@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'login' => 'Kirish',
+    'logout' => 'Chiqish',
+    'register' => 'Ro\'yxatdan o\'tish',
+    'email' => 'Email',
+    'password' => 'Parol',
+    'confirm_password' => 'Parolni tasdiqlang',
+    'name' => 'Ism',
+    'phone' => 'Telefon',
+    'remember_me' => 'Meni eslab qol',
+    'forgot_password' => 'Parolni unutdingizmi?',
+    'reset_password' => 'Parolni tiklash',
+    'send_reset_link' => 'Tiklash havolasini yuborish',
+    'dashboard' => 'Boshqaruv paneli',
+    'profile' => 'Profil',
+    'change_password' => 'Parolni o\'zgartirish',
+    'old_password' => 'Eski parol',
+    'new_password' => 'Yangi parol',
+    'logout_confirm' => 'Chiqishni tasdiqlaysizmi?',
+    'login_success' => 'Muvaffaqiyatli kirdingiz!',
+    'logout_success' => 'Muvaffaqiyatli chiqdingiz!',
+    'register_success' => 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!',
+    'wrong_credentials' => 'Email yoki parol noto\'g\'ri',
+    'email_not_found' => 'Bu email topilmadi',
+];
