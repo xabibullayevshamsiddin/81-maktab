@@ -79,6 +79,7 @@
                           <form action="{{ route('user.update', $user) }}" method="POST" class="d-inline">
                             @csrf
                             @method('PUT')
+                            <input type="hidden" name="is_active" value="{{ $user->is_active ? 1 : 0 }}">
                             <select name="role" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
                               @foreach (\App\Models\User::ROLES as $value => $label)
                                 <option value="{{ $value }}" {{ $user->role === $value ? 'selected' : '' }}>

@@ -40,13 +40,17 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return redirect()->route('categories.index')->with('success', 'Kategoriya yangilandi.');
+        return redirect()->route('categories.index')
+            ->with('success', 'Kategoriya yangilandi.')
+            ->with('toast_type', 'warning');
     }
 
     public function destroy(Category $category)
     {
         $category->delete();
 
-        return redirect()->route('categories.index')->with('success', 'Kategoriya o\'chirildi. Bog\'langan postlar kategoriyasiz qoldi.');
+        return redirect()->route('categories.index')
+            ->with('error', 'Kategoriya o\'chirildi. Bog\'langan postlar kategoriyasiz qoldi.')
+            ->with('toast_type', 'error');
     }
 }

@@ -23,7 +23,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return redirect()->route('home');
+            return redirect()->route('home')
+                ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
+                ->with('toast_type', 'success');
         }
 
         return back()
@@ -52,7 +54,9 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('home');
+        return redirect()->route('home')
+            ->with('success', 'Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi.')
+            ->with('toast_type', 'success');
     }
 
     public function regiter_store(RegisterRequest $request)
@@ -66,6 +70,8 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect('/login')
+            ->with('error', 'Siz tizimdan chiqdingiz.')
+            ->with('toast_type', 'error');
     }
 }

@@ -25,7 +25,7 @@
   <body>
     <header class="page-header">
       <div class="container">
-        <div class="header-main" id="navbar" style="top: 0;">
+        <div class="header-main" id="navbar" style="margin-top: 20px">
           <a class="logo" href="{{ route('home') }}" aria-label="81-IDUM bosh sahifa">
             <img
               src="{{ asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
@@ -136,5 +136,376 @@
     </footer>
 
     <script src="{{ asset('temp/js/script.js') }}?v={{ filemtime(public_path('temp/js/script.js')) }}"></script>
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+      (() => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toastTimerMs = 3200;
+
+        function showToast(message, type = 'success') {
+          if (!message) return;
+
+          const toast = document.createElement('div');
+          toast.className = `toast toast-${type}`;
+          toast.textContent = message;
+          container.appendChild(toast);
+
+          // Slide-in animation already via CSS; remove after timeout.
+          setTimeout(() => {
+            toast.classList.add('toast-out');
+            setTimeout(() => toast.remove(), 250);
+          }, toastTimerMs);
+        }
+
+        // Flash messages -> toast.
+        const successMsg = @json(session('success'));
+        const errorMsg = @json(session('error'));
+        const toastType = @json(session('toast_type'));
+
+        function resolveToastType(defaultType) {
+          if (!toastType) return defaultType;
+          if (toastType === 'warning') return 'warning';
+          if (toastType === 'error') return 'error';
+          if (toastType === 'success') return 'success';
+          return defaultType;
+        }
+
+        if (successMsg) showToast(successMsg, resolveToastType('success'));
+        if (errorMsg) showToast(errorMsg, 'error');
+
+        @if ($errors->any())
+          showToast(@json($errors->first()), 'error');
+        @endif
+
+        // AJAX Like forms
+        document.addEventListener('submit', async (event) => {
+          const form = event.target.closest('form.js-like-form');
+          if (!form) return;
+
+          event.preventDefault();
+
+          const btn = form.querySelector('button.like-btn');
+          if (btn) btn.disabled = true;
+
+          const action = form.action;
+
+          try {
+            const res = await fetch(action, {
+              method: 'POST',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+              },
+              body: new FormData(form),
+            });
+
+            const data = await res.json();
+            if (!data || !data.ok) {
+              showToast(data?.message || 'Xatolik', data?.toast_type || 'error');
+              return;
+            }
+
+            // Update UI
+            if (btn && data.likes_count != null) {
+              const icon = btn.querySelector('i');
+              const countEl = btn.querySelector('.like-count');
+
+              btn.classList.toggle('liked', !!data.liked);
+              if (icon) {
+                icon.classList.toggle('fa-solid', !!data.liked);
+                icon.classList.toggle('fa-regular', !data.liked);
+              }
+              if (countEl) countEl.textContent = String(data.likes_count);
+            }
+
+            showToast(data.message || (data.liked ? "Like qo'shildi." : 'Like olib tashlandi.'), data.toast_type || 'success');
+          } catch (e) {
+            showToast('Like qilishda xatolik', 'error');
+          } finally {
+            if (btn) btn.disabled = false;
+          }
+        });
+
+        // AJAX Comment forms (posts/show)
+        // Reply toggle (show/hide reply form) - ishlaydigan bo‘lishi uchun bitta event listener yetarli.
+        document.addEventListener('click', (event) => {
+          const btn = event.target.closest('button.js-comment-reply-toggle');
+          if (!btn) return;
+
+          const wrapper = btn.nextElementSibling && btn.nextElementSibling.classList.contains('js-comment-reply-form-wrapper')
+            ? btn.nextElementSibling
+            : btn.parentElement?.querySelector('.js-comment-reply-form-wrapper');
+
+          if (!wrapper) return;
+          wrapper.hidden = !wrapper.hidden;
+        });
+
+        document.addEventListener('submit', async (event) => {
+          const form = event.target.closest('form.js-comment-form');
+          if (!form) return;
+
+          event.preventDefault();
+
+          const cfg = window.__POST_COMMENTS_CONFIG__ || {};
+          const updateUrlTemplate = cfg.updateUrlTemplate || null;
+          const destroyUrlTemplate = cfg.destroyUrlTemplate || null;
+          const storeUrl = cfg.storeUrl || (form.dataset && form.dataset.storeUrl) || null;
+          const csrfToken = cfg.csrfToken || null;
+
+          function escapeHtml(value) {
+            return String(value ?? '')
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+          }
+
+          function prependHtml(parentEl, html) {
+            if (!parentEl || !html) return;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = String(html).trim();
+            const node = wrapper.firstElementChild;
+            if (node) parentEl.prepend(node);
+          }
+
+          const action = form.action;
+          const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+          if (btn) btn.disabled = true;
+
+          const methodOverride = (form.querySelector('input[name="_method"]')?.value || '').toLowerCase();
+          const parentIdValue = form.querySelector('input[name="parent_id"]')?.value || null;
+          const deletingId = form.dataset.commentId || null;
+
+          try {
+            const res = await fetch(action, {
+              method: 'POST',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+              },
+              body: new FormData(form),
+            });
+
+            const data = await res.json();
+            if (!data || !data.ok) {
+              showToast(data?.message || 'Izoh bilan ishlashda xatolik', data?.toast_type || 'error');
+              return;
+            }
+
+            const toastType = data.toast_type || 'success';
+            showToast(data.message || 'OK', toastType);
+
+            // EDIT
+            if (methodOverride === 'put' && data.comment?.id) {
+              const el = document.querySelector(`article.comment-card[data-comment-id="${data.comment.id}"]`);
+              const textEl = el?.querySelector('.comment-body p');
+              if (textEl) textEl.textContent = data.comment.body ?? '';
+
+              const details = form.closest('details');
+              if (details) details.open = false;
+              form.reset();
+              return;
+            }
+
+            // DELETE
+            if (methodOverride === 'delete' && deletingId) {
+              const el = document.querySelector(`article.comment-card[data-comment-id="${deletingId}"]`);
+              if (el) el.remove();
+
+              const details = form.closest('details');
+              if (details) details.open = false;
+              return;
+            }
+
+            // CREATE / REPLY
+            const comment = data.comment || null;
+            if (!comment) {
+              form.reset();
+              return;
+            }
+
+            const currentUserId = cfg.currentUserId ?? null;
+            const canManageAll = !!cfg.currentUserCanManageAll;
+            const canManageThis = canManageAll || (currentUserId != null && comment.user_id != null && String(comment.user_id) === String(currentUserId));
+
+            const isReply = !!parentIdValue; // storeComment reply forms always send parent_id
+            const insertParentId = comment.parent_id ?? null;
+
+            const editUrl = updateUrlTemplate ? updateUrlTemplate.replace('__COMMENT_ID__', String(comment.id)) : null;
+            const destroyUrl = destroyUrlTemplate ? destroyUrlTemplate.replace('__COMMENT_ID__', String(comment.id)) : null;
+
+            const canManageActionsHtml = canManageThis && editUrl && destroyUrl
+              ? `
+                  <details class="comment-action-box">
+                    <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
+                    <form
+                      class="comment-form comment-form-inline js-comment-form js-comment-edit-form"
+                      action="${editUrl}"
+                      method="POST"
+                      data-comment-id="${comment.id}"
+                    >
+                      <input type="hidden" name="_token" value="${escapeHtml(csrfToken)}" />
+                      <input type="hidden" name="_method" value="PUT" />
+                      <input
+                        type="text"
+                        class="comment-input"
+                        name="body"
+                        maxlength="500"
+                        required
+                        value="${escapeHtml(comment.body)}"
+                      />
+                      <button class="btn btn-sm" type="submit">Saqlash</button>
+                    </form>
+                  </details>
+                  <form
+                    class="js-comment-form js-comment-delete-form"
+                    action="${destroyUrl}"
+                    method="POST"
+                    data-comment-id="${comment.id}"
+                    onsubmit="return confirm(\"Izohni o'chirmoqchimisiz?\")"
+                  >
+                    <input type="hidden" name="_token" value="${escapeHtml(csrfToken)}" />
+                    <input type="hidden" name="_method" value="DELETE" />
+                    <button type="submit" class="btn btn-sm comment-delete-btn">
+                      <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> O'chirish
+                    </button>
+                  </form>
+                `
+              : '';
+
+            if (isReply && insertParentId) {
+              const parentArticle = document.querySelector(`article.comment-card[data-comment-id="${insertParentId}"]`);
+              if (!parentArticle) {
+                // Fallback: rootga qo'shib qo'yamiz (kam hollarda)
+                const rootList = document.querySelector('#post-detail .comments-list');
+                if (rootList) prependHtml(rootList, buildReplyLi());
+                form.reset();
+                return;
+              }
+
+              let repliesContainer = parentArticle.querySelector('div.comment-list.comment-replies');
+              if (!repliesContainer) {
+                repliesContainer = document.createElement('div');
+                repliesContainer.className = 'comment-list comment-replies';
+                parentArticle.appendChild(repliesContainer);
+              }
+
+              prependHtml(repliesContainer, buildReplyLi());
+
+              const wrapper = form.closest('.js-comment-reply-form-wrapper');
+              if (wrapper) wrapper.hidden = true;
+              form.reset();
+              return;
+            }
+
+            // Top-level comment
+            const rootList = document.querySelector('#post-detail .comments-list');
+            if (rootList) prependHtml(rootList, buildTopLevelLi());
+
+            form.reset();
+
+            return;
+
+            function buildReplyLi() {
+              return `
+                <article class="comment-card reveal comment-item-reply" data-comment-id="${escapeHtml(comment.id)}">
+                  <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                  <div class="comment-body">
+                    <div class="comment-meta">
+                      <strong>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                      <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
+                    </div>
+                    <p>${escapeHtml(comment.body || '')}</p>
+                    <div class="comment-actions">
+                      <button type="button" class="comment-like" aria-label="Yoqtirish">
+                        <i class="fa-regular fa-heart"></i> <span class="like-count">0</span>
+                      </button>
+                      ${canManageActionsHtml}
+                    </div>
+                  </div>
+                </article>
+              `;
+            }
+
+            function buildTopLevelLi() {
+              const showAuthorField = (cfg.currentUserId == null);
+              const authorFieldHtml = showAuthorField
+                ? `
+                    <input
+                      type="text"
+                      class="comment-input"
+                      name="author_name"
+                      placeholder="Ismingiz (ixtiyoriy)"
+                      maxlength="80"
+                    />
+                  `
+                : '';
+
+              const replyFormHtml = `
+                <button
+                  type="button"
+                  class="comment-reply js-comment-reply-toggle"
+                  aria-label="Javob"
+                  data-reply-parent-id="${escapeHtml(comment.id)}"
+                >
+                  <i class="fa-regular fa-comment"></i>
+                  Javob
+                </button>
+                <div class="js-comment-reply-form-wrapper comment-reply-form-wrapper" hidden>
+                  <form class="comment-form comment-form-inline js-comment-form js-comment-reply-form" action="${escapeHtml(form.action)}" method="POST">
+                    <input type="hidden" name="parent_id" value="${escapeHtml(comment.id)}" />
+                    <input type="hidden" name="_token" value="${escapeHtml(csrfToken)}" />
+                    ${authorFieldHtml}
+                    <input
+                      type="text"
+                      class="comment-input"
+                      name="body"
+                      placeholder="Javobingizni yozing"
+                      maxlength="500"
+                      required
+                    />
+                    <button class="btn btn-sm" type="submit">Javob yuborish</button>
+                  </form>
+                </div>
+              `;
+
+              return `
+                <article class="comment-card reveal" data-comment-id="${escapeHtml(comment.id)}">
+                  <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                  <div class="comment-body">
+                    <div class="comment-meta">
+                      <strong>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                      <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
+                    </div>
+                    <p>${escapeHtml(comment.body || '')}</p>
+                    <div class="comment-actions">
+                      <button type="button" class="comment-like" aria-label="Yoqtirish">
+                        <i class="fa-regular fa-heart"></i> <span class="like-count">0</span>
+                      </button>
+                      ${replyFormHtml}
+                      ${canManageActionsHtml}
+                    </div>
+                  </div>
+                </article>
+              `;
+            }
+          } catch (e) {
+            showToast('Izoh yuborishda xatolik', 'error');
+          } finally {
+            if (btn) btn.disabled = false;
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
+

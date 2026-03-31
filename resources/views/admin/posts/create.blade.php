@@ -77,7 +77,7 @@
 
             <div class="mb-3">
               <label class="form-label">To'liq tavsif</label>
-              <textarea class="form-control" name="content" rows="6" required>{{ old('content') }}</textarea>
+              <input type="text" class="form-control" name="content" value="{{ old('content') }}" required>
             </div>
 
             <div class="mb-3">

@@ -3,7 +3,7 @@
 
     <div class="container">
       <!-- Hero Content -->
-      <div class="news-hero-content">
+      <div class="news-hero-content" s>
           <span class="badge">81-IDUM Kurslar</span>
           <h1>Bilim va kelajak shu yerda boshlanadi</h1>
           <p>
@@ -43,248 +43,208 @@
 
         <!-- COURSE CARDS -->
         <div class="courses-grid" id="courses-grid">
-          <article class="course-card course-card-v2 reveal" data-category="math">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="Chuqur matematika" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-square-root-variable"></i>
-                  <span>Matematika</span>
-                </div>
+          <article class="course-card reveal" data-category="math">
+            <div class="course-img-wrap">
+              <div class="course-icon">
+                <i class="fa-solid fa-square-root-variable"></i>
               </div>
+              <span class="course-tag">Matematika</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Chuqur matematika</h3>
               <p>
                 Olimpiada va imtihonlarga tayyorlanadigan kengaytirilgan
                 matematik kurs.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 6 oy</li>
-                <li><i class="fa-solid fa-users"></i> 7–11-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 7вЂ“11-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.9</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 1]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="1"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="language">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/image.png') }}" alt="Ingliz tili (IELTS)" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-language"></i>
-                  <span>Tillar</span>
-                </div>
+          <article class="course-card reveal" data-category="language">
+            <div class="course-img-wrap course-img-lang">
+              <div class="course-icon">
+                <i class="fa-solid fa-language"></i>
               </div>
+              <span class="course-tag">Tillar</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Ingliz tili (IELTS)</h3>
               <p>
                 IELTS imtihoniga maqsadli tayyorgarlik va chet el
                 universitetlariga kirish.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 4 oy</li>
-                <li><i class="fa-solid fa-users"></i> 8–11-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 8вЂ“11-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.8</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 2]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="2"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="science">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Kimyo va biologiya" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-flask"></i>
-                  <span>Tabiiy fanlar</span>
-                </div>
-              </div>
+          <article class="course-card reveal" data-category="science">
+            <div class="course-img-wrap course-img-science">
+              <div class="course-icon"><i class="fa-solid fa-flask"></i></div>
+              <span class="course-tag">Tabiiy fanlar</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Kimyo va biologiya</h3>
               <p>
                 Tibbiyot va tabiiy fanlar yo'nalishiga ixtisoslashtirilgan
                 amaliy kurs.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 5 oy</li>
-                <li><i class="fa-solid fa-users"></i> 8–11-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 8вЂ“11-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.7</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 3]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="3"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="tech">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="Dasturlash asoslari" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-laptop-code"></i>
-                  <span>Texnologiya</span>
-                </div>
+          <article class="course-card reveal" data-category="tech">
+            <div class="course-img-wrap course-img-tech">
+              <div class="course-icon">
+                <i class="fa-solid fa-laptop-code"></i>
               </div>
+              <span class="course-tag">Texnologiya</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Dasturlash asoslari</h3>
               <p>
                 Python va algoritmlar orqali zamonaviy dasturlash ko'nikmalarini
                 egallash.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 3 oy</li>
-                <li><i class="fa-solid fa-users"></i> 6–11-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 6вЂ“11-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.9</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 4]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="4"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="language">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="Rus tili" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-globe"></i>
-                  <span>Tillar</span>
-                </div>
-              </div>
+          <article class="course-card reveal" data-category="language">
+            <div class="course-img-wrap course-img-lang">
+              <div class="course-icon"><i class="fa-solid fa-globe"></i></div>
+              <span class="course-tag">Tillar</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Rus tili</h3>
               <p>
                 Muloqot, grammatika va rus adabiyotiga oid chuqurlashtirilgan
                 kurs.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 4 oy</li>
-                <li><i class="fa-solid fa-users"></i> 5–11-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 5вЂ“11-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.6</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 5]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="5"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="math">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/image.png') }}" alt="Fizika va mexanika" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-chart-line"></i>
-                  <span>Matematika</span>
-                </div>
+          <article class="course-card reveal" data-category="math">
+            <div class="course-img-wrap">
+              <div class="course-icon">
+                <i class="fa-solid fa-chart-line"></i>
               </div>
+              <span class="course-tag">Matematika</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Fizika va mexanika</h3>
               <p>
                 Nazariy va amaliy fizikani birlashtirgan olimpiada darajasidagi
                 kurs.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 6 oy</li>
-                <li><i class="fa-solid fa-users"></i> 9–11-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 9вЂ“11-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.8</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 6]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="6"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="tech">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Robototexnika" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-robot"></i>
-                  <span>Texnologiya</span>
-                </div>
-              </div>
+          <article class="course-card reveal" data-category="tech">
+            <div class="course-img-wrap course-img-tech">
+              <div class="course-icon"><i class="fa-solid fa-robot"></i></div>
+              <span class="course-tag">Texnologiya</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Robototexnika</h3>
               <p>
                 Arduino va Lego Mindstorms asosida qurilmalar loyihalash va
                 dasturlash.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 4 oy</li>
-                <li><i class="fa-solid fa-users"></i> 5–9-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 5вЂ“9-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.9</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 7]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="7"
                 >Batafsil</a
               >
             </div>
           </article>
 
-          <article class="course-card course-card-v2 reveal" data-category="science">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="Geografiya va ekologiya" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-atom"></i>
-                  <span>Tabiiy fanlar</span>
-                </div>
-              </div>
+          <article class="course-card reveal" data-category="science">
+            <div class="course-img-wrap course-img-science">
+              <div class="course-icon"><i class="fa-solid fa-atom"></i></div>
+              <span class="course-tag">Tabiiy fanlar</span>
             </div>
-
-            <div class="course-body-v2">
+            <div class="course-body">
               <h3>Geografiya va ekologiya</h3>
               <p>
                 Dunyo geografiyasi, ekotizimlar va atrof-muhit ilmi bo'yicha
                 kuch kurs.
               </p>
-              <ul class="course-meta-v2">
+              <ul class="course-meta">
                 <li><i class="fa-regular fa-clock"></i> 3 oy</li>
-                <li><i class="fa-solid fa-users"></i> 6–10-sinf</li>
+                <li><i class="fa-solid fa-users"></i> 6вЂ“10-sinf</li>
                 <li><i class="fa-solid fa-star"></i> 4.5</li>
               </ul>
               <a
                 href="{{ route('courses', ['id' => 8]) }}"
-                class="btn btn-sm details-btn course-cta"
+                class="btn btn-sm details-btn"
                 data-course-id="8"
                 >Batafsil</a
               >

@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StorePostRequest;
-use App\Http\Requests\UpdatePostRequest;
+use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
@@ -34,9 +33,15 @@ class PostController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePostRequest $request)
+    public function store(Request $request)
     {
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'short_content' => ['required', 'string'],
+            'content' => ['required', 'string'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp'],
+        ]);
 
         $validated['image'] = $request->file('image')->store('posts', 'public');
         $validated['slug'] = $this->makeUniqueSlug($validated['title']);
@@ -68,12 +73,18 @@ class PostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePostRequest $request, Post $post)
+    public function update(Request $request, Post $post)
     {
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'short_content' => ['required', 'string'],
+            'content' => ['required', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp',],
+        ]);
 
         if ($request->hasFile('image')) {
-            if (! empty($post->image)) {
+            if (!empty($post->image)) {
                 Storage::disk('public')->delete($post->image);
             }
 
@@ -86,7 +97,9 @@ class PostController extends Controller
 
         $post->update($validated);
 
-        return redirect()->route('posts.index')->with('success', 'Post yangilandi.');
+        return redirect()->route('posts.index')
+            ->with('success', 'Post yangilandi.')
+            ->with('toast_type', 'warning');
     }
 
     /**
@@ -94,13 +107,15 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        if (! empty($post->image)) {
+        if (!empty($post->image)) {
             Storage::disk('public')->delete($post->image);
         }
 
         $post->delete();
 
-        return redirect()->route('posts.index')->with('success', "Post o'chirildi.");
+        return redirect()->route('posts.index')
+            ->with('error', "Post o'chirildi.")
+            ->with('toast_type', 'error');
     }
 
     private function makeUniqueSlug(string $title, ?int $ignoreId = null): string
@@ -124,6 +139,7 @@ class PostController extends Controller
             if ($ignoreId) {
                 $q->where('id', '!=', $ignoreId);
             }
+
             if (! $q->exists()) {
                 return $candidate;
             }
@@ -131,3 +147,4 @@ class PostController extends Controller
         }
     }
 }
+

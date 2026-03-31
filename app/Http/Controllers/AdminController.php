@@ -45,7 +45,9 @@ class AdminController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('user')->with('success', 'Foydalanuvchi yangilandi.');
+        return redirect()->route('user')
+            ->with('success', 'Foydalanuvchi yangilandi.')
+            ->with('toast_type', 'warning');
     }
 
     public function destroyUser(User $user)
@@ -62,7 +64,9 @@ class AdminController extends Controller
 
         $user->delete();
 
-        return redirect()->route('user')->with('success', "Foydalanuvchi o'chirildi.");
+        return redirect()->route('user')
+            ->with('error', "Foydalanuvchi o'chirildi.")
+            ->with('toast_type', 'error');
     }
 
     public function notification()

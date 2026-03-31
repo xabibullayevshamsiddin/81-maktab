@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreCommentRequest;
+use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class PublicPostController extends Controller
@@ -12,11 +13,18 @@ class PublicPostController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $categoryId = $request->query('category_id');
+        $sort = (string) $request->query('sort', 'new');
+
+        $categories = Category::orderBy('name')->get();
 
         $postsQuery = Post::query()
             ->with('category')
-            ->withCount(['comments', 'likes'])
-            ->latest();
+            ->withCount(['comments', 'likes']);
+
+        if ($categoryId !== null && $categoryId !== '' && $categoryId !== 'all') {
+            $postsQuery->where('category_id', $categoryId);
+        }
 
         if ($q !== '') {
             $postsQuery->where(function ($sub) use ($q) {
@@ -25,157 +33,135 @@ class PublicPostController extends Controller
             });
         }
 
-        $posts = $postsQuery->paginate(6)->appends($request->query());
+        // Sorting
+        switch ($sort) {
+            case 'popular':
+                $postsQuery->orderByDesc('views');
+                break;
+            case 'likes':
+                $postsQuery->orderByDesc('likes_count');
+                break;
+            case 'comments':
+                $postsQuery->orderByDesc('comments_count');
+                break;
+            case 'new':
+            default:
+                $postsQuery->latest();
+                break;
+        }
 
-        $topPosts = Post::query()
-            ->with('category')
-            ->withCount(['comments', 'likes'])
-            ->orderByDesc('views')
-            ->latest()
-            ->take(3)
-            ->get();
+        $posts = $postsQuery->paginate(10)->appends($request->query());
 
-        return view('post', compact('posts', 'topPosts', 'q'));
+        return view('post', [
+            'posts' => $posts,
+            'categories' => $categories,
+            'q' => $q,
+            'categoryId' => $categoryId,
+            'sort' => $sort,
+        ]);
     }
 
     public function show(Post $post)
     {
-        $post->load(['category', 'comments' => function ($q) {
-            $q->latest()->with('replies');
-        }])->loadCount(['comments', 'likes']);
-
+        // Increment views on each open.
         $post->increment('views');
 
-        $liked = $post->likes()
-            ->where(function ($q) {
-                if (auth()->check()) {
-                    $q->where('user_id', auth()->id());
+        $post->load('category');
+        $post->loadCount(['comments', 'likes']);
 
-                    return;
-                }
-                $q->whereNull('user_id')->where('ip_address', request()->ip());
-            })
-            ->exists();
+        $liked = false;
+        if (auth()->check() && auth()->user()?->isActive()) {
+            $liked = $post->likes()
+                ->where('user_id', auth()->id())
+                ->exists();
+        }
 
-        $relatedPosts = Post::query()
-            ->where('id', '!=', $post->id)
-            ->when($post->category_id, function ($q) use ($post) {
-                $q->where('category_id', $post->category_id);
-            })
-            ->with('category')
-            ->withCount(['comments', 'likes'])
+        // Load top-level comments and their replies.
+        $comments = $post->comments()
+            ->whereNull('parent_id')
+            ->with(['replies' => function ($query) {
+                $query->latest();
+            }])
             ->latest()
-            ->take(3)
             ->get();
 
-        return view('posts.show', compact('post', 'liked', 'relatedPosts'));
+        return view('posts.show', compact('post', 'liked', 'comments'));
     }
 
-    public function storeComment(StoreCommentRequest $request, Post $post)
+    public function storeComment(Request $request, Post $post)
     {
-        $validated = $request->validated();
-        $user = $request->user();
-        $isAjax = $request->ajax() || $request->wantsJson();
+        if ($response = $this->ensureCanInteract($request)) {
+            return $response;
+        }
 
-        $comment = $post->comments()->create([
-            'user_id' => $user?->id,
-            'author_name' => $user?->name ?? ($validated['author_name'] ?? null),
-            'body' => $validated['body'],
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:500'],
+            'author_name' => ['nullable', 'string', 'max:80'],
+            'parent_id' => ['nullable', 'integer', 'exists:comments,id'],
         ]);
 
-        if ($isAjax) {
+        $parentComment = null;
+        if (! empty($validated['parent_id'])) {
+            $parentComment = $post->comments()
+                ->whereKey($validated['parent_id'])
+                ->firstOrFail();
+        }
+
+        $comment = new Comment();
+        $comment->post_id = $post->id;
+        $comment->body = $validated['body'];
+        $comment->author_name = $request->user()?->name ?? ($validated['author_name'] ?? null);
+        $comment->user_id = $request->user()?->id;
+
+        // Show comments immediately.
+        $comment->is_approved = true;
+        $comment->parent_id = $parentComment?->id;
+        $comment->save();
+
+        if ($request->wantsJson()) {
+            $comment->refresh();
+
             return response()->json([
-                'success' => true,
+                'ok' => true,
                 'message' => "Izoh qo'shildi.",
+                'toast_type' => 'success',
                 'comment' => [
                     'id' => $comment->id,
                     'author_name' => $comment->author_name ?? 'Mehmon',
                     'body' => $comment->body,
-                    'created_at' => $comment->created_at->format('d.m.Y H:i'),
+                    'created_at' => $comment->created_at?->format('d.m.Y H:i'),
+                    'parent_id' => $comment->parent_id,
+                    'user_id' => $comment->user_id,
                 ],
             ]);
         }
 
-        return back()->with('success', "Izoh qo'shildi.");
+        return back()
+            ->with('success', "Izoh qo'shildi.")
+            ->with('toast_type', 'success');
     }
 
-    public function toggleLike(Request $request, Post $post)
+    public function updateComment(Request $request, Post $post, Comment $comment)
     {
-        $user = $request->user();
-        $isAjax = $request->ajax() || $request->wantsJson();
+        $this->ensureCommentBelongsToPost($post, $comment);
 
-        if ($user) {
-            $existing = $post->likes()->where('user_id', $user->id)->first();
-            if ($existing) {
-                $existing->delete();
-                $liked = false;
-            } else {
-                $post->likes()->create([
-                    'user_id' => $user->id,
-                    'ip_address' => $request->ip(),
-                    'user_agent' => substr((string) $request->userAgent(), 0, 255),
-                ]);
-                $liked = true;
-            }
-        } else {
-            $existing = $post->likes()
-                ->whereNull('user_id')
-                ->where('ip_address', $request->ip())
-                ->first();
-
-            if ($existing) {
-                $existing->delete();
-                $liked = false;
-            } else {
-                $post->likes()->create([
-                    'user_id' => null,
-                    'ip_address' => $request->ip(),
-                    'user_agent' => substr((string) $request->userAgent(), 0, 255),
-                ]);
-                $liked = true;
-            }
+        if (! $this->canManageComment($comment)) {
+            abort(403);
         }
 
-        $post->loadCount('likes');
-
-        if ($isAjax) {
-            return response()->json([
-                'success' => true,
-                'liked' => $liked,
-                'likes_count' => $post->likes_count,
-            ]);
-        }
-
-        return back();
-    }
-
-    public function updateComment(Request $request, Comment $comment)
-    {
-        $user = $request->user();
-        $isAdmin = $user && in_array($user->role, ['admin', 'moderator']);
-        $isOwner = $comment->user_id === $user?->id ||
-            (! $comment->user_id && $comment->author_name === $user?->name);
-
-        if (! $isAdmin && ! $isOwner) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['error' => 'Siz bu izohni tahrirlashingiz mumkin emas.'], 403);
-            }
-
-            return back()->with('error', 'Siz bu izohni tahrirlashingiz mumkin emas.');
-        }
-
-        $request->validate([
-            'body' => 'required|string|max:500',
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:500'],
         ]);
 
         $comment->update([
-            'body' => $request->body,
+            'body' => $validated['body'],
         ]);
 
-        if ($request->ajax() || $request->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json([
-                'success' => true,
-                'message' => 'Izoh tahrirlandi.',
+                'ok' => true,
+                'message' => 'Izoh yangilandi.',
+                'toast_type' => 'warning',
                 'comment' => [
                     'id' => $comment->id,
                     'body' => $comment->body,
@@ -183,70 +169,155 @@ class PublicPostController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Izoh tahrirlandi.');
+        return back()
+            ->with('success', 'Izoh yangilandi.')
+            ->with('toast_type', 'warning');
     }
 
-    public function destroyComment(Request $request, Comment $comment)
+    public function destroyComment(Request $request, Post $post, Comment $comment)
     {
-        $user = $request->user();
-        $isAdmin = $user && in_array($user->role, ['admin', 'moderator']);
-        $isOwner = $comment->user_id === $user?->id ||
-            (! $comment->user_id && $comment->author_name === $user?->name);
+        $this->ensureCommentBelongsToPost($post, $comment);
 
-        if (! $isAdmin && ! $isOwner) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['error' => 'Siz bu izohni o\'chirishingiz mumkin emas.'], 403);
-            }
-
-            return back()->with('error', 'Siz bu izohni o\'chirishingiz mumkin emas.');
+        if (! $this->canManageComment($comment)) {
+            abort(403);
         }
 
         $comment->delete();
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Izoh o\'chirildi.']);
-        }
-
-        return back()->with('success', 'Izoh o\'chirildi.');
-    }
-
-    public function replyComment(StoreCommentRequest $request, $commentId)
-    {
-        $validated = $request->validated();
-        $user = $request->user();
-        $isAjax = $request->ajax() || $request->wantsJson();
-
-        $parentComment = Comment::find($commentId);
-
-        if (! $parentComment) {
-            if ($isAjax) {
-                return response()->json(['error' => 'Izoh topilmadi.'], 404);
-            }
-
-            return back()->with('error', 'Izoh topilmadi.');
-        }
-
-        $reply = Comment::create([
-            'post_id' => $parentComment->post_id,
-            'user_id' => $user?->id,
-            'author_name' => $user?->name ?? ($validated['author_name'] ?? null),
-            'body' => $validated['body'],
-            'parent_id' => $parentComment->id,
-        ]);
-
-        if ($isAjax) {
+        if ($request->wantsJson()) {
             return response()->json([
-                'success' => true,
-                'message' => "Javob qo'shildi.",
-                'reply' => [
-                    'id' => $reply->id,
-                    'author_name' => $reply->author_name ?? 'Mehmon',
-                    'body' => $reply->body,
-                    'created_at' => $reply->created_at->format('d.m.Y H:i'),
-                ],
+                'ok' => true,
+                'message' => "Izoh o'chirildi.",
+                'toast_type' => 'error',
             ]);
         }
 
-        return back()->with('success', "Javob qo'shildi.");
+        return back()
+            ->with('success', "Izoh o'chirildi.")
+            ->with('toast_type', 'error');
+    }
+
+    private function ensureCommentBelongsToPost(Post $post, Comment $comment): void
+    {
+        if ((int) $comment->post_id !== (int) $post->id) {
+            abort(404);
+        }
+    }
+
+    private function canManageComment(Comment $comment): bool
+    {
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        if ((int) $comment->user_id === (int) $user->id) {
+            return true;
+        }
+
+        return $user->isAdmin() || $user->isEditor() || $user->isModerator();
+    }
+
+    public function toggleLike(Request $request, Post $post)
+    {
+        if ($response = $this->ensureCanInteract($request)) {
+            return $response;
+        }
+
+        $existing = $post->likes()
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $likesCount = $post->likes()->count();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => true,
+                    'message' => "Like olib tashlandi.",
+                    'liked' => false,
+                    'likes_count' => $likesCount,
+                    'toast_type' => 'warning',
+                ]);
+            }
+
+            return back()
+                ->with('success', "Like olib tashlandi.")
+                ->with('toast_type', 'warning');
+        }
+
+        try {
+            $post->likes()->create([
+                'user_id' => auth()->id(),
+                'ip_address' => null,
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ]);
+        } catch (QueryException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => "Like qo'shishda xatolik. Qayta urinib ko'ring.",
+                    'toast_type' => 'warning',
+                ], 422);
+            }
+
+            return back()
+                ->with('error', "Like qo'shishda xatolik. Qayta urinib ko'ring.")
+                ->with('toast_type', 'warning');
+        }
+
+        $likesCount = $post->likes()->count();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => "Like qo'shildi.",
+                'liked' => true,
+                'likes_count' => $likesCount,
+                'toast_type' => 'success',
+            ]);
+        }
+
+        return back()
+            ->with('success', "Like qo'shildi.")
+            ->with('toast_type', 'success');
+    }
+
+    private function ensureCanInteract(Request $request)
+    {
+        if (! auth()->check()) {
+            return $this->denyInteraction(
+                $request,
+                "Like bosish va izoh yozish uchun avval ro'yxatdan o'ting.",
+                401
+            );
+        }
+
+        if (! $request->user()?->isActive()) {
+            return $this->denyInteraction(
+                $request,
+                "Siz block qilingansiz. Like bosish va izoh yozish mumkin emas.",
+                403
+            );
+        }
+
+        return null;
+    }
+
+    private function denyInteraction(Request $request, string $message, int $statusCode)
+    {
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok' => false,
+                'message' => $message,
+                'toast_type' => 'warning',
+            ], $statusCode);
+        }
+
+        return back()
+            ->with('error', $message)
+            ->with('toast_type', 'warning');
     }
 }

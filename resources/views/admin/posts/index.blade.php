@@ -61,7 +61,7 @@
                 <tbody>
                   @forelse ($posts as $post)
                     <tr>
-                      <td><p>{{ $post->id }}</p></td>
+                      <td><p>{{ $loop->iteration }}</p></td>
                       <td>
                         @if ($post->image)
                           <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">

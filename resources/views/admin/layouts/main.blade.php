@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -381,5 +381,127 @@
     <script src="{{ asset('admin/js/main.js') }}"></script>
 
     @yield('page_scripts')
+
+    <!-- Admin toast (session flash -> top-right toast) -->
+    <style>
+      #admin-toast-container {
+        position: fixed;
+        top: 115px;
+        right: 18px;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      }
+
+      #admin-toast-container .admin-toast {
+        pointer-events: auto;
+        max-width: 420px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(8, 24, 43, 0.92);
+        opacity: 0;
+        transform: translateX(24px) translateY(6px);
+        animation: adminToastIn 260ms ease forwards;
+      }
+
+      #admin-toast-container .admin-toast.admin-success {
+        background: rgba(15, 118, 110, 0.14);
+        border-color: rgba(15, 118, 110, 0.35);
+        color: #0f766e;
+      }
+
+      #admin-toast-container .admin-toast.admin-warning {
+        background: rgba(245, 158, 11, 0.14);
+        border-color: rgba(245, 158, 11, 0.35);
+        color: #f59e0b;
+      }
+
+      #admin-toast-container .admin-toast.admin-error {
+        background: rgba(220, 38, 38, 0.12);
+        border-color: rgba(220, 38, 38, 0.3);
+        color: #dc2626;
+      }
+
+      #admin-toast-container .admin-toast.admin-toast-out {
+        animation: adminToastOut 220ms ease forwards;
+      }
+
+      @keyframes adminToastIn {
+        to {
+          opacity: 1;
+          transform: translateX(0) translateY(0);
+        }
+      }
+
+      @keyframes adminToastOut {
+        to {
+          opacity: 0;
+          transform: translateX(18px) translateY(6px);
+        }
+      }
+    </style>
+
+    <div id="admin-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+      (() => {
+        const container = document.getElementById('admin-toast-container');
+        if (!container) return;
+
+        const toastTimerMs = 3200;
+
+        function showToast(message, type) {
+          if (!message) return;
+
+          const toast = document.createElement('div');
+          toast.className = `admin-toast admin-${type}`;
+          toast.textContent = message;
+          container.appendChild(toast);
+
+          setTimeout(() => {
+            toast.classList.add('admin-toast-out');
+            setTimeout(() => toast.remove(), 250);
+          }, toastTimerMs);
+        }
+
+        const sessionSuccess = @json(session('success'));
+        const sessionError = @json(session('error'));
+        const toastTypeFlash = @json(session('toast_type'));
+
+        const errorsAny = @json($errors->any());
+        const firstError = @json($errors->first());
+
+        function resolveType(defaultType) {
+          if (!toastTypeFlash) return defaultType;
+          if (toastTypeFlash === 'warning') return 'warning';
+          if (toastTypeFlash === 'error') return 'error';
+          if (toastTypeFlash === 'success') return 'success';
+          return defaultType;
+        }
+
+        // Remove old inline alerts to avoid duplicates
+        document.querySelectorAll('.alert-box.success-alert, .alert-box.danger-alert').forEach((el) => {
+          el.remove();
+        });
+
+        if (sessionSuccess) {
+          showToast(sessionSuccess, resolveType('success'));
+        }
+        if (sessionError) {
+          showToast(sessionError, resolveType('error'));
+        }
+        if (errorsAny) {
+          showToast(firstError, 'error');
+        }
+      })();
+    </script>
+
   </body>
 </html>

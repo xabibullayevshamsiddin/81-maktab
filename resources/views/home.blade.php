@@ -57,7 +57,7 @@
   </section>
 
   <main>
-    <section class="container reveal glass-section" id="about">
+    <section class="container reveal glass-section" id="about" style="padding-bottom: 50px">
       <div class="section-head">
         <h2>81-IDUM ga xush kelibsiz</h2>
         <p>Kelajak liderlarini tayyorlaydigan zamonaviy maktab muhiti</p>
@@ -92,75 +92,49 @@
       </div>
     </section>
 
-    <section class="container news reveal glass-section" id="news">
+    <section class="container news reveal glass-section" id="news" style="margin-top: 50px">
       <div class="section-head">
         <h2>Yangiliklar</h2>
         <p>So'nggi voqealar va tadbirlar</p>
       </div>
 
       <div class="news-container">
-        <article class="news-card">
-          <img
-            src="{{ asset('temp/img/0131(1).jpg') }}"
-            alt="Matematika olimpiadasi yangiligi"
-          />
-          <h3>Matematika olimpiadasi natijalari</h3>
-          <p>
-            Tuman bosqichida o'quvchilarimiz yuqori natija ko'rsatib, keyingi
-            bosqichga yo'llanmani qo'lga kiritdi.
-          </p>
-          <div class="icon-links">
-            <div class="icon-link">
-              <span class="meta"><i class="fa-regular fa-eye"></i> 1.2k</span>
-              <span class="meta"><i class="fa-regular fa-comment"></i> 26</span>
-              <button class="like-btn" type="button" aria-label="Yoqtirish">
-                <i class="fa-regular fa-heart"></i>
-                <span class="like-count">18</span>
-              </button>
-            </div>
-            <a href="{{ route('post') }}" class="btn btn-sm">Batafsil</a>
-          </div>
-        </article>
+        @forelse($posts as $post)
+          <article class="news-card">
+            <img
+              src="{{ asset('storage/' . $post->image) }}"
+              alt="{{ $post->title }}"
+            />
 
-        <article class="news-card">
-          <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="STEAM laboratoriya ochilishi" />
-          <h3>Yangi STEAM laboratoriya</h3>
-          <p>
-            Amaliy mashg'ulotlar uchun yangi laboratoriya ishga tushirildi.
-            O'quvchilar robototexnika bo'yicha darslarni boshlashdi.
-          </p>
-          <div class="icon-links">
-            <div class="icon-link">
-              <span class="meta"><i class="fa-regular fa-eye"></i> 980</span>
-              <span class="meta"><i class="fa-regular fa-comment"></i> 14</span>
-              <button class="like-btn" type="button" aria-label="Yoqtirish">
-                <i class="fa-regular fa-heart"></i>
-                <span class="like-count">11</span>
-              </button>
-            </div>
-            <a href="{{ route('post') }}" class="btn btn-sm">Batafsil</a>
-          </div>
-        </article>
+            @if($post->category)
+              <div style="padding: 12px 16px 0;">
+                <span class="badge" style="margin-bottom: 0; background: rgba(21, 101, 192, 0.12); border: 1px solid rgba(21, 101, 192, 0.28); color: var(--primary);">
+                  {{ $post->category->name }}
+                </span>
+              </div>
+            @endif
 
-        <article class="news-card">
-          <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="Ochiq eshiklar kuni" />
-          <h3>Ochiq eshiklar kuni</h3>
-          <p>
-            Ota-onalar uchun maxsus uchrashuv tashkil etildi. Dars jarayoni,
-            to'garaklar va baholash tizimi haqida batafsil ma'lumot berildi.
-          </p>
-          <div class="icon-links">
-            <div class="icon-link">
-              <span class="meta"><i class="fa-regular fa-eye"></i> 1.6k</span>
-              <span class="meta"><i class="fa-regular fa-comment"></i> 31</span>
-              <button class="like-btn" type="button" aria-label="Yoqtirish">
-                <i class="fa-regular fa-heart"></i>
-                <span class="like-count">24</span>
-              </button>
+            <h3>{{ $post->title }}</h3>
+            <p>{{ $post->short_content }}</p>
+
+            <div class="icon-links">
+              <div class="icon-link">
+                <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
+                <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
+                <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form" style="margin-left: 4px;">
+                  @csrf
+                  <button class="like-btn" type="submit" aria-label="Yoqtirish">
+                    <i class="fa-regular fa-heart"></i>
+                    <span class="like-count">{{ $post->likes_count }}</span>
+                  </button>
+                </form>
+              </div>
+              <a href="{{ route('post.show', $post) }}" class="btn btn-sm">Batafsil</a>
             </div>
-            <a href="{{ route('post') }}" class="btn btn-sm">Batafsil</a>
-          </div>
-        </article>
+          </article>
+        @empty
+          <p>Hozircha yangiliklar yo‘q.</p>
+        @endforelse
       </div>
     </section>
 
