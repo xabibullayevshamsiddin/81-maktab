@@ -20,9 +20,113 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="{{ asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
+    <style>
+      .header-user-name {
+        color: #fff;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .nav-dropdown {
+        position: relative;
+      }
+
+      .nav-dropdown-details {
+        position: relative;
+      }
+
+      .nav-dropdown-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .nav-dropdown-toggle::-webkit-details-marker {
+        display: none;
+      }
+
+      .nav-dropdown-toggle i {
+        font-size: 12px;
+        transition: transform 0.2s ease;
+      }
+
+      .nav-dropdown-details[open] .nav-dropdown-toggle i {
+        transform: rotate(180deg);
+      }
+
+      .nav-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 12px);
+        right: 0;
+        min-width: 220px;
+        display: grid;
+        gap: 6px;
+        padding: 10px;
+        border-radius: 16px;
+        background: rgba(6, 31, 58, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 18px 34px rgba(4, 23, 47, 0.26);
+      }
+
+      .nav-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px 12px;
+        border: none;
+        border-radius: 12px;
+        background: transparent;
+        color: #fff;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .nav-dropdown-item:hover,
+      .nav-dropdown-item.active {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateY(-1px);
+      }
+
+      .nav-dropdown-form {
+        margin: 0;
+      }
+
+      @media (max-width: 980px) {
+        .nav-dropdown {
+          width: 100%;
+        }
+
+        .nav-dropdown-details {
+          width: 100%;
+        }
+
+        .nav-dropdown-toggle {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .nav-dropdown-menu {
+          position: static;
+          min-width: 100%;
+          margin-top: 10px;
+        }
+      }
+    </style>
   </head>
 
   <body>
+    @php
+      $authUser = auth()->user();
+      $showAdminToolsDropdown = $authUser && $authUser->isAdmin();
+      $canOpenCourse = $authUser && ($authUser->isTeacher() || $authUser->isAdmin());
+      $canAccessDashboard = $authUser && ($authUser->isAdmin() || $authUser->isEditor());
+      $adminToolsActive = request()->routeIs('teacher.courses.*');
+    @endphp
     <header class="page-header">
       <div class="container">
         <div class="header-main" id="navbar" style="margin-top: 20px">
@@ -49,24 +153,57 @@
               <li><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">Maktab haqida</a></li>
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">Kurslar</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">Yangiliklar</a></li>
-              <li><a class="nav-link {{ request()->routeIs('teacher') ? 'active' : '' }}" href="{{ route('teacher') }}">Ustozlar</a></li>
+              <li><a class="nav-link {{ request()->routeIs('teacher*') ? 'active' : '' }}" href="{{ route('teacher') }}">Ustozlar</a></li>
+              @if($showAdminToolsDropdown)
+                <li class="nav-dropdown">
+                  <details class="nav-dropdown-details js-header-dropdown">
+                    <summary class="nav-link nav-dropdown-toggle {{ $adminToolsActive ? 'active' : '' }}">
+                      Boshqaruv
+                      <i class="fa-solid fa-chevron-down"></i>
+                    </summary>
+
+                    <div class="nav-dropdown-menu">
+                      <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
+                        <i class="fa-solid fa-book-open"></i>
+                        Kurs ochish
+                      </a>
+
+                      <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="nav-dropdown-item">
+                          <i class="fa-solid fa-right-from-bracket"></i>
+                          Logout
+                        </button>
+                      </form>
+                    </div>
+                  </details>
+                </li>
+              @else
+                @if($canOpenCourse)
+                  <li><a class="nav-link {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">Kurs ochish</a></li>
+                @endif
+              @endif
               <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">Aloqa</a></li>
             </ul>
           </nav>
 
           <div class="login">
             @auth
-                 <p style="color: white">{{ auth()->user()->name }}</p>
+                 <p class="header-user-name">{{ $authUser->name }}</p>
             @endauth
 
 
             @auth
-                <a href="{{ route('dashboard') }}" class="btn btn-outline">dashboard</a>
+                @if($canAccessDashboard)
+                  <a href="{{ route('dashboard') }}" class="btn btn-outline">dashboard</a>
+                @endif
 
-                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
-                    @csrf
-                    <button type="submit" class="btn btn-outline">Logout</button>
-                </form>
+                @unless($showAdminToolsDropdown)
+                  <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                      @csrf
+                      <button type="submit" class="btn btn-outline">Logout</button>
+                  </form>
+                @endunless
                  @else
             <a href="{{ route('login') }}" class="btn btn-outline">Kirish</a>
             <a href="{{ route('register') }}" class="btn">Ro'yxatdan o'tish</a>
@@ -181,6 +318,25 @@
           showToast(@json($errors->first()), 'error');
         @endif
 
+        const headerDropdowns = document.querySelectorAll('.js-header-dropdown');
+        if (headerDropdowns.length) {
+          document.addEventListener('click', (event) => {
+            headerDropdowns.forEach((dropdown) => {
+              if (!dropdown.contains(event.target)) {
+                dropdown.removeAttribute('open');
+              }
+            });
+          });
+
+          document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+
+            headerDropdowns.forEach((dropdown) => {
+              dropdown.removeAttribute('open');
+            });
+          });
+        }
+
         // AJAX Like forms
         document.addEventListener('submit', async (event) => {
           const form = event.target.closest('form.js-like-form');
@@ -270,7 +426,10 @@
             const wrapper = document.createElement('div');
             wrapper.innerHTML = String(html).trim();
             const node = wrapper.firstElementChild;
-            if (node) parentEl.prepend(node);
+            if (node) {
+              node.classList.add('visible');
+              parentEl.prepend(node);
+            }
           }
 
           const action = form.action;
@@ -338,6 +497,12 @@
 
             const editUrl = updateUrlTemplate ? updateUrlTemplate.replace('__COMMENT_ID__', String(comment.id)) : null;
             const destroyUrl = destroyUrlTemplate ? destroyUrlTemplate.replace('__COMMENT_ID__', String(comment.id)) : null;
+            const roleKey = String(comment.role_key || 'guest');
+            const roleLabel = String(comment.role_label || 'Mehmon');
+            const roleBadgeIconHtml = roleKey === 'super_admin'
+              ? '<i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i>'
+              : '';
+            const roleBadgeHtml = `<span class="comment-role-badge role-${escapeHtml(roleKey)}">${roleBadgeIconHtml}${escapeHtml(roleLabel)}</span>`;
 
             const canManageActionsHtml = canManageThis && editUrl && destroyUrl
               ? `
@@ -382,7 +547,7 @@
               const parentArticle = document.querySelector(`article.comment-card[data-comment-id="${insertParentId}"]`);
               if (!parentArticle) {
                 // Fallback: rootga qo'shib qo'yamiz (kam hollarda)
-                const rootList = document.querySelector('#post-detail .comments-list');
+                const rootList = document.querySelector('#post-detail .comments-list') || document.querySelector('.comments-list');
                 if (rootList) prependHtml(rootList, buildReplyLi());
                 form.reset();
                 return;
@@ -404,8 +569,11 @@
             }
 
             // Top-level comment
-            const rootList = document.querySelector('#post-detail .comments-list');
-            if (rootList) prependHtml(rootList, buildTopLevelLi());
+            const rootList = document.querySelector('#post-detail .comments-list') || document.querySelector('.comments-list');
+            if (rootList) {
+              rootList.querySelectorAll('.comment-empty').forEach((el) => el.remove());
+              prependHtml(rootList, buildTopLevelLi());
+            }
 
             form.reset();
 
@@ -413,13 +581,14 @@
 
             function buildReplyLi() {
               return `
-                <article class="comment-card reveal comment-item-reply" data-comment-id="${escapeHtml(comment.id)}">
-                  <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
+                <article class="comment-card reveal role-${escapeHtml(roleKey)} comment-item-reply" data-comment-id="${escapeHtml(comment.id)}">
+                  <div class="comment-avatar role-${escapeHtml(roleKey)} ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
                     <i class="fa-solid fa-user"></i>
                   </div>
                   <div class="comment-body">
                     <div class="comment-meta">
                       <strong>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                      ${roleBadgeHtml}
                       <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
                     </div>
                     <p>${escapeHtml(comment.body || '')}</p>
@@ -477,13 +646,14 @@
               `;
 
               return `
-                <article class="comment-card reveal" data-comment-id="${escapeHtml(comment.id)}">
-                  <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
+                <article class="comment-card reveal role-${escapeHtml(roleKey)}" data-comment-id="${escapeHtml(comment.id)}">
+                  <div class="comment-avatar role-${escapeHtml(roleKey)} ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
                     <i class="fa-solid fa-user"></i>
                   </div>
                   <div class="comment-body">
                     <div class="comment-meta">
                       <strong>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                      ${roleBadgeHtml}
                       <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
                     </div>
                     <p>${escapeHtml(comment.body || '')}</p>
@@ -508,4 +678,3 @@
     </script>
   </body>
 </html>
-

@@ -24,144 +24,45 @@
           <p>Fan yo'nalishlari bo'yicha tajribali pedagoglar</p>
         </div>
 
-                <div class="teachers-grid">
-          <article class="teacher-card reveal">
-            <div class="teacher-photo-wrap">
-              <img src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Akmal Karimov profil rasmi" class="teacher-photo" />
-            </div>
-            <div class="teacher-top">
-              <div>
-                <h3>Akmal Karimov</h3>
-                <p class="teacher-role">Matematika fani ustozi</p>
+        <div class="teachers-grid">
+          @forelse($teachers as $teacher)
+            <article class="teacher-card reveal">
+              <div class="teacher-photo-wrap">
+                <img
+                  src="{{ $teacher->image ? asset('storage/' . $teacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                  alt="{{ $teacher->full_name }} profil rasmi"
+                  class="teacher-photo"
+                />
               </div>
-            </div>
-            <p class="teacher-desc">
-              Algebra, geometriya va olimpiada yo'nalishida chuqurlashtirilgan
-              mashg'ulotlar olib boradi.
-            </p>
-            <ul class="teacher-meta">
-              <li><i class="fa-solid fa-award"></i> 14 yil tajriba</li>
-              <li><i class="fa-solid fa-users"></i> 9-11-sinflar</li>
-            </ul>
-            <div class="teacher-actions">
-              <a href="{{ route('teacher') }}" class="btn btn-sm">Batafsil</a>
-            </div>
-          </article>
-
-          <article class="teacher-card reveal">
-            <div class="teacher-photo-wrap">
-              <img src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Dilnoza Rahimova profil rasmi" class="teacher-photo" />
-            </div>
-            <div class="teacher-top">
-              <div>
-                <h3>Dilnoza Rahimova</h3>
-                <p class="teacher-role">Ingliz tili ustozi</p>
+              <div class="teacher-top">
+                <div>
+                  <h3>{{ $teacher->full_name }}</h3>
+                  <p class="teacher-role">{{ $teacher->subject }}</p>
+                </div>
               </div>
-            </div>
-            <p class="teacher-desc">
-              IELTS tayyorlovi, speaking club va akademik yozuv bo'yicha darslar
-              tashkil etadi.
-            </p>
-            <ul class="teacher-meta">
-              <li><i class="fa-solid fa-award"></i> 10 yil tajriba</li>
-              <li><i class="fa-solid fa-users"></i> 8-11-sinflar</li>
-            </ul>
-            <div class="teacher-actions">
-              <a href="{{ route('teacher') }}" class="btn btn-sm">Batafsil</a>
-            </div>
-          </article>
-
-          <article class="teacher-card reveal">
-            <div class="teacher-photo-wrap">
-              <img src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Madina Yo'ldosheva profil rasmi" class="teacher-photo" />
-            </div>
-            <div class="teacher-top">
-              <div>
-                <h3>Madina Yo'ldosheva</h3>
-                <p class="teacher-role">Kimyo va biologiya ustozi</p>
+              <p class="teacher-desc">
+                {{ $teacher->bio ?: 'Ushbu ustoz haqida batafsil ma\'lumotni ochib ko\'rishingiz mumkin.' }}
+              </p>
+              <ul class="teacher-meta">
+                <li><i class="fa-solid fa-award"></i> {{ $teacher->experience_years }} yil tajriba</li>
+                <li><i class="fa-solid fa-users"></i> {{ $teacher->grades ?: 'Barcha sinflar' }}</li>
+              </ul>
+              <div class="teacher-actions">
+                @auth
+                  <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="display:inline;">
+                    @csrf
+                    <button class="like-btn" type="submit" aria-label="Ustozni yoqtirish">
+                      <i class="fa-regular fa-heart"></i>
+                      <span class="like-count">{{ $teacher->likes_count ?? 0 }}</span>
+                    </button>
+                  </form>
+                @endauth
+                <a href="{{ route('teacher.show', $teacher) }}" class="btn btn-sm">Batafsil</a>
               </div>
-            </div>
-            <p class="teacher-desc">
-              Laboratoriya mashg'ulotlari hamda test tahlili orqali amaliy
-              natijaga yo'naltirilgan ta'lim beradi.
-            </p>
-            <ul class="teacher-meta">
-              <li><i class="fa-solid fa-award"></i> 12 yil tajriba</li>
-              <li><i class="fa-solid fa-users"></i> 8-11-sinflar</li>
-            </ul>
-            <div class="teacher-actions">
-              <a href="{{ route('teacher') }}" class="btn btn-sm">Batafsil</a>
-            </div>
-          </article>
-
-          <article class="teacher-card reveal">
-            <div class="teacher-photo-wrap">
-              <img src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Sardor Qodirov profil rasmi" class="teacher-photo" />
-            </div>
-            <div class="teacher-top">
-              <div>
-                <h3>Sardor Qodirov</h3>
-                <p class="teacher-role">Informatika ustozi</p>
-              </div>
-            </div>
-            <p class="teacher-desc">
-              Dasturlash asoslari, algoritmik fikrlash va loyihaviy ishlar bo'yicha
-              mentorlik qiladi.
-            </p>
-            <ul class="teacher-meta">
-              <li><i class="fa-solid fa-award"></i> 8 yil tajriba</li>
-              <li><i class="fa-solid fa-users"></i> 7-11-sinflar</li>
-            </ul>
-            <div class="teacher-actions">
-              <a href="{{ route('teacher') }}" class="btn btn-sm">Batafsil</a>
-            </div>
-          </article>
-
-          <article class="teacher-card reveal">
-            <div class="teacher-photo-wrap">
-              <img src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Jahongir Sattorov profil rasmi" class="teacher-photo" />
-            </div>
-            <div class="teacher-top">
-              <div>
-                <h3>Jahongir Sattorov</h3>
-                <p class="teacher-role">Fizika ustozi</p>
-              </div>
-            </div>
-            <p class="teacher-desc">
-              Nazariya va masala yechish amaliyotini uyg'unlashtirib, fizikani
-              chuqur va tushunarli tarzda o'rgatadi.
-            </p>
-            <ul class="teacher-meta">
-              <li><i class="fa-solid fa-award"></i> 11 yil tajriba</li>
-              <li><i class="fa-solid fa-users"></i> 8-11-sinflar</li>
-            </ul>
-            <div class="teacher-actions">
-              <a href="{{ route('teacher') }}" class="btn btn-sm">Batafsil</a>
-            </div>
-          </article>
-
-          <article class="teacher-card reveal">
-            <div class="teacher-photo-wrap">
-              <img src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Nodira Islomova profil rasmi" class="teacher-photo" />
-            </div>
-            <div class="teacher-top">
-              <div>
-                <h3>Nodira Islomova</h3>
-                <p class="teacher-role">Geografiya ustozi</p>
-              </div>
-            </div>
-            <p class="teacher-desc">
-              Xarita bilan ishlash, tahliliy fikrlash va ekologik dunyoqarashni
-              rivojlantirishga yo'naltirilgan darslar olib boradi.
-            </p>
-            <ul class="teacher-meta">
-              <li><i class="fa-solid fa-award"></i> 9 yil tajriba</li>
-              <li><i class="fa-solid fa-users"></i> 6-10-sinflar</li>
-            </ul>
-            <div class="teacher-actions">
-              <a href="{{ route('teacher') }}" class="btn btn-sm">Batafsil</a>
-            </div>
-          </article>
+            </article>
+          @empty
+            <p>Hozircha ustozlar qo‘shilmagan.</p>
+          @endforelse
         </div>
       </section>
 
@@ -232,3 +133,4 @@
     </main>
 
 </x-loyouts.main>
+

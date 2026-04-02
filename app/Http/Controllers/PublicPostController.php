@@ -79,9 +79,13 @@ class PublicPostController extends Controller
         // Load top-level comments and their replies.
         $comments = $post->comments()
             ->whereNull('parent_id')
-            ->with(['replies' => function ($query) {
+            ->with([
+                'user.roleRelation',
+                'replies' => function ($query) {
+                    $query->with('user.roleRelation');
                 $query->latest();
-            }])
+                },
+            ])
             ->latest()
             ->get();
 
@@ -120,6 +124,7 @@ class PublicPostController extends Controller
 
         if ($request->wantsJson()) {
             $comment->refresh();
+            $comment->load('user.roleRelation');
 
             return response()->json([
                 'ok' => true,
@@ -132,6 +137,8 @@ class PublicPostController extends Controller
                     'created_at' => $comment->created_at?->format('d.m.Y H:i'),
                     'parent_id' => $comment->parent_id,
                     'user_id' => $comment->user_id,
+                    'role_key' => $comment->user?->role ?? 'guest',
+                    'role_label' => $comment->user?->role_label ?? 'Mehmon',
                 ],
             ]);
         }
@@ -216,7 +223,7 @@ class PublicPostController extends Controller
             return true;
         }
 
-        return $user->isAdmin() || $user->isEditor() || $user->isModerator();
+        return $user->isAdmin();
     }
 
     public function toggleLike(Request $request, Post $post)

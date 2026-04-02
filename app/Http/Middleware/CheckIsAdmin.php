@@ -14,7 +14,7 @@ class CheckIsAdmin
             return redirect()->route('login');
         }
 
-        if (! $request->user()->isEditor()) {
+        if (! $request->user()->isAdmin()) {
             abort(403, 'Sizda bu sahifaga kirish huquqi yo\'q.');
         }
 

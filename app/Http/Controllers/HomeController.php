@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\TeacherComment;
 
 class HomeController extends Controller
 {
@@ -34,8 +35,19 @@ class HomeController extends Controller
         return view('teacher');
     }
 
+     public function teacherShow(){
+        $comments = TeacherComment::query()
+            ->whereNull('parent_id')
+            ->with(['replies' => function ($query) {
+                $query->latest();
+            }])
+            ->latest()
+            ->get();
+
+        return view('teacherShow', compact('comments'));
+    }
+
      public function contact(){
         return view('contact');
     }
 }
-

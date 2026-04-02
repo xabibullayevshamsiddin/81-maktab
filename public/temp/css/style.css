@@ -352,11 +352,12 @@ section {
 
 .news-card img {
   width: 100%;
-  height: 190px;
   object-fit: cover;
   object-position: center;
   display: block; /* img tag default whitespace bo'lmasligi uchun */
   flex-shrink: 0; /* flex ichida rasm siqilib "galati" bo'lmasin */
+  aspect-ratio: 3 / 2; /* 1200x800 uchun mos (crop bo'lmasin uchun ratio saqlanadi) */
+  height: auto;
 }
 
 .news-card h3,
@@ -699,7 +700,7 @@ section.teachers.reveal::before {
   }
 
   .news-card img {
-    height: 180px;
+    height: auto;
   }
 }
 
@@ -2437,6 +2438,8 @@ a {
   display: flex;
   gap: 12px;
   box-shadow: 0 10px 26px rgba(13, 63, 120, 0.08);
+  position: relative;
+  overflow: hidden;
 }
 
 .comment-avatar {
@@ -2502,6 +2505,159 @@ a {
   font-size: 13px;
 }
 
+.comment-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  border: 1px solid transparent;
+}
+
+.comment-card.role-super_admin {
+  border-color: rgba(249, 115, 22, 0.36);
+  background:
+    linear-gradient(135deg, rgba(255, 247, 237, 0.98), rgba(255, 237, 213, 0.88)),
+    var(--surface);
+  box-shadow:
+    0 14px 34px rgba(249, 115, 22, 0.18),
+    0 0 0 1px rgba(251, 146, 60, 0.12);
+}
+
+.comment-card.role-super_admin::before {
+  content: '';
+  position: absolute;
+  inset: auto -20% -48% auto;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.28) 0%, rgba(251, 146, 60, 0) 68%);
+  animation: superAdminGlow 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.comment-card.role-super_admin::after {
+  content: 'SUPER ADMIN';
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  color: #fff7ed;
+  background: linear-gradient(135deg, #ef4444, #f97316 55%, #facc15);
+  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.24);
+  animation: superAdminFlame 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.comment-card.role-super_admin .comment-body p,
+.comment-card.role-super_admin .comment-date,
+.comment-card.role-super_admin .comment-meta span {
+  color: #7c2d12;
+}
+
+.comment-card.role-super_admin .comment-meta strong {
+  color: #9a3412;
+}
+
+.comment-avatar.role-super_admin {
+  background: linear-gradient(135deg, #ef4444, #f97316 52%, #facc15);
+  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.28);
+  animation: superAdminPulse 2.2s ease-in-out infinite;
+}
+
+.comment-role-badge.role-super_admin {
+  color: #9a3412;
+  background: linear-gradient(135deg, rgba(254, 215, 170, 0.92), rgba(254, 240, 138, 0.9));
+  border-color: rgba(249, 115, 22, 0.34);
+  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.16);
+  animation: superAdminBadge 1.9s ease-in-out infinite;
+}
+
+.comment-role-badge.role-admin {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.12);
+  border-color: rgba(185, 28, 28, 0.28);
+}
+
+.comment-role-badge.role-editor {
+  color: #1d4ed8;
+  background: rgba(29, 78, 216, 0.12);
+  border-color: rgba(29, 78, 216, 0.28);
+}
+
+.comment-role-badge.role-moderator {
+  color: #0f766e;
+  background: rgba(15, 118, 110, 0.12);
+  border-color: rgba(15, 118, 110, 0.28);
+}
+
+.comment-role-badge.role-teacher {
+  color: #b45309;
+  background: rgba(180, 83, 9, 0.14);
+  border-color: rgba(180, 83, 9, 0.28);
+}
+
+.comment-role-badge.role-user,
+.comment-role-badge.role-guest {
+  color: #475569;
+  background: rgba(71, 85, 105, 0.1);
+  border-color: rgba(71, 85, 105, 0.22);
+}
+
+@keyframes superAdminGlow {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes superAdminPulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 10px 22px rgba(249, 115, 22, 0.22);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 16px 30px rgba(239, 68, 68, 0.28);
+  }
+}
+
+@keyframes superAdminBadge {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(249, 115, 22, 0.16);
+  }
+  50% {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(239, 68, 68, 0.2);
+  }
+}
+
+@keyframes superAdminFlame {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: saturate(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.04);
+    filter: saturate(1.2);
+  }
+}
+
 .comment-action-box {
   border: none;
   margin: 0;
@@ -2509,22 +2665,23 @@ a {
 
 .comment-action-box summary {
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   list-style: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 7px 11px;
   border-radius: 12px;
-  border: 1px solid rgba(219, 232, 249, 0.95);
-  background: rgba(255, 255, 255, 0.55);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid rgba(21, 101, 192, 0.22);
+  background: rgba(21, 101, 192, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
 
 .comment-action-box summary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(13, 63, 120, 0.08);
+  color: var(--primary);
+  box-shadow: 0 8px 18px rgba(13, 63, 120, 0.12);
 }
 
 .comment-action-box summary::-webkit-details-marker {
@@ -2562,9 +2719,17 @@ a {
 }
 
 .comment-delete-btn {
-  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-  border: 1px solid rgba(220, 38, 38, 0.35) !important;
-  color: #fff !important;
+  background: rgba(220, 38, 38, 0.1) !important;
+  border: 1px solid rgba(220, 38, 38, 0.28) !important;
+  color: #b91c1c !important;
+  font-weight: 600;
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+}
+
+.comment-delete-btn:hover {
+  background: rgba(220, 38, 38, 0.16) !important;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.16);
 }
 
 .comment-like,
@@ -3494,7 +3659,7 @@ body {
 .post-grid {
   margin-top: 26px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   align-items: stretch;
   justify-items: stretch;
@@ -3502,7 +3667,7 @@ body {
 
 @media (min-width: 1050px) {
   .post-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -3515,14 +3680,15 @@ body {
 /* Post detail rasmini kattaroq qilamiz */
 .post-detail-card img {
   width: 100%;
-  height: 420px;
   object-fit: cover;
   display: block;
+  aspect-ratio: 3 / 2; /* 1200x800 nisbatiga mos */
+  height: auto;
 }
 
 @media (max-width: 980px) {
   .post-detail-card img {
-    height: 260px;
+    height: auto;
   }
 }
 

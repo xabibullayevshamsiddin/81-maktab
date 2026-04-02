@@ -18,7 +18,7 @@
       <script>
         window.__POST_COMMENTS_CONFIG__ = {
           currentUserId: @json(auth()->check() ? auth()->id() : null),
-          currentUserCanManageAll: @json(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEditor() || auth()->user()->isModerator())),
+          currentUserCanManageAll: @json(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEditor() || auth()->user()->isModerator() || auth()->user()->isTeacher())),
           updateUrlTemplate: @json(route('post.comments.update', [$post, '__COMMENT_ID__'])),
           destroyUrlTemplate: @json(route('post.comments.destroy', [$post, '__COMMENT_ID__'])),
           storeUrl: @json(route('post.comments.store', $post)),

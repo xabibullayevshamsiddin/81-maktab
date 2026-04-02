@@ -16,10 +16,10 @@
             <strong>YUQORI NATIJA</strong>
           </h1>
           <p>
-            81-ixtisoslashtirilgan umumta'lim maktabi 1963-yilda tashkil
-            etilgan. Maktabimiz matematika yo'nalishiga ixtisoslashgan bo'lib,
-            ta'lim sifati, chet tillari va zamonaviy ko'nikmalarni
-            rivojlantirishga alohida e'tibor qaratadi.
+            Toshkent shahar Uchtepa tumani, Paxtakor MFY, Ali Qushchi ko'chasi
+            3-uyda joylashgan 81-maktab 1963-yildan buyon faoliyat yuritadi.
+            Bugun maktabda o'zbek va rus tillarida 2097 nafar o'quvchi 90 nafar
+            pedagog rahbarligida ta'lim olmoqda.
           </p>
         </div>
         <div class="home-btn">
@@ -59,34 +59,35 @@
   <main>
     <section class="container reveal glass-section" id="about" style="padding-bottom: 50px">
       <div class="section-head">
-        <h2>81-IDUM ga xush kelibsiz</h2>
-        <p>Kelajak liderlarini tayyorlaydigan zamonaviy maktab muhiti</p>
+        <h2>81-maktabga xush kelibsiz</h2>
+        <p>Rasmiy ko'rsatkichlar bilan tanishing</p>
       </div>
       <div class="about-modern">
         <article class="about-card">
-          <h3>Fan va natija</h3>
+          <h3>O'quvchilar va sinflar</h3>
           <p>
-            Matematika, aniq fanlar va til yo'nalishida chuqurlashtirilgan
-            darslar orqali o'quvchilarimiz har yili yuqori natijalarga
-            erishmoqda.
+            Maktabda 2097 nafar o'quvchi 60 ta sinfda tahsil oladi. Ta'lim
+            jarayoni 2 smenada tashkil etilgan bo'lib, o'zbek va rus tillarida
+            olib boriladi.
           </p>
-          <a href="#news" class="btn btn-sm">Yangiliklarni ko'rish</a>
+          <a href="{{ route('about') }}" class="btn btn-sm">Batafsil ko'rish</a>
         </article>
         <article class="about-card">
-          <h3>Rivojlanish muhiti</h3>
+          <h3>Pedagoglar salohiyati</h3>
           <p>
-            Darsdan tashqari to'garaklar, mentorlik va zamonaviy
-            laboratoriyalar yordamida o'quvchi salohiyati bosqichma-bosqich
-            rivojlantiriladi.
+            90 nafar pedagog xodimning barchasi oliy ma'lumotli. Ularning 26
+            nafari milliy va xalqaro sertifikatlarga ega bo'lib, maktabda kuchli
+            ta'lim jamoasi shakllangan.
           </p>
-          <a href="{{ route('contact') }}" class="btn btn-sm">Bog'lanish</a>
+          <a href="{{ route('teacher') }}" class="btn btn-sm">Ustozlarni ko'rish</a>
         </article>
         <article class="about-highlight">
-          <span class="badge">81-IDUM</span>
-          <h3>Yangi avlod uchun kuchli poydevor</h3>
+          <span class="badge">81-maktab</span>
+          <h3>Barqaror infratuzilma va natija</h3>
           <p>
-            Intizom, sifatli ta'lim va raqamli ko'nikmalarni birlashtirgan
-            holda har bir o'quvchini real hayotga tayyorlaymiz.
+            16 000 m2 hudud, 960 o'rinli bino, 45 ta kompyuter, 120 o'rinli
+            oshxona va yaxshi holatdagi sport zali maktabning kundalik ta'lim
+            muhiti uchun xizmat qiladi.
           </p>
         </article>
       </div>

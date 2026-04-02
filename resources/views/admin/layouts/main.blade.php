@@ -46,6 +46,7 @@
 
 
 
+          @if(auth()->user()->isAdmin() || auth()->user()->isEditor())
           <li class="nav-item {{ request()->routeIs('posts.*') ? 'active' : '' }}">
             <a href="{{ route('posts.index') }}">
               <span class="icon">
@@ -63,7 +64,39 @@
               <span class="text">yangiliklar</span>
             </a>
           </li>
+          @endif
 
+          @if(auth()->user()->isAdmin())
+          <li class="nav-item {{ request()->routeIs('teachers.*') ? 'active' : '' }}">
+            <a href="{{ route('teachers.index') }}">
+              <span class="icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 2.5C8.61929 2.5 7.5 3.61929 7.5 5C7.5 6.38071 8.61929 7.5 10 7.5C11.3807 7.5 12.5 6.38071 12.5 5C12.5 3.61929 11.3807 2.5 10 2.5Z" />
+                  <path d="M4.16667 15.8333C4.16667 13.302 6.21869 11.25 8.75 11.25H11.25C13.7813 11.25 15.8333 13.302 15.8333 15.8333V16.25C15.8333 16.7102 15.4602 17.0833 15 17.0833H5C4.53976 17.0833 4.16667 16.7102 4.16667 16.25V15.8333Z" />
+                </svg>
+              </span>
+              <span class="text">Ustozlar</span>
+            </a>
+          </li>
+          @endif
+
+          @if(auth()->user()->isAdmin())
+          <li class="nav-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.courses.index') }}">
+              <span class="icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3.33333 4.16667C3.33333 3.70643 3.70643 3.33334 4.16667 3.33334H15.8333C16.2936 3.33334 16.6667 3.70643 16.6667 4.16667V15.8333C16.6667 16.2936 16.2936 16.6667 15.8333 16.6667H4.16667C3.70643 16.6667 3.33333 16.2936 3.33333 15.8333V4.16667Z" />
+                  <path d="M6.25 7.08334H13.75V8.33334H6.25V7.08334Z" />
+                  <path d="M6.25 10H13.75V11.25H6.25V10Z" />
+                  <path d="M6.25 12.9167H10.8333V14.1667H6.25V12.9167Z" />
+                </svg>
+              </span>
+              <span class="text">Kurslar</span>
+            </a>
+          </li>
+          @endif
+
+          @if(auth()->user()->isAdmin() || auth()->user()->isEditor())
           <li class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
             <a href="{{ route('categories.index') }}">
               <span class="icon">
@@ -75,7 +108,9 @@
               <span class="text">Kategoriyalar</span>
             </a>
           </li>
+          @endif
 
+          @if(auth()->user()->isAdmin())
           <li class="nav-item {{ request()->routeIs('notification') ? 'active' : '' }}">
             <a href="{{ route('notification') }}">
               <span class="icon">
@@ -93,7 +128,9 @@
               <span class="text">Notifications</span>
             </a>
           </li>
+          @endif
 
+          @if(auth()->user()->isAdmin())
           <li class="nav-item {{ request()->routeIs('user') ? 'active' : '' }}">
             <a href="{{ route('user') }}">
               <span class="icon">
@@ -109,6 +146,7 @@
               <span class="text">Foydalanuvchilar</span>
             </a>
           </li>
+          @endif
 
           <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
             <a href="{{ route('home') }}">

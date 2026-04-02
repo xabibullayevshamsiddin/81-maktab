@@ -80,10 +80,10 @@
                             @csrf
                             @method('PUT')
                             <input type="hidden" name="is_active" value="{{ $user->is_active ? 1 : 0 }}">
-                            <select name="role" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
-                              @foreach (\App\Models\User::ROLES as $value => $label)
-                                <option value="{{ $value }}" {{ $user->role === $value ? 'selected' : '' }}>
-                                  {{ $label }}
+                            <select name="role_id" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
+                              @foreach ($roles as $roleOption)
+                                <option value="{{ $roleOption->id }}" {{ (int) $user->role_id === (int) $roleOption->id ? 'selected' : '' }}>
+                                  {{ $roleOption->label }}
                                 </option>
                               @endforeach
                             </select>
@@ -105,7 +105,7 @@
                           <form action="{{ route('user.update', $user) }}" method="POST" class="d-inline">
                             @csrf
                             @method('PUT')
-                            <input type="hidden" name="role" value="{{ $user->role }}">
+                            <input type="hidden" name="role_id" value="{{ $user->role_id }}">
                             <select name="is_active" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
                               <option value="1" {{ $user->is_active ? 'selected' : '' }}>Active</option>
                               <option value="0" {{ !$user->is_active ? 'selected' : '' }}>Block</option>

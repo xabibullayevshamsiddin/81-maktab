@@ -2,15 +2,13 @@
   $showReplyForm = $showReplyForm ?? true;
   $authUser = auth()->user();
   $canManageComment = $authUser && (
-    ((int) ($comment->user_id ?? 0) === (int) $authUser->id
-      || $authUser->isAdmin()
-      || $authUser->isEditor()
-      || $authUser->isModerator()
-      || $authUser->isTeacher()
-    )
+    ((int) ($comment->user_id ?? 0) === (int) $authUser->id)
+    || $authUser->isAdmin()
+    || $authUser->isEditor()
+    || $authUser->isModerator()
+    || $authUser->isTeacher()
   );
 
-  // Vizual dizayn uchun avatar rangini navbat bilan farqlaymiz.
   $avatarAccent = (isset($comment->id) && ((int) $comment->id % 2) === 0);
   $roleKey = $comment->user?->role ?? 'guest';
   $roleLabel = $comment->user?->role_label ?? 'Mehmon';
@@ -39,11 +37,6 @@
     <p>{{ $comment->body }}</p>
 
     <div class="comment-actions">
-      <button type="button" class="comment-like" aria-label="Yoqtirish">
-        <i class="fa-regular fa-heart"></i>
-        <span class="like-count">{{ $comment->likes_count ?? 0 }}</span>
-      </button>
-
       @if ($showReplyForm)
         <button
           type="button"
@@ -58,7 +51,7 @@
         <div class="js-comment-reply-form-wrapper comment-reply-form-wrapper" hidden>
           <form
             class="comment-form comment-form-inline js-comment-form js-comment-reply-form"
-            action="{{ route('post.comments.store', $post) }}"
+            action="{{ route('teacher.comments.store') }}"
             method="POST"
           >
             @csrf
@@ -92,7 +85,7 @@
           <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
           <form
             class="comment-form comment-form-inline js-comment-form js-comment-edit-form"
-            action="{{ route('post.comments.update', [$post, $comment]) }}"
+            action="{{ route('teacher.comments.update', $comment) }}"
             method="POST"
             data-comment-id="{{ $comment->id }}"
           >
@@ -112,7 +105,7 @@
 
         <form
           class="js-comment-form js-comment-delete-form"
-          action="{{ route('post.comments.destroy', [$post, $comment]) }}"
+          action="{{ route('teacher.comments.destroy', $comment) }}"
           method="POST"
           data-comment-id="{{ $comment->id }}"
           onsubmit="return confirm('Izohni o\\'chirmoqchimisiz?')"
@@ -130,7 +123,7 @@
   @if ($comment->replies->isNotEmpty())
     <div class="comment-list comment-replies">
       @foreach($comment->replies as $reply)
-        @include('posts.partials.comment-item', ['comment' => $reply, 'post' => $post, 'showReplyForm' => false])
+        @include('teacher.partials.comment-item', ['comment' => $reply, 'showReplyForm' => false])
       @endforeach
     </div>
   @endif

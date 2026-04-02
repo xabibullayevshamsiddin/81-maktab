@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -21,15 +22,22 @@ class AdminController extends Controller
 
     public function user()
     {
-        $users = User::latest()->get();
+        $users = User::with('roleRelation')
+            ->latest()
+            ->get();
 
-        return view('admin.user', compact('users'));
+        $roles = Role::query()
+            ->orderByDesc('level')
+            ->orderBy('label')
+            ->get();
+
+        return view('admin.user', compact('users', 'roles'));
     }
 
     public function updateUser(Request $request, User $user)
     {
         $validated = $request->validate([
-            'role' => ['required', 'string', 'in:super_admin,admin,editor,moderator,user'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
             'is_active' => ['required', 'boolean'],
         ]);
 
@@ -43,7 +51,10 @@ class AdminController extends Controller
             return redirect()->route('user')->with('error', "O'zingizning rolni o'zgartira olmaysiz.");
         }
 
-        $user->update($validated);
+        $user->update([
+            'role_id' => $validated['role_id'],
+            'is_active' => $validated['is_active'],
+        ]);
 
         return redirect()->route('user')
             ->with('success', 'Foydalanuvchi yangilandi.')
