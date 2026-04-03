@@ -19,6 +19,18 @@ class AuthController extends Controller
     private const OTP_VERIFY_DECAY_SECONDS = 600;
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
+    /**
+     * Vaqtincha: false bo‘lsa ro‘yxatdan o‘tish email kodisiz, darhol hisob ochiladi.
+     * Email OTP ni qayta yoqish uchun true qiling.
+     */
+    private const REGISTER_EMAIL_OTP_ENABLED = false;
+
+    /**
+     * Vaqtincha: false bo‘lsa kirish email kodisiz — faqat email + parol.
+     * Kirish OTP ni qayta yoqish uchun true qiling.
+     */
+    private const LOGIN_EMAIL_OTP_ENABLED = false;
+
     public function login()
     {
         return view('login.login');
@@ -35,6 +47,21 @@ class AuthController extends Controller
                     'email' => "Email yoki parol noto'g'ri.",
                 ])
                 ->onlyInput('email');
+        }
+
+        if (! $user->isActive()) {
+            return back()
+                ->withErrors(['email' => 'Hisobingiz bloklangan. Administrator bilan bog‘laning.'])
+                ->onlyInput('email');
+        }
+
+        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('home'))
+                ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
+                ->with('toast_type', 'success');
         }
 
         if (! $this->canSendOtpNow($user->email, OneTimeCode::PURPOSE_LOGIN)) {
@@ -73,6 +100,24 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'password' => $validated['password'],
+            ]);
+            $user->email_verified_at = now();
+            $user->save();
+
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return redirect()->route('home')
+                ->with('success', 'Ro‘yxatdan o‘tish muvaffaqiyatli.')
+                ->with('toast_type', 'success');
+        }
+
         if (! $this->canSendOtpNow($validated['email'], OneTimeCode::PURPOSE_REGISTER)) {
             return back()
                 ->withErrors(['email' => "Kod yuborish limiti: {$this->otpResendCooldownSecondsLeft($validated['email'], OneTimeCode::PURPOSE_REGISTER)} soniya kuting."])
@@ -110,6 +155,10 @@ class AuthController extends Controller
 
     public function showLoginVerify(Request $request)
     {
+        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+            return redirect()->route('login');
+        }
+
         $email = (string) $request->session()->get('otp_login_email', '');
         if ($email === '') {
             return redirect()->route('login');
@@ -123,6 +172,10 @@ class AuthController extends Controller
 
     public function verifyLoginCode(Request $request)
     {
+        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+            return redirect()->route('login');
+        }
+
         $validated = $request->validate([
             'code' => ['required', 'digits:6'],
         ]);
@@ -168,6 +221,10 @@ class AuthController extends Controller
 
     public function resendLoginCode(Request $request)
     {
+        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+            return redirect()->route('login');
+        }
+
         $email = (string) $request->session()->get('otp_login_email', '');
         if ($email === '') {
             return redirect()->route('login');
@@ -203,6 +260,10 @@ class AuthController extends Controller
 
     public function showRegisterVerify(Request $request)
     {
+        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+            return redirect()->route('register');
+        }
+
         $email = (string) $request->session()->get('otp_register_email', '');
         if ($email === '') {
             return redirect()->route('register');
@@ -216,6 +277,10 @@ class AuthController extends Controller
 
     public function verifyRegisterCode(Request $request)
     {
+        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+            return redirect()->route('register');
+        }
+
         $validated = $request->validate([
             'code' => ['required', 'digits:6'],
         ]);
@@ -273,6 +338,10 @@ class AuthController extends Controller
 
     public function resendRegisterCode(Request $request)
     {
+        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+            return redirect()->route('register');
+        }
+
         $email = (string) $request->session()->get('otp_register_email', '');
         if ($email === '') {
             return redirect()->route('register');

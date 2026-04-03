@@ -140,34 +140,107 @@ class User extends Authenticatable
         return $this->hasMany(Course::class, 'created_by');
     }
 
+    public function courseEnrollments(): HasMany
+    {
+        return $this->hasMany(CourseEnrollment::class);
+    }
+
     public function roleLevel(): int
     {
+        $this->loadMissing('roleRelation');
+
         return (int) ($this->roleRelation?->level ?? self::ROLE_HIERARCHY[self::ROLE_USER]);
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        $this->loadMissing('roleRelation');
+
+        if ($this->roleRelation?->name === $roleName) {
+            return true;
+        }
+
+        $roleId = Role::idByName($roleName);
+
+        return $roleId !== null
+            && (int) $this->role_id === (int) $roleId;
     }
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === self::ROLE_SUPER_ADMIN;
+        return $this->hasRole(self::ROLE_SUPER_ADMIN);
     }
 
     public function isAdmin(): bool
     {
-        return $this->roleLevel() >= self::ROLE_HIERARCHY[self::ROLE_ADMIN];
+        return $this->isSuperAdmin() || $this->hasRole(self::ROLE_ADMIN);
     }
 
     public function isEditor(): bool
     {
-        return $this->roleLevel() >= self::ROLE_HIERARCHY[self::ROLE_EDITOR];
+        return $this->isAdmin() || $this->hasRole(self::ROLE_EDITOR);
     }
 
     public function isModerator(): bool
     {
-        return $this->roleLevel() >= self::ROLE_HIERARCHY[self::ROLE_MODERATOR];
+        return $this->isEditor() || $this->hasRole(self::ROLE_MODERATOR);
+    }
+
+    /**
+     * Faqat moderator roli (admin/editor emas) — cheklangan admin menyusi uchun.
+     */
+    public function isOnlyModerator(): bool
+    {
+        return $this->hasRole(self::ROLE_MODERATOR) && ! $this->isAdmin() && ! $this->hasRole(self::ROLE_EDITOR);
+    }
+
+    /**
+     * Faqat moderator uchun: super_admin/admin yozgan izohlarni boshqarish mumkin emas.
+     */
+    public function canModerateCommentAuthor(?User $author): bool
+    {
+        if (! $this->isOnlyModerator()) {
+            return true;
+        }
+
+        if (! $author) {
+            return true;
+        }
+
+        return ! $author->isAdmin();
+    }
+
+    /**
+     * Post yoki ustozlar sahifasidagi izohni tahrirlash/o‘chirish (controller va view bilan bir xil).
+     */
+    public function canManageCommentAsStaff(?User $commentAuthor, int|string|null $commentUserId): bool
+    {
+        if ((int) ($commentUserId ?? 0) === (int) $this->id) {
+            return true;
+        }
+
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if (! $this->isModerator()) {
+            return false;
+        }
+
+        return $this->canModerateCommentAuthor($commentAuthor);
     }
 
     public function isTeacher(): bool
     {
-        return $this->role === self::ROLE_TEACHER;
+        return $this->hasRole(self::ROLE_TEACHER);
+    }
+
+    /**
+     * Kursni ushbu foydalanuvchi yaratganmi (o‘qituvchi paneli uchun).
+     */
+    public function ownsCourse(Course $course): bool
+    {
+        return (int) $course->created_by === (int) $this->id;
     }
 
     public function isActive(): bool
@@ -180,13 +253,26 @@ class User extends Authenticatable
         return $this->roleLevel() > $user->roleLevel();
     }
 
+    public function canAssignRole(Role $role): bool
+    {
+        if ($role->name === self::ROLE_SUPER_ADMIN) {
+            return $this->isSuperAdmin();
+        }
+
+        return $this->roleLevel() > (int) $role->level;
+    }
+
     public function getRoleAttribute(): string
     {
+        $this->loadMissing('roleRelation');
+
         return $this->roleRelation?->name ?? self::ROLE_USER;
     }
 
     public function getRoleLabelAttribute(): string
     {
+        $this->loadMissing('roleRelation');
+
         if ($this->roleRelation?->label) {
             return $this->roleRelation->label;
         }

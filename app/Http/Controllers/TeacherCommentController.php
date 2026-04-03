@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TeacherComment;
+use App\Models\TeacherCommentLike;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class TeacherCommentController extends Controller
@@ -51,6 +53,7 @@ class TeacherCommentController extends Controller
                     'user_id' => $comment->user_id,
                     'role_key' => $comment->user?->role ?? 'guest',
                     'role_label' => $comment->user?->role_label ?? 'Mehmon',
+                    'likes_count' => 0,
                 ],
             ]);
         }
@@ -112,19 +115,81 @@ class TeacherCommentController extends Controller
             ->with('toast_type', 'error');
     }
 
+    public function toggleCommentLike(Request $request, TeacherComment $comment)
+    {
+        if ($response = $this->ensureCanInteract($request)) {
+            return $response;
+        }
+
+        $existing = TeacherCommentLike::query()
+            ->where('teacher_comment_id', $comment->id)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $likesCount = $comment->likes()->count();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => true,
+                    'message' => 'Like olib tashlandi.',
+                    'liked' => false,
+                    'likes_count' => $likesCount,
+                    'toast_type' => 'warning',
+                ]);
+            }
+
+            return back()
+                ->with('success', 'Like olib tashlandi.')
+                ->with('toast_type', 'warning');
+        }
+
+        try {
+            TeacherCommentLike::query()->create([
+                'teacher_comment_id' => $comment->id,
+                'user_id' => auth()->id(),
+            ]);
+        } catch (QueryException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => "Like qo'shishda xatolik. Qayta urinib ko'ring.",
+                    'toast_type' => 'warning',
+                ], 422);
+            }
+
+            return back()
+                ->with('error', "Like qo'shishda xatolik. Qayta urinib ko'ring.")
+                ->with('toast_type', 'warning');
+        }
+
+        $likesCount = $comment->likes()->count();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => "Like qo'shildi.",
+                'liked' => true,
+                'likes_count' => $likesCount,
+                'toast_type' => 'success',
+            ]);
+        }
+
+        return back()
+            ->with('success', "Like qo'shildi.")
+            ->with('toast_type', 'success');
+    }
+
     private function canManageComment(TeacherComment $comment): bool
     {
         if (! auth()->check()) {
             return false;
         }
 
-        $user = auth()->user();
+        $comment->loadMissing('user.roleRelation');
 
-        if ((int) $comment->user_id === (int) $user->id) {
-            return true;
-        }
-
-        return $user->isAdmin();
+        return auth()->user()->canManageCommentAsStaff($comment->user, $comment->user_id);
     }
 
     private function ensureCanInteract(Request $request)

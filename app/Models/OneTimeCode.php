@@ -11,6 +11,7 @@ class OneTimeCode extends Model
 
     public const PURPOSE_LOGIN = 'login';
     public const PURPOSE_REGISTER = 'register';
+    public const PURPOSE_EMAIL_CHANGE = 'email_change';
 
     protected $fillable = [
         'email',

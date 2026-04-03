@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Comment;
+use App\Models\CommentLike;
 use App\Models\Post;
+use App\Models\PostLike;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class PublicPostController extends Controller
 {
@@ -52,12 +55,15 @@ class PublicPostController extends Controller
 
         $posts = $postsQuery->paginate(10)->appends($request->query());
 
+        $likedPostIds = $this->likedPostIdsForUser($posts->pluck('id'));
+
         return view('post', [
             'posts' => $posts,
             'categories' => $categories,
             'q' => $q,
             'categoryId' => $categoryId,
             'sort' => $sort,
+            'likedPostIds' => $likedPostIds,
         ]);
     }
 
@@ -69,12 +75,7 @@ class PublicPostController extends Controller
         $post->load('category');
         $post->loadCount(['comments', 'likes']);
 
-        $liked = false;
-        if (auth()->check() && auth()->user()?->isActive()) {
-            $liked = $post->likes()
-                ->where('user_id', auth()->id())
-                ->exists();
-        }
+        $likedPostIds = $this->likedPostIdsForUser(collect([$post->id]));
 
         // Load top-level comments and their replies.
         $comments = $post->comments()
@@ -82,14 +83,16 @@ class PublicPostController extends Controller
             ->with([
                 'user.roleRelation',
                 'replies' => function ($query) {
-                    $query->with('user.roleRelation');
-                $query->latest();
+                    $query->with('user.roleRelation')->withCount('likes')->latest();
                 },
             ])
+            ->withCount('likes')
             ->latest()
             ->get();
 
-        return view('posts.show', compact('post', 'liked', 'comments'));
+        $likedCommentIds = $this->likedPostCommentIdsForUser($comments);
+
+        return view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds'));
     }
 
     public function storeComment(Request $request, Post $post)
@@ -139,6 +142,7 @@ class PublicPostController extends Controller
                     'user_id' => $comment->user_id,
                     'role_key' => $comment->user?->role ?? 'guest',
                     'role_label' => $comment->user?->role_label ?? 'Mehmon',
+                    'likes_count' => 0,
                 ],
             ]);
         }
@@ -204,6 +208,121 @@ class PublicPostController extends Controller
             ->with('toast_type', 'error');
     }
 
+    public function toggleCommentLike(Request $request, Post $post, Comment $comment)
+    {
+        $this->ensureCommentBelongsToPost($post, $comment);
+
+        if ($response = $this->ensureCanInteract($request)) {
+            return $response;
+        }
+
+        $existing = CommentLike::query()
+            ->where('comment_id', $comment->id)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $likesCount = $comment->likes()->count();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => true,
+                    'message' => 'Like olib tashlandi.',
+                    'liked' => false,
+                    'likes_count' => $likesCount,
+                    'toast_type' => 'warning',
+                ]);
+            }
+
+            return back()
+                ->with('success', 'Like olib tashlandi.')
+                ->with('toast_type', 'warning');
+        }
+
+        try {
+            CommentLike::query()->create([
+                'comment_id' => $comment->id,
+                'user_id' => auth()->id(),
+            ]);
+        } catch (QueryException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => "Like qo'shishda xatolik. Qayta urinib ko'ring.",
+                    'toast_type' => 'warning',
+                ], 422);
+            }
+
+            return back()
+                ->with('error', "Like qo'shishda xatolik. Qayta urinib ko'ring.")
+                ->with('toast_type', 'warning');
+        }
+
+        $likesCount = $comment->likes()->count();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => "Like qo'shildi.",
+                'liked' => true,
+                'likes_count' => $likesCount,
+                'toast_type' => 'success',
+            ]);
+        }
+
+        return back()
+            ->with('success', "Like qo'shildi.")
+            ->with('toast_type', 'success');
+    }
+
+    private function likedPostIdsForUser(Collection $postIds): Collection
+    {
+        if (! auth()->check() || ! auth()->user()?->isActive()) {
+            return collect();
+        }
+
+        $postIds = $postIds->filter(fn ($id) => $id !== null && $id !== '')->values();
+        if ($postIds->isEmpty()) {
+            return collect();
+        }
+
+        return PostLike::query()
+            ->where('user_id', auth()->id())
+            ->whereIn('post_id', $postIds)
+            ->pluck('post_id');
+    }
+
+    private function likedPostCommentIdsForUser(Collection $comments): Collection
+    {
+        if (! auth()->check()) {
+            return collect();
+        }
+
+        $ids = $this->flattenPostCommentIds($comments);
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return CommentLike::query()
+            ->where('user_id', auth()->id())
+            ->whereIn('comment_id', $ids)
+            ->pluck('comment_id');
+    }
+
+    private function flattenPostCommentIds(Collection $comments): Collection
+    {
+        $ids = collect();
+        foreach ($comments as $c) {
+            $ids->push($c->id);
+            if ($c->relationLoaded('replies') && $c->replies->isNotEmpty()) {
+                $ids = $ids->merge($this->flattenPostCommentIds($c->replies));
+            }
+        }
+
+        return $ids;
+    }
+
     private function ensureCommentBelongsToPost(Post $post, Comment $comment): void
     {
         if ((int) $comment->post_id !== (int) $post->id) {
@@ -217,13 +336,9 @@ class PublicPostController extends Controller
             return false;
         }
 
-        $user = auth()->user();
+        $comment->loadMissing('user.roleRelation');
 
-        if ((int) $comment->user_id === (int) $user->id) {
-            return true;
-        }
-
-        return $user->isAdmin();
+        return auth()->user()->canManageCommentAsStaff($comment->user, $comment->user_id);
     }
 
     public function toggleLike(Request $request, Post $post)

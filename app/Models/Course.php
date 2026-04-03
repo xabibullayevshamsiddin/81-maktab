@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Course extends Model
 {
@@ -21,6 +22,7 @@ class Course extends Model
         'price',
         'duration',
         'description',
+        'image',
         'start_date',
         'status',
         'publish_code',
@@ -40,6 +42,27 @@ class Course extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(CourseEnrollment::class);
+    }
+
+    /**
+     * Karta uchun rasm: avval kurs rasmi, bo‘lmasa ustoz rasmi, bo‘lmasa umumiy placeholder.
+     */
+    public function coverImageUrl(): string
+    {
+        if (! empty($this->image)) {
+            return asset('storage/'.$this->image);
+        }
+
+        if ($this->teacher?->image) {
+            return asset('storage/'.$this->teacher->image);
+        }
+
+        return asset('temp/img/how-to-be-teacher-malaysia-feature.png');
     }
 }
 

@@ -11,6 +11,18 @@
   --shadow: 0 14px 40px rgba(13, 63, 120, 0.14);
 }
 
+:root[data-theme='dark'] {
+  --bg: #07111f;
+  --surface: #0f1b2d;
+  --text: #e6eefb;
+  --muted: #9cb1cb;
+  --primary: #7db4ff;
+  --primary-2: #4d94ff;
+  --accent: #2dd4bf;
+  --border: #22334a;
+  --shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -31,6 +43,16 @@ body {
     #eef4ff 100%
   );
   line-height: 1.6;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+:root[data-theme='dark'] body {
+  background: radial-gradient(
+    circle at 20% -10%,
+    #10233f 0%,
+    var(--bg) 40%,
+    #050b14 100%
+  );
 }
 
 a {
@@ -159,7 +181,8 @@ a {
 
 .btn-outline {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border);
+  color: var(--primary-2);
 }
 
 .btn-sm {
@@ -334,10 +357,26 @@ section {
 }
 
 .news-container {
-  margin: 60px;
+  margin: 32px 0 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+}
+
+#news .news-container {
+  align-items: stretch;
+}
+
+#news .news-card {
+  min-width: 0;
+  height: 100%;
+}
+
+#news .news-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  aspect-ratio: auto;
 }
 
 .news-card {
@@ -668,10 +707,13 @@ section.teachers.reveal::before {
 
   .about-modern,
   .teacher,
-  .news-container,
   .footer-container,
   .contact {
     grid-template-columns: 1fr;
+  }
+
+  .news-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .contact-form,
@@ -697,6 +739,14 @@ section.teachers.reveal::before {
 
   .glass-section::before {
     left: 20px;
+  }
+
+  .news-container {
+    grid-template-columns: 1fr;
+  }
+
+  #news .news-card img {
+    height: 170px;
   }
 
   .news-card img {
@@ -1237,6 +1287,20 @@ section.teachers.reveal::before {
   box-shadow: 0 18px 42px rgba(13, 63, 120, 0.16);
 }
 
+.course-card-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #0d3f78 0%, #1565c0 100%);
+  overflow: hidden;
+}
+
+.course-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .course-img-wrap {
   position: relative;
   padding: 28px 20px 20px;
@@ -1305,6 +1369,10 @@ section.teachers.reveal::before {
   margin-bottom: 14px;
   line-height: 1.55;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .course-meta {
@@ -1330,6 +1398,78 @@ section.teachers.reveal::before {
 
 .course-meta li i {
   color: var(--accent);
+}
+
+.course-card-actions {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(21, 101, 192, 0.12);
+}
+
+.course-enroll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.course-enroll-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.course-enroll-note {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 52px;
+}
+
+.course-enroll-note:focus {
+  outline: 2px solid #93c5fd;
+  border-color: var(--primary-2);
+}
+
+.course-enroll-submit {
+  align-self: flex-start;
+}
+
+.course-enrolled-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #047857;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.course-enroll-guest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.course-enroll-hint {
+  width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.btn.btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
 }
 
 .course-card.hidden {
@@ -1553,7 +1693,7 @@ body.modal-open {
   margin-top: 50px;
   color: #fff;
   max-width: 700px;
-  
+
 }
 
 .news-hero-content h1 {
@@ -1576,6 +1716,27 @@ body.modal-open {
   display: flex;
   gap: 10px;
   margin-top: 14px;
+}
+
+.course-create-form {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.course-create-form .comment-input,
+.course-create-form select.form-control,
+.course-create-form input[type="file"] {
+  width: 100%;
+  flex: none;
+}
+
+.comment-form .comment-label {
+  display: block;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--muted);
 }
 
 .comment-input {
@@ -2438,8 +2599,6 @@ a {
   display: flex;
   gap: 12px;
   box-shadow: 0 10px 26px rgba(13, 63, 120, 0.08);
-  position: relative;
-  overflow: hidden;
 }
 
 .comment-avatar {
@@ -2500,6 +2659,65 @@ a {
   border-left: 3px solid rgba(21, 101, 192, 0.35);
 }
 
+/* Super Admin: alovga o‘xshash yumshoq animatsiya */
+.comment-card.comment-card--super-admin {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(251, 146, 60, 0.55);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 247, 237, 0.98) 0%,
+    var(--surface) 45%,
+    rgba(255, 251, 235, 0.92) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(251, 146, 60, 0.35),
+    0 8px 28px rgba(234, 88, 12, 0.18);
+  animation: comment-super-fire-glow 2.4s ease-in-out infinite;
+}
+
+.comment-card.comment-card--super-admin::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    transparent 40%,
+    rgba(251, 191, 36, 0.1) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: comment-super-fire-sheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+@keyframes comment-super-fire-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(251, 146, 60, 0.4),
+      0 8px 26px rgba(234, 88, 12, 0.14);
+    border-color: rgba(251, 146, 60, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(251, 191, 36, 0.5),
+      0 10px 36px rgba(239, 68, 68, 0.22);
+    border-color: rgba(239, 68, 68, 0.45);
+  }
+}
+
+@keyframes comment-super-fire-sheen {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 .comment-meta span {
   color: var(--muted);
   font-size: 13px;
@@ -2508,7 +2726,6 @@ a {
 .comment-role-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   padding: 3px 9px;
   border-radius: 999px;
   font-size: 11px;
@@ -2517,66 +2734,33 @@ a {
   border: 1px solid transparent;
 }
 
-.comment-card.role-super_admin {
-  border-color: rgba(249, 115, 22, 0.36);
-  background:
-    linear-gradient(135deg, rgba(255, 247, 237, 0.98), rgba(255, 237, 213, 0.88)),
-    var(--surface);
-  box-shadow:
-    0 14px 34px rgba(249, 115, 22, 0.18),
-    0 0 0 1px rgba(251, 146, 60, 0.12);
-}
-
-.comment-card.role-super_admin::before {
-  content: '';
-  position: absolute;
-  inset: auto -20% -48% auto;
-  width: 180px;
-  height: 180px;
-  background: radial-gradient(circle, rgba(251, 146, 60, 0.28) 0%, rgba(251, 146, 60, 0) 68%);
-  animation: superAdminGlow 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.comment-card.role-super_admin::after {
-  content: 'SUPER ADMIN';
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.9px;
-  color: #fff7ed;
-  background: linear-gradient(135deg, #ef4444, #f97316 55%, #facc15);
-  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.24);
-  animation: superAdminFlame 1.8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.comment-card.role-super_admin .comment-body p,
-.comment-card.role-super_admin .comment-date,
-.comment-card.role-super_admin .comment-meta span {
-  color: #7c2d12;
-}
-
-.comment-card.role-super_admin .comment-meta strong {
-  color: #9a3412;
-}
-
-.comment-avatar.role-super_admin {
-  background: linear-gradient(135deg, #ef4444, #f97316 52%, #facc15);
-  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.28);
-  animation: superAdminPulse 2.2s ease-in-out infinite;
-}
-
 .comment-role-badge.role-super_admin {
-  color: #9a3412;
-  background: linear-gradient(135deg, rgba(254, 215, 170, 0.92), rgba(254, 240, 138, 0.9));
-  border-color: rgba(249, 115, 22, 0.34);
-  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.16);
-  animation: superAdminBadge 1.9s ease-in-out infinite;
+  color: #fff;
+  border: none;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(
+    90deg,
+    #c2410c,
+    #ea580c,
+    #f97316,
+    #fbbf24,
+    #ef4444,
+    #ea580c,
+    #c2410c
+  );
+  background-size: 200% 100%;
+  animation: comment-super-fire-badge 2s linear infinite;
+}
+
+@keyframes comment-super-fire-badge {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .comment-role-badge.role-admin {
@@ -2608,54 +2792,6 @@ a {
   color: #475569;
   background: rgba(71, 85, 105, 0.1);
   border-color: rgba(71, 85, 105, 0.22);
-}
-
-@keyframes superAdminGlow {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.08);
-  }
-}
-
-@keyframes superAdminPulse {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-    box-shadow: 0 10px 22px rgba(249, 115, 22, 0.22);
-  }
-  50% {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 16px 30px rgba(239, 68, 68, 0.28);
-  }
-}
-
-@keyframes superAdminBadge {
-  0%,
-  100% {
-    transform: translateY(0);
-    box-shadow: 0 8px 18px rgba(249, 115, 22, 0.16);
-  }
-  50% {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(239, 68, 68, 0.2);
-  }
-}
-
-@keyframes superAdminFlame {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-    filter: saturate(1);
-  }
-  50% {
-    transform: translateY(-2px) scale(1.04);
-    filter: saturate(1.2);
-  }
 }
 
 .comment-action-box {
@@ -3819,5 +3955,517 @@ body {
   to {
     transform: translateX(18px) translateY(12px);
     opacity: 0;
+  }
+}
+
+:root[data-theme='dark'] .header-main {
+  background: rgba(7, 17, 31, 0.88);
+  border-color: rgba(125, 180, 255, 0.18);
+}
+
+:root[data-theme='dark'] .header-main.scrolled {
+  background: rgba(5, 12, 24, 0.94);
+}
+
+:root[data-theme='dark'] #site-nav {
+  background: rgba(8, 18, 32, 0.98);
+}
+
+:root[data-theme='dark'] .theme-toggle,
+:root[data-theme='dark'] .btn-outline {
+  border-color: rgba(125, 180, 255, 0.28);
+  background: rgba(125, 180, 255, 0.08);
+  color: #e6eefb;
+}
+
+:root[data-theme='dark'] .nav-dropdown-menu {
+  background: rgba(8, 18, 32, 0.98);
+  border-color: rgba(125, 180, 255, 0.18);
+}
+
+:root[data-theme='dark'] .news-card,
+:root[data-theme='dark'] .about-card,
+:root[data-theme='dark'] .about-info-card,
+:root[data-theme='dark'] .milestone-card,
+:root[data-theme='dark'] .contact-card,
+:root[data-theme='dark'] .contact-form-wrap,
+:root[data-theme='dark'] .course-card,
+:root[data-theme='dark'] .detail-content,
+:root[data-theme='dark'] .stat-card,
+:root[data-theme='dark'] .comment-card,
+:root[data-theme='dark'] .comment-form-box,
+:root[data-theme='dark'] .teachers-stat-item,
+:root[data-theme='dark'] .profile-activity-block,
+:root[data-theme='dark'] .signin-card,
+:root[data-theme='dark'] .register-card,
+:root[data-theme='dark'] .glass-section {
+  box-shadow: var(--shadow);
+}
+
+:root[data-theme='dark'] .fact-list li,
+:root[data-theme='dark'] .teacher-meta li,
+:root[data-theme='dark'] .course-meta li,
+:root[data-theme='dark'] .filter-btn,
+:root[data-theme='dark'] .mobile-courses-toggle,
+:root[data-theme='dark'] .form-control,
+:root[data-theme='dark'] .comment-modal-list li,
+:root[data-theme='dark'] .profile-pending-email {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .comment-panel,
+:root[data-theme='dark'] .comment-modal-dialog,
+:root[data-theme='dark'] .course-details-dialog,
+:root[data-theme='dark'] .course-details-close {
+  background: #0f1b2d;
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .post-detail-card .badge,
+:root[data-theme='dark'] .post-card .badge,
+:root[data-theme='dark'] .profile-role-badge {
+  background: rgba(77, 148, 255, 0.14);
+  border-color: rgba(77, 148, 255, 0.3);
+  color: #9cc4ff;
+}
+
+:root[data-theme='dark'] .profile-tag {
+  background: rgba(45, 212, 191, 0.14);
+  color: #7ce8db;
+}
+
+:root[data-theme='dark'] .profile-course-status--published {
+  color: #6ee7b7;
+}
+
+:root[data-theme='dark'] .profile-course-status--pending_verification {
+  color: #fcd34d;
+}
+
+:root[data-theme='dark'] .profile-course-status--draft {
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] textarea,
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] .comment-input,
+:root[data-theme='dark'] .signin-form input,
+:root[data-theme='dark'] .register-form input,
+:root[data-theme='dark'] .contact-form input,
+:root[data-theme='dark'] .contact-form textarea,
+:root[data-theme='dark'] .comment-form input,
+:root[data-theme='dark'] .comment-form textarea {
+  background: #0b1524;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+:root[data-theme='dark'] .profile-activity-link,
+:root[data-theme='dark'] .teacher-top h3,
+:root[data-theme='dark'] .course-body h3,
+:root[data-theme='dark'] .cta-content h2,
+:root[data-theme='dark'] .about-cta-box h2,
+:root[data-theme='dark'] .contact-form-wrap h2,
+:root[data-theme='dark'] .detail-content h2,
+:root[data-theme='dark'] .profile-card h2,
+:root[data-theme='dark'] .signin-card h2,
+:root[data-theme='dark'] .register-card h2,
+:root[data-theme='dark'] .about-info-card h3,
+:root[data-theme='dark'] .milestone-card h3,
+:root[data-theme='dark'] .contact-card-text h3,
+:root[data-theme='dark'] .comment-panel h3,
+:root[data-theme='dark'] .comment-form-box h3,
+:root[data-theme='dark'] .teachers-cta h2,
+:root[data-theme='dark'] .section-head h2,
+:root[data-theme='dark'] .teacher h2 {
+  color: #9cc4ff;
+}
+
+:root[data-theme='dark'] .about-highlight,
+:root[data-theme='dark'] .teachers,
+:root[data-theme='dark'] .teaching-approach,
+:root[data-theme='dark'] .about-stats-section,
+:root[data-theme='dark'] .courses-stats-section,
+:root[data-theme='dark'] .news-hero,
+:root[data-theme='dark'] .teachers-hero,
+:root[data-theme='dark'] .courses-hero,
+:root[data-theme='dark'] .about-hero,
+:root[data-theme='dark'] .contact-hero,
+:root[data-theme='dark'] .sow-hero,
+:root[data-theme='dark'] .signin-hero,
+:root[data-theme='dark'] .register-hero {
+  background: linear-gradient(145deg, #08111f 0%, #10233f 55%, #17365d 100%);
+}
+
+:root[data-theme='dark'] .glass-section {
+  border-color: rgba(125, 180, 255, 0.14);
+  background: linear-gradient(
+      135deg,
+      rgba(15, 27, 45, 0.96),
+      rgba(9, 19, 33, 0.92)
+    ),
+    radial-gradient(circle at 10% 8%, rgba(45, 212, 191, 0.08), transparent 45%);
+}
+
+:root[data-theme='dark'] .about-highlight h3,
+:root[data-theme='dark'] .about-highlight p,
+:root[data-theme='dark'] .about-stat-item,
+:root[data-theme='dark'] .stat-item,
+:root[data-theme='dark'] .teacher h2,
+:root[data-theme='dark'] .teacher p,
+:root[data-theme='dark'] .approach-card h3,
+:root[data-theme='dark'] .approach-card p,
+:root[data-theme='dark'] .approach-card li,
+:root[data-theme='dark'] .approach-caption h3,
+:root[data-theme='dark'] .approach-caption p,
+:root[data-theme='dark'] .image-caption h3,
+:root[data-theme='dark'] .image-caption p {
+  color: #e6eefb;
+}
+
+:root[data-theme='dark'] .section-head p,
+:root[data-theme='dark'] .about-card p,
+:root[data-theme='dark'] .about-info-card p,
+:root[data-theme='dark'] .milestone-card p,
+:root[data-theme='dark'] .contact-card-text p,
+:root[data-theme='dark'] .contact-card-text a,
+:root[data-theme='dark'] .teacher-role,
+:root[data-theme='dark'] .teacher-desc,
+:root[data-theme='dark'] .news-card p,
+:root[data-theme='dark'] .news-page-info,
+:root[data-theme='dark'] .comment-date,
+:root[data-theme='dark'] .comment-body,
+:root[data-theme='dark'] .comment-body p,
+:root[data-theme='dark'] .detail-content p,
+:root[data-theme='dark'] .detail-list li,
+:root[data-theme='dark'] .stat-label,
+:root[data-theme='dark'] .teachers-cta p,
+:root[data-theme='dark'] .cta-content p,
+:root[data-theme='dark'] .about-cta-box p {
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .comment-modal-list li,
+:root[data-theme='dark'] .comment-list li.comment-item:not(.comment-card),
+:root[data-theme='dark'] .teacher-photo-wrap,
+:root[data-theme='dark'] .approach-image-card,
+:root[data-theme='dark'] .detail-image-card {
+  border-color: var(--border);
+}
+
+:root[data-theme='dark'] .comment-list li.comment-item:not(.comment-card) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme='dark'] .comment-role-badge.role-user,
+:root[data-theme='dark'] .comment-role-badge.role-guest {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+:root[data-theme='dark'] .comment-action-box summary,
+:root[data-theme='dark'] .comment-delete-btn,
+:root[data-theme='dark'] .comment-like,
+:root[data-theme='dark'] .comment-reply,
+:root[data-theme='dark'] .icon-link,
+:root[data-theme='dark'] .comment-trigger {
+  color: var(--muted) !important;
+}
+
+:root[data-theme='dark'] .comment-action-box summary {
+  background: rgba(77, 148, 255, 0.12);
+  border-color: rgba(77, 148, 255, 0.22);
+}
+
+:root[data-theme='dark'] .badge,
+:root[data-theme='dark'] .milestone-year,
+:root[data-theme='dark'] .course-tag {
+  color: #e6eefb;
+}
+
+:root[data-theme='dark'] .footer,
+:root[data-theme='dark'] .footer-bottom {
+  background: #050b14;
+}
+
+/* Profil sahifasi */
+.profile-hero {
+  padding-bottom: 8px;
+}
+
+.profile-main {
+  padding: 28px 0 56px;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  gap: 28px 40px;
+  align-items: start;
+}
+
+.profile-column-settings {
+  position: sticky;
+  top: 88px;
+}
+
+.profile-column-activity {
+  min-width: 0;
+}
+
+/* Profil: chap kartochkalar to‘liq ustun bo‘yicha (signin-card max-width ni bekor qilish) */
+.profile-main .profile-column-settings .signin-card.profile-card {
+  max-width: none;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.profile-main .profile-column-settings .signin-card h2,
+.profile-main .profile-column-settings .signin-card .signin-subtitle {
+  text-align: left;
+}
+
+.profile-activity-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 12px 40px rgba(13, 63, 120, 0.08);
+}
+
+.profile-activity-block:last-child {
+  margin-bottom: 0;
+}
+
+.profile-activity-block h3 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-activity-block h3 i {
+  opacity: 0.88;
+}
+
+.profile-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.profile-activity-list li {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.profile-activity-list li:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.profile-activity-list.profile-activity-list-compact li {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.profile-activity-list.profile-activity-list-compact li:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.profile-email-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.profile-muted {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.profile-meta-line {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 18px;
+  font-size: 14px;
+}
+
+.profile-role-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: rgba(125, 180, 255, 0.1);
+  color: var(--primary);
+}
+
+.profile-activity-body {
+  margin: 0 0 8px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.profile-activity-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--primary-2);
+}
+
+.profile-activity-link:hover {
+  text-decoration: underline;
+}
+
+.profile-activity-date {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.profile-activity-title {
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.profile-tag {
+  display: inline-block;
+  margin-top: 4px;
+  margin-right: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(45, 212, 191, 0.14);
+  color: #0f766e;
+}
+
+.profile-empty {
+  color: var(--muted);
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.profile-pending-email {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(125, 180, 255, 0.06);
+  font-size: 14px;
+}
+
+.profile-pending-enrollment-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-pending-enrollment-item {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.profile-pending-enrollment-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.profile-pending-enrollment-list {
+  margin-bottom: 14px !important;
+}
+
+.profile-inline-form {
+  display: inline-block;
+}
+
+.profile-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+:root[data-theme='dark'] .profile-main .signin-card.profile-card,
+:root[data-theme='dark'] .profile-main .profile-activity-block {
+  background: linear-gradient(180deg, rgba(15, 27, 45, 0.98), rgba(10, 19, 33, 0.98));
+  border-color: rgba(125, 180, 255, 0.14);
+}
+
+:root[data-theme='dark'] .profile-activity-list li {
+  border-bottom-color: rgba(125, 180, 255, 0.12);
+}
+
+:root[data-theme='dark'] .profile-pending-enrollment-item {
+  border-bottom-color: rgba(125, 180, 255, 0.12);
+}
+
+:root[data-theme='dark'] .profile-pending-email strong,
+:root[data-theme='dark'] .profile-activity-title,
+:root[data-theme='dark'] .profile-main label {
+  color: var(--text);
+}
+
+.profile-course-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
+
+.profile-course-status--published {
+  background: rgba(16, 185, 129, 0.18);
+  color: #047857;
+}
+
+.profile-course-status--pending_verification {
+  background: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+}
+
+.profile-course-status--draft {
+  background: rgba(107, 114, 128, 0.2);
+  color: #374151;
+}
+
+.profile-enroll-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 980px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-column-settings {
+    position: static;
   }
 }

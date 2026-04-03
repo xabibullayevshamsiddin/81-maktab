@@ -1,4 +1,4 @@
-﻿
+
 // ===== Source: script.js =====
 (() => {
 const navbar = document.getElementById('navbar');
@@ -904,7 +904,6 @@ const navLinks = document.querySelectorAll('.nav-link');
 const scrollTopBtn = document.getElementById('scroll-top');
 const reveals = document.querySelectorAll('.reveal');
 const commentForm = document.getElementById('comment-form');
-const commentLikes = document.querySelectorAll('.comment-like');
 const yearEl = document.getElementById('year');
 
 if (yearEl) {
@@ -982,21 +981,6 @@ if (commentForm) {
     }, 3500);
   });
 }
-
-commentLikes.forEach((button) => {
-  button.addEventListener('click', () => {
-    const icon = button.querySelector('i');
-    const countEl = button.querySelector('.like-count');
-    if (!icon || !countEl) return;
-
-    const count = Number.parseInt(countEl.textContent || '0', 10);
-    const liked = button.classList.toggle('liked');
-
-    countEl.textContent = String(liked ? count + 1 : Math.max(0, count - 1));
-    icon.classList.toggle('fa-regular', !liked);
-    icon.classList.toggle('fa-solid', liked);
-  });
-});
 
 })();
 

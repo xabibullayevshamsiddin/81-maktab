@@ -3,14 +3,20 @@
     <div class="container">
       <div class="news-hero-content reveal">
         <h1>Kurs ochish</h1>
-        <p>Ustoz/Admin kurs ma'lumotlarini kiriting, email kod bilan tasdiqlang.</p>
+        <p>
+          @if(config('courses.require_email_verification'))
+            Ustoz/Admin kurs ma'lumotlarini kiriting, email kod bilan tasdiqlang.
+          @else
+            Ustoz/Admin kurs ma'lumotlarini kiriting; kurs yaratilgach darhol saytda chiqadi.
+          @endif
+        </p>
       </div>
     </div>
   </section>
 
   <main class="news">
     <section class="container news reveal glass-section">
-      <form action="{{ route('teacher.courses.store') }}" method="POST" class="comment-form" style="max-width: 720px;">
+      <form action="{{ route('teacher.courses.store') }}" method="POST" enctype="multipart/form-data" class="comment-form course-create-form" style="max-width: 720px;">
         @csrf
 
         <select name="teacher_id" class="form-control" required>
@@ -28,8 +34,18 @@
         <input type="date" name="start_date" class="comment-input" value="{{ old('start_date') }}" required>
         <textarea name="description" rows="5" class="comment-input" placeholder="Kurs tavsifi" required>{{ old('description') }}</textarea>
 
+        <label for="course-image" class="comment-label">Kurs rasmi (ixtiyoriy, JPG/PNG/WebP, max 4 MB)</label>
+        <input type="file" id="course-image" name="image" class="comment-input" accept="image/jpeg,image/png,image/webp">
+        @error('image')
+          <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
+        @enderror
+
         <button class="btn" type="submit">
-          <i class="fa-solid fa-paper-plane"></i> Email kod yuborish
+          @if(config('courses.require_email_verification'))
+            <i class="fa-solid fa-paper-plane"></i> Email kod yuborish
+          @else
+            <i class="fa-solid fa-check"></i> Kursni joylash
+          @endif
         </button>
       </form>
     </section>

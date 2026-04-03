@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\PostLike;
+use App\Models\Teacher;
 use App\Models\TeacherComment;
 
 class HomeController extends Controller
@@ -16,7 +18,23 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        return view('home', compact('posts'));
+        $likedPostIds = collect();
+        if (auth()->check() && auth()->user()->isActive()) {
+            $ids = $posts->pluck('id');
+            if ($ids->isNotEmpty()) {
+                $likedPostIds = PostLike::query()
+                    ->where('user_id', auth()->id())
+                    ->whereIn('post_id', $ids)
+                    ->pluck('post_id');
+            }
+        }
+
+        $featuredTeacher = Teacher::query()
+            ->where('is_active', true)
+            ->inRandomOrder()
+            ->first();
+
+        return view('home', compact('posts', 'likedPostIds', 'featuredTeacher'));
     }
 
      public function about(){

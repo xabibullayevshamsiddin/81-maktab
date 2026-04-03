@@ -81,7 +81,7 @@
                             @method('PUT')
                             <input type="hidden" name="is_active" value="{{ $user->is_active ? 1 : 0 }}">
                             <select name="role_id" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
-                              @foreach ($roles as $roleOption)
+                              @foreach ($assignableRoles as $roleOption)
                                 <option value="{{ $roleOption->id }}" {{ (int) $user->role_id === (int) $roleOption->id ? 'selected' : '' }}>
                                   {{ $roleOption->label }}
                                 </option>

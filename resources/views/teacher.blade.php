@@ -48,11 +48,12 @@
                 <li><i class="fa-solid fa-users"></i> {{ $teacher->grades ?: 'Barcha sinflar' }}</li>
               </ul>
               <div class="teacher-actions">
+                @php $likedTeacherIds = $likedTeacherIds ?? collect(); @endphp
                 @auth
                   <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="display:inline;">
                     @csrf
-                    <button class="like-btn" type="submit" aria-label="Ustozni yoqtirish">
-                      <i class="fa-regular fa-heart"></i>
+                    <button class="like-btn {{ $likedTeacherIds->contains($teacher->id) ? 'liked' : '' }}" type="submit" aria-label="Ustozni yoqtirish">
+                      <i class="{{ $likedTeacherIds->contains($teacher->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                       <span class="like-count">{{ $teacher->likes_count ?? 0 }}</span>
                     </button>
                   </form>

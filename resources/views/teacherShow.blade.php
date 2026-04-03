@@ -56,13 +56,23 @@
       </div>
     </section>
 
+    @php
+      $teacherCommentLikeUrlTemplate = str_replace(
+          '/0/like',
+          '/__COMMENT_ID__/like',
+          route('teacher.comments.like', ['comment' => 0])
+      );
+    @endphp
     <section class="container comments-section" id="post-detail">
       <script>
         window.__POST_COMMENTS_CONFIG__ = {
           currentUserId: @json(auth()->check() ? auth()->id() : null),
-          currentUserCanManageAll: @json(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEditor() || auth()->user()->isModerator() || auth()->user()->isTeacher())),
+          currentUserIsAdmin: @json(auth()->check() && auth()->user()->isAdmin()),
+          currentUserIsModerator: @json(auth()->check() && auth()->user()->isModerator()),
+          currentUserIsOnlyModerator: @json(auth()->check() && auth()->user()->isOnlyModerator()),
           updateUrlTemplate: @json(route('teacher.comments.update', '__COMMENT_ID__')),
           destroyUrlTemplate: @json(route('teacher.comments.destroy', '__COMMENT_ID__')),
+          commentLikeUrlTemplate: @json($teacherCommentLikeUrlTemplate),
           storeUrl: @json(route('teacher.comments.store')),
           csrfToken: @json(csrf_token()),
         };
@@ -97,7 +107,7 @@
             <p class="comment-empty">Hozircha izohlar yo'q.</p>
           @else
             @foreach($comments as $comment)
-              @include('teacher.partials.comment-item', ['comment' => $comment, 'showReplyForm' => true])
+              @include('teacher.partials.comment-item', ['comment' => $comment, 'showReplyForm' => true, 'likedCommentIds' => $likedCommentIds])
             @endforeach
           @endif
         </div>

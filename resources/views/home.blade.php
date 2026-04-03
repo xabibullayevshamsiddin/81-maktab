@@ -94,12 +94,19 @@
     </section>
 
     <section class="container news reveal glass-section" id="news" style="margin-top: 50px">
-      <div class="section-head">
-        <h2>Yangiliklar</h2>
-        <p>So'nggi voqealar va tadbirlar</p>
+      <div
+        class="section-head"
+        style="display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap;"
+      >
+        <div>
+          <h2>Yangiliklar</h2>
+          <p>So'nggi voqealar va tadbirlar</p>
+        </div>
+        <a href="{{ route('post') }}" class="btn btn-sm">Barcha yangiliklar</a>
       </div>
 
       <div class="news-container">
+        @php $likedPostIds = $likedPostIds ?? collect(); @endphp
         @forelse($posts as $post)
           <article class="news-card">
             <img
@@ -124,8 +131,8 @@
                 <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
                 <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form" style="margin-left: 4px;">
                   @csrf
-                  <button class="like-btn" type="submit" aria-label="Yoqtirish">
-                    <i class="fa-regular fa-heart"></i>
+                  <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="Yoqtirish">
+                    <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                     <span class="like-count">{{ $post->likes_count }}</span>
                   </button>
                 </form>
@@ -151,19 +158,39 @@
           <a href="{{ route('teacher') }}" class="btn">Batafsil</a>
         </div>
 
-        <article class="teacher-img">
-          <img
-            src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-            alt="Ustozlar jamoasi"
-          />
-          <h3>Kasbiy yondashuv va zamonaviy metodika</h3>
-          <p>
-            Har bir darsda interaktiv usullar qo'llanadi. Bu yondashuv
-            o'quvchilarni fanlarga qiziqtiradi va mustahkam natijaga olib
-            keladi.
-          </p>
-          <a href="{{ route('teacher') }}" class="btn1">Batafsil</a>
-        </article>
+        @if(isset($featuredTeacher) && $featuredTeacher)
+          <article class="teacher-img">
+            <img
+              src="{{ $featuredTeacher->image ? asset('storage/' . $featuredTeacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              alt="{{ $featuredTeacher->full_name }} profil rasmi"
+            />
+            <h3>{{ $featuredTeacher->full_name }}</h3>
+            <p>
+              {{ $featuredTeacher->bio ?: ($featuredTeacher->subject . ' fani bo‘yicha tajribali ustoz.') }}
+            </p>
+            <p class="profile-muted" style="margin-top:8px;">
+              {{ $featuredTeacher->subject }}
+              @if($featuredTeacher->experience_years)
+                · {{ $featuredTeacher->experience_years }} yil tajriba
+              @endif
+            </p>
+            <a href="{{ route('teacher.show', $featuredTeacher) }}" class="btn1">Ustoz haqida</a>
+          </article>
+        @else
+          <article class="teacher-img">
+            <img
+              src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              alt="Ustozlar jamoasi"
+            />
+            <h3>Kasbiy yondashuv va zamonaviy metodika</h3>
+            <p>
+              Har bir darsda interaktiv usullar qo'llanadi. Bu yondashuv
+              o'quvchilarni fanlarga qiziqtiradi va mustahkam natijaga olib
+              keladi.
+            </p>
+            <a href="{{ route('teacher') }}" class="btn1">Batafsil</a>
+          </article>
+        @endif
       </div>
     </section>
   </main>

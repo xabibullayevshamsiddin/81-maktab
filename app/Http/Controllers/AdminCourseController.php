@@ -9,19 +9,27 @@ class AdminCourseController extends Controller
 {
     public function index()
     {
-        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
+        $user = auth()->user();
+        abort_unless($user && ($user->isAdmin() || $user->isTeacher()), 403);
 
-        $courses = Course::query()
+        $query = Course::query()
             ->with(['teacher', 'creator'])
-            ->latest()
-            ->get();
+            ->withCount('enrollments')
+            ->latest();
+
+        if (! $user->isAdmin()) {
+            $query->where('created_by', $user->id);
+        }
+
+        $courses = $query->get();
 
         return view('admin.courses.index', compact('courses'));
     }
 
     public function updateStatus(Request $request, Course $course)
     {
-        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
+        $user = auth()->user();
+        abort_unless($user && ($user->isAdmin() || ($user->isTeacher() && $user->ownsCourse($course))), 403);
 
         $validated = $request->validate([
             'status' => ['required', 'in:draft,pending_verification,published'],

@@ -1,14 +1,9 @@
 @php
   $showReplyForm = $showReplyForm ?? true;
+  $likedCommentIds = $likedCommentIds ?? collect();
+  $commentIsLiked = auth()->check() && $likedCommentIds->contains($comment->id);
   $authUser = auth()->user();
-  $canManageComment = $authUser && (
-    ((int) ($comment->user_id ?? 0) === (int) $authUser->id
-      || $authUser->isAdmin()
-      || $authUser->isEditor()
-      || $authUser->isModerator()
-      || $authUser->isTeacher()
-    )
-  );
+  $canManageComment = $authUser && $authUser->canManageCommentAsStaff($comment->user, $comment->user_id);
 
   // Vizual dizayn uchun avatar rangini navbat bilan farqlaymiz.
   $avatarAccent = (isset($comment->id) && ((int) $comment->id % 2) === 0);
@@ -16,20 +11,15 @@
   $roleLabel = $comment->user?->role_label ?? 'Mehmon';
 @endphp
 
-<article class="comment-card reveal role-{{ $roleKey }} {{ $showReplyForm ? '' : 'comment-item-reply' }}" data-comment-id="{{ $comment->id }}">
-  <div class="comment-avatar role-{{ $roleKey }} {{ $avatarAccent ? 'accent' : '' }}">
+<article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleKey === 'super_admin' ? 'comment-card--super-admin' : '' }}" data-comment-id="{{ $comment->id }}">
+  <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }}">
     <i class="fa-solid fa-user"></i>
   </div>
 
   <div class="comment-body">
     <div class="comment-meta">
       <strong>{{ $comment->author_name ?? 'Mehmon' }}</strong>
-      <span class="comment-role-badge role-{{ $roleKey }}">
-        @if ($roleKey === 'super_admin')
-          <i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i>
-        @endif
-        {{ $roleLabel }}
-      </span>
+      <span class="comment-role-badge role-{{ $roleKey }}">{{ $roleLabel }}</span>
       <span class="comment-date">
         <i class="fa-regular fa-clock"></i>
         {{ $comment->created_at ? $comment->created_at->diffForHumans() : '' }}
@@ -39,10 +29,13 @@
     <p>{{ $comment->body }}</p>
 
     <div class="comment-actions">
-      <button type="button" class="comment-like" aria-label="Yoqtirish">
-        <i class="fa-regular fa-heart"></i>
-        <span class="like-count">{{ $comment->likes_count ?? 0 }}</span>
-      </button>
+      <form action="{{ route('post.comments.like', [$post, $comment]) }}" method="POST" class="js-like-form" style="display:inline;">
+        @csrf
+        <button type="submit" class="like-btn comment-like {{ $commentIsLiked ? 'liked' : '' }}" aria-label="Yoqtirish">
+          <i class="{{ $commentIsLiked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+          <span class="like-count">{{ $comment->likes_count ?? 0 }}</span>
+        </button>
+      </form>
 
       @if ($showReplyForm)
         <button
@@ -130,7 +123,7 @@
   @if ($comment->replies->isNotEmpty())
     <div class="comment-list comment-replies">
       @foreach($comment->replies as $reply)
-        @include('posts.partials.comment-item', ['comment' => $reply, 'post' => $post, 'showReplyForm' => false])
+        @include('posts.partials.comment-item', ['comment' => $reply, 'post' => $post, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])
       @endforeach
     </div>
   @endif

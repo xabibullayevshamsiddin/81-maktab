@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Teacher;
 use App\Models\TeacherComment;
+use App\Models\TeacherCommentLike;
+use App\Models\TeacherLike;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 
 class PublicTeacherController extends Controller
 {
@@ -18,7 +21,18 @@ class PublicTeacherController extends Controller
             ->orderBy('full_name')
             ->get();
 
-        return view('teacher', compact('teachers'));
+        $likedTeacherIds = collect();
+        if (auth()->check()) {
+            $ids = $teachers->pluck('id');
+            if ($ids->isNotEmpty()) {
+                $likedTeacherIds = TeacherLike::query()
+                    ->where('user_id', auth()->id())
+                    ->whereIn('teacher_id', $ids)
+                    ->pluck('teacher_id');
+            }
+        }
+
+        return view('teacher', compact('teachers', 'likedTeacherIds'));
     }
 
     public function show(Teacher $teacher)
@@ -38,13 +52,16 @@ class PublicTeacherController extends Controller
             ->with([
                 'user.roleRelation',
                 'replies' => function ($query) {
-                    $query->with('user.roleRelation')->latest();
+                    $query->with('user.roleRelation')->withCount('likes')->latest();
                 },
             ])
+            ->withCount('likes')
             ->latest()
             ->get();
 
-        return view('teacherShow', compact('teacher', 'comments', 'liked'));
+        $likedCommentIds = $this->likedTeacherCommentIdsForUser($comments);
+
+        return view('teacherShow', compact('teacher', 'comments', 'liked', 'likedCommentIds'));
     }
 
     public function toggleLike(Request $request, Teacher $teacher)
@@ -98,6 +115,36 @@ class PublicTeacherController extends Controller
         return back()
             ->with('success', "Like qo'shildi.")
             ->with('toast_type', 'success');
+    }
+
+    private function likedTeacherCommentIdsForUser(Collection $comments): Collection
+    {
+        if (! auth()->check()) {
+            return collect();
+        }
+
+        $ids = $this->flattenTeacherCommentIds($comments);
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return TeacherCommentLike::query()
+            ->where('user_id', auth()->id())
+            ->whereIn('teacher_comment_id', $ids)
+            ->pluck('teacher_comment_id');
+    }
+
+    private function flattenTeacherCommentIds(Collection $comments): Collection
+    {
+        $ids = collect();
+        foreach ($comments as $c) {
+            $ids->push($c->id);
+            if ($c->relationLoaded('replies') && $c->replies->isNotEmpty()) {
+                $ids = $ids->merge($this->flattenTeacherCommentIds($c->replies));
+            }
+        }
+
+        return $ids;
     }
 }
 

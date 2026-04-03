@@ -51,7 +51,7 @@
                 type="password"
                 id="reg-password"
                 name="password"
-                placeholder="Kamida 6 ta belgi"
+                placeholder="Kamida 8 ta belgi"
                 required
                 autocomplete="new-password"
                 minlength="6"

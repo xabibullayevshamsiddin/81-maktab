@@ -20,11 +20,67 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="{{ asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
+    <script>
+      (() => {
+        const storageKey = 'site-theme';
+        const savedTheme = localStorage.getItem(storageKey);
+        const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme === 'dark' || savedTheme === 'light'
+          ? savedTheme
+          : (systemPrefersDark ? 'dark' : 'light');
+
+        document.documentElement.setAttribute('data-theme', theme);
+        document.addEventListener('DOMContentLoaded', () => {
+          document.body.setAttribute('data-theme', theme);
+        });
+      })();
+    </script>
     <style>
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .theme-toggle:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .theme-toggle .theme-toggle-dark-icon {
+        display: none;
+      }
+
+      [data-theme='dark'] .theme-toggle .theme-toggle-light-icon {
+        display: none;
+      }
+
+      [data-theme='dark'] .theme-toggle .theme-toggle-dark-icon {
+        display: inline-block;
+      }
+
+      .mobile-theme-toggle-wrap {
+        display: none;
+      }
+
       .header-user-name {
         color: #fff;
         font-weight: 600;
         white-space: nowrap;
+      }
+
+      .login {
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
 
       .nav-dropdown {
@@ -97,6 +153,10 @@
       }
 
       @media (max-width: 980px) {
+        .mobile-theme-toggle-wrap {
+          display: block;
+        }
+
         .nav-dropdown {
           width: 100%;
         }
@@ -119,12 +179,12 @@
     </style>
   </head>
 
-  <body>
+  <body data-theme="light">
     @php
       $authUser = auth()->user();
       $showAdminToolsDropdown = $authUser && $authUser->isAdmin();
       $canOpenCourse = $authUser && ($authUser->isTeacher() || $authUser->isAdmin());
-      $canAccessDashboard = $authUser && ($authUser->isAdmin() || $authUser->isEditor());
+      $canAccessDashboard = $authUser && $authUser->isModerator();
       $adminToolsActive = request()->routeIs('teacher.courses.*');
     @endphp
     <header class="page-header">
@@ -154,6 +214,12 @@
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">Kurslar</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">Yangiliklar</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher*') ? 'active' : '' }}" href="{{ route('teacher') }}">Ustozlar</a></li>
+              <li class="mobile-theme-toggle-wrap">
+                <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o‘chirish" title="Tungi rejim">
+                  <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+                  <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+                </button>
+              </li>
               @if($showAdminToolsDropdown)
                 <li class="nav-dropdown">
                   <details class="nav-dropdown-details js-header-dropdown">
@@ -163,6 +229,10 @@
                     </summary>
 
                     <div class="nav-dropdown-menu">
+                      <a class="nav-dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
+                        <i class="fa-solid fa-user"></i>
+                        Profil
+                      </a>
                       <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
                         <i class="fa-solid fa-book-open"></i>
                         Kurs ochish
@@ -188,26 +258,31 @@
           </nav>
 
           <div class="login">
+            <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o‘chirish" title="Tungi rejim">
+              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+            </button>
+
             @auth
-                 <p class="header-user-name">{{ $authUser->name }}</p>
+              <p class="header-user-name">{{ $authUser->name }}</p>
             @endauth
 
-
             @auth
-                @if($canAccessDashboard)
-                  <a href="{{ route('dashboard') }}" class="btn btn-outline">dashboard</a>
-                @endif
+              <a href="{{ route('profile.show') }}" class="btn btn-outline">Profil</a>
+              @if($canAccessDashboard)
+                <a href="{{ route('dashboard') }}" class="btn btn-outline">dashboard</a>
+              @endif
 
-                @unless($showAdminToolsDropdown)
-                  <form action="{{ route('logout') }}" method="POST" style="display:inline;">
-                      @csrf
-                      <button type="submit" class="btn btn-outline">Logout</button>
-                  </form>
-                @endunless
-                 @else
-            <a href="{{ route('login') }}" class="btn btn-outline">Kirish</a>
-            <a href="{{ route('register') }}" class="btn">Ro'yxatdan o'tish</a>
-              @endauth
+              @unless($showAdminToolsDropdown)
+                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                  @csrf
+                  <button type="submit" class="btn btn-outline">Logout</button>
+                </form>
+              @endunless
+            @else
+              <a href="{{ route('login') }}" class="btn btn-outline">Kirish</a>
+              <a href="{{ route('register') }}" class="btn">Ro'yxatdan o'tish</a>
+            @endauth
           </div>
         </div>
       </div>
@@ -291,14 +366,38 @@
           toast.textContent = message;
           container.appendChild(toast);
 
-          // Slide-in animation already via CSS; remove after timeout.
           setTimeout(() => {
             toast.classList.add('toast-out');
             setTimeout(() => toast.remove(), 250);
           }, toastTimerMs);
         }
 
-        // Flash messages -> toast.
+        const themeToggles = document.querySelectorAll('.js-theme-toggle');
+        const storageKey = 'site-theme';
+
+        function applyTheme(theme) {
+          document.documentElement.setAttribute('data-theme', theme);
+          document.body.setAttribute('data-theme', theme);
+
+          themeToggles.forEach((button) => {
+            button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+            button.setAttribute('title', theme === 'dark' ? 'Kunduzgi rejim' : 'Tungi rejim');
+          });
+        }
+
+        if (themeToggles.length) {
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          applyTheme(currentTheme);
+
+          themeToggles.forEach((button) => {
+            button.addEventListener('click', () => {
+              const nextTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+              localStorage.setItem(storageKey, nextTheme);
+              applyTheme(nextTheme);
+            });
+          });
+        }
+
         const successMsg = @json(session('success'));
         const errorMsg = @json(session('error'));
         const toastType = @json(session('toast_type'));
@@ -337,7 +436,6 @@
           });
         }
 
-        // AJAX Like forms
         document.addEventListener('submit', async (event) => {
           const form = event.target.closest('form.js-like-form');
           if (!form) return;
@@ -365,7 +463,6 @@
               return;
             }
 
-            // Update UI
             if (btn && data.likes_count != null) {
               const icon = btn.querySelector('i');
               const countEl = btn.querySelector('.like-count');
@@ -386,8 +483,6 @@
           }
         });
 
-        // AJAX Comment forms (posts/show)
-        // Reply toggle (show/hide reply form) - ishlaydigan bo‘lishi uchun bitta event listener yetarli.
         document.addEventListener('click', (event) => {
           const btn = event.target.closest('button.js-comment-reply-toggle');
           if (!btn) return;
@@ -409,16 +504,15 @@
           const cfg = window.__POST_COMMENTS_CONFIG__ || {};
           const updateUrlTemplate = cfg.updateUrlTemplate || null;
           const destroyUrlTemplate = cfg.destroyUrlTemplate || null;
-          const storeUrl = cfg.storeUrl || (form.dataset && form.dataset.storeUrl) || null;
           const csrfToken = cfg.csrfToken || null;
 
           function escapeHtml(value) {
             return String(value ?? '')
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#39;');
+              .replace(/&/g, '\u0026amp;')
+              .replace(/</g, '\u0026lt;')
+              .replace(/>/g, '\u0026gt;')
+              .replace(/"/g, '\u0026quot;')
+              .replace(/'/g, '\u0026#39;');
           }
 
           function prependHtml(parentEl, html) {
@@ -459,7 +553,6 @@
             const toastType = data.toast_type || 'success';
             showToast(data.message || 'OK', toastType);
 
-            // EDIT
             if (methodOverride === 'put' && data.comment?.id) {
               const el = document.querySelector(`article.comment-card[data-comment-id="${data.comment.id}"]`);
               const textEl = el?.querySelector('.comment-body p');
@@ -471,7 +564,6 @@
               return;
             }
 
-            // DELETE
             if (methodOverride === 'delete' && deletingId) {
               const el = document.querySelector(`article.comment-card[data-comment-id="${deletingId}"]`);
               if (el) el.remove();
@@ -481,7 +573,6 @@
               return;
             }
 
-            // CREATE / REPLY
             const comment = data.comment || null;
             if (!comment) {
               form.reset();
@@ -489,20 +580,29 @@
             }
 
             const currentUserId = cfg.currentUserId ?? null;
-            const canManageAll = !!cfg.currentUserCanManageAll;
-            const canManageThis = canManageAll || (currentUserId != null && comment.user_id != null && String(comment.user_id) === String(currentUserId));
+            const roleKey = String(comment.role_key || 'guest');
+            let canManageThis = false;
+            if (currentUserId != null && comment.user_id != null && String(comment.user_id) === String(currentUserId)) {
+              canManageThis = true;
+            } else if (cfg.currentUserIsAdmin) {
+              canManageThis = true;
+            } else if (cfg.currentUserIsModerator) {
+              canManageThis = !cfg.currentUserIsOnlyModerator || (roleKey !== 'super_admin' && roleKey !== 'admin');
+            }
 
-            const isReply = !!parentIdValue; // storeComment reply forms always send parent_id
+            const isReply = !!parentIdValue;
             const insertParentId = comment.parent_id ?? null;
 
             const editUrl = updateUrlTemplate ? updateUrlTemplate.replace('__COMMENT_ID__', String(comment.id)) : null;
             const destroyUrl = destroyUrlTemplate ? destroyUrlTemplate.replace('__COMMENT_ID__', String(comment.id)) : null;
-            const roleKey = String(comment.role_key || 'guest');
             const roleLabel = String(comment.role_label || 'Mehmon');
-            const roleBadgeIconHtml = roleKey === 'super_admin'
-              ? '<i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i>'
-              : '';
-            const roleBadgeHtml = `<span class="comment-role-badge role-${escapeHtml(roleKey)}">${roleBadgeIconHtml}${escapeHtml(roleLabel)}</span>`;
+            const roleBadgeHtml = `<span class="comment-role-badge role-${escapeHtml(roleKey)}">${escapeHtml(roleLabel)}</span>`;
+
+            const likeUrlTpl = cfg.commentLikeUrlTemplate || '';
+            const likeCountStr = comment.likes_count != null ? String(comment.likes_count) : '0';
+            const likeFormHtml = (likeUrlTpl && csrfToken)
+              ? `<form action="${escapeHtml(likeUrlTpl.replace('__COMMENT_ID__', String(comment.id)))}" method="POST" class="js-like-form" style="display:inline;"><input type="hidden" name="_token" value="${escapeHtml(csrfToken)}" /><button type="submit" class="like-btn comment-like" aria-label="Yoqtirish"><i class="fa-regular fa-heart"></i> <span class="like-count">${likeCountStr}</span></button></form>`
+              : `<span class="comment-like-fallback"><i class="fa-regular fa-heart"></i> <span class="like-count">${likeCountStr}</span></span>`;
 
             const canManageActionsHtml = canManageThis && editUrl && destroyUrl
               ? `
@@ -546,7 +646,6 @@
             if (isReply && insertParentId) {
               const parentArticle = document.querySelector(`article.comment-card[data-comment-id="${insertParentId}"]`);
               if (!parentArticle) {
-                // Fallback: rootga qo'shib qo'yamiz (kam hollarda)
                 const rootList = document.querySelector('#post-detail .comments-list') || document.querySelector('.comments-list');
                 if (rootList) prependHtml(rootList, buildReplyLi());
                 form.reset();
@@ -568,7 +667,6 @@
               return;
             }
 
-            // Top-level comment
             const rootList = document.querySelector('#post-detail .comments-list') || document.querySelector('.comments-list');
             if (rootList) {
               rootList.querySelectorAll('.comment-empty').forEach((el) => el.remove());
@@ -580,9 +678,10 @@
             return;
 
             function buildReplyLi() {
+              const superCls = roleKey === 'super_admin' ? ' comment-card--super-admin' : '';
               return `
-                <article class="comment-card reveal role-${escapeHtml(roleKey)} comment-item-reply" data-comment-id="${escapeHtml(comment.id)}">
-                  <div class="comment-avatar role-${escapeHtml(roleKey)} ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
+                <article class="comment-card reveal comment-item-reply${superCls}" data-comment-id="${escapeHtml(comment.id)}">
+                  <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
                     <i class="fa-solid fa-user"></i>
                   </div>
                   <div class="comment-body">
@@ -593,9 +692,7 @@
                     </div>
                     <p>${escapeHtml(comment.body || '')}</p>
                     <div class="comment-actions">
-                      <button type="button" class="comment-like" aria-label="Yoqtirish">
-                        <i class="fa-regular fa-heart"></i> <span class="like-count">0</span>
-                      </button>
+                      ${likeFormHtml}
                       ${canManageActionsHtml}
                     </div>
                   </div>
@@ -645,9 +742,10 @@
                 </div>
               `;
 
+              const superCls = roleKey === 'super_admin' ? ' comment-card--super-admin' : '';
               return `
-                <article class="comment-card reveal role-${escapeHtml(roleKey)}" data-comment-id="${escapeHtml(comment.id)}">
-                  <div class="comment-avatar role-${escapeHtml(roleKey)} ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
+                <article class="comment-card reveal${superCls}" data-comment-id="${escapeHtml(comment.id)}">
+                  <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
                     <i class="fa-solid fa-user"></i>
                   </div>
                   <div class="comment-body">
@@ -658,9 +756,7 @@
                     </div>
                     <p>${escapeHtml(comment.body || '')}</p>
                     <div class="comment-actions">
-                      <button type="button" class="comment-like" aria-label="Yoqtirish">
-                        <i class="fa-regular fa-heart"></i> <span class="like-count">0</span>
-                      </button>
+                      ${likeFormHtml}
                       ${replyFormHtml}
                       ${canManageActionsHtml}
                     </div>

@@ -31,4 +31,9 @@ class TeacherComment extends Model
     {
         return $this->hasMany(TeacherComment::class, 'parent_id');
     }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(TeacherCommentLike::class, 'teacher_comment_id');
+    }
 }

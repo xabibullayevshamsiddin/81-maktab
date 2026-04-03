@@ -13,14 +13,24 @@
     </div>
   </section>
 
+  @php
+    $commentLikeUrlTemplate = str_replace(
+        '/comments/0/',
+        '/comments/__COMMENT_ID__/',
+        route('post.comments.like', ['post' => $post, 'comment' => 0])
+    );
+  @endphp
   <main class="news">
     <section class="container news reveal glass-section" id="post-detail">
       <script>
         window.__POST_COMMENTS_CONFIG__ = {
           currentUserId: @json(auth()->check() ? auth()->id() : null),
-          currentUserCanManageAll: @json(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEditor() || auth()->user()->isModerator() || auth()->user()->isTeacher())),
+          currentUserIsAdmin: @json(auth()->check() && auth()->user()->isAdmin()),
+          currentUserIsModerator: @json(auth()->check() && auth()->user()->isModerator()),
+          currentUserIsOnlyModerator: @json(auth()->check() && auth()->user()->isOnlyModerator()),
           updateUrlTemplate: @json(route('post.comments.update', [$post, '__COMMENT_ID__'])),
           destroyUrlTemplate: @json(route('post.comments.destroy', [$post, '__COMMENT_ID__'])),
+          commentLikeUrlTemplate: @json($commentLikeUrlTemplate),
           storeUrl: @json(route('post.comments.store', $post)),
           csrfToken: @json(csrf_token()),
         };
@@ -47,10 +57,11 @@
             <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
             <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span></span>
 
+            @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
             <form action="{{ route('post.like', $post) }}" method="POST" style="display:inline;" class="js-like-form">
               @csrf
-              <button class="like-btn {{ $liked ? 'liked' : '' }}" type="submit" aria-label="Yoqtirish" style="padding-left: 10px;">
-                <i class="{{ $liked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+              <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="Yoqtirish" style="padding-left: 10px;">
+                <i class="{{ $postLikedByMe ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                 <span class="like-count">{{ $post->likes_count }}</span>
               </button>
             </form>
@@ -86,7 +97,7 @@
             <p class="comment-empty">Hozircha izohlar yo'q.</p>
           @else
             @foreach($comments as $comment)
-              @include('posts.partials.comment-item', ['comment' => $comment, 'post' => $post, 'showReplyForm' => true])
+              @include('posts.partials.comment-item', ['comment' => $comment, 'post' => $post, 'showReplyForm' => true, 'likedCommentIds' => $likedCommentIds])
             @endforeach
           @endif
         </div>

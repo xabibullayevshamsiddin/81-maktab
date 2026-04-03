@@ -46,7 +46,7 @@
 
 
 
-          @if(auth()->user()->isAdmin() || auth()->user()->isEditor())
+          @if(!auth()->user()->isOnlyModerator() && (auth()->user()->isAdmin() || auth()->user()->isEditor()))
           <li class="nav-item {{ request()->routeIs('posts.*') ? 'active' : '' }}">
             <a href="{{ route('posts.index') }}">
               <span class="icon">
@@ -80,7 +80,7 @@
           </li>
           @endif
 
-          @if(auth()->user()->isAdmin())
+          @if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
           <li class="nav-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
             <a href="{{ route('admin.courses.index') }}">
               <span class="icon">
@@ -95,8 +95,35 @@
             </a>
           </li>
           @endif
+          @if(auth()->user()->isAdmin())
+          <li class="nav-item {{ request()->routeIs('admin.course-enrollments.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.course-enrollments.index') }}">
+              <span class="icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.16667 3.33334H15.8333C16.7538 3.33334 17.5 4.07953 17.5 5.00001V15C17.5 15.9205 16.7538 16.6667 15.8333 16.6667H4.16667C3.24619 16.6667 2.5 15.9205 2.5 15V5.00001C2.5 4.07953 3.24619 3.33334 4.16667 3.33334Z" />
+                  <path d="M5.83333 8.33334H14.1667V9.58334H5.83333V8.33334Z" />
+                  <path d="M5.83333 11.25H11.6667V12.5H5.83333V11.25Z" />
+                </svg>
+              </span>
+              <span class="text">Barcha yozilishlar</span>
+            </a>
+          </li>
+          @elseif(auth()->user()->isTeacher())
+          <li class="nav-item {{ request()->routeIs('teacher.enrollments.*') ? 'active' : '' }}">
+            <a href="{{ route('teacher.enrollments.index') }}">
+              <span class="icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.16667 3.33334H15.8333C16.7538 3.33334 17.5 4.07953 17.5 5.00001V15C17.5 15.9205 16.7538 16.6667 15.8333 16.6667H4.16667C3.24619 16.6667 2.5 15.9205 2.5 15V5.00001C2.5 4.07953 3.24619 3.33334 4.16667 3.33334Z" />
+                  <path d="M5.83333 8.33334H14.1667V9.58334H5.83333V8.33334Z" />
+                  <path d="M5.83333 11.25H11.6667V12.5H5.83333V11.25Z" />
+                </svg>
+              </span>
+              <span class="text">Kurs arizalari</span>
+            </a>
+          </li>
+          @endif
 
-          @if(auth()->user()->isAdmin() || auth()->user()->isEditor())
+          @if(!auth()->user()->isOnlyModerator() && (auth()->user()->isAdmin() || auth()->user()->isEditor()))
           <li class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
             <a href="{{ route('categories.index') }}">
               <span class="icon">
@@ -106,6 +133,22 @@
                 </svg>
               </span>
               <span class="text">Kategoriyalar</span>
+            </a>
+          </li>
+          @endif
+
+          @if(auth()->user()->isModerator())
+          <li class="nav-item {{ request()->routeIs('admin.comments.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.comments.index') }}">
+              <span class="icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3.33333 3.33334C3.33333 2.41286 4.07953 1.66667 5 1.66667H8.33333C9.25381 1.66667 10 2.41286 10 3.33334V6.66667C10 7.58715 9.25381 8.33334 8.33333 8.33334H5C4.07953 8.33334 3.33333 7.58715 3.33333 6.66667V3.33334Z" />
+                  <path d="M11.6667 3.33334C11.6667 2.41286 12.4129 1.66667 13.3333 1.66667H15C15.9205 1.66667 16.6667 2.41286 16.6667 3.33334V5C16.6667 5.92048 15.9205 6.66667 15 6.66667H13.3333C12.4129 6.66667 11.6667 5.92048 11.6667 5V3.33334Z" />
+                  <path d="M3.33333 11.6667C3.33333 10.7462 4.07953 10 5 10H8.33333C9.25381 10 10 10.7462 10 11.6667V15C10 15.9205 9.25381 16.6667 8.33333 16.6667H5C4.07953 16.6667 3.33333 15.9205 3.33333 15V11.6667Z" />
+                  <path d="M11.6667 10H16.6667V15C16.6667 15.9205 15.9205 16.6667 15 16.6667H13.3333C12.4129 16.6667 11.6667 15.9205 11.6667 15V10Z" />
+                </svg>
+              </span>
+              <span class="text">Izohlar</span>
             </a>
           </li>
           @endif

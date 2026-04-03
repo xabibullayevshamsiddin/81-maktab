@@ -26,12 +26,14 @@ class AdminController extends Controller
             ->latest()
             ->get();
 
-        $roles = Role::query()
+        $assignableRoles = Role::query()
             ->orderByDesc('level')
             ->orderBy('label')
-            ->get();
+            ->get()
+            ->filter(fn (Role $role) => auth()->user()->canAssignRole($role))
+            ->values();
 
-        return view('admin.user', compact('users', 'roles'));
+        return view('admin.user', compact('users', 'assignableRoles'));
     }
 
     public function updateUser(Request $request, User $user)
@@ -49,6 +51,11 @@ class AdminController extends Controller
 
         if ($user->id === $currentUser->id) {
             return redirect()->route('user')->with('error', "O'zingizning rolni o'zgartira olmaysiz.");
+        }
+
+        $newRole = Role::query()->findOrFail($validated['role_id']);
+        if (! $currentUser->canAssignRole($newRole)) {
+            return redirect()->route('user')->with('error', 'Bu rolni tayinlash huquqingiz yo\'q.');
         }
 
         $user->update([

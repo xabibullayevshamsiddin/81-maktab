@@ -59,6 +59,7 @@ Qiziqarli yangiliklar va muhim jarayonlar doimo siz bilan!</p>
       </form>
 
       <div class="post-grid">
+        @php $likedPostIds = $likedPostIds ?? collect(); @endphp
         @forelse($posts as $post)
           <article class="news-card post-card">
             <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" />
@@ -79,8 +80,8 @@ Qiziqarli yangiliklar va muhim jarayonlar doimo siz bilan!</p>
 
                 <form action="{{ route('post.like', $post) }}" method="POST" style="margin-left: 10px;" class="js-like-form">
                   @csrf
-                  <button class="like-btn" type="submit" aria-label="Yoqtirish">
-                    <i class="fa-regular fa-heart"></i>
+                  <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="Yoqtirish">
+                    <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                     <span class="like-count">{{ $post->likes_count }}</span>
                   </button>
                 </form>
