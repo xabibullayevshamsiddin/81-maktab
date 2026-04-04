@@ -47,6 +47,9 @@
                 <li><i class="fa-solid fa-award"></i> {{ $teacher->experience_years }} yil tajriba</li>
                 <li><i class="fa-solid fa-users"></i> {{ $teacher->grades ?: 'Barcha sinflar' }}</li>
               </ul>
+              @if(filled($teacher->achievements))
+                <p class="teacher-achievements-preview"><i class="fa-solid fa-trophy"></i> {{ \Illuminate\Support\Str::limit(trim(strtok($teacher->achievements, "\n")), 100) }}</p>
+              @endif
               <div class="teacher-actions">
                 @php $likedTeacherIds = $likedTeacherIds ?? collect(); @endphp
                 @auth

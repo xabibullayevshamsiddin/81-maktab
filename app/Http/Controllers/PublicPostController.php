@@ -17,7 +17,7 @@ class PublicPostController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $categoryId = $request->query('category_id');
-        $sort = (string) $request->query('sort', 'new');
+        $filter = (string) $request->query('filter', 'all');
 
         $categories = Category::orderBy('name')->get();
 
@@ -36,8 +36,32 @@ class PublicPostController extends Controller
             });
         }
 
-        // Sorting
-        switch ($sort) {
+        $allowedFilters = [
+            'all', 'video_news', 'social', 'has_video', 'new', 'popular', 'likes', 'comments',
+        ];
+        if (! in_array($filter, $allowedFilters, true)) {
+            $filter = 'all';
+        }
+
+        switch ($filter) {
+            case 'video_news':
+                $postsQuery->where('post_kind', 'video_news');
+                $postsQuery->latest();
+                break;
+            case 'social':
+                $postsQuery->where('post_kind', 'social');
+                $postsQuery->latest();
+                break;
+            case 'has_video':
+                $postsQuery->where(function ($sub): void {
+                    $sub->where(function ($w): void {
+                        $w->whereNotNull('video_path')->where('video_path', '!=', '');
+                    })->orWhere(function ($w): void {
+                        $w->whereNotNull('video_url')->where('video_url', '!=', '');
+                    });
+                });
+                $postsQuery->latest();
+                break;
             case 'popular':
                 $postsQuery->orderByDesc('views');
                 break;
@@ -48,6 +72,9 @@ class PublicPostController extends Controller
                 $postsQuery->orderByDesc('comments_count');
                 break;
             case 'new':
+                $postsQuery->latest();
+                break;
+            case 'all':
             default:
                 $postsQuery->latest();
                 break;
@@ -57,14 +84,23 @@ class PublicPostController extends Controller
 
         $likedPostIds = $this->likedPostIdsForUser($posts->pluck('id'));
 
-        return view('post', [
+        $viewData = [
             'posts' => $posts,
             'categories' => $categories,
             'q' => $q,
             'categoryId' => $categoryId,
-            'sort' => $sort,
+            'filter' => $filter,
             'likedPostIds' => $likedPostIds,
-        ]);
+            'postKindLabels' => config('post_kinds', []),
+        ];
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'html' => view('posts.partials.list', $viewData)->render(),
+            ]);
+        }
+
+        return view('post', $viewData);
     }
 
     public function show(Post $post)

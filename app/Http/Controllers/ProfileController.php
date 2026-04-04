@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -24,6 +25,12 @@ class ProfileController extends Controller
     private const OTP_VERIFY_DECAY_SECONDS = 600;
 
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
+
+    private const PASSWORD_CHANGE_MAX_ATTEMPTS = 5;
+
+    private const PASSWORD_CHANGE_DECAY_SECONDS = 600;
+
+    private const PASSWORD_CHANGE_CONFIRM_TTL_SECONDS = 600;
 
     public function show(Request $request)
     {
@@ -84,6 +91,7 @@ class ProfileController extends Controller
         }
 
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
+        $passwordChangeUnlocked = $this->hasConfirmedPasswordChange($request, (int) $user->id);
 
         return view('profile.show', compact(
             'user',
@@ -95,7 +103,8 @@ class ProfileController extends Controller
             'courseEnrollments',
             'canViewCourseEnrollments',
             'pendingTeacherEnrollments',
-            'pendingEmail'
+            'pendingEmail',
+            'passwordChangeUnlocked'
         ));
     }
 
@@ -105,8 +114,11 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'phone' => ['nullable', 'string', 'max:40'],
+            'phone' => uz_phone_rules(false),
+        ], [
+            'phone.regex' => uz_phone_validation_message(),
         ]);
+        $validated['phone'] = uz_phone_format($validated['phone'] ?? null);
 
         $user->update([
             'name' => $validated['name'],
@@ -116,6 +128,106 @@ class ProfileController extends Controller
         return redirect()
             ->route('profile.show')
             ->with('success', 'Profil maʼlumotlari yangilandi.')
+            ->with('toast_type', 'success');
+    }
+
+    public function confirmPasswordChange(Request $request)
+    {
+        $user = $request->user();
+        $limiterKey = $this->passwordChangeKey($request, (int) $user->id);
+
+        if (RateLimiter::tooManyAttempts($limiterKey, self::PASSWORD_CHANGE_MAX_ATTEMPTS)) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('password', "Juda ko'p xato urinish. {$this->passwordChangeSecondsLeft($request, (int) $user->id)} soniyadan keyin qayta urinib ko'ring.", [
+                    'current_password' => ["Juda ko'p xato urinish. {$this->passwordChangeSecondsLeft($request, (int) $user->id)} soniyadan keyin qayta urinib ko'ring."],
+                ]);
+            }
+
+            return back()->withErrors([
+                'current_password' => "Juda ko'p xato urinish. {$this->passwordChangeSecondsLeft($request, (int) $user->id)} soniyadan keyin qayta urinib ko'ring.",
+            ]);
+        }
+
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+        ], [
+            'current_password.required' => 'Joriy parolni kiriting.',
+        ]);
+
+        if (! Hash::check($validated['current_password'], (string) $user->password)) {
+            RateLimiter::hit($limiterKey, self::PASSWORD_CHANGE_DECAY_SECONDS);
+
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('password', 'Joriy parol noto\'g\'ri.', [
+                    'current_password' => ['Joriy parol noto\'g\'ri.'],
+                ]);
+            }
+
+            return back()->withErrors([
+                'current_password' => 'Joriy parol noto\'g\'ri.',
+            ]);
+        }
+
+        RateLimiter::clear($limiterKey);
+        $this->storePasswordChangeConfirmation($request, (int) $user->id);
+
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'password', 'Joriy parol tasdiqlandi. Endi yangi parolni kiriting.');
+        }
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Joriy parol tasdiqlandi. Endi yangi parolni kiriting.')
+            ->with('toast_type', 'success');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $this->hasConfirmedPasswordChange($request, (int) $user->id)) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('password', 'Avval joriy parolni tasdiqlang.', [
+                    'current_password' => ['Avval joriy parolni tasdiqlang.'],
+                ]);
+            }
+
+            return redirect()
+                ->route('profile.show')
+                ->withErrors([
+                    'current_password' => 'Avval joriy parolni tasdiqlang.',
+                ]);
+        }
+
+        $validated = $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:6',
+                'confirmed',
+            ],
+        ], [
+            'password.required' => 'Yangi parolni kiriting.',
+            'password.min' => 'Yangi parol kamida 6 belgidan iborat bo\'lishi kerak.',
+            'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
+        ]);
+
+        $user->forceFill([
+            'password' => Hash::make($validated['password']),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        $this->clearPasswordChangeConfirmation($request);
+        $request->session()->regenerate();
+        $request->session()->regenerateToken();
+
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'password', 'Parol muvaffaqiyatli yangilandi.');
+        }
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Parol muvaffaqiyatli yangilandi.')
             ->with('toast_type', 'success');
     }
 
@@ -134,12 +246,24 @@ class ProfileController extends Controller
 
         $newEmail = strtolower(trim($validated['email']));
         if ($newEmail === strtolower((string) $user->email)) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Yangi email joriy manzildan farq qilishi kerak.', [
+                    'email' => ['Yangi email joriy manzildan farq qilishi kerak.'],
+                ]);
+            }
+
             return back()
                 ->withErrors(['email' => 'Yangi email joriy manzildan farq qilishi kerak.'])
                 ->withInput();
         }
 
         if (! $this->canSendEmailChangeOtp($newEmail)) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', "Kod yuborishdan oldin {$this->emailChangeResendSecondsLeft($newEmail)} soniya kuting.", [
+                    'email' => ["Kod yuborishdan oldin {$this->emailChangeResendSecondsLeft($newEmail)} soniya kuting."],
+                ]);
+            }
+
             return back()
                 ->withErrors([
                     'email' => "Kod yuborishdan oldin {$this->emailChangeResendSecondsLeft($newEmail)} soniya kuting.",
@@ -155,6 +279,11 @@ class ProfileController extends Controller
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Yangi emailga kod yuborilmadi. Keyinroq urinib ko\'ring.', [
+                    'email' => ['Yangi emailga kod yuborilmadi. Keyinroq urinib ko\'ring.'],
+                ], 500);
+            }
 
             return back()
                 ->withErrors(['email' => 'Yangi emailga kod yuborilmadi. Keyinroq urinib ko‘ring.'])
@@ -162,6 +291,9 @@ class ProfileController extends Controller
         }
 
         $request->session()->put('profile_email_change_pending', $newEmail);
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'email', "Tasdiqlash kodi {$newEmail} manziliga yuborildi.");
+        }
 
         return redirect()
             ->route('profile.show')
@@ -177,6 +309,10 @@ class ProfileController extends Controller
 
         $pending = (string) $request->session()->get('profile_email_change_pending', '');
         if ($pending === '') {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Avval yangi email kiriting va kod oling.');
+            }
+
             return redirect()
                 ->route('profile.show')
                 ->with('error', 'Avval yangi email kiriting va kod oling.')
@@ -186,6 +322,12 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if (RateLimiter::tooManyAttempts($this->emailChangeVerifyKey($pending), self::OTP_VERIFY_MAX_ATTEMPTS)) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', "Juda ko'p xato urinish. {$this->emailChangeVerifySecondsLeft($pending)} soniyadan keyin qayta urinib ko'ring.", [
+                    'code' => ["Juda ko'p xato urinish. {$this->emailChangeVerifySecondsLeft($pending)} soniyadan keyin qayta urinib ko'ring."],
+                ]);
+            }
+
             return back()->withErrors([
                 'code' => "Juda ko'p xato urinish. {$this->emailChangeVerifySecondsLeft($pending)} soniyadan keyin qayta urinib ko'ring.",
             ]);
@@ -200,11 +342,21 @@ class ProfileController extends Controller
         if (! $this->isValidOtp($otp, $validated['code'])) {
             RateLimiter::hit($this->emailChangeVerifyKey($pending), self::OTP_VERIFY_DECAY_SECONDS);
 
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', "Kod noto'g'ri yoki muddati tugagan.", [
+                    'code' => ["Kod noto'g'ri yoki muddati tugagan."],
+                ]);
+            }
+
             return back()->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."]);
         }
 
         $meta = $otp->meta ?? [];
         if ((int) ($meta['user_id'] ?? 0) !== (int) $user->id) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Tasdiqlash sessiyasi yaroqsiz. Qaytadan urinib ko\'ring.');
+            }
+
             return redirect()
                 ->route('profile.show')
                 ->with('error', 'Tasdiqlash sessiyasi yaroqsiz. Qaytadan urinib ko‘ring.')
@@ -214,6 +366,12 @@ class ProfileController extends Controller
         if (User::query()->where('email', $pending)->where('id', '!=', $user->id)->exists()) {
             $request->session()->forget('profile_email_change_pending');
             $otp->delete();
+
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Bu email allaqachon boshqa hisobda ishlatilgan.', [
+                    'email' => ['Bu email allaqachon boshqa hisobda ishlatilgan.'],
+                ]);
+            }
 
             return redirect()
                 ->route('profile.show')
@@ -230,6 +388,10 @@ class ProfileController extends Controller
         RateLimiter::clear($this->emailChangeVerifyKey($pending));
         $request->session()->forget('profile_email_change_pending');
 
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'email', 'Email manzili yangilandi.');
+        }
+
         return redirect()
             ->route('profile.show')
             ->with('success', 'Email manzili yangilandi.')
@@ -240,6 +402,10 @@ class ProfileController extends Controller
     {
         $pending = (string) $request->session()->get('profile_email_change_pending', '');
         if ($pending === '') {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Avval yangi email kiriting.');
+            }
+
             return redirect()
                 ->route('profile.show')
                 ->with('error', 'Avval yangi email kiriting.')
@@ -249,6 +415,12 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if (! $this->canSendEmailChangeOtp($pending)) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', "Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting.", [
+                    'code' => ["Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting."],
+                ]);
+            }
+
             return back()->withErrors([
                 'code' => "Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting.",
             ]);
@@ -261,6 +433,10 @@ class ProfileController extends Controller
             ->first();
 
         if (! $latest || (int) ($latest->meta['user_id'] ?? 0) !== (int) $user->id) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Kodni qayta yuborish mumkin emas. Emailni qayta kiriting.');
+            }
+
             return redirect()
                 ->route('profile.show')
                 ->with('error', 'Kodni qayta yuborish mumkin emas. Emailni qayta kiriting.')
@@ -275,8 +451,17 @@ class ProfileController extends Controller
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Kodni qayta yuborib bo\'lmadi.', [
+                    'code' => ['Kodni qayta yuborib bo\'lmadi.'],
+                ], 500);
+            }
 
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo‘lmadi.']);
+        }
+
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'email', 'Yangi kod yuborildi.', 'warning');
         }
 
         return back()
@@ -295,6 +480,10 @@ class ProfileController extends Controller
         }
 
         $request->session()->forget('profile_email_change_pending');
+
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'email', 'Email almashtirish bekor qilindi.', 'warning');
+        }
 
         return redirect()
             ->route('profile.show')
@@ -385,5 +574,107 @@ class ProfileController extends Controller
     private function emailChangeVerifySecondsLeft(string $email): int
     {
         return RateLimiter::availableIn($this->emailChangeVerifyKey($email));
+    }
+
+    private function passwordChangeKey(Request $request, int $userId): string
+    {
+        return 'profile-password-change:'.$userId.':'.$request->ip();
+    }
+
+    private function passwordChangeSecondsLeft(Request $request, int $userId): int
+    {
+        return RateLimiter::availableIn($this->passwordChangeKey($request, $userId));
+    }
+
+    private function storePasswordChangeConfirmation(Request $request, int $userId): void
+    {
+        $request->session()->put('profile_password_change_confirmation', [
+            'user_id' => $userId,
+            'confirmed_at' => now()->timestamp,
+            'password_hash' => (string) $request->user()->password,
+        ]);
+    }
+
+    private function clearPasswordChangeConfirmation(Request $request): void
+    {
+        $request->session()->forget('profile_password_change_confirmation');
+    }
+
+    private function hasConfirmedPasswordChange(Request $request, int $userId): bool
+    {
+        $meta = $request->session()->get('profile_password_change_confirmation');
+
+        if (! is_array($meta) || (int) ($meta['user_id'] ?? 0) !== $userId) {
+            return false;
+        }
+
+        if (! hash_equals((string) ($meta['password_hash'] ?? ''), (string) $request->user()->password)) {
+            $this->clearPasswordChangeConfirmation($request);
+
+            return false;
+        }
+
+        $confirmedAt = (int) ($meta['confirmed_at'] ?? 0);
+        if ($confirmedAt < (now()->timestamp - self::PASSWORD_CHANGE_CONFIRM_TTL_SECONDS)) {
+            $this->clearPasswordChangeConfirmation($request);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function wantsJson(Request $request): bool
+    {
+        return $request->expectsJson() || $request->ajax();
+    }
+
+    private function sectionErrorResponse(string $section, string $message, array $errors = [], int $status = 422)
+    {
+        return response()->json([
+            'ok' => false,
+            'section' => $section,
+            'message' => $message,
+            'errors' => $errors,
+            'toast_type' => 'error',
+        ], $status);
+    }
+
+    private function sectionSuccessResponse(Request $request, string $section, string $message, string $toastType = 'success')
+    {
+        $payload = [
+            'ok' => true,
+            'section' => $section,
+            'message' => $message,
+            'toast_type' => $toastType,
+        ];
+
+        if ($section === 'email') {
+            $payload['html'] = $this->renderEmailCard($request);
+            $payload['user_email'] = (string) $request->user()->email;
+            $payload['pending_email'] = (string) $request->session()->get('profile_email_change_pending', '');
+        }
+
+        if ($section === 'password') {
+            $payload['html'] = $this->renderPasswordCard($request);
+            $payload['password_unlocked'] = $this->hasConfirmedPasswordChange($request, (int) $request->user()->id);
+        }
+
+        return response()->json($payload);
+    }
+
+    private function renderEmailCard(Request $request): string
+    {
+        return view('profile.partials.email-card', [
+            'user' => $request->user()->loadMissing('roleRelation'),
+            'pendingEmail' => (string) $request->session()->get('profile_email_change_pending', ''),
+        ])->render();
+    }
+
+    private function renderPasswordCard(Request $request): string
+    {
+        return view('profile.partials.password-card', [
+            'passwordChangeUnlocked' => $this->hasConfirmedPasswordChange($request, (int) $request->user()->id),
+        ])->render();
     }
 }

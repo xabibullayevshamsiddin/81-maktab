@@ -7,10 +7,12 @@ use Illuminate\Http\Request;
 
 class AdminCourseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         abort_unless($user && ($user->isAdmin() || $user->isTeacher()), 403);
+
+        $q = trim((string) $request->query('q', ''));
 
         $query = Course::query()
             ->with(['teacher', 'creator'])
@@ -19,6 +21,17 @@ class AdminCourseController extends Controller
 
         if (! $user->isAdmin()) {
             $query->where('created_by', $user->id);
+        }
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q): void {
+                $w->where('title', 'like', '%'.$q.'%')
+                    ->orWhere('description', 'like', '%'.$q.'%')
+                    ->orWhere('duration', 'like', '%'.$q.'%')
+                    ->orWhereHas('teacher', function ($t) use ($q): void {
+                        $t->where('full_name', 'like', '%'.$q.'%');
+                    });
+            });
         }
 
         $courses = $query->get();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ContactMessage;
 use App\Models\Post;
 use App\Models\PostLike;
 use App\Models\Teacher;
@@ -65,7 +66,28 @@ class HomeController extends Controller
         return view('teacherShow', compact('comments'));
     }
 
-     public function contact(){
+    public function contact()
+    {
         return view('contact');
+    }
+
+    public function storeContact(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => uz_phone_rules(),
+            'note' => ['nullable', 'string', 'max:2000'],
+            'message' => ['required', 'string', 'max:5000'],
+        ], [
+            'phone.regex' => uz_phone_validation_message(),
+        ]);
+        $validated['phone'] = uz_phone_format($validated['phone']);
+
+        ContactMessage::query()->create($validated);
+
+        return redirect()
+            ->route('contact')
+            ->with('success', 'Xabaringiz qabul qilindi. Tez orada siz bilan bog‘lanamiz.');
     }
 }

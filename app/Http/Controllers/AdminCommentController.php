@@ -18,18 +18,45 @@ class AdminCommentController extends Controller
             $type = 'post';
         }
 
+        $q = trim((string) $request->query('q', ''));
+
         if ($type === 'teacher') {
-            $comments = TeacherComment::query()
+            $query = TeacherComment::query()
                 ->with(['user', 'parent'])
-                ->latest()
-                ->paginate(25)
-                ->withQueryString();
+                ->latest();
+
+            if ($q !== '') {
+                $query->where(function ($w) use ($q): void {
+                    $w->where('body', 'like', '%'.$q.'%')
+                        ->orWhereHas('user', function ($u) use ($q): void {
+                            $u->where('name', 'like', '%'.$q.'%')
+                                ->orWhere('email', 'like', '%'.$q.'%')
+                                ->orWhere('phone', 'like', '%'.$q.'%');
+                        });
+                });
+            }
+
+            $comments = $query->paginate(25)->withQueryString();
         } else {
-            $comments = Comment::query()
+            $query = Comment::query()
                 ->with(['post', 'user', 'parent'])
-                ->latest()
-                ->paginate(25)
-                ->withQueryString();
+                ->latest();
+
+            if ($q !== '') {
+                $query->where(function ($w) use ($q): void {
+                    $w->where('body', 'like', '%'.$q.'%')
+                        ->orWhereHas('user', function ($u) use ($q): void {
+                            $u->where('name', 'like', '%'.$q.'%')
+                                ->orWhere('email', 'like', '%'.$q.'%')
+                                ->orWhere('phone', 'like', '%'.$q.'%');
+                        })
+                        ->orWhereHas('post', function ($p) use ($q): void {
+                            $p->where('title', 'like', '%'.$q.'%');
+                        });
+                });
+            }
+
+            $comments = $query->paginate(25)->withQueryString();
         }
 
         return view('admin.comments.index', compact('comments', 'type'));

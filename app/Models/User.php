@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
@@ -27,6 +28,8 @@ class User extends Authenticatable
     public const ROLE_TEACHER = Role::NAME_TEACHER;
 
     public const ROLE_USER = Role::NAME_USER;
+
+    public const UNIVERSAL_GRADE_LABEL = 'Barcha sinflar';
 
     public const ROLES = [
         self::ROLE_SUPER_ADMIN => 'Super Admin',
@@ -50,6 +53,7 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'grade',
         'password',
         'role_id',
         'is_active',
@@ -135,6 +139,11 @@ class User extends Authenticatable
         return $this->hasMany(TeacherLike::class);
     }
 
+    public function teacherProfile(): HasOne
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
     public function createdCourses(): HasMany
     {
         return $this->hasMany(Course::class, 'created_by');
@@ -152,18 +161,26 @@ class User extends Authenticatable
         return (int) ($this->roleRelation?->level ?? self::ROLE_HIERARCHY[self::ROLE_USER]);
     }
 
-    public function hasRole(string $roleName): bool
+    public function hasRole(array|string $roleNames): bool
     {
         $this->loadMissing('roleRelation');
 
-        if ($this->roleRelation?->name === $roleName) {
-            return true;
+        $currentRoleName = trim((string) ($this->roleRelation?->name ?? ''));
+        if ($currentRoleName === '') {
+            return false;
         }
 
-        $roleId = Role::idByName($roleName);
+        $roleNames = array_values(array_filter(array_map(
+            static fn ($roleName) => trim((string) $roleName),
+            is_array($roleNames) ? $roleNames : [$roleNames]
+        )));
 
-        return $roleId !== null
-            && (int) $this->role_id === (int) $roleId;
+        return in_array($currentRoleName, $roleNames, true);
+    }
+
+    public function hasAnyRole(array|string $roleNames): bool
+    {
+        return $this->hasRole($roleNames);
     }
 
     public function isSuperAdmin(): bool
@@ -223,7 +240,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if (! $this->isModerator()) {
+        if (! $this->hasRole(self::ROLE_MODERATOR)) {
             return false;
         }
 
@@ -233,6 +250,50 @@ class User extends Authenticatable
     public function isTeacher(): bool
     {
         return $this->hasRole(self::ROLE_TEACHER);
+    }
+
+    public function canAccessDashboard(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+            self::ROLE_EDITOR,
+            self::ROLE_MODERATOR,
+        ]);
+    }
+
+    public function canManageContent(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+            self::ROLE_EDITOR,
+        ]);
+    }
+
+    public function canManageInbox(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+        ]) || $this->isOnlyModerator();
+    }
+
+    public function canManageEducation(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+            self::ROLE_TEACHER,
+        ]);
+    }
+
+    public function canManageSystem(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+        ]);
     }
 
     /**
@@ -278,6 +339,38 @@ class User extends Authenticatable
         }
 
         return self::ROLES[$this->role] ?? $this->role;
+    }
+
+    public function getAdminRoleBadgeClassAttribute(): string
+    {
+        return match ($this->role) {
+            self::ROLE_SUPER_ADMIN => 'bg-dark',
+            self::ROLE_ADMIN => 'bg-danger',
+            self::ROLE_EDITOR => 'bg-warning',
+            self::ROLE_MODERATOR => 'bg-info',
+            default => 'bg-secondary',
+        };
+    }
+
+    public function hasUniversalGrade(): bool
+    {
+        return $this->role !== self::ROLE_USER;
+    }
+
+    public function displayGrade(string $emptyLabel = 'Kiritilmagan'): string
+    {
+        if ($this->hasUniversalGrade()) {
+            return self::UNIVERSAL_GRADE_LABEL;
+        }
+
+        $grade = trim((string) ($this->grade ?? ''));
+
+        return $grade !== '' ? $grade : $emptyLabel;
+    }
+
+    public function getGradeLabelAttribute(): string
+    {
+        return $this->displayGrade();
     }
 
     public function syncRolePivot(): void

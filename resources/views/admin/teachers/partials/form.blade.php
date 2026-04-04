@@ -1,4 +1,17 @@
 <div class="input-style-1">
+  <label>Foydalanuvchi (teacher akkaunt)</label>
+  <select name="user_id">
+    <option value="">Tanlanmagan</option>
+    @foreach(($teacherUsers ?? collect()) as $u)
+      <option value="{{ $u->id }}" {{ (string) old('user_id', $teacher?->user_id) === (string) $u->id ? 'selected' : '' }}>
+        {{ $u->name }} ({{ $u->email }})
+      </option>
+    @endforeach
+  </select>
+  <small style="color:#64748b;">Kurs ochishda teacher akkaunt shu karta bilan bog‘lanadi.</small>
+</div>
+
+<div class="input-style-1">
   <label>Ism-familiya</label>
   <input type="text" name="full_name" value="{{ old('full_name', $teacher?->full_name) }}" required>
 </div>
@@ -9,24 +22,30 @@
 </div>
 
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-6">
     <div class="input-style-1">
       <label>Tajriba (yil)</label>
       <input type="number" min="0" max="60" name="experience_years" value="{{ old('experience_years', $teacher?->experience_years ?? 0) }}" required>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-6">
     <div class="input-style-1">
       <label>Sinflar</label>
       <input type="text" name="grades" value="{{ old('grades', $teacher?->grades) }}" placeholder="Masalan: 7-11-sinflar">
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="input-style-1">
-      <label>Tartib raqami</label>
-      <input type="number" min="0" max="9999" name="sort_order" value="{{ old('sort_order', $teacher?->sort_order ?? 0) }}">
-    </div>
-  </div>
+</div>
+
+<div class="input-style-1">
+  <label>Yutuqlar va mukofotlar</label>
+  <textarea name="achievements" rows="4" placeholder="Har bir qatorga bitta yutuq (masalan: Toshkent shahar olimpiadasi — 1-o‘rin)">{{ old('achievements', $teacher?->achievements) }}</textarea>
+  <small style="color:#64748b;display:block;margin-top:6px;">Saytda ustoz kartochkasi va batafsil sahifada ko‘rinadi. Tartib raqami emas — bu yerda faqat yutuqlar yoziladi.</small>
+</div>
+
+<div class="input-style-1">
+  <label>Ro‘yxatdagi tartib (raqam)</label>
+  <input type="number" min="0" max="9999" name="sort_order" value="{{ old('sort_order', $teacher?->sort_order ?? 0) }}">
+  <small style="color:#64748b;display:block;margin-top:6px;"><strong>Nima bu?</strong> «Ustozlar» sahifasida kartochkalar qaysi ketma-ketlikda chiqishini belgilaydi: <strong>kichik raqam</strong> (0, 1, 2…) ustunlik — yuqoriroqda turadi. Yutuqlar bilan aloqasi yo‘q.</small>
 </div>
 
 <div class="input-style-1">

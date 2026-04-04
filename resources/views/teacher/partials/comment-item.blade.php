@@ -8,9 +8,14 @@
   $avatarAccent = (isset($comment->id) && ((int) $comment->id % 2) === 0);
   $roleKey = $comment->user?->role ?? 'guest';
   $roleLabel = $comment->user?->role_label ?? 'Mehmon';
+  $roleCardClass = match ($roleKey) {
+    'super_admin' => 'comment-card--super-admin',
+    'admin' => 'comment-card--admin',
+    default => '',
+  };
 @endphp
 
-<article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleKey === 'super_admin' ? 'comment-card--super-admin' : '' }}" data-comment-id="{{ $comment->id }}">
+<article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
   <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }}">
     <i class="fa-solid fa-user"></i>
   </div>

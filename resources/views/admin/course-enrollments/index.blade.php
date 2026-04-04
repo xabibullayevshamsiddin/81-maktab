@@ -35,6 +35,12 @@
       </div>
     </div>
 
+    @include('admin.partials.search-bar', [
+      'placeholder' => 'Kurs nomi, o‘quvchi ismi, email, telefon, sinf...',
+      'action' => route('admin.course-enrollments.index'),
+      'hidden' => array_filter(['status' => request('status')]),
+    ])
+
     <div class="card-style mb-30">
       <div class="table-wrapper table-responsive">
         <table class="table">

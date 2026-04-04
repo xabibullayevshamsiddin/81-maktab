@@ -22,6 +22,11 @@
               <a href="{{ route('teachers.create') }}" class="main-btn primary-btn btn-hover btn-sm">Ustoz qo'shish</a>
             </div>
 
+            @include('admin.partials.search-bar', [
+              'placeholder' => 'Ism, fan, bog‘langan user email/telefon...',
+              'action' => route('teachers.index'),
+            ])
+
             <div class="table-wrapper table-responsive">
               <table class="table">
                 <thead>
@@ -29,6 +34,7 @@
                     <th><h6>#</h6></th>
                     <th><h6>Rasm</h6></th>
                     <th><h6>Ism</h6></th>
+                    <th><h6>Bog'langan user</h6></th>
                     <th><h6>Fan</h6></th>
                     <th><h6>Tajriba</h6></th>
                     <th><h6>Status</h6></th>
@@ -47,6 +53,16 @@
                         @endif
                       </td>
                       <td><p><strong>{{ $teacher->full_name }}</strong></p></td>
+                      <td>
+                        <p>
+                          @if($teacher->user)
+                            {{ $teacher->user->name }}<br>
+                            <small style="color:#64748b;">{{ $teacher->user->email }}</small>
+                          @else
+                            —
+                          @endif
+                        </p>
+                      </td>
                       <td><p>{{ $teacher->subject }}</p></td>
                       <td><p>{{ $teacher->experience_years }} yil</p></td>
                       <td>
@@ -68,7 +84,7 @@
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="7"><p>Hozircha ustozlar qo'shilmagan.</p></td>
+                      <td colspan="8"><p>Hozircha ustozlar qo'shilmagan.</p></td>
                     </tr>
                   @endforelse
                 </tbody>

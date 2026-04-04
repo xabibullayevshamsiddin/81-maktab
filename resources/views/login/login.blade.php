@@ -33,7 +33,7 @@
                     @error('email')
                         <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
                     @enderror
-                    <a href="{{ route('contact') }}" class="forgot">Parolni unutdingizmi?</a>
+                    <a href="{{ route('password.forgot.form') }}" class="forgot">Parolni unutdingizmi?</a>
                     <button class="btn" type="submit">Kirish</button>
                     <p id="signin-message" class="form-message" aria-live="polite"></p>
                 </form>

@@ -34,6 +34,11 @@
               <a href="{{ route('categories.create') }}" class="btn btn-success">Kategoriya qo'shish</a>
             </div>
 
+            @include('admin.partials.search-bar', [
+              'placeholder' => 'Kategoriya nomi yoki slug...',
+              'action' => route('categories.index'),
+            ])
+
             @if (session('success'))
               <div class="alert-box success-alert mb-20">
                 <div class="alert">{{ session('success') }}</div>

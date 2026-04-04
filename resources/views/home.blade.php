@@ -112,6 +112,10 @@
             <img
               src="{{ asset('storage/' . $post->image) }}"
               alt="{{ $post->title }}"
+              class="js-image-zoom-trigger zoomable-image"
+              data-zoom-src="{{ asset('storage/' . $post->image) }}"
+              role="button"
+              tabindex="0"
             />
 
             @if($post->category)

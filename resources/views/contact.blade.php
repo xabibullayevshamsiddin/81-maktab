@@ -52,28 +52,42 @@
               </div>
               <div class="contact-card-text">
                 <h3>Email</h3>
-                <p><a href="mailto:info@school81.uz">info@school81.uz</a></p>
+                <p>
+                  <a
+                    href="{{ gmail_compose_url('info@school81.uz', '81-IDUM murojaati') }}"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    info@school81.uz
+                  </a>
+                </p>
               </div>
             </article>
           </div>
 
           <div class="contact-form-wrap reveal">
-            <h2>Xabar yuborish</h2>
-            <form class="contact-form" id="contact-form">
-              <input type="text" id="name" placeholder="Ismingiz" required />
-              <input type="email" id="email" placeholder="Email" required />
-              <input type="tel" id="phone" placeholder="Telefon" required />
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+              <h2 style="margin:0;">Xabar yuborish</h2>
+              <x-site-rule-items area="contact" />
+            </div>
+            <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
+              @csrf
+              <input type="text" id="name" name="name" value="{{ old('name') }}" placeholder="Ismingiz" required />
+              <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Email" required />
+              <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Telefon" required />
               <textarea
                 id="shikoyat"
+                name="note"
                 placeholder="Shikoyat yoki qo'shimcha izoh (ixtiyoriy)"
                 rows="2"
-              ></textarea>
+              >{{ old('note') }}</textarea>
               <textarea
                 id="message"
+                name="message"
                 rows="5"
                 placeholder="Xabaringiz"
                 required
-              ></textarea>
+              >{{ old('message') }}</textarea>
               <button class="btn" type="submit">Yuborish</button>
               <p id="form-message" class="form-message" aria-live="polite"></p>
             </form>

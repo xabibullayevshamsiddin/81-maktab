@@ -35,7 +35,11 @@
           @if ($errors->any())
             <div class="alert-box danger-alert mb-20">
               <div class="alert">
-                {{ $errors->first() }}
+                <ul class="mb-0 ps-3">
+                  @foreach ($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                  @endforeach
+                </ul>
               </div>
             </div>
           @endif
@@ -49,7 +53,7 @@
             </div>
           @endif
 
-          <form action="{{ route('posts.store') }}" method="POST" enctype="multipart/form-data">
+          <form action="{{ route('posts.store') }}" method="POST" enctype="multipart/form-data" id="post-create-form">
             @csrf
 
             <div class="mb-3">
@@ -71,18 +75,41 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label">Yangilik turi</label>
+              <select class="form-control" name="post_kind" required>
+                @foreach ($postKinds as $key => $meta)
+                  <option value="{{ $key }}" {{ old('post_kind', 'general') === $key ? 'selected' : '' }}>
+                    {{ $meta['label'] ?? $key }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">Qisqacha tavsif</label>
               <textarea class="form-control" name="short_content" required>{{ old('short_content') }}</textarea>
             </div>
 
             <div class="mb-3">
               <label class="form-label">To'liq tavsif</label>
-              <input type="text" class="form-control" name="content" value="{{ old('content') }}" required>
+              <textarea class="form-control" name="content" rows="8" required>{{ old('content') }}</textarea>
             </div>
 
             <div class="mb-3">
               <label class="form-label">Rasm</label>
               <input type="file" class="form-control" name="image" accept="image/*" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Video fayl (kompyuterdan, ixtiyoriy)</label>
+              <input type="file" class="form-control" name="video_file" accept="video/mp4,video/webm">
+              <small class="text-muted">MP4 yoki WebM. Sayt kodida video hajmi cheklanmaydi; amalda cheklov faqat PHP (php.ini / OSPanel) va veb-serverdan. Rasm kartochkada ustun; batafsil sahifada video ko‘rinadi.</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Yoki YouTube havolasi (ixtiyoriy)</label>
+              <input type="text" class="form-control" name="video_url" value="{{ old('video_url') }}" placeholder="https://www.youtube.com/watch?v=... yoki youtu.be/...">
+              <small class="text-muted">Agar ikkalasi ham bo‘lsa, avvalo yuklangan fayl ijro etiladi.</small>
             </div>
 
             <button type="submit" class="btn btn-success">Qo'shish</button>

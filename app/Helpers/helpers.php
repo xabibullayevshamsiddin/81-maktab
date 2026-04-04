@@ -92,3 +92,168 @@ if (! function_exists('number_format_uz')) {
         return number_format($number, 0, '.', ' ');
     }
 }
+
+if (! function_exists('gmail_compose_url')) {
+    function gmail_compose_url(string $email, ?string $subject = null, ?string $body = null): string
+    {
+        $query = array_filter([
+            'view' => 'cm',
+            'fs' => '1',
+            'to' => trim($email),
+            'su' => $subject,
+            'body' => $body,
+        ], static fn ($value) => $value !== null && $value !== '');
+
+        return 'https://mail.google.com/mail/?'.http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    }
+}
+
+if (! function_exists('uz_phone_input_pattern')) {
+    function uz_phone_input_pattern(): string
+    {
+        return '\+998(?:[\s-]?\d{2})(?:[\s-]?\d{3})(?:[\s-]?\d{2})(?:[\s-]?\d{2})';
+    }
+}
+
+if (! function_exists('uz_phone_validation_message')) {
+    function uz_phone_validation_message(): string
+    {
+        return "Telefon raqam +998 90 123 45 67 ko'rinishida bo'lishi kerak.";
+    }
+}
+
+if (! function_exists('uz_phone_input_title')) {
+    function uz_phone_input_title(): string
+    {
+        return uz_phone_validation_message();
+    }
+}
+
+if (! function_exists('uz_phone_rules')) {
+    function uz_phone_rules(bool $required = true): array
+    {
+        return [
+            $required ? 'required' : 'nullable',
+            'string',
+            'max:20',
+            'regex:/^'.uz_phone_input_pattern().'$/',
+        ];
+    }
+}
+
+if (! function_exists('uz_phone_normalize')) {
+    function uz_phone_normalize(?string $phone): ?string
+    {
+        if ($phone === null) {
+            return null;
+        }
+
+        $phone = trim($phone);
+        if ($phone === '') {
+            return null;
+        }
+
+        return preg_replace('/[^\d+]+/', '', $phone);
+    }
+}
+
+if (! function_exists('uz_phone_format')) {
+    function uz_phone_format(?string $phone): ?string
+    {
+        $normalized = uz_phone_normalize($phone);
+        if ($normalized === null) {
+            return null;
+        }
+
+        return $normalized;
+    }
+}
+
+if (! function_exists('school_grade_sections')) {
+    function school_grade_sections(): array
+    {
+        return ['A', 'B', 'C', 'D', 'E', 'F'];
+    }
+}
+
+if (! function_exists('school_grade_grouped_options')) {
+    function school_grade_grouped_options(): array
+    {
+        $groups = [];
+
+        foreach (range(1, 11) as $gradeNumber) {
+            $groupLabel = $gradeNumber.'-sinf';
+            $groups[$groupLabel] = [];
+
+            foreach (school_grade_sections() as $section) {
+                $value = $gradeNumber.'-'.$section;
+                $groups[$groupLabel][$value] = $value;
+            }
+        }
+
+        return $groups;
+    }
+}
+
+if (! function_exists('school_grade_options')) {
+    function school_grade_options(): array
+    {
+        return collect(school_grade_grouped_options())
+            ->flatMap(static fn ($options) => array_keys($options))
+            ->values()
+            ->all();
+    }
+}
+
+if (! function_exists('school_grade_validation_message')) {
+    function school_grade_validation_message(): string
+    {
+        return "Sinf ro'yxatdan tanlanishi kerak.";
+    }
+}
+
+if (! function_exists('normalize_school_grade')) {
+    function normalize_school_grade(?string $grade): ?string
+    {
+        if ($grade === null) {
+            return null;
+        }
+
+        $grade = strtoupper(trim((string) $grade));
+        if ($grade === '') {
+            return null;
+        }
+
+        $grade = preg_replace('/\s+/', '', $grade);
+        $grade = str_replace(['_', '/', '\\'], '-', $grade);
+
+        if (preg_match('/^(\d{1,2})([A-Z])$/', $grade, $matches) === 1) {
+            return $matches[1].'-'.$matches[2];
+        }
+
+        return $grade;
+    }
+}
+
+if (! function_exists('normalize_school_grade_list')) {
+    function normalize_school_grade_list($grades): array
+    {
+        if ($grades === null) {
+            return [];
+        }
+
+        if (! is_array($grades) && ! $grades instanceof \Traversable) {
+            $grades = [$grades];
+        }
+
+        $gradeOrder = array_flip(school_grade_options());
+
+        return collect($grades)
+            ->map(static fn ($grade) => is_scalar($grade) ? normalize_school_grade((string) $grade) : null)
+            ->filter(static fn ($grade) => $grade !== null && isset($gradeOrder[$grade]))
+            ->unique()
+            ->sortBy(static fn ($grade) => $gradeOrder[$grade])
+            ->values()
+            ->all();
+    }
+}

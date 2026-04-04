@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,5 +27,30 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    public function render($request, Throwable $e)
+    {
+        if ($e instanceof PostTooLargeException) {
+            $hint = 'OSPanel: «PHP» → loyiha uchun PHP versiyasi → «Sozlamalar» (yoki php.ini): '
+                .'upload_max_filesize va post_max_size ni oshiring (masalan 512M). '
+                .'post_max_size yuklanadigan fayldan katta bo‘lishi kerak (video + forma maydonlari).';
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'So‘rov hajmi juda katta. '.$hint,
+                ], 413);
+            }
+
+            return redirect()->back()
+                ->withInput($request->except(['image', 'video_file']))
+                ->with(
+                    'error',
+                    'Post saqlanmadi: so‘rov hajmi juda katta. '.$hint
+                        .' Katta videoni YouTube ga yuklab, shu yerga havola qoldirish yengilroq.'
+                );
+        }
+
+        return parent::render($request, $e);
     }
 }

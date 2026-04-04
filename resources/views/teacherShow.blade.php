@@ -31,6 +31,19 @@
             <li><i class="fa-solid fa-check"></i> Fan: {{ $teacher->subject }}</li>
             <li><i class="fa-solid fa-check"></i> Sinflar: {{ $teacher->grades ?: 'Barcha sinflar' }}</li>
           </ul>
+          @if(filled($teacher->achievements))
+            <div class="teacher-achievements-block">
+              <h3 class="teacher-achievements-title"><i class="fa-solid fa-trophy"></i> Yutuqlar</h3>
+              <ul class="detail-list teacher-achievements-list">
+                @foreach(preg_split("/\r\n|\r|\n/", $teacher->achievements) as $line)
+                  @php $line = trim($line); @endphp
+                  @if($line !== '')
+                    <li><i class="fa-solid fa-award"></i> {{ $line }}</li>
+                  @endif
+                @endforeach
+              </ul>
+            </div>
+          @endif
           @auth
             <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="margin-bottom: 14px;">
               @csrf
@@ -68,7 +81,7 @@
         window.__POST_COMMENTS_CONFIG__ = {
           currentUserId: @json(auth()->check() ? auth()->id() : null),
           currentUserIsAdmin: @json(auth()->check() && auth()->user()->isAdmin()),
-          currentUserIsModerator: @json(auth()->check() && auth()->user()->isModerator()),
+          currentUserIsModerator: @json(auth()->check() && auth()->user()->hasRole('moderator')),
           currentUserIsOnlyModerator: @json(auth()->check() && auth()->user()->isOnlyModerator()),
           updateUrlTemplate: @json(route('teacher.comments.update', '__COMMENT_ID__')),
           destroyUrlTemplate: @json(route('teacher.comments.destroy', '__COMMENT_ID__')),
@@ -113,7 +126,10 @@
         </div>
 
         <div class="comment-form-box reveal">
-          <h3><i class="fa-solid fa-pen-to-square"></i> Izoh qoldiring</h3>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> Izoh qoldiring</h3>
+            <x-site-rule-items area="comment" />
+          </div>
           <form class="comment-form js-comment-form" action="{{ route('teacher.comments.store') }}" method="POST">
             @csrf
 
@@ -150,4 +166,3 @@
     </section>
   </main>
 </x-loyouts.main>
-

@@ -17,6 +17,13 @@ use App\Http\Controllers\AdminCourseEnrollmentController;
 use App\Http\Controllers\CourseEnrollmentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TeacherEnrollmentController;
+use App\Http\Controllers\ExamController;
+use App\Http\Controllers\ResultController;
+use App\Http\Controllers\AdminExamController;
+use App\Http\Controllers\AdminQuestionController;
+use App\Http\Controllers\AdminContactMessageController;
+use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\AdminCalendarEventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,6 +46,7 @@ Route::post('courses/{course}/enroll', [CourseEnrollmentController::class, 'stor
 Route::delete('courses/{course}/enroll', [CourseEnrollmentController::class, 'destroy'])
     ->middleware('auth')
     ->name('courses.enroll.cancel');
+Route::get('taqvim', [CalendarController::class, 'index'])->name('calendar');
 Route::get('post',[PublicPostController::class, 'index'])->name('post');
 Route::get('post/{post:slug}', [PublicPostController::class, 'show'])->name('post.show');
 Route::post('post/{post:slug}/comments', [PublicPostController::class, 'storeComment'])->name('post.comments.store');
@@ -53,12 +61,20 @@ Route::post('teacher/comments/{comment}/like', [TeacherCommentController::class,
 Route::get('teacher',[PublicTeacherController::class, 'index'])->name('teacher');
 Route::get('teacher/{teacher:slug}',[PublicTeacherController::class, 'show'])->name('teacher.show');
 Route::post('teacher/{teacher:slug}/like', [PublicTeacherController::class, 'toggleLike'])->name('teacher.like');
-Route::get('contact',[HomeController::class, 'contact'])->name('contact');
+Route::get('contact', [HomeController::class, 'contact'])->name('contact');
+Route::post('contact', [HomeController::class, 'storeContact'])
+    ->middleware('throttle:10,1')
+    ->name('contact.store');
 
 // login
 Route::get('login',[AuthController::class, 'login'])->name('login');
 Route::post('authenticate',[AuthController::class,'authenticate'])->name('authenticate');
 Route::post('authanticate',[AuthController::class,'authenticate'])->name('authanticate');
+Route::get('forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.forgot.form');
+Route::post('forgot-password', [AuthController::class, 'sendPasswordResetCode'])->name('password.forgot.send');
+Route::get('reset-password', [AuthController::class, 'showPasswordResetForm'])->name('password.reset.form');
+Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+Route::post('reset-password/resend', [AuthController::class, 'resendPasswordResetCode'])->name('password.reset.resend');
 Route::get('login/verify-code', [AuthController::class, 'showLoginVerify'])->name('login.verify.form');
 Route::post('login/verify-code', [AuthController::class, 'verifyLoginCode'])->name('login.verify');
 Route::post('login/verify-code/resend', [AuthController::class, 'resendLoginCode'])->name('login.verify.resend');
@@ -75,6 +91,8 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->name('profile.password.confirm');
+    Route::post('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
     Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');
     Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->name('profile.email.resend');
@@ -84,17 +102,29 @@ Route::middleware('auth')->group(function () {
     Route::post('profile/kurs-arizalari/{enrollment}/tasdiqlash', [TeacherEnrollmentController::class, 'approve'])->name('teacher.enrollments.approve');
     Route::post('profile/kurs-arizalari/{enrollment}/rad-etish', [TeacherEnrollmentController::class, 'reject'])->name('teacher.enrollments.reject');
     Route::delete('profile/kurs-arizalari/{enrollment}', [TeacherEnrollmentController::class, 'destroy'])->name('teacher.enrollments.destroy');
+
+    Route::get('exams', [ExamController::class, 'index'])->name('exam.index');
+    Route::get('exams/{exam}', [ExamController::class, 'startPage'])->name('exam.start.page');
+    Route::post('exams/{exam}/start', [ExamController::class, 'start'])->name('exam.start');
+    Route::get('exam-session/{result}', [ExamController::class, 'session'])->name('exam.session');
+    Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->name('exam.answer');
+    Route::post('exam-session/{result}/violation', [ExamController::class, 'reportViolation'])
+        ->middleware('throttle:90,1')
+        ->name('exam.violation');
+    Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->name('exam.submit');
+    Route::get('exam-results/{result}', [ResultController::class, 'show'])->name('exam.result.show');
+
 });
 
-Route::middleware(['auth', 'role:super_admin,admin,editor,moderator,teacher'])->group(function(){
+Route::middleware(['auth', 'role:super_admin,admin,editor,moderator'])->group(function(){
     Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 });
 
 Route::middleware(['auth', 'role:super_admin,admin'])->group(function(){
     Route::get('user', [AdminController::class, 'user'])->name('user');
     Route::put('user/{user}', [AdminController::class, 'updateUser'])->name('user.update');
+    Route::post('user/{user}/password-reset/send', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
     Route::delete('user/{user}', [AdminController::class, 'destroyUser'])->name('user.destroy');
-    Route::get('notification', [AdminController::class, 'notification'])->name('notification');
 });
 
 Route::middleware(['auth', 'role:teacher,super_admin,admin'])->group(function(){
@@ -106,13 +136,15 @@ Route::middleware(['auth', 'role:teacher,super_admin,admin'])->group(function(){
 });
 
 
-Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moderator,teacher'])->group(function(){
+Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moderator'])->group(function(){
     Route::middleware('role:super_admin,admin,editor')->group(function () {
         Route::resource('posts', PostController::class);
         Route::resource('categories', CategoryController::class)->except('show');
+        Route::resource('calendar-events', AdminCalendarEventController::class)->except(['show']);
     });
 
-    Route::middleware('role:super_admin,admin,editor,moderator')->group(function () {
+    Route::middleware('role:super_admin,admin,moderator')->group(function () {
+        Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('admin.contact-messages.index');
         Route::get('comments', [AdminCommentController::class, 'index'])->name('admin.comments.index');
         Route::get('comments/{type}/{id}/edit', [AdminCommentController::class, 'edit'])
             ->where(['type' => 'post|teacher', 'id' => '[0-9]+'])
@@ -126,14 +158,30 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 
     Route::middleware('role:super_admin,admin')->group(function () {
+        Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
         Route::post('comments/users/{user}/block', [AdminCommentController::class, 'blockUser'])->name('admin.comments.block-user');
     });
 
     Route::middleware('role:super_admin,admin')->group(function () {
         Route::resource('teachers', TeacherController::class);
+        Route::get('exams', [AdminExamController::class, 'index'])->name('admin.exams.index');
+        Route::get('exams/create', [AdminExamController::class, 'create'])->name('admin.exams.create');
+        Route::post('exams', [AdminExamController::class, 'store'])->name('admin.exams.store');
+        Route::get('exams/{exam}/edit', [AdminExamController::class, 'edit'])->name('admin.exams.edit');
+        Route::put('exams/{exam}', [AdminExamController::class, 'update'])->name('admin.exams.update');
+        Route::delete('exams/{exam}', [AdminExamController::class, 'destroy'])->name('admin.exams.destroy');
+
+        Route::get('exams/{exam}/questions', [AdminQuestionController::class, 'index'])->name('admin.exams.questions.index');
+        Route::get('exams/{exam}/questions/create', [AdminQuestionController::class, 'create'])->name('admin.exams.questions.create');
+        Route::post('exams/{exam}/questions', [AdminQuestionController::class, 'store'])->name('admin.exams.questions.store');
+        Route::get('exams/{exam}/questions/{question}/edit', [AdminQuestionController::class, 'edit'])->name('admin.exams.questions.edit');
+        Route::put('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'update'])->name('admin.exams.questions.update');
+        Route::delete('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('admin.exams.questions.destroy');
+        Route::get('exam-results', [AdminExamController::class, 'results'])->name('admin.exams.results');
+        Route::delete('exam-results/{result}', [AdminExamController::class, 'destroyResult'])->name('admin.exams.results.destroy');
     });
 
-    Route::middleware('role:super_admin,admin,teacher')->group(function () {
+    Route::middleware('role:super_admin,admin')->group(function () {
         Route::get('courses', [AdminCourseController::class, 'index'])->name('admin.courses.index');
         Route::put('courses/{course}/status', [AdminCourseController::class, 'updateStatus'])->name('admin.courses.status');
         Route::get('courses/{course}/edit', [TeacherCourseController::class, 'edit'])->name('admin.courses.edit');

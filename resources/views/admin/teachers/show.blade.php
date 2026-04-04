@@ -24,9 +24,15 @@
           <p><strong>Fan:</strong> {{ $teacher->subject }}</p>
           <p><strong>Tajriba:</strong> {{ $teacher->experience_years }} yil</p>
           <p><strong>Sinflar:</strong> {{ $teacher->grades ?: '-' }}</p>
+          <p><strong>Ro‘yxat tartibi (sort_order):</strong> {{ $teacher->sort_order }} <span class="text-muted" style="font-size:12px;">— ustozlar sahifasida ketma-kelik</span></p>
           <p><strong>Status:</strong> {{ $teacher->is_active ? 'Faol' : 'Nofaol' }}</p>
           <p><strong>Slug:</strong> {{ $teacher->slug }}</p>
           <hr>
+          @if(filled($teacher->achievements))
+            <p><strong>Yutuqlar:</strong></p>
+            <pre style="white-space:pre-wrap;font-size:14px;">{{ $teacher->achievements }}</pre>
+            <hr>
+          @endif
           <p>{{ $teacher->bio ?: 'Bio kiritilmagan.' }}</p>
           <a href="{{ route('teachers.edit', $teacher) }}" class="main-btn warning-btn btn-hover btn-sm">Tahrirlash</a>
           <a href="{{ route('teachers.index') }}" class="main-btn light-btn btn-hover btn-sm">Orqaga</a>

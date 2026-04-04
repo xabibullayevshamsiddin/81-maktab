@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.main')
+@extends('admin.layouts.main')
 
 @section('title', 'Postlar')
 
@@ -37,6 +37,11 @@
               <h6 class="mb-0">Barcha postlar</h6>
               <a href="{{ route('posts.create') }}" class="btn btn-success">Post qo'shish</a>
             </div>
+
+            @include('admin.partials.search-bar', [
+              'placeholder' => 'Sarlavha yoki qisqa matn bo‘yicha...',
+              'action' => route('posts.index'),
+            ])
 
             @if (session('success'))
               <div class="alert-box success-alert mb-20">

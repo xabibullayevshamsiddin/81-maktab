@@ -35,7 +35,11 @@
           @if ($errors->any())
             <div class="alert-box danger-alert mb-20">
               <div class="alert">
-                {{ $errors->first() }}
+                <ul class="mb-0 ps-3">
+                  @foreach ($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                  @endforeach
+                </ul>
               </div>
             </div>
           @endif
@@ -71,13 +75,24 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label">Yangilik turi</label>
+              <select class="form-control" name="post_kind" required>
+                @foreach ($postKinds as $key => $meta)
+                  <option value="{{ $key }}" {{ old('post_kind', $post->post_kind ?? 'general') === $key ? 'selected' : '' }}>
+                    {{ $meta['label'] ?? $key }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">Qisqacha tavsif</label>
               <textarea class="form-control" name="short_content" rows="3" required>{{ old('short_content', $post->short_content) }}</textarea>
             </div>
 
             <div class="mb-3">
               <label class="form-label">To'liq tavsif</label>
-              <input type="text" class="form-control" name="content" value="{{ old('content', $post->content) }}" required>
+              <textarea class="form-control" name="content" rows="8" required>{{ old('content', $post->content) }}</textarea>
             </div>
 
             @if ($post->image)
@@ -91,6 +106,28 @@
               <label class="form-label">Yangi rasm (ixtiyoriy)</label>
               <input type="file" class="form-control" name="image" accept="image/*">
 
+            </div>
+
+            @if(!empty($post->video_path))
+              <div class="mb-3">
+                <label class="form-label">Joriy video fayl</label>
+                <p class="text-muted small">{{ basename($post->video_path) }}</p>
+                <label class="form-check-label d-block">
+                  <input type="checkbox" name="remove_video_file" value="1" class="form-check-input">
+                  Video faylni o‘chirish
+                </label>
+              </div>
+            @endif
+
+            <div class="mb-3">
+              <label class="form-label">Yangi video fayl (ixtiyoriy)</label>
+              <input type="file" class="form-control" name="video_file" accept="video/mp4,video/webm">
+              <small class="text-muted">MP4 yoki WebM. Kod tomonda cheklov yo‘q; amalda PHP va server limiti qo‘llanadi.</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">YouTube havolasi (ixtiyoriy)</label>
+              <input type="text" class="form-control" name="video_url" value="{{ old('video_url', $post->video_url) }}" placeholder="https://www.youtube.com/watch?v=... yoki youtu.be/...">
             </div>
 
             <button type="submit" class="btn btn-primary">Saqlash</button>

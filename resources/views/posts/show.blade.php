@@ -26,7 +26,7 @@
         window.__POST_COMMENTS_CONFIG__ = {
           currentUserId: @json(auth()->check() ? auth()->id() : null),
           currentUserIsAdmin: @json(auth()->check() && auth()->user()->isAdmin()),
-          currentUserIsModerator: @json(auth()->check() && auth()->user()->isModerator()),
+          currentUserIsModerator: @json(auth()->check() && auth()->user()->hasRole('moderator')),
           currentUserIsOnlyModerator: @json(auth()->check() && auth()->user()->isOnlyModerator()),
           updateUrlTemplate: @json(route('post.comments.update', [$post, '__COMMENT_ID__'])),
           destroyUrlTemplate: @json(route('post.comments.destroy', [$post, '__COMMENT_ID__'])),
@@ -41,8 +41,51 @@
         </p>
       @endif
 
+      @php
+        $ytEmbed = $post->video_url ? \App\Support\YoutubeEmbed::parse($post->video_url) : null;
+        $videoExt = filled($post->video_path) ? strtolower(pathinfo($post->video_path, PATHINFO_EXTENSION)) : '';
+      @endphp
       <article class="news-card post-detail-card">
-        <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" />
+        <div class="post-detail-media">
+          @if($post->hasVideo())
+            @if(filled($post->video_path))
+              <video class="post-detail-video-native" controls playsinline preload="metadata" title="{{ $post->title }}">
+                <source
+                  src="{{ asset('storage/'.$post->video_path) }}"
+                  type="{{ $videoExt === 'webm' ? 'video/webm' : 'video/mp4' }}"
+                />
+                Brauzeringiz video qo‘llab-quvvatlamaydi.
+              </video>
+            @elseif($ytEmbed)
+              <div class="post-video-embed post-video-embed--detail-hero">
+                <div class="post-video-embed-inner">
+                  <iframe
+                    src="{{ $ytEmbed[0] }}"
+                    title="Video: {{ $post->title }}"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+              </div>
+            @elseif(filled($post->video_url))
+              <div class="post-detail-video-external">
+                <a class="btn" href="{{ $post->video_url }}" target="_blank" rel="noopener noreferrer">
+                  <i class="fa-solid fa-up-right-from-square"></i> Videoni ochish
+                </a>
+              </div>
+            @endif
+          @else
+            <img
+              src="{{ asset('storage/' . $post->image) }}"
+              alt="{{ $post->title }}"
+              class="js-image-zoom-trigger zoomable-image"
+              data-zoom-src="{{ asset('storage/' . $post->image) }}"
+              role="button"
+              tabindex="0"
+            />
+          @endif
+        </div>
 
         @if($post->category)
           <div style="padding: 12px 16px 0;">
@@ -76,7 +119,7 @@
         </div>
 
         @php
-          $canEdit = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isEditor() || auth()->user()->isModerator());
+          $canEdit = auth()->check() && auth()->user()->canAccessDashboard();
         @endphp
 
         @if($canEdit)
@@ -103,7 +146,10 @@
         </div>
 
         <div class="comment-form-box reveal">
-          <h3><i class="fa-solid fa-pen-to-square"></i> Izoh qoldiring</h3>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> Izoh qoldiring</h3>
+            <x-site-rule-items area="comment" />
+          </div>
 
           <form class="comment-form js-comment-form" action="{{ route('post.comments.store', $post) }}" method="POST">
             @csrf

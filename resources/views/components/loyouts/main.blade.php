@@ -75,6 +75,9 @@
         color: #fff;
         font-weight: 600;
         white-space: nowrap;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .login {
@@ -85,10 +88,14 @@
 
       .nav-dropdown {
         position: relative;
+        display: flex;
+        align-items: center;
       }
 
       .nav-dropdown-details {
         position: relative;
+        display: flex;
+        align-items: center;
       }
 
       .nav-dropdown-toggle {
@@ -97,6 +104,9 @@
         gap: 8px;
         cursor: pointer;
         list-style: none;
+        line-height: 1;
+        position: relative;
+        top: 2px;
       }
 
       .nav-dropdown-toggle::-webkit-details-marker {
@@ -163,11 +173,13 @@
 
         .nav-dropdown-details {
           width: 100%;
+          display: block;
         }
 
         .nav-dropdown-toggle {
           width: 100%;
           justify-content: space-between;
+          top: 0;
         }
 
         .nav-dropdown-menu {
@@ -182,10 +194,14 @@
   <body data-theme="light">
     @php
       $authUser = auth()->user();
-      $showAdminToolsDropdown = $authUser && $authUser->isAdmin();
-      $canOpenCourse = $authUser && ($authUser->isTeacher() || $authUser->isAdmin());
-      $canAccessDashboard = $authUser && $authUser->isModerator();
-      $adminToolsActive = request()->routeIs('teacher.courses.*');
+      $canOpenCourse = $authUser && $authUser->hasAnyRole(['teacher', 'admin', 'super_admin']);
+      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
+      $accountMenuActive = $authUser && (
+        request()->routeIs('exam.*')
+        || request()->routeIs('profile.*')
+        || request()->routeIs('teacher.courses.*')
+        || request()->routeIs('dashboard')
+      );
     @endphp
     <header class="page-header">
       <div class="container">
@@ -213,6 +229,7 @@
               <li><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">Maktab haqida</a></li>
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">Kurslar</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">Yangiliklar</a></li>
+              <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">Taqvim</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher*') ? 'active' : '' }}" href="{{ route('teacher') }}">Ustozlar</a></li>
               <li class="mobile-theme-toggle-wrap">
                 <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o‘chirish" title="Tungi rejim">
@@ -220,23 +237,35 @@
                   <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
                 </button>
               </li>
-              @if($showAdminToolsDropdown)
-                <li class="nav-dropdown">
+              @auth
+                <li class="nav-dropdown" style="margin-top: 5px">
                   <details class="nav-dropdown-details js-header-dropdown">
-                    <summary class="nav-link nav-dropdown-toggle {{ $adminToolsActive ? 'active' : '' }}">
-                      Boshqaruv
+                    <summary class="nav-link nav-dropdown-toggle {{ $accountMenuActive ? 'active' : '' }}">
+                      Kabinet
                       <i class="fa-solid fa-chevron-down"></i>
                     </summary>
 
                     <div class="nav-dropdown-menu">
+                      <a class="nav-dropdown-item {{ request()->routeIs('exam.*') ? 'active' : '' }}" href="{{ route('exam.index') }}">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        Imtihonlar
+                      </a>
                       <a class="nav-dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
                         <i class="fa-solid fa-user"></i>
                         Profil
                       </a>
-                      <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
-                        <i class="fa-solid fa-book-open"></i>
-                        Kurs ochish
-                      </a>
+                      @if($canOpenCourse)
+                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
+                          <i class="fa-solid fa-book-open"></i>
+                          Kurs ochish
+                        </a>
+                      @endif
+                      @if($canAccessDashboard)
+                        <a class="nav-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                          <i class="fa-solid fa-table-columns"></i>
+                          Dashboard
+                        </a>
+                      @endif
 
                       <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
                         @csrf
@@ -248,11 +277,7 @@
                     </div>
                   </details>
                 </li>
-              @else
-                @if($canOpenCourse)
-                  <li><a class="nav-link {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">Kurs ochish</a></li>
-                @endif
-              @endif
+              @endauth
               <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">Aloqa</a></li>
             </ul>
           </nav>
@@ -267,22 +292,10 @@
               <p class="header-user-name">{{ $authUser->name }}</p>
             @endauth
 
-            @auth
-              <a href="{{ route('profile.show') }}" class="btn btn-outline">Profil</a>
-              @if($canAccessDashboard)
-                <a href="{{ route('dashboard') }}" class="btn btn-outline">dashboard</a>
-              @endif
-
-              @unless($showAdminToolsDropdown)
-                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
-                  @csrf
-                  <button type="submit" class="btn btn-outline">Logout</button>
-                </form>
-              @endunless
-            @else
+            @guest
               <a href="{{ route('login') }}" class="btn btn-outline">Kirish</a>
               <a href="{{ route('register') }}" class="btn">Ro'yxatdan o'tish</a>
-            @endauth
+            @endguest
           </div>
         </div>
       </div>
@@ -298,6 +311,16 @@
     >
       <i class="fa-solid fa-chevron-up"></i>
     </button>
+
+    <div id="image-lightbox" class="image-lightbox" aria-hidden="true">
+      <button type="button" class="image-lightbox-close" aria-label="Rasmni yopish">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="image-lightbox-stage">
+        <img id="image-lightbox-img" class="image-lightbox-img" alt="" />
+        <p id="image-lightbox-caption" class="image-lightbox-caption" hidden></p>
+      </div>
+    </div>
 
     <footer class="footer">
       <div class="footer-container container">
@@ -321,7 +344,13 @@
             <li><a href="{{ route('about') }}">Maktab haqida</a></li>
             <li><a href="{{ route('courses') }}">Kurslar</a></li>
             <li><a href="{{ route('post') }}">Yangiliklar</a></li>
+            <li><a href="{{ route('calendar') }}">Taqvim</a></li>
             <li><a href="{{ route('teacher') }}">Ustozlar</a></li>
+            @auth
+              <li><a href="{{ route('exam.index') }}">Imtihonlar</a></li>
+            @else
+              <li><a href="{{ route('login') }}">Imtihonlar (kirish)</a></li>
+            @endauth
             <li><a href="{{ route('contact') }}">Aloqa</a></li>
           </ul>
         </div>
@@ -337,7 +366,16 @@
             <i class="fa-solid fa-phone"></i>
             <a href="tel:+998711234567">+998 71 123 45 67</a>
           </p>
-          <p><i class="fa-solid fa-envelope"></i> info@school81.uz</p>
+          <p>
+            <i class="fa-solid fa-envelope"></i>
+            <a
+              href="{{ gmail_compose_url('info@school81.uz', '81-IDUM murojaati') }}"
+              target="_blank"
+              rel="noopener"
+            >
+              info@school81.uz
+            </a>
+          </p>
         </div>
       </div>
 
@@ -348,6 +386,134 @@
     </footer>
 
     <script src="{{ asset('temp/js/script.js') }}?v={{ filemtime(public_path('temp/js/script.js')) }}"></script>
+    <script>
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.site-rules-open');
+        if (!btn) return;
+        const id = btn.getAttribute('data-dialog');
+        const dlg = id && document.getElementById(id);
+        if (dlg && typeof dlg.showModal === 'function' && !dlg.open) dlg.showModal();
+      });
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.site-rules-close')) {
+          const dlg = e.target.closest('dialog');
+          if (dlg && typeof dlg.close === 'function') dlg.close();
+          return;
+        }
+
+        if (e.target.matches('.site-rules-dialog')) {
+          if (typeof e.target.close === 'function') e.target.close();
+        }
+      });
+    </script>
+    <script>
+      (() => {
+        const phoneInputs = document.querySelectorAll('input[name="phone"], input[name="contact_phone"]');
+        if (!phoneInputs.length) return;
+
+        const pattern = @json(uz_phone_input_pattern());
+        const title = @json(uz_phone_input_title());
+        const placeholder = '+998 90 123 45 67';
+
+        const prettifyPhone = (value) => {
+          const normalized = String(value || '').replace(/[^\d+]+/g, '');
+          const match = normalized.match(/^\+998(\d{2})(\d{3})(\d{2})(\d{2})$/);
+
+          if (!match) {
+            return value;
+          }
+
+          return `+998 ${match[1]} ${match[2]} ${match[3]} ${match[4]}`;
+        };
+
+        phoneInputs.forEach((input) => {
+          input.setAttribute('type', 'tel');
+          input.setAttribute('inputmode', 'tel');
+          input.setAttribute('autocomplete', 'tel');
+          input.setAttribute('maxlength', '17');
+          input.setAttribute('pattern', pattern);
+          input.setAttribute('title', title);
+          input.setAttribute('placeholder', placeholder);
+          input.value = prettifyPhone(input.value);
+
+          input.addEventListener('blur', () => {
+            input.value = prettifyPhone(input.value);
+          });
+        });
+      })();
+    </script>
+    <script>
+      (() => {
+        const lightbox = document.getElementById('image-lightbox');
+        const lightboxImg = document.getElementById('image-lightbox-img');
+        const lightboxCaption = document.getElementById('image-lightbox-caption');
+        if (!lightbox || !lightboxImg || !lightboxCaption) return;
+
+        function openLightbox(img) {
+          const src = img.getAttribute('data-zoom-src') || img.currentSrc || img.getAttribute('src');
+          const alt = (img.getAttribute('alt') || '').trim();
+          if (!src) return;
+
+          lightboxImg.setAttribute('src', src);
+          lightboxImg.setAttribute('alt', alt);
+
+          if (alt) {
+            lightboxCaption.textContent = alt;
+            lightboxCaption.hidden = false;
+          } else {
+            lightboxCaption.textContent = '';
+            lightboxCaption.hidden = true;
+          }
+
+          lightbox.classList.add('open');
+          lightbox.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('lightbox-open');
+        }
+
+        function closeLightbox() {
+          lightbox.classList.remove('open');
+          lightbox.setAttribute('aria-hidden', 'true');
+          document.body.classList.remove('lightbox-open');
+          lightboxImg.removeAttribute('src');
+          lightboxImg.setAttribute('alt', '');
+          lightboxCaption.textContent = '';
+          lightboxCaption.hidden = true;
+        }
+
+        document.addEventListener('click', (event) => {
+          const img = event.target.closest('.js-image-zoom-trigger');
+          if (img) {
+            openLightbox(img);
+            return;
+          }
+
+          if (event.target.closest('.image-lightbox-close')) {
+            closeLightbox();
+            return;
+          }
+
+          if (event.target === lightbox) {
+            closeLightbox();
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          const focusedZoomable = document.activeElement?.classList?.contains('js-image-zoom-trigger')
+            ? document.activeElement
+            : null;
+
+          if (focusedZoomable && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            openLightbox(focusedZoomable);
+            return;
+          }
+
+          if (event.key === 'Escape' && lightbox.classList.contains('open')) {
+            closeLightbox();
+          }
+        });
+      })();
+    </script>
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
@@ -678,9 +844,14 @@
             return;
 
             function buildReplyLi() {
-              const superCls = roleKey === 'super_admin' ? ' comment-card--super-admin' : '';
+              const staffCardCls =
+                roleKey === 'super_admin'
+                  ? ' comment-card--super-admin'
+                  : roleKey === 'admin'
+                    ? ' comment-card--admin'
+                    : '';
               return `
-                <article class="comment-card reveal comment-item-reply${superCls}" data-comment-id="${escapeHtml(comment.id)}">
+                <article class="comment-card reveal comment-item-reply${staffCardCls}" data-comment-id="${escapeHtml(comment.id)}">
                   <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
                     <i class="fa-solid fa-user"></i>
                   </div>
@@ -742,9 +913,14 @@
                 </div>
               `;
 
-              const superCls = roleKey === 'super_admin' ? ' comment-card--super-admin' : '';
+              const staffCardCls =
+                roleKey === 'super_admin'
+                  ? ' comment-card--super-admin'
+                  : roleKey === 'admin'
+                    ? ' comment-card--admin'
+                    : '';
               return `
-                <article class="comment-card reveal${superCls}" data-comment-id="${escapeHtml(comment.id)}">
+                <article class="comment-card reveal${staffCardCls}" data-comment-id="${escapeHtml(comment.id)}">
                   <div class="comment-avatar ${(parseInt(comment.id, 10) % 2 === 0) ? 'accent' : ''}">
                     <i class="fa-solid fa-user"></i>
                   </div>

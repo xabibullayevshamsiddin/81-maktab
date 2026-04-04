@@ -5,12 +5,24 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::withCount('posts')->latest()->get();
+        $q = trim((string) $request->query('q', ''));
+
+        $query = Category::withCount('posts')->latest();
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q): void {
+                $w->where('name', 'like', '%'.$q.'%')
+                    ->orWhere('slug', 'like', '%'.$q.'%');
+            });
+        }
+
+        $categories = $query->get();
 
         return view('admin.categories.index', compact('categories'));
     }

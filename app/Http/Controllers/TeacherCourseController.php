@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -13,22 +14,39 @@ class TeacherCourseController extends Controller
 {
     public function create()
     {
-        $this->authorizeCreator();
+        $user = $this->authorizeCreator();
+        $isAdmin = $user->isAdmin();
 
-        $teachers = Teacher::query()
-            ->where('is_active', true)
-            ->orderBy('full_name')
-            ->get();
+        $teachers = collect();
+        $selectedTeacher = null;
+        if ($isAdmin) {
+            $teachers = Teacher::query()
+                ->where('is_active', true)
+                ->orderBy('full_name')
+                ->get();
+        } else {
+            $selectedTeacher = $this->teacherProfileLinkedToUser($user);
+            if (! $selectedTeacher) {
+                return redirect()
+                    ->route('profile.show')
+                    ->with(
+                        'error',
+                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin → Ustozlar → tahrirlash → foydalanuvchi tanlash)."
+                    )
+                    ->with('toast_type', 'error');
+            }
+        }
 
-        return view('courses.create', compact('teachers'));
+        return view('courses.create', compact('teachers', 'isAdmin', 'selectedTeacher'));
     }
 
     public function store(Request $request)
     {
         $user = $this->authorizeCreator();
 
+        $isAdmin = $user->isAdmin();
         $validated = $request->validate([
-            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+            'teacher_id' => [$isAdmin ? 'required' : 'nullable', 'integer', 'exists:teachers,id'],
             'title' => ['required', 'string', 'max:255'],
             'price' => ['required', 'string', 'max:100'],
             'duration' => ['required', 'string', 'max:120'],
@@ -37,12 +55,26 @@ class TeacherCourseController extends Controller
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
-        $teacher = Teacher::query()->findOrFail((int) $validated['teacher_id']);
+        if ($isAdmin) {
+            $teacher = Teacher::query()->findOrFail((int) $validated['teacher_id']);
+        } else {
+            $teacher = $this->teacherProfileLinkedToUser($user);
+            if (! $teacher) {
+                return redirect()
+                    ->route('profile.show')
+                    ->with(
+                        'error',
+                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin → Ustozlar → tahrirlash → foydalanuvchi tanlash)."
+                    )
+                    ->with('toast_type', 'error');
+            }
+        }
+
         abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
 
         if (! config('courses.require_email_verification')) {
             $payload = [
-                'teacher_id' => (int) $validated['teacher_id'],
+                'teacher_id' => (int) $teacher->id,
                 'created_by' => (int) $user->id,
                 'title' => $validated['title'],
                 'price' => $validated['price'],
@@ -69,7 +101,7 @@ class TeacherCourseController extends Controller
         $code = (string) random_int(100000, 999999);
 
         $payload = [
-            'teacher_id' => (int) $validated['teacher_id'],
+            'teacher_id' => (int) $teacher->id,
             'created_by' => (int) $user->id,
             'title' => $validated['title'],
             'price' => $validated['price'],
@@ -270,6 +302,17 @@ class TeacherCourseController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Teacher akkaunti uchun faqat shu userga bog'langan faol ustoz kartasi (boshqa fallback yo'q).
+     */
+    private function teacherProfileLinkedToUser(User $user): ?Teacher
+    {
+        return Teacher::query()
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
     }
 }
 

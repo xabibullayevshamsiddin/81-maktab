@@ -18,6 +18,12 @@
 
       <div class="courses-grid" id="courses-grid">
         @forelse($courses as $course)
+          @php
+            $teacher = $course->teacher;
+            $teacherAchievements = $teacher?->achievementItems() ?? [];
+            $teacherBio = $teacher?->shortBio(260) ?? "Kurs muallifi haqida qisqa ma'lumot hali kiritilmagan.";
+            $courseModalId = 'course-details-'.$course->id;
+          @endphp
           <article class="course-card reveal">
             <div class="course-card-media">
               <img
@@ -38,12 +44,32 @@
                 <li><i class="fa-regular fa-calendar"></i> {{ $course->start_date?->format('Y-m-d') }}</li>
               </ul>
               <div class="course-card-actions">
+                <div class="course-card-toolbar">
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm course-info-trigger"
+                    data-course-modal-open="{{ $courseModalId }}"
+                  >
+                    <i class="fa-solid fa-circle-info"></i> Kurs haqida ma'lumot
+                  </button>
+                </div>
                 @auth
                   @php
                     $enrollmentByCourseId = $enrollmentByCourseId ?? collect();
                     $en = $enrollmentByCourseId->get($course->id);
                     $isOwnCourse = (int) $course->created_by === (int) auth()->id();
+                    $canManageCourse = auth()->user()->canManageSystem() || $isOwnCourse;
                   @endphp
+                  @if($canManageCourse)
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                      <a href="{{ route('admin.courses.edit', $course) }}" class="btn btn-sm">Kursni tahrirlash</a>
+                      <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Kurs o‘chirilsinmi?');" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline btn-sm">Kursni o‘chirish</button>
+                      </form>
+                    </div>
+                  @endif
                   @if($isOwnCourse)
                     <p class="course-enroll-hint" style="font-size:13px;margin:0;">Bu siz yaratgan kurs — o‘z kursingizga yozilmaysiz.</p>
                     @if($en)
@@ -121,10 +147,120 @@
               </div>
             </div>
           </article>
+          <div id="{{ $courseModalId }}" class="course-details-modal" aria-hidden="true">
+            <div class="course-details-overlay" data-course-modal-close></div>
+            <div class="course-details-dialog" role="dialog" aria-modal="true" aria-labelledby="{{ $courseModalId }}-title">
+              <button type="button" class="course-details-close" aria-label="Ma'lumotni yopish" data-course-modal-close>
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <div class="course-details-content">
+                <span class="course-detail-badge">Kurs haqida ma'lumot</span>
+                <h2 id="{{ $courseModalId }}-title">{{ $course->title }}</h2>
+
+                <div class="course-details-grid">
+                  <div class="course-details-main">
+                    <ul class="course-details-meta">
+                      <li><i class="fa-solid fa-user"></i> <span>Muallif: {{ $teacher?->full_name ?: '-' }}</span></li>
+                      <li><i class="fa-solid fa-book-open"></i> <span>Fan: {{ $teacher?->subject ?: "Kiritilmagan" }}</span></li>
+                      <li><i class="fa-regular fa-clock"></i> <span>Davomiyligi: {{ $course->duration }}</span></li>
+                      <li><i class="fa-solid fa-money-bill-wave"></i> <span>Narxi: {{ $course->price }}</span></li>
+                      <li><i class="fa-regular fa-calendar-check"></i> <span>Boshlanishi: {{ $course->start_date?->format('Y-m-d') ?: '-' }}</span></li>
+                    </ul>
+
+                    <div class="course-details-copy">
+                      <h3>Nimalarni o'rganasiz</h3>
+                      <p>{!! nl2br(e($course->description)) !!}</p>
+                    </div>
+                  </div>
+
+                  <aside class="course-teacher-card">
+                    <div class="course-teacher-card-head">
+                      <img src="{{ $teacher?->imageUrl() }}" alt="{{ $teacher?->full_name ?: 'Ustoz' }}">
+                      <div>
+                        <span class="course-teacher-label">Kurs muallifi</span>
+                        <h3>{{ $teacher?->full_name ?: 'Ustoz' }}</h3>
+                        <p>{{ $teacher?->subject ?: "Fan ko'rsatilmagan" }}</p>
+                      </div>
+                    </div>
+
+                    <div class="course-teacher-facts">
+                      <span><i class="fa-solid fa-award"></i> {{ (int) ($teacher?->experience_years ?? 0) }} yil tajriba</span>
+                      <span><i class="fa-solid fa-layer-group"></i> {{ $teacher?->grades ?: 'Barcha sinflar' }}</span>
+                    </div>
+
+                    <p class="course-teacher-bio">{{ $teacherBio }}</p>
+
+                    <div class="course-teacher-achievements">
+                      <h4><i class="fa-solid fa-trophy"></i> Yutuqlar va tajriba</h4>
+                      @if(!empty($teacherAchievements))
+                        <ul>
+                          @foreach($teacherAchievements as $achievement)
+                            <li><i class="fa-solid fa-check"></i> {{ $achievement }}</li>
+                          @endforeach
+                        </ul>
+                      @else
+                        <p class="course-teacher-empty">Ustozning yutuqlari hozircha alohida kiritilmagan.</p>
+                      @endif
+                    </div>
+
+                    @if($teacher)
+                      <a href="{{ route('teacher.show', $teacher) }}" class="btn btn-sm course-teacher-link">
+                        <i class="fa-solid fa-user-graduate"></i> Ustoz profilini ochish
+                      </a>
+                    @endif
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
         @empty
           <p>Hozircha kurslar yo'q.</p>
         @endforelse
       </div>
     </section>
   </main>
+
+  <script>
+    (() => {
+      const openButtons = document.querySelectorAll('[data-course-modal-open]');
+      if (!openButtons.length) return;
+
+      const closeModal = (modal) => {
+        if (!modal) return;
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      };
+
+      const openModal = (modal) => {
+        if (!modal) return;
+        document.querySelectorAll('.course-details-modal.active').forEach((currentModal) => {
+          closeModal(currentModal);
+        });
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+      };
+
+      openButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const modalId = button.getAttribute('data-course-modal-open');
+          openModal(document.getElementById(modalId));
+        });
+      });
+
+      document.querySelectorAll('[data-course-modal-close]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+          closeModal(event.target.closest('.course-details-modal'));
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        document.querySelectorAll('.course-details-modal.active').forEach((modal) => {
+          closeModal(modal);
+        });
+      });
+    })();
+  </script>
 </x-loyouts.main>

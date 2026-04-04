@@ -12,6 +12,7 @@ class OneTimeCode extends Model
     public const PURPOSE_LOGIN = 'login';
     public const PURPOSE_REGISTER = 'register';
     public const PURPOSE_EMAIL_CHANGE = 'email_change';
+    public const PURPOSE_PASSWORD_RESET = 'password_reset';
 
     protected $fillable = [
         'email',
@@ -26,4 +27,3 @@ class OneTimeCode extends Model
         'meta' => 'array',
     ];
 }
-

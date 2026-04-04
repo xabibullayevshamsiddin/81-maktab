@@ -15,11 +15,14 @@ class CourseEnrollmentController extends Controller
         $this->ensureEnrollable($course);
 
         $validated = $request->validate([
-            'contact_phone' => ['required', 'string', 'max:40'],
+            'contact_phone' => uz_phone_rules(),
             'grade' => ['required', 'string', 'max:32'],
             'subject_level' => ['required', 'string', 'max:120'],
             'note' => ['nullable', 'string', 'max:500'],
+        ], [
+            'contact_phone.regex' => uz_phone_validation_message(),
         ]);
+        $validated['contact_phone'] = uz_phone_format($validated['contact_phone']);
 
         $userId = (int) $request->user()->id;
 

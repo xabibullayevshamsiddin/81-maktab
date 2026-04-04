@@ -22,6 +22,22 @@ class AdminCourseEnrollmentController extends Controller
             $query->where('status', $status);
         }
 
+        $q = trim((string) $request->query('q', ''));
+        if ($q !== '') {
+            $query->where(function ($w) use ($q): void {
+                $w->whereHas('user', function ($u) use ($q): void {
+                    $u->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('phone', 'like', '%'.$q.'%');
+                })->orWhereHas('course', function ($c) use ($q): void {
+                    $c->where('title', 'like', '%'.$q.'%');
+                })
+                    ->orWhere('contact_phone', 'like', '%'.$q.'%')
+                    ->orWhere('grade', 'like', '%'.$q.'%')
+                    ->orWhere('subject_level', 'like', '%'.$q.'%');
+            });
+        }
+
         $enrollments = $query->paginate(30)->withQueryString();
 
         $pendingCount = CourseEnrollment::query()
@@ -31,16 +47,27 @@ class AdminCourseEnrollmentController extends Controller
         return view('admin.course-enrollments.index', compact('enrollments', 'pendingCount'));
     }
 
-    public function index(Course $course)
+    public function index(Request $request, Course $course)
     {
         $this->authorizeManageCourse($course);
 
         $course->load('teacher');
 
-        $enrollments = $course->enrollments()
+        $q = trim((string) $request->query('q', ''));
+
+        $enrollmentQuery = $course->enrollments()
             ->with(['user', 'reviewer'])
-            ->latest()
-            ->get();
+            ->latest();
+
+        if ($q !== '') {
+            $enrollmentQuery->whereHas('user', function ($u) use ($q): void {
+                $u->where('name', 'like', '%'.$q.'%')
+                    ->orWhere('email', 'like', '%'.$q.'%')
+                    ->orWhere('phone', 'like', '%'.$q.'%');
+            });
+        }
+
+        $enrollments = $enrollmentQuery->get();
 
         return view('admin.courses.enrollments', compact('course', 'enrollments'));
     }

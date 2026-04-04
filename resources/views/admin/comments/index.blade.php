@@ -38,6 +38,12 @@
       </div>
     </div>
 
+    @include('admin.partials.search-bar', [
+      'placeholder' => $type === 'post' ? 'Izoh, muallif, post sarlavhasi...' : 'Izoh yoki muallif...',
+      'action' => route('admin.comments.index'),
+      'hidden' => ['type' => $type],
+    ])
+
     <div class="card-style mb-30">
       <div class="table-wrapper table-responsive">
         <table class="table">
@@ -96,7 +102,7 @@
                     @else
                       <span class="text-muted small">Huquq yo‘q</span>
                     @endif
-                    @if($comment->user && auth()->user()->isAdmin() && auth()->user()->canManage($comment->user) && (int)$comment->user->id !== (int)auth()->id())
+                    @if($comment->user && auth()->user()->canManageSystem() && auth()->user()->canManage($comment->user) && (int)$comment->user->id !== (int)auth()->id())
                       <form action="{{ route('admin.comments.block-user', $comment->user) }}" method="POST" class="d-inline" onsubmit="return confirm('Bu foydalanuvchini bloklaysizmi?');">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-dark">Bloklash</button>

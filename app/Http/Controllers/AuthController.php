@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -36,6 +37,13 @@ class AuthController extends Controller
         return view('login.login');
     }
 
+    public function showForgotPassword(Request $request)
+    {
+        return view('login.forgot-password', [
+            'email' => $this->normalizeEmail((string) $request->query('email', '')),
+        ]);
+    }
+
     public function authenticate(LoginRequest $request)
     {
         $credentials = $request->validated();
@@ -56,7 +64,7 @@ class AuthController extends Controller
         }
 
         if (! self::LOGIN_EMAIL_OTP_ENABLED) {
-            Auth::login($user);
+            Auth::login($user, true);
             $request->session()->regenerate();
 
             return redirect()->intended(route('home'))
@@ -99,18 +107,20 @@ class AuthController extends Controller
     public function registerStore(RegisterRequest $request)
     {
         $validated = $request->validated();
+        $validated['phone'] = uz_phone_format($validated['phone']);
 
         if (! self::REGISTER_EMAIL_OTP_ENABLED) {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
+                'grade' => $validated['grade'],
                 'password' => $validated['password'],
             ]);
             $user->email_verified_at = now();
             $user->save();
 
-            Auth::login($user);
+            Auth::login($user, true);
             $request->session()->regenerate();
 
             return redirect()->route('home')
@@ -129,6 +139,7 @@ class AuthController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
+                'grade' => $validated['grade'],
                 'password' => Hash::make($validated['password']),
             ]);
         } catch (\Throwable $e) {
@@ -151,6 +162,172 @@ class AuthController extends Controller
     public function regiter_store(RegisterRequest $request)
     {
         return $this->registerStore($request);
+    }
+
+    public function sendPasswordResetCode(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email:rfc', 'max:255'],
+        ]);
+
+        $email = $this->normalizeEmail($validated['email']);
+        $user = User::query()->where('email', $email)->first();
+
+        if (! $user) {
+            return back()
+                ->withErrors(['email' => 'Bu email bilan hisob topilmadi.'])
+                ->onlyInput('email');
+        }
+
+        if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
+            return back()
+                ->withErrors([
+                    'email' => "Kod yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
+                ])
+                ->onlyInput('email');
+        }
+
+        try {
+            $this->issuePasswordResetOtp($user);
+        } catch (\Throwable $e) {
+            Log::error('OTP password reset send failed', [
+                'email' => $email,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withErrors(['email' => 'Parolni tiklash kodi yuborilmadi. Keyinroq qayta urinib ko\'ring.'])
+                ->onlyInput('email');
+        }
+
+        return redirect()
+            ->route('password.reset.form', ['email' => $email])
+            ->with('success', "Tasdiqlash kodi {$email} manziliga yuborildi.")
+            ->with('toast_type', 'success');
+    }
+
+    public function showPasswordResetForm(Request $request)
+    {
+        $email = $this->normalizeEmail((string) $request->query('email', ''));
+        if ($email === '') {
+            return redirect()->route('password.forgot.form');
+        }
+
+        return view('login.reset-password', [
+            'email' => $email,
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email:rfc', 'max:255'],
+            'code' => ['required', 'digits:6'],
+            'password' => [
+                'required',
+                'string',
+                'min:6',
+                'confirmed',
+            ],
+        ], [
+            'email.required' => 'Emailni kiriting.',
+            'code.required' => 'Tasdiqlash kodini kiriting.',
+            'code.digits' => 'Kod 6 xonali bo\'lishi kerak.',
+            'password.required' => 'Yangi parolni kiriting.',
+            'password.min' => 'Yangi parol kamida 6 belgidan iborat bo\'lishi kerak.',
+            'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
+        ]);
+
+        $email = $this->normalizeEmail($validated['email']);
+
+        if (RateLimiter::tooManyAttempts($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_PASSWORD_RESET), self::OTP_VERIFY_MAX_ATTEMPTS)) {
+            return back()
+                ->withErrors([
+                    'code' => "Juda ko'p xato urinish. {$this->otpVerifySecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniyadan keyin qayta urinib ko'ring.",
+                ])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $user = User::query()->where('email', $email)->first();
+        if (! $user) {
+            return back()
+                ->withErrors(['email' => 'Bu email bilan hisob topilmadi.'])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $otp = OneTimeCode::query()
+            ->where('email', $email)
+            ->where('purpose', OneTimeCode::PURPOSE_PASSWORD_RESET)
+            ->latest('id')
+            ->first();
+
+        if (! $this->isValidOtp($otp, $validated['code'])) {
+            RateLimiter::hit($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_PASSWORD_RESET), self::OTP_VERIFY_DECAY_SECONDS);
+
+            return back()
+                ->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $meta = $otp->meta ?? [];
+        if ((int) ($meta['user_id'] ?? 0) !== (int) $user->id) {
+            return back()
+                ->withErrors(['email' => 'Parolni tiklash sessiyasi yaroqsiz. Kodni qayta yuboring.'])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($validated['password']),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        $otp->delete();
+        RateLimiter::clear($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_PASSWORD_RESET));
+
+        return redirect()
+            ->route('login')
+            ->with('success', 'Parol yangilandi. Endi yangi parol bilan tizimga kiring.')
+            ->with('toast_type', 'success');
+    }
+
+    public function resendPasswordResetCode(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email:rfc', 'max:255'],
+        ]);
+
+        $email = $this->normalizeEmail($validated['email']);
+        $user = User::query()->where('email', $email)->first();
+
+        if (! $user) {
+            return redirect()
+                ->route('password.forgot.form', ['email' => $email])
+                ->withErrors(['email' => 'Bu email bilan hisob topilmadi.']);
+        }
+
+        if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
+            return back()->withErrors([
+                'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
+            ]);
+        }
+
+        try {
+            $this->issuePasswordResetOtp($user);
+        } catch (\Throwable $e) {
+            Log::error('OTP password reset resend failed', [
+                'email' => $email,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
+        }
+
+        return redirect()
+            ->route('password.reset.form', ['email' => $email])
+            ->with('success', 'Yangi kod yuborildi.')
+            ->with('toast_type', 'warning');
     }
 
     public function showLoginVerify(Request $request)
@@ -211,7 +388,7 @@ class AuthController extends Controller
         $otp->delete();
         RateLimiter::clear($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_LOGIN));
         $request->session()->forget('otp_login_email');
-        Auth::login($user);
+        Auth::login($user, true);
         $request->session()->regenerate();
 
         return redirect()->route('home')
@@ -308,7 +485,7 @@ class AuthController extends Controller
         }
 
         $meta = $otp->meta ?? [];
-        if (empty($meta['email']) || empty($meta['password']) || empty($meta['name']) || empty($meta['phone'])) {
+        if (empty($meta['email']) || empty($meta['password']) || empty($meta['name']) || empty($meta['phone']) || empty($meta['grade'])) {
             return redirect()->route('register')->withErrors(['email' => "Ro'yxatdan o'tish ma'lumotlari topilmadi."]);
         }
 
@@ -322,13 +499,14 @@ class AuthController extends Controller
             'name' => $meta['name'],
             'email' => $meta['email'],
             'phone' => $meta['phone'],
+            'grade' => $meta['grade'],
             'password' => $meta['password'], // already hashed in registerStore
         ]);
 
         $otp->delete();
         RateLimiter::clear($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_REGISTER));
         $request->session()->forget('otp_register_email');
-        Auth::login($user);
+        Auth::login($user, true);
         $request->session()->regenerate();
 
         return redirect()->route('home')
@@ -386,6 +564,48 @@ class AuthController extends Controller
             ->with('toast_type', 'error');
     }
 
+    public function adminSendPasswordReset(Request $request, User $user)
+    {
+        $admin = $request->user();
+
+        if (! $admin || ! $admin->canManage($user)) {
+            return redirect()
+                ->route('user')
+                ->with('error', 'Siz bu foydalanuvchi uchun parol reset kodini yubora olmaysiz.')
+                ->with('toast_type', 'error');
+        }
+
+        if (! $this->canSendOtpNow((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
+            return redirect()
+                ->route('user')
+                ->with('error', "Kod yuborish limiti: {$this->otpResendCooldownSecondsLeft((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.")
+                ->with('toast_type', 'error');
+        }
+
+        try {
+            $this->issuePasswordResetOtp($user, [
+                'issued_by_admin_id' => (int) $admin->id,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Admin password reset send failed', [
+                'email' => $user->email,
+                'target_user_id' => $user->id,
+                'admin_user_id' => $admin->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('user')
+                ->with('error', 'Parolni tiklash kodi yuborilmadi. Mail sozlamalarini tekshiring.')
+                ->with('toast_type', 'error');
+        }
+
+        return redirect()
+            ->route('user')
+            ->with('success', "{$user->name} uchun parolni tiklash kodi {$user->email} manziliga yuborildi.")
+            ->with('toast_type', 'success');
+    }
+
     private function issueAndSendOtp(string $email, string $purpose, array $meta = []): void
     {
         $code = (string) random_int(100000, 999999);
@@ -403,13 +623,33 @@ class AuthController extends Controller
             'meta' => $meta,
         ]);
 
-        $subject = $purpose === OneTimeCode::PURPOSE_LOGIN
-            ? 'Kirish uchun tasdiqlash kodi'
-            : "Ro'yxatdan o'tish kodi";
+        $subject = match ($purpose) {
+            OneTimeCode::PURPOSE_LOGIN => 'Kirish uchun tasdiqlash kodi',
+            OneTimeCode::PURPOSE_PASSWORD_RESET => 'Parolni tiklash kodi',
+            default => "Ro'yxatdan o'tish kodi",
+        };
 
-        $title = $purpose === OneTimeCode::PURPOSE_LOGIN
-            ? 'Kirishni tasdiqlang'
-            : "Ro'yxatdan o'tishni tasdiqlang";
+        $title = match ($purpose) {
+            OneTimeCode::PURPOSE_LOGIN => 'Kirishni tasdiqlang',
+            OneTimeCode::PURPOSE_PASSWORD_RESET => 'Parolni yangilang',
+            default => "Ro'yxatdan o'tishni tasdiqlang",
+        };
+
+        $description = $purpose === OneTimeCode::PURPOSE_PASSWORD_RESET
+            ? 'Parolni yangilash uchun quyidagi 6 xonali kodni kiriting. Agar kodni admin yuborgan bo\'lsa ham, shu kod ishlaydi.'
+            : 'Assalomu alaykum. Quyidagi 6 xonali kodni saytdagi tasdiqlash oynasiga kiriting.';
+
+        $actionHtml = '';
+        if ($purpose === OneTimeCode::PURPOSE_PASSWORD_RESET) {
+            $resetUrl = route('password.reset.form', ['email' => $email]);
+            $actionHtml = '
+                  <p style="margin:16px 0 0;text-align:center;">
+                    <a href="'.$resetUrl.'" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;">
+                      Parolni yangilash oynasini ochish
+                    </a>
+                  </p>
+            ';
+        }
 
         $html = '
             <div style="background:#f3f6fb;padding:24px 12px;font-family:Arial,sans-serif;">
@@ -421,11 +661,12 @@ class AuthController extends Controller
                 <div style="padding:22px 20px;color:#111827;">
                   <h2 style="margin:0 0 10px;font-size:18px;">'.$title.'</h2>
                   <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">
-                    Assalomu alaykum. Quyidagi 6 xonali kodni saytdagi tasdiqlash oynasiga kiriting.
+                    '.$description.'
                   </p>
                   <div style="text-align:center;margin:18px 0 16px;">
                     <span style="display:inline-block;letter-spacing:6px;font-weight:700;font-size:30px;padding:12px 18px;border-radius:10px;background:#eef2ff;color:#1d4ed8;">'.$code.'</span>
                   </div>
+                  '.$actionHtml.'
                   <p style="margin:0;color:#dc2626;font-size:13px;font-weight:600;">Kod 10 daqiqa amal qiladi.</p>
                   <p style="margin:14px 0 0;color:#6b7280;font-size:12px;line-height:1.6;">
                     Agar bu amalni siz bajarmagan bo\'lsangiz, ushbu xabarni e\'tiborsiz qoldiring.
@@ -478,5 +719,17 @@ class AuthController extends Controller
     private function otpVerifyLimiterKey(string $email, string $purpose): string
     {
         return 'otp-verify:'.$purpose.':'.strtolower($email);
+    }
+
+    private function issuePasswordResetOtp(User $user, array $extraMeta = []): void
+    {
+        $this->issueAndSendOtp((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET, array_merge([
+            'user_id' => (int) $user->id,
+        ], $extraMeta));
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        return strtolower(trim($email));
     }
 }

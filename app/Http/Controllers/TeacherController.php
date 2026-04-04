@@ -3,31 +3,55 @@
 namespace App\Http\Controllers;
 
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class TeacherController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $teachers = Teacher::query()->latest()->get();
+        $q = trim((string) $request->query('q', ''));
+
+        $query = Teacher::query()->with('user')->latest();
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q): void {
+                $w->where('full_name', 'like', '%'.$q.'%')
+                    ->orWhere('subject', 'like', '%'.$q.'%')
+                    ->orWhere('grades', 'like', '%'.$q.'%')
+                    ->orWhere('bio', 'like', '%'.$q.'%')
+                    ->orWhere('achievements', 'like', '%'.$q.'%')
+                    ->orWhereHas('user', function ($u) use ($q): void {
+                        $u->where('name', 'like', '%'.$q.'%')
+                            ->orWhere('email', 'like', '%'.$q.'%')
+                            ->orWhere('phone', 'like', '%'.$q.'%');
+                    });
+            });
+        }
+
+        $teachers = $query->get();
 
         return view('admin.teachers.index', compact('teachers'));
     }
 
     public function create()
     {
-        return view('admin.teachers.create');
+        $teacherUsers = $this->teacherUsers();
+
+        return view('admin.teachers.create', compact('teacherUsers'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id'],
             'full_name' => ['required', 'string', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:60'],
             'grades' => ['nullable', 'string', 'max:255'],
+            'achievements' => ['nullable', 'string', 'max:10000'],
             'bio' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
@@ -56,16 +80,20 @@ class TeacherController extends Controller
 
     public function edit(Teacher $teacher)
     {
-        return view('admin.teachers.edit', compact('teacher'));
+        $teacherUsers = $this->teacherUsers($teacher);
+
+        return view('admin.teachers.edit', compact('teacher', 'teacherUsers'));
     }
 
     public function update(Request $request, Teacher $teacher)
     {
         $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id,'.$teacher->id],
             'full_name' => ['required', 'string', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:60'],
             'grades' => ['nullable', 'string', 'max:255'],
+            'achievements' => ['nullable', 'string', 'max:10000'],
             'bio' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
@@ -133,6 +161,23 @@ class TeacherController extends Controller
             }
             $i++;
         }
+    }
+
+    private function teacherUsers(?Teacher $ignoreTeacher = null)
+    {
+        $ignoreId = $ignoreTeacher?->id;
+
+        $takenUserIds = Teacher::query()
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->whereNotNull('user_id')
+            ->pluck('user_id');
+
+        return User::query()
+            ->with('roleRelation')
+            ->whereHas('roleRelation', fn ($q) => $q->where('name', User::ROLE_TEACHER))
+            ->whereNotIn('id', $takenUserIds)
+            ->orderBy('name')
+            ->get();
     }
 }
 

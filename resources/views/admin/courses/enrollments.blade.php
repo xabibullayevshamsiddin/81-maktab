@@ -23,6 +23,11 @@
       <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+    @include('admin.partials.search-bar', [
+      'placeholder' => 'Ism, email, telefon bo‘yicha...',
+      'action' => route('admin.courses.enrollments', $course),
+    ])
+
     <div class="card-style mb-30">
       <div class="table-wrapper table-responsive">
         <table class="table">

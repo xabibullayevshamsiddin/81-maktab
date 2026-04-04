@@ -3,18 +3,27 @@
 @section('title', 'Kurslar nazorati')
 
 @section('content')
+@php
+  $adminUser = auth()->user();
+  $canManageAllCourses = $adminUser->canManageSystem();
+@endphp
 <section class="table-components">
   <div class="container-fluid">
     <div class="title-wrapper pt-30">
       <div class="row align-items-center">
-        <div class="col-md-6"><div class="title"><h2>@if(auth()->user()->isAdmin())Kurslar nazorati @else Mening kurslarim @endif</h2></div></div>
+        <div class="col-md-6"><div class="title"><h2>@if($canManageAllCourses)Kurslar nazorati @else Mening kurslarim @endif</h2></div></div>
         <div class="col-md-6 text-end">
-          @if(auth()->user()->isAdmin())
+          @if($canManageAllCourses)
             <a href="{{ route('admin.course-enrollments.index') }}" class="btn btn-primary btn-sm">Barcha yozilishlar</a>
           @endif
         </div>
       </div>
     </div>
+
+    @include('admin.partials.search-bar', [
+      'placeholder' => 'Kurs nomi, tavsif, ustoz ismi...',
+      'action' => route('admin.courses.index'),
+    ])
 
     <div class="card-style mb-30">
       <div class="table-wrapper table-responsive">
@@ -34,7 +43,7 @@
           <tbody>
             @forelse($courses as $course)
               @php
-                $canManage = auth()->user()->isAdmin() || auth()->user()->ownsCourse($course);
+                $canManage = $canManageAllCourses || $adminUser->ownsCourse($course);
               @endphp
               <tr>
                 <td><p>{{ $course->id }}</p></td>
@@ -85,4 +94,3 @@
   </div>
 </section>
 @endsection
-
