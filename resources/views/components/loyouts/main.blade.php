@@ -136,6 +136,34 @@
               @endauth
               <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
             </ul>
+
+            <div class="mobile-nav-extras">
+              <div class="locale-switcher" aria-label="Language switcher">
+                @foreach($supportedLocales as $localeKey => $localeLabel)
+                  <a
+                    href="{{ route('locale.switch', $localeKey) }}"
+                    class="locale-switcher-link {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                    data-locale-switch
+                    hreflang="{{ $localeKey }}"
+                    lang="{{ $localeKey }}"
+                  >
+                    {{ $localeLabel }}
+                  </a>
+                @endforeach
+              </div>
+
+              @guest
+                <div class="mobile-nav-actions">
+                  <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+                  <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+                </div>
+              @else
+                <div class="mobile-nav-user">
+                  <span class="mobile-nav-user-name">{{ $authUser->name }}</span>
+                  <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
+                </div>
+              @endguest
+            </div>
           </nav>
 
           <div class="login {{ auth()->guest() ? 'login--guest' : '' }}">

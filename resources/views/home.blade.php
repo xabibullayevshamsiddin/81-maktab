@@ -52,7 +52,7 @@
   </section>
 
   <main>
-    <section class="container reveal glass-section" id="about" style="padding-bottom: 50px; margin-top:50px;">
+    <section class="container reveal glass-section home-about-section" id="about">
       <div class="section-head">
         <h2>{{ __('public.home.welcome_title') }}</h2>
         <p>{{ __('public.home.welcome_text') }}</p>
@@ -76,11 +76,8 @@
       </div>
     </section>
 
-    <section class="container news reveal glass-section" id="news" style="margin-top: 50px;padding-bottom:50px;">
-      <div
-        class="section-head"
-        style="display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap;"
-      >
+    <section class="container news reveal glass-section home-news-section" id="news">
+      <div class="section-head home-news-head">
         <div>
           <h2>{{ __('public.home.news_title') }}</h2>
           <p>{{ __('public.home.news_text') }}</p>
@@ -110,17 +107,17 @@
             />
 
             @if($post->category || $post->hasVideo() || $kindLabel)
-              <div style="padding: 0 16px; margin-top: 10px; display:flex; flex-wrap:wrap; gap:8px;">
+              <div class="home-card-badges">
                 @if($post->category)
-                  <span class="badge" style="margin-bottom: 0; background: rgba(21, 101, 192, 0.12); border: 1px solid rgba(21, 101, 192, 0.28); color: var(--primary);">
+                  <span class="badge badge-soft-primary">
                     {{ $postCategory }}
                   </span>
                 @endif
                 @if($kindLabel)
-                  <span class="badge" style="margin-bottom: 0; background: rgba(21, 101, 192, 0.1); color: var(--primary-2);">{{ $kindLabel }}</span>
+                  <span class="badge badge-soft-secondary">{{ $kindLabel }}</span>
                 @endif
                 @if($post->hasVideo())
-                  <span class="badge" style="margin-bottom: 0; background: rgba(220, 38, 38, 0.12); color: #b91c1c;">{{ __('public.common.video') }}</span>
+                  <span class="badge badge-soft-danger">{{ __('public.common.video') }}</span>
                 @endif
               </div>
             @endif
@@ -132,7 +129,7 @@
               <div class="icon-link">
                 <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
                 <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
-                <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form" style="margin-left: 4px;">
+                <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form home-like-form">
                   @csrf
                   <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                     <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
@@ -185,7 +182,7 @@
             <p>
               {{ $featuredTeacherBio ?: ($featuredTeacherSubject . ' fani bo\'yicha tajribali ustoz.') }}
             </p>
-            <p class="profile-muted" style="margin-top:8px;">
+            <p class="profile-muted home-featured-teacher-meta">
               {{ $featuredTeacherSubject }}
               @if($featuredTeacher->experience_years)
                 В· {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
