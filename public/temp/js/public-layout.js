@@ -1159,11 +1159,10 @@
   }
 
   // ============================
-  // 🔤 LOCALE TEXT ANIMATION
+  // 🌐 LOCALE PAGE REVEAL (smooth slide-in after switch)
   // ============================
-  function initLocaleTextAnimation() {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+  function initLocalePageReveal() {
+    // Check if we just did a locale switch
     let transitionData = null;
     try {
       const raw = sessionStorage.getItem('site-locale-transition');
@@ -1174,83 +1173,51 @@
     sessionStorage.removeItem('site-locale-transition');
 
     const elapsed = Date.now() - (transitionData.at || 0);
-    if (elapsed > 4000) return;
+    if (elapsed > 3500) return;
 
-    // Inject keyframe CSS once
-    if (!document.getElementById('locale-char-keyframes')) {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    // Inject the entry keyframe once
+    if (!document.getElementById('locale-reveal-style')) {
       const style = document.createElement('style');
-      style.id = 'locale-char-keyframes';
+      style.id = 'locale-reveal-style';
       style.textContent = `
-        @keyframes charFlyIn {
-          0%   { opacity:0; transform: translateY(-36px) rotate(var(--cr,0deg)) scale(0.4); filter:blur(5px); }
-          55%  { opacity:1; filter:blur(0); }
-          80%  { transform: translateY(3px) rotate(calc(var(--cr,0deg)*0.1)) scale(1.06); }
-          100% { opacity:1; transform: translateY(0) rotate(0deg) scale(1); filter:blur(0); }
+        @keyframes localeSlideIn {
+          0%   { opacity: 0; transform: translateX(32px) scale(0.992); filter: blur(6px); }
+          40%  { opacity: 1; filter: blur(0); }
+          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
         }
-        .locale-char {
-          display: inline-block;
-          animation: charFlyIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-          will-change: transform, opacity;
+        .locale-page-entering {
+          animation: localeSlideIn 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
-        .locale-char-space { display: inline-block; width: 0.28em; }
+        .locale-switcher-link.is-active-switch {
+          background: rgba(255,255,255,0.28) !important;
+          box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+          transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+          transform: scale(1.1);
+        }
       `;
       document.head.appendChild(style);
     }
 
-    function splitAnimate(el, baseDelay) {
-      // Only simple text nodes, skip complex HTML elements
-      const fullText = Array.from(el.childNodes)
-        .filter(n => n.nodeType === Node.TEXT_NODE)
-        .map(n => n.textContent)
-        .join('');
-      if (!fullText.trim() || fullText.length > 120) return;
-
-      // Keep existing HTML structure but wrap text nodes
-      Array.from(el.childNodes).forEach(node => {
-        if (node.nodeType !== Node.TEXT_NODE) return;
-        const text = node.textContent;
-        if (!text.trim()) return;
-
-        const frag = document.createDocumentFragment();
-        Array.from(text).forEach((ch, i) => {
-          if (ch === ' ') {
-            const sp = document.createElement('span');
-            sp.className = 'locale-char-space';
-            sp.textContent = '\u00a0';
-            frag.appendChild(sp);
-          } else {
-            const span = document.createElement('span');
-            span.className = 'locale-char';
-            span.textContent = ch;
-            const rot = (Math.random() - 0.5) * 28;
-            const delay = baseDelay + i * 0.038;
-            span.style.cssText = `--cr:${rot.toFixed(1)}deg; animation-delay:${delay.toFixed(3)}s;`;
-            frag.appendChild(span);
-          }
-        });
-        node.parentNode.replaceChild(frag, node);
-      });
+    // Animate the main shell in
+    const shell = document.querySelector('.site-shell');
+    if (shell) {
+      shell.classList.add('locale-page-entering');
+      shell.addEventListener('animationend', () => {
+        shell.classList.remove('locale-page-entering');
+      }, { once: true });
     }
 
-    if (prefersReduced) return; // respect preference - don't animate
-
-    // Target: headings and nav links
-    const targets = [
-      ...document.querySelectorAll('h1, h2, h3'),
-      ...document.querySelectorAll('.nav-link'),
-      ...document.querySelectorAll('.hero-title, .section-head h2'),
-    ];
-
-    const seen = new WeakSet();
-    targets.forEach((el, i) => {
-      if (seen.has(el)) return;
-      seen.add(el);
-      if (el.closest('[data-no-anim]')) return;
-      // stagger by element index, not per-char
-      const delay = i * 0.06;
-      splitAnimate(el, delay);
-    });
+    // Highlight the now-active locale button briefly
+    const activeLocale = document.querySelector('.locale-switcher-link.active');
+    if (activeLocale) {
+      activeLocale.classList.add('is-active-switch');
+      setTimeout(() => activeLocale.classList.remove('is-active-switch'), 800);
+    }
   }
+
 
   moveGlobalModals();
   initShellUi();
@@ -1267,5 +1234,5 @@
   initInteractiveActions();
   initProMaxAnimations();
   initThemeBurstEffect();
-  initLocaleTextAnimation();
+  initLocalePageReveal();
 })();
