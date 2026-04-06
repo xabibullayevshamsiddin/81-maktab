@@ -116,7 +116,7 @@
                   placeholder="{{ __('auth_pages.register.password_placeholder') }}"
                   required
                   autocomplete="new-password"
-                  minlength="6"
+                  minlength="8"
                 />
                 <button
                   type="button"
@@ -141,7 +141,7 @@
                   placeholder="{{ __('auth_pages.register.password_confirm_placeholder') }}"
                   required
                   autocomplete="new-password"
-                  minlength="6"
+                  minlength="8"
                 />
                 <button
                   type="button"

@@ -50,7 +50,7 @@
             name="password"
             placeholder="{{ __('auth_pages.reset.password_placeholder') }}"
             required
-            minlength="6"
+            minlength="8"
             autocomplete="new-password"
           />
             <button type="button" class="pw-toggle" aria-label="{{ __('auth_pages.common.show_password') }}" data-target="reset-password">
@@ -66,7 +66,7 @@
             name="password_confirmation"
             placeholder="{{ __('auth_pages.reset.password_confirm_placeholder') }}"
             required
-            minlength="6"
+            minlength="8"
             autocomplete="new-password"
           />
             <button type="button" class="pw-toggle" aria-label="{{ __('auth_pages.common.show_password') }}" data-target="reset-password-confirmation">

@@ -244,12 +244,12 @@ class ProfileController extends Controller
             'password' => [
                 'required',
                 'string',
-                'min:6',
+                'min:8',
                 'confirmed',
             ],
         ], [
             'password.required' => 'Yangi parolni kiriting.',
-            'password.min' => 'Yangi parol kamida 6 belgidan iborat bo\'lishi kerak.',
+            'password.min' => 'Yangi parol kamida 8 belgidan iborat bo\'lishi kerak.',
             'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
         ]);
 

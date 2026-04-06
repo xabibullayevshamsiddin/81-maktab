@@ -81,7 +81,7 @@
               id="profile-new-password"
               name="password"
               required
-              minlength="6"
+              minlength="8"
               autocomplete="new-password"
               placeholder="{{ __('profile.password_card.new_placeholder') }}"
             />
@@ -108,7 +108,7 @@
               id="profile-new-password-confirmation"
               name="password_confirmation"
               required
-              minlength="6"
+              minlength="8"
               autocomplete="new-password"
               placeholder="{{ __('profile.password_card.confirm_placeholder') }}"
             />

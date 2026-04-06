@@ -19,7 +19,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => uz_phone_rules(),
             'grade' => ['required', 'string', Rule::in(school_grade_options())],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 
@@ -43,7 +43,7 @@ class RegisterRequest extends FormRequest
             'grade.required' => 'Sinfni tanlash shart.',
             'grade.in' => school_grade_validation_message(),
             'password.required' => 'Parol kiritilishi shart.',
-            'password.min' => 'Parol kamida 6 belgidan iborat bo\'lishi kerak.',
+            'password.min' => 'Parol kamida 8 belgidan iborat bo\'lishi kerak.',
             'password.confirmed' => 'Parol tasdiqlanmadi.',
         ];
     }

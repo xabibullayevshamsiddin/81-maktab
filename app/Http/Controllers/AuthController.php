@@ -227,7 +227,7 @@ class AuthController extends Controller
             'password' => [
                 'required',
                 'string',
-                'min:6',
+                'min:8',
                 'confirmed',
             ],
         ], [
@@ -235,7 +235,7 @@ class AuthController extends Controller
             'code.required' => 'Tasdiqlash kodini kiriting.',
             'code.digits' => 'Kod 6 xonali bo\'lishi kerak.',
             'password.required' => 'Yangi parolni kiriting.',
-            'password.min' => 'Yangi parol kamida 6 belgidan iborat bo\'lishi kerak.',
+            'password.min' => 'Yangi parol kamida 8 belgidan iborat bo\'lishi kerak.',
             'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
         ]);
 
