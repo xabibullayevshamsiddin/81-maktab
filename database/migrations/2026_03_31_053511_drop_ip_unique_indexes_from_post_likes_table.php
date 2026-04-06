@@ -1,8 +1,7 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 return new class extends Migration
 {
@@ -12,13 +11,10 @@ return new class extends Migration
             return;
         }
 
-        if ($this->indexExists('post_likes', 'post_likes_unique_ip')) {
-            DB::statement('ALTER TABLE `post_likes` DROP INDEX `post_likes_unique_ip`');
-        }
-
-        if ($this->indexExists('post_likes', 'post_likes_post_id_ip_address_index')) {
-            DB::statement('ALTER TABLE `post_likes` DROP INDEX `post_likes_post_id_ip_address_index`');
-        }
+        Schema::table('post_likes', function (Blueprint $table) {
+            try { $table->dropUnique('post_likes_unique_ip'); } catch (\Exception $e) {}
+            try { $table->dropIndex('post_likes_post_id_ip_address_index'); } catch (\Exception $e) {}
+        });
     }
 
     public function down(): void
@@ -27,19 +23,9 @@ return new class extends Migration
             return;
         }
 
-        if (! $this->indexExists('post_likes', 'post_likes_unique_ip')) {
-            DB::statement('ALTER TABLE `post_likes` ADD UNIQUE `post_likes_unique_ip` (`post_id`, `ip_address`)');
-        }
-
-        if (! $this->indexExists('post_likes', 'post_likes_post_id_ip_address_index')) {
-            DB::statement('ALTER TABLE `post_likes` ADD INDEX `post_likes_post_id_ip_address_index` (`post_id`, `ip_address`)');
-        }
-    }
-
-    private function indexExists(string $table, string $indexName): bool
-    {
-        $result = DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName]);
-
-        return ! empty($result);
+        Schema::table('post_likes', function (Blueprint $table) {
+            try { $table->unique(['post_id', 'ip_address'], 'post_likes_unique_ip'); } catch (\Exception $e) {}
+            try { $table->index(['post_id', 'ip_address'], 'post_likes_post_id_ip_address_index'); } catch (\Exception $e) {}
+        });
     }
 };
