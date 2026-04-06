@@ -25,7 +25,7 @@
 <article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
   <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}">
     @if($avatarUrl)
-      <img src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? 'Mehmon' }}" loading="lazy" decoding="async">
+      <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? 'Mehmon' }}" loading="lazy" decoding="async">
     @else
       <span>{{ $avatarInitial }}</span>
     @endif
