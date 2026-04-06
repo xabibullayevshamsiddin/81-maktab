@@ -100,6 +100,45 @@
     });
   }
 
+  function initMobileMenu() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const siteNav = document.getElementById('site-nav');
+    if (!menuToggle || !siteNav) return;
+
+    const closeMenu = () => {
+      siteNav.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    menuToggle.addEventListener(
+      'click',
+      (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const isOpen = siteNav.classList.toggle('open');
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+      },
+      true
+    );
+
+    siteNav.querySelectorAll('.nav-link').forEach((link) => {
+      link.addEventListener('click', closeMenu, true);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!siteNav.classList.contains('open')) return;
+      if (siteNav.contains(event.target) || menuToggle.contains(event.target)) return;
+      closeMenu();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeMenu();
+      }
+    });
+  }
+
   function initSiteRules() {
     document.addEventListener('click', (event) => {
       const button = event.target.closest('.site-rules-open');
@@ -814,6 +853,7 @@
   }
 
   moveGlobalModals();
+  initMobileMenu();
   initHeaderClearance();
   initLocaleSwitcher();
   initSiteRules();
