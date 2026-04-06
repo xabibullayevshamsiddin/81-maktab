@@ -162,6 +162,21 @@
                   <span class="mobile-nav-user-name">{{ $authUser->name }}</span>
                   <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
                 </div>
+
+                <div class="mobile-nav-actions mobile-nav-actions--auth">
+                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+                  @if($canOpenCourse)
+                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
+                  @endif
+                  @if($canAccessDashboard)
+                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
+                  @endif
+                  <form action="{{ route('logout') }}" method="POST" class="mobile-nav-form">
+                    @csrf
+                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
+                  </form>
+                </div>
               @endguest
             </div>
           </nav>

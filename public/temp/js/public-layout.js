@@ -107,6 +107,8 @@
 
     const closeMenu = () => {
       siteNav.classList.remove('open');
+      document.documentElement.classList.remove('mobile-menu-open');
+      document.body.classList.remove('mobile-menu-open');
       menuToggle.setAttribute('aria-expanded', 'false');
     };
 
@@ -117,6 +119,8 @@
         event.stopImmediatePropagation();
 
         const isOpen = siteNav.classList.toggle('open');
+        document.documentElement.classList.toggle('mobile-menu-open', isOpen);
+        document.body.classList.toggle('mobile-menu-open', isOpen);
         menuToggle.setAttribute('aria-expanded', String(isOpen));
       },
       true
@@ -134,6 +138,12 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
+        closeMenu();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 980) {
         closeMenu();
       }
     });
