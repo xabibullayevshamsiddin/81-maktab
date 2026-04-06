@@ -10,5 +10,9 @@ services:
         value: production
       - key: APP_DEBUG
         value: "false"
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
       - key: APP_KEY
         generateValue: true
