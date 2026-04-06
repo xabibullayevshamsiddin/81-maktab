@@ -11,7 +11,7 @@ services:
       - key: APP_DEBUG
         value: "false"
       - key: SESSION_DRIVER
-        value: cookie
+        value: database
       - key: SESSION_SECURE_COOKIE
         value: "true"
       - key: APP_KEY
