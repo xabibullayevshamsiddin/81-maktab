@@ -1,4 +1,4 @@
-﻿@php $likedPostIds = $likedPostIds ?? collect(); @endphp
+@php $likedPostIds = $likedPostIds ?? collect(); @endphp
 
 <div class="post-grid">
   @forelse($posts as $post)
@@ -10,10 +10,10 @@
     @endphp
     <article class="news-card post-card">
       <img
-        src="{{ asset('storage/' . $post->image) }}"
+        src="{{ app_storage_asset($post->image) }}"
         alt="{{ $postTitle }}"
         class="js-image-zoom-trigger zoomable-image"
-        data-zoom-src="{{ asset('storage/' . $post->image) }}"
+        data-zoom-src="{{ app_storage_asset($post->image) }}"
         loading="lazy"
         decoding="async"
         role="button"

@@ -59,7 +59,7 @@
             @if(filled($post->video_path))
               <video class="post-detail-video-native" controls playsinline preload="metadata" title="{{ $postTitle }}">
                 <source
-                  src="{{ asset('storage/'.$post->video_path) }}"
+                  src="{{ app_storage_asset($post->video_path) }}"
                   type="{{ $videoExt === 'webm' ? 'video/webm' : 'video/mp4' }}"
                 />
                 {{ __('public.posts.browser_no_video') }}
@@ -85,10 +85,10 @@
             @endif
           @else
             <img
-              src="{{ asset('storage/' . $post->image) }}"
+              src="{{ app_storage_asset($post->image) }}"
               alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
-              data-zoom-src="{{ asset('storage/' . $post->image) }}"
+              data-zoom-src="{{ app_storage_asset($post->image) }}"
               loading="lazy"
               decoding="async"
               role="button"

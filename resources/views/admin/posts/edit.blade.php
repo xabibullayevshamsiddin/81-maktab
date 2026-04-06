@@ -113,7 +113,7 @@
             @if ($post->image)
               <div class="mb-3">
                 <label class="form-label d-block">Joriy rasm</label>
-                <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;">
+                <img src="{{ app_storage_asset($post->image) }}" alt="{{ $post->title }}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;">
               </div>
             @endif
 

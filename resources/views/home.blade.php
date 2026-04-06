@@ -2,7 +2,7 @@
   <section class="hero" id="home">
     <video autoplay muted loop playsinline class="bg-video">
       <source
-        src="{{ asset('temp/img/PixVerse_V5.6_Image_Text_540P_tiriltirib_ber.mp4') }}"
+        src="{{ app_public_asset('temp/img/PixVerse_V5.6_Image_Text_540P_tiriltirib_ber.mp4') }}"
         type="video/mp4"
       />
     </video>
@@ -99,10 +99,10 @@
           @endphp
           <article class="news-card">
             <img
-              src="{{ asset('storage/' . $post->image) }}"
+              src="{{ app_storage_asset($post->image) }}"
               alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
-              data-zoom-src="{{ asset('storage/' . $post->image) }}"
+              data-zoom-src="{{ app_storage_asset($post->image) }}"
               loading="lazy"
               decoding="async"
               role="button"
@@ -176,7 +176,7 @@
           @endphp
           <article class="teacher-img">
             <img
-              src="{{ $featuredTeacher->image ? asset('storage/' . $featuredTeacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
               alt="{{ $featuredTeacher->full_name }} profil rasmi"
               loading="lazy"
               decoding="async"
@@ -188,7 +188,7 @@
             <p class="profile-muted" style="margin-top:8px;">
               {{ $featuredTeacherSubject }}
               @if($featuredTeacher->experience_years)
-                · {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
+                В· {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
               @endif
             </p>
             <div class="teacher-img-actions">
@@ -208,7 +208,7 @@
         @else
           <article class="teacher-img">
             <img
-              src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              src="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
               alt="{{ __('public.layout.nav.teachers') }}"
               loading="lazy"
               decoding="async"

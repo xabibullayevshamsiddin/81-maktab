@@ -61,12 +61,12 @@
             class="course-create-teacher-card"
             data-course-teacher-preview
             data-course-preview='@json($teacherPreviewData)'
-            data-course-preview-fallback="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+            data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
             data-course-initial-teacher-id="{{ $initialTeacherId }}"
           >
             <div class="course-create-teacher-media">
               <img
-                src="{{ $initialTeacher['image'] ?? asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
                 alt="Ustoz rasmi"
                 data-preview-image
               >

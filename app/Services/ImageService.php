@@ -123,7 +123,7 @@ class ImageService
             return null;
         }
 
-        return asset("storage/{$path}");
+        return app_storage_asset($path) ?? app_public_asset("storage/{$path}");
     }
 
     public function storeSquareWebp(UploadedFile $file, string $directory = 'uploads', int $size = 320, int $quality = 82): string

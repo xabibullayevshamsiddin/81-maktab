@@ -69,7 +69,7 @@
                       <td><p>{{ ($posts->firstItem() ?? 1) + $loop->index }}</p></td>
                       <td>
                         @if ($post->image)
-                          <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                          <img src="{{ app_storage_asset($post->image) }}" alt="{{ $post->title }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
                         @else
                           <p>-</p>
                         @endif

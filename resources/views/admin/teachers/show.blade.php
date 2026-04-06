@@ -15,7 +15,7 @@
       <div class="row g-3 align-items-start">
         <div class="col-md-4">
           <img
-            src="{{ $teacher->image ? asset('storage/' . $teacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
             alt="{{ $teacher->full_name }}"
             style="width:100%;max-width:360px;aspect-ratio:3/2;object-fit:cover;border-radius:14px;"
           >
@@ -41,4 +41,3 @@
   </div>
 </section>
 @endsection
-

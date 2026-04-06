@@ -67,7 +67,7 @@
   <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp">
   @if($teacher?->image)
     <div style="margin-top:10px;">
-      <img src="{{ asset('storage/' . $teacher->image) }}" alt="{{ $teacher->full_name }}" style="width:140px;aspect-ratio:3/2;object-fit:cover;border-radius:10px;">
+      <img src="{{ app_storage_asset($teacher->image) }}" alt="{{ $teacher->full_name }}" style="width:140px;aspect-ratio:3/2;object-fit:cover;border-radius:10px;">
     </div>
   @endif
 </div>

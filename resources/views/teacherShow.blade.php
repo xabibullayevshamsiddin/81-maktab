@@ -72,7 +72,7 @@
 
         <article class="detail-image-card reveal">
           <img
-            src="{{ $teacher->image ? asset('storage/' . $teacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
             alt="{{ $teacher->full_name }} rasmi"
             loading="lazy"
             decoding="async"

@@ -23,7 +23,7 @@
             </div>
 
             @include('admin.partials.search-bar', [
-              'placeholder' => 'Ism, fan, bog‘langan user email/telefon...',
+              'placeholder' => 'Ism, fan, bogвЂlangan user email/telefon...',
               'action' => route('teachers.index'),
             ])
 
@@ -47,7 +47,7 @@
                       <td><p>{{ $teacher->id }}</p></td>
                       <td>
                         @if($teacher->image)
-                          <img src="{{ asset('storage/' . $teacher->image) }}" alt="{{ $teacher->full_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">
+                          <img src="{{ app_storage_asset($teacher->image) }}" alt="{{ $teacher->full_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">
                         @else
                           <span class="badge bg-secondary">Rasm yo'q</span>
                         @endif
@@ -59,7 +59,7 @@
                             {{ $teacher->user->name }}<br>
                             <small style="color:#64748b;">{{ $teacher->user->email }}</small>
                           @else
-                            —
+                            вЂ”
                           @endif
                         </p>
                       </td>

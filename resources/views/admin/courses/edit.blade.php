@@ -100,7 +100,7 @@
           <div class="mb-3">
             <label class="form-label">Yangi rasm (ixtiyoriy)</label>
             @if($course->image)
-              <p class="small text-muted">Joriy: <a href="{{ asset('storage/'.$course->image) }}" target="_blank" rel="noopener">ko‘rish</a></p>
+              <p class="small text-muted">Joriy: <a href="{{ app_storage_asset($course->image) }}" target="_blank" rel="noopener">ko‘rish</a></p>
             @endif
             <input type="file" name="image" class="form-control" accept="image/jpeg,image/png,image/webp">
             @error('image')

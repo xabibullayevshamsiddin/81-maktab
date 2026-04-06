@@ -59,13 +59,13 @@ class Course extends Model
     public function coverImageUrl(): string
     {
         if (! empty($this->image)) {
-            return asset('storage/'.$this->image);
+            return app_storage_asset($this->image) ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
         }
 
         if ($this->teacher?->image) {
-            return asset('storage/'.$this->teacher->image);
+            return app_storage_asset($this->teacher->image) ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
         }
 
-        return asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+        return app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
     }
 }

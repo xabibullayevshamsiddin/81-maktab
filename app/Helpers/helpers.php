@@ -123,6 +123,19 @@ if (! function_exists('app_public_asset')) {
     }
 }
 
+if (! function_exists('app_storage_asset')) {
+    function app_storage_asset(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        return app_public_asset('storage/'.$path);
+    }
+}
+
 if (! function_exists('cache_key_home_posts')) {
     function cache_key_home_posts(): string
     {

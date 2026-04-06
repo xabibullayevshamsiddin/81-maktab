@@ -415,7 +415,7 @@ class User extends Authenticatable
             return null;
         }
 
-        return asset('storage/'.$this->avatar);
+        return app_storage_asset($this->avatar);
     }
 
     public function getAvatarUrlAttribute(): ?string

@@ -41,7 +41,7 @@ class Question extends Model
             return null;
         }
 
-        return asset('storage/'.$this->image_path);
+        return app_storage_asset($this->image_path);
     }
 
     public function isTextType(): bool

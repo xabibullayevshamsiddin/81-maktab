@@ -1,4 +1,4 @@
-﻿<x-loyouts.main title="{{ __('public.teachers.page_title') }}">
+<x-loyouts.main title="{{ __('public.teachers.page_title') }}">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
@@ -31,7 +31,7 @@
             <article class="teacher-card reveal">
               <div class="teacher-photo-wrap">
                 <img
-                  src="{{ $teacher->image ? asset('storage/' . $teacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                  src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
                   alt="{{ $teacher->full_name }} profil rasmi"
                   class="teacher-photo"
                   loading="lazy"
@@ -118,7 +118,7 @@
 
           <article class="approach-image-card reveal">
             <img
-              src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              src="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
               alt="{{ __('public.layout.nav.teachers') }}"
               loading="lazy"
               decoding="async"
