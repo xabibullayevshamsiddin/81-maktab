@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	    <link rel="icon" href="/admin/images/favicon.png" type="image/png" />
+	    <link rel="icon" href="{{ app_public_asset('admin/images/favicon.png') }}" type="image/png" />
     <title>@yield('title', 'Admin Panel')</title>
 
     <!-- ========== All CSS files linkup ========= -->
-    <link rel="stylesheet" href="/admin/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/admin/css/lineicons.css" />
-	    <link rel="stylesheet" href="/admin/css/materialdesignicons.min.css" />
-	    <link rel="stylesheet" href="/admin/css/fullcalendar.css" />
-	    <link rel="stylesheet" href="/admin/css/main.css" />
-      <link rel="stylesheet" href="/temp/css/extracted-admin.css?v={{ filemtime(public_path('temp/css/extracted-admin.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('admin/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('admin/css/lineicons.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('admin/css/materialdesignicons.min.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('admin/css/fullcalendar.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('admin/css/main.css') }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ filemtime(public_path('temp/css/extracted-admin.css')) }}" />
   </head>
 	  <body
       data-admin-success="{{ session('success') }}"
@@ -31,7 +31,7 @@
     <aside class="sidebar-nav-wrapper">
       <div class="navbar-logo">
         <a href="{{ route('dashboard') }}">
-          <img src="/admin/images/logo/logo.svg" alt="logo" />
+          <img src="{{ app_public_asset('admin/images/logo/logo.svg') }}" alt="logo" />
         </a>
       </div>
       <nav class="sidebar-nav">
@@ -318,16 +318,16 @@
     <!-- ======== main-wrapper end =========== -->
 
     <!-- ========= All Javascript files linkup ======== -->
-    <script src="/admin/js/bootstrap.bundle.min.js"></script>
-    <script src="/admin/js/Chart.min.js"></script>
-    <script src="/admin/js/dynamic-pie-chart.js"></script>
-    <script src="/admin/js/moment.min.js"></script>
-    <script src="/admin/js/fullcalendar.js"></script>
-    <script src="/admin/js/jvectormap.min.js"></script>
-	    <script src="/admin/js/world-merc.js"></script>
-	    <script src="/admin/js/polyfill.js"></script>
-	    <script src="/admin/js/main.js"></script>
-      <script src="/temp/js/extracted-admin.js?v={{ filemtime(public_path('temp/js/extracted-admin.js')) }}"></script>
+    <script src="{{ app_public_asset('admin/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ app_public_asset('admin/js/Chart.min.js') }}"></script>
+    <script src="{{ app_public_asset('admin/js/dynamic-pie-chart.js') }}"></script>
+    <script src="{{ app_public_asset('admin/js/moment.min.js') }}"></script>
+    <script src="{{ app_public_asset('admin/js/fullcalendar.js') }}"></script>
+    <script src="{{ app_public_asset('admin/js/jvectormap.min.js') }}"></script>
+	    <script src="{{ app_public_asset('admin/js/world-merc.js') }}"></script>
+	    <script src="{{ app_public_asset('admin/js/polyfill.js') }}"></script>
+	    <script src="{{ app_public_asset('admin/js/main.js') }}"></script>
+      <script src="{{ app_public_asset('temp/js/extracted-admin.js') }}?v={{ filemtime(public_path('temp/js/extracted-admin.js')) }}"></script>
 
     @yield('page_scripts')
 

@@ -108,6 +108,21 @@ if (! function_exists('gmail_compose_url')) {
     }
 }
 
+if (! function_exists('app_public_asset')) {
+    function app_public_asset(string $path): string
+    {
+        $path = '/'.ltrim($path, '/');
+
+        if (app()->runningInConsole()) {
+            return $path;
+        }
+
+        $baseUrl = request()->getBaseUrl();
+
+        return ($baseUrl !== '' ? rtrim($baseUrl, '/') : '').$path;
+    }
+}
+
 if (! function_exists('cache_key_home_posts')) {
     function cache_key_home_posts(): string
     {

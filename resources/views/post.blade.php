@@ -100,6 +100,6 @@
   </main>
 
   @push('page_scripts')
-    <script src="/temp/js/post-filters.js?v={{ filemtime(public_path('temp/js/post-filters.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/post-filters.js') }}?v={{ filemtime(public_path('temp/js/post-filters.js')) }}"></script>
   @endpush
 </x-loyouts.main>

@@ -1,6 +1,6 @@
 <x-loyouts.main title="Imtihonlar">
 @push('page_styles')
-    <link rel="stylesheet" href="/temp/css/profile-exams.css?v={{ filemtime(public_path('temp/css/profile-exams.css')) }}">
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-exams.css') }}?v={{ filemtime(public_path('temp/css/profile-exams.css')) }}">
 @endpush
 <div class="container exam-public-container"><div class="row"><div class="col-12">
 @php

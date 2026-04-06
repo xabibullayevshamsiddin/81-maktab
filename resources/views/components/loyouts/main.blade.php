@@ -19,9 +19,9 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script src="/temp/js/theme-init.js?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
-    <link rel="stylesheet" href="/temp/css/style.css?v={{ filemtime(public_path('temp/css/style.css')) }}" />
-    <link rel="stylesheet" href="/temp/css/extracted-public.css?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
+    <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
     @stack('page_styles')
   </head>
 
@@ -56,7 +56,7 @@
 	        <div class="header-main header-main--offset" id="navbar">
           <a class="logo" href="{{ route('home') }}" aria-label="{{ __('public.layout.nav.home') }}">
             <img
-              src="/temp/img/photo_2026-02-06_11-05-24-2.jpg"
+              src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
               alt="{{ __('public.layout.logo_alt') }}"
             />
           </a>
@@ -196,7 +196,7 @@
       <div class="footer-container container">
         <div class="footer-com">
           <img
-            src="/temp/img/photo_2026-02-06_11-05-24-2.jpg"
+            src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
             alt="{{ __('public.layout.logo_alt') }}"
             class="img2"
           />
@@ -259,8 +259,8 @@
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="/temp/js/script.js?v={{ filemtime(public_path('temp/js/script.js')) }}"></script>
-    <script src="/temp/js/public-layout.js?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/script.js') }}?v={{ filemtime(public_path('temp/js/script.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
     @stack('page_scripts')
   </body>
 </html>
