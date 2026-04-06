@@ -2,12 +2,21 @@
 
 return [
     'general' => [
-        'label' => 'Oddiy yangilik',
+        'label' => [
+            'uz' => 'Oddiy yangilik',
+            'en' => 'General news',
+        ],
     ],
     'video_news' => [
-        'label' => 'Videolik yangilik',
+        'label' => [
+            'uz' => 'Videolik yangilik',
+            'en' => 'Video news',
+        ],
     ],
     'social' => [
-        'label' => 'Ijtimoiy yangilik',
+        'label' => [
+            'uz' => 'Ijtimoiy yangilik',
+            'en' => 'Social news',
+        ],
     ],
 ];

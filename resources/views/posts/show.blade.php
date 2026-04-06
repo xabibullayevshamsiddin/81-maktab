@@ -1,14 +1,20 @@
-<x-loyouts.main title="81-IDUM | {{ $post->title }}">
+@php
+  $postTitle = localized_model_value($post, 'title');
+  $postShort = localized_model_value($post, 'short_content');
+  $postContent = localized_model_value($post, 'content');
+  $postCategory = localized_model_value($post->category, 'name');
+@endphp
+<x-loyouts.main title="81-IDUM | {{ $postTitle }}">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
-        <h1>{{ $post->title }}</h1>
+        <h1>{{ $postTitle }}</h1>
         @if($post->category)
-          <p>{{ $post->category->name }}</p>
+          <p>{{ $postCategory }}</p>
         @endif
       </div>
       <a href="{{ route('post') }}" class="btn">
-        Orqaga <i class="fa-solid fa-arrow-left" style="margin-left: 6px"></i>
+        {{ __('public.posts.show_back') }} <i class="fa-solid fa-arrow-left" style="margin-left: 6px"></i>
       </a>
     </div>
   </section>
@@ -19,22 +25,24 @@
         '/comments/__COMMENT_ID__/',
         route('post.comments.like', ['post' => $post, 'comment' => 0])
     );
+    $postCommentConfig = [
+      'currentUserId' => auth()->check() ? auth()->id() : null,
+      'currentUserIsAdmin' => auth()->check() && auth()->user()->isAdmin(),
+      'currentUserIsModerator' => auth()->check() && auth()->user()->hasRole('moderator'),
+      'currentUserIsOnlyModerator' => auth()->check() && auth()->user()->isOnlyModerator(),
+      'updateUrlTemplate' => route('post.comments.update', [$post, '__COMMENT_ID__']),
+      'destroyUrlTemplate' => route('post.comments.destroy', [$post, '__COMMENT_ID__']),
+      'commentLikeUrlTemplate' => $commentLikeUrlTemplate,
+      'storeUrl' => route('post.comments.store', $post),
+      'csrfToken' => csrf_token(),
+    ];
   @endphp
   <main class="news">
-    <section class="container news reveal glass-section" id="post-detail">
-      <script>
-        window.__POST_COMMENTS_CONFIG__ = {
-          currentUserId: @json(auth()->check() ? auth()->id() : null),
-          currentUserIsAdmin: @json(auth()->check() && auth()->user()->isAdmin()),
-          currentUserIsModerator: @json(auth()->check() && auth()->user()->hasRole('moderator')),
-          currentUserIsOnlyModerator: @json(auth()->check() && auth()->user()->isOnlyModerator()),
-          updateUrlTemplate: @json(route('post.comments.update', [$post, '__COMMENT_ID__'])),
-          destroyUrlTemplate: @json(route('post.comments.destroy', [$post, '__COMMENT_ID__'])),
-          commentLikeUrlTemplate: @json($commentLikeUrlTemplate),
-          storeUrl: @json(route('post.comments.store', $post)),
-          csrfToken: @json(csrf_token()),
-        };
-      </script>
+    <section
+      class="container news reveal glass-section"
+      id="post-detail"
+      data-comment-config='@json($postCommentConfig)'
+    >
       @if (session('success'))
         <p style="margin: 0 0 12px; color: #0f766e; font-weight: 700;">
           {{ session('success') }}
@@ -49,19 +57,19 @@
         <div class="post-detail-media">
           @if($post->hasVideo())
             @if(filled($post->video_path))
-              <video class="post-detail-video-native" controls playsinline preload="metadata" title="{{ $post->title }}">
+              <video class="post-detail-video-native" controls playsinline preload="metadata" title="{{ $postTitle }}">
                 <source
                   src="{{ asset('storage/'.$post->video_path) }}"
                   type="{{ $videoExt === 'webm' ? 'video/webm' : 'video/mp4' }}"
                 />
-                Brauzeringiz video qo‘llab-quvvatlamaydi.
+                {{ __('public.posts.browser_no_video') }}
               </video>
             @elseif($ytEmbed)
               <div class="post-video-embed post-video-embed--detail-hero">
                 <div class="post-video-embed-inner">
                   <iframe
                     src="{{ $ytEmbed[0] }}"
-                    title="Video: {{ $post->title }}"
+                    title="Video: {{ $postTitle }}"
                     loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
@@ -71,16 +79,18 @@
             @elseif(filled($post->video_url))
               <div class="post-detail-video-external">
                 <a class="btn" href="{{ $post->video_url }}" target="_blank" rel="noopener noreferrer">
-                  <i class="fa-solid fa-up-right-from-square"></i> Videoni ochish
+                  <i class="fa-solid fa-up-right-from-square"></i> {{ __('public.posts.open_video') }}
                 </a>
               </div>
             @endif
           @else
             <img
               src="{{ asset('storage/' . $post->image) }}"
-              alt="{{ $post->title }}"
+              alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
               data-zoom-src="{{ asset('storage/' . $post->image) }}"
+              loading="lazy"
+              decoding="async"
               role="button"
               tabindex="0"
             />
@@ -90,7 +100,7 @@
         @if($post->category)
           <div style="padding: 12px 16px 0;">
             <span class="badge">
-              {{ $post->category->name }}
+              {{ $postCategory }}
             </span>
           </div>
         @endif
@@ -103,19 +113,31 @@
             @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
             <form action="{{ route('post.like', $post) }}" method="POST" style="display:inline;" class="js-like-form">
               @csrf
-              <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="Yoqtirish" style="padding-left: 10px;">
+              <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}" style="padding-left: 10px;">
                 <i class="{{ $postLikedByMe ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                 <span class="like-count">{{ $post->likes_count }}</span>
               </button>
             </form>
           </div>
+          <div class="icon-link-actions">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline share-btn js-share-trigger"
+              data-share-url="{{ route('post.show', $post) }}"
+              data-share-title="{{ $postTitle }}"
+              data-share-text="{{ __('public.posts.share_text') }}"
+              data-share-success="{{ __('public.posts.share_success') }}"
+            >
+              <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+            </button>
+          </div>
         </div>
 
-        <h3>{{ $post->title }}</h3>
-        <p>{{ $post->short_content }}</p>
+        <h3>{{ $postTitle }}</h3>
+        <p>{{ $postShort }}</p>
 
         <div class="post-content">
-          {!! nl2br(e($post->content)) !!}
+          {!! nl2br(e($postContent)) !!}
         </div>
 
         @php
@@ -137,7 +159,7 @@
       <div class="comments-wrapper" style="display:grid;">
         <div class="comments-list">
           @if ($comments->isEmpty())
-            <p class="comment-empty">Hozircha izohlar yo'q.</p>
+            <p class="comment-empty">{{ __('public.posts.comments_empty') }}</p>
           @else
             @foreach($comments as $comment)
               @include('posts.partials.comment-item', ['comment' => $comment, 'post' => $post, 'showReplyForm' => true, 'likedCommentIds' => $likedCommentIds])
@@ -147,7 +169,7 @@
 
         <div class="comment-form-box reveal">
           <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
-            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> Izoh qoldiring</h3>
+            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> {{ __('public.posts.leave_comment') }}</h3>
             <x-site-rule-items area="comment" />
           </div>
 
@@ -159,7 +181,7 @@
                 type="text"
                 class="comment-input"
                 name="author_name"
-                placeholder="Ismingiz (ixtiyoriy)"
+                placeholder="{{ __('public.posts.guest_name') }}"
                 maxlength="80"
                 value="{{ old('author_name') }}"
               />
@@ -169,18 +191,18 @@
               rows="4"
               class="comment-input"
               name="body"
-              placeholder="Fikringizni yozing..."
-              maxlength="500"
+              placeholder="{{ __('public.posts.comment_placeholder') }}"
+              maxlength="100"
               required
             >{{ old('body') }}</textarea>
 
             <button type="submit" class="btn">
-              <i class="fa-solid fa-paper-plane"></i> Yuborish
+              <i class="fa-solid fa-paper-plane"></i> {{ __('public.posts.submit_comment') }}
             </button>
           </form>
 
           <p class="comment-hint">
-            <i class="fa-solid fa-info-circle"></i> Izohingiz moderator tomonidan ko'rib chiqiladi.
+            <i class="fa-solid fa-info-circle"></i> {{ __('public.posts.comment_hint') }}
           </p>
         </div>
       </div>

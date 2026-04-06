@@ -8,16 +8,35 @@ use App\Models\Post;
 use App\Models\PostLike;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
     public function home()
     {
-        $posts = Post::with('category')
-            ->withCount(['comments', 'likes'])
-            ->latest()
-            ->take(3)
-            ->get();
+        $posts = Cache::remember(cache_key_home_posts(), now()->addMinutes(5), function () {
+            return Post::query()
+                ->select([
+                    'id',
+                    'category_id',
+                    'title',
+                    'title_en',
+                    'short_content',
+                    'short_content_en',
+                    'image',
+                    'slug',
+                    'views',
+                    'post_kind',
+                    'video_path',
+                    'video_url',
+                    'created_at',
+                ])
+                ->with(['category:id,name,name_en'])
+                ->withCount(['comments', 'likes'])
+                ->latest()
+                ->take(3)
+                ->get();
+        });
 
         $likedPostIds = collect();
         if (auth()->check() && auth()->user()->isActive()) {
@@ -30,12 +49,33 @@ class HomeController extends Controller
             }
         }
 
-        $featuredTeacher = Teacher::query()
-            ->where('is_active', true)
-            ->inRandomOrder()
-            ->first();
+        $featuredTeacherId = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
+            return Teacher::query()
+                ->where('is_active', true)
+                ->inRandomOrder()
+                ->value('id');
+        });
 
-        return view('home', compact('posts', 'likedPostIds', 'featuredTeacher'));
+        $featuredTeacher = $featuredTeacherId
+            ? Teacher::query()
+                ->select([
+                    'id',
+                    'full_name',
+                    'slug',
+                    'subject',
+                    'subject_en',
+                    'bio',
+                    'bio_en',
+                    'image',
+                    'experience_years',
+                    'is_active',
+                ])
+                ->find($featuredTeacherId)
+            : null;
+
+        $postKindLabels = config('post_kinds', []);
+
+        return view('home', compact('posts', 'likedPostIds', 'featuredTeacher', 'postKindLabels'));
     }
 
      public function about(){

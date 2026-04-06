@@ -20,10 +20,12 @@ use App\Http\Controllers\TeacherEnrollmentController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\AdminExamController;
+use App\Http\Controllers\TeacherExamController;
 use App\Http\Controllers\AdminQuestionController;
 use App\Http\Controllers\AdminContactMessageController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\AdminCalendarEventController;
+use App\Http\Controllers\LocaleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +40,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/',[HomeController::class, 'home'])->name('home');
+Route::get('lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 Route::get('about',[HomeController::class, 'about'])->name('about');
 Route::get('courses',[PublicCourseController::class, 'index'])->name('courses');
 Route::post('courses/{course}/enroll', [CourseEnrollmentController::class, 'store'])
@@ -70,11 +73,6 @@ Route::post('contact', [HomeController::class, 'storeContact'])
 Route::get('login',[AuthController::class, 'login'])->name('login');
 Route::post('authenticate',[AuthController::class,'authenticate'])->name('authenticate');
 Route::post('authanticate',[AuthController::class,'authenticate'])->name('authanticate');
-Route::get('forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.forgot.form');
-Route::post('forgot-password', [AuthController::class, 'sendPasswordResetCode'])->name('password.forgot.send');
-Route::get('reset-password', [AuthController::class, 'showPasswordResetForm'])->name('password.reset.form');
-Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
-Route::post('reset-password/resend', [AuthController::class, 'resendPasswordResetCode'])->name('password.reset.resend');
 Route::get('login/verify-code', [AuthController::class, 'showLoginVerify'])->name('login.verify.form');
 Route::post('login/verify-code', [AuthController::class, 'verifyLoginCode'])->name('login.verify');
 Route::post('login/verify-code/resend', [AuthController::class, 'resendLoginCode'])->name('login.verify.resend');
@@ -86,17 +84,44 @@ Route::get('register/verify-code', [AuthController::class, 'showRegisterVerify']
 Route::post('register/verify-code', [AuthController::class, 'verifyRegisterCode'])->name('register.verify');
 Route::post('register/verify-code/resend', [AuthController::class, 'resendRegisterCode'])->name('register.verify.resend');
 
+// password reset
+Route::get('forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.forgot.form');
+Route::post('forgot-password', [AuthController::class, 'sendPasswordResetCode'])->name('password.forgot.send');
+Route::get('reset-password', [AuthController::class, 'showPasswordResetForm'])->name('password.reset.form');
+Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+Route::post('reset-password/resend', [AuthController::class, 'resendPasswordResetCode'])->name('password.reset.resend');
+
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->name('profile.password.confirm');
-    Route::post('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
     Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');
     Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->name('profile.email.resend');
     Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->name('profile.email.cancel');
+    Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->name('profile.password.confirm');
+    Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+
+    Route::middleware(['role:super_admin,admin,editor,moderator,teacher'])->group(function () {
+        Route::get('profile/exams', [TeacherExamController::class, 'index'])->name('profile.exams.index');
+        Route::get('profile/exams/create', [TeacherExamController::class, 'create'])->name('profile.exams.create');
+        Route::post('profile/exams', [TeacherExamController::class, 'store'])->name('profile.exams.store');
+        Route::get('profile/exams/{exam}/edit', [TeacherExamController::class, 'edit'])->name('profile.exams.edit');
+        Route::put('profile/exams/{exam}', [TeacherExamController::class, 'update'])->name('profile.exams.update');
+        Route::delete('profile/exams/{exam}', [TeacherExamController::class, 'destroy'])->name('profile.exams.destroy');
+
+        Route::get('profile/exams/{exam}/questions', [TeacherExamController::class, 'questionsIndex'])->name('profile.exams.questions.index');
+        Route::get('profile/exams/{exam}/questions/create', [TeacherExamController::class, 'questionCreate'])->name('profile.exams.questions.create');
+        Route::post('profile/exams/{exam}/questions', [TeacherExamController::class, 'questionStore'])->name('profile.exams.questions.store');
+        Route::get('profile/exams/{exam}/questions/{question}/edit', [TeacherExamController::class, 'questionEdit'])->name('profile.exams.questions.edit');
+        Route::put('profile/exams/{exam}/questions/{question}', [TeacherExamController::class, 'questionUpdate'])->name('profile.exams.questions.update');
+        Route::delete('profile/exams/{exam}/questions/{question}', [TeacherExamController::class, 'questionDestroy'])->name('profile.exams.questions.destroy');
+
+        Route::get('profile/exams/results', [TeacherExamController::class, 'results'])->name('profile.exams.results');
+        Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])->name('profile.exams.results.show');
+        Route::post('profile/exams/results/{result}/grade/{answer}', [TeacherExamController::class, 'gradeTextAnswer'])->name('profile.exams.grade');
+    });
 
     Route::get('profile/kurs-arizalari', [TeacherEnrollmentController::class, 'index'])->name('teacher.enrollments.index');
     Route::post('profile/kurs-arizalari/{enrollment}/tasdiqlash', [TeacherEnrollmentController::class, 'approve'])->name('teacher.enrollments.approve');
@@ -123,8 +148,8 @@ Route::middleware(['auth', 'role:super_admin,admin,editor,moderator'])->group(fu
 Route::middleware(['auth', 'role:super_admin,admin'])->group(function(){
     Route::get('user', [AdminController::class, 'user'])->name('user');
     Route::put('user/{user}', [AdminController::class, 'updateUser'])->name('user.update');
-    Route::post('user/{user}/password-reset/send', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
     Route::delete('user/{user}', [AdminController::class, 'destroyUser'])->name('user.destroy');
+    Route::post('user/{user}/password-reset', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
 });
 
 Route::middleware(['auth', 'role:teacher,super_admin,admin'])->group(function(){
@@ -178,6 +203,8 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
         Route::put('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'update'])->name('admin.exams.questions.update');
         Route::delete('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('admin.exams.questions.destroy');
         Route::get('exam-results', [AdminExamController::class, 'results'])->name('admin.exams.results');
+        Route::get('exam-results/{result}', [AdminExamController::class, 'showResult'])->name('admin.exams.results.show');
+        Route::post('exam-results/{result}/grade/{answer}', [AdminExamController::class, 'gradeTextAnswer'])->name('admin.exams.results.grade');
         Route::delete('exam-results/{result}', [AdminExamController::class, 'destroyResult'])->name('admin.exams.results.destroy');
     });
 

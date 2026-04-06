@@ -63,6 +63,11 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label">Nomi (EN, ixtiyoriy)</label>
+              <input type="text" class="form-control" name="title_en" value="{{ old('title_en', $post->title_en) }}">
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">Kategoriya</label>
               <select class="form-control" name="category_id" required>
                 <option value="">Kategoriyani tanlang</option>
@@ -76,10 +81,10 @@
 
             <div class="mb-3">
               <label class="form-label">Yangilik turi</label>
-              <select class="form-control" name="post_kind" required>
-                @foreach ($postKinds as $key => $meta)
+                <select class="form-control" name="post_kind" required>
+                  @foreach ($postKinds as $key => $meta)
                   <option value="{{ $key }}" {{ old('post_kind', $post->post_kind ?? 'general') === $key ? 'selected' : '' }}>
-                    {{ $meta['label'] ?? $key }}
+                    {{ localized_post_kind_label($key, 'uz') }}
                   </option>
                 @endforeach
               </select>
@@ -91,8 +96,18 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label">Qisqacha tavsif (EN, ixtiyoriy)</label>
+              <textarea class="form-control" name="short_content_en" rows="3">{{ old('short_content_en', $post->short_content_en) }}</textarea>
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">To'liq tavsif</label>
               <textarea class="form-control" name="content" rows="8" required>{{ old('content', $post->content) }}</textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">To'liq tavsif (EN, ixtiyoriy)</label>
+              <textarea class="form-control" name="content_en" rows="8">{{ old('content_en', $post->content_en) }}</textarea>
             </div>
 
             @if ($post->image)

@@ -225,6 +225,11 @@
                 </tbody>
               </table>
             </div>
+            @if($users->hasPages())
+              <div class="p-3">
+                {{ $users->links() }}
+              </div>
+            @endif
           </div>
         </div>
       </div>

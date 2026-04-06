@@ -4,43 +4,23 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" href="{{ asset('admin/images/favicon.svg') }}" type="image/x-icon" />
+	    <link rel="icon" href="{{ asset('admin/images/favicon.png') }}" type="image/png" />
     <title>@yield('title', 'Admin Panel')</title>
 
     <!-- ========== All CSS files linkup ========= -->
     <link rel="stylesheet" href="{{ asset('admin/css/bootstrap.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('admin/css/lineicons.css') }}" />
-    <link rel="stylesheet" href="{{ asset('admin/css/materialdesignicons.min.css') }}" />
-    <link rel="stylesheet" href="{{ asset('admin/css/fullcalendar.css') }}" />
-    <link rel="stylesheet" href="{{ asset('admin/css/main.css') }}" />
-    <style>
-      .sidebar-section {
-        padding: 18px 25px 8px;
-        color: #9aa4ca;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .sidebar-nav-wrapper .sidebar-nav .divider.section-divider {
-        padding: 6px 25px;
-      }
-
-      .sidebar-nav-wrapper .sidebar-nav .divider.section-divider hr {
-        margin: 0;
-      }
-
-      .sidebar-nav-wrapper .sidebar-nav ul .nav-item a .icon i {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 19px;
-        line-height: 1;
-      }
-    </style>
+	    <link rel="stylesheet" href="{{ asset('admin/css/materialdesignicons.min.css') }}" />
+	    <link rel="stylesheet" href="{{ asset('admin/css/fullcalendar.css') }}" />
+	    <link rel="stylesheet" href="{{ asset('admin/css/main.css') }}" />
+      <link rel="stylesheet" href="{{ asset('temp/css/extracted-admin.css') }}?v={{ filemtime(public_path('temp/css/extracted-admin.css')) }}" />
   </head>
-  <body>
+	  <body
+      data-admin-success="{{ session('success') }}"
+      data-admin-error="{{ session('error') }}"
+      data-admin-toast-type="{{ session('toast_type') }}"
+      data-admin-errors='@json(isset($errors) ? $errors->all() : [])'
+    >
     <!-- ======== Preloader =========== -->
     <div id="preloader">
       <div class="spinner"></div>
@@ -55,17 +35,20 @@
         </a>
       </div>
       <nav class="sidebar-nav">
-        @php
-          $sidebarUser = auth()->user();
-          $canManageContent = $sidebarUser->canManageContent();
-          $canManageInbox = $sidebarUser->canManageInbox();
-          $canManageEducation = $sidebarUser->canManageEducation();
-          $canManageSystem = $sidebarUser->canManageSystem();
-          $examsIndexActive = request()->routeIs('admin.exams.index')
-              || request()->routeIs('admin.exams.create')
-              || request()->routeIs('admin.exams.edit')
-              || request()->routeIs('admin.exams.questions.*');
-        @endphp
+	        @php
+	          $sidebarUser = auth()->user();
+	          $canManageContent = $sidebarUser->canManageContent();
+	          $canManageInbox = $sidebarUser->canManageInbox();
+	          $canManageEducation = $sidebarUser->canManageEducation();
+	          $canManageTeachers = $sidebarUser->canManageTeachers();
+	          $canManageSystem = $sidebarUser->canManageSystem();
+		          $adminAvatarUrl = $sidebarUser->avatar_url;
+		          $adminAvatarInitial = $sidebarUser->avatar_initial;
+	          $examsIndexActive = request()->routeIs('admin.exams.index')
+	              || request()->routeIs('admin.exams.create')
+	              || request()->routeIs('admin.exams.edit')
+	              || request()->routeIs('admin.exams.questions.*');
+	        @endphp
 
         <ul>
           <li class="sidebar-section">Asosiy</li>
@@ -120,17 +103,19 @@
             @endif
           @endif
 
-          @if($canManageEducation)
+          @if($canManageTeachers || $canManageEducation)
             <li class="sidebar-section">Ta'lim</li>
 
-            @if($sidebarUser->canManageSystem())
+            @if($canManageTeachers)
               <li class="nav-item {{ request()->routeIs('teachers.*') ? 'active' : '' }}">
                 <a href="{{ route('teachers.index') }}">
                   <span class="icon"><i class="mdi mdi-school-outline"></i></span>
                   <span class="text">Ustozlar</span>
                 </a>
               </li>
+            @endif
 
+            @if($sidebarUser->canManageSystem())
               <li class="nav-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.courses.index') }}">
                   <span class="icon"><i class="mdi mdi-book-open-page-variant-outline"></i></span>
@@ -163,6 +148,12 @@
                 <a href="{{ route('teacher.enrollments.index') }}">
                   <span class="icon"><i class="mdi mdi-clipboard-text-outline"></i></span>
                   <span class="text">Kurs arizalari</span>
+                </a>
+              </li>
+              <li class="nav-item {{ request()->routeIs('profile.exams.*') ? 'active' : '' }}">
+                <a href="{{ route('profile.exams.index') }}">
+                  <span class="icon"><i class="mdi mdi-pen"></i></span>
+                  <span class="text">Mening imtihonlarim</span>
                 </a>
               </li>
             @endif
@@ -220,24 +211,40 @@
                 <div class="profile-box ml-15">
                   <button class="dropdown-toggle bg-transparent border-0" type="button" id="profile"
                     data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="profile-info">
-                      <div class="info">
-                        <div class="image">
-                          <img src="{{ asset('admin/images/profile/profile-image.png') }}" alt="" />
-                        </div>
-                        <div>
-                          <h6 class="fw-500">{{ auth()->user()->name }}</h6>
-                          <p>Admin</p>
-                        </div>
-                      </div>
-                    </div>
+		                    <div class="profile-info">
+		                      <div class="info">
+					                        <div class="image admin-avatar-frame admin-avatar-frame--header {{ $adminAvatarUrl ? 'has-image' : '' }}">
+		                              @if($adminAvatarUrl)
+				                            <img
+				                              src="{{ $adminAvatarUrl }}"
+				                              alt=""
+				                              class="admin-avatar-img"
+				                              onerror="this.parentElement.classList.add('is-broken')"
+				                            />
+		                              @endif
+		                              <span class="admin-user-avatar-fallback">{{ $adminAvatarInitial }}</span>
+					                        </div>
+	                        <div>
+	                          <h6 class="fw-500">{{ auth()->user()->name }}</h6>
+	                          <p>{{ auth()->user()->role_label }}</p>
+	                        </div>
+	                      </div>
+	                    </div>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile">
-                    <li>
-                      <div class="author-info flex items-center !p-1">
-                        <div class="image">
-                          <img src="{{ asset('admin/images/profile/profile-image.png') }}" alt="image">
-                        </div>
+		                    <li>
+		                      <div class="author-info flex items-center !p-1">
+			                        <div class="image admin-avatar-frame {{ $adminAvatarUrl ? 'has-image' : '' }}">
+	                                @if($adminAvatarUrl)
+			                            <img
+			                              src="{{ $adminAvatarUrl }}"
+			                              alt=""
+			                              class="admin-avatar-img"
+			                              onerror="this.parentElement.classList.add('is-broken')"
+			                            >
+	                                @endif
+	                                <span class="admin-user-avatar-fallback">{{ $adminAvatarInitial }}</span>
+			                        </div>
                         <div class="content">
                           <h4 class="text-sm">{{ auth()->user()->name }}</h4>
                           <a class="text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white text-xs" href="#">{{ auth()->user()->email ?? 'admin@example.com' }}</a>
@@ -291,8 +298,8 @@
             <div class="copyright text-center text-md-start">
               <p class="text-sm">
                 Designed and Developed by
-                <a href="https://plainadmin.com" rel="nofollow" target="_blank">
-                  PlainAdmin
+                <a rel="nofollow">
+                  Admin
                 </a>
               </p>
             </div>
@@ -317,138 +324,17 @@
     <script src="{{ asset('admin/js/moment.min.js') }}"></script>
     <script src="{{ asset('admin/js/fullcalendar.js') }}"></script>
     <script src="{{ asset('admin/js/jvectormap.min.js') }}"></script>
-    <script src="{{ asset('admin/js/world-merc.js') }}"></script>
-    <script src="{{ asset('admin/js/polyfill.js') }}"></script>
-    <script src="{{ asset('admin/js/main.js') }}"></script>
+	    <script src="{{ asset('admin/js/world-merc.js') }}"></script>
+	    <script src="{{ asset('admin/js/polyfill.js') }}"></script>
+	    <script src="{{ asset('admin/js/main.js') }}"></script>
+      <script src="{{ asset('temp/js/extracted-admin.js') }}?v={{ filemtime(public_path('temp/js/extracted-admin.js')) }}"></script>
 
     @yield('page_scripts')
 
     <!-- Admin toast (session flash -> top-right toast) -->
-    <style>
-      #admin-toast-container {
-        position: fixed;
-        top: 115px;
-        right: 18px;
-        z-index: 999999;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        pointer-events: none;
-      }
-
-      #admin-toast-container .admin-toast {
-        pointer-events: auto;
-        max-width: 420px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        color: #fff;
-        font-weight: 700;
-        font-size: 14px;
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(8, 24, 43, 0.92);
-        opacity: 0;
-        transform: translateX(24px) translateY(6px);
-        animation: adminToastIn 260ms ease forwards;
-      }
-
-      #admin-toast-container .admin-toast.admin-success {
-        background: rgba(15, 118, 110, 0.14);
-        border-color: rgba(15, 118, 110, 0.35);
-        color: #0f766e;
-      }
-
-      #admin-toast-container .admin-toast.admin-warning {
-        background: rgba(245, 158, 11, 0.14);
-        border-color: rgba(245, 158, 11, 0.35);
-        color: #f59e0b;
-      }
-
-      #admin-toast-container .admin-toast.admin-error {
-        background: rgba(220, 38, 38, 0.12);
-        border-color: rgba(220, 38, 38, 0.3);
-        color: #dc2626;
-      }
-
-      #admin-toast-container .admin-toast.admin-toast-out {
-        animation: adminToastOut 220ms ease forwards;
-      }
-
-      @keyframes adminToastIn {
-        to {
-          opacity: 1;
-          transform: translateX(0) translateY(0);
-        }
-      }
-
-      @keyframes adminToastOut {
-        to {
-          opacity: 0;
-          transform: translateX(18px) translateY(6px);
-        }
-      }
-    </style>
 
     <div id="admin-toast-container" aria-live="polite" aria-atomic="true"></div>
 
-    <script>
-      (() => {
-        const container = document.getElementById('admin-toast-container');
-        if (!container) return;
-
-        const toastTimerMs = 3200;
-
-        function showToast(message, type) {
-          if (!message) return;
-
-          const toast = document.createElement('div');
-          toast.className = `admin-toast admin-${type}`;
-          toast.textContent = message;
-          container.appendChild(toast);
-
-          setTimeout(() => {
-            toast.classList.add('admin-toast-out');
-            setTimeout(() => toast.remove(), 250);
-          }, toastTimerMs);
-        }
-
-        const sessionSuccess = @json(session('success'));
-        const sessionError = @json(session('error'));
-        const toastTypeFlash = @json(session('toast_type'));
-
-        const errorsAny = @json(isset($errors) && $errors->any());
-        const errorMessages = @json(isset($errors) ? $errors->all() : []);
-
-        function resolveType(defaultType) {
-          if (!toastTypeFlash) return defaultType;
-          if (toastTypeFlash === 'warning') return 'warning';
-          if (toastTypeFlash === 'error') return 'error';
-          if (toastTypeFlash === 'success') return 'success';
-          return defaultType;
-        }
-
-        // Session flash bilan toast takrorlanmasin. Validatsiya xatosi (.danger-alert) ni o‘chirma — aks holda forma xabarlari yo‘qoladi.
-        if (errorsAny) {
-          document.querySelectorAll('.alert-box.success-alert').forEach((el) => el.remove());
-        } else {
-          document.querySelectorAll('.alert-box.success-alert, .alert-box.danger-alert').forEach((el) => el.remove());
-        }
-
-        if (sessionSuccess) {
-          showToast(sessionSuccess, resolveType('success'));
-        }
-        if (sessionError) {
-          showToast(sessionError, resolveType('error'));
-        }
-        if (errorsAny && errorMessages.length) {
-          const summary =
-            errorMessages.length === 1
-              ? errorMessages[0]
-              : errorMessages.slice(0, 2).join(' · ') + (errorMessages.length > 2 ? ` (+${errorMessages.length - 2})` : '');
-          showToast(summary, 'error');
-        }
-      })();
-    </script>
 
   </body>
 </html>

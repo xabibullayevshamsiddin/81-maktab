@@ -27,17 +27,22 @@ class AdminCalendarEventController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'body' => ['nullable', 'string', 'max:10000'],
+            'body_en' => ['nullable', 'string', 'max:10000'],
             'event_date' => ['required', 'date'],
             'time_note' => ['nullable', 'string', 'max:64'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'time_note_en' => ['nullable', 'string', 'max:64'],
         ]);
 
+        $validated['sort_order'] = $this->nextSortOrderForDate((string) $validated['event_date']);
+
         CalendarEvent::query()->create($validated);
+        forget_public_calendar_caches();
 
         return redirect()
             ->route('calendar-events.index')
-            ->with('success', 'Tadbir qo‘shildi.');
+            ->with('success', "Tadbir qo'shildi.");
     }
 
     public function edit(CalendarEvent $calendar_event)
@@ -49,13 +54,16 @@ class AdminCalendarEventController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'body' => ['nullable', 'string', 'max:10000'],
+            'body_en' => ['nullable', 'string', 'max:10000'],
             'event_date' => ['required', 'date'],
             'time_note' => ['nullable', 'string', 'max:64'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'time_note_en' => ['nullable', 'string', 'max:64'],
         ]);
 
         $calendar_event->update($validated);
+        forget_public_calendar_caches();
 
         return redirect()
             ->route('calendar-events.index')
@@ -65,9 +73,17 @@ class AdminCalendarEventController extends Controller
     public function destroy(CalendarEvent $calendar_event)
     {
         $calendar_event->delete();
+        forget_public_calendar_caches();
 
         return redirect()
             ->route('calendar-events.index')
-            ->with('success', 'O‘chirildi.');
+            ->with('success', "O'chirildi.");
+    }
+
+    private function nextSortOrderForDate(string $eventDate): int
+    {
+        return (int) CalendarEvent::query()
+            ->whereDate('event_date', $eventDate)
+            ->max('sort_order') + 1;
     }
 }

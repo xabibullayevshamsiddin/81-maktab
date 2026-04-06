@@ -90,6 +90,11 @@
                 </tbody>
               </table>
             </div>
+            @if($categories->hasPages())
+              <div class="p-3">
+                {{ $categories->links() }}
+              </div>
+            @endif
           </div>
         </div>
       </div>
@@ -97,4 +102,3 @@
   </div>
 </section>
 @endsection
-

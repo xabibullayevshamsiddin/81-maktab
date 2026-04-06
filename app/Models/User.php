@@ -11,11 +11,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
+
+    protected static ?bool $legacyRoleColumnExists = null;
 
     public const ROLE_SUPER_ADMIN = Role::NAME_SUPER_ADMIN;
 
@@ -40,6 +43,25 @@ class User extends Authenticatable
         self::ROLE_USER => 'Foydalanuvchi',
     ];
 
+    public const ROLE_LABELS = [
+        'uz' => [
+            self::ROLE_SUPER_ADMIN => 'Super Admin',
+            self::ROLE_ADMIN => 'Admin',
+            self::ROLE_EDITOR => 'Editor',
+            self::ROLE_MODERATOR => 'Moderator',
+            self::ROLE_TEACHER => 'O\'qituvchi',
+            self::ROLE_USER => 'Foydalanuvchi',
+        ],
+        'en' => [
+            self::ROLE_SUPER_ADMIN => 'Super Admin',
+            self::ROLE_ADMIN => 'Admin',
+            self::ROLE_EDITOR => 'Editor',
+            self::ROLE_MODERATOR => 'Moderator',
+            self::ROLE_TEACHER => 'Teacher',
+            self::ROLE_USER => 'User',
+        ],
+    ];
+
     public const ROLE_HIERARCHY = [
         self::ROLE_SUPER_ADMIN => 5,
         self::ROLE_ADMIN => 4,
@@ -54,6 +76,7 @@ class User extends Authenticatable
         'email',
         'phone',
         'grade',
+        'avatar',
         'password',
         'role_id',
         'is_active',
@@ -156,19 +179,12 @@ class User extends Authenticatable
 
     public function roleLevel(): int
     {
-        $this->loadMissing('roleRelation');
-
-        return (int) ($this->roleRelation?->level ?? self::ROLE_HIERARCHY[self::ROLE_USER]);
+        return (int) (self::ROLE_HIERARCHY[$this->resolvedRoleName()] ?? self::ROLE_HIERARCHY[self::ROLE_USER]);
     }
 
     public function hasRole(array|string $roleNames): bool
     {
-        $this->loadMissing('roleRelation');
-
-        $currentRoleName = trim((string) ($this->roleRelation?->name ?? ''));
-        if ($currentRoleName === '') {
-            return false;
-        }
+        $currentRoleName = $this->resolvedRoleName();
 
         $roleNames = array_values(array_filter(array_map(
             static fn ($roleName) => trim((string) $roleName),
@@ -288,6 +304,32 @@ class User extends Authenticatable
         ]);
     }
 
+    public function hasLinkedActiveTeacherProfile(): bool
+    {
+        return $this->teacherProfile()
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    public function canOpenCourse(): bool
+    {
+        return $this->isAdmin() || ($this->isTeacher() && $this->hasLinkedActiveTeacherProfile());
+    }
+
+    public function canManageExams(): bool
+    {
+        return $this->isAdmin() || ($this->isTeacher() && $this->hasLinkedActiveTeacherProfile());
+    }
+
+    public function canManageTeachers(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+            self::ROLE_EDITOR,
+        ]);
+    }
+
     public function canManageSystem(): bool
     {
         return $this->hasAnyRole([
@@ -325,20 +367,14 @@ class User extends Authenticatable
 
     public function getRoleAttribute(): string
     {
-        $this->loadMissing('roleRelation');
-
-        return $this->roleRelation?->name ?? self::ROLE_USER;
+        return $this->resolvedRoleName();
     }
 
     public function getRoleLabelAttribute(): string
     {
-        $this->loadMissing('roleRelation');
+        $resolvedRoleName = $this->resolvedRoleName();
 
-        if ($this->roleRelation?->label) {
-            return $this->roleRelation->label;
-        }
-
-        return self::ROLES[$this->role] ?? $this->role;
+        return $this->localizedRoleLabel($resolvedRoleName);
     }
 
     public function getAdminRoleBadgeClassAttribute(): string
@@ -371,6 +407,92 @@ class User extends Authenticatable
     public function getGradeLabelAttribute(): string
     {
         return $this->displayGrade();
+    }
+
+    public function avatarUrl(): ?string
+    {
+        if (empty($this->avatar)) {
+            return null;
+        }
+
+        return asset('storage/'.$this->avatar);
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatarUrl();
+    }
+
+    public function getAvatarInitialAttribute(): string
+    {
+        $name = trim((string) ($this->name ?? 'U'));
+
+        return Str::upper(Str::substr($name !== '' ? $name : 'U', 0, 1));
+    }
+
+    public function localizedRoleLabel(?string $roleName = null, ?string $locale = null): string
+    {
+        $resolvedRoleName = $roleName ?: $this->resolvedRoleName();
+        $locale = trim((string) ($locale ?: app()->getLocale() ?: 'uz'));
+
+        if (isset(self::ROLE_LABELS[$locale][$resolvedRoleName])) {
+            return self::ROLE_LABELS[$locale][$resolvedRoleName];
+        }
+
+        if (isset(self::ROLE_LABELS['uz'][$resolvedRoleName])) {
+            return self::ROLE_LABELS['uz'][$resolvedRoleName];
+        }
+
+        return self::ROLES[$resolvedRoleName] ?? $resolvedRoleName;
+    }
+
+    protected static function hasLegacyRoleColumn(): bool
+    {
+        if (self::$legacyRoleColumnExists !== null) {
+            return self::$legacyRoleColumnExists;
+        }
+
+        self::$legacyRoleColumnExists = Schema::hasTable('users') && Schema::hasColumn('users', 'role');
+
+        return self::$legacyRoleColumnExists;
+    }
+
+    protected function legacyRoleName(): string
+    {
+        if (! self::hasLegacyRoleColumn()) {
+            return '';
+        }
+
+        $legacyRoleName = trim((string) ($this->getRawOriginal('role') ?? $this->attributes['role'] ?? ''));
+
+        return array_key_exists($legacyRoleName, self::ROLE_HIERARCHY) ? $legacyRoleName : '';
+    }
+
+    protected function relationRoleName(): string
+    {
+        $this->loadMissing('roleRelation');
+
+        $relationRoleName = trim((string) ($this->roleRelation?->name ?? ''));
+
+        return array_key_exists($relationRoleName, self::ROLE_HIERARCHY) ? $relationRoleName : '';
+    }
+
+    protected function resolvedRoleName(): string
+    {
+        $relationRoleName = $this->relationRoleName();
+        $legacyRoleName = $this->legacyRoleName();
+
+        if ($relationRoleName === '') {
+            return $legacyRoleName !== '' ? $legacyRoleName : self::ROLE_USER;
+        }
+
+        if ($legacyRoleName === '') {
+            return $relationRoleName;
+        }
+
+        return self::ROLE_HIERARCHY[$legacyRoleName] > self::ROLE_HIERARCHY[$relationRoleName]
+            ? $legacyRoleName
+            : $relationRoleName;
     }
 
     public function syncRolePivot(): void

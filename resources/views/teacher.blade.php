@@ -1,16 +1,12 @@
-<x-loyouts.main title="81-IDUM | Ustozlar">
+﻿<x-loyouts.main title="{{ __('public.teachers.page_title') }}">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
-          <span class="badge">81-IDUM Ustozlar</span>
-          <h1>Kasbiy tajriba va <strong>zamonaviy metodika</strong></h1>
-          <p>
-            Ustozlar jamoamiz fan bo'yicha chuqur bilim, amaliy yondashuv va
-            individual qo'llab-quvvatlash orqali o'quvchilarning natijasini
-            oshirishga xizmat qiladi.
-          </p>
+          <span class="badge">{{ __('public.teachers.badge') }}</span>
+          <h1>{{ __('public.teachers.hero_title') }}</h1>
+          <p>{{ __('public.teachers.hero_text') }}</p>
           <a href="#teachers-list" class="btn"
-            >Jamoani ko'rish
+            >{{ __('public.teachers.hero_button') }}
             <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
           ></a>
       </div>
@@ -20,79 +16,116 @@
     <main>
       <section class="container teachers-section" id="teachers-list">
         <div class="section-head">
-          <h2>Ustozlar jamoasi</h2>
-          <p>Fan yo'nalishlari bo'yicha tajribali pedagoglar</p>
+          <h2>{{ __('public.teachers.list_title') }}</h2>
+          <p>{{ __('public.teachers.list_text') }}</p>
         </div>
 
         <div class="teachers-grid">
           @forelse($teachers as $teacher)
+            @php
+              $teacherSubject = localized_model_value($teacher, 'subject');
+              $teacherBio = localized_model_value($teacher, 'bio');
+              $teacherAchievements = localized_model_value($teacher, 'achievements');
+              $teacherAchievementPreview = \Illuminate\Support\Str::limit(trim((string) strtok($teacherAchievements, "\n")), 100);
+            @endphp
             <article class="teacher-card reveal">
               <div class="teacher-photo-wrap">
                 <img
                   src="{{ $teacher->image ? asset('storage/' . $teacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
                   alt="{{ $teacher->full_name }} profil rasmi"
                   class="teacher-photo"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <div class="teacher-top">
                 <div>
                   <h3>{{ $teacher->full_name }}</h3>
-                  <p class="teacher-role">{{ $teacher->subject }}</p>
+                  <p class="teacher-role">{{ $teacherSubject }}</p>
                 </div>
               </div>
               <p class="teacher-desc">
-                {{ $teacher->bio ?: 'Ushbu ustoz haqida batafsil ma\'lumotni ochib ko\'rishingiz mumkin.' }}
+                {{ $teacherBio ?: __('public.teachers.fallback_bio') }}
               </p>
               <ul class="teacher-meta">
-                <li><i class="fa-solid fa-award"></i> {{ $teacher->experience_years }} yil tajriba</li>
-                <li><i class="fa-solid fa-users"></i> {{ $teacher->grades ?: 'Barcha sinflar' }}</li>
+                <li><i class="fa-solid fa-award"></i> {{ __('public.common.years_experience', ['count' => $teacher->experience_years]) }}</li>
+                <li><i class="fa-solid fa-users"></i> {{ $teacher->grades ?: __('public.common.all_grades') }}</li>
               </ul>
-              @if(filled($teacher->achievements))
-                <p class="teacher-achievements-preview"><i class="fa-solid fa-trophy"></i> {{ \Illuminate\Support\Str::limit(trim(strtok($teacher->achievements, "\n")), 100) }}</p>
+              @if(filled($teacherAchievements))
+                <p class="teacher-achievements-preview"><i class="fa-solid fa-trophy"></i> {{ $teacherAchievementPreview }}</p>
               @endif
               <div class="teacher-actions">
                 @php $likedTeacherIds = $likedTeacherIds ?? collect(); @endphp
                 @auth
                   <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="display:inline;">
                     @csrf
-                    <button class="like-btn {{ $likedTeacherIds->contains($teacher->id) ? 'liked' : '' }}" type="submit" aria-label="Ustozni yoqtirish">
+                    <button class="like-btn {{ $likedTeacherIds->contains($teacher->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                       <i class="{{ $likedTeacherIds->contains($teacher->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                       <span class="like-count">{{ $teacher->likes_count ?? 0 }}</span>
                     </button>
                   </form>
                 @endauth
-                <a href="{{ route('teacher.show', $teacher) }}" class="btn btn-sm">Batafsil</a>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline share-btn js-share-trigger"
+                  data-share-url="{{ route('teacher.show', $teacher) }}"
+                  data-share-title="{{ $teacher->full_name }}"
+                  data-share-text="{{ __('public.teachers.share_text') }}"
+                  data-share-success="{{ __('public.teachers.share_success') }}"
+                >
+                  <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+                </button>
+                <a href="{{ route('teacher.show', $teacher) }}" class="btn btn-sm">{{ __('public.common.details') }}</a>
               </div>
             </article>
           @empty
-            <p>Hozircha ustozlar qo‘shilmagan.</p>
+            <p>{{ __('public.teachers.empty') }}</p>
           @endforelse
         </div>
+
+        @if($teachers->hasPages())
+          <div class="news-pagination" style="margin-top: 28px;">
+            @if ($teachers->onFirstPage())
+              <span class="btn btn-sm btn-outline" aria-disabled="true">{{ __('public.posts.previous') }}</span>
+            @else
+              <a class="btn btn-sm btn-outline" href="{{ $teachers->previousPageUrl() }}">{{ __('public.posts.previous') }}</a>
+            @endif
+
+            <span class="news-page-info">
+              {{ $teachers->currentPage() }} / {{ $teachers->lastPage() }}
+            </span>
+
+            @if ($teachers->hasMorePages())
+              <a class="btn btn-sm" href="{{ $teachers->nextPageUrl() }}">{{ __('public.posts.next') }}</a>
+            @else
+              <span class="btn btn-sm" aria-disabled="true">{{ __('public.posts.next') }}</span>
+            @endif
+          </div>
+        @endif
       </section>
 
       <section class="teaching-approach">
         <div class="container approach-grid">
           <article class="approach-card reveal">
-            <h3>Ta'lim yondashuvi</h3>
-            <p>
-              Har bir fan bo'yicha darslar nazariya, amaliy topshiriqlar va
-              individual kuzatuv asosida tashkil qilinadi.
-            </p>
+            <h3>{{ __('public.teachers.approach_title') }}</h3>
+            <p>{{ __('public.teachers.approach_text') }}</p>
             <ul>
-              <li><i class="fa-solid fa-check"></i> Interaktiv dars jarayoni</li>
-              <li><i class="fa-solid fa-check"></i> Muntazam oraliq monitoring</li>
-              <li><i class="fa-solid fa-check"></i> Ota-ona bilan muntazam aloqa</li>
+              <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.approach_item_1') }}</li>
+              <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.approach_item_2') }}</li>
+              <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.approach_item_3') }}</li>
             </ul>
           </article>
 
           <article class="approach-image-card reveal">
             <img
               src="{{ ('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-              alt="81-IDUM ustozlar jamoasi"
+              alt="{{ __('public.layout.nav.teachers') }}"
+              loading="lazy"
+              decoding="async"
             />
             <div class="approach-caption">
-              <h3>Jamoaviy kuch va natija</h3>
-              <p>Ustozlar hamkorligi o'quvchi natijasini barqaror oshiradi.</p>
+              <h3>{{ __('public.teachers.approach_caption_title') }}</h3>
+              <p>{{ __('public.teachers.approach_caption_text') }}</p>
             </div>
           </article>
         </div>
@@ -102,19 +135,19 @@
         <div class="container teachers-stats">
           <div class="teachers-stat-item reveal">
             <strong data-target="40" class="stat-num">0</strong>
-            <span>Tajribali ustoz</span>
+            <span>{{ __('public.teachers.stat_1') }}</span>
           </div>
           <div class="teachers-stat-item reveal">
             <strong data-target="18" class="stat-num">0</strong>
-            <span>Fan yo'nalishi</span>
+            <span>{{ __('public.teachers.stat_2') }}</span>
           </div>
           <div class="teachers-stat-item reveal">
             <strong data-target="1200" class="stat-num">0</strong>
-            <span>O'quvchi</span>
+            <span>{{ __('public.teachers.stat_3') }}</span>
           </div>
           <div class="teachers-stat-item reveal">
             <strong data-target="96" class="stat-num">0</strong>
-            <span>% Qoniqish darajasi</span>
+            <span>{{ __('public.teachers.stat_4') }}</span>
           </div>
         </div>
       </section>
@@ -122,14 +155,11 @@
       <section class="container teachers-cta-section reveal">
         <div class="glass-section teachers-cta">
           <div>
-            <h2>Ustozlar bilan bog'lanish</h2>
-            <p>
-              Darslar, maslahat yoki ro'yxatdan o'tish bo'yicha qo'shimcha
-              ma'lumot olish uchun bizga murojaat qiling.
-            </p>
+            <h2>{{ __('public.teachers.cta_title') }}</h2>
+            <p>{{ __('public.teachers.cta_text') }}</p>
           </div>
           <a href="{{ route('contact') }}" class="btn"
-            >Aloqa
+            >{{ __('public.teachers.cta_button') }}
             <i class="fa-solid fa-arrow-right" style="margin-left: 6px"></i
           ></a>
         </div>
@@ -137,4 +167,3 @@
     </main>
 
 </x-loyouts.main>
-

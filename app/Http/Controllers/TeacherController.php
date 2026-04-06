@@ -20,9 +20,12 @@ class TeacherController extends Controller
             $query->where(function ($w) use ($q): void {
                 $w->where('full_name', 'like', '%'.$q.'%')
                     ->orWhere('subject', 'like', '%'.$q.'%')
+                    ->orWhere('subject_en', 'like', '%'.$q.'%')
                     ->orWhere('grades', 'like', '%'.$q.'%')
                     ->orWhere('bio', 'like', '%'.$q.'%')
+                    ->orWhere('bio_en', 'like', '%'.$q.'%')
                     ->orWhere('achievements', 'like', '%'.$q.'%')
+                    ->orWhere('achievements_en', 'like', '%'.$q.'%')
                     ->orWhereHas('user', function ($u) use ($q): void {
                         $u->where('name', 'like', '%'.$q.'%')
                             ->orWhere('email', 'like', '%'.$q.'%')
@@ -31,7 +34,7 @@ class TeacherController extends Controller
             });
         }
 
-        $teachers = $query->get();
+        $teachers = $query->paginate(10)->withQueryString();
 
         return view('admin.teachers.index', compact('teachers'));
     }
@@ -49,24 +52,27 @@ class TeacherController extends Controller
             'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id'],
             'full_name' => ['required', 'string', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
+            'subject_en' => ['nullable', 'string', 'max:255'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:60'],
             'grades' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:10000'],
+            'achievements_en' => ['nullable', 'string', 'max:10000'],
             'bio' => ['nullable', 'string'],
+            'bio_en' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
         $validated['slug'] = $this->makeUniqueSlug($validated['full_name']);
         $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
-        $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
+        $validated['sort_order'] = $this->nextSortOrder();
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('teachers', 'public');
         }
 
         Teacher::create($validated);
+        forget_public_teacher_caches();
 
         return redirect()->route('teachers.index')
             ->with('success', "Ustoz qo'shildi.")
@@ -91,12 +97,14 @@ class TeacherController extends Controller
             'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id,'.$teacher->id],
             'full_name' => ['required', 'string', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
+            'subject_en' => ['nullable', 'string', 'max:255'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:60'],
             'grades' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:10000'],
+            'achievements_en' => ['nullable', 'string', 'max:10000'],
             'bio' => ['nullable', 'string'],
+            'bio_en' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -105,7 +113,6 @@ class TeacherController extends Controller
         }
 
         $validated['is_active'] = (bool) ($validated['is_active'] ?? false);
-        $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
 
         if ($request->hasFile('image')) {
             if (! empty($teacher->image)) {
@@ -115,6 +122,7 @@ class TeacherController extends Controller
         }
 
         $teacher->update($validated);
+        forget_public_teacher_caches();
 
         return redirect()->route('teachers.index')
             ->with('success', "Ustoz yangilandi.")
@@ -128,6 +136,7 @@ class TeacherController extends Controller
         }
 
         $teacher->delete();
+        forget_public_teacher_caches();
 
         return redirect()->route('teachers.index')
             ->with('error', "Ustoz o'chirildi.")
@@ -139,28 +148,22 @@ class TeacherController extends Controller
         $base = Str::slug($name);
         $slug = $base !== '' ? $base : 'teacher';
 
-        $existsQuery = Teacher::query()->where('slug', $slug);
-        if ($ignoreId) {
-            $existsQuery->where('id', '!=', $ignoreId);
-        }
+        $existingSlugs = Teacher::query()
+            ->where('slug', 'like', $slug.'%')
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->pluck('slug')
+            ->all();
 
-        if (! $existsQuery->exists()) {
+        if (! in_array($slug, $existingSlugs, true)) {
             return $slug;
         }
 
         $i = 2;
-        while (true) {
-            $candidate = "{$slug}-{$i}";
-            $q = Teacher::query()->where('slug', $candidate);
-            if ($ignoreId) {
-                $q->where('id', '!=', $ignoreId);
-            }
-
-            if (! $q->exists()) {
-                return $candidate;
-            }
+        while (in_array("{$slug}-{$i}", $existingSlugs, true)) {
             $i++;
         }
+
+        return "{$slug}-{$i}";
     }
 
     private function teacherUsers(?Teacher $ignoreTeacher = null)
@@ -179,5 +182,9 @@ class TeacherController extends Controller
             ->orderBy('name')
             ->get();
     }
-}
 
+    private function nextSortOrder(): int
+    {
+        return (int) Teacher::query()->max('sort_order') + 1;
+    }
+}

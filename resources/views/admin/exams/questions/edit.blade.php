@@ -5,7 +5,7 @@
   <div class="col-lg-12">
     <div class="card-style mb-30">
       <h6 class="mb-20">Savolni tahrirlash: {{ $exam->title }}</h6>
-      <form method="POST" action="{{ route('admin.exams.questions.update', [$exam, $question]) }}">
+      <form method="POST" action="{{ route('admin.exams.questions.update', [$exam, $question]) }}" enctype="multipart/form-data" novalidate>
         @csrf
         @method('PUT')
         @include('admin.exams.questions.partials.form', ['question' => $question])
@@ -14,4 +14,3 @@
   </div>
 </div>
 @endsection
-

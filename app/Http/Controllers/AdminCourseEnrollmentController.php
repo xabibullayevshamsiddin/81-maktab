@@ -67,7 +67,7 @@ class AdminCourseEnrollmentController extends Controller
             });
         }
 
-        $enrollments = $enrollmentQuery->get();
+        $enrollments = $enrollmentQuery->paginate(10)->withQueryString();
 
         return view('admin.courses.enrollments', compact('course', 'enrollments'));
     }

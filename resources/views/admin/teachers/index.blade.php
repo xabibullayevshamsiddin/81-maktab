@@ -90,6 +90,11 @@
                 </tbody>
               </table>
             </div>
+            @if($teachers->hasPages())
+              <div class="p-3">
+                {{ $teachers->links() }}
+              </div>
+            @endif
           </div>
         </div>
       </div>
@@ -97,4 +102,3 @@
   </div>
 </section>
 @endsection
-

@@ -1,31 +1,29 @@
 <div class="signin-card profile-card" data-profile-section="email" id="profile-email-card">
   <div class="profile-card-head">
-    <span class="profile-card-kicker">2-qadam</span>
-    <h2>Emailni almashtirish</h2>
-    <p class="signin-subtitle">
-      Jarayon oddiy: yangi emailni yozasiz, kod olasiz, keyin kodni kiritib tasdiqlaysiz.
-    </p>
+    <span class="profile-card-kicker">{{ __('profile.steps.email') }}</span>
+    <h2>{{ __('profile.email_card.title') }}</h2>
+    <p class="signin-subtitle">{{ __('profile.email_card.subtitle') }}</p>
   </div>
 
   <div class="profile-step-strip">
     <span class="profile-step-chip {{ $pendingEmail === '' ? 'is-active' : '' }}">
       <i class="fa-solid fa-at"></i>
-      1. Yangi email
+      {{ __('profile.email_card.step_new') }}
     </span>
     <span class="profile-step-chip {{ $pendingEmail !== '' ? 'is-active' : '' }}">
       <i class="fa-solid fa-key"></i>
-      2. Kodni kiriting
+      {{ __('profile.email_card.step_code') }}
     </span>
     <span class="profile-step-chip">
       <i class="fa-solid fa-circle-check"></i>
-      3. Tasdiqlansin
+      {{ __('profile.email_card.step_done') }}
     </span>
   </div>
 
   <p class="profile-alert">
     <i class="fa-solid fa-envelope-circle-check"></i>
     <span class="profile-alert-copy">
-      <span class="profile-alert-label">Hozirgi email</span>
+      <span class="profile-alert-label">{{ __('profile.email_card.current_email') }}</span>
       <strong class="profile-break-text">{{ $user->email }}</strong>
     </span>
   </p>
@@ -34,7 +32,7 @@
     <p class="profile-pending-email">
       <i class="fa-solid fa-hourglass-half"></i>
       <span class="profile-alert-copy">
-        <span class="profile-alert-label">Tasdiqlanishi kutilmoqda</span>
+        <span class="profile-alert-label">{{ __('profile.email_card.pending_email') }}</span>
         <strong class="profile-break-text">{{ $pendingEmail }}</strong>
       </span>
     </p>
@@ -43,8 +41,8 @@
       @csrf
 
       <div class="profile-field">
-        <label for="email-code">6 xonali kod</label>
-        <span class="profile-field-hint">Emailga kelgan kodni shu yerga kiriting.</span>
+        <label for="email-code">{{ __('profile.email_card.code_label') }}</label>
+        <span class="profile-field-hint">{{ __('profile.email_card.code_hint') }}</span>
         <input type="text" id="email-code" name="code" inputmode="numeric" maxlength="6" placeholder="123456" required autocomplete="one-time-code" />
         @error('code')
           <p class="form-message profile-form-error">{{ $message }}</p>
@@ -54,7 +52,7 @@
       <div class="profile-form-actions">
         <button class="btn" type="submit">
           <i class="fa-solid fa-check"></i>
-          Emailni tasdiqlash
+          {{ __('profile.email_card.confirm') }}
         </button>
       </div>
     </form>
@@ -62,11 +60,11 @@
     <div class="profile-email-actions">
       <form action="{{ route('profile.email.resend') }}" method="POST" data-profile-async="email">
         @csrf
-        <button class="btn btn-outline" type="submit">Kodni qayta yuborish</button>
+        <button class="btn btn-outline" type="submit">{{ __('profile.email_card.resend') }}</button>
       </form>
       <form action="{{ route('profile.email.cancel') }}" method="POST" data-profile-async="email">
         @csrf
-        <button class="btn btn-outline" type="submit">Bekor qilish</button>
+        <button class="btn btn-outline" type="submit">{{ __('profile.email_card.cancel') }}</button>
       </form>
     </div>
   @else
@@ -74,8 +72,8 @@
       @csrf
 
       <div class="profile-field">
-        <label for="new-email">Yangi email</label>
-        <span class="profile-field-hint">Tasdiqlash kodi aynan shu email manzilga yuboriladi.</span>
+        <label for="new-email">{{ __('profile.email_card.new_email') }}</label>
+        <span class="profile-field-hint">{{ __('profile.email_card.new_email_hint') }}</span>
         <input type="email" id="new-email" name="email" value="{{ old('email') }}" required autocomplete="email" />
         @error('email')
           <p class="form-message profile-form-error">{{ $message }}</p>
@@ -85,7 +83,7 @@
       <div class="profile-form-actions">
         <button class="btn" type="submit">
           <i class="fa-solid fa-paper-plane"></i>
-          Kod yuborish
+          {{ __('profile.email_card.send_code') }}
         </button>
       </div>
     </form>

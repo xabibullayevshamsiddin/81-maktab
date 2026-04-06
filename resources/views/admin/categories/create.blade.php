@@ -32,6 +32,11 @@
               <input type="text" class="form-control" name="name" value="{{ old('name') }}" required>
             </div>
 
+            <div class="mb-3">
+              <label class="form-label">Kategoriya nomi (EN, ixtiyoriy)</label>
+              <input type="text" class="form-control" name="name_en" value="{{ old('name_en') }}">
+            </div>
+
             <button type="submit" class="btn btn-success">Saqlash</button>
             <a href="{{ route('categories.index') }}" class="btn btn-danger">Bekor qilish</a>
           </form>

@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
+use App\Models\Exam;
 use App\Models\OneTimeCode;
 use App\Models\PostLike;
 use App\Models\TeacherComment;
 use App\Models\TeacherLike;
 use App\Models\User;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -90,6 +93,16 @@ class ProfileController extends Controller
                 ->get();
         }
 
+        $createdExams = collect();
+        if ($user->canManageExams()) {
+            $createdExams = Exam::query()
+                ->where('created_by', $user->id)
+                ->withCount('questions')
+                ->latest()
+                ->limit(20)
+                ->get();
+        }
+
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
         $passwordChangeUnlocked = $this->hasConfirmedPasswordChange($request, (int) $user->id);
 
@@ -100,6 +113,7 @@ class ProfileController extends Controller
             'likedPosts',
             'teacherLikes',
             'createdCourses',
+            'createdExams',
             'courseEnrollments',
             'canViewCourseEnrollments',
             'pendingTeacherEnrollments',
@@ -108,22 +122,49 @@ class ProfileController extends Controller
         ));
     }
 
-    public function update(Request $request)
+    public function update(Request $request, ImageService $imageService)
     {
         $user = $request->user();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'phone' => uz_phone_rules(false),
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ], [
             'phone.regex' => uz_phone_validation_message(),
+            'avatar.image' => 'Profil rasmi rasm bo‘lishi kerak.',
+            'avatar.mimes' => 'Profil rasmi JPG, PNG yoki WebP formatda bo‘lishi kerak.',
+            'avatar.max' => 'Profil rasmi 3 MB dan oshmasligi kerak.',
         ]);
         $validated['phone'] = uz_phone_format($validated['phone'] ?? null);
 
-        $user->update([
+        $payload = [
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
-        ]);
+        ];
+
+        $previousAvatar = $user->avatar;
+
+        if ($request->hasFile('avatar')) {
+            try {
+                $payload['avatar'] = $imageService->storeSquareWebp(
+                    $request->file('avatar'),
+                    'avatars',
+                    320,
+                    82
+                );
+            } catch (\Throwable $e) {
+                throw ValidationException::withMessages([
+                    'avatar' => 'Profil rasmini tayyorlab bo‘lmadi. Boshqa rasm bilan qayta urinib ko‘ring.',
+                ]);
+            }
+        }
+
+        $user->update($payload);
+
+        if (isset($payload['avatar']) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
+            $imageService->deleteImage($previousAvatar);
+        }
 
         return redirect()
             ->route('profile.show')

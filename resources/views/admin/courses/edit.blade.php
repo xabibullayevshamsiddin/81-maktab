@@ -46,6 +46,11 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label">Kurs nomi (EN, ixtiyoriy)</label>
+            <input type="text" name="title_en" class="form-control" value="{{ old('title_en', $course->title_en) }}" maxlength="255">
+          </div>
+
+          <div class="mb-3">
             <label class="form-label">Narxi *</label>
             <input type="text" name="price" class="form-control" value="{{ old('price', $course->price) }}" required maxlength="100">
             @error('price')
@@ -54,11 +59,21 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label">Narxi (EN, ixtiyoriy)</label>
+            <input type="text" name="price_en" class="form-control" value="{{ old('price_en', $course->price_en) }}" maxlength="100">
+          </div>
+
+          <div class="mb-3">
             <label class="form-label">Davomiyligi *</label>
             <input type="text" name="duration" class="form-control" value="{{ old('duration', $course->duration) }}" required maxlength="120">
             @error('duration')
               <p class="text-danger small mt-1">{{ $message }}</p>
             @enderror
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Davomiyligi (EN, ixtiyoriy)</label>
+            <input type="text" name="duration_en" class="form-control" value="{{ old('duration_en', $course->duration_en) }}" maxlength="120">
           </div>
 
           <div class="mb-3">
@@ -75,6 +90,11 @@
             @error('description')
               <p class="text-danger small mt-1">{{ $message }}</p>
             @enderror
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tavsif (EN, ixtiyoriy)</label>
+            <textarea name="description_en" class="form-control" rows="6">{{ old('description_en', $course->description_en) }}</textarea>
           </div>
 
           <div class="mb-3">

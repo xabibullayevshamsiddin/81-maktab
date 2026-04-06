@@ -5,10 +5,11 @@
           <span class="badge">81-IDUM Aloqa</span>
           <h1>Biz bilan <strong>bog'laning</strong></h1>
           <p>
-            Savol, taklif yoki murojaat bo'lsa, quyidagi forma orqali bizga yozing.
+            Savolingiz, taklifingiz yoki murojaatingiz bo'lsa, quyidagi forma orqali bizga yozing.
+            Parolni tiklash yoki maktabga oid boshqa masalalarda ham shu yerda murojaat qoldirishingiz mumkin.
             Tez orada siz bilan bog'lanamiz.
           </p>
-          <a href="#contact-main" class="btn"
+          <a href="#contact-main" class="btn" style="margin-top:30px;"
             >Xabar yuborish
             <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
           ></a>
@@ -26,12 +27,15 @@
               </div>
               <div class="contact-card-text">
                 <h3>Manzil</h3>
+                <p style="margin:0 0 6px;">81-IDUM maktab lokatsiyasi</p>
+                <p style="margin:0 0 10px;color:#64748b;">Maktab joylashuvini Google Maps orqali ochib ko'ring.</p>
                 <a
-                  href="https://yandex.uz/maps/org/51913117189/?ll=69.190318%2C41.306955&z=16"
+                  href="https://maps.app.goo.gl/erCMfrDY42DCogHL6"
+                  class="btn"
                   target="_blank"
                   rel="noopener"
                 >
-                  Toshkent, Maktab No. 81
+                  Xaritada ochish
                 </a>
               </div>
             </article>

@@ -1,23 +1,34 @@
 @php
   $showReplyForm = $showReplyForm ?? true;
   $likedCommentIds = $likedCommentIds ?? collect();
+  $teacher = $teacher ?? $comment->teacher;
   $commentIsLiked = auth()->check() && $likedCommentIds->contains($comment->id);
   $authUser = auth()->user();
   $canManageComment = $authUser && $authUser->canManageCommentAsStaff($comment->user, $comment->user_id);
 
   $avatarAccent = (isset($comment->id) && ((int) $comment->id % 2) === 0);
+  $avatarUrl = $comment->user?->avatar_url;
+  $avatarInitial = \Illuminate\Support\Str::upper(
+    \Illuminate\Support\Str::substr(trim((string) ($comment->author_name ?: 'M')), 0, 1)
+  );
   $roleKey = $comment->user?->role ?? 'guest';
   $roleLabel = $comment->user?->role_label ?? 'Mehmon';
+  $commentBodyMax = $comment->parent_id ? 50 : 100;
   $roleCardClass = match ($roleKey) {
     'super_admin' => 'comment-card--super-admin',
     'admin' => 'comment-card--admin',
+    'moderator' => 'comment-card--moderator',
     default => '',
   };
 @endphp
 
 <article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
-  <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }}">
-    <i class="fa-solid fa-user"></i>
+  <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}">
+    @if($avatarUrl)
+      <img src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? 'Mehmon' }}" loading="lazy" decoding="async">
+    @else
+      <span>{{ $avatarInitial }}</span>
+    @endif
   </div>
 
   <div class="comment-body">
@@ -55,7 +66,7 @@
         <div class="js-comment-reply-form-wrapper comment-reply-form-wrapper" hidden>
           <form
             class="comment-form comment-form-inline js-comment-form js-comment-reply-form"
-            action="{{ route('teacher.comments.store') }}"
+            action="{{ route('teacher.comments.store', $teacher) }}"
             method="POST"
           >
             @csrf
@@ -71,14 +82,14 @@
               />
             @endguest
 
-            <input
-              type="text"
-              class="comment-input"
-              name="body"
-              placeholder="Javobingizni yozing"
-              maxlength="500"
-              required
-            />
+              <input
+                type="text"
+                class="comment-input"
+                name="body"
+                placeholder="Javobingizni yozing"
+                maxlength="50"
+                required
+              />
             <button class="btn btn-sm" type="submit">Javob yuborish</button>
           </form>
         </div>
@@ -95,14 +106,14 @@
           >
             @csrf
             @method('PUT')
-            <input
-              type="text"
-              class="comment-input"
-              name="body"
-              value="{{ $comment->body }}"
-              maxlength="500"
-              required
-            />
+              <input
+                type="text"
+                class="comment-input"
+                name="body"
+                value="{{ $comment->body }}"
+                maxlength="{{ $commentBodyMax }}"
+                required
+              />
             <button class="btn btn-sm" type="submit">Saqlash</button>
           </form>
         </details>
@@ -127,9 +138,8 @@
   @if ($comment->replies->isNotEmpty())
     <div class="comment-list comment-replies">
       @foreach($comment->replies as $reply)
-        @include('teacher.partials.comment-item', ['comment' => $reply, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])
+        @include('teacher.partials.comment-item', ['comment' => $reply, 'teacher' => $teacher, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])
       @endforeach
     </div>
   @endif
 </article>
-

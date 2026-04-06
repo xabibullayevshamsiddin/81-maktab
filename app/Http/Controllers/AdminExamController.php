@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Answer;
 use App\Models\Exam;
 use App\Models\Result;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AdminExamController extends Controller
 {
+    public function __construct(private readonly ImageService $imageService) {}
+
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -20,7 +25,7 @@ class AdminExamController extends Controller
             $query->where('title', 'like', '%'.$q.'%');
         }
 
-        $exams = $query->get();
+        $exams = $query->paginate(10)->withQueryString();
 
         return view('admin.exams.index', compact('exams'));
     }
@@ -59,6 +64,7 @@ class AdminExamController extends Controller
             'allowed_grades' => $validated['allowed_grades'],
             'is_active' => false,
         ]);
+        forget_public_exam_caches();
 
         return redirect()
             ->route('admin.exams.questions.index', $exam)
@@ -109,13 +115,25 @@ class AdminExamController extends Controller
         ]);
 
         $exam->syncActiveFromQuestions();
+        forget_public_exam_caches();
 
         return redirect()->route('admin.exams.index')->with('success', 'Imtihon yangilandi.');
     }
 
     public function destroy(Exam $exam)
     {
+        $imagePaths = $exam->questions()
+            ->whereNotNull('image_path')
+            ->pluck('image_path')
+            ->filter()
+            ->all();
+
         $exam->delete();
+        forget_public_exam_caches();
+
+        foreach ($imagePaths as $imagePath) {
+            $this->imageService->deleteImage($imagePath);
+        }
 
         return back()->with('success', "Imtihon o'chirildi.");
     }
@@ -154,6 +172,66 @@ class AdminExamController extends Controller
             ->withQueryString();
 
         return view('admin.exams.results', compact('results', 'exams', 'selectedExamId'));
+    }
+
+    public function showResult(Result $result)
+    {
+        $exam = $result->exam;
+        $result->load(['user', 'answers.question.options', 'answers.option']);
+
+        return view('admin.exams.results_show', compact('exam', 'result'));
+    }
+
+    public function gradeTextAnswer(Request $request, Result $result, Answer $answer)
+    {
+        abort_unless((int) $answer->result_id === (int) $result->id, 404);
+
+        $validated = $request->validate([
+            'is_correct' => ['required', 'boolean'],
+        ]);
+
+        DB::transaction(function () use ($result, $answer, $validated): void {
+            $answer->update([
+                'is_correct_override' => $validated['is_correct'],
+            ]);
+
+            $answers = Answer::query()
+                ->where('result_id', $result->id)
+                ->with(['option:id,is_correct', 'question:id,points,question_type'])
+                ->get();
+
+            $correctCount = 0;
+            $pointsEarned = 0;
+            $hasPendingManualReview = false;
+
+            foreach ($answers as $item) {
+                if ($item->question?->isTextType()) {
+                    if ($item->is_correct_override === null && filled($item->text_answer)) {
+                        $hasPendingManualReview = true;
+                        continue;
+                    }
+                }
+
+                if ($item->isCorrectAnswer()) {
+                    $correctCount++;
+                    $pointsEarned += (int) ($item->question?->points ?? 0);
+                }
+            }
+
+            $examModel = Exam::query()->find($result->exam_id);
+            $passing = (int) ($examModel?->passing_points ?? 0);
+            $passed = $hasPendingManualReview
+                ? null
+                : ($passing > 0 ? $pointsEarned >= $passing : true);
+
+            $result->update([
+                'score' => $correctCount,
+                'points_earned' => $pointsEarned,
+                'passed' => $passed,
+            ]);
+        });
+
+        return back()->with('success', 'Matnli javob baholandi va natija yangilandi.');
     }
 
     public function destroyResult(Result $result)

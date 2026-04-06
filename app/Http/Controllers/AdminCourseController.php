@@ -34,7 +34,7 @@ class AdminCourseController extends Controller
             });
         }
 
-        $courses = $query->get();
+        $courses = $query->paginate(10)->withQueryString();
 
         return view('admin.courses.index', compact('courses'));
     }
@@ -51,10 +51,10 @@ class AdminCourseController extends Controller
         $course->update([
             'status' => $validated['status'],
         ]);
+        forget_public_course_caches();
 
         return back()
             ->with('success', "Kurs holati yangilandi.")
             ->with('toast_type', 'warning');
     }
 }
-

@@ -12,6 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('exams')
+            || ! Schema::hasColumn('exams', 'start_time')
+            || ! Schema::hasColumn('exams', 'end_time')) {
+            return;
+        }
+
         Schema::table('exams', function (Blueprint $table) {
             $table->timestamp('start_time')->nullable()->change();
             $table->timestamp('end_time')->nullable()->change();
@@ -23,6 +29,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('exams')
+            || ! Schema::hasColumn('exams', 'start_time')
+            || ! Schema::hasColumn('exams', 'end_time')) {
+            return;
+        }
+
         DB::table('exams')->whereNull('start_time')->update(['start_time' => now()]);
         DB::table('exams')->whereNull('end_time')->update(['end_time' => now()]);
 

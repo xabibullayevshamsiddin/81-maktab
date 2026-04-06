@@ -1,16 +1,18 @@
+@php
+  $teacherSubject = localized_model_value($teacher, 'subject');
+  $teacherBio = localized_model_value($teacher, 'bio');
+  $teacherAchievements = localized_model_value($teacher, 'achievements');
+@endphp
 <x-loyouts.main title="81-IDUM | {{ $teacher->full_name }}">
   <section class="sow-hero" id="home">
     <div class="overlay"></div>
     <div class="container">
       <div class="sow-hero-content reveal">
-        <span class="badge">81-IDUM Ustozlar</span>
-        <h1>{{ $teacher->full_name }} <strong>haqida</strong></h1>
-        <p>
-          Kasbiy yondashuv, zamonaviy metodika va o'quvchi natijasiga
-          yo'naltirilgan ta'lim modeli haqida qisqacha ma'lumotlar.
-        </p>
+        <span class="badge">{{ __('public.teachers.badge') }}</span>
+        <h1>{{ __('public.teachers.detail_title', ['name' => $teacher->full_name]) }}</h1>
+        <p>{{ __('public.teachers.detail_text') }}</p>
         <a href="#teachers-detail" class="btn">
-          Batafsil bo'lim
+          {{ __('public.teachers.detail_jump') }}
           <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i>
         </a>
       </div>
@@ -21,21 +23,21 @@
     <section class="container teachers-detail" id="teachers-detail">
       <div class="detail-grid">
         <div class="detail-content reveal">
-          <span class="eyebrow">81-IDUM Ustozlar Jamoasi</span>
-          <h2>{{ $teacher->subject }}</h2>
+          <span class="eyebrow">{{ __('public.teachers.detail_badge') }}</span>
+          <h2>{{ $teacherSubject }}</h2>
           <p>
-            {{ $teacher->bio ?: "Ustozimiz har bir o'quvchining salohiyatiga mos yondashib, nazariya va amaliy mashg'ulotlarni birlashtirgan holda sifatli natijaga erishishni maqsad qiladi." }}
+            {{ $teacherBio ?: __('public.teachers.detail_fallback') }}
           </p>
           <ul class="detail-list">
-            <li><i class="fa-solid fa-check"></i> {{ $teacher->experience_years }} yil tajriba</li>
-            <li><i class="fa-solid fa-check"></i> Fan: {{ $teacher->subject }}</li>
-            <li><i class="fa-solid fa-check"></i> Sinflar: {{ $teacher->grades ?: 'Barcha sinflar' }}</li>
+            <li><i class="fa-solid fa-check"></i> {{ __('public.common.years_experience', ['count' => $teacher->experience_years]) }}</li>
+            <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_subject') }}: {{ $teacherSubject }}</li>
+            <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_grades') }}: {{ $teacher->grades ?: __('public.common.all_grades') }}</li>
           </ul>
-          @if(filled($teacher->achievements))
+          @if(filled($teacherAchievements))
             <div class="teacher-achievements-block">
-              <h3 class="teacher-achievements-title"><i class="fa-solid fa-trophy"></i> Yutuqlar</h3>
+              <h3 class="teacher-achievements-title"><i class="fa-solid fa-trophy"></i> {{ __('public.teachers.achievements') }}</h3>
               <ul class="detail-list teacher-achievements-list">
-                @foreach(preg_split("/\r\n|\r|\n/", $teacher->achievements) as $line)
+                @foreach(preg_split("/\r\n|\r|\n/", $teacherAchievements) as $line)
                   @php $line = trim($line); @endphp
                   @if($line !== '')
                     <li><i class="fa-solid fa-award"></i> {{ $line }}</li>
@@ -47,23 +49,37 @@
           @auth
             <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="margin-bottom: 14px;">
               @csrf
-              <button class="like-btn {{ ($liked ?? false) ? 'liked' : '' }}" type="submit" aria-label="Ustozni yoqtirish">
+              <button class="like-btn {{ ($liked ?? false) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                 <i class="{{ ($liked ?? false) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                 <span class="like-count">{{ $teacher->likes_count ?? 0 }}</span>
               </button>
             </form>
           @endauth
-          <a href="{{ route('teacher') }}" class="btn">Ustozlar sahifasiga qaytish</a>
+          <div class="teacher-detail-actions">
+            <a href="{{ route('teacher') }}" class="btn">{{ __('public.teachers.back_to_teachers') }}</a>
+            <button
+              type="button"
+              class="btn btn-outline share-btn js-share-trigger"
+              data-share-url="{{ route('teacher.show', $teacher) }}"
+              data-share-title="{{ $teacher->full_name }}"
+              data-share-text="{{ __('public.teachers.share_text') }}"
+              data-share-success="{{ __('public.teachers.share_success') }}"
+            >
+              <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+            </button>
+          </div>
         </div>
 
         <article class="detail-image-card reveal">
           <img
             src="{{ $teacher->image ? asset('storage/' . $teacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
             alt="{{ $teacher->full_name }} rasmi"
+            loading="lazy"
+            decoding="async"
           />
           <div class="image-caption">
             <h3>{{ $teacher->full_name }}</h3>
-            <p>{{ $teacher->subject }}</p>
+            <p>{{ $teacherSubject }}</p>
           </div>
         </article>
       </div>
@@ -75,62 +91,64 @@
           '/__COMMENT_ID__/like',
           route('teacher.comments.like', ['comment' => 0])
       );
+      $teacherCommentConfig = [
+        'currentUserId' => auth()->check() ? auth()->id() : null,
+        'currentUserIsAdmin' => auth()->check() && auth()->user()->isAdmin(),
+        'currentUserIsModerator' => auth()->check() && auth()->user()->hasRole('moderator'),
+        'currentUserIsOnlyModerator' => auth()->check() && auth()->user()->isOnlyModerator(),
+        'updateUrlTemplate' => route('teacher.comments.update', '__COMMENT_ID__'),
+        'destroyUrlTemplate' => route('teacher.comments.destroy', '__COMMENT_ID__'),
+        'commentLikeUrlTemplate' => $teacherCommentLikeUrlTemplate,
+        'storeUrl' => route('teacher.comments.store', $teacher),
+        'csrfToken' => csrf_token(),
+      ];
     @endphp
-    <section class="container comments-section" id="post-detail">
-      <script>
-        window.__POST_COMMENTS_CONFIG__ = {
-          currentUserId: @json(auth()->check() ? auth()->id() : null),
-          currentUserIsAdmin: @json(auth()->check() && auth()->user()->isAdmin()),
-          currentUserIsModerator: @json(auth()->check() && auth()->user()->hasRole('moderator')),
-          currentUserIsOnlyModerator: @json(auth()->check() && auth()->user()->isOnlyModerator()),
-          updateUrlTemplate: @json(route('teacher.comments.update', '__COMMENT_ID__')),
-          destroyUrlTemplate: @json(route('teacher.comments.destroy', '__COMMENT_ID__')),
-          commentLikeUrlTemplate: @json($teacherCommentLikeUrlTemplate),
-          storeUrl: @json(route('teacher.comments.store')),
-          csrfToken: @json(csrf_token()),
-        };
-      </script>
+    <section
+      class="container comments-section"
+      id="post-detail"
+      data-comment-config='@json($teacherCommentConfig)'
+    >
 
       <div class="section-head">
-        <h2>Fikr-mulohazalar</h2>
-        <p>O'quvchilar va ota-onalar biz haqimizda nima deydi</p>
+        <h2>{{ __('public.teachers.comments_title') }}</h2>
+        <p>{{ __('public.teachers.comments_text') }}</p>
       </div>
 
       <div class="comments-stats reveal">
         <div class="stat-card">
           <span class="stat-icon"><i class="fa-solid fa-comments"></i></span>
           <span class="stat-num">{{ $comments->count() }}</span>
-          <span class="stat-label">Izohlar</span>
+          <span class="stat-label">{{ __('public.teachers.comments_count') }}</span>
         </div>
         <div class="stat-card">
           <span class="stat-icon"><i class="fa-solid fa-star"></i></span>
           <span class="stat-num">4.9</span>
-          <span class="stat-label">Reyting</span>
+          <span class="stat-label">{{ __('public.teachers.rating') }}</span>
         </div>
         <div class="stat-card">
           <span class="stat-icon"><i class="fa-solid fa-heart"></i></span>
           <span class="stat-num">1.2k</span>
-          <span class="stat-label">Yoqtirishlar</span>
+          <span class="stat-label">{{ __('public.teachers.likes') }}</span>
         </div>
       </div>
 
       <div class="comments-wrapper">
         <div class="comments-list">
           @if ($comments->isEmpty())
-            <p class="comment-empty">Hozircha izohlar yo'q.</p>
+            <p class="comment-empty">{{ __('public.posts.comments_empty') }}</p>
           @else
             @foreach($comments as $comment)
-              @include('teacher.partials.comment-item', ['comment' => $comment, 'showReplyForm' => true, 'likedCommentIds' => $likedCommentIds])
+              @include('teacher.partials.comment-item', ['comment' => $comment, 'teacher' => $teacher, 'showReplyForm' => true, 'likedCommentIds' => $likedCommentIds])
             @endforeach
           @endif
         </div>
 
         <div class="comment-form-box reveal">
           <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
-            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> Izoh qoldiring</h3>
+            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> {{ __('public.posts.leave_comment') }}</h3>
             <x-site-rule-items area="comment" />
           </div>
-          <form class="comment-form js-comment-form" action="{{ route('teacher.comments.store') }}" method="POST">
+          <form class="comment-form js-comment-form" action="{{ route('teacher.comments.store', $teacher) }}" method="POST">
             @csrf
 
             @guest
@@ -138,7 +156,7 @@
                 type="text"
                 class="comment-input"
                 name="author_name"
-                placeholder="Ismingiz (ixtiyoriy)"
+                placeholder="{{ __('public.posts.guest_name') }}"
                 maxlength="80"
                 value="{{ old('author_name') }}"
               />
@@ -148,18 +166,17 @@
               rows="4"
               class="comment-input"
               name="body"
-              placeholder="Fikringizni yozing..."
-              maxlength="500"
+              placeholder="{{ __('public.posts.comment_placeholder') }}"
+              maxlength="100"
               required
             >{{ old('body') }}</textarea>
 
             <button type="submit" class="btn">
-              <i class="fa-solid fa-paper-plane"></i> Yuborish
+              <i class="fa-solid fa-paper-plane"></i> {{ __('public.posts.submit_comment') }}
             </button>
           </form>
           <p class="comment-hint">
-            <i class="fa-solid fa-info-circle"></i> Izohingiz moderator tomonidan
-            ko'rib chiqiladi.
+            <i class="fa-solid fa-info-circle"></i> {{ __('public.posts.comment_hint') }}
           </p>
         </div>
       </div>

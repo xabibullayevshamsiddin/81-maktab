@@ -93,6 +93,11 @@
           </tbody>
         </table>
       </div>
+      @if($enrollments->hasPages())
+        <div class="p-3">
+          {{ $enrollments->links() }}
+        </div>
+      @endif
     </div>
   </div>
 </section>

@@ -1,8 +1,8 @@
-<x-loyouts.main title="81-IDUM | Parolni tiklash">
+<x-loyouts.main :title="__('auth_pages.forgot.page_title')">
   <section class="signin-hero">
     <div class="container">
-      <h1>Parolni tiklash</h1>
-      <p>Email manzilingizni kiriting, biz sizga 6 xonali tiklash kodini yuboramiz.</p>
+      <h1>{{ __('auth_pages.forgot.hero_title') }}</h1>
+      <p>{{ __('auth_pages.forgot.hero_text') }}</p>
     </div>
   </section>
 
@@ -12,23 +12,23 @@
         <div class="signin-card-icon">
           <i class="fa-solid fa-unlock-keyhole"></i>
         </div>
-        <h2>Parolni qayta o'rnatish</h2>
-        <p class="signin-subtitle">Hisobingizga biriktirilgan email orqali yangi parol qo'yasiz.</p>
+        <h2>{{ __('auth_pages.forgot.card_title') }}</h2>
+        <p class="signin-subtitle">{{ __('auth_pages.forgot.subtitle') }}</p>
 
         <div class="signin-helper-box">
-          <strong>Qanday ishlaydi?</strong>
-          <p>Email yozasiz, kod olasiz, keyin shu kod bilan yangi parol kiritasiz.</p>
+          <strong>{{ __('auth_pages.forgot.helper_title') }}</strong>
+          <p>{{ __('auth_pages.forgot.helper_text') }}</p>
         </div>
 
         <form action="{{ route('password.forgot.send') }}" method="POST" class="signin-form">
           @csrf
-          <label for="forgot-email">Email</label>
+          <label for="forgot-email">{{ __('auth_pages.forgot.email') }}</label>
           <input
             type="email"
             id="forgot-email"
             name="email"
             value="{{ old('email', $email ?? '') }}"
-            placeholder="ism@gmail.com"
+            placeholder="{{ __('auth_pages.forgot.email_placeholder') }}"
             required
             autocomplete="email"
           />
@@ -36,15 +36,15 @@
             <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
           @enderror
 
-          <button class="btn" type="submit">Tiklash kodini yuborish</button>
+          <button class="btn" type="submit">{{ __('auth_pages.forgot.submit') }}</button>
         </form>
 
         <div class="signin-divider">
-          <span>yoki</span>
+          <span>{{ __('auth_pages.common.or') }}</span>
         </div>
 
         <p class="signin-register">
-          Parolingiz esingizdami? <a href="{{ route('login') }}">Tizimga kirish</a>
+          {{ __('auth_pages.forgot.login_text') }} <a href="{{ route('login') }}">{{ __('auth_pages.forgot.login_link') }}</a>
         </p>
       </div>
     </div>

@@ -82,6 +82,7 @@
               <td>{{ $result->status }}</td>
               <td style="white-space:nowrap;font-size:13px;">{{ $result->submitted_at?->format('d.m.Y H:i') ?? '-' }}</td>
               <td>
+                <a href="{{ route('admin.exams.results.show', $result) }}" class="main-btn info-btn btn-hover btn-sm">Ko'rish</a>
                 <form method="POST" action="{{ route('admin.exams.results.destroy', $result) }}" onsubmit="return confirm('Bu natijani o‘chirishni tasdiqlaysizmi?');" style="display:inline;">
                   @csrf
                   @method('DELETE')

@@ -2,7 +2,7 @@
 
 @section('content')
 @php
-  $qCount = $questions->count();
+  $qCount = $totalQuestionCount ?? $questions->count();
   $need = $exam->required_questions;
   $ready = $exam->is_active;
   $pointsOk = ($pointsSum ?? 0) === (int) $exam->total_points;
@@ -40,12 +40,26 @@
       @forelse($questions as $question)
         <div style="border:1px solid #e5e7eb; border-radius:10px; padding:12px; margin-top:12px;">
           <span style="font-size:12px;font-weight:700;color:#1565c0;">{{ (int) $question->points }} ball</span>
-          <strong>{{ $question->body }}</strong>
-          <ul style="margin:10px 0 0 18px;">
-            @foreach($question->options as $option)
-              <li>{{ $option->label }}. {{ $option->body }} @if($option->is_correct) <b>(to'g'ri)</b> @endif</li>
-            @endforeach
-          </ul>
+          <div class="exam-admin-preview">{!! render_exam_rich_text($question->body) !!}</div>
+          @if($question->image_url)
+            <img src="{{ $question->image_url }}" alt="Savol rasmi" class="exam-admin-image" loading="lazy">
+          @endif
+          @if($question->isTextType())
+            <div style="margin-top:12px; padding:12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;">
+              <p style="margin:0 0 6px; font-size:12px; font-weight:800; color:#b45309;">Matnli savol</p>
+              <p style="margin:0; font-size:13px; color:#475569;"><strong>Namunaviy javob:</strong></p>
+              <div style="margin-top:6px; white-space:pre-wrap;">{{ $question->model_answer ?: "Namunaviy javob kiritilmagan." }}</div>
+            </div>
+          @else
+            <ul style="margin:10px 0 0 18px;">
+              @foreach($question->options as $option)
+                <li>
+                  <strong>{{ $option->label }}.</strong> {!! render_exam_rich_text($option->body) !!}
+                  @if($option->is_correct) <b>(to'g'ri)</b> @endif
+                </li>
+              @endforeach
+            </ul>
+          @endif
           <div style="display:flex; gap:8px; margin-top:10px;">
             <a href="{{ route('admin.exams.questions.edit', [$exam, $question]) }}" class="main-btn warning-btn btn-hover btn-sm">Tahrirlash</a>
             <form method="POST" action="{{ route('admin.exams.questions.destroy', [$exam, $question]) }}">
@@ -57,8 +71,12 @@
       @empty
         <p class="mt-20">Savollar hali qo'shilmagan.</p>
       @endforelse
+      @if($questions->hasPages())
+        <div class="p-3">
+          {{ $questions->links() }}
+        </div>
+      @endif
     </div>
   </div>
 </div>
 @endsection
-

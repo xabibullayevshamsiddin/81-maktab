@@ -18,11 +18,12 @@ class CategoryController extends Controller
         if ($q !== '') {
             $query->where(function ($w) use ($q): void {
                 $w->where('name', 'like', '%'.$q.'%')
+                    ->orWhere('name_en', 'like', '%'.$q.'%')
                     ->orWhere('slug', 'like', '%'.$q.'%');
             });
         }
 
-        $categories = $query->get();
+        $categories = $query->paginate(10)->withQueryString();
 
         return view('admin.categories.index', compact('categories'));
     }
@@ -37,6 +38,7 @@ class CategoryController extends Controller
         $validated = $request->validated();
 
         Category::create($validated);
+        forget_public_content_caches();
 
         return redirect()->route('categories.index')->with('success', 'Kategoriya qo\'shildi.');
     }
@@ -51,6 +53,7 @@ class CategoryController extends Controller
         $validated = $request->validated();
 
         $category->update($validated);
+        forget_public_content_caches();
 
         return redirect()->route('categories.index')
             ->with('success', 'Kategoriya yangilandi.')
@@ -60,6 +63,7 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         $category->delete();
+        forget_public_content_caches();
 
         return redirect()->route('categories.index')
             ->with('error', 'Kategoriya o\'chirildi. Bog\'langan postlar kategoriyasiz qoldi.')

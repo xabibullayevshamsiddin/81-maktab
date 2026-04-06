@@ -12,15 +12,10 @@
       <div class="card-home">
         <div class="home-content">
           <h1 class="hero-title">
-            <span>Har doim</span>
-            <strong>YUQORI NATIJA</strong>
+            <span>{{ __('public.home.hero_top') }}</span>
+            <strong>{{ __('public.home.hero_main') }}</strong>
           </h1>
-          <p>
-            Toshkent shahar Uchtepa tumani, Paxtakor MFY, Ali Qushchi ko'chasi
-            3-uyda joylashgan 81-maktab 1963-yildan buyon faoliyat yuritadi.
-            Bugun maktabda o'zbek va rus tillarida 2097 nafar o'quvchi 90 nafar
-            pedagog rahbarligida ta'lim olmoqda.
-          </p>
+          <p>{{ __('public.home.hero_text') }}</p>
         </div>
         <div class="home-btn">
           <a
@@ -57,77 +52,81 @@
   </section>
 
   <main>
-    <section class="container reveal glass-section" id="about" style="padding-bottom: 50px">
+    <section class="container reveal glass-section" id="about" style="padding-bottom: 50px; margin-top:50px;">
       <div class="section-head">
-        <h2>81-maktabga xush kelibsiz</h2>
-        <p>Rasmiy ko'rsatkichlar bilan tanishing</p>
+        <h2>{{ __('public.home.welcome_title') }}</h2>
+        <p>{{ __('public.home.welcome_text') }}</p>
       </div>
       <div class="about-modern">
         <article class="about-card">
-          <h3>O'quvchilar va sinflar</h3>
-          <p>
-            Maktabda 2097 nafar o'quvchi 60 ta sinfda tahsil oladi. Ta'lim
-            jarayoni 2 smenada tashkil etilgan bo'lib, o'zbek va rus tillarida
-            olib boriladi.
-          </p>
-          <a href="{{ route('about') }}" class="btn btn-sm">Batafsil ko'rish</a>
+          <h3>{{ __('public.home.students_title') }}</h3>
+          <p>{{ __('public.home.students_text') }}</p>
+          <a href="{{ route('about') }}" class="btn btn-sm">{{ __('public.home.students_action') }}</a>
         </article>
         <article class="about-card">
-          <h3>Pedagoglar salohiyati</h3>
-          <p>
-            90 nafar pedagog xodimning barchasi oliy ma'lumotli. Ularning 26
-            nafari milliy va xalqaro sertifikatlarga ega bo'lib, maktabda kuchli
-            ta'lim jamoasi shakllangan.
-          </p>
-          <a href="{{ route('teacher') }}" class="btn btn-sm">Ustozlarni ko'rish</a>
+          <h3>{{ __('public.home.pedagogues_title') }}</h3>
+          <p>{{ __('public.home.pedagogues_text') }}</p>
+          <a href="{{ route('teacher') }}" class="btn btn-sm">{{ __('public.home.pedagogues_action') }}</a>
         </article>
         <article class="about-highlight">
-          <span class="badge">81-maktab</span>
-          <h3>Barqaror infratuzilma va natija</h3>
-          <p>
-            16 000 m2 hudud, 960 o'rinli bino, 45 ta kompyuter, 120 o'rinli
-            oshxona va yaxshi holatdagi sport zali maktabning kundalik ta'lim
-            muhiti uchun xizmat qiladi.
-          </p>
+          <span class="badge">{{ __('public.home.highlight_badge') }}</span>
+          <h3>{{ __('public.home.highlight_title') }}</h3>
+          <p>{{ __('public.home.highlight_text') }}</p>
         </article>
       </div>
     </section>
 
-    <section class="container news reveal glass-section" id="news" style="margin-top: 50px">
+    <section class="container news reveal glass-section" id="news" style="margin-top: 50px;padding-bottom:50px;">
       <div
         class="section-head"
         style="display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap;"
       >
         <div>
-          <h2>Yangiliklar</h2>
-          <p>So'nggi voqealar va tadbirlar</p>
+          <h2>{{ __('public.home.news_title') }}</h2>
+          <p>{{ __('public.home.news_text') }}</p>
         </div>
-        <a href="{{ route('post') }}" class="btn btn-sm">Barcha yangiliklar</a>
+        <a href="{{ route('post') }}" class="btn btn-sm">{{ __('public.home.news_all') }}</a>
       </div>
 
       <div class="news-container">
         @php $likedPostIds = $likedPostIds ?? collect(); @endphp
         @forelse($posts as $post)
+          @php
+            $postTitle = localized_model_value($post, 'title');
+            $postShort = localized_model_value($post, 'short_content');
+            $postCategory = localized_model_value($post->category, 'name');
+            $kindLabel = localized_post_kind_label($post->post_kind ?? 'general');
+          @endphp
           <article class="news-card">
             <img
               src="{{ asset('storage/' . $post->image) }}"
-              alt="{{ $post->title }}"
+              alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
               data-zoom-src="{{ asset('storage/' . $post->image) }}"
+              loading="lazy"
+              decoding="async"
               role="button"
               tabindex="0"
             />
 
-            @if($post->category)
-              <div style="padding: 12px 16px 0;">
-                <span class="badge" style="margin-bottom: 0; background: rgba(21, 101, 192, 0.12); border: 1px solid rgba(21, 101, 192, 0.28); color: var(--primary);">
-                  {{ $post->category->name }}
-                </span>
+            @if($post->category || $post->hasVideo() || $kindLabel)
+              <div style="padding: 0 16px; margin-top: 10px; display:flex; flex-wrap:wrap; gap:8px;">
+                @if($post->category)
+                  <span class="badge" style="margin-bottom: 0; background: rgba(21, 101, 192, 0.12); border: 1px solid rgba(21, 101, 192, 0.28); color: var(--primary);">
+                    {{ $postCategory }}
+                  </span>
+                @endif
+                @if($kindLabel)
+                  <span class="badge" style="margin-bottom: 0; background: rgba(21, 101, 192, 0.1); color: var(--primary-2);">{{ $kindLabel }}</span>
+                @endif
+                @if($post->hasVideo())
+                  <span class="badge" style="margin-bottom: 0; background: rgba(220, 38, 38, 0.12); color: #b91c1c;">{{ __('public.common.video') }}</span>
+                @endif
               </div>
             @endif
 
-            <h3>{{ $post->title }}</h3>
-            <p>{{ $post->short_content }}</p>
+            <h3>{{ $postTitle }}</h3>
+            <p>{{ $postShort }}</p>
 
             <div class="icon-links">
               <div class="icon-link">
@@ -135,17 +134,29 @@
                 <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
                 <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form" style="margin-left: 4px;">
                   @csrf
-                  <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="Yoqtirish">
+                  <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                     <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                     <span class="like-count">{{ $post->likes_count }}</span>
                   </button>
                 </form>
               </div>
-              <a href="{{ route('post.show', $post) }}" class="btn btn-sm">Batafsil</a>
+              <div class="icon-link-actions">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline share-btn js-share-trigger"
+                  data-share-url="{{ route('post.show', $post) }}"
+                  data-share-title="{{ $postTitle }}"
+                  data-share-text="{{ __('public.home.news_share_text') }}"
+                  data-share-success="{{ __('public.home.news_share_success') }}"
+                >
+                  <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+                </button>
+                <a href="{{ route('post.show', $post) }}" class="btn btn-sm">{{ __('public.common.details') }}</a>
+              </div>
             </div>
           </article>
         @empty
-          <p>Hozircha yangiliklar yo‘q.</p>
+          <p>{{ __('public.home.news_empty') }}</p>
         @endforelse
       </div>
     </section>
@@ -153,46 +164,70 @@
     <section class="teachers reveal" id="teachers">
       <div class="container teacher">
         <div class="teacher-content">
-          <h2>Ustozlar jamoasi</h2>
-          <p>
-            Maktabimizda tajribali va malakali ustozlar faoliyat yuritadi.
-            Ular fan bo'yicha chuqur bilim berish bilan birga, o'quvchilarni
-            mustaqil fikrlash, jamoada ishlash va ijodkorlikka yo'naltiradi.
-          </p>
-          <a href="{{ route('teacher') }}" class="btn">Batafsil</a>
+          <h2>{{ __('public.home.teachers_title') }}</h2>
+          <p>{{ __('public.home.teachers_text') }}</p>
+          <a href="{{ route('teacher') }}" class="btn">{{ __('public.home.teachers_action') }}</a>
         </div>
 
         @if(isset($featuredTeacher) && $featuredTeacher)
+          @php
+            $featuredTeacherSubject = localized_model_value($featuredTeacher, 'subject');
+            $featuredTeacherBio = localized_model_value($featuredTeacher, 'bio');
+          @endphp
           <article class="teacher-img">
             <img
               src="{{ $featuredTeacher->image ? asset('storage/' . $featuredTeacher->image) : asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
               alt="{{ $featuredTeacher->full_name }} profil rasmi"
+              loading="lazy"
+              decoding="async"
             />
             <h3>{{ $featuredTeacher->full_name }}</h3>
             <p>
-              {{ $featuredTeacher->bio ?: ($featuredTeacher->subject . ' fani bo‘yicha tajribali ustoz.') }}
+              {{ $featuredTeacherBio ?: ($featuredTeacherSubject . ' fani bo\'yicha tajribali ustoz.') }}
             </p>
             <p class="profile-muted" style="margin-top:8px;">
-              {{ $featuredTeacher->subject }}
+              {{ $featuredTeacherSubject }}
               @if($featuredTeacher->experience_years)
-                · {{ $featuredTeacher->experience_years }} yil tajriba
+                · {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
               @endif
             </p>
-            <a href="{{ route('teacher.show', $featuredTeacher) }}" class="btn1">Ustoz haqida</a>
+            <div class="teacher-img-actions">
+              <a href="{{ route('teacher.show', $featuredTeacher) }}" class="btn1">{{ __('public.teachers.about_button') }}</a>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm share-btn js-share-trigger"
+                data-share-url="{{ route('teacher.show', $featuredTeacher) }}"
+                data-share-title="{{ $featuredTeacher->full_name }}"
+                data-share-text="{{ __('public.home.teacher_share_text') }}"
+                data-share-success="{{ __('public.home.teacher_share_success') }}"
+              >
+                <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+              </button>
+            </div>
           </article>
         @else
           <article class="teacher-img">
             <img
               src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-              alt="Ustozlar jamoasi"
+              alt="{{ __('public.layout.nav.teachers') }}"
+              loading="lazy"
+              decoding="async"
             />
-            <h3>Kasbiy yondashuv va zamonaviy metodika</h3>
-            <p>
-              Har bir darsda interaktiv usullar qo'llanadi. Bu yondashuv
-              o'quvchilarni fanlarga qiziqtiradi va mustahkam natijaga olib
-              keladi.
-            </p>
-            <a href="{{ route('teacher') }}" class="btn1">Batafsil</a>
+            <h3>{{ __('public.home.teacher_fallback_title') }}</h3>
+            <p>{{ __('public.home.teacher_fallback_text') }}</p>
+            <div class="teacher-img-actions">
+              <a href="{{ route('teacher') }}" class="btn1">{{ __('public.common.details') }}</a>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm share-btn js-share-trigger"
+                data-share-url="{{ route('teacher') }}"
+                data-share-title="{{ __('public.layout.nav.teachers') }}"
+                data-share-text="{{ __('public.home.teachers_page_share_text') }}"
+                data-share-success="{{ __('public.home.teachers_page_share_success') }}"
+              >
+                <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+              </button>
+            </div>
           </article>
         @endif
       </div>

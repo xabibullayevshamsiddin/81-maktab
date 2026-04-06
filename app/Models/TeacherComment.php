@@ -22,6 +22,11 @@ class TeacherComment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class);
+    }
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(TeacherComment::class, 'parent_id');

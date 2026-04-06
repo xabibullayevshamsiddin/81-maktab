@@ -1,25 +1,24 @@
-<x-loyouts.main title="81-IDUM | Ro'yxatdan o'tish">
-
+<x-loyouts.main :title="__('auth_pages.register.page_title')">
     <section class="register-hero">
       <div class="container">
-        <h1>Ro'yxatdan o'tish</h1>
-        <p>Yangi hisob yarating va 81-IDUM jamoasiga qo'shiling</p>
+        <h1>{{ __('auth_pages.register.hero_title') }}</h1>
+        <p>{{ __('auth_pages.register.hero_text') }}</p>
       </div>
     </section>
 
     <main class="register-section">
       <div class="container">
         <div class="register-card">
-          <span class="register-card-badge">81-IDUM a'zoligi</span>
+          <span class="register-card-badge">{{ __('auth_pages.register.badge') }}</span>
           <div class="register-card-icon">
             <i class="fa-solid fa-user-plus"></i>
           </div>
-          <h2>Hisob yarating</h2>
-          <p class="register-subtitle">Quyidagi maydonlarni to'ldiring</p>
+          <h2>{{ __('auth_pages.register.card_title') }}</h2>
+          <p class="register-subtitle">{{ __('auth_pages.register.subtitle') }}</p>
           <div class="register-chip-list" aria-hidden="true">
-            <span class="register-chip"><i class="fa-solid fa-id-card"></i> Asosiy ma'lumotlar</span>
-            <span class="register-chip"><i class="fa-solid fa-graduation-cap"></i> Sinf tanlanadi</span>
-            <span class="register-chip"><i class="fa-solid fa-shield-halved"></i> Xavfsiz kirish</span>
+            <span class="register-chip"><i class="fa-solid fa-id-card"></i> {{ __('auth_pages.register.chip_1') }}</span>
+            <span class="register-chip"><i class="fa-solid fa-graduation-cap"></i> {{ __('auth_pages.register.chip_2') }}</span>
+            <span class="register-chip"><i class="fa-solid fa-shield-halved"></i> {{ __('auth_pages.register.chip_3') }}</span>
           </div>
 
           <form action="{{ route('register.store') }}" method="POST" class="register-form" id="register-form-server">
@@ -31,13 +30,13 @@
               </div>
             @endif
             <div class="register-field">
-              <label for="reg-name">Ism va familiya</label>
+              <label for="reg-name">{{ __('auth_pages.register.name') }}</label>
               <input
                 type="text"
                 id="reg-name"
                 name="name"
                 value="{{ old('name') }}"
-                placeholder="masalan: Sardor Yuldashev"
+                placeholder="{{ __('auth_pages.register.name_placeholder') }}"
                 required
                 autocomplete="name"
               />
@@ -46,13 +45,13 @@
               @enderror
             </div>
             <div class="register-field">
-              <label for="reg-email">Email</label>
+              <label for="reg-email">{{ __('auth_pages.register.email') }}</label>
               <input
                 type="email"
                 id="reg-email"
                 name="email"
                 value="{{ old('email') }}"
-                placeholder="masalan: sardor@email.uz"
+                placeholder="{{ __('auth_pages.register.email_placeholder') }}"
                 required
                 autocomplete="email"
               />
@@ -62,13 +61,13 @@
             </div>
             <div class="register-field-grid">
               <div class="register-field">
-                <label for="reg-phone">Telefon</label>
+                <label for="reg-phone">{{ __('auth_pages.register.phone') }}</label>
                 <input
                   type="tel"
                   id="reg-phone"
                   name="phone"
                   value="{{ old('phone') }}"
-                  placeholder="masalan: +998 90 123 45 67"
+                  placeholder="{{ __('auth_pages.register.phone_placeholder') }}"
                   required
                   autocomplete="tel"
                   inputmode="tel"
@@ -81,12 +80,17 @@
                 @enderror
               </div>
               <div class="register-field">
-                <label for="reg-grade">Sinf</label>
+                <label for="reg-grade">{{ __('auth_pages.register.grade') }}</label>
                 <div class="register-select-wrap">
                   <select id="reg-grade" name="grade" required>
-                    <option value="">Sinfni tanlang</option>
+                    <option value="">{{ __('auth_pages.register.grade_placeholder') }}</option>
                     @foreach (school_grade_grouped_options() as $groupLabel => $options)
-                      <optgroup label="{{ $groupLabel }}">
+                      @php
+                        $localizedGroupLabel = app()->getLocale() === 'en'
+                          ? str_replace('-sinf', __('auth_pages.register.grade_group_suffix'), $groupLabel)
+                          : $groupLabel;
+                      @endphp
+                      <optgroup label="{{ $localizedGroupLabel }}">
                         @foreach ($options as $value => $label)
                           <option value="{{ $value }}" {{ old('grade') === $value ? 'selected' : '' }}>
                             {{ $label }}
@@ -101,15 +105,15 @@
                 @enderror
               </div>
             </div>
-            <p class="register-field-note">Faqat maktabdagi mavjud sinf variantlari ko'rsatiladi.</p>
+            <p class="register-field-note">{{ __('auth_pages.register.grade_note') }}</p>
             <div class="register-field">
-              <label for="reg-password">Parol</label>
+              <label for="reg-password">{{ __('auth_pages.register.password') }}</label>
               <div class="pw-wrap">
                 <input
                   type="password"
                   id="reg-password"
                   name="password"
-                  placeholder="Kamida 6 ta belgi"
+                  placeholder="{{ __('auth_pages.register.password_placeholder') }}"
                   required
                   autocomplete="new-password"
                   minlength="6"
@@ -117,7 +121,7 @@
                 <button
                   type="button"
                   class="pw-toggle"
-                  aria-label="Parolni ko'rsatish"
+                  aria-label="{{ __('auth_pages.common.show_password') }}"
                   data-target="reg-password"
                 >
                   <i class="fa-regular fa-eye"></i>
@@ -128,13 +132,13 @@
               @enderror
             </div>
             <div class="register-field">
-              <label for="reg-password-confirm">Parolni tasdiqlang</label>
+              <label for="reg-password-confirm">{{ __('auth_pages.register.password_confirm') }}</label>
               <div class="pw-wrap">
                 <input
                   type="password"
                   id="reg-password-confirm"
                   name="password_confirmation"
-                  placeholder="Parolni qayta kiriting"
+                  placeholder="{{ __('auth_pages.register.password_confirm_placeholder') }}"
                   required
                   autocomplete="new-password"
                   minlength="6"
@@ -142,15 +146,15 @@
                 <button
                   type="button"
                   class="pw-toggle"
-                  aria-label="Parolni ko'rsatish"
+                  aria-label="{{ __('auth_pages.common.show_password') }}"
                   data-target="reg-password-confirm"
                 >
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </div>
             </div>
-            <button class="btn" type="submit">Ro'yxatdan o'tish</button>
-            <p class="register-submit-note">Davom etish orqali sayt qoidalari va foydalanuvchi tartibiga rozilik bildirasiz.</p>
+            <button class="btn" type="submit">{{ __('auth_pages.register.submit') }}</button>
+            <p class="register-submit-note">{{ __('auth_pages.register.submit_note') }}</p>
             <p
               id="register-message"
               class="form-message register-global-message"
@@ -159,11 +163,11 @@
           </form>
 
           <div class="register-divider">
-            <span>yoki</span>
+            <span>{{ __('auth_pages.common.or') }}</span>
           </div>
 
           <p class="register-signin">
-            Hisobingiz bormi? <a href="{{ route('login') }}">Tizimga kirish</a>
+            {{ __('auth_pages.register.login_text') }} <a href="{{ route('login') }}">{{ __('auth_pages.register.login_link') }}</a>
           </p>
         </div>
       </div>

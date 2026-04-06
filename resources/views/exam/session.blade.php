@@ -1,14 +1,15 @@
 @php
   $totalQ = $orderedQuestions->count();
-  $answeredCount = collect($answerMap)->filter(fn ($v) => $v !== null && $v !== '')->count();
+  $answeredCount = $answerMap->filter(function ($answer) {
+    return $answer && ($answer->option_id !== null || filled($answer->text_answer));
+  })->count();
   $progressPct = $totalQ > 0 ? min(100, (int) round($answeredCount / $totalQ * 100)) : 0;
   $examTitle = $result->exam->title ?? 'Imtihon';
 @endphp
 
-<x-loyouts.main title="{{ $examTitle }} — savol">
+<x-loyouts.main title="{{ $examTitle }} - savol">
   <main class="news exam-page exam-session-wrap">
     <div class="exam-page-inner exam-anti-copy" id="exam-anti-root">
-      {{-- HEADER: qat’iy fon + yuqori kontrast (matnlar ko‘rinsin) --}}
       <header class="exam-session-header">
         <div class="exam-session-header-row">
           <div class="exam-session-title-block">
@@ -49,7 +50,6 @@
         @csrf
       </form>
 
-      {{-- Bitta savol: faqat bitta blok ko‘rinadi --}}
       <div class="exam-step-stack">
         @foreach($orderedQuestions as $index => $question)
           <article
@@ -60,31 +60,56 @@
           >
             <div class="exam-q-head">
               <span class="exam-q-num">{{ $index + 1 }}</span>
-              <p class="exam-q-text">{{ $question->body }}</p>
+              <div class="exam-q-text">{!! render_exam_rich_text($question->body) !!}</div>
             </div>
 
-            <div class="exam-options">
-              @foreach($question->options as $option)
-                <label class="exam-option">
-                  <input
-                    type="radio"
-                    name="q_{{ $question->id }}"
-                    value="{{ $option->id }}"
-                    {{ (int) ($answerMap[$question->id] ?? 0) === (int) $option->id ? 'checked' : '' }}
-                    onchange="saveAnswer({{ $question->id }}, {{ $option->id }})"
-                  >
-                  <span class="exam-option-body">
-                    <span class="exam-option-label">{{ $option->label }}.</span>
-                    {{ $option->body }}
-                  </span>
-                </label>
-              @endforeach
-            </div>
+            @if($question->image_url)
+              <div class="exam-question-media">
+                <img src="{{ $question->image_url }}" alt="Savol rasmi" loading="lazy">
+              </div>
+            @endif
+
+            @if($question->isTextType())
+              @php
+                $textAnswer = optional($answerMap->get($question->id))->text_answer ?? '';
+              @endphp
+              <div class="exam-text-answer-block">
+                <label class="exam-text-answer-label" for="exam_text_{{ $question->id }}">Javobingiz</label>
+                <textarea
+                  id="exam_text_{{ $question->id }}"
+                  class="exam-text-answer-field"
+                  data-text-question-id="{{ $question->id }}"
+                  placeholder="Javobingizni shu yerga yozing..."
+                  rows="7"
+                >{{ $textAnswer }}</textarea>
+                <p class="exam-answer-save-state" data-text-save-state="{{ $question->id }}">
+                  Javobingiz yozilishi bilan avtomatik saqlanadi.
+                </p>
+              </div>
+            @else
+              <div class="exam-options">
+                @foreach($question->options as $option)
+                  <label class="exam-option">
+                    <input
+                      type="radio"
+                      name="q_{{ $question->id }}"
+                      value="{{ $option->id }}"
+                      {{ (int) (optional($answerMap->get($question->id))->option_id ?? 0) === (int) $option->id ? 'checked' : '' }}
+                      onchange="saveAnswer({{ $question->id }}, {{ $option->id }})"
+                    >
+                    <span class="exam-option-body">
+                      <span class="exam-option-label">{{ $option->label }}.</span>
+                      {!! render_exam_rich_text($option->body) !!}
+                    </span>
+                  </label>
+                @endforeach
+              </div>
+            @endif
           </article>
         @endforeach
       </div>
 
-      <nav class="exam-step-nav" aria-label="Savollar bo‘yicha">
+      <nav class="exam-step-nav" aria-label="Savollar boyicha">
         <button type="button" class="exam-btn-secondary" id="exam-btn-prev" disabled>
           <i class="fa-solid fa-arrow-left"></i> Oldingi
         </button>
@@ -117,7 +142,7 @@
         <i class="fa-solid fa-circle-question"></i>
       </div>
       <h3 id="exam-finish-confirm-title">Imtihonni yakunlaysizmi?</h3>
-      <p>Javoblaringiz yuboriladi. Keyin ularni o‘zgartirish yoki imtihonga qaytish mumkin emas.</p>
+      <p>Javoblaringiz yuboriladi. Keyin ularni o'zgartirish yoki imtihonga qaytish mumkin emas.</p>
       <div class="exam-rule-modal-actions">
         <button type="button" class="exam-btn-secondary" id="exam-finish-confirm-cancel">Bekor qilish</button>
         <button type="button" class="exam-btn-primary" id="exam-finish-confirm-submit">
@@ -174,14 +199,17 @@
         modal.hidden = false;
         document.body.style.overflow = 'hidden';
       }
+
       function hideRuleModal() {
         if (!modal) return;
         modal.hidden = true;
         document.body.style.overflow = '';
       }
+
       function showScreenshotWarn(e) {
         warnAndReport(e);
       }
+
       function maybeContextWarn() {
         var now = Date.now();
         if (now - lastContextWarnAt < 600) return;
@@ -210,7 +238,6 @@
         var ctrl = e.ctrlKey || e.metaKey;
         var meta = e.metaKey;
 
-        // PrtSc, ba’zi klaviaturalar / Android
         if (
           key === 'PrintScreen'
           || key === 'Print'
@@ -231,12 +258,10 @@
           return;
         }
 
-        // macOS: Cmd+Shift+3/4/5 — skrinshot / yozuv
         if (meta && e.shiftKey && (kl === '3' || kl === '4' || kl === '5')) {
           showScreenshotWarn(e);
           return;
         }
-        // Ba’zi muhitlarda Win+Shift+S
         if (e.shiftKey && meta && kl === 's') {
           showScreenshotWarn(e);
           return;
@@ -264,16 +289,32 @@
 
       if (root) {
         ['copy', 'cut', 'contextmenu', 'dragstart', 'paste', 'selectstart'].forEach(function (ev) {
-          root.addEventListener(ev, function (e) { e.preventDefault(); }, true);
+          root.addEventListener(ev, function (e) {
+            if (e.target && e.target.closest('.exam-text-answer-field')) {
+              if (ev === 'copy' || ev === 'cut' || ev === 'paste') {
+                e.preventDefault();
+              }
+              return;
+            }
+
+            e.preventDefault();
+          }, true);
         });
       }
-      document.addEventListener('paste', function (e) { e.preventDefault(); }, true);
+      document.addEventListener('paste', function (e) {
+        if (e.target && e.target.closest('.exam-text-answer-field')) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+      }, true);
     })();
 
     const expiresAt = new Date(@json(optional($result->expires_at)->toIso8601String())).getTime();
     const timerEl = document.getElementById('timer');
     const totalQuestions = {{ (int) $totalQ }};
     const steps = Array.prototype.slice.call(document.querySelectorAll('.exam-step'));
+    const textSaveTimers = new Map();
     let currentIdx = 0;
 
     const btnPrev = document.getElementById('exam-btn-prev');
@@ -296,26 +337,45 @@
       if (btnFinish) btnFinish.hidden = !last;
     }
 
-    if (btnPrev) btnPrev.addEventListener('click', function () { showStep(currentIdx - 1); });
-    if (btnNext) btnNext.addEventListener('click', function () { showStep(currentIdx + 1); });
+    async function flushPendingTextAnswers() {
+      const dirtyFields = Array.prototype.slice.call(document.querySelectorAll('.exam-text-answer-field[data-dirty="1"]'));
+
+      for (const field of dirtyFields) {
+        await saveTextAnswer(Number(field.dataset.textQuestionId), field.value, field, true);
+      }
+    }
+
+    if (btnPrev) btnPrev.addEventListener('click', async function () {
+      await flushPendingTextAnswers();
+      showStep(currentIdx - 1);
+    });
+    if (btnNext) btnNext.addEventListener('click', async function () {
+      await flushPendingTextAnswers();
+      showStep(currentIdx + 1);
+    });
+
     var finishConfirmModal = document.getElementById('exam-finish-confirm-modal');
+
     function showFinishConfirmModal() {
       if (!finishConfirmModal) return;
       finishConfirmModal.hidden = false;
       document.body.style.overflow = 'hidden';
       document.getElementById('exam-finish-confirm-submit')?.focus();
     }
+
     function hideFinishConfirmModal() {
       if (!finishConfirmModal) return;
       finishConfirmModal.hidden = true;
       document.body.style.overflow = '';
     }
+
     if (btnFinish) btnFinish.addEventListener('click', function () {
       showFinishConfirmModal();
     });
     document.getElementById('exam-finish-confirm-cancel')?.addEventListener('click', hideFinishConfirmModal);
     finishConfirmModal?.querySelector('[data-exam-finish-backdrop]')?.addEventListener('click', hideFinishConfirmModal);
-    document.getElementById('exam-finish-confirm-submit')?.addEventListener('click', function () {
+    document.getElementById('exam-finish-confirm-submit')?.addEventListener('click', async function () {
+      await flushPendingTextAnswers();
       document.getElementById('submit-form').submit();
     });
     document.addEventListener('keydown', function (e) {
@@ -333,17 +393,22 @@
       timerEl.textContent = min + ':' + sec;
 
       if (diff <= 0) {
-        document.getElementById('submit-form').submit();
+        flushPendingTextAnswers().finally(function () {
+          document.getElementById('submit-form').submit();
+        });
       }
     }
 
     function updateProgress() {
       const checked = document.querySelectorAll('.exam-option input[type=radio]:checked').length;
+      const textAnswered = Array.prototype.slice.call(document.querySelectorAll('.exam-text-answer-field'))
+        .filter(function (field) { return field.value.trim() !== ''; }).length;
+      const answered = checked + textAnswered;
       const fill = document.getElementById('exam-progress-fill');
       const num = document.getElementById('exam-answered-num');
-      if (num) num.textContent = checked;
+      if (num) num.textContent = answered;
       if (fill && totalQuestions > 0) {
-        fill.style.width = Math.min(100, Math.round(checked / totalQuestions * 100)) + '%';
+        fill.style.width = Math.min(100, Math.round(answered / totalQuestions * 100)) + '%';
       }
     }
 
@@ -369,9 +434,92 @@
           if (data.message) alert(data.message);
         }
       } catch (e) {
-        alert('Javobni saqlashda xato bo‘ldi.');
+        alert("Javobni saqlashda xato bo'ldi.");
       }
     }
+
+    function setTextSaveState(questionId, text, kind) {
+      const stateEl = document.querySelector('[data-text-save-state="' + questionId + '"]');
+      if (!stateEl) return;
+
+      stateEl.textContent = text;
+      stateEl.classList.remove('is-saving', 'is-saved', 'is-error');
+      if (kind) {
+        stateEl.classList.add(kind);
+      }
+    }
+
+    async function saveTextAnswer(questionId, textAnswer, field, forceNow) {
+      if (!forceNow && field.dataset.lastSavedValue === textAnswer) {
+        field.dataset.dirty = '0';
+        updateProgress();
+        return;
+      }
+
+      setTextSaveState(questionId, 'Javob saqlanmoqda...', 'is-saving');
+
+      try {
+        const response = await fetch(@json(route('exam.answer', $result)), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': @json(csrf_token()),
+          },
+          body: JSON.stringify({
+            question_id: questionId,
+            text_answer: textAnswer,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(function () { return {}; });
+          throw new Error(data.message || "Javobni saqlab bo'lmadi.");
+        }
+
+        field.dataset.lastSavedValue = textAnswer;
+        field.dataset.dirty = '0';
+        setTextSaveState(
+          questionId,
+          textAnswer.trim() === '' ? "Javob o'chirildi." : 'Javob saqlandi.',
+          'is-saved'
+        );
+        updateProgress();
+      } catch (error) {
+        field.dataset.dirty = '1';
+        setTextSaveState(questionId, error.message || "Javobni saqlashda xato bo'ldi.", 'is-error');
+      }
+    }
+
+    Array.prototype.slice.call(document.querySelectorAll('.exam-text-answer-field')).forEach(function (field) {
+      field.dataset.lastSavedValue = field.value;
+      field.dataset.dirty = '0';
+
+      field.addEventListener('input', function () {
+        field.dataset.dirty = '1';
+        updateProgress();
+        setTextSaveState(field.dataset.textQuestionId, 'Javob saqlanmoqda...', 'is-saving');
+
+        const key = field.dataset.textQuestionId;
+        if (textSaveTimers.has(key)) {
+          clearTimeout(textSaveTimers.get(key));
+        }
+
+        textSaveTimers.set(key, setTimeout(function () {
+          saveTextAnswer(Number(field.dataset.textQuestionId), field.value, field, false);
+        }, 500));
+      });
+
+      field.addEventListener('blur', function () {
+        const key = field.dataset.textQuestionId;
+        if (textSaveTimers.has(key)) {
+          clearTimeout(textSaveTimers.get(key));
+          textSaveTimers.delete(key);
+        }
+
+        saveTextAnswer(Number(field.dataset.textQuestionId), field.value, field, true);
+      });
+    });
 
     tick();
     setInterval(tick, 1000);

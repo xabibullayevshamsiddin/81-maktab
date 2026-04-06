@@ -1,0 +1,162 @@
+/* Modern Glassmorphic Container */
+.exam-public-container {
+    padding-top: 150px; /* Prevent header overlap */
+    padding-bottom: 60px;
+    min-height: 80vh;
+}
+.exam-public-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(13, 63, 120, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* Modern Tables */
+.exam-public-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+.exam-public-table th {
+    background: transparent;
+    font-weight: 600;
+    color: #4b6282;
+    padding: 12px 20px;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(13, 63, 120, 0.1);
+    text-align: left;
+}
+.exam-public-table td {
+    background: #ffffff;
+    padding: 15px 20px;
+    color: #333;
+    font-size: 15px;
+    vertical-align: middle;
+}
+.exam-public-table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-left: 1px solid rgba(13,63,120,0.05); }
+.exam-public-table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-right: 1px solid rgba(13,63,120,0.05); }
+.exam-public-table td { border-top: 1px solid rgba(13,63,120,0.05); border-bottom: 1px solid rgba(13,63,120,0.05); box-shadow: 0 2px 5px rgba(0,0,0,0.01); }
+
+/* Stylish Inputs */
+.exam-public-container input[type="text"], 
+.exam-public-container input[type="number"], 
+.exam-public-container input[type="date"], 
+.exam-public-container input[type="file"], 
+.exam-public-container select, 
+.exam-public-container textarea {
+    width: 100%;
+    padding: 14px 20px;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    margin-bottom: 18px;
+    background: rgba(13, 63, 120, 0.03);
+    color: #111;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+.exam-public-container input[type="text"]:focus, 
+.exam-public-container input[type="number"]:focus, 
+.exam-public-container input[type="date"]:focus, 
+.exam-public-container input[type="file"]:focus, 
+.exam-public-container select:focus, 
+.exam-public-container textarea:focus {
+    background: #fff;
+    border-color: #0d3f78;
+    box-shadow: 0 4px 15px rgba(13, 63, 120, 0.08);
+    outline: none;
+}
+
+/* Question Preview Cards in List */
+.question-item {
+    background: #ffffff;
+    border: 1px solid rgba(13, 63, 120, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+.question-item:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+.question-point-badge {
+    background: #0d3f78;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Stylish Labels */
+.exam-public-container label:not([class]) {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #0d3f78;
+    font-size: 14px;
+}
+
+/* Enhancing standard buttons */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 10px 24px;
+    transition: all 0.3s;
+    border: none;
+}
+.btn-primary { 
+    background: linear-gradient(135deg, #0d3f78 0%, #1a62b3 100%); 
+    color: #fff !important;
+}
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff !important;
+}
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff !important;
+}
+.btn-info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: #fff !important;
+}
+
+/* Toolbars inside questions */
+.exam-builder-toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(13, 63, 120, 0.04);
+    border-radius: 12px;
+}
+.exam-builder-toolbar button {
+    background: #fff;
+    color: #0d3f78;
+    border: 1px solid rgba(13, 63, 120, 0.1);
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.exam-builder-toolbar button:hover {
+    background: #0d3f78;
+    color: #fff;
+}
+
+/* Status / Badges */
+.badge { padding: 8px 16px; border-radius: 10px; font-weight: 600; }
+
+/* Global Typography */
+h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }

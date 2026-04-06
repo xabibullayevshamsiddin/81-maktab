@@ -17,17 +17,32 @@ class PostController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
-        $query = Post::with('category')->latest();
+        $query = Post::query()
+            ->select([
+                'id',
+                'category_id',
+                'title',
+                'title_en',
+                'slug',
+                'short_content',
+                'short_content_en',
+                'image',
+                'created_at',
+            ])
+            ->with(['category:id,name,name_en'])
+            ->latest();
 
         if ($q !== '') {
             $query->where(function ($w) use ($q): void {
                 $w->where('title', 'like', '%'.$q.'%')
+                    ->orWhere('title_en', 'like', '%'.$q.'%')
                     ->orWhere('slug', 'like', '%'.$q.'%')
-                    ->orWhere('short_content', 'like', '%'.$q.'%');
+                    ->orWhere('short_content', 'like', '%'.$q.'%')
+                    ->orWhere('short_content_en', 'like', '%'.$q.'%');
             });
         }
 
-        $posts = $query->get();
+        $posts = $query->paginate(10)->withQueryString();
 
         return view('admin.posts.index', compact('posts'));
     }
@@ -52,10 +67,13 @@ class PostController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'post_kind' => ['required', 'in:'.implode(',', $postKindKeys ?: ['general', 'video_news', 'social'])],
             'short_content' => ['required', 'string'],
+            'short_content_en' => ['nullable', 'string'],
             'content' => ['required', 'string'],
+            'content_en' => ['nullable', 'string'],
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp'],
             'video_url' => ['nullable', 'string', 'max:500'],
             'video_file' => array_merge(
@@ -75,6 +93,7 @@ class PostController extends Controller
         }
 
         Post::create($validated);
+        $this->forgetPublicCaches();
 
         return redirect()->route('posts.index')->with('success', "Post qo'shildi.");
 
@@ -108,10 +127,13 @@ class PostController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'post_kind' => ['required', 'in:'.implode(',', $postKindKeys ?: ['general', 'video_news', 'social'])],
             'short_content' => ['required', 'string'],
+            'short_content_en' => ['nullable', 'string'],
             'content' => ['required', 'string'],
+            'content_en' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp',],
             'video_url' => ['nullable', 'string', 'max:500'],
             'video_file' => array_merge(
@@ -150,6 +172,7 @@ class PostController extends Controller
         }
 
         $post->update($validated);
+        $this->forgetPublicCaches();
 
         return redirect()->route('posts.index')
             ->with('success', 'Post yangilandi.')
@@ -169,6 +192,7 @@ class PostController extends Controller
         }
 
         $post->delete();
+        $this->forgetPublicCaches();
 
         return redirect()->route('posts.index')
             ->with('error', "Post o'chirildi.")
@@ -224,28 +248,26 @@ class PostController extends Controller
         $base = Str::slug($title);
         $slug = $base !== '' ? $base : 'post';
 
-        $existsQuery = Post::query()->where('slug', $slug);
-        if ($ignoreId) {
-            $existsQuery->where('id', '!=', $ignoreId);
-        }
+        $existingSlugs = Post::query()
+            ->where('slug', 'like', $slug.'%')
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->pluck('slug')
+            ->all();
 
-        if (! $existsQuery->exists()) {
+        if (! in_array($slug, $existingSlugs, true)) {
             return $slug;
         }
 
         $i = 2;
-        while (true) {
-            $candidate = "{$slug}-{$i}";
-            $q = Post::query()->where('slug', $candidate);
-            if ($ignoreId) {
-                $q->where('id', '!=', $ignoreId);
-            }
-
-            if (! $q->exists()) {
-                return $candidate;
-            }
+        while (in_array("{$slug}-{$i}", $existingSlugs, true)) {
             $i++;
         }
+
+        return "{$slug}-{$i}";
+    }
+
+    private function forgetPublicCaches(): void
+    {
+        forget_public_content_caches();
     }
 }
-

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exam extends Model
@@ -15,6 +16,7 @@ class Exam extends Model
         'passing_points',
         'allowed_grades',
         'is_active',
+        'created_by',
     ];
 
     protected $casts = [
@@ -94,5 +96,28 @@ class Exam extends Model
     public function results(): HasMany
     {
         return $this->hasMany(Result::class);
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function ownsExam(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
+            return true;
+        }
+
+        return (int) $this->created_by === (int) $user->id;
+    }
+
+    public function isOwnedByTeacher(): bool
+    {
+        return $this->created_by !== null;
     }
 }

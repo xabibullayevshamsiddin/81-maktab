@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Exam;
 use App\Models\Option;
 use App\Models\Question;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AdminQuestionController extends Controller
 {
+    public function __construct(private readonly ImageService $imageService) {}
+
     public function index(Request $request, Exam $exam)
     {
         $q = trim((string) $request->query('q', ''));
@@ -24,11 +28,12 @@ class AdminQuestionController extends Controller
             $questionsQuery->where('body', 'like', '%'.$q.'%');
         }
 
-        $questions = $questionsQuery->get();
+        $questions = $questionsQuery->paginate(10)->withQueryString();
+        $totalQuestionCount = (int) $exam->questions()->count();
 
         $pointsSum = (int) $exam->questions()->sum('points');
 
-        return view('admin.exams.questions.index', compact('exam', 'questions', 'pointsSum'));
+        return view('admin.exams.questions.index', compact('exam', 'questions', 'pointsSum', 'totalQuestionCount'));
     }
 
     public function create(Exam $exam)
@@ -53,25 +58,51 @@ class AdminQuestionController extends Controller
         $validated = $this->validateQuestion($request);
         $this->assertQuestionPointsWithinBudget($exam, (int) $validated['points'], null);
 
-        DB::transaction(function () use ($exam, $validated): void {
-            $question = Question::query()->create([
-                'exam_id' => $exam->id,
-                'body' => $validated['body'],
-                'sort_order' => (int) ($validated['sort_order'] ?? 0),
-                'points' => (int) $validated['points'],
-            ]);
+        $uploadedImagePath = null;
+        $isTextType = $validated['question_type'] === Question::TYPE_TEXT;
 
-            foreach (['A', 'B', 'C', 'D'] as $label) {
-                Option::query()->create([
-                    'question_id' => $question->id,
-                    'label' => $label,
-                    'body' => $validated['options'][$label],
-                    'is_correct' => $validated['correct_label'] === $label,
-                ]);
+        try {
+            if ($request->hasFile('question_image')) {
+                $uploadedImagePath = $this->imageService->uploadAndOptimize(
+                    $request->file('question_image'),
+                    'exam-questions',
+                    1600,
+                    1200
+                );
             }
-        });
+
+            DB::transaction(function () use ($exam, $validated, $uploadedImagePath, $isTextType): void {
+                $question = Question::query()->create([
+                    'exam_id' => $exam->id,
+                    'body' => sanitize_exam_rich_text($validated['body']),
+                    'image_path' => $uploadedImagePath,
+                    'sort_order' => $this->nextSortOrder($exam),
+                    'points' => (int) $validated['points'],
+                    'question_type' => $validated['question_type'],
+                    'model_answer' => $isTextType ? $validated['model_answer'] : null,
+                ]);
+
+                if (!$isTextType) {
+                    foreach (['A', 'B', 'C', 'D'] as $label) {
+                        Option::query()->create([
+                            'question_id' => $question->id,
+                            'label' => $label,
+                            'body' => sanitize_exam_rich_text($validated['options'][$label]),
+                            'is_correct' => $validated['correct_label'] === $label,
+                        ]);
+                    }
+                }
+            });
+        } catch (\Throwable $exception) {
+            if ($uploadedImagePath) {
+                $this->imageService->deleteImage($uploadedImagePath);
+            }
+
+            throw $exception;
+        }
 
         $exam->syncActiveFromQuestions();
+        forget_public_exam_caches();
 
         return redirect()->route('admin.exams.questions.index', $exam)
             ->with('success', "Savol qo'shildi.");
@@ -91,25 +122,62 @@ class AdminQuestionController extends Controller
         $validated = $this->validateQuestion($request);
         $this->assertQuestionPointsWithinBudget($exam, (int) $validated['points'], $question->id);
 
-        DB::transaction(function () use ($question, $validated): void {
-            $question->update([
-                'body' => $validated['body'],
-                'sort_order' => (int) ($validated['sort_order'] ?? 0),
-                'points' => (int) $validated['points'],
-            ]);
+        $oldImagePath = $question->image_path;
+        $nextImagePath = $oldImagePath;
+        $uploadedImagePath = null;
 
-            foreach (['A', 'B', 'C', 'D'] as $label) {
-                $question->options()->updateOrCreate(
-                    ['label' => $label],
-                    [
-                        'body' => $validated['options'][$label],
-                        'is_correct' => $validated['correct_label'] === $label,
-                    ]
+        try {
+            if ($request->hasFile('question_image')) {
+                $uploadedImagePath = $this->imageService->uploadAndOptimize(
+                    $request->file('question_image'),
+                    'exam-questions',
+                    1600,
+                    1200
                 );
+                $nextImagePath = $uploadedImagePath;
+            } elseif ($request->boolean('remove_question_image')) {
+                $nextImagePath = null;
             }
-        });
+
+            $isTextType = $validated['question_type'] === Question::TYPE_TEXT;
+
+            DB::transaction(function () use ($question, $validated, $nextImagePath, $isTextType): void {
+                $question->update([
+                    'body' => sanitize_exam_rich_text($validated['body']),
+                    'image_path' => $nextImagePath,
+                    'points' => (int) $validated['points'],
+                    'question_type' => $validated['question_type'],
+                    'model_answer' => $isTextType ? $validated['model_answer'] : null,
+                ]);
+
+                if ($isTextType) {
+                    $question->options()->delete();
+                } else {
+                    foreach (['A', 'B', 'C', 'D'] as $label) {
+                        $question->options()->updateOrCreate(
+                            ['label' => $label],
+                            [
+                                'body' => sanitize_exam_rich_text($validated['options'][$label]),
+                                'is_correct' => $validated['correct_label'] === $label,
+                            ]
+                        );
+                    }
+                }
+            });
+        } catch (\Throwable $exception) {
+            if ($uploadedImagePath) {
+                $this->imageService->deleteImage($uploadedImagePath);
+            }
+
+            throw $exception;
+        }
+
+        if ($oldImagePath && $oldImagePath !== $nextImagePath) {
+            $this->imageService->deleteImage($oldImagePath);
+        }
 
         $exam->syncActiveFromQuestions();
+        forget_public_exam_caches();
 
         return redirect()->route('admin.exams.questions.index', $exam)
             ->with('success', 'Savol yangilandi.');
@@ -118,24 +186,47 @@ class AdminQuestionController extends Controller
     public function destroy(Exam $exam, Question $question)
     {
         abort_unless((int) $question->exam_id === (int) $exam->id, 404);
+        $imagePath = $question->image_path;
         $question->delete();
+
+        if ($imagePath) {
+            $this->imageService->deleteImage($imagePath);
+        }
+
         $exam->syncActiveFromQuestions();
+        forget_public_exam_caches();
 
         return back()->with('success', "Savol o'chirildi.");
     }
 
     private function validateQuestion(Request $request): array
     {
-        return $request->validate([
-            'body' => ['required', 'string', 'max:2000'],
+        $isTextType = $request->input('question_type') === Question::TYPE_TEXT;
+
+        $rules = [
+            'question_type' => ['required', Rule::in([Question::TYPE_MCQ, Question::TYPE_TEXT])],
+            'body' => ['required', 'string', 'max:12000'],
+            'question_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'remove_question_image' => ['nullable', 'boolean'],
             'points' => ['required', 'integer', 'min:1', 'max:1000'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-            'correct_label' => ['required', 'in:A,B,C,D'],
-            'options.A' => ['required', 'string', 'max:1000'],
-            'options.B' => ['required', 'string', 'max:1000'],
-            'options.C' => ['required', 'string', 'max:1000'],
-            'options.D' => ['required', 'string', 'max:1000'],
-        ]);
+        ];
+
+        if ($isTextType) {
+            $rules['model_answer'] = ['nullable', 'string', 'max:12000'];
+        } else {
+            $rules['correct_label'] = ['required', 'in:A,B,C,D'];
+            $rules['options.A'] = ['required', 'string', 'max:4000'];
+            $rules['options.B'] = ['required', 'string', 'max:4000'];
+            $rules['options.C'] = ['required', 'string', 'max:4000'];
+            $rules['options.D'] = ['required', 'string', 'max:4000'];
+        }
+
+        return $request->validate($rules);
+    }
+
+    private function nextSortOrder(Exam $exam): int
+    {
+        return (int) $exam->questions()->max('sort_order') + 1;
     }
 
     private function assertQuestionPointsWithinBudget(Exam $exam, int $questionPoints, ?int $exceptQuestionId): void
@@ -155,4 +246,3 @@ class AdminQuestionController extends Controller
         }
     }
 }
-

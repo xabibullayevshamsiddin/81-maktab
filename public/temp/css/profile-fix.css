@@ -1,0 +1,211 @@
+/* Profil sahifasi - Premium Pro Max Design System & Fixes */
+
+/* Umumiy tuzatishlar */
+.profile-main {
+  padding: 40px 0 80px !important;
+}
+
+.container {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+}
+
+/* Overview Panel - Glassmorphism */
+.profile-overview-panel {
+  display: grid !important;
+  gap: 32px !important;
+  margin-bottom: 40px !important;
+  padding: 40px !important;
+  border-radius: 32px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: var(--shadow-bloom) !important;
+}
+
+:root[data-theme='dark'] .profile-overview-panel {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.profile-overview-main {
+  display: flex !important;
+  align-items: center !important;
+  gap: 32px !important;
+}
+
+.profile-avatar {
+  width: 120px !important;
+  height: 120px !important;
+  border-radius: 36px !important;
+  flex: 0 0 120px !important;
+  background: linear-gradient(135deg, var(--accent), var(--primary-2)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  box-shadow: 0 20px 40px rgba(20, 184, 166, 0.3) !important;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05) rotate(2deg) !important;
+}
+
+/* Statistikalar - 4 ustun */
+.profile-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 20px !important;
+  margin-top: 24px !important;
+}
+
+.profile-stat-card {
+  padding: 24px !important;
+  border-radius: 24px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  transition: all 0.3s ease !important;
+  text-align: center !important;
+}
+
+.profile-stat-card:hover {
+  transform: translateY(-8px) !important;
+  border-color: var(--accent) !important;
+}
+
+/* Asosiy Layout - 2 ustun (Sidebar + Activity) */
+.profile-layout {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 40px !important;
+  align-items: flex-start !important;
+}
+
+.profile-column-settings {
+  flex: 0 0 400px !important;
+  width: 400px !important;
+  position: sticky !important;
+  top: 100px !important;
+}
+
+.profile-column-activity {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+}
+
+/* "Asosiy ma'lumotlar" kartochkasi dizayni */
+.signin-card.profile-card {
+  border-radius: 28px !important;
+  padding: 32px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-bloom) !important;
+  margin-bottom: 30px !important;
+  overflow: hidden !important;
+}
+
+/* Facts (Bento ko'rinishida) - 2 ustun bo'lishi kerak */
+.profile-facts {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin: 24px 0 !important;
+}
+
+.profile-fact-card {
+  padding: 16px !important;
+  border-radius: 18px !important;
+  background: rgba(15, 23, 42, 0.03) !important;
+  border: 1px solid transparent !important;
+  transition: all 0.3s ease !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+}
+
+:root[data-theme='dark'] .profile-fact-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.profile-fact-card:hover {
+  background: var(--surface) !important;
+  border-color: var(--primary-2) !important;
+}
+
+/* Form Grid - Ism va Telefon yonma-yon */
+.profile-form-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+  align-items: start !important;
+}
+
+.profile-avatar-upload {
+  margin-bottom: 24px !important;
+  width: 100% !important;
+}
+
+.profile-field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.profile-field label {
+  font-weight: 700 !important;
+  font-size: 14px !important;
+}
+
+.profile-field input {
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(15, 23, 42, 0.02) !important;
+  width: 100% !important;
+}
+
+:root[data-theme='dark'] .profile-field input {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Email va Maxfiylik bloklari */
+.signin-card.profile-card[data-profile-section="email"],
+.signin-card.profile-card[data-profile-section="security"] {
+  margin-top: 20px !important;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .profile-layout {
+    flex-direction: column !important;
+  }
+  .profile-column-settings {
+    flex: none !important;
+    width: 100% !important;
+    position: static !important;
+  }
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-facts,
+  .profile-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Aminatsiyalar uchun fix */
+.reveal, .stagger-item {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}

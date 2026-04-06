@@ -31,7 +31,7 @@ class TeacherCourseController extends Controller
                     ->route('profile.show')
                     ->with(
                         'error',
-                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin → Ustozlar → tahrirlash → foydalanuvchi tanlash)."
+                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin > Ustozlar > Tahrirlash > Foydalanuvchi tanlash)."
                     )
                     ->with('toast_type', 'error');
             }
@@ -48,9 +48,13 @@ class TeacherCourseController extends Controller
         $validated = $request->validate([
             'teacher_id' => [$isAdmin ? 'required' : 'nullable', 'integer', 'exists:teachers,id'],
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'string', 'max:100'],
+            'price_en' => ['nullable', 'string', 'max:100'],
             'duration' => ['required', 'string', 'max:120'],
+            'duration_en' => ['nullable', 'string', 'max:120'],
             'description' => ['required', 'string'],
+            'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
@@ -64,7 +68,7 @@ class TeacherCourseController extends Controller
                     ->route('profile.show')
                     ->with(
                         'error',
-                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin → Ustozlar → tahrirlash → foydalanuvchi tanlash)."
+                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin > Ustozlar > Tahrirlash > Foydalanuvchi tanlash)."
                     )
                     ->with('toast_type', 'error');
             }
@@ -77,9 +81,13 @@ class TeacherCourseController extends Controller
                 'teacher_id' => (int) $teacher->id,
                 'created_by' => (int) $user->id,
                 'title' => $validated['title'],
+                'title_en' => $validated['title_en'] ?? null,
                 'price' => $validated['price'],
+                'price_en' => $validated['price_en'] ?? null,
                 'duration' => $validated['duration'],
+                'duration_en' => $validated['duration_en'] ?? null,
                 'description' => $validated['description'],
+                'description_en' => $validated['description_en'] ?? null,
                 'start_date' => $validated['start_date'],
                 'status' => Course::STATUS_PUBLISHED,
                 'publish_code' => null,
@@ -91,6 +99,7 @@ class TeacherCourseController extends Controller
             }
 
             Course::create($payload);
+            forget_public_course_caches();
 
             return redirect()
                 ->route('courses')
@@ -104,9 +113,13 @@ class TeacherCourseController extends Controller
             'teacher_id' => (int) $teacher->id,
             'created_by' => (int) $user->id,
             'title' => $validated['title'],
+            'title_en' => $validated['title_en'] ?? null,
             'price' => $validated['price'],
+            'price_en' => $validated['price_en'] ?? null,
             'duration' => $validated['duration'],
+            'duration_en' => $validated['duration_en'] ?? null,
             'description' => $validated['description'],
+            'description_en' => $validated['description_en'] ?? null,
             'start_date' => $validated['start_date'],
             'status' => Course::STATUS_PENDING_VERIFICATION,
             'publish_code' => $code,
@@ -165,6 +178,7 @@ class TeacherCourseController extends Controller
             'publish_code' => null,
             'publish_code_expires_at' => null,
         ]);
+        forget_public_course_caches();
 
         return redirect()->route('courses')
             ->with('success', "Kurs tasdiqlandi va saytda chiqdi.")
@@ -211,9 +225,13 @@ class TeacherCourseController extends Controller
         $validated = $request->validate([
             'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'string', 'max:100'],
+            'price_en' => ['nullable', 'string', 'max:100'],
             'duration' => ['required', 'string', 'max:120'],
+            'duration_en' => ['nullable', 'string', 'max:120'],
             'description' => ['required', 'string'],
+            'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
@@ -224,9 +242,13 @@ class TeacherCourseController extends Controller
         $payload = [
             'teacher_id' => (int) $validated['teacher_id'],
             'title' => $validated['title'],
+            'title_en' => $validated['title_en'] ?? null,
             'price' => $validated['price'],
+            'price_en' => $validated['price_en'] ?? null,
             'duration' => $validated['duration'],
+            'duration_en' => $validated['duration_en'] ?? null,
             'description' => $validated['description'],
+            'description_en' => $validated['description_en'] ?? null,
             'start_date' => $validated['start_date'],
         ];
 
@@ -238,6 +260,7 @@ class TeacherCourseController extends Controller
         }
 
         $course->update($payload);
+        forget_public_course_caches();
 
         return redirect()
             ->route('admin.courses.index')
@@ -255,10 +278,11 @@ class TeacherCourseController extends Controller
         }
 
         $course->delete();
+        forget_public_course_caches();
 
         return redirect()
             ->route('admin.courses.index')
-            ->with('success', 'Kurs o‘chirildi.')
+            ->with('success', "Kurs o'chirildi.")
             ->with('toast_type', 'warning');
     }
 
@@ -315,4 +339,3 @@ class TeacherCourseController extends Controller
             ->first();
     }
 }
-

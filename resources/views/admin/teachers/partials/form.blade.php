@@ -8,7 +8,7 @@
       </option>
     @endforeach
   </select>
-  <small style="color:#64748b;">Kurs ochishda teacher akkaunt shu karta bilan bog‘lanadi.</small>
+  <small style="color:#64748b;">Kurs ochishda teacher akkaunt shu karta bilan bog'lanadi.</small>
 </div>
 
 <div class="input-style-1">
@@ -19,6 +19,11 @@
 <div class="input-style-1">
   <label>Fan yo'nalishi</label>
   <input type="text" name="subject" value="{{ old('subject', $teacher?->subject) }}" required>
+</div>
+
+<div class="input-style-1">
+  <label>Fan yo'nalishi (EN, ixtiyoriy)</label>
+  <input type="text" name="subject_en" value="{{ old('subject_en', $teacher?->subject_en) }}">
 </div>
 
 <div class="row">
@@ -38,19 +43,23 @@
 
 <div class="input-style-1">
   <label>Yutuqlar va mukofotlar</label>
-  <textarea name="achievements" rows="4" placeholder="Har bir qatorga bitta yutuq (masalan: Toshkent shahar olimpiadasi — 1-o‘rin)">{{ old('achievements', $teacher?->achievements) }}</textarea>
-  <small style="color:#64748b;display:block;margin-top:6px;">Saytda ustoz kartochkasi va batafsil sahifada ko‘rinadi. Tartib raqami emas — bu yerda faqat yutuqlar yoziladi.</small>
+  <textarea name="achievements" rows="4" placeholder="Har bir qatorga bitta yutuq yozing">{{ old('achievements', $teacher?->achievements) }}</textarea>
+  <small style="color:#64748b;display:block;margin-top:6px;">Saytda ustoz kartochkasi va batafsil sahifada ko'rinadi.</small>
 </div>
 
 <div class="input-style-1">
-  <label>Ro‘yxatdagi tartib (raqam)</label>
-  <input type="number" min="0" max="9999" name="sort_order" value="{{ old('sort_order', $teacher?->sort_order ?? 0) }}">
-  <small style="color:#64748b;display:block;margin-top:6px;"><strong>Nima bu?</strong> «Ustozlar» sahifasida kartochkalar qaysi ketma-ketlikda chiqishini belgilaydi: <strong>kichik raqam</strong> (0, 1, 2…) ustunlik — yuqoriroqda turadi. Yutuqlar bilan aloqasi yo‘q.</small>
+  <label>Yutuqlar va mukofotlar (EN, ixtiyoriy)</label>
+  <textarea name="achievements_en" rows="4">{{ old('achievements_en', $teacher?->achievements_en) }}</textarea>
 </div>
 
 <div class="input-style-1">
   <label>Bio</label>
   <textarea name="bio" rows="5">{{ old('bio', $teacher?->bio) }}</textarea>
+</div>
+
+<div class="input-style-1">
+  <label>Bio (EN, ixtiyoriy)</label>
+  <textarea name="bio_en" rows="5">{{ old('bio_en', $teacher?->bio_en) }}</textarea>
 </div>
 
 <div class="input-style-1">
@@ -71,4 +80,3 @@
 <button type="submit" class="main-btn primary-btn btn-hover">
   {{ $teacher ? 'Saqlash' : "Qo'shish" }}
 </button>
-

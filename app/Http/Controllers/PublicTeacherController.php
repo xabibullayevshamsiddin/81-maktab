@@ -9,21 +9,43 @@ use App\Models\TeacherLike;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class PublicTeacherController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $teachers = Teacher::query()
-            ->withCount('likes')
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('full_name')
-            ->get();
+        $page = max(1, (int) $request->query('page', 1));
+
+        $teachers = Cache::remember(cache_key_public_teachers_page($page), now()->addMinutes(10), function () use ($request) {
+            return Teacher::query()
+                ->select([
+                    'id',
+                    'full_name',
+                    'slug',
+                    'subject',
+                    'subject_en',
+                    'experience_years',
+                    'grades',
+                    'achievements',
+                    'achievements_en',
+                    'bio',
+                    'bio_en',
+                    'image',
+                    'sort_order',
+                    'is_active',
+                ])
+                ->withCount('likes')
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('full_name')
+                ->paginate(3)
+                ->appends($request->query());
+        });
 
         $likedTeacherIds = collect();
         if (auth()->check()) {
-            $ids = $teachers->pluck('id');
+            $ids = $teachers->getCollection()->pluck('id');
             if ($ids->isNotEmpty()) {
                 $likedTeacherIds = TeacherLike::query()
                     ->where('user_id', auth()->id())
@@ -48,11 +70,15 @@ class PublicTeacherController extends Controller
         }
 
         $comments = TeacherComment::query()
+            ->where('teacher_id', $teacher->id)
             ->whereNull('parent_id')
             ->with([
                 'user.roleRelation',
-                'replies' => function ($query) {
-                    $query->with('user.roleRelation')->withCount('likes')->latest();
+                'replies' => function ($query) use ($teacher) {
+                    $query->where('teacher_id', $teacher->id)
+                        ->with('user.roleRelation')
+                        ->withCount('likes')
+                        ->latest();
                 },
             ])
             ->withCount('likes')
@@ -147,4 +173,3 @@ class PublicTeacherController extends Controller
         return $ids;
     }
 }
-

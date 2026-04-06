@@ -60,6 +60,11 @@
           </tbody>
         </table>
       </div>
+      @if($exams->hasPages())
+        <div class="p-3">
+          {{ $exams->links() }}
+        </div>
+      @endif
     </div>
   </div>
 </div>

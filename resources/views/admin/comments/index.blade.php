@@ -76,8 +76,10 @@
                 <td>
                   @if($type === 'post' && $comment->post)
                     <a href="{{ route('post.show', $comment->post->slug) }}" target="_blank" rel="noopener">{{ $comment->post->title }}</a>
+                  @elseif($type === 'teacher' && $comment->teacher)
+                    <a href="{{ route('teacher.show', $comment->teacher) }}" target="_blank" rel="noopener">{{ $comment->teacher->full_name }}</a>
                   @elseif($type === 'teacher')
-                    <a href="{{ route('teacher') }}" target="_blank" rel="noopener">Ustozlar</a>
+                    <span class="text-muted">Biriktirilmagan ustoz</span>
                   @else
                     <span class="text-muted">—</span>
                   @endif

@@ -140,7 +140,8 @@ class ExamController extends Controller
 
         $answerMap = Answer::query()
             ->where('result_id', $result->id)
-            ->pluck('option_id', 'question_id');
+            ->get(['question_id', 'option_id', 'text_answer'])
+            ->keyBy('question_id');
 
         $result->load('exam');
 
@@ -159,14 +160,47 @@ class ExamController extends Controller
 
         $validated = $request->validate([
             'question_id' => ['required', 'integer'],
-            'option_id' => ['required', 'integer'],
+            'option_id' => ['nullable', 'integer'],
+            'text_answer' => ['nullable', 'string', 'max:12000'],
         ]);
 
         $questionId = (int) $validated['question_id'];
-        $optionId = (int) $validated['option_id'];
 
         $order = collect($result->question_order_json ?? [])->map(fn ($id) => (int) $id);
         abort_unless($order->contains($questionId), 403);
+
+        $question = Question::query()->findOrFail($questionId);
+
+        if ($question->isTextType()) {
+            $textAnswer = trim((string) ($validated['text_answer'] ?? ''));
+
+            if ($textAnswer === '') {
+                Answer::query()
+                    ->where('result_id', $result->id)
+                    ->where('question_id', $questionId)
+                    ->delete();
+
+                return response()->json(['ok' => true, 'answered' => false]);
+            }
+
+            Answer::query()->updateOrCreate(
+                [
+                    'result_id' => $result->id,
+                    'question_id' => $questionId,
+                ],
+                [
+                    'option_id' => null,
+                    'text_answer' => $textAnswer,
+                    'is_correct_override' => null,
+                    'answered_at' => now(),
+                ]
+            );
+
+            return response()->json(['ok' => true, 'answered' => true]);
+        }
+
+        $optionId = (int) ($validated['option_id'] ?? 0);
+        abort_if($optionId <= 0, 422, "Variant tanlanmadi.");
 
         $option = Option::query()
             ->where('id', $optionId)
@@ -180,6 +214,8 @@ class ExamController extends Controller
             ],
             [
                 'option_id' => $option->id,
+                'text_answer' => null,
+                'is_correct_override' => null,
                 'answered_at' => now(),
             ]
         );
@@ -293,13 +329,27 @@ class ExamController extends Controller
 
             $answers = Answer::query()
                 ->where('result_id', $row->id)
-                ->whereNotNull('option_id')
-                ->with(['option:id,is_correct', 'question:id,points'])
+                ->with(['option:id,is_correct', 'question:id,points,question_type'])
                 ->get();
 
             $correctCount = 0;
             $pointsEarned = 0;
+            $hasPendingManualReview = false;
             foreach ($answers as $a) {
+                if ($a->question?->isTextType()) {
+                    if ($a->is_correct_override === null && filled($a->text_answer)) {
+                        $hasPendingManualReview = true;
+                        continue;
+                    }
+
+                    if ($a->isCorrectAnswer()) {
+                        $correctCount++;
+                        $pointsEarned += (int) ($a->question?->points ?? 0);
+                    }
+
+                    continue;
+                }
+
                 if ($a->option?->is_correct) {
                     $correctCount++;
                     $pointsEarned += (int) ($a->question?->points ?? 0);
@@ -307,7 +357,9 @@ class ExamController extends Controller
             }
 
             $passing = (int) ($exam?->passing_points ?? 0);
-            $passed = $passing > 0 ? $pointsEarned >= $passing : true;
+            $passed = $hasPendingManualReview
+                ? null
+                : ($passing > 0 ? $pointsEarned >= $passing : true);
 
             $row->update([
                 'score' => $correctCount,

@@ -19,9 +19,13 @@ class Course extends Model
         'teacher_id',
         'created_by',
         'title',
+        'title_en',
         'price',
+        'price_en',
         'duration',
+        'duration_en',
         'description',
+        'description_en',
         'image',
         'start_date',
         'status',
@@ -65,4 +69,3 @@ class Course extends Model
         return asset('temp/img/how-to-be-teacher-malaysia-feature.png');
     }
 }
-

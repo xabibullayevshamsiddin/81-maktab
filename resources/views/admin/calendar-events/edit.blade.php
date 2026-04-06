@@ -23,14 +23,14 @@
             <div class="mb-3">
               <label class="form-label">Vaqt (ixtiyoriy)</label>
               <input type="text" name="time_note" class="form-control" value="{{ old('time_note', $event->time_note) }}" maxlength="64">
+</div>
+            <div class="mb-3">
+              <label class="form-label">Vaqt (EN, ixtiyoriy)</label>
+              <input type="text" name="time_note_en" class="form-control" value="{{ old('time_note_en', $event->time_note_en) }}" maxlength="64">
             </div>
             <div class="mb-3">
               <label class="form-label">Tavsif</label>
               <textarea name="body" class="form-control" rows="4">{{ old('body', $event->body) }}</textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Tartib</label>
-              <input type="number" name="sort_order" class="form-control" value="{{ old('sort_order', $event->sort_order) }}" min="0" max="9999">
             </div>
             <button type="submit" class="btn btn-primary">Saqlash</button>
             <a href="{{ route('calendar-events.index') }}" class="btn btn-outline-secondary">Orqaga</a>

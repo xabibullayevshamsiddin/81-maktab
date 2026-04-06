@@ -2,33 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\TeacherCommentLike;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class TeacherCommentController extends Controller
 {
-    public function store(Request $request)
+    private const COMMENT_BODY_MAX = 100;
+
+    private const REPLY_BODY_MAX = 50;
+
+    public function store(Request $request, Teacher $teacher)
     {
+        abort_unless($teacher->is_active, 404);
+
         if ($response = $this->ensureCanInteract($request)) {
             return $response;
         }
 
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:500'],
-            'author_name' => ['nullable', 'string', 'max:80'],
-            'parent_id' => ['nullable', 'integer', 'exists:teacher_comments,id'],
-        ]);
+        $validated = $this->validateCommentPayload($request, $request->filled('parent_id'));
 
         $parentComment = null;
         if (! empty($validated['parent_id'])) {
             $parentComment = TeacherComment::query()
+                ->where('teacher_id', $teacher->id)
                 ->whereKey($validated['parent_id'])
                 ->firstOrFail();
         }
 
         $comment = new TeacherComment();
+        $comment->teacher_id = $teacher->id;
         $comment->body = $validated['body'];
         $comment->author_name = $request->user()?->name ?? ($validated['author_name'] ?? null);
         $comment->user_id = $request->user()?->id;
@@ -53,6 +59,8 @@ class TeacherCommentController extends Controller
                     'user_id' => $comment->user_id,
                     'role_key' => $comment->user?->role ?? 'guest',
                     'role_label' => $comment->user?->role_label ?? 'Mehmon',
+                    'avatar_url' => $comment->user?->avatar_url,
+                    'avatar_initial' => Str::upper(Str::substr(trim((string) ($comment->author_name ?: 'M')), 0, 1)),
                     'likes_count' => 0,
                 ],
             ]);
@@ -69,9 +77,7 @@ class TeacherCommentController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:500'],
-        ]);
+        $validated = $this->validateCommentPayload($request, (bool) $comment->parent_id, false);
 
         $comment->update([
             'body' => $validated['body'],
@@ -190,6 +196,26 @@ class TeacherCommentController extends Controller
         $comment->loadMissing('user.roleRelation');
 
         return auth()->user()->canManageCommentAsStaff($comment->user, $comment->user_id);
+    }
+
+    private function validateCommentPayload(Request $request, bool $isReply, bool $includeMeta = true): array
+    {
+        $bodyMax = $isReply ? self::REPLY_BODY_MAX : self::COMMENT_BODY_MAX;
+
+        $rules = [
+            'body' => ['required', 'string', 'max:'.$bodyMax],
+        ];
+
+        if ($includeMeta) {
+            $rules['author_name'] = ['nullable', 'string', 'max:80'];
+            $rules['parent_id'] = ['nullable', 'integer', 'exists:teacher_comments,id'];
+        }
+
+        return $request->validate($rules, [
+            'body.max' => $isReply
+                ? "Javob matni ".self::REPLY_BODY_MAX." belgidan oshmasin."
+                : "Izoh matni ".self::COMMENT_BODY_MAX." belgidan oshmasin.",
+        ]);
     }
 
     private function ensureCanInteract(Request $request)

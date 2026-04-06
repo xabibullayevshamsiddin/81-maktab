@@ -1,5 +1,5 @@
 <x-loyouts.main title="Imtihon - {{ $exam->title }}">
-  <main class="news exam-page">
+  <main class="news exam-page exam-start-page">
     <div class="exam-page-inner" style="max-width: 560px;">
       <header class="exam-hero">
         <span class="exam-hero-badge">

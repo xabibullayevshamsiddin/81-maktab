@@ -17,10 +17,13 @@ class Teacher extends Model
         'full_name',
         'slug',
         'subject',
+        'subject_en',
         'experience_years',
         'grades',
         'achievements',
+        'achievements_en',
         'bio',
+        'bio_en',
         'image',
         'is_active',
         'sort_order',
@@ -56,9 +59,9 @@ class Teacher extends Model
         return $this->hasMany(TeacherLike::class);
     }
 
-    public function achievementItems(?int $limit = null): array
+    public function achievementItems(?int $limit = null, ?string $locale = null): array
     {
-        $items = collect(preg_split("/\r\n|\r|\n/", (string) $this->achievements))
+        $items = collect(preg_split("/\r\n|\r|\n/", localized_model_value($this, 'achievements', $locale)))
             ->map(static fn ($line) => trim((string) $line))
             ->filter()
             ->values();
@@ -70,13 +73,16 @@ class Teacher extends Model
         return $items->all();
     }
 
-    public function shortBio(int $limit = 220): string
+    public function shortBio(int $limit = 220, ?string $locale = null): string
     {
-        $fallback = $this->subject
-            ? $this->subject." fani bo'yicha ".$this->experience_years." yillik tajribaga ega ustoz."
+        $subject = localized_model_value($this, 'subject', $locale);
+        $bio = localized_model_value($this, 'bio', $locale);
+
+        $fallback = $subject
+            ? $subject." fani bo'yicha ".$this->experience_years." yillik tajribaga ega ustoz."
             : 'Tajribali va natijaga yonaltirilgan ustoz.';
 
-        return Str::limit(trim((string) ($this->bio ?: $fallback)), $limit);
+        return Str::limit(trim((string) ($bio ?: $fallback)), $limit);
     }
 
     public function imageUrl(): string

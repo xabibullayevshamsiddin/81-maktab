@@ -108,6 +108,335 @@ if (! function_exists('gmail_compose_url')) {
     }
 }
 
+if (! function_exists('cache_key_home_posts')) {
+    function cache_key_home_posts(): string
+    {
+        return 'public.home.posts.v1';
+    }
+}
+
+if (! function_exists('cache_key_home_featured_teacher')) {
+    function cache_key_home_featured_teacher(): string
+    {
+        return 'public.home.featured_teacher.v1';
+    }
+}
+
+if (! function_exists('cache_key_public_post_categories')) {
+    function cache_key_public_post_categories(): string
+    {
+        return 'public.posts.categories.v1';
+    }
+}
+
+if (! function_exists('cache_namespace_version_key')) {
+    function cache_namespace_version_key(string $namespace): string
+    {
+        return 'cache.namespace_version.'.$namespace;
+    }
+}
+
+if (! function_exists('cache_namespace_version')) {
+    function cache_namespace_version(string $namespace): int
+    {
+        $key = cache_namespace_version_key($namespace);
+
+        if (! \Illuminate\Support\Facades\Cache::has($key)) {
+            \Illuminate\Support\Facades\Cache::forever($key, 1);
+        }
+
+        return (int) \Illuminate\Support\Facades\Cache::get($key, 1);
+    }
+}
+
+if (! function_exists('bump_cache_namespace_version')) {
+    function bump_cache_namespace_version(string $namespace): int
+    {
+        $nextVersion = cache_namespace_version($namespace) + 1;
+        \Illuminate\Support\Facades\Cache::forever(cache_namespace_version_key($namespace), $nextVersion);
+
+        return $nextVersion;
+    }
+}
+
+if (! function_exists('cache_key_public_teachers_page')) {
+    function cache_key_public_teachers_page(int $page = 1): string
+    {
+        return 'public.teachers.page.'.$page.'.v'.cache_namespace_version('public_teachers');
+    }
+}
+
+if (! function_exists('cache_key_public_courses_page')) {
+    function cache_key_public_courses_page(int $page = 1): string
+    {
+        return 'public.courses.page.'.$page.'.v'.cache_namespace_version('public_courses');
+    }
+}
+
+if (! function_exists('cache_key_public_course_show')) {
+    function cache_key_public_course_show(int $courseId): string
+    {
+        return 'public.courses.show.'.$courseId.'.v'.cache_namespace_version('public_courses');
+    }
+}
+
+if (! function_exists('cache_key_public_exams_page')) {
+    function cache_key_public_exams_page(int $page = 1): string
+    {
+        return 'public.exams.page.'.$page.'.v'.cache_namespace_version('public_exams');
+    }
+}
+
+if (! function_exists('cache_key_public_calendar_page')) {
+    function cache_key_public_calendar_page(int $year, int $page = 1): string
+    {
+        return 'public.calendar.year.'.$year.'.page.'.$page.'.v'.cache_namespace_version('public_calendar');
+    }
+}
+
+if (! function_exists('forget_public_content_caches')) {
+    function forget_public_content_caches(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget(cache_key_home_posts());
+        \Illuminate\Support\Facades\Cache::forget(cache_key_public_post_categories());
+    }
+}
+
+if (! function_exists('forget_public_teacher_caches')) {
+    function forget_public_teacher_caches(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget(cache_key_home_featured_teacher());
+        bump_cache_namespace_version('public_teachers');
+        bump_cache_namespace_version('public_courses');
+    }
+}
+
+if (! function_exists('forget_public_course_caches')) {
+    function forget_public_course_caches(): void
+    {
+        bump_cache_namespace_version('public_courses');
+    }
+}
+
+if (! function_exists('forget_public_exam_caches')) {
+    function forget_public_exam_caches(): void
+    {
+        bump_cache_namespace_version('public_exams');
+    }
+}
+
+if (! function_exists('forget_public_calendar_caches')) {
+    function forget_public_calendar_caches(): void
+    {
+        bump_cache_namespace_version('public_calendar');
+    }
+}
+
+if (! function_exists('supported_locales')) {
+    function supported_locales(): array
+    {
+        return [
+            'uz' => 'UZ',
+            'en' => 'EN',
+        ];
+    }
+}
+
+if (! function_exists('current_locale')) {
+    function current_locale(): string
+    {
+        $locale = (string) app()->getLocale();
+
+        return array_key_exists($locale, supported_locales())
+            ? $locale
+            : (string) config('app.locale', 'uz');
+    }
+}
+
+if (! function_exists('localized_model_value')) {
+    function localized_model_value($model, string $field, ?string $locale = null, bool $fallback = true): string
+    {
+        if (! $model) {
+            return '';
+        }
+
+        $locale = $locale ?: current_locale();
+        $baseValue = trim((string) data_get($model, $field));
+
+        if ($locale === 'uz') {
+            return $baseValue;
+        }
+
+        $localizedValue = trim((string) data_get($model, $field.'_'.$locale));
+        if ($localizedValue !== '') {
+            return $localizedValue;
+        }
+
+        return $fallback ? $baseValue : '';
+    }
+}
+
+if (! function_exists('localized_post_kind_label')) {
+    function localized_post_kind_label(?string $key, ?string $locale = null): string
+    {
+        $key = $key ?: 'general';
+        $meta = config('post_kinds.'.$key, []);
+        $locale = $locale ?: current_locale();
+
+        $localizedLabel = data_get($meta, 'label.'.$locale);
+        if (filled($localizedLabel)) {
+            return (string) $localizedLabel;
+        }
+
+        $fallbackLabel = data_get($meta, 'label.uz', data_get($meta, 'label'));
+
+        return filled($fallbackLabel) ? (string) $fallbackLabel : $key;
+    }
+}
+
+if (! function_exists('sanitize_exam_rich_text')) {
+    function sanitize_exam_rich_text(?string $value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        $allowedTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'mark', 'small', 'sub', 'sup', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'];
+        $allowedAttributes = [
+            'table' => ['border', 'cellpadding', 'cellspacing'],
+            'th' => ['colspan', 'rowspan', 'scope'],
+            'td' => ['colspan', 'rowspan'],
+        ];
+
+        $hasSupportedHtml = preg_match('/<(\/?(p|br|strong|b|em|i|u|mark|small|sub|sup|ul|ol|li|table|thead|tbody|tfoot|tr|th|td))\b/i', $value) === 1;
+        if (! $hasSupportedHtml) {
+            return $value;
+        }
+
+        if (! class_exists(\DOMDocument::class)) {
+            return trim(strip_tags($value, '<'.implode('><', $allowedTags).'>'));
+        }
+
+        $previousLibxml = libxml_use_internal_errors(true);
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        $document->preserveWhiteSpace = false;
+
+        $loaded = @$document->loadHTML(
+            '<?xml encoding="utf-8" ?><div>'.$value.'</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+
+        if (! $loaded) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousLibxml);
+
+            return trim(strip_tags($value, '<'.implode('><', $allowedTags).'>'));
+        }
+
+        $root = $document->getElementsByTagName('div')->item(0);
+        if ($root instanceof \DOMNode) {
+            sanitize_exam_rich_text_node($root, $allowedTags, $allowedAttributes);
+        }
+
+        $sanitized = '';
+        if ($root instanceof \DOMNode) {
+            foreach (iterator_to_array($root->childNodes) as $childNode) {
+                $sanitized .= $document->saveHTML($childNode);
+            }
+        }
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousLibxml);
+
+        return trim($sanitized);
+    }
+}
+
+if (! function_exists('sanitize_exam_rich_text_node')) {
+    function sanitize_exam_rich_text_node(\DOMNode $parent, array $allowedTags, array $allowedAttributes): void
+    {
+        foreach (iterator_to_array($parent->childNodes) as $childNode) {
+            if ($childNode->nodeType === XML_COMMENT_NODE) {
+                $parent->removeChild($childNode);
+
+                continue;
+            }
+
+            if ($childNode->nodeType === XML_TEXT_NODE) {
+                continue;
+            }
+
+            if ($childNode->nodeType !== XML_ELEMENT_NODE) {
+                $parent->removeChild($childNode);
+
+                continue;
+            }
+
+            $tagName = strtolower($childNode->nodeName);
+
+            if (! in_array($tagName, $allowedTags, true)) {
+                if (in_array($tagName, ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta'], true)) {
+                    $parent->removeChild($childNode);
+
+                    continue;
+                }
+
+                while ($childNode->firstChild) {
+                    $parent->insertBefore($childNode->firstChild, $childNode);
+                }
+
+                $parent->removeChild($childNode);
+
+                continue;
+            }
+
+            if ($childNode->hasAttributes()) {
+                foreach (iterator_to_array($childNode->attributes) as $attribute) {
+                    $attributeName = strtolower($attribute->nodeName);
+                    $attributeValue = trim((string) $attribute->nodeValue);
+                    $tagAllowedAttributes = $allowedAttributes[$tagName] ?? [];
+
+                    if (str_starts_with($attributeName, 'on') || ! in_array($attributeName, $tagAllowedAttributes, true)) {
+                        $childNode->removeAttribute($attribute->nodeName);
+
+                        continue;
+                    }
+
+                    if (in_array($attributeName, ['border', 'cellpadding', 'cellspacing', 'colspan', 'rowspan'], true)
+                        && preg_match('/^\d{1,2}$/', $attributeValue) !== 1) {
+                        $childNode->removeAttribute($attribute->nodeName);
+
+                        continue;
+                    }
+
+                    if ($attributeName === 'scope'
+                        && ! in_array(strtolower($attributeValue), ['col', 'row', 'colgroup', 'rowgroup'], true)) {
+                        $childNode->removeAttribute($attribute->nodeName);
+                    }
+                }
+            }
+
+            sanitize_exam_rich_text_node($childNode, $allowedTags, $allowedAttributes);
+        }
+    }
+}
+
+if (! function_exists('render_exam_rich_text')) {
+    function render_exam_rich_text(?string $value): \Illuminate\Support\HtmlString
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return new \Illuminate\Support\HtmlString('');
+        }
+
+        $containsHtml = preg_match('/<[^>]+>/', $value) === 1;
+        $html = $containsHtml ? $value : nl2br(e($value));
+
+        return new \Illuminate\Support\HtmlString($html);
+    }
+}
+
 if (! function_exists('uz_phone_input_pattern')) {
     function uz_phone_input_pattern(): string
     {

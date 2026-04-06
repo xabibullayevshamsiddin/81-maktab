@@ -16,7 +16,14 @@
         </p>
       @endif
 
-      @if($result->passed !== null)
+      @if($result->passed === null)
+        <p class="exam-result-pass is-pending">
+          <i class="fa-solid fa-hourglass-half"></i> Matnli savollar tekshiruvda
+          <span style="display:block;font-size:13px;font-weight:600;opacity:0.9;margin-top:6px;">
+            Yakuniy natija ustoz tekshirganidan keyin ko'rinadi.
+          </span>
+        </p>
+      @elseif($result->passed !== null)
         <p class="exam-result-pass {{ $result->passed ? 'is-pass' : 'is-fail' }}">
           @if($result->passed)
             <i class="fa-solid fa-circle-check"></i> O‘tdi

@@ -66,7 +66,7 @@
                 <tbody>
                   @forelse ($posts as $post)
                     <tr>
-                      <td><p>{{ $loop->iteration }}</p></td>
+                      <td><p>{{ ($posts->firstItem() ?? 1) + $loop->index }}</p></td>
                       <td>
                         @if ($post->image)
                           <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
@@ -103,6 +103,11 @@
                 </tbody>
               </table>
             </div>
+            @if($posts->hasPages())
+              <div class="p-3">
+                {{ $posts->links() }}
+              </div>
+            @endif
           </div>
         </div>
       </div>

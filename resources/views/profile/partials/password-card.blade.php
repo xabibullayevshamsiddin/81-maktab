@@ -1,30 +1,28 @@
 <div class="signin-card profile-card" data-profile-section="password" id="profile-password-card">
   <div class="profile-card-head">
-    <span class="profile-card-kicker">3-qadam</span>
-    <h2>Parolni almashtirish</h2>
-    <p class="signin-subtitle">
-      Eski parolni kiriting va yangi parolni oddiyroq tarzda yangilang.
-    </p>
+    <span class="profile-card-kicker">{{ __('profile.steps.password') }}</span>
+    <h2>{{ __('profile.password_card.title') }}</h2>
+    <p class="signin-subtitle">{{ __('profile.password_card.subtitle') }}</p>
   </div>
 
   <div class="profile-security-list">
     <div class="profile-security-item">
       <i class="fa-solid fa-shield-halved"></i>
-      <span>Joriy parol tekshiriladi</span>
+      <span>{{ __('profile.password_card.item_current') }}</span>
     </div>
     <div class="profile-security-item">
       <i class="fa-solid fa-key"></i>
-      <span>Kamida 6 ta belgi bo'lishi kerak</span>
+      <span>{{ __('profile.password_card.item_min') }}</span>
     </div>
     <div class="profile-security-item">
       <i class="fa-solid fa-lock"></i>
-      <span>O'zingizga esda qoladigan parol tanlang</span>
+      <span>{{ __('profile.password_card.item_easy') }}</span>
     </div>
   </div>
 
   <p class="profile-security-note">
     <i class="fa-solid fa-circle-info"></i>
-    Avval joriy parolni tasdiqlaysiz. Tasdiqlangandan keyingina yangi parol maydonlari ochiladi.
+    {{ __('profile.password_card.note') }}
   </p>
 
   @if(! ($passwordChangeUnlocked ?? false))
@@ -32,8 +30,8 @@
       @csrf
 
       <div class="profile-field">
-        <label for="profile-current-password">Joriy parol</label>
-        <span class="profile-field-hint">To'g'ri kiritilgach, yangi parol maydonlari ochiladi.</span>
+        <label for="profile-current-password">{{ __('profile.password_card.current_label') }}</label>
+        <span class="profile-field-hint">{{ __('profile.password_card.current_hint') }}</span>
         <div class="pw-wrap">
           <input
             type="password"
@@ -41,12 +39,12 @@
             name="current_password"
             required
             autocomplete="current-password"
-            placeholder="Joriy parolingiz"
+            placeholder="{{ __('profile.password_card.current_placeholder') }}"
           />
           <button
             type="button"
             class="pw-toggle"
-            aria-label="Parolni ko'rsatish"
+            aria-label="{{ __('profile.password_card.show_password') }}"
             data-target="profile-current-password"
           >
             <i class="fa-regular fa-eye"></i>
@@ -60,14 +58,14 @@
       <div class="profile-form-actions">
         <button class="btn" type="submit">
           <i class="fa-solid fa-shield-halved"></i>
-          Joriy parolni tasdiqlash
+          {{ __('profile.password_card.confirm_current') }}
         </button>
       </div>
     </form>
   @else
     <p class="profile-password-confirmed">
       <i class="fa-solid fa-circle-check"></i>
-      Joriy parol tasdiqlandi. Endi yangi parolni kiritishingiz mumkin.
+      {{ __('profile.password_card.confirmed') }}
     </p>
 
     <form action="{{ route('profile.password.update') }}" method="POST" class="signin-form comment-form profile-form-stack" data-profile-async="password">
@@ -75,8 +73,8 @@
 
       <div class="profile-form-grid">
         <div class="profile-field">
-          <label for="profile-new-password">Yangi parol</label>
-          <span class="profile-field-hint">Kamida 6 ta belgi yozsangiz bo'ladi.</span>
+          <label for="profile-new-password">{{ __('profile.password_card.new_label') }}</label>
+          <span class="profile-field-hint">{{ __('profile.password_card.new_hint') }}</span>
           <div class="pw-wrap">
             <input
               type="password"
@@ -85,12 +83,12 @@
               required
               minlength="6"
               autocomplete="new-password"
-              placeholder="Yangi parol"
+              placeholder="{{ __('profile.password_card.new_placeholder') }}"
             />
             <button
               type="button"
               class="pw-toggle"
-              aria-label="Parolni ko'rsatish"
+              aria-label="{{ __('profile.password_card.show_password') }}"
               data-target="profile-new-password"
             >
               <i class="fa-regular fa-eye"></i>
@@ -102,8 +100,8 @@
         </div>
 
         <div class="profile-field">
-          <label for="profile-new-password-confirmation">Yangi parolni tasdiqlang</label>
-          <span class="profile-field-hint">Yangi parolni aynan shu yerda qayta kiriting.</span>
+          <label for="profile-new-password-confirmation">{{ __('profile.password_card.confirm_label') }}</label>
+          <span class="profile-field-hint">{{ __('profile.password_card.confirm_hint') }}</span>
           <div class="pw-wrap">
             <input
               type="password"
@@ -112,12 +110,12 @@
               required
               minlength="6"
               autocomplete="new-password"
-              placeholder="Parolni qayta kiriting"
+              placeholder="{{ __('profile.password_card.confirm_placeholder') }}"
             />
             <button
               type="button"
               class="pw-toggle"
-              aria-label="Parolni ko'rsatish"
+              aria-label="{{ __('profile.password_card.show_password') }}"
               data-target="profile-new-password-confirmation"
             >
               <i class="fa-regular fa-eye"></i>
@@ -129,7 +127,7 @@
       <div class="profile-form-actions">
         <button class="btn" type="submit">
           <i class="fa-solid fa-lock"></i>
-          Parolni yangilash
+          {{ __('profile.password_card.update') }}
         </button>
       </div>
     </form>

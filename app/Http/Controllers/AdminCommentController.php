@@ -22,12 +22,15 @@ class AdminCommentController extends Controller
 
         if ($type === 'teacher') {
             $query = TeacherComment::query()
-                ->with(['user', 'parent'])
+                ->with(['user', 'parent', 'teacher'])
                 ->latest();
 
             if ($q !== '') {
                 $query->where(function ($w) use ($q): void {
                     $w->where('body', 'like', '%'.$q.'%')
+                        ->orWhereHas('teacher', function ($t) use ($q): void {
+                            $t->where('full_name', 'like', '%'.$q.'%');
+                        })
                         ->orWhereHas('user', function ($u) use ($q): void {
                             $u->where('name', 'like', '%'.$q.'%')
                                 ->orWhere('email', 'like', '%'.$q.'%')
@@ -70,7 +73,7 @@ class AdminCommentController extends Controller
         if ($type === 'post') {
             $comment = Comment::query()->with(['post', 'user'])->findOrFail($id);
         } else {
-            $comment = TeacherComment::query()->with('user')->findOrFail($id);
+            $comment = TeacherComment::query()->with(['user', 'teacher'])->findOrFail($id);
         }
 
         $this->ensureModeratorMayModifyComment($comment);
@@ -90,7 +93,7 @@ class AdminCommentController extends Controller
         if ($type === 'post') {
             $comment = Comment::query()->with('user')->findOrFail($id);
         } else {
-            $comment = TeacherComment::query()->with('user')->findOrFail($id);
+            $comment = TeacherComment::query()->with(['user', 'teacher'])->findOrFail($id);
         }
 
         $this->ensureModeratorMayModifyComment($comment);
@@ -110,7 +113,7 @@ class AdminCommentController extends Controller
         if ($type === 'post') {
             $comment = Comment::query()->with('user')->findOrFail($id);
         } else {
-            $comment = TeacherComment::query()->with('user')->findOrFail($id);
+            $comment = TeacherComment::query()->with(['user', 'teacher'])->findOrFail($id);
         }
 
         $this->ensureModeratorMayModifyComment($comment);
