@@ -11,6 +11,99 @@
   const root = document.documentElement;
   const body = document.body;
 
+  function initShellUi() {
+    const navbar = document.getElementById('navbar');
+    const scrollTopBtn = document.getElementById('scroll-top');
+    const year = document.getElementById('year');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    if (year) {
+      year.textContent = String(new Date().getFullYear());
+    }
+
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+
+      if (navbar) {
+        navbar.classList.toggle('scrolled', scrollY > 30);
+      }
+
+      if (scrollTopBtn) {
+        scrollTopBtn.classList.toggle('show', scrollY > 320);
+      }
+
+      const fromTop = scrollY + 120;
+      navLinks.forEach((link) => {
+        const href = link.getAttribute('href');
+        if (!href || !href.startsWith('#')) return;
+
+        const section = document.querySelector(href);
+        if (!section) return;
+
+        const isActive =
+          section.offsetTop <= fromTop &&
+          section.offsetTop + section.offsetHeight > fromTop;
+
+        link.classList.toggle('active', isActive);
+      });
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    if (scrollTopBtn) {
+      scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  }
+
+  function initRevealAnimations() {
+    const reveals = document.querySelectorAll('.reveal');
+    if (!reveals.length) return;
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.18 }
+      );
+
+      reveals.forEach((item) => observer.observe(item));
+      return;
+    }
+
+    reveals.forEach((item) => item.classList.add('visible'));
+  }
+
+  function initPasswordToggles() {
+    const toggles = document.querySelectorAll('.pw-toggle[data-target]');
+    if (!toggles.length) return;
+
+    toggles.forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        const input = targetId ? document.getElementById(targetId) : null;
+        if (!input) return;
+
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+
+        const icon = button.querySelector('i');
+        icon?.classList.toggle('fa-eye', !isHidden);
+        icon?.classList.toggle('fa-eye-slash', isHidden);
+
+        button.setAttribute('aria-label', isHidden ? 'Parolni yashirish' : 'Parolni ko‘rsatish');
+      });
+    });
+  }
+
   function moveGlobalModals() {
     const modalRoot = document.getElementById('global-modal-root');
     if (!modalRoot) return;
@@ -775,9 +868,7 @@
       scrollBar.style.width = scrolled + '%';
     }, { passive: true });
 
-    // 2. Mouse Glow (olib tashlandi)
-
-    // 3. CounterUp Animation
+    // 2. CounterUp Animation
     const numElements = document.querySelectorAll('[data-count]');
     if (numElements.length > 0) {
       const observer = new IntersectionObserver((entries) => {
@@ -797,7 +888,6 @@
               const step = (timestamp) => {
                 if (!startTime) startTime = timestamp;
                 const progress = Math.min((timestamp - startTime) / duration, 1);
-                // easeOutExpo function for smooth slowing down at end
                 const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                 const current = Math.floor(easeProgress * end);
                 entry.target.innerText = current.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + suffix;
@@ -817,7 +907,7 @@
       numElements.forEach(el => observer.observe(el));
     }
 
-    // 4. Advanced 3D Tilt Effect on cards
+    // 3. Advanced 3D Tilt Effect on cards
     if (!window.matchMedia("(hover: none)").matches) {
       const tiltElements = document.querySelectorAll('.about-card, .news-card, .course-card');
       tiltElements.forEach(el => {
@@ -825,13 +915,10 @@
           const rect = el.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const y = e.clientY - rect.top;
-          
           const centerX = rect.width / 2;
           const centerY = rect.height / 2;
-          
           const rotateX = ((y - centerY) / centerY) * -4;
           const rotateY = ((x - centerX) / centerX) * 4;
-          
           el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
           el.style.transition = 'none';
         });
@@ -842,7 +929,7 @@
       });
     }
 
-    // 5. Stagger items helper
+    // 4. Stagger items helper
     const containers = document.querySelectorAll('.news-container, .courses-grid, .about-grid');
     containers.forEach(container => {
       Array.from(container.children).forEach((child, idx) => {
@@ -862,7 +949,313 @@
     });
   }
 
+  // ============================
+  // 🌙☀️ THEME BURST ANIMATION
+  // ============================
+  function initThemeBurstEffect() {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'theme-burst-canvas';
+    Object.assign(canvas.style, {
+      position: 'fixed', top: '0', left: '0',
+      width: '100%', height: '100%',
+      pointerEvents: 'none', zIndex: '9998',
+      opacity: '0', transition: 'opacity 0.15s ease',
+    });
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+
+    function burstEffect(originX, originY, goingDark) {
+      canvas.style.opacity = '1';
+      const particleColors = goingDark
+        ? ['#7fc8ff', '#a0c4ff', '#dde8ff', '#ffffff', '#c8d8ff']
+        : ['#ffd700', '#ffb700', '#fff7a0', '#ffffff', '#ffa500'];
+
+      const particles = [];
+      const starDots = [];
+      let frame = 0;
+      const totalFrames = 80;
+
+      // Particles burst from origin
+      for (let i = 0; i < 55; i++) {
+        const angle = (Math.PI * 2 * i) / 55 + (Math.random() - 0.5) * 0.4;
+        const speed = 2 + Math.random() * 9;
+        particles.push({
+          x: originX, y: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 1.5 + Math.random() * 3.5,
+          color: particleColors[Math.floor(Math.random() * particleColors.length)],
+          life: 1,
+          decay: 0.015 + Math.random() * 0.015,
+        });
+      }
+
+      // Star dots for dark mode
+      if (goingDark) {
+        for (let i = 0; i < 35; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 60 + Math.random() * Math.max(canvas.width, canvas.height) * 0.7;
+          starDots.push({
+            x: originX + Math.cos(angle) * dist,
+            y: originY + Math.sin(angle) * dist,
+            size: 0.5 + Math.random() * 1.8,
+            delay: Math.floor(Math.random() * 30),
+          });
+        }
+      }
+
+      // Sun rays for light mode
+      const rays = [];
+      if (!goingDark) {
+        for (let i = 0; i < 14; i++) {
+          rays.push({
+            angle: (Math.PI * 2 * i) / 14,
+            len: 0,
+            maxLen: 80 + Math.random() * 120,
+          });
+        }
+      }
+
+      function drawFrame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const t = frame / totalFrames;
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        // --- Radial spread backdrop ---
+        const radius = eased * Math.hypot(canvas.width, canvas.height) * 1.2;
+        const grad = ctx.createRadialGradient(originX, originY, 0, originX, originY, radius);
+        if (goingDark) {
+          grad.addColorStop(0, `rgba(5, 15, 45, ${0.55 * (1 - t)})`);
+          grad.addColorStop(0.5, `rgba(10, 25, 70, ${0.3 * (1 - t)})`);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+        } else {
+          grad.addColorStop(0, `rgba(255, 240, 120, ${0.65 * (1 - t)})`);
+          grad.addColorStop(0.45, `rgba(255, 180, 40, ${0.28 * (1 - t)})`);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // --- Celestial body ---
+        const bodyAlpha = Math.max(0, 1 - t * 2.2);
+        const bodyR = 18 + t * 14;
+        ctx.save();
+        ctx.globalAlpha = bodyAlpha;
+
+        if (goingDark) {
+          // Moon glow halo
+          const halo = ctx.createRadialGradient(originX, originY, 0, originX, originY, bodyR * 3);
+          halo.addColorStop(0, 'rgba(200,225,255,0.9)');
+          halo.addColorStop(0.5, 'rgba(100,170,255,0.35)');
+          halo.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(originX, originY, bodyR * 3, 0, Math.PI * 2); ctx.fill();
+
+          // Moon disc
+          ctx.fillStyle = '#d0e8ff';
+          ctx.beginPath(); ctx.arc(originX, originY, bodyR, 0, Math.PI * 2); ctx.fill();
+
+          // Crescent shadow bite
+          const biteTheme = document.documentElement.getAttribute('data-theme') === 'dark'
+            ? '#0f1b2d' : '#e8f0fe';
+          ctx.fillStyle = biteTheme;
+          ctx.beginPath();
+          ctx.arc(originX + bodyR * 0.32, originY - bodyR * 0.08, bodyR * 0.78, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Stars spawning around moon
+          if (frame > 15) {
+            starDots.forEach(s => {
+              if (frame < s.delay) return;
+              const starT = Math.min(1, (frame - s.delay) / 25);
+              ctx.globalAlpha = bodyAlpha * starT;
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+            });
+          }
+        } else {
+          // Sun outer corona
+          const corona = ctx.createRadialGradient(originX, originY, bodyR * 0.5, originX, originY, bodyR * 3.5);
+          corona.addColorStop(0, 'rgba(255,255,220,0.95)');
+          corona.addColorStop(0.35, 'rgba(255,210,60,0.5)');
+          corona.addColorStop(0.7, 'rgba(255,150,0,0.18)');
+          corona.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = corona;
+          ctx.beginPath(); ctx.arc(originX, originY, bodyR * 3.5, 0, Math.PI * 2); ctx.fill();
+
+          // Sun disc
+          ctx.fillStyle = '#fffbe0';
+          ctx.beginPath(); ctx.arc(originX, originY, bodyR, 0, Math.PI * 2); ctx.fill();
+
+          // Rays
+          rays.forEach(ray => {
+            ray.len = Math.min(ray.maxLen, ray.len + 10);
+            const rAlpha = 0.55 * bodyAlpha;
+            ctx.strokeStyle = `rgba(255,220,80,${rAlpha})`;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(
+              originX + Math.cos(ray.angle) * (bodyR + 4),
+              originY + Math.sin(ray.angle) * (bodyR + 4)
+            );
+            ctx.lineTo(
+              originX + Math.cos(ray.angle) * (bodyR + 4 + ray.len),
+              originY + Math.sin(ray.angle) * (bodyR + 4 + ray.len)
+            );
+            ctx.stroke();
+          });
+        }
+        ctx.restore();
+
+        // --- Particles ---
+        particles.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          p.vx *= 0.94; p.vy *= 0.94;
+          p.vy += 0.08; // soft gravity
+          p.life -= p.decay;
+          if (p.life <= 0) return;
+          ctx.globalAlpha = p.life * bodyAlpha * 1.4;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        });
+
+        frame++;
+        if (frame < totalFrames) {
+          requestAnimationFrame(drawFrame);
+        } else {
+          canvas.style.opacity = '0';
+          setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 200);
+        }
+      }
+
+      requestAnimationFrame(drawFrame);
+    }
+
+    // Intercept theme toggle clicks BEFORE the theme changes
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.js-theme-toggle');
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const nextDark = document.documentElement.getAttribute('data-theme') !== 'dark';
+      // slight delay so the theme has applied first
+      setTimeout(() => burstEffect(cx, cy, nextDark), 60);
+    }, true);
+  }
+
+  // ============================
+  // 🔤 LOCALE TEXT ANIMATION
+  // ============================
+  function initLocaleTextAnimation() {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let transitionData = null;
+    try {
+      const raw = sessionStorage.getItem('site-locale-transition');
+      transitionData = raw ? JSON.parse(raw) : null;
+    } catch (_) {}
+
+    if (!transitionData) return;
+    sessionStorage.removeItem('site-locale-transition');
+
+    const elapsed = Date.now() - (transitionData.at || 0);
+    if (elapsed > 4000) return;
+
+    // Inject keyframe CSS once
+    if (!document.getElementById('locale-char-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'locale-char-keyframes';
+      style.textContent = `
+        @keyframes charFlyIn {
+          0%   { opacity:0; transform: translateY(-36px) rotate(var(--cr,0deg)) scale(0.4); filter:blur(5px); }
+          55%  { opacity:1; filter:blur(0); }
+          80%  { transform: translateY(3px) rotate(calc(var(--cr,0deg)*0.1)) scale(1.06); }
+          100% { opacity:1; transform: translateY(0) rotate(0deg) scale(1); filter:blur(0); }
+        }
+        .locale-char {
+          display: inline-block;
+          animation: charFlyIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+          will-change: transform, opacity;
+        }
+        .locale-char-space { display: inline-block; width: 0.28em; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function splitAnimate(el, baseDelay) {
+      // Only simple text nodes, skip complex HTML elements
+      const fullText = Array.from(el.childNodes)
+        .filter(n => n.nodeType === Node.TEXT_NODE)
+        .map(n => n.textContent)
+        .join('');
+      if (!fullText.trim() || fullText.length > 120) return;
+
+      // Keep existing HTML structure but wrap text nodes
+      Array.from(el.childNodes).forEach(node => {
+        if (node.nodeType !== Node.TEXT_NODE) return;
+        const text = node.textContent;
+        if (!text.trim()) return;
+
+        const frag = document.createDocumentFragment();
+        Array.from(text).forEach((ch, i) => {
+          if (ch === ' ') {
+            const sp = document.createElement('span');
+            sp.className = 'locale-char-space';
+            sp.textContent = '\u00a0';
+            frag.appendChild(sp);
+          } else {
+            const span = document.createElement('span');
+            span.className = 'locale-char';
+            span.textContent = ch;
+            const rot = (Math.random() - 0.5) * 28;
+            const delay = baseDelay + i * 0.038;
+            span.style.cssText = `--cr:${rot.toFixed(1)}deg; animation-delay:${delay.toFixed(3)}s;`;
+            frag.appendChild(span);
+          }
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+
+    if (prefersReduced) return; // respect preference - don't animate
+
+    // Target: headings and nav links
+    const targets = [
+      ...document.querySelectorAll('h1, h2, h3'),
+      ...document.querySelectorAll('.nav-link'),
+      ...document.querySelectorAll('.hero-title, .section-head h2'),
+    ];
+
+    const seen = new WeakSet();
+    targets.forEach((el, i) => {
+      if (seen.has(el)) return;
+      seen.add(el);
+      if (el.closest('[data-no-anim]')) return;
+      // stagger by element index, not per-char
+      const delay = i * 0.06;
+      splitAnimate(el, delay);
+    });
+  }
+
   moveGlobalModals();
+  initShellUi();
+  initRevealAnimations();
+  initPasswordToggles();
   initMobileMenu();
   initHeaderClearance();
   initLocaleSwitcher();
@@ -873,4 +1266,6 @@
   initHeaderDropdowns();
   initInteractiveActions();
   initProMaxAnimations();
+  initThemeBurstEffect();
+  initLocaleTextAnimation();
 })();
