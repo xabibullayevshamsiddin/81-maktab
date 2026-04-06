@@ -3,7 +3,7 @@ services:
     name: 81-maktab
     env: php
     buildCommand: composer install --no-dev --optimize-autoloader
-    preDeployCommand: php artisan migrate --force
+    preDeployCommand: php artisan optimize:clear && php artisan migrate --force && php artisan route:cache && php artisan view:cache
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_ENV
