@@ -41,7 +41,7 @@
   height: 120px !important;
   border-radius: 36px !important;
   flex: 0 0 120px !important;
-  background: linear-gradient(135deg, var(--accent), var(--primary-2)) !important;
+  background: linear-gradient(135deg, var(--accent), var(--primary-2));
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -49,6 +49,16 @@
   font-weight: 900 !important;
   box-shadow: 0 20px 40px rgba(20, 184, 166, 0.3) !important;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  color: white !important;
+  overflow: hidden !important;
+}
+
+.profile-avatar.profile-avatar--image {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  color: transparent !important;
+  background-color: transparent !important;
 }
 
 .profile-avatar:hover {

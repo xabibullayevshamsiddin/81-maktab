@@ -228,7 +228,7 @@
                 <div class="profile-field">
                   <label for="profile-phone">{{ __('profile.main_card.phone_label') }}</label>
                   <span class="profile-field-hint">{{ __('profile.main_card.phone_hint') }}</span>
-                  <input type="text" id="profile-phone" name="phone" value="{{ old('phone', $user->phone) }}"
+                  <input style="margin-top:25px;" type="text" id="profile-phone" name="phone" value="{{ old('phone', $user->phone) }}"
                     maxlength="40" placeholder="+998..." autocomplete="tel" />
                   @error('phone')
                     <p class="form-message profile-form-error">{{ $message }}</p>

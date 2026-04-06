@@ -4891,6 +4891,30 @@ body {
   background: #0b1524;
   color: var(--text);
   border-color: var(--border);
+  caret-color: var(--text);
+}
+
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder,
+:root[data-theme='dark'] .comment-input::placeholder {
+  color: rgba(156, 177, 203, 0.72);
+}
+
+:root[data-theme='dark'] input:-webkit-autofill,
+:root[data-theme='dark'] input:-webkit-autofill:hover,
+:root[data-theme='dark'] input:-webkit-autofill:focus,
+:root[data-theme='dark'] textarea:-webkit-autofill,
+:root[data-theme='dark'] textarea:-webkit-autofill:hover,
+:root[data-theme='dark'] textarea:-webkit-autofill:focus,
+:root[data-theme='dark'] select:-webkit-autofill,
+:root[data-theme='dark'] select:-webkit-autofill:hover,
+:root[data-theme='dark'] select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text) !important;
+  caret-color: var(--text);
+  border-color: var(--border) !important;
+  -webkit-box-shadow: 0 0 0 1000px #0b1524 inset !important;
+  box-shadow: 0 0 0 1000px #0b1524 inset !important;
+  transition: background-color 9999s ease-out 0s;
 }
 
 :root[data-theme='dark'] .profile-activity-link,
@@ -7578,4 +7602,46 @@ details.calendar-day-dtls[open] .calendar-day-chevron {
   .footer-bottom {
     padding-inline: 16px;
   }
+}
+
+/* ===== Dark Input Autofill Final Override ===== */
+:root[data-theme='dark'] .signin-form input,
+:root[data-theme='dark'] .register-form input,
+:root[data-theme='dark'] .register-form select,
+:root[data-theme='dark'] .comment-input,
+:root[data-theme='dark'] .comment-form input,
+:root[data-theme='dark'] .comment-form textarea,
+:root[data-theme='dark'] .contact-form input,
+:root[data-theme='dark'] .contact-form textarea,
+:root[data-theme='dark'] .course-create-form .comment-input,
+:root[data-theme='dark'] .course-create-form select.form-control,
+:root[data-theme='dark'] .exam-filter-input,
+:root[data-theme='dark'] .exam-filter-select,
+:root[data-theme='dark'] .pw-wrap input {
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'] .signin-form input:-webkit-autofill,
+:root[data-theme='dark'] .signin-form input:-webkit-autofill:hover,
+:root[data-theme='dark'] .signin-form input:-webkit-autofill:focus,
+:root[data-theme='dark'] .register-form input:-webkit-autofill,
+:root[data-theme='dark'] .register-form input:-webkit-autofill:hover,
+:root[data-theme='dark'] .register-form input:-webkit-autofill:focus,
+:root[data-theme='dark'] .comment-input:-webkit-autofill,
+:root[data-theme='dark'] .comment-input:-webkit-autofill:hover,
+:root[data-theme='dark'] .comment-input:-webkit-autofill:focus,
+:root[data-theme='dark'] .pw-wrap input:-webkit-autofill,
+:root[data-theme='dark'] .pw-wrap input:-webkit-autofill:hover,
+:root[data-theme='dark'] .pw-wrap input:-webkit-autofill:focus,
+:root[data-theme='dark'] .contact-form input:-webkit-autofill,
+:root[data-theme='dark'] .contact-form input:-webkit-autofill:hover,
+:root[data-theme='dark'] .contact-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text) !important;
+  caret-color: var(--text) !important;
+  background-color: #0b1524 !important;
+  -webkit-box-shadow: 0 0 0 1000px #0b1524 inset !important;
+  box-shadow: 0 0 0 1000px #0b1524 inset !important;
+  -webkit-background-clip: padding-box !important;
+  border-color: var(--border) !important;
+  transition: background-color 999999s ease-out 0s, color 999999s ease-out 0s;
 }
