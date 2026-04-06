@@ -18,4 +18,4 @@ RUN cp .env.example .env && php artisan key:generate
 
 EXPOSE 8080
 
-CMD php artisan serve --host=0.0.0.0 --port=8080
+CMD php artisan serve --host=0.0.0.0 --port=$(echo $PORT)
