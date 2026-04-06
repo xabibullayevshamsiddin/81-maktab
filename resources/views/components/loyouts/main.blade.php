@@ -181,7 +181,7 @@
             </div>
           </nav>
 
-          <div class="login {{ auth()->guest() ? 'login--guest' : '' }}">
+          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
             <div class="locale-switcher" aria-label="Language switcher">
               @foreach($supportedLocales as $localeKey => $localeLabel)
                 <a

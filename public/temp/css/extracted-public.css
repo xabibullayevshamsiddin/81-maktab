@@ -74,6 +74,10 @@
   margin-left: auto;
 }
 
+.desktop-header-tools {
+  display: flex;
+}
+
 .login .btn {
   padding-inline: 14px;
 }
@@ -551,6 +555,10 @@
   }
 
   .login {
+    display: none !important;
+  }
+
+  .desktop-header-tools {
     display: none !important;
   }
 
