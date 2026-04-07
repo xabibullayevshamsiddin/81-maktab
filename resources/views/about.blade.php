@@ -13,7 +13,7 @@
     <div class="container">
       <div class="news-hero-content reveal">
         <span class="badge">{{ __('public.about.badge') }}</span>
-        <h1>{!! __('public.about.hero_title') !!}</h1>
+        <h1 class="js-split-text">{!! __('public.about.hero_title') !!}</h1>
         <p>{{ __('public.about.hero_text') }}</p>
         <a href="#overview" class="btn">
           {{ __('public.about.jump') }}
@@ -26,7 +26,7 @@
   <main>
     <section class="container about-overview" id="overview">
       <div class="section-head">
-        <h2>{{ __('public.about.overview_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.about.overview_title') }}</h2>
         <p>{{ __('public.about.overview_text') }}</p>
       </div>
 
@@ -72,7 +72,7 @@
 
     <section class="container milestone-section">
       <div class="section-head">
-        <h2>{{ __('public.about.official_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.about.official_title') }}</h2>
         <p>{{ __('public.about.official_text') }}</p>
       </div>
 
@@ -119,7 +119,7 @@
 
     <section class="container milestone-section" style="padding-top: 0">
       <div class="section-head">
-        <h2>{{ __('public.about.facilities_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.about.facilities_title') }}</h2>
         <p>{{ __('public.about.facilities_text') }}</p>
       </div>
 
@@ -140,7 +140,7 @@
     <section class="container about-cta reveal">
       <div class="glass-section about-cta-box">
         <div>
-          <h2>{{ __('public.about.cta_title') }}</h2>
+          <h2 class="js-split-text">{{ __('public.about.cta_title') }}</h2>
           <p>{{ __('public.about.cta_text') }}</p>
         </div>
         <a href="{{ route('contact') }}" class="btn">

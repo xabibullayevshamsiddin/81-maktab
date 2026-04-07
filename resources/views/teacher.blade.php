@@ -3,7 +3,7 @@
     <div class="container">
       <div class="news-hero-content reveal">
           <span class="badge">{{ __('public.teachers.badge') }}</span>
-          <h1>{{ __('public.teachers.hero_title') }}</h1>
+          <h1 class="js-split-text">{{ __('public.teachers.hero_title') }}</h1>
           <p>{{ __('public.teachers.hero_text') }}</p>
           <a href="#teachers-list" class="btn"
             >{{ __('public.teachers.hero_button') }}
@@ -16,7 +16,7 @@
     <main>
       <section class="container teachers-section" id="teachers-list">
         <div class="section-head">
-          <h2>{{ __('public.teachers.list_title') }}</h2>
+          <h2 class="js-split-text">{{ __('public.teachers.list_title') }}</h2>
           <p>{{ __('public.teachers.list_text') }}</p>
         </div>
 
@@ -155,7 +155,7 @@
       <section class="container teachers-cta-section reveal">
         <div class="glass-section teachers-cta">
           <div>
-            <h2>{{ __('public.teachers.cta_title') }}</h2>
+            <h2 class="js-split-text">{{ __('public.teachers.cta_title') }}</h2>
             <p>{{ __('public.teachers.cta_text') }}</p>
           </div>
           <a href="{{ route('contact') }}" class="btn"

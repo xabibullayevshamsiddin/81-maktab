@@ -3,7 +3,7 @@
     <div class="container">
       <div class="news-hero-content">
         <span class="badge">{{ __('public.courses.badge') }}</span>
-        <h1>{{ __('public.courses.hero_title') }}</h1>
+        <h1 class="js-split-text">{{ __('public.courses.hero_title') }}</h1>
         <p>{{ __('public.courses.hero_text') }}</p>
       </div>
     </div>
@@ -12,7 +12,7 @@
   <main>
     <section class="container courses-filter-section" id="courses-list">
       <div class="section-head">
-        <h2>{{ __('public.courses.section_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.courses.section_title') }}</h2>
         <p>{{ __('public.courses.section_text') }}</p>
       </div>
 

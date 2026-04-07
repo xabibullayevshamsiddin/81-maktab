@@ -11,11 +11,11 @@
     <div class="container">
       <div class="card-home">
         <div class="home-content">
-          <h1 class="hero-title">
-            <span>{{ __('public.home.hero_top') }}</span>
-            <strong>{{ __('public.home.hero_main') }}</strong>
+          <h1 class="hero-title" id="animated-hero">
+            <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
+            <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
           </h1>
-          <p>{{ __('public.home.hero_text') }}</p>
+          <p class="hero-text-fade">{{ __('public.home.hero_text') }}</p>
         </div>
         <div class="home-btn">
           <a
@@ -54,7 +54,7 @@
   <main>
     <section class="container reveal glass-section home-about-section" id="about">
       <div class="section-head">
-        <h2>{{ __('public.home.welcome_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.home.welcome_title') }}</h2>
         <p>{{ __('public.home.welcome_text') }}</p>
       </div>
       <div class="about-modern">
@@ -79,7 +79,7 @@
     <section class="container news reveal glass-section home-news-section" id="news">
       <div class="section-head home-news-head">
         <div>
-          <h2>{{ __('public.home.news_title') }}</h2>
+          <h2 class="js-split-text">{{ __('public.home.news_title') }}</h2>
           <p>{{ __('public.home.news_text') }}</p>
         </div>
         <a href="{{ route('post') }}" class="btn btn-sm">{{ __('public.home.news_all') }}</a>
@@ -161,7 +161,7 @@
     <section class="teachers reveal" id="teachers">
       <div class="container teacher">
         <div class="teacher-content">
-          <h2>{{ __('public.home.teachers_title') }}</h2>
+          <h2 class="js-split-text">{{ __('public.home.teachers_title') }}</h2>
           <p>{{ __('public.home.teachers_text') }}</p>
           <a href="{{ route('teacher') }}" class="btn">{{ __('public.home.teachers_action') }}</a>
         </div>
@@ -185,7 +185,7 @@
             <p class="profile-muted home-featured-teacher-meta">
               {{ $featuredTeacherSubject }}
               @if($featuredTeacher->experience_years)
-                В· {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
+                Р’В· {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
               @endif
             </p>
             <div class="teacher-img-actions">
@@ -230,4 +230,6 @@
       </div>
     </section>
   </main>
+
 </x-loyouts.main>
+

@@ -22,6 +22,7 @@
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
+    <link rel="icon" type="image/jpeg" href="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" />
     @stack('page_styles')
   </head>
 
@@ -326,6 +327,101 @@
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
+    <script>
+      (function() {
+        /**
+         * Universal Premium Letter Animation Engine v2.0 (Pro Max)
+         * Supports nested HTML tags and high-performance scroll triggers.
+         */
+        const splitTextProcessor = {
+          getRandomOffset() {
+            const range = 100;
+            const offsets = [
+              { x: 0, y: -range }, { x: 0, y: range },
+              { x: -range, y: 0 }, { x: range, y: 0 }
+            ];
+            return offsets[Math.floor(Math.random() * offsets.length)];
+          },
+
+          processNode(node, state) {
+            if (node.nodeType === 3) { // Text node
+              const text = node.textContent;
+              const fragment = document.createDocumentFragment();
+              const words = text.split(/(\s+)/);
+
+              words.forEach((word) => {
+                if (word.trim() === '') {
+                  fragment.appendChild(document.createTextNode(word));
+                  return;
+                }
+
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'anim-word';
+                wordSpan.style.display = 'inline-block';
+                wordSpan.style.whiteSpace = 'nowrap';
+                wordSpan.style.verticalAlign = 'top';
+
+                [...word].forEach((char) => {
+                  const letter = document.createElement('span');
+                  letter.textContent = char;
+                  letter.className = 'letter';
+                  
+                  const offset = this.getRandomOffset();
+                  letter.style.transform = `translate(${offset.x}px, ${offset.y}px)`;
+                  
+                  wordSpan.appendChild(letter);
+                  
+                  setTimeout(() => {
+                    letter.classList.add('active');
+                  }, 100 + state.delay);
+                  
+                  state.delay += 30;
+                });
+
+                fragment.appendChild(wordSpan);
+              });
+
+              node.parentNode.replaceChild(fragment, node);
+            } else if (node.nodeType === 1) { // Element node
+              const children = Array.from(node.childNodes);
+              children.forEach(child => this.processNode(child, state));
+            }
+          },
+
+          animate(target) {
+            if (target.dataset.animated === 'true') return;
+            target.dataset.animated = 'true';
+            
+            const state = { delay: 0 };
+            const children = Array.from(target.childNodes);
+            children.forEach(child => this.processNode(child, state));
+          }
+        };
+
+        const initGlobalAnimations = () => {
+          const splitTargets = document.querySelectorAll('.js-split-text');
+          if (!splitTargets.length) return;
+
+          const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+          };
+
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                splitTextProcessor.animate(entry.target);
+                observer.unobserve(entry.target);
+              }
+            });
+          }, observerOptions);
+
+          splitTargets.forEach(target => observer.observe(target));
+        };
+
+        window.addEventListener('load', initGlobalAnimations);
+      })();
+    </script>
     @stack('page_scripts')
   </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	    <link rel="icon" href="{{ app_public_asset('panel-assets/images/favicon.png') }}" type="image/png" />
+    <link rel="icon" href="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" type="image/jpeg" />
     <title>@yield('title', 'Admin Panel')</title>
 
     <!-- ========== All CSS files linkup ========= -->
@@ -31,7 +31,7 @@
     <aside class="sidebar-nav-wrapper">
       <div class="navbar-logo">
         <a href="{{ route('dashboard') }}">
-          <img src="{{ app_public_asset('panel-assets/images/logo/logo.svg') }}" alt="logo" />
+          <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;" />
         </a>
       </div>
       <nav class="sidebar-nav">
