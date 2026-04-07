@@ -185,11 +185,32 @@
           .catch(function () {});
       }
 
+      function playViolationSound() {
+        try {
+          // Short professional alert beep (Base64 WAV)
+          var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          var osc = audioContext.createOscillator();
+          var gain = audioContext.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, audioContext.currentTime); // High pitched beep
+          gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
+          osc.start();
+          osc.stop(audioContext.currentTime + 0.5);
+        } catch (e) {
+          // Fallback if AudioContext is blocked or not supported
+          console.warn("Audio feedback failed:", e);
+        }
+      }
+
       function warnAndReport(e) {
         if (e) {
           e.preventDefault();
           e.stopPropagation();
         }
+        playViolationSound();
         showRuleModal();
         reportRuleViolation();
       }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Teacher;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +17,10 @@ class TeacherCourseController extends Controller
     {
         $user = $this->authorizeCreator();
         $isAdmin = $user->isAdmin();
+
+        if ($redirect = $this->teacherCourseBlockResponse($user)) {
+            return $redirect;
+        }
 
         $teachers = collect();
         $selectedTeacher = null;
@@ -43,6 +48,10 @@ class TeacherCourseController extends Controller
     public function store(Request $request)
     {
         $user = $this->authorizeCreator();
+
+        if ($redirect = $this->teacherCourseBlockResponse($user)) {
+            return $redirect;
+        }
 
         $isAdmin = $user->isAdmin();
         $validated = $request->validate([
@@ -99,6 +108,7 @@ class TeacherCourseController extends Controller
             }
 
             Course::create($payload);
+            $this->consumeTeacherCourseApproval($user);
             forget_public_course_caches();
 
             return redirect()
@@ -131,12 +141,64 @@ class TeacherCourseController extends Controller
         }
 
         $course = Course::create($payload);
+        $this->consumeTeacherCourseApproval($user);
 
         $this->sendPublishCode($user->email, $course, $code);
 
         return redirect()
             ->route('teacher.courses.verify.form', $course)
             ->with('success', "Tasdiqlash kodi emailingizga yuborildi.")
+            ->with('toast_type', 'success');
+    }
+
+    public function requestAccess()
+    {
+        abort_unless(auth()->check(), 403);
+
+        $user = auth()->user();
+        abort_unless($user->isTeacher(), 403);
+
+        if (! $user->hasLinkedActiveTeacherProfile()) {
+            return redirect()
+                ->route('profile.show')
+                ->with(
+                    'error',
+                    "Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak, keyin kurs uchun ruxsat so'raysiz."
+                )
+                ->with('toast_type', 'error');
+        }
+
+        if ($user->hasReachedCourseOpenLimit()) {
+            return redirect()
+                ->route('profile.show')
+                ->with('error', "Bitta teacher akkaunti faqat bitta kurs ocha oladi.")
+                ->with('toast_type', 'warning');
+        }
+
+        if ($user->hasCourseOpenApproval()) {
+            return redirect()
+                ->route('teacher.courses.create')
+                ->with('success', "Admin sizga ruxsat bergan, endi kursni ochishingiz mumkin.")
+                ->with('toast_type', 'success');
+        }
+
+        if ($user->hasPendingCourseOpenRequest()) {
+            return redirect()
+                ->route('profile.show')
+                ->with('error', "Kurs ochish so'rovingiz allaqachon yuborilgan. Admin javobini kuting.")
+                ->with('toast_type', 'warning');
+        }
+
+        $user->update([
+            'course_open_request_pending' => true,
+            'course_open_requested_at' => now(),
+            'course_open_approved' => false,
+            'course_open_approved_at' => null,
+        ]);
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', "Kurs ochish uchun ruxsat so'rovi adminga yuborildi.")
             ->with('toast_type', 'success');
     }
 
@@ -337,5 +399,24 @@ class TeacherCourseController extends Controller
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->first();
+    }
+
+    private function teacherCourseBlockResponse(User $user): ?RedirectResponse
+    {
+        if ($user->isAdmin()) {
+            return null;
+        }
+
+        if (! $user->hasLinkedActiveTeacherProfile()) {
+            return redirect()
+                ->route('profile.show')
+                ->with(
+                    'error',
+                    "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin > Ustozlar > Tahrirlash > Foydalanuvchi tanlash)."
+                )
+                ->with('toast_type', 'error');
+        }
+
+        return null;
     }
 }

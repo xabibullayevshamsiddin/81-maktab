@@ -97,7 +97,14 @@ class AdminController extends Controller
             $selectedRoleId = 0;
         }
 
-        $query = User::with('roleRelation')->latest();
+        $query = User::with('roleRelation')
+            ->withCount('createdCourses')
+            ->withCount([
+                'teacherProfile as active_teacher_profile_count' => function ($builder): void {
+                    $builder->where('is_active', true);
+                },
+            ])
+            ->latest();
 
         if ($q !== '') {
             $query->where(function ($w) use ($q): void {

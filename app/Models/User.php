@@ -306,15 +306,25 @@ class User extends Authenticatable
 
     public function hasLinkedActiveTeacherProfile(): bool
     {
+        if (array_key_exists('active_teacher_profile_count', $this->attributes)) {
+            return (int) $this->attributes['active_teacher_profile_count'] > 0;
+        }
+
         return $this->teacherProfile()
             ->where('is_active', true)
             ->exists();
     }
 
-    public function canOpenCourse(): bool
+    public function hasCreatedCourse(): bool
     {
-        return $this->isAdmin() || ($this->isTeacher() && $this->hasLinkedActiveTeacherProfile());
+        if (array_key_exists('created_courses_count', $this->attributes)) {
+            return (int) $this->attributes['created_courses_count'] > 0;
+        }
+
+        return $this->createdCourses()->exists();
     }
+
+
 
     public function canManageExams(): bool
     {

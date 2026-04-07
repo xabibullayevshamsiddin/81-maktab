@@ -24,9 +24,11 @@
   $likedTeacherCount = $teacherLikes->count();
   $courseEnrollmentCount = $courseEnrollments->count();
   $createdCourseCount = $createdCourses->count();
-  $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
+	  $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
+	  $canViewCourseEnrollments = $user->isAdmin() || ($user->isTeacher() && $user->hasLinkedActiveTeacherProfile());
 
-  $profileStats = [
+
+	  $profileStats = [
     [
       'icon' => 'fa-regular fa-comments',
       'value' => $postCommentCount + $teacherCommentCount,
@@ -348,17 +350,26 @@
                 <p class="profile-empty">{{ __('profile.blocks.teacher_requests.empty') }}</p>
               @endif
 
-              <div class="profile-actions-row">
-                <a href="{{ route('teacher.enrollments.index') }}"
-                  class="btn btn-sm">{{ __('profile.blocks.teacher_requests.all') }}</a>
-                <a href="{{ route('teacher.courses.create') }}"
-                  class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
-                @if(auth()->user()->isAdmin())
-                  <a href="{{ route('admin.courses.index') }}"
-                    class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.admin_courses') }}</a>
-                @endif
-              </div>
-            </section>
+@php
+                    $canCreateCourse = $user->isAdmin() || ($user->isTeacher() && $user->hasLinkedActiveTeacherProfile());
+                    $needsLink = $user->isTeacher() && ! $user->hasLinkedActiveTeacherProfile();
+                  @endphp
+                  <div class="profile-actions-row">
+                    <a href="{{ route('teacher.enrollments.index') }}"
+                      class="btn btn-sm">{{ __('profile.blocks.teacher_requests.all') }}</a>
+                    @if($canCreateCourse)
+                      <a href="{{ route('teacher.courses.create') }}"
+                        class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
+                    @endif
+                    @if(auth()->user()->isAdmin())
+                      <a href="{{ route('admin.courses.index') }}"
+                        class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.admin_courses') }}</a>
+                    @endif
+                  </div>
+                  @if($needsLink)
+                    <p class="profile-empty" style="margin-top:12px;">Admin teacher akkauntingizni ustoz kartasiga bog'lashi kerak.</p>
+                  @endif
+	            </section>
           @endif
 
           <section class="profile-activity-block reveal">
@@ -536,6 +547,15 @@
                       };
                     @endphp
                     <span class="profile-course-status profile-course-status--{{ $course->status }}">{{ $stLabel }}</span>
+
+                    @if($course->status === \App\Models\Course::STATUS_DRAFT && $course->rejection_reason)
+                      <div class="profile-rejection-block mt-10">
+                        <span class="profile-tag profile-tag--rejected mb-5" style="display: inline-block;">{{ __('Rad etilgan') }}</span>
+                        <p class="profile-enroll-note" style="color: #b91c1c; border-left-color: #b91c1c;">
+                          <strong>{{ __('Sabab') }}:</strong> {{ $course->rejection_reason }}
+                        </p>
+                      </div>
+                    @endif
 
                     @if($course->teacher)
                       <div class="profile-inline-meta">

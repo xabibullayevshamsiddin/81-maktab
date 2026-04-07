@@ -36,8 +36,10 @@
       >
 		    @php
 		      $authUser = auth()->user();
-		      $canOpenCourse = $authUser && $authUser->canOpenCourse();
-		      $needsTeacherProfileLink = $authUser && $authUser->isTeacher() && ! $authUser->canOpenCourse();
+		      // Any admin or teacher with a linked profile can create a course now.
+		      // The course itself will need approval before publication.
+		      $canCreateCourse = $authUser && ($authUser->isAdmin() || ($authUser->isTeacher() && $authUser->hasLinkedActiveTeacherProfile()));
+		      $needsTeacherProfileLink = $authUser && $authUser->isTeacher() && ! $authUser->hasLinkedActiveTeacherProfile();
 		      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
 		      $currentLocale = current_locale();
 		      $supportedLocales = supported_locales();
@@ -80,7 +82,7 @@
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher*') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
               <li class="mobile-theme-toggle-wrap">
-                <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki oР В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ўР В РІР‚в„ўР вЂ™Р’Вchirish" title="Tungi rejim">
+                <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
                   <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
                   <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
                 </button>
@@ -102,14 +104,15 @@
                         <i class="fa-solid fa-user"></i>
                         {{ __('public.layout.menu.profile') }}
                       </a>
-	                      @if($canOpenCourse)
-	                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
-	                          <i class="fa-solid fa-book-open"></i>
-	                          {{ __('public.layout.menu.course_open') }}
-	                        </a>
-	                      @elseif($needsTeacherProfileLink)
-	                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
-	                          <i class="fa-solid fa-circle-info"></i>
+		                      @if($canCreateCourse)
+		                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
+		                          <i class="fa-solid fa-book-open"></i>
+		                          {{ __('public.layout.menu.course_open') }}
+		                        </a>
+
+		                      @elseif($needsTeacherProfileLink)
+		                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
+		                          <i class="fa-solid fa-circle-info"></i>
 	                          <span>
 	                            {{ __('public.layout.menu.course_open') }}
 	                            <small class="nav-dropdown-item-note">Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak.</small>
@@ -163,22 +166,25 @@
                   <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
                 </div>
 
-                <div class="mobile-nav-actions mobile-nav-actions--auth">
-                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
-                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
-                  @if($canOpenCourse)
-                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
-                  @endif
-                  @if($canAccessDashboard)
-                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
-                  @endif
-                  <form action="{{ route('logout') }}" method="POST" class="mobile-nav-form">
-                    @csrf
-                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
-                  </form>
-                </div>
-              @endguest
-            </div>
+	                <div class="mobile-nav-actions mobile-nav-actions--auth">
+	                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+	                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+	                  @if($canCreateCourse)
+	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
+	                  @endif
+	                  @if($canAccessDashboard)
+	                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
+	                  @endif
+	                  <form action="{{ route('logout') }}" method="POST" class="mobile-nav-form">
+	                    @csrf
+	                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
+	                  </form>
+	                </div>
+	                @if($needsTeacherProfileLink)
+	                  <p class="mobile-nav-note">Ustoz bo'lsangiz, avval admin teacher profilingizni bog'lashi kerak.</p>
+	                @endif
+	              @endguest
+	            </div>
           </nav>
 
           <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
@@ -194,7 +200,7 @@
                 </a>
               @endforeach
             </div>
-            <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki oР В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ўР В РІР‚в„ўР вЂ™Р’Вchirish" title="Tungi rejim">
+            <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
               <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
             </button>
@@ -237,23 +243,35 @@
 
     <footer class="footer">
       <div class="footer-container container">
-        <div class="footer-com">
-          <img
-            src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
-            alt="{{ __('public.layout.logo_alt') }}"
-            class="img2"
-          />
-          <h3>{{ __('public.layout.school_name') }}</h3>
-          <p>{{ __('public.layout.footer.description') }}</p>
+        <!-- Column 1: Branding -->
+        <div class="footer-column footer-brand">
+          <a href="{{ route('home') }}" class="footer-logo">
+            <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="{{ __('public.layout.logo_alt') }}" />
+            <span>{{ __('public.layout.school_name') }}</span>
+          </a>
+          <p class="footer-desc">{{ __('public.layout.footer.description') }}</p>
+          <div class="footer-socials">
+            <a href="#" class="social-link" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
+            <a href="#" class="social-link" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="social-link" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+          </div>
         </div>
 
-        <div class="footer-col">
-          <h4>{{ __('public.layout.footer.quick_links') }}</h4>
-          <ul>
+        <!-- Column 2: Explore -->
+        <div class="footer-column">
+          <h4 class="footer-title">{{ __('public.layout.footer.quick_links') }}</h4>
+          <ul class="footer-links">
             <li><a href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
             <li><a href="{{ route('about') }}">{{ __('public.layout.nav.about') }}</a></li>
             <li><a href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
             <li><a href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Resources -->
+        <div class="footer-column">
+          <h4 class="footer-title">Resurslar</h4>
+          <ul class="footer-links">
             <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
             <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
             @auth
@@ -265,36 +283,41 @@
           </ul>
         </div>
 
-        <div class="footer-cop">
-          <h4>{{ __('public.layout.footer.contact') }}</h4>
-          <a
-            href="https://maps.app.goo.gl/erCMfrDY42DCogHL6"
-            target="_blank"
-            rel="noopener"
-          >
-            <i class="fa-solid fa-location-dot"></i> {{ __('public.layout.footer.map_label') }}
-          </a>
-          <p>
-            <i class="fa-solid fa-phone"></i>
-            <a href="tel:+998711234567">+998 71 123 45 67</a>
-          </p>
-          <p>
-            <i class="fa-solid fa-envelope"></i>
-            <a
-              href="{{ gmail_compose_url('info@school81.uz', '81-IDUM murojaati') }}"
-              target="_blank"
-              rel="noopener"
-            >
-              info@school81.uz
+        <!-- Column 4: Contact -->
+        <div class="footer-column">
+          <h4 class="footer-title">{{ __('public.layout.footer.contact') }}</h4>
+          <ul class="footer-contact-list">
+            <li>
+              <i class="fa-solid fa-location-dot"></i>
+              <span>Yashnobod tumani, Toshkent, O'zbekiston</span>
+            </li>
+            <li>
+              <i class="fa-solid fa-phone"></i>
+              <a href="tel:+998711234567">+998 71 123 45 67</a>
+            </li>
+            <li>
+              <i class="fa-solid fa-envelope"></i>
+              <a href="mailto:info@school81.uz">info@school81.uz</a>
+            </li>
+          </ul>
+          <div class="footer-map-action">
+            <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer">
+              <i class="fa-solid fa-map-location-dot"></i> Xaritada ko'rish
             </a>
-          </p>
+          </div>
         </div>
       </div>
 
-	      <div class="footer-bottom">
-	        &copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}
-	      </div>
-	    </footer>
+      <div class="footer-bottom">
+        <div class="container footer-bottom-inner">
+          <p>&copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}</p>
+          <div class="footer-bottom-links">
+            <a href="#">Maxfiylik siyosati</a>
+            <a href="#">Foydalanish shartlari</a>
+          </div>
+        </div>
+      </div>
+    </footer>
 	    @endunless
 	    </div>
 

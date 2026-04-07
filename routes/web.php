@@ -153,6 +153,10 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function(){
     Route::post('user/{user}/password-reset', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
 });
 
+Route::middleware(['auth', 'role:teacher'])->group(function () {
+    Route::post('course-open/request', [TeacherCourseController::class, 'requestAccess'])->name('teacher.courses.request');
+});
+
 Route::middleware(['auth', 'role:teacher,super_admin,admin'])->group(function(){
     Route::get('course-open', [TeacherCourseController::class, 'create'])->name('teacher.courses.create');
     Route::post('course-open', [TeacherCourseController::class, 'store'])->name('teacher.courses.store');
@@ -210,6 +214,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 
     Route::middleware('role:super_admin,admin')->group(function () {
+        Route::get('course-requests', [AdminCourseController::class, 'requests'])->name('admin.courses.requests');
         Route::get('courses', [AdminCourseController::class, 'index'])->name('admin.courses.index');
         Route::put('courses/{course}/status', [AdminCourseController::class, 'updateStatus'])->name('admin.courses.status');
         Route::get('courses/{course}/edit', [TeacherCourseController::class, 'edit'])->name('admin.courses.edit');

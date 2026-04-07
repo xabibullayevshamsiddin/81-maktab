@@ -116,17 +116,30 @@
             @endif
 
             @if($sidebarUser->canManageSystem())
-              <li class="nav-item {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+              <li class="nav-item {{ request()->routeIs('admin.courses.index') ? 'active' : '' }}">
                 <a href="{{ route('admin.courses.index') }}">
                   <span class="icon"><i class="mdi mdi-book-open-page-variant-outline"></i></span>
                   <span class="text">Kurslar</span>
                 </a>
               </li>
 
-              <li class="nav-item {{ request()->routeIs('admin.course-enrollments.index') ? 'active' : '' }}">
-                <a href="{{ route('admin.course-enrollments.index') }}">
-                  <span class="icon"><i class="mdi mdi-clipboard-text-outline"></i></span>
-                  <span class="text">Kurs yozilishlari</span>
+              <li class="nav-item {{ request()->routeIs('admin.courses.requests') ? 'active' : '' }}">
+  <a href="{{ route('admin.courses.requests') }}">
+    <span class="icon"><i class="mdi mdi-book-open-outline"></i></span>
+    <span class="text">Kurs so'rovlari</span>
+    @php
+      $pendingCoursesCount = \App\Models\Course::where('status', \App\Models\Course::STATUS_PENDING_VERIFICATION)->count();
+    @endphp
+    @if($pendingCoursesCount > 0)
+      <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem;">{{ $pendingCoursesCount }}</span>
+    @endif
+  </a>
+</li>
+
+<li class="nav-item {{ request()->routeIs('admin.course-enrollments.index') ? 'active' : '' }}">
+  <a href="{{ route('admin.course-enrollments.index') }}">
+    <span class="icon"><i class="mdi mdi-clipboard-text-outline"></i></span>
+    <span class="text">Kurs yozilishlari</span>
                 </a>
               </li>
 

@@ -114,6 +114,9 @@
                 </thead>
                 <tbody>
                   @forelse ($users as $user)
+                    @php
+                      $isTeacherRole = $user->hasRole(\App\Models\User::ROLE_TEACHER);
+                    @endphp
                     <tr>
                       <td><p>{{ $user->id }}</p></td>
                       <td>
@@ -185,6 +188,7 @@
                           </span>
                         @endif
                       </td>
+
                       <td><p>{{ $user->created_at?->format('Y-m-d H:i') }}</p></td>
                       <td>
                         <div class="action">

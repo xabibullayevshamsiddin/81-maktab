@@ -29,6 +29,7 @@ class Course extends Model
         'image',
         'start_date',
         'status',
+        'rejection_reason',
         'publish_code',
         'publish_code_expires_at',
     ];

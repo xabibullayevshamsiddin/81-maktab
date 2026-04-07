@@ -8,7 +8,10 @@
     <div class="exam-public-card mb-30">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
         <h6 class="mb-10">Imtihonlar</h6>
-        <a href="{{ route('profile.exams.create') }}" class="btn">Yangi imtihon</a>
+        <div>
+          <a href="{{ route('profile.exams.results') }}" class="btn btn-outline mb-2 me-2">Umumiy Natijalar</a>
+          <a href="{{ route('profile.exams.create') }}" class="btn mb-2">Yangi imtihon</a>
+        </div>
       </div>
 
       @include('admin.partials.search-bar', [
@@ -48,6 +51,7 @@
                   <td title="{{ $exam->allowedGradesLabel() }}">{{ $exam->allowedGradesLabel() }}</td>
                   <td>{{ $exam->is_active ? 'Faol' : 'Tayyorlanmoqda' }}</td>
                   <td style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <a href="{{ route('profile.exams.results', ['exam_id' => $exam->id]) }}" class="btn btn-info btn-sm">Natijalar</a>
                     <a href="{{ route('profile.exams.questions.index', $exam) }}" class="btn btn-primary  btn-sm">Savollar</a>
                     <a href="{{ route('profile.exams.edit', $exam) }}" class="btn btn-warning btn-sm">Tahrirlash</a>
                     <form method="POST" action="{{ route('profile.exams.destroy', $exam) }}">

@@ -1,113 +1,145 @@
-<x-loyouts.main title="Imtihonlar">
+<x-loyouts.main title="Imtihon Natijalari">
 @push('page_styles')
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-exams.css') }}?v={{ filemtime(public_path('temp/css/profile-exams.css')) }}">
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ filemtime(public_path('temp/css/profile-results.css')) }}">
 @endpush
-<div class="container exam-public-container"><div class="row"><div class="col-12">
-<div class="row">
-  <div class="col-lg-12">
-    <div class="exam-public-card mb-30">
-      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;">
-        <div>
-          <h6 class="mb-10">Imtihon natijalari</h6>
-          <p class="text-sm" style="color:#64748b;margin:0;">Imtihonni tanlang — faqat shu imtihonni topshirganlar chiqadi.</p>
+
+<div class="container exam-public-container">
+    <div class="results-header">
+        <div class="results-breadcrumb">
+            <a href="{{ route('profile.exams.index') }}">{{ __('public.layout.menu.exams') }}</a>
+            <i class="fa-solid fa-chevron-right" style="font-size: 10px; opacity: 0.5; align-self: center;"></i>
+            <span>Natijalar</span>
         </div>
-        <form method="get" action="{{ route('profile.exams.results') }}" style="min-width:260px;flex:1;max-width:420px;">
-          <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Imtihon</label>
-          @if(request()->filled('q'))
-            <input type="hidden" name="q" value="{{ request('q') }}">
-          @endif
-          <select name="exam_id" class="form-control" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0;" onchange="this.form.submit()">
-            <option value="">— Barcha imtihonlar —</option>
-            @foreach($exams as $ex)
-              <option value="{{ $ex->id }}" {{ (string) $selectedExamId === (string) $ex->id ? 'selected' : '' }}>
-                {{ $ex->title }}
-              </option>
-            @endforeach
-          </select>
-        </form>
-      </div>
-
-      @include('admin.partials.search-bar', [
-        'placeholder' => 'Ism, email yoki telefon bo‘yicha...',
-        'action' => route('profile.exams.results'),
-        'hidden' => array_filter(['exam_id' => $selectedExamId]),
-      ])
-
-      <div class="table-wrapper exam-public-table-responsive">
-        <table class="exam-public-table">
-          <thead>
-          <tr>
-            <th>#</th>
-            <th>Ism</th>
-            <th>Telefon</th>
-            <th>Email</th>
-            @if(!$selectedExamId)
-              <th>Imtihon</th>
-            @endif
-            <th>Ball</th>
-            <th>Qoidabuzarlik</th>
-            <th>Natija</th>
-            <th>To‘g‘ri</th>
-            <th>Holat</th>
-            <th>Vaqt</th>
-            <th>Amal</th>
-          </tr>
-          </thead>
-          <tbody>
-          @forelse($results as $result)
-            <tr>
-              <td>{{ $result->id }}</td>
-              <td>{{ $result->user->name ?? '—' }}</td>
-              <td>{{ $result->user->phone ?? '—' }}</td>
-              <td style="font-size:13px;">{{ $result->user->email ?? '—' }}</td>
-              @if(!$selectedExamId)
-                <td>{{ $result->exam->title ?? '—' }}</td>
-              @endif
-              <td>{{ $result->points_earned ?? '—' }} / {{ $result->points_max ?? '—' }}</td>
-              <td style="white-space:nowrap;">
-                @if((int) ($result->rule_violation_count ?? 0) > 0)
-                  <span style="{{ (int) $result->rule_violation_count > 5 ? 'color:#b91c1c;font-weight:700;' : '' }}">{{ (int) $result->rule_violation_count }}</span>
-                @else
-                  0
-                @endif
-              </td>
-              <td>
-                @if($result->passed === null)
-                  —
-                @elseif($result->passed)
-                  <span style="color:#16a34a;font-weight:700;">O‘tdi</span>
-                @else
-                  <span style="color:#b91c1c;font-weight:700;">Yiqildi</span>
-                @endif
-              </td>
-              <td>{{ $result->score }} / {{ $result->total_questions }}</td>
-              <td>{{ $result->status }}</td>
-              <td style="white-space:nowrap;font-size:13px;">{{ $result->submitted_at?->format('d.m.Y H:i') ?? '-' }}</td>
-                  <a href="{{ route('profile.exams.results.show', $result) }}" class="btn btn-info btn-sm">Ko'rish</a>
-                  <form method="POST" action="{{ route('profile.exams.results.destroy', $result) }}" onsubmit="return confirm('Bu natijani o‘chirishni tasdiqlaysizmi?');" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-sm">O‘chirish</button>
-                  </form>
-                </td>
-            </tr>
-          @empty
-            <tr>
-              <td colspan="{{ $selectedExamId ? 10 : 11 }}">
-                @if($selectedExamId)
-                  Bu imtihon bo‘yicha hali natija yo‘q.
-                @else
-                  Natija topilmadi.
-                @endif
-              </td>
-            </tr>
-          @endforelse
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-20">{{ $results->links() }}</div>
+        <h1 class="results-title">Imtihon Natijalari</h1>
+        <p class="text-muted">Barcha topshirilgan imtihonlar va o'quvchilar ko'rsatkichlari bu yerda jamlangan.</p>
     </div>
-  </div>
+
+    <div class="results-filter-bar">
+        <form method="get" action="{{ route('profile.exams.results') }}" class="d-flex flex-wrap gap-3 align-items-end" style="flex: 1;">
+            <div style="flex: 1; min-width: 200px;">
+                <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Imtihonni tanlang</label>
+                <select name="exam_id" class="form-control" onchange="this.form.submit()" style="border-radius: 12px;">
+                    <option value="">— Barcha imtihonlar —</option>
+                    @foreach($exams as $ex)
+                        <option value="{{ $ex->id }}" {{ (string) $selectedExamId === (string) $ex->id ? 'selected' : '' }}>
+                            {{ $ex->title }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            @if(request()->filled('q'))
+                <input type="hidden" name="q" value="{{ request('q') }}">
+            @endif
+        </form>
+
+        <div style="flex: 1; max-width: 400px;">
+            @include('admin.partials.search-bar', [
+                'placeholder' => 'Ism, email yoki telefon...',
+                'action' => route('profile.exams.results'),
+                'hidden' => array_filter(['exam_id' => $selectedExamId]),
+            ])
+        </div>
+    </div>
+
+    <div class="results-table-card">
+        <div class="table-responsive">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>O'quvchi</th>
+                        @if(!$selectedExamId)
+                            <th>Imtihon</th>
+                        @endif
+                        <th>Ball (Jami)</th>
+                        <th>Status</th>
+                        <th>Natija</th>
+                        <th>Sana</th>
+                        <th style="text-align: right;">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($results as $result)
+                        @php
+                            $statusClass = match($result->status) {
+                                'submitted' => 'status-submitted',
+                                'started' => 'status-started',
+                                'expired' => 'status-expired',
+                                default => ''
+                            };
+                            $statusLabel = match($result->status) {
+                                'submitted' => 'Topshirildi',
+                                'started' => 'Jarayonda',
+                                'expired' => 'Vaqti o\'tdi',
+                                default => $result->status
+                            };
+                            $initials = strtoupper(substr($result->user->name ?? 'U', 0, 1));
+                        @endphp
+                        <tr>
+                            <td>
+                                <div class="user-info-cell">
+                                    <div class="user-avatar-placeholder">{{ $initials }}</div>
+                                    <div class="user-data">
+                                        <span class="user-name">{{ $result->user->name ?? 'Noma\'lum o\'quvchi' }}</span>
+                                        <span class="user-meta">{{ $result->user->phone ?? $result->user->email ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            @if(!$selectedExamId)
+                                <td>
+                                    <span class="fw-bold" style="color: #4b6282;">{{ $result->exam->title ?? '—' }}</span>
+                                </td>
+                            @endif
+                            <td>
+                                <div class="score-badge" style="background: rgba(13, 63, 120, 0.05); color: #0d3f78;">
+                                    <i class="fa-solid fa-chart-simple"></i>
+                                    {{ $result->points_earned ?? 0 }} / {{ $result->points_max ?? 0 }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge {{ $statusClass }}">
+                                    @if($result->status === 'submitted') <i class="fa-solid fa-circle-check"></i> @endif
+                                    @if($result->status === 'started') <i class="fa-solid fa-hourglass-half"></i> @endif
+                                    @if($result->status === 'expired') <i class="fa-solid fa-triangle-exclamation"></i> @endif
+                                    {{ $statusLabel }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($result->passed === null)
+                                    <span class="result-tag tag-pending"><i class="fa-solid fa-clock-rotate-left"></i> Tekshiruvda</span>
+                                @elseif($result->passed)
+                                    <span class="result-tag tag-pass"><i class="fa-solid fa-square-check"></i> O‘tdi</span>
+                                @else
+                                    <span class="result-tag tag-fail"><i class="fa-solid fa-circle-xmark"></i> Yiqildi</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column" style="font-size: 13px;">
+                                    <span class="fw-bold">{{ $result->submitted_at?->format('d.m.Y') ?? '-' }}</span>
+                                    <span class="text-muted">{{ $result->submitted_at?->format('H:i') ?? '' }}</span>
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{{ route('profile.exams.results.show', $result) }}" class="btn btn-primary btn-sm px-4">
+                                    <i class="fa-solid fa-eye me-1"></i> Ko'rish
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ $selectedExamId ? 6 : 7 }}" class="py-5 text-center text-muted">
+                                <i class="fa-solid fa-folder-open mb-3" style="font-size: 40px; opacity: 0.2;"></i>
+                                <p>Hali birorta ham natija mavjud emas.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-center">
+        {{ $results->links() }}
+    </div>
 </div>
-</div></div></div>
 </x-loyouts.main>

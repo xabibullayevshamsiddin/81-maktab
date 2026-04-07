@@ -158,5 +158,91 @@
 /* Status / Badges */
 .badge { padding: 8px 16px; border-radius: 10px; font-weight: 600; }
 
+[data-theme='dark'] .question-point-badge {
+    background: #1e3a8a;
+    color: #93c5fd;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme='dark'] .exam-admin-preview {
+    color: #e2e8f0;
+}
+
+[data-theme='dark'] .exam-admin-image {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* Global Typography */
 h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }
+
+/* Dark Mode Overrides for Exams Module */
+[data-theme='dark'] .exam-public-card {
+    background: rgba(15, 27, 45, 0.8);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .exam-public-table th {
+    color: #94a3b8;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .exam-public-table td {
+    background: #0f1b2d;
+    color: #cbd5e1;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] h1, 
+[data-theme='dark'] h2, 
+[data-theme='dark'] h3, 
+[data-theme='dark'] h4, 
+[data-theme='dark'] h5, 
+[data-theme='dark'] h6 {
+    color: #ffffff;
+}
+
+[data-theme='dark'] .exam-public-container label:not([class]) {
+    color: #93c5fd;
+}
+
+[data-theme='dark'] .exam-public-container input[type="text"], 
+[data-theme='dark'] .exam-public-container input[type="number"], 
+[data-theme='dark'] .exam-public-container input[type="date"], 
+[data-theme='dark'] .exam-public-container input[type="file"], 
+[data-theme='dark'] .exam-public-container select, 
+[data-theme='dark'] .exam-public-container textarea {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border-color: transparent;
+}
+
+[data-theme='dark'] .exam-public-container input:focus, 
+[data-theme='dark'] .exam-public-container select:focus, 
+[data-theme='dark'] .exam-public-container textarea:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #3b82f6;
+}
+
+[data-theme='dark'] .question-item {
+    background: #0f1b2d;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .exam-builder-toolbar {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme='dark'] .exam-builder-toolbar button {
+    background: rgba(255, 255, 255, 0.05);
+    color: #93c5fd;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .exam-builder-toolbar button:hover {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+

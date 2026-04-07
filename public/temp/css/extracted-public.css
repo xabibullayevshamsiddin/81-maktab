@@ -507,6 +507,13 @@
   line-height: 1.4;
 }
 
+.mobile-nav-note {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @media (max-width: 980px) {
   .header-main {
     width: calc(100% - 20px);

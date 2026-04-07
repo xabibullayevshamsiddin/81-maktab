@@ -33,7 +33,6 @@
               <th><h6>#</h6></th>
               <th><h6>Nomi</h6></th>
               <th><h6>Ustoz</h6></th>
-              <th><h6>Muallif</h6></th>
               <th><h6>Boshlanish</h6></th>
               <th><h6>Status</h6></th>
               <th><h6>Yozilishlar</h6></th>
@@ -49,7 +48,6 @@
                 <td><p>{{ $course->id }}</p></td>
                 <td><p><strong>{{ $course->title }}</strong></p></td>
                 <td><p>{{ $course->teacher?->full_name ?: '-' }}</p></td>
-                <td><p>{{ $course->creator?->name ?: '-' }}</p></td>
                 <td><p>{{ $course->start_date?->format('Y-m-d') }}</p></td>
                 <td>
                   @if($canManage)
@@ -85,7 +83,7 @@
                 </td>
               </tr>
             @empty
-              <tr><td colspan="8"><p>Hozircha kurslar yo'q.</p></td></tr>
+              <tr><td colspan="7"><p>Hozircha kurslar yo'q.</p></td></tr>
             @endforelse
           </tbody>
         </table>
