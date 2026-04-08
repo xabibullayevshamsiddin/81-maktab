@@ -108,7 +108,6 @@ class TeacherCourseController extends Controller
             }
 
             Course::create($payload);
-            $this->consumeTeacherCourseApproval($user);
             forget_public_course_caches();
 
             return redirect()
@@ -141,7 +140,6 @@ class TeacherCourseController extends Controller
         }
 
         $course = Course::create($payload);
-        $this->consumeTeacherCourseApproval($user);
 
         $this->sendPublishCode($user->email, $course, $code);
 
