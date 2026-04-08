@@ -1330,7 +1330,7 @@
     var openBtn = document.getElementById('search-open-btn');
     if (!modal || !input || !resultsEl) return;
 
-    var searchUrl = '/search';
+    var searchUrl = modal.getAttribute('data-search-url') || '/search';
     var debounce = null;
     var controller = null;
 
