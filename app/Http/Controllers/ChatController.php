@@ -37,7 +37,10 @@ class ChatController extends Controller
             $role = $user?->roleRelation?->name ?? 'user';
             $isSuperAdmin = $role === 'super_admin';
             $isAdmin = in_array($role, ['super_admin', 'admin'], true);
-            $avatarUrl = $user && $user->avatar ? app_storage_asset($user->avatar) : null;
+            // Hostda to‘g‘ri domen/HTTPS uchun asset() (APP_URL) ishonchliroq.
+            $avatarUrl = $user && $user->avatar
+                ? asset('storage/'.ltrim($user->avatar, '/'))
+                : null;
             $isMine = (int) $m->user_id === $currentUserId;
 
             return [

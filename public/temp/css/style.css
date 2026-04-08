@@ -1018,6 +1018,51 @@ body.chat-fullscreen-active::before {
   flex-shrink: 0;
 }
 
+.chat-rules {
+  margin: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(21, 101, 192, 0.06);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.chat-rules summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+}
+
+.chat-rules summary::-webkit-details-marker {
+  display: none;
+}
+
+.chat-rules summary::after {
+  content: " ▾";
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.chat-rules[open] summary::after {
+  content: " ▴";
+}
+
+.chat-rules ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.chat-rules li {
+  margin-bottom: 4px;
+}
+
+:root[data-theme='dark'] .chat-rules {
+  background: rgba(99, 102, 241, 0.12);
+}
+
 .chat-panel-title {
   display: flex;
   align-items: center;
@@ -1269,12 +1314,16 @@ body.chat-fullscreen-active::before {
   border: 1px solid var(--border);
   background: var(--surface, #fff);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+  -webkit-appearance: none;
+  appearance: none;
+  color: inherit;
 }
 
 .chat-sticker-btn:hover {

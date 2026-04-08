@@ -371,6 +371,15 @@
               </button>
             </div>
           </div>
+          <details class="chat-rules">
+            <summary>Chat qoidalari</summary>
+            <ul>
+              <li>Hurmat bilan yozing, haqorat va trolling qilmang.</li>
+              <li>Spam, reklama va takroriy xabarlarni yubormang.</li>
+              <li>Telefon, manzil va boshqa shaxsiy ma’lumotlarni ochiq joylamang.</li>
+              <li>Muammo bo‘lsa admin/moderator xabarni o‘chirishi yoki foydalanuvchini cheklashi mumkin.</li>
+            </ul>
+          </details>
           <div class="chat-messages" id="chat-messages"></div>
           <form class="chat-input-wrap" id="chat-form">
             <div class="chat-sticker-row" aria-label="Tezkor stikerlar">

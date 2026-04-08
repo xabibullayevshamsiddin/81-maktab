@@ -1442,6 +1442,16 @@
       setTimeout(function () { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
     }
 
+    function escChatHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, function (ch) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] || ch;
+      });
+    }
+
+    function escAttr(s) {
+      return String(s ?? '').replace(/"/g, '&quot;');
+    }
+
     function renderMsg(m) {
       var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '') + (m.is_super_admin ? ' is-super-admin' : '');
       var badge = '';
@@ -1452,8 +1462,8 @@
       }
       var avatarCls = 'chat-msg-avatar' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
       var avatarInner = m.avatar_url
-        ? '<img src="' + m.avatar_url + '" alt="" class="chat-msg-avatar-img" />'
-        : m.user_initial;
+        ? '<img src="' + escAttr(m.avatar_url) + '" alt="" class="chat-msg-avatar-img" loading="lazy" decoding="async" />'
+        : escChatHtml(m.user_initial);
       var actions = '';
       if (m.can_delete) {
         actions += '<button type="button" class="chat-msg-action" data-chat-delete="' + m.id + '" title="O\'chirish"><i class="fa-solid fa-trash-can"></i></button>';
@@ -1466,7 +1476,7 @@
         + '<div class="' + avatarCls + '">' + avatarInner + '</div>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
-        + '<span class="chat-msg-name">' + m.user_name + '</span>'
+        + '<span class="chat-msg-name">' + escChatHtml(m.user_name) + '</span>'
         + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + actionsHtml
@@ -1534,8 +1544,36 @@
         credentials: 'same-origin',
         body: JSON.stringify({ body: text }),
       })
-        .then(function () { pollNew(); })
-        .catch(function () {});
+        .then(function (r) {
+          if (!r.ok) {
+            return r.text().then(function (t) {
+              var msg = 'Xabar yuborilmadi.';
+              if (r.status === 419) {
+                msg = 'Sessiya tugagan — sahifani yangilang.';
+              } else {
+                try {
+                  var d = JSON.parse(t);
+                  msg = (d && (d.error || d.message)) || msg;
+                  if (d && d.errors) {
+                    var firstErr = Object.values(d.errors)[0];
+                    if (Array.isArray(firstErr) && firstErr[0]) {
+                      msg = firstErr[0];
+                    }
+                  }
+                } catch (e) {
+                  /* HTML yoki boshqa javob */
+                }
+              }
+              throw new Error(msg);
+            });
+          }
+          pollNew();
+        })
+        .catch(function (err) {
+          if (window.showToast) {
+            window.showToast(err && err.message ? err.message : 'Chat: tarmoq xatosi', 'error');
+          }
+        });
     }
 
     // Drag support
