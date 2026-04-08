@@ -168,10 +168,6 @@ class AuthController extends Controller
             ->with('toast_type', 'success');
     }
 
-    public function regiter_store(RegisterRequest $request)
-    {
-        return $this->registerStore($request);
-    }
 
     public function sendPasswordResetCode(Request $request)
     {

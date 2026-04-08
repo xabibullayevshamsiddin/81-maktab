@@ -20,24 +20,26 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        $stats = [
-            'users' => User::count(),
-            'teachers' => Teacher::count(),
-            'posts' => Post::count(),
-            'categories' => Category::count(),
-            'comments' => Comment::count() + TeacherComment::count(),
-            'pending_comments' => Comment::pending()->count() + TeacherComment::query()->where('is_approved', false)->count(),
-            'contact_messages' => ContactMessage::count(),
-            'today_messages' => ContactMessage::query()->whereDate('created_at', today())->count(),
-            'courses' => Course::count(),
-            'published_courses' => Course::query()->where('status', Course::STATUS_PUBLISHED)->count(),
-            'pending_courses' => Course::query()->where('status', Course::STATUS_PENDING_VERIFICATION)->count(),
-            'pending_enrollments' => CourseEnrollment::pending()->count(),
-            'exams' => Exam::count(),
-            'active_exams' => Exam::query()->where('is_active', true)->count(),
-            'exam_results' => Result::count(),
-            'passed_results' => Result::query()->where('passed', true)->count(),
-        ];
+        $stats = cache()->remember('admin_dashboard_stats', 300, function () {
+            return [
+                'users' => User::count(),
+                'teachers' => Teacher::count(),
+                'posts' => Post::count(),
+                'categories' => Category::count(),
+                'comments' => Comment::count() + TeacherComment::count(),
+                'pending_comments' => Comment::pending()->count() + TeacherComment::query()->where('is_approved', false)->count(),
+                'contact_messages' => ContactMessage::count(),
+                'today_messages' => ContactMessage::query()->whereDate('created_at', today())->count(),
+                'courses' => Course::count(),
+                'published_courses' => Course::query()->where('status', Course::STATUS_PUBLISHED)->count(),
+                'pending_courses' => Course::query()->where('status', Course::STATUS_PENDING_VERIFICATION)->count(),
+                'pending_enrollments' => CourseEnrollment::pending()->count(),
+                'exams' => Exam::count(),
+                'active_exams' => Exam::query()->where('is_active', true)->count(),
+                'exam_results' => Result::count(),
+                'passed_results' => Result::query()->where('passed', true)->count(),
+            ];
+        });
 
         $recentPosts = Post::query()
             ->with('category')
