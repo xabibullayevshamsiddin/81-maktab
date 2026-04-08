@@ -91,24 +91,23 @@
   }
 
   function initPasswordToggles() {
-    const toggles = document.querySelectorAll('.pw-toggle[data-target]');
-    if (!toggles.length) return;
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('.pw-toggle[data-target]');
+      if (!button) return;
 
-    toggles.forEach((button) => {
-      button.addEventListener('click', () => {
-        const targetId = button.getAttribute('data-target');
-        const input = targetId ? document.getElementById(targetId) : null;
-        if (!input) return;
+      event.preventDefault();
+      const targetId = button.getAttribute('data-target');
+      const input = targetId ? document.getElementById(targetId) : null;
+      if (!input) return;
 
-        const isHidden = input.type === 'password';
-        input.type = isHidden ? 'text' : 'password';
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
 
-        const icon = button.querySelector('i');
-        icon?.classList.toggle('fa-eye', !isHidden);
-        icon?.classList.toggle('fa-eye-slash', isHidden);
-
-        button.setAttribute('aria-label', isHidden ? 'Parolni yashirish' : 'Parolni ko‘rsatish');
-      });
+      const icon = button.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fa-eye', !isHidden);
+        icon.classList.toggle('fa-eye-slash', isHidden);
+      }
     });
   }
 
