@@ -202,14 +202,6 @@
                             <i class="lni lni-envelope"></i>
                           </a>
                           @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
-                            <form action="{{ route('user.password-reset.send', $user) }}" method="POST" style="display:inline;" onsubmit="return confirm('Parolni tiklash kodi foydalanuvchi emailiga yuborilsinmi?');">
-                              @csrf
-                              <button type="submit" class="text-warning me-2" style="background:none;border:none;padding:0;" title="Parolni tiklash kodini yuborish">
-                                <i class="lni lni-key"></i>
-                              </button>
-                            </form>
-                          @endif
-                          @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
                             <form action="{{ route('user.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Foydalanuvchini o\'chirishni xohlaysizmi?');">
                               @csrf
                               @method('DELETE')

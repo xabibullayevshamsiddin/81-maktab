@@ -24,13 +24,13 @@ class AuthController extends Controller
      * Vaqtincha: false bo‘lsa ro‘yxatdan o‘tish email kodisiz, darhol hisob ochiladi.
      * Email OTP ni qayta yoqish uchun true qiling.
      */
-    private const REGISTER_EMAIL_OTP_ENABLED = true;
+    private const REGISTER_EMAIL_OTP_ENABLED = false;
 
     /**
      * Vaqtincha: false bo‘lsa kirish email kodisiz — faqat email + parol.
      * Kirish OTP ni qayta yoqish uchun true qiling.
      */
-    private const LOGIN_EMAIL_OTP_ENABLED = true;
+    private const LOGIN_EMAIL_OTP_ENABLED = false;
 
     public function login()
     {
@@ -171,6 +171,10 @@ class AuthController extends Controller
 
     public function sendPasswordResetCode(Request $request)
     {
+        return back()
+            ->withErrors(['email' => 'Parolni email orqali tiklash vaqtincha o‘chirildi.'])
+            ->onlyInput('email');
+
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
         ]);
@@ -298,6 +302,10 @@ class AuthController extends Controller
 
     public function resendPasswordResetCode(Request $request)
     {
+        return back()->withErrors([
+            'code' => 'Parolni tiklash kodini qayta yuborish vaqtincha o‘chirildi.',
+        ]);
+
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
         ]);
@@ -575,6 +583,11 @@ class AuthController extends Controller
 
     public function adminSendPasswordReset(Request $request, User $user)
     {
+        return redirect()
+            ->route('user')
+            ->with('error', 'Parol reset kodini emailga yuborish vaqtincha o‘chirildi.')
+            ->with('toast_type', 'error');
+
         $admin = $request->user();
 
         if (! $admin || ! $admin->canManage($user)) {

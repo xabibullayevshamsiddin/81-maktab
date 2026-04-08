@@ -30,7 +30,6 @@
                     @error('email')
                         <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
                     @enderror
-                    <a href="{{ route('password.forgot.form') }}" class="forgot">{{ __('auth_pages.login.forgot') }}</a>
                     <button class="btn" type="submit">{{ __('auth_pages.login.submit') }}</button>
                     <p id="signin-message" class="form-message" aria-live="polite"></p>
                 </form>

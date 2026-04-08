@@ -16,19 +16,3 @@ services:
         value: "true"
       - key: APP_KEY
         generateValue: true
-      - key: MAIL_MAILER
-        value: smtp
-      - key: MAIL_HOST
-        value: smtp.gmail.com
-      - key: MAIL_PORT
-        value: "587"
-      - key: MAIL_USERNAME
-        value: xabibullayevshamsiddinmllb1809@gmail.com
-      - key: MAIL_PASSWORD
-        value: wopeaazjvadcvczu
-      - key: MAIL_ENCRYPTION
-        value: tls
-      - key: MAIL_FROM_ADDRESS
-        value: xabibullayevshamsiddinmllb1809@gmail.com
-      - key: MAIL_FROM_NAME
-        value: 81-maktab
