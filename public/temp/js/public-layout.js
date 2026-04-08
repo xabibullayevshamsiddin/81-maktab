@@ -211,34 +211,12 @@
       triggerRipple(link);
       localeLinks.forEach((item) => item.classList.toggle('is-loading', item === link));
 
-      await new Promise((resolve) => window.setTimeout(resolve, 120));
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
       document.documentElement.classList.add('locale-switching-out');
 
-      try {
-        await new Promise((resolve) => window.setTimeout(resolve, 280));
-
-        const response = await fetch(link.href, {
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            Accept: 'text/html',
-          },
-          credentials: 'same-origin',
-        });
-
-        if (!response.ok) {
-          throw new Error('locale_fetch_failed');
-        }
-
-        const html = await response.text();
-        sessionStorage.setItem('site-locale-transition', JSON.stringify({ at: Date.now() }));
-        document.open();
-        document.write(html);
-        document.close();
-      } catch (error) {
-        document.documentElement.classList.remove('locale-switching-out');
-        localeLinks.forEach((item) => item.classList.remove('is-loading'));
-        window.location.href = link.href;
-      }
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+      sessionStorage.setItem('site-locale-transition', JSON.stringify({ at: Date.now() }));
+      window.location.href = link.href;
     }
 
     document.addEventListener('click', (event) => {
