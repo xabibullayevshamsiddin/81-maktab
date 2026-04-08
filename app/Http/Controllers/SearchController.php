@@ -11,10 +11,19 @@ use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
-    public function search(Request $request): JsonResponse
+    public function search(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return $this->jsonSearch($q);
+        }
+
+        return $this->jsonSearch($q);
+    }
+
+    private function jsonSearch(string $q): JsonResponse
+    {
         if (mb_strlen($q) < 2) {
             return response()->json(['results' => []]);
         }
@@ -104,11 +113,11 @@ class SearchController extends Controller
                 'icon' => 'fa-solid fa-graduation-cap',
                 'title' => $e->title,
                 'subtitle' => null,
-                'url' => route('exam.start.page', $e),
+                'url' => auth()->check() ? route('exam.start.page', $e) : route('login'),
                 'image' => null,
             ];
         }
 
-        return response()->json(['results' => $results]);
+        return response()->json(['results' => $results, 'query' => $q]);
     }
 }

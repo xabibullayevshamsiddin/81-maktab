@@ -355,7 +355,7 @@
     </button>
     @endunless
 
-    <div id="search-modal" class="search-modal" hidden role="dialog" aria-modal="true" aria-label="Qidirish" data-search-url="{{ route('search') }}">
+    <div id="search-modal" class="search-modal" hidden role="dialog" aria-modal="true" aria-label="Qidirish" data-search-url="{{ request()->getBaseUrl() }}/search">
       <div class="search-modal-backdrop"></div>
       <div class="search-modal-box">
         <div class="search-modal-input-wrap">
