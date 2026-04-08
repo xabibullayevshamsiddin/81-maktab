@@ -17,7 +17,9 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     private const OTP_VERIFY_MAX_ATTEMPTS = 5;
+
     private const OTP_VERIFY_DECAY_SECONDS = 600;
+
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
     /**
@@ -87,6 +89,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'error' => $e->getMessage(),
             ]);
+
             return back()
                 ->withErrors(['email' => 'Emailga kod yuborilmadi. Sozlamalarni tekshiring.'])
                 ->onlyInput('email');
@@ -109,7 +112,7 @@ class AuthController extends Controller
         $validated = $request->validated();
         $validated['phone'] = uz_phone_format($validated['phone']);
 
-        $fullName = trim(($validated['first_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+        $fullName = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         $isParent = ! empty($validated['is_parent']);
 
         if (! self::REGISTER_EMAIL_OTP_ENABLED) {
@@ -156,6 +159,7 @@ class AuthController extends Controller
                 'email' => $validated['email'],
                 'error' => $e->getMessage(),
             ]);
+
             return back()
                 ->withErrors(['email' => 'Emailga kod yuborilmadi. Sozlamalarni tekshiring.'])
                 ->onlyInput('email');
@@ -167,7 +171,6 @@ class AuthController extends Controller
             ->with('success', 'Ro‘yxatdan o‘tish kodi emailingizga yuborildi.')
             ->with('toast_type', 'success');
     }
-
 
     public function sendPasswordResetCode(Request $request)
     {
@@ -389,13 +392,14 @@ class AuthController extends Controller
 
         if (! $this->isValidOtp($otp, $validated['code'])) {
             RateLimiter::hit($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_LOGIN), self::OTP_VERIFY_DECAY_SECONDS);
+
             return back()->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."]);
         }
 
         $userId = (int) ($otp->meta['user_id'] ?? 0);
         $user = User::query()->find($userId);
         if (! $user) {
-            return redirect()->route('login')->withErrors(['email' => "Foydalanuvchi topilmadi."]);
+            return redirect()->route('login')->withErrors(['email' => 'Foydalanuvchi topilmadi.']);
         }
 
         $otp->delete();
@@ -440,6 +444,7 @@ class AuthController extends Controller
                 'email' => $email,
                 'error' => $e->getMessage(),
             ]);
+
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo‘lmadi.']);
         }
 
@@ -494,6 +499,7 @@ class AuthController extends Controller
 
         if (! $this->isValidOtp($otp, $validated['code'])) {
             RateLimiter::hit($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_REGISTER), self::OTP_VERIFY_DECAY_SECONDS);
+
             return back()->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."]);
         }
 
@@ -505,14 +511,22 @@ class AuthController extends Controller
 
         if (User::query()->where('email', $meta['email'])->exists()) {
             return redirect()->route('login')
-                ->with('success', "Bu email bilan hisob allaqachon mavjud. Tizimga kiring.")
+                ->with('success', 'Bu email bilan hisob allaqachon mavjud. Tizimga kiring.')
+                ->with('toast_type', 'warning');
+        }
+
+        $metaFirst = (string) ($meta['first_name'] ?? '');
+        $metaLast = (string) ($meta['last_name'] ?? '');
+        if (User::isFullNameTaken($metaFirst, $metaLast)) {
+            return redirect()->route('register')
+                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro‘yxatdan o‘tishni boshidan qayta boshlang.'])
                 ->with('toast_type', 'warning');
         }
 
         $user = User::create([
             'first_name' => $meta['first_name'] ?? '',
             'last_name' => $meta['last_name'] ?? '',
-            'name' => $meta['name'] ?? trim(($meta['first_name'] ?? '') . ' ' . ($meta['last_name'] ?? '')),
+            'name' => $meta['name'] ?? trim(($meta['first_name'] ?? '').' '.($meta['last_name'] ?? '')),
             'email' => $meta['email'],
             'phone' => $meta['phone'],
             'grade' => $metaIsParent ? null : ($meta['grade'] ?? null),
@@ -562,6 +576,7 @@ class AuthController extends Controller
                 'email' => $email,
                 'error' => $e->getMessage(),
             ]);
+
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo‘lmadi.']);
         }
 

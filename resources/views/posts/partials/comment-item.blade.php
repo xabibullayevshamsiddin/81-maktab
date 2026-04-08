@@ -23,13 +23,23 @@
 @endphp
 
 <article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
-  <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}">
-    @if($avatarUrl)
-      <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? 'Mehmon' }}" loading="lazy" decoding="async">
-    @else
-      <span>{{ $avatarInitial }}</span>
-    @endif
-  </div>
+  @if(auth()->check() && $comment->user_id)
+    <button type="button" class="comment-avatar comment-avatar--btn {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}" data-user-preview-id="{{ $comment->user_id }}" title="Profil" aria-label="Foydalanuvchi profili">
+      @if($avatarUrl)
+        <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="" loading="lazy" decoding="async">
+      @else
+        <span>{{ $avatarInitial }}</span>
+      @endif
+    </button>
+  @else
+    <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}">
+      @if($avatarUrl)
+        <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? 'Mehmon' }}" loading="lazy" decoding="async">
+      @else
+        <span>{{ $avatarInitial }}</span>
+      @endif
+    </div>
+  @endif
 
   <div class="comment-body">
     <div class="comment-meta">

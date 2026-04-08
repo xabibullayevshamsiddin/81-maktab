@@ -348,6 +348,7 @@
         data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
         data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
         data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
+        data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
         data-csrf="{{ csrf_token() }}"
         data-user-id="{{ auth()->id() }}"
       >
@@ -397,6 +398,12 @@
           </form>
         </div>
       </div>
+
+      <span id="user-preview-config" hidden
+        data-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
+        data-csrf="{{ csrf_token() }}"
+        data-current-user-id="{{ auth()->id() }}"
+      ></span>
       @endunless
     @endauth
 
@@ -412,6 +419,30 @@
     @endunless
 
     <div id="global-modal-root"></div>
+
+    @auth
+      @unless($isExamSessionRoute)
+      <dialog id="chat-user-preview-dialog" class="chat-user-preview-dialog" aria-labelledby="chat-user-preview-name">
+        <div class="chat-user-preview-shell">
+          <button type="button" class="chat-user-preview-close" id="chat-user-preview-close" aria-label="Yopish">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="chat-user-preview-body">
+            <p class="chat-user-preview-loading" id="chat-user-preview-loading">Yuklanmoqda…</p>
+            <div class="chat-user-preview-content" id="chat-user-preview-content" hidden>
+              <div class="chat-user-preview-avatar" id="chat-user-preview-avatar"></div>
+              <h3 class="chat-user-preview-name" id="chat-user-preview-name"></h3>
+              <p class="chat-user-preview-role" id="chat-user-preview-role"></p>
+              <ul class="chat-user-preview-details" id="chat-user-preview-details"></ul>
+              <div class="chat-user-preview-extra" id="chat-user-preview-extra"></div>
+              <div class="chat-user-preview-admin-actions" id="chat-user-preview-admin-actions" hidden></div>
+              <div class="chat-user-preview-contact" id="chat-user-preview-contact" hidden></div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+      @endunless
+    @endauth
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 

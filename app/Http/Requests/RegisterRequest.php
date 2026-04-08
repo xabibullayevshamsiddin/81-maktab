@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class RegisterRequest extends FormRequest
 {
@@ -31,6 +32,23 @@ class RegisterRequest extends FormRequest
         $this->merge([
             'grade' => $this->input('is_parent') ? null : normalize_school_grade($this->input('grade')),
         ]);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v): void {
+            if ($v->errors()->isNotEmpty()) {
+                return;
+            }
+            $first = (string) $this->input('first_name', '');
+            $last = (string) $this->input('last_name', '');
+            if (User::isFullNameTaken($first, $last)) {
+                $v->errors()->add(
+                    'last_name',
+                    'Bu ism va familiya bilan foydalanuvchi allaqachon ro‘yxatdan o‘tgan. Boshqa ism yoki familiya kiriting.'
+                );
+            }
+        });
     }
 
     public function messages(): array

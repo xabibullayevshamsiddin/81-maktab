@@ -99,7 +99,25 @@ class User extends Authenticatable
 
     public function buildNameFromParts(): string
     {
-        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        return trim(($this->first_name ?? '').' '.($this->last_name ?? ''));
+    }
+
+    /**
+     * Bir xil ism + familiya kombinatsiyasi allaqachon mavjudmi (registr bo‘yicha farqsiz).
+     * Alohida ism yoki alohida familiya takrori ruxsat etiladi.
+     */
+    public static function isFullNameTaken(string $firstName, string $lastName): bool
+    {
+        $fn = mb_strtolower(trim($firstName));
+        $ln = mb_strtolower(trim($lastName));
+        if ($fn === '' || $ln === '') {
+            return false;
+        }
+
+        return static::query()
+            ->whereRaw('LOWER(TRIM(first_name)) = ?', [$fn])
+            ->whereRaw('LOWER(TRIM(last_name)) = ?', [$ln])
+            ->exists();
     }
 
     protected $hidden = [
@@ -308,12 +326,17 @@ class User extends Authenticatable
         ]);
     }
 
+    /**
+     * Izohlar va aloqa xabarlari (moderator va editor ham kirishi mumkin).
+     */
     public function canManageInbox(): bool
     {
         return $this->hasAnyRole([
             self::ROLE_SUPER_ADMIN,
             self::ROLE_ADMIN,
-        ]) || $this->isOnlyModerator();
+            self::ROLE_EDITOR,
+            self::ROLE_MODERATOR,
+        ]);
     }
 
     public function canManageEducation(): bool
@@ -344,8 +367,6 @@ class User extends Authenticatable
 
         return $this->createdCourses()->exists();
     }
-
-
 
     public function canManageExams(): bool
     {

@@ -39,7 +39,7 @@
               <i class="lni lni-key me-1"></i>
               Kalit tugmasi foydalanuvchining emailiga parolni tiklash kodini yuboradi.
             </p>
-
+            
             @php
               $hasUserFilters = filled($q ?? '') || filled($selectedGrade ?? '') || filled($selectedStatus ?? '') || ((int) ($selectedRoleId ?? 0) > 0);
             @endphp

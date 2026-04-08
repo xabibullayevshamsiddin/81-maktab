@@ -11,6 +11,335 @@
   const root = document.documentElement;
   const body = document.body;
 
+  function escChatHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] || ch;
+    });
+  }
+
+  function escAttr(s) {
+    return String(s ?? '').replace(/"/g, '&quot;');
+  }
+
+  /** Chat panel uchun Escape; dialog ochiq bo‘lsa avvalo dialog yopiladi. */
+  let chatPanelEscapeHandler = null;
+
+  function initChatUserPreviewChrome() {
+    var dlg = document.getElementById('chat-user-preview-dialog');
+    if (!dlg) return;
+    var btn = document.getElementById('chat-user-preview-close');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (dlg.close) dlg.close();
+      });
+    }
+    dlg.addEventListener('click', function (e) {
+      if (e.target === dlg && dlg.close) dlg.close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (dlg.open) {
+        dlg.close();
+        return;
+      }
+      if (chatPanelEscapeHandler) chatPanelEscapeHandler();
+    });
+  }
+
+  function initUserProfilePreview() {
+    var previewLoadingForId = null;
+
+    function userPreviewConfigEl() {
+      return document.getElementById('user-preview-config') || document.getElementById('chat-widget');
+    }
+
+    function buildChatUserPreviewExtra(d) {
+      var parts = [];
+      var courses = d.courses;
+      if (courses) {
+        if (courses.created && courses.created.length) {
+          var itemsCreated = courses.created.map(function (c) {
+            var t = escChatHtml(c.title || '');
+            if (c.url) {
+              return '<li><a href="' + escAttr(c.url) + '" target="_blank" rel="noopener">' + t + '</a></li>';
+            }
+            return '<li><span>' + t + '</span> <span class="chat-user-preview-muted">(nashr emas)</span></li>';
+          }).join('');
+          parts.push(
+            '<div class="chat-user-preview-section">'
+            + '<h4 class="chat-user-preview-section-title">Kurslar — yaratgan</h4>'
+            + '<ul class="chat-user-preview-links">' + itemsCreated + '</ul></div>'
+          );
+        }
+        if (courses.enrolled && courses.enrolled.length) {
+          var itemsEnr = courses.enrolled.map(function (c) {
+            var t = escChatHtml(c.title || '');
+            if (c.url) {
+              return '<li><a href="' + escAttr(c.url) + '" target="_blank" rel="noopener">' + t + '</a></li>';
+            }
+            return '<li><span>' + t + '</span></li>';
+          }).join('');
+          parts.push(
+            '<div class="chat-user-preview-section">'
+            + '<h4 class="chat-user-preview-section-title">Kurslarda qatnashish</h4>'
+            + '<ul class="chat-user-preview-links">' + itemsEnr + '</ul></div>'
+          );
+        }
+      }
+      var ex = d.exam_stats;
+      if (ex) {
+        var showExam = (ex.finished_total > 0)
+          || (ex.started_incomplete > 0)
+          || (ex.pending_grade > 0)
+          || (ex.avg_percent != null)
+          || (ex.pass_rate_percent != null);
+        if (showExam) {
+          var statParts = [];
+          statParts.push(
+            '<div class="chat-user-preview-stat-row"><span>Jami topshirilgan</span><strong>'
+            + escChatHtml(String(ex.finished_total ?? 0)) + '</strong></div>'
+          );
+          statParts.push(
+            '<div class="chat-user-preview-stat-row"><span>O‘tgan</span><strong class="chat-user-preview-stat--ok">'
+            + escChatHtml(String(ex.passed ?? 0)) + '</strong></div>'
+          );
+          statParts.push(
+            '<div class="chat-user-preview-stat-row"><span>Yiqilgan</span><strong class="chat-user-preview-stat--bad">'
+            + escChatHtml(String(ex.failed ?? 0)) + '</strong></div>'
+          );
+          if ((ex.pending_grade ?? 0) > 0) {
+            statParts.push(
+              '<div class="chat-user-preview-stat-row"><span>Tekshiruvda (ball kutilmoqda)</span><strong>'
+              + escChatHtml(String(ex.pending_grade)) + '</strong></div>'
+            );
+          }
+          if ((ex.started_incomplete ?? 0) > 0) {
+            statParts.push(
+              '<div class="chat-user-preview-stat-row"><span>Hali tugatmagan</span><strong>'
+              + escChatHtml(String(ex.started_incomplete)) + '</strong></div>'
+            );
+          }
+          if (ex.avg_percent != null) {
+            statParts.push(
+              '<div class="chat-user-preview-stat-row"><span>O‘rtacha foiz (ball)</span><strong>'
+              + escChatHtml(String(ex.avg_percent)) + '%</strong></div>'
+            );
+          }
+          if (ex.pass_rate_percent != null) {
+            statParts.push(
+              '<div class="chat-user-preview-stat-row"><span>O‘tish darajasi</span><strong>'
+              + escChatHtml(String(ex.pass_rate_percent)) + '%</strong></div>'
+            );
+            statParts.push(
+              '<p class="chat-user-preview-stat-note">O‘tgan va yiqilgan hisoblangan imtihonlar nisbati.</p>'
+            );
+          }
+          parts.push(
+            '<div class="chat-user-preview-section">'
+            + '<h4 class="chat-user-preview-section-title">Imtihonlar</h4>'
+            + '<div class="chat-user-preview-stat-block">' + statParts.join('') + '</div></div>'
+          );
+        }
+      }
+      return parts.join('');
+    }
+
+    function openUserProfilePreview(userId) {
+      var cfg = userPreviewConfigEl();
+      var previewDialog = document.getElementById('chat-user-preview-dialog');
+      var previewBase = cfg && cfg.getAttribute('data-user-preview-base');
+      var csrf = cfg && cfg.getAttribute('data-csrf');
+      var previewLoading = document.getElementById('chat-user-preview-loading');
+      var previewContent = document.getElementById('chat-user-preview-content');
+      var previewAvatar = document.getElementById('chat-user-preview-avatar');
+      var previewNameEl = document.getElementById('chat-user-preview-name');
+      var previewRoleEl = document.getElementById('chat-user-preview-role');
+      var previewDetailsEl = document.getElementById('chat-user-preview-details');
+      var previewExtraEl = document.getElementById('chat-user-preview-extra');
+      var previewAdminEl = document.getElementById('chat-user-preview-admin-actions');
+      var previewContactEl = document.getElementById('chat-user-preview-contact');
+      if (!previewDialog || !previewBase || !previewLoading || !previewContent) return;
+      previewLoadingForId = String(userId);
+      previewLoading.hidden = false;
+      previewLoading.textContent = 'Yuklanmoqda…';
+      previewContent.hidden = true;
+      if (previewContactEl) {
+        previewContactEl.hidden = true;
+        previewContactEl.innerHTML = '';
+      }
+      if (previewAdminEl) {
+        previewAdminEl.hidden = true;
+        previewAdminEl.innerHTML = '';
+      }
+      if (previewExtraEl) previewExtraEl.innerHTML = '';
+      if (typeof previewDialog.showModal === 'function') {
+        previewDialog.showModal();
+      }
+      fetch(previewBase + '/' + userId + '/preview', {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error();
+          return r.json();
+        })
+        .then(function (d) {
+          if (previewLoadingForId !== String(userId)) return;
+          if (previewNameEl) previewNameEl.textContent = d.display_name || '';
+          if (previewRoleEl) {
+            var rl = escChatHtml(d.role_label || '');
+            if (d.is_super_admin) {
+              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge chat-user-preview-badge--super"><i class="fa-solid fa-crown"></i> ' + rl + '</span>';
+            } else if (d.is_admin) {
+              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge">' + rl + '</span>';
+            } else {
+              previewRoleEl.textContent = d.role_label || '';
+            }
+          }
+          if (previewAvatar) {
+            previewAvatar.className = 'chat-user-preview-avatar';
+            previewAvatar.innerHTML = '';
+            if (d.avatar_url) {
+              var img = document.createElement('img');
+              img.src = d.avatar_url;
+              img.alt = '';
+              img.className = 'chat-user-preview-avatar-img';
+              img.loading = 'lazy';
+              previewAvatar.appendChild(img);
+            } else {
+              var ini = (d.display_name || '?').trim().charAt(0).toUpperCase();
+              previewAvatar.textContent = ini;
+              previewAvatar.classList.add('chat-user-preview-avatar--initial');
+            }
+          }
+          if (previewDetailsEl) {
+            var rows = [];
+            if (d.grade) {
+              rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
+            }
+            if (d.is_parent) {
+              rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
+            }
+            if (d.member_year) {
+              rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+            }
+            previewDetailsEl.innerHTML = rows.length ? rows.join('') : '<li class="chat-user-preview-details-empty">Qo‘shimcha maydonlar kiritilmagan.</li>';
+          }
+          if (previewExtraEl) {
+            previewExtraEl.innerHTML = buildChatUserPreviewExtra(d);
+          }
+          if (previewContactEl && d.contact) {
+            previewContactEl.hidden = false;
+            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa (faqat Super Admin)</p>'
+              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + escChatHtml(d.contact.email || '—') + '</span></div>'
+              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + escChatHtml(d.contact.phone || '—') + '</span></div>';
+          } else if (previewContactEl) {
+            previewContactEl.hidden = true;
+            previewContactEl.innerHTML = '';
+          }
+          var previewAdminEl2 = document.getElementById('chat-user-preview-admin-actions');
+          if (previewAdminEl2 && d.super_admin_actions) {
+            previewAdminEl2.hidden = false;
+            var sa = d.super_admin_actions;
+            var cfgSelf = userPreviewConfigEl();
+            var selfId = cfgSelf && cfgSelf.getAttribute('data-current-user-id');
+            var admParts = [];
+            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Super Admin)</p>');
+            admParts.push(
+              '<p class="chat-user-preview-admin-status">Akkaunt holati: <strong>'
+              + (sa.is_active ? 'Faol' : 'Bloklangan') + '</strong></p>'
+            );
+            if (sa.can_deactivate) {
+              admParts.push(
+                '<button type="button" class="chat-user-preview-btn chat-user-preview-btn--danger" data-sa-deactivate="'
+                + escAttr(String(userId)) + '"><i class="fa-solid fa-ban"></i> Bloklash (kirishni to‘xtatish)</button>'
+              );
+            }
+            if (sa.can_activate) {
+              admParts.push(
+                '<button type="button" class="chat-user-preview-btn chat-user-preview-btn--ok" data-sa-activate="'
+                + escAttr(String(userId)) + '"><i class="fa-solid fa-unlock"></i> Akkauntni qayta yoqish</button>'
+              );
+            }
+            if (!sa.can_deactivate && !sa.can_activate) {
+              if (d.is_super_admin) {
+                admParts.push('<p class="chat-user-preview-muted">Boshqa Super Admin akkauntini bloklash mumkin emas.</p>');
+              } else if (selfId && String(userId) === String(selfId)) {
+                admParts.push('<p class="chat-user-preview-muted">Bu o‘z profilingiz.</p>');
+              }
+            }
+            previewAdminEl2.innerHTML = admParts.join('');
+          } else if (previewAdminEl2) {
+            previewAdminEl2.hidden = true;
+            previewAdminEl2.innerHTML = '';
+          }
+          previewLoading.hidden = true;
+          previewContent.hidden = false;
+        })
+        .catch(function () {
+          if (previewLoadingForId !== String(userId)) return;
+          previewLoading.textContent = 'Ma’lumot yuklab bo‘lmadi.';
+        });
+    }
+
+    window.openUserProfilePreview = openUserProfilePreview;
+
+    document.addEventListener('click', function (e) {
+      var tr = e.target.closest('[data-user-preview-id]');
+      if (!tr) return;
+      e.preventDefault();
+      var id = tr.getAttribute('data-user-preview-id');
+      if (id) openUserProfilePreview(id);
+    });
+
+    document.addEventListener('click', function (e) {
+      var deBtn = e.target.closest('[data-sa-deactivate]');
+      var acBtn = e.target.closest('[data-sa-activate]');
+      if (!deBtn && !acBtn) return;
+      e.preventDefault();
+      var cfg = userPreviewConfigEl();
+      var previewBase = cfg && cfg.getAttribute('data-user-preview-base');
+      var csrf = cfg && cfg.getAttribute('data-csrf');
+      if (!previewBase || !csrf) return;
+      var uid = deBtn ? deBtn.getAttribute('data-sa-deactivate') : acBtn.getAttribute('data-sa-activate');
+      if (!uid) return;
+      var isDeact = !!deBtn;
+      var confirmMsg = isDeact
+        ? 'Bu foydalanuvchini bloklaysizmi? U saytga kira olmaydi.'
+        : 'Akkauntni qayta faollashtirasizmi?';
+      if (!window.confirm(confirmMsg)) return;
+      fetch(previewBase + '/' + uid + '/' + (isDeact ? 'deactivate' : 'activate'), {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+        },
+        credentials: 'same-origin',
+        body: '{}',
+      })
+        .then(function (r) {
+          return r.json().then(function (j) {
+            if (!r.ok) {
+              throw new Error((j && (j.error || j.message)) || 'Xatolik');
+            }
+            return j;
+          });
+        })
+        .then(function () {
+          if (window.showToast) {
+            window.showToast(isDeact ? 'Foydalanuvchi bloklandi.' : 'Akkaunt faollashtirildi.', 'success');
+          }
+          openUserProfilePreview(uid);
+        })
+        .catch(function (err) {
+          if (window.showToast) {
+            window.showToast(err && err.message ? err.message : 'Amal bajarilmadi.', 'error');
+          }
+        });
+    });
+  }
+
   function initShellUi() {
     const navbar = document.getElementById('navbar');
     const scrollTopBtn = document.getElementById('scroll-top');
@@ -1442,16 +1771,6 @@
       setTimeout(function () { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
     }
 
-    function escChatHtml(s) {
-      return String(s ?? '').replace(/[&<>"']/g, function (ch) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] || ch;
-      });
-    }
-
-    function escAttr(s) {
-      return String(s ?? '').replace(/"/g, '&quot;');
-    }
-
     function renderMsg(m) {
       var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '') + (m.is_super_admin ? ' is-super-admin' : '');
       var badge = '';
@@ -1460,7 +1779,7 @@
       } else if (m.is_admin) {
         badge = '<span class="chat-msg-admin-badge">Admin</span>';
       }
-      var avatarCls = 'chat-msg-avatar' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
+      var avatarCls = 'chat-msg-avatar chat-msg-avatar-btn' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
       var avatarInner = m.avatar_url
         ? '<img src="' + escAttr(m.avatar_url) + '" alt="" class="chat-msg-avatar-img" loading="lazy" decoding="async" />'
         : escChatHtml(m.user_initial);
@@ -1473,7 +1792,9 @@
       }
       var actionsHtml = actions ? '<div class="chat-msg-actions">' + actions + '</div>' : '';
       return '<div class="' + cls + '" data-msg-id="' + m.id + '">'
-        + '<div class="' + avatarCls + '">' + avatarInner + '</div>'
+        + '<button type="button" class="' + avatarCls + '" data-user-preview-id="' + m.user_id + '" title="Profil" aria-label="Foydalanuvchi profili">'
+        + avatarInner
+        + '</button>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
         + '<span class="chat-msg-name">' + escChatHtml(m.user_name) + '</span>'
@@ -1701,12 +2022,14 @@
       }
     });
 
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && isOpen) closePanel();
-    });
+    chatPanelEscapeHandler = function () {
+      if (isOpen) closePanel();
+    };
   }
 
   moveGlobalModals();
+  initChatUserPreviewChrome();
+  initUserProfilePreview();
   initShellUi();
   initRevealAnimations();
   initPasswordToggles();
