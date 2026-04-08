@@ -7,6 +7,7 @@
   $profileCardStaffClass = match ($profileRoleKey) {
     'super_admin' => 'profile-card--super-admin',
     'admin' => 'profile-card--admin',
+    'moderator' => 'profile-card--moderator',
     default => '',
   };
 

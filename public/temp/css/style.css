@@ -4034,6 +4034,22 @@ body.modal-open {
   mix-blend-mode: soft-light;
 }
 
+/* Super admin comment matni ham ajralib turadi */
+.comment-card.comment-card--super-admin .comment-meta strong {
+  color: #9a3412;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.comment-card.comment-card--super-admin .comment-body p {
+  color: #7c2d12;
+  font-weight: 600;
+}
+
+.comment-card.comment-card--super-admin .comment-date {
+  color: #b45309;
+}
+
 /* Admin: super admin bilan bir xil g‘oya — ranglar ko‘k */
 .comment-card.comment-card--admin {
   position: relative;
@@ -4068,6 +4084,39 @@ body.modal-open {
   mix-blend-mode: soft-light;
 }
 
+.comment-card.comment-card--moderator {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(13, 148, 136, 0.5);
+  background: linear-gradient(
+    145deg,
+    rgba(240, 253, 250, 0.98) 0%,
+    var(--surface) 45%,
+    rgba(204, 251, 241, 0.94) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(13, 148, 136, 0.32),
+    0 8px 28px rgba(15, 118, 110, 0.16);
+  animation: comment-moderator-glow 2.4s ease-in-out infinite;
+}
+
+.comment-card.comment-card--moderator::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    transparent 40%,
+    rgba(45, 212, 191, 0.15) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: comment-super-fire-sheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
 @keyframes comment-admin-glow {
   0%,
   100% {
@@ -4081,6 +4130,22 @@ body.modal-open {
       0 0 0 2px rgba(96, 165, 250, 0.42),
       0 10px 36px rgba(37, 99, 235, 0.2);
     border-color: rgba(37, 99, 235, 0.52);
+  }
+}
+
+@keyframes comment-moderator-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(13, 148, 136, 0.38),
+      0 8px 26px rgba(15, 118, 110, 0.14);
+    border-color: rgba(20, 184, 166, 0.48);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(45, 212, 191, 0.42),
+      0 10px 36px rgba(13, 148, 136, 0.2);
+    border-color: rgba(13, 148, 136, 0.52);
   }
 }
 
@@ -4191,9 +4256,32 @@ body.modal-open {
 }
 
 .comment-role-badge.role-moderator {
-  color: #0f766e;
-  background: rgba(15, 118, 110, 0.12);
-  border-color: rgba(15, 118, 110, 0.28);
+  color: #fff;
+  border: none;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(
+    90deg,
+    #0f766e,
+    #0d9488,
+    #14b8a6,
+    #2dd4bf,
+    #5eead4,
+    #14b8a6,
+    #0f766e
+  );
+  background-size: 200% 100%;
+  animation: comment-moderator-badge-flow 2s linear infinite;
+}
+
+@keyframes comment-moderator-badge-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .comment-role-badge.role-teacher {
@@ -5821,6 +5909,19 @@ body {
   border-color: rgba(148, 163, 184, 0.25);
 }
 
+:root[data-theme='dark'] .comment-card.comment-card--super-admin .comment-meta strong {
+  color: #fdba74;
+  text-shadow: 0 0 14px rgba(251, 146, 60, 0.2);
+}
+
+:root[data-theme='dark'] .comment-card.comment-card--super-admin .comment-body p {
+  color: #fed7aa;
+}
+
+:root[data-theme='dark'] .comment-card.comment-card--super-admin .comment-date {
+  color: #fbbf24;
+}
+
 :root[data-theme='dark'] .comment-action-box summary,
 :root[data-theme='dark'] .comment-delete-btn,
 :root[data-theme='dark'] .comment-like,
@@ -6181,6 +6282,60 @@ body {
 .profile-main .profile-column-settings .signin-card.profile-card.profile-card--admin > * {
   position: relative;
   z-index: 1;
+}
+
+.profile-main .profile-column-settings .signin-card.profile-card.profile-card--moderator {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(13, 148, 136, 0.55);
+  background: linear-gradient(
+    145deg,
+    rgba(240, 253, 250, 0.98) 0%,
+    var(--surface) 45%,
+    rgba(204, 251, 241, 0.94) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(13, 148, 136, 0.35),
+    0 8px 28px rgba(15, 118, 110, 0.18);
+  animation: profile-moderator-glow 2.4s ease-in-out infinite;
+}
+
+.profile-main .profile-column-settings .signin-card.profile-card.profile-card--moderator::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    transparent 40%,
+    rgba(45, 212, 191, 0.12) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: comment-super-fire-sheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+.profile-main .profile-column-settings .signin-card.profile-card.profile-card--moderator > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes profile-moderator-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(13, 148, 136, 0.4),
+      0 8px 26px rgba(15, 118, 110, 0.14);
+    border-color: rgba(20, 184, 166, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(45, 212, 191, 0.5),
+      0 10px 36px rgba(13, 148, 136, 0.22);
+    border-color: rgba(13, 148, 136, 0.45);
+  }
 }
 
 .profile-activity-body {
