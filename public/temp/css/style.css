@@ -5655,6 +5655,187 @@ body {
   align-items: center;
 }
 
+/* Profil: imtihon natijalari statistika va kartalar */
+.profile-exam-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.profile-exam-stat-card {
+  text-align: center;
+  padding: 16px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.profile-exam-stat-num {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.profile-exam-stat-label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.profile-exam-stat--primary .profile-exam-stat-num { color: var(--primary-2); }
+.profile-exam-stat--success .profile-exam-stat-num { color: #16a34a; }
+.profile-exam-stat--danger .profile-exam-stat-num { color: #dc2626; }
+.profile-exam-stat--info .profile-exam-stat-num { color: #0ea5e9; }
+
+.profile-results-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.profile-exam-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-exam-result-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-exam-result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(13, 63, 120, 0.1);
+}
+
+.profile-exam-result-card.is-pass {
+  border-left: 4px solid #16a34a;
+}
+
+.profile-exam-result-card.is-fail {
+  border-left: 4px solid #dc2626;
+}
+
+.profile-exam-result-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+
+.profile-exam-result-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.profile-exam-result-date {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-exam-result-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-pass {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.badge-fail {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.profile-exam-result-bottom {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.profile-exam-result-metric {
+  text-align: center;
+  padding: 12px 8px;
+  background: var(--surface);
+}
+
+.profile-exam-result-metric-val {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.profile-exam-result-metric-val small {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.profile-exam-result-metric-label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .profile-exam-stat--success .profile-exam-stat-num { color: #4ade80; }
+:root[data-theme='dark'] .profile-exam-stat--danger .profile-exam-stat-num { color: #f87171; }
+:root[data-theme='dark'] .profile-exam-stat--info .profile-exam-stat-num { color: #38bdf8; }
+:root[data-theme='dark'] .badge-pass { background: rgba(22, 163, 74, 0.15); color: #4ade80; }
+:root[data-theme='dark'] .badge-fail { background: rgba(220, 38, 38, 0.15); color: #f87171; }
+
+@media (max-width: 640px) {
+  .profile-exam-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-exam-result-bottom {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-exam-result-top {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  .profile-exam-result-card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
 .profile-toolbar {
   margin-bottom: 20px;
   display: flex;

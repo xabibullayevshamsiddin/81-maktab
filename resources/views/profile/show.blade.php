@@ -313,16 +313,43 @@
           </section>
 
           @if(($examResults ?? collect())->isNotEmpty())
+            @php
+              $erTotal = $examResults->count();
+              $erPassed = $examResults->where('passed', true)->count();
+              $erFailed = $erTotal - $erPassed;
+              $erAvgScore = $examResults->avg('points_earned');
+              $erMaxScore = $examResults->max('points_earned');
+              $erPassRate = $erTotal > 0 ? round($erPassed / $erTotal * 100) : 0;
+            @endphp
             <section class="profile-activity-block reveal" id="exam-results-section">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-chart-column"></i> Mening natijalarim</h3>
-                  <p>Topshirgan imtihonlaringiz natijalari.</p>
+                  <p>Topshirgan imtihonlaringiz natijalari va statistikasi.</p>
                 </div>
-                <span class="profile-section-count">{{ $examResults->count() }} ta</span>
+                <span class="profile-section-count">{{ $erTotal }} ta</span>
               </div>
 
-              <div class="profile-results-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+              <div class="profile-exam-stats">
+                <div class="profile-exam-stat-card profile-exam-stat--primary">
+                  <span class="profile-exam-stat-num">{{ $erTotal }}</span>
+                  <span class="profile-exam-stat-label">Jami imtihon</span>
+                </div>
+                <div class="profile-exam-stat-card profile-exam-stat--success">
+                  <span class="profile-exam-stat-num">{{ $erPassed }}</span>
+                  <span class="profile-exam-stat-label">O'tdi</span>
+                </div>
+                <div class="profile-exam-stat-card profile-exam-stat--danger">
+                  <span class="profile-exam-stat-num">{{ $erFailed }}</span>
+                  <span class="profile-exam-stat-label">Yiqildi</span>
+                </div>
+                <div class="profile-exam-stat-card profile-exam-stat--info">
+                  <span class="profile-exam-stat-num">{{ $erPassRate }}%</span>
+                  <span class="profile-exam-stat-label">O'tish darajasi</span>
+                </div>
+              </div>
+
+              <div class="profile-results-actions">
                 <button type="button" class="btn btn-sm btn-outline" onclick="window.print()">
                   <i class="fa-solid fa-print"></i> Chop etish
                 </button>
@@ -331,41 +358,46 @@
                 </a>
               </div>
 
-              <div class="table-wrapper table-responsive" id="exam-results-table">
-                <table class="table profile-results-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Imtihon</th>
-                      <th>Ball</th>
-                      <th>Natija</th>
-                      <th>To'g'ri</th>
-                      <th>Holat</th>
-                      <th>Sana</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @foreach($examResults as $i => $er)
-                      <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td>{{ $er->exam->title ?? '-' }}</td>
-                        <td>{{ $er->points_earned ?? '-' }} / {{ $er->points_max ?? '-' }}</td>
-                        <td>
-                          @if($er->passed === null)
-                            <span style="color:var(--muted);">—</span>
-                          @elseif($er->passed)
-                            <span style="color:#16a34a;font-weight:700;">O'tdi</span>
-                          @else
-                            <span style="color:#b91c1c;font-weight:700;">Yiqildi</span>
-                          @endif
-                        </td>
-                        <td>{{ $er->score }} / {{ $er->total_questions }}</td>
-                        <td>{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</td>
-                        <td style="white-space:nowrap;font-size:13px;">{{ $er->submitted_at?->format('d.m.Y H:i') ?? '-' }}</td>
-                      </tr>
-                    @endforeach
-                  </tbody>
-                </table>
+              <div class="profile-exam-results-list" id="exam-results-table">
+                @foreach($examResults as $er)
+                  <div class="profile-exam-result-card {{ $er->passed ? 'is-pass' : 'is-fail' }}">
+                    <div class="profile-exam-result-top">
+                      <div class="profile-exam-result-info">
+                        <h4 class="profile-exam-result-title">{{ $er->exam->title ?? '-' }}</h4>
+                        <span class="profile-exam-result-date">
+                          <i class="fa-regular fa-calendar"></i>
+                          {{ $er->submitted_at?->format('d.m.Y H:i') ?? '-' }}
+                        </span>
+                      </div>
+                      <div class="profile-exam-result-badge {{ $er->passed ? 'badge-pass' : 'badge-fail' }}">
+                        @if($er->passed)
+                          <i class="fa-solid fa-circle-check"></i> O'tdi
+                        @else
+                          <i class="fa-solid fa-circle-xmark"></i> Yiqildi
+                        @endif
+                      </div>
+                    </div>
+                    <div class="profile-exam-result-bottom">
+                      <div class="profile-exam-result-metric">
+                        <span class="profile-exam-result-metric-val">{{ $er->points_earned ?? 0 }}<small>/{{ $er->points_max ?? 0 }}</small></span>
+                        <span class="profile-exam-result-metric-label">Ball</span>
+                      </div>
+                      <div class="profile-exam-result-metric">
+                        <span class="profile-exam-result-metric-val">{{ $er->score }}<small>/{{ $er->total_questions }}</small></span>
+                        <span class="profile-exam-result-metric-label">To'g'ri</span>
+                      </div>
+                      <div class="profile-exam-result-metric">
+                        @php $pct = $er->points_max > 0 ? round($er->points_earned / $er->points_max * 100) : 0; @endphp
+                        <span class="profile-exam-result-metric-val">{{ $pct }}%</span>
+                        <span class="profile-exam-result-metric-label">Foiz</span>
+                      </div>
+                      <div class="profile-exam-result-metric">
+                        <span class="profile-exam-result-metric-val" style="font-size:12px;">{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</span>
+                        <span class="profile-exam-result-metric-label">Holat</span>
+                      </div>
+                    </div>
+                  </div>
+                @endforeach
               </div>
             </section>
           @endif
