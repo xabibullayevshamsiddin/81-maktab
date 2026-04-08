@@ -112,13 +112,13 @@ class TeacherCommentController extends Controller
             return response()->json([
                 'ok' => true,
                 'message' => "Izoh o'chirildi.",
-                'toast_type' => 'error',
+                'toast_type' => 'success',
             ]);
         }
 
         return back()
             ->with('success', "Izoh o'chirildi.")
-            ->with('toast_type', 'error');
+            ->with('toast_type', 'success');
     }
 
     public function toggleCommentLike(Request $request, TeacherComment $comment)

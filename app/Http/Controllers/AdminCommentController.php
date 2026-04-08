@@ -122,7 +122,7 @@ class AdminCommentController extends Controller
         return redirect()
             ->route('admin.comments.index', ['type' => $type])
             ->with('success', 'Izoh o‘chirildi.')
-            ->with('toast_type', 'error');
+            ->with('toast_type', 'success');
     }
 
     public function blockUser(User $user)
