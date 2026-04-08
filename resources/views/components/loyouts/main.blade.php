@@ -190,7 +190,7 @@
                 </div>
               @else
                 <div class="mobile-nav-user">
-                  <span class="mobile-nav-user-name">{{ $authUser->name }}</span>
+                  <span class="mobile-nav-user-name">{{ $authUser->first_name ?: $authUser->name }}</span>
                   <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
                 </div>
 
@@ -235,7 +235,7 @@
             </button>
 
             @auth
-              <p class="header-user-name">{{ $authUser->name }}</p>
+              <p class="header-user-name">{{ $authUser->first_name ?: $authUser->name }}</p>
             @endauth
 
             @guest
