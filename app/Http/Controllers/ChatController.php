@@ -31,6 +31,7 @@ class ChatController extends Controller
         $data = $messages->map(function (ChatMessage $m) use ($currentUserId) {
             $user = $m->user;
             $role = $user?->roleRelation?->name ?? 'user';
+            $isSuperAdmin = $role === 'super_admin';
             $isAdmin = in_array($role, ['super_admin', 'admin'], true);
 
             return [
@@ -38,6 +39,7 @@ class ChatController extends Controller
                 'body' => e($m->body),
                 'is_mine' => (int) $m->user_id === $currentUserId,
                 'is_admin' => $isAdmin,
+                'is_super_admin' => $isSuperAdmin,
                 'user_name' => $user->first_name ?: $user->name ?? '?',
                 'user_initial' => mb_strtoupper(mb_substr(trim($user->first_name ?: $user->name ?? '?'), 0, 1)),
                 'time' => $m->created_at?->format('H:i'),

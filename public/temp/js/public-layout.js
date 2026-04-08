@@ -1380,14 +1380,20 @@
     }
 
     function renderMsg(m) {
-      var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '');
-      var adminBadge = m.is_admin ? '<span class="chat-msg-admin-badge">Admin</span>' : '';
+      var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '') + (m.is_super_admin ? ' is-super-admin' : '');
+      var badge = '';
+      if (m.is_super_admin) {
+        badge = '<span class="chat-msg-super-badge"><i class="fa-solid fa-crown"></i> Super Admin</span>';
+      } else if (m.is_admin) {
+        badge = '<span class="chat-msg-admin-badge">Admin</span>';
+      }
+      var avatarCls = 'chat-msg-avatar' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
       return '<div class="' + cls + '">'
-        + '<div class="chat-msg-avatar">' + m.user_initial + '</div>'
+        + '<div class="' + avatarCls + '">' + m.user_initial + '</div>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
         + '<span class="chat-msg-name">' + m.user_name + '</span>'
-        + adminBadge
+        + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + '</div>'
         + '<div class="chat-msg-text">' + m.body + '</div>'

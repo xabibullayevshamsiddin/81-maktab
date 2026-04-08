@@ -1008,6 +1008,72 @@ section {
   text-transform: uppercase;
 }
 
+.chat-msg-super-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: superBadgeGlow 2s ease-in-out infinite alternate;
+}
+
+.chat-msg-super-badge i {
+  font-size: 8px;
+}
+
+@keyframes superBadgeGlow {
+  from { box-shadow: 0 0 4px rgba(245, 158, 11, 0.3); }
+  to { box-shadow: 0 0 12px rgba(245, 158, 11, 0.6); }
+}
+
+.chat-msg.is-super-admin .chat-msg-avatar--super {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  animation: superAvatarPulse 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes superAvatarPulse {
+  from { box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
+  to { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.4), 0 0 12px rgba(245, 158, 11, 0.15); }
+}
+
+.chat-msg.is-super-admin .chat-msg-name {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+}
+
+.chat-msg.is-super-admin:not(.is-mine) .chat-msg-text {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(249, 115, 22, 0.06));
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.chat-msg.is-super-admin.is-mine .chat-msg-text {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  color: #fff;
+}
+
+:root[data-theme='dark'] .chat-msg.is-super-admin:not(.is-mine) .chat-msg-text {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(249, 115, 22, 0.08));
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+:root[data-theme='dark'] .chat-msg.is-super-admin .chat-msg-name {
+  background: linear-gradient(135deg, #fbbf24, #fb923c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .chat-msg-time { font-size: 10px; color: var(--muted); margin-left: auto; }
 
 .chat-msg-text {
