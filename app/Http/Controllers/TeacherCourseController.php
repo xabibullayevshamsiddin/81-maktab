@@ -372,12 +372,28 @@ class TeacherCourseController extends Controller
     private function sendPublishCode(string $email, Course $course, string $code): void
     {
         try {
-            Mail::raw(
-                "Kursni tasdiqlash kodi: {$code}\n\nKurs: {$course->title}\nKod 15 daqiqa amal qiladi.",
-                static function ($message) use ($email) {
-                    $message->to($email)->subject("Kurs tasdiqlash kodi");
-                }
-            );
+            $html = '
+            <div style="background:#f3f6fb;padding:24px 12px;font-family:Arial,sans-serif;">
+              <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
+                <div style="background:linear-gradient(135deg,#0ea5e9,#2563eb);padding:18px 20px;color:#fff;">
+                  <h1 style="margin:0;font-size:20px;line-height:1.3;">81-maktab</h1>
+                  <p style="margin:6px 0 0;font-size:13px;opacity:.95;">Kurs tasdiqlash</p>
+                </div>
+                <div style="padding:22px 20px;color:#111827;">
+                  <h2 style="margin:0 0 10px;font-size:18px;">Kursni tasdiqlang</h2>
+                  <p style="margin:0 0 6px;color:#4b5563;font-size:14px;">Kurs: <strong>'.e($course->title).'</strong></p>
+                  <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Quyidagi 6 xonali kodni kiriting:</p>
+                  <div style="text-align:center;margin:18px 0 16px;">
+                    <span style="display:inline-block;letter-spacing:6px;font-weight:700;font-size:30px;padding:12px 18px;border-radius:10px;background:#eef2ff;color:#1d4ed8;">'.$code.'</span>
+                  </div>
+                  <p style="margin:0;color:#dc2626;font-size:13px;font-weight:600;">Kod 15 daqiqa amal qiladi.</p>
+                </div>
+              </div>
+            </div>';
+
+            Mail::html($html, static function ($message) use ($email) {
+                $message->to($email)->subject("Kurs tasdiqlash kodi");
+            });
         } catch (\Throwable $e) {
             Log::warning('Course publish code email failed', [
                 'email' => $email,
