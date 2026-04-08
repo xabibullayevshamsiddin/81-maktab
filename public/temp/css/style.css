@@ -1020,9 +1020,9 @@ body.chat-fullscreen-active::before {
 
 .chat-rules {
   margin: 0;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--border);
-  background: rgba(21, 101, 192, 0.06);
+  background: transparent;
   font-size: 12px;
   line-height: 1.45;
   color: var(--muted);
@@ -1031,9 +1031,14 @@ body.chat-fullscreen-active::before {
 
 .chat-rules summary {
   cursor: pointer;
-  font-weight: 700;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--muted);
   list-style: none;
+  font-size: 12px;
+}
+
+.chat-rules summary:hover {
+  color: var(--text);
 }
 
 .chat-rules summary::-webkit-details-marker {
@@ -1060,7 +1065,7 @@ body.chat-fullscreen-active::before {
 }
 
 :root[data-theme='dark'] .chat-rules {
-  background: rgba(99, 102, 241, 0.12);
+  background: transparent;
 }
 
 .chat-panel-title {
@@ -1069,21 +1074,6 @@ body.chat-fullscreen-active::before {
   gap: 10px;
   font-size: 15px;
   font-weight: 700;
-}
-
-.chat-panel-title-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  line-height: 1.2;
-}
-
-.chat-panel-title-hint {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  opacity: 0.88;
 }
 
 .chat-panel-actions { display: flex; gap: 6px; }
