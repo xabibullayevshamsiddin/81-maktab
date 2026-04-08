@@ -442,15 +442,46 @@
     function showToast(message, type = 'success') {
       if (!message) return;
 
-      const toast = document.createElement('div');
-      toast.className = `toast toast-${type}`;
-      toast.textContent = message;
+      var iconMap = {
+        success: 'fa-solid fa-circle-check',
+        error: 'fa-solid fa-circle-exclamation',
+        warning: 'fa-solid fa-triangle-exclamation',
+      };
+      var titleMap = {
+        success: 'Muvaffaqiyatli',
+        error: 'Xatolik',
+        warning: 'Ogohlantirish',
+      };
+
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.style.setProperty('--toast-duration', toastTimerMs + 'ms');
+      toast.innerHTML =
+        '<div class="toast-body">' +
+          '<div class="toast-icon"><i class="' + (iconMap[type] || iconMap.success) + '"></i></div>' +
+          '<div class="toast-content">' +
+            '<p class="toast-title">' + (titleMap[type] || titleMap.success) + '</p>' +
+            '<p class="toast-msg">' + message + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="toast-close" aria-label="Yopish"><i class="fa-solid fa-xmark"></i></button>' +
+        '<div class="toast-progress"><div class="toast-progress-bar"></div></div>';
+
       container.appendChild(toast);
 
-      setTimeout(() => {
+      var dismissToast = function () {
+        if (toast.classList.contains('toast-out')) return;
         toast.classList.add('toast-out');
-        setTimeout(() => toast.remove(), 250);
-      }, toastTimerMs);
+        setTimeout(function () { toast.remove(); }, 380);
+      };
+
+      toast.querySelector('.toast-close').addEventListener('click', function (e) {
+        e.stopPropagation();
+        dismissToast();
+      });
+      toast.addEventListener('click', dismissToast);
+
+      setTimeout(dismissToast, toastTimerMs);
     }
 
     async function copyTextToClipboard(text) {
