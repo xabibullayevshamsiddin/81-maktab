@@ -122,12 +122,16 @@
                 @enderror
               </div>
             </div>
-            <div class="register-field" style="margin-top:4px;">
-              <label class="register-parent-toggle" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text);">
-                <input type="checkbox" id="reg-is-parent" name="is_parent" value="1" {{ old('is_parent') ? 'checked' : '' }} style="width:18px;height:18px;accent-color:var(--primary-2);">
-                <span>Men ota-onaman</span>
+            <div class="register-parent-wrap">
+              <label class="register-parent-toggle" for="reg-is-parent">
+                <input type="checkbox" id="reg-is-parent" name="is_parent" value="1" {{ old('is_parent') ? 'checked' : '' }}>
+                <span class="register-parent-switch"></span>
+                <span class="register-parent-label">
+                  <i class="fa-solid fa-user-shield"></i>
+                  Men ota-onaman
+                </span>
               </label>
-              <p class="register-field-note" style="margin-top:6px;font-size:12px;color:var(--muted);">Agar siz ota-ona bo'lsangiz, sinf tanlash shart emas.</p>
+              <p class="register-field-note">Agar siz ota-ona bo'lsangiz, sinf tanlash shart emas.</p>
             </div>
             <script>
               (function() {
