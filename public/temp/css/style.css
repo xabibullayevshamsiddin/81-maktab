@@ -4216,21 +4216,41 @@ body.modal-open {
   border-left: 3px solid rgba(21, 101, 192, 0.35);
 }
 
-/* Super Admin: alovga o‘xshash yumshoq animatsiya */
+/* Super Admin: alov + yaltirash (harakatlanuvchi nur) */
 .comment-card.comment-card--super-admin {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   border-color: rgba(251, 146, 60, 0.55);
-  background: linear-gradient(
-    145deg,
-    rgba(255, 247, 237, 0.98) 0%,
-    var(--surface) 45%,
-    rgba(255, 251, 235, 0.92) 100%
-  );
+  background-color: var(--surface);
+  background-image: linear-gradient(
+      145deg,
+      rgba(255, 247, 237, 0.98) 0%,
+      var(--surface) 45%,
+      rgba(255, 251, 235, 0.92) 100%
+    ),
+    linear-gradient(
+      118deg,
+      rgba(251, 146, 60, 0.12) 0%,
+      rgba(255, 255, 255, 0.22) 22%,
+      rgba(251, 191, 36, 0.28) 40%,
+      rgba(255, 255, 255, 0.18) 58%,
+      rgba(249, 115, 22, 0.15) 78%,
+      rgba(254, 215, 170, 0.2) 100%
+    );
+  background-size: 100% 100%, 220% 220%;
+  background-blend-mode: normal, soft-light;
+  animation:
+    comment-super-fire-glow 2.4s ease-in-out infinite,
+    comment-super-bg-shimmer 5.5s ease-in-out infinite;
   box-shadow:
     0 0 0 1px rgba(251, 146, 60, 0.35),
     0 8px 28px rgba(234, 88, 12, 0.18);
-  animation: comment-super-fire-glow 2.4s ease-in-out infinite;
+}
+
+.comment-card.comment-card--super-admin > * {
+  position: relative;
+  z-index: 2;
 }
 
 .comment-card.comment-card--super-admin::after {
@@ -4239,15 +4259,30 @@ body.modal-open {
   inset: 0;
   border-radius: inherit;
   background: linear-gradient(
-    110deg,
-    transparent 40%,
-    rgba(251, 191, 36, 0.1) 50%,
-    transparent 60%
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 36%,
+    rgba(255, 255, 255, 0.42) 47%,
+    rgba(254, 243, 199, 0.75) 50%,
+    rgba(255, 255, 255, 0.38) 53%,
+    transparent 64%,
+    transparent 100%
   );
-  background-size: 200% 100%;
-  animation: comment-super-fire-sheen 2.8s ease-in-out infinite;
+  background-size: 260% 100%;
+  animation: comment-super-fire-sheen 2.1s ease-in-out infinite;
   pointer-events: none;
-  mix-blend-mode: soft-light;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+@keyframes comment-super-bg-shimmer {
+  0%,
+  100% {
+    background-position: 0% 0%, 12% 8%;
+  }
+  50% {
+    background-position: 0% 0%, 88% 92%;
+  }
 }
 
 /* Super admin comment matni ham ajralib turadi */
@@ -4370,12 +4405,14 @@ body.modal-open {
   100% {
     box-shadow:
       0 0 0 1px rgba(251, 146, 60, 0.4),
-      0 8px 26px rgba(234, 88, 12, 0.14);
+      0 8px 26px rgba(234, 88, 12, 0.14),
+      0 0 18px rgba(251, 191, 36, 0.12);
     border-color: rgba(251, 146, 60, 0.5);
   }
   50% {
     box-shadow:
-      0 0 0 2px rgba(251, 191, 36, 0.5),
+      0 0 0 2px rgba(251, 191, 36, 0.55),
+      0 0 24px rgba(253, 186, 116, 0.35),
       0 10px 36px rgba(239, 68, 68, 0.22);
     border-color: rgba(239, 68, 68, 0.45);
   }
@@ -4383,10 +4420,17 @@ body.modal-open {
 
 @keyframes comment-super-fire-sheen {
   0% {
-    background-position: 100% 0;
+    background-position: 120% 0;
   }
   100% {
-    background-position: -100% 0;
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-card.comment-card--super-admin,
+  .comment-card.comment-card--super-admin::after {
+    animation: none !important;
   }
 }
 
