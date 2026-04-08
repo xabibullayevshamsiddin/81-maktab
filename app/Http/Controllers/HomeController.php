@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Http\Request;
 use App\Models\ContactMessage;
 use App\Models\Post;
@@ -74,6 +76,10 @@ class HomeController extends Controller
             : null;
 
         $postKindLabels = config('post_kinds', []);
+
+        SEOMeta::setTitle('Bosh sahifa');
+        SEOMeta::setDescription('81-IDUM maktab sayti — yangiliklar, o\'qituvchilar, kurslar va imtihonlar.');
+        OpenGraph::setUrl(route('home'));
 
         return view('home', compact('posts', 'likedPostIds', 'featuredTeacher', 'postKindLabels'));
     }

@@ -73,6 +73,8 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'phone',
         'grade',
@@ -81,6 +83,23 @@ class User extends Authenticatable
         'role_id',
         'is_active',
     ];
+
+    public static function nameValidationRules(bool $required = true): array
+    {
+        $base = ['string', 'max:120', 'regex:/^[\p{L}\s\'\-\.]+$/u'];
+
+        return $required ? array_merge(['required'], $base) : array_merge(['nullable'], $base);
+    }
+
+    public static function nameValidationMessage(): string
+    {
+        return 'Faqat harflar, probel, apostrof va defis ishlatilishi mumkin.';
+    }
+
+    public function buildNameFromParts(): string
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
 
     protected $hidden = [
         'password',

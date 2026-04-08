@@ -4,6 +4,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\TeacherCommentController;
@@ -97,6 +98,7 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
     Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
     Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');
     Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->name('profile.email.resend');
@@ -120,6 +122,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('profile/exams/{exam}/questions/{question}', [TeacherExamController::class, 'questionDestroy'])->name('profile.exams.questions.destroy');
 
         Route::get('profile/exams/results', [TeacherExamController::class, 'results'])->name('profile.exams.results');
+        Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->name('profile.exams.results.export');
         Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])->name('profile.exams.results.show');
         Route::post('profile/exams/results/{result}/grade/{answer}', [TeacherExamController::class, 'gradeTextAnswer'])->name('profile.exams.grade');
     });
@@ -208,6 +211,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
         Route::put('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'update'])->name('admin.exams.questions.update');
         Route::delete('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('admin.exams.questions.destroy');
         Route::get('exam-results', [AdminExamController::class, 'results'])->name('admin.exams.results');
+        Route::get('exam-results/export', [AdminExamController::class, 'exportResults'])->name('admin.exams.results.export');
         Route::get('exam-results/{result}', [AdminExamController::class, 'showResult'])->name('admin.exams.results.show');
         Route::post('exam-results/{result}/grade/{answer}', [AdminExamController::class, 'gradeTextAnswer'])->name('admin.exams.results.grade');
         Route::delete('exam-results/{result}', [AdminExamController::class, 'destroyResult'])->name('admin.exams.results.destroy');
@@ -228,6 +232,11 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
 
     Route::middleware('role:super_admin,admin')->group(function () {
         Route::get('course-enrollments', [AdminCourseEnrollmentController::class, 'indexAll'])->name('admin.course-enrollments.index');
+    });
+
+    Route::middleware('role:super_admin')->group(function () {
+        Route::get('settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
+        Route::put('settings', [AdminSettingsController::class, 'update'])->name('admin.settings.update');
     });
 });
 

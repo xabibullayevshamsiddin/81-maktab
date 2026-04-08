@@ -29,20 +29,37 @@
                 <span>{{ $errors->first() }}</span>
               </div>
             @endif
-            <div class="register-field">
-              <label for="reg-name">{{ __('auth_pages.register.name') }}</label>
-              <input
-                type="text"
-                id="reg-name"
-                name="name"
-                value="{{ old('name') }}"
-                placeholder="{{ __('auth_pages.register.name_placeholder') }}"
-                required
-                autocomplete="name"
-              />
-              @error('name')
-                <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
-              @enderror
+            <div class="register-field-grid">
+              <div class="register-field">
+                <label for="reg-first-name">Ism</label>
+                <input
+                  type="text"
+                  id="reg-first-name"
+                  name="first_name"
+                  value="{{ old('first_name') }}"
+                  placeholder="Ismingiz"
+                  required
+                  autocomplete="given-name"
+                />
+                @error('first_name')
+                  <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
+                @enderror
+              </div>
+              <div class="register-field">
+                <label for="reg-last-name">Familiya</label>
+                <input
+                  type="text"
+                  id="reg-last-name"
+                  name="last_name"
+                  value="{{ old('last_name') }}"
+                  placeholder="Familiyangiz"
+                  required
+                  autocomplete="family-name"
+                />
+                @error('last_name')
+                  <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
+                @enderror
+              </div>
             </div>
             <div class="register-field">
               <label for="reg-email">{{ __('auth_pages.register.email') }}</label>

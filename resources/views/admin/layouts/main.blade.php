@@ -181,6 +181,15 @@
                 <span class="text">Foydalanuvchilar</span>
               </a>
             </li>
+
+            @if($sidebarUser->isSuperAdmin())
+              <li class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.settings.index') }}">
+                  <span class="icon"><i class="mdi mdi-cog-outline"></i></span>
+                  <span class="text">Sozlamalar</span>
+                </a>
+              </li>
+            @endif
           @endif
 
           <li class="divider section-divider"><hr></li>

@@ -9,7 +9,7 @@
     <div class="container">
       <div class="sow-hero-content reveal">
         <span class="badge">{{ __('public.teachers.badge') }}</span>
-        <h1>{{ __('public.teachers.detail_title', ['name' => $teacher->full_name]) }}</h1>
+        <h1 class="js-split-text">{{ __('public.teachers.detail_title', ['name' => $teacher->full_name]) }}</h1>
         <p>{{ __('public.teachers.detail_text') }}</p>
         <a href="#teachers-detail" class="btn">
           {{ __('public.teachers.detail_jump') }}
@@ -24,7 +24,7 @@
       <div class="detail-grid">
         <div class="detail-content reveal">
           <span class="eyebrow">{{ __('public.teachers.detail_badge') }}</span>
-          <h2>{{ $teacherSubject }}</h2>
+          <h2 class="js-split-text">{{ $teacherSubject }}</h2>
           <p>
             {{ $teacherBio ?: __('public.teachers.detail_fallback') }}
           </p>
@@ -110,7 +110,7 @@
     >
 
       <div class="section-head">
-        <h2>{{ __('public.teachers.comments_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.teachers.comments_title') }}</h2>
         <p>{{ __('public.teachers.comments_text') }}</p>
       </div>
 

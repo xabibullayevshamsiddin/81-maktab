@@ -15,9 +15,7 @@ class PublicTeacherController extends Controller
 {
     public function index(Request $request)
     {
-        $page = max(1, (int) $request->query('page', 1));
-
-        $teachers = Cache::remember(cache_key_public_teachers_page($page), now()->addMinutes(10), function () use ($request) {
+        $teachers = Cache::remember('public_teachers_all', now()->addMinutes(10), function () {
             return Teacher::query()
                 ->select([
                     'id',
@@ -39,13 +37,12 @@ class PublicTeacherController extends Controller
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('full_name')
-                ->paginate(3)
-                ->appends($request->query());
+                ->get();
         });
 
         $likedTeacherIds = collect();
         if (auth()->check()) {
-            $ids = $teachers->getCollection()->pluck('id');
+            $ids = $teachers->pluck('id');
             if ($ids->isNotEmpty()) {
                 $likedTeacherIds = TeacherLike::query()
                     ->where('user_id', auth()->id())

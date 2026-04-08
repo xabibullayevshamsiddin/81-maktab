@@ -23,13 +23,39 @@
             @endforeach
           </select>
         </form>
+
+        <form method="get" action="{{ route('admin.exams.results') }}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          @if(request()->filled('q'))
+            <input type="hidden" name="q" value="{{ request('q') }}">
+          @endif
+          @if($selectedExamId)
+            <input type="hidden" name="exam_id" value="{{ $selectedExamId }}">
+          @endif
+          <div>
+            <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Boshlanish</label>
+            <input type="date" name="date_from" class="form-control" style="padding:9px 12px;border-radius:8px;border:1px solid #e2e8f0;" value="{{ request('date_from') }}" onchange="this.form.submit()" />
+          </div>
+          <div>
+            <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Tugash</label>
+            <input type="date" name="date_to" class="form-control" style="padding:9px 12px;border-radius:8px;border:1px solid #e2e8f0;" value="{{ request('date_to') }}" onchange="this.form.submit()" />
+          </div>
+        </form>
       </div>
 
       @include('admin.partials.search-bar', [
         'placeholder' => 'Ism, email yoki telefon bo‘yicha...',
         'action' => route('admin.exams.results'),
-        'hidden' => array_filter(['exam_id' => $selectedExamId]),
+        'hidden' => array_filter(['exam_id' => $selectedExamId, 'date_from' => request('date_from'), 'date_to' => request('date_to')]),
       ])
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+        <a href="{{ route('admin.exams.results.export', array_filter(['exam_id' => $selectedExamId, 'date_from' => request('date_from'), 'date_to' => request('date_to')])) }}" class="main-btn primary-btn btn-hover btn-sm">
+          <i class="mdi mdi-file-excel-outline" style="margin-right:4px;"></i> Excel (CSV) export
+        </a>
+        <button type="button" class="main-btn light-btn btn-hover btn-sm" onclick="window.print()">
+          <i class="mdi mdi-printer-outline" style="margin-right:4px;"></i> Chop etish
+        </button>
+      </div>
 
       <div class="table-wrapper table-responsive">
         <table class="table">

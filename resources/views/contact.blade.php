@@ -3,7 +3,7 @@
     <div class="container">
       <div class="news-hero-content reveal">
           <span class="badge">81-IDUM Aloqa</span>
-          <h1>Biz bilan <strong>bog'laning</strong></h1>
+          <h1 class="js-split-text">Biz bilan <strong>bog'laning</strong></h1>
           <p>
             Savolingiz, taklifingiz yoki murojaatingiz bo'lsa, quyidagi forma orqali bizga yozing.
             Parolni tiklash yoki maktabga oid boshqa masalalarda ham shu yerda murojaat qoldirishingiz mumkin.

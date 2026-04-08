@@ -15,9 +15,9 @@
     </div>
 
     <div class="results-filter-bar">
-        <form method="get" action="{{ route('profile.exams.results') }}" class="d-flex flex-wrap gap-3 align-items-end" style="flex: 1;">
-            <div style="flex: 1; min-width: 200px;">
-                <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Imtihonni tanlang</label>
+        <form method="get" action="{{ route('profile.exams.results') }}" class="d-flex flex-wrap gap-3 align-items-end" style="flex: 1;" id="results-filter-form">
+            <div style="flex: 1; min-width: 180px;">
+                <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Imtihon</label>
                 <select name="exam_id" class="form-control" onchange="this.form.submit()" style="border-radius: 12px;">
                     <option value="">— Barcha imtihonlar —</option>
                     @foreach($exams as $ex)
@@ -27,7 +27,17 @@
                     @endforeach
                 </select>
             </div>
-            
+
+            <div style="min-width: 140px;">
+                <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Boshlanish</label>
+                <input type="date" name="date_from" class="form-control" style="border-radius: 12px;" value="{{ request('date_from') }}" onchange="this.form.submit()" />
+            </div>
+
+            <div style="min-width: 140px;">
+                <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Tugash</label>
+                <input type="date" name="date_to" class="form-control" style="border-radius: 12px;" value="{{ request('date_to') }}" onchange="this.form.submit()" />
+            </div>
+
             @if(request()->filled('q'))
                 <input type="hidden" name="q" value="{{ request('q') }}">
             @endif
@@ -37,9 +47,25 @@
             @include('admin.partials.search-bar', [
                 'placeholder' => 'Ism, email yoki telefon...',
                 'action' => route('profile.exams.results'),
-                'hidden' => array_filter(['exam_id' => $selectedExamId]),
+                'hidden' => array_filter(['exam_id' => $selectedExamId, 'date_from' => request('date_from'), 'date_to' => request('date_to')]),
             ])
         </div>
+    </div>
+
+    @php
+      $exportParams = array_filter([
+        'exam_id' => $selectedExamId,
+        'date_from' => request('date_from'),
+        'date_to' => request('date_to'),
+      ]);
+    @endphp
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+      <a href="{{ route('profile.exams.results.export', $exportParams) }}" class="btn btn-sm" style="gap:6px;">
+        <i class="fa-solid fa-file-csv"></i> Excel (CSV) export
+      </a>
+      <button type="button" class="btn btn-sm btn-outline" onclick="window.print()" style="gap:6px;">
+        <i class="fa-solid fa-print"></i> Chop etish
+      </button>
     </div>
 
     <div class="results-table-card">

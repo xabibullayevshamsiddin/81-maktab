@@ -6,7 +6,7 @@
           <i class="fa-solid fa-graduation-cap"></i>
           Onlayn imtihon
         </span>
-        <h1 class="exam-title">Mavjud imtihonlar</h1>
+        <h1 class="exam-title js-split-text">Mavjud imtihonlar</h1>
         <p class="exam-hero-lead">
           Har bir imtihonni faqat <strong>bir marta</strong> topshirishingiz mumkin. Vaqtingiz tugagach, javoblaringiz avtomatik yuboriladi.
         </p>

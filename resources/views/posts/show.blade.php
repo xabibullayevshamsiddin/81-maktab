@@ -8,7 +8,7 @@
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
-        <h1>{{ $postTitle }}</h1>
+        <h1 class="js-split-text">{{ $postTitle }}</h1>
         @if($post->category)
           <p>{{ $postCategory }}</p>
         @endif

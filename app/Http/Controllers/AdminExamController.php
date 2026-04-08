@@ -8,6 +8,7 @@ use App\Models\Result;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -166,12 +167,88 @@ class AdminExamController extends Controller
             });
         }
 
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        if ($dateFrom) {
+            $query->whereDate('submitted_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('submitted_at', '<=', $dateTo);
+        }
+
         $results = $query
             ->latest('id')
             ->paginate(40)
             ->withQueryString();
 
         return view('admin.exams.results', compact('results', 'exams', 'selectedExamId'));
+    }
+
+    public function exportResults(Request $request)
+    {
+        $examId = $request->query('exam_id');
+        $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
+
+        $query = Result::query()
+            ->with(['exam:id,title', 'user:id,name,first_name,last_name'])
+            ->whereIn('status', ['submitted', 'expired']);
+
+        if ($selectedExamId) {
+            $query->where('exam_id', $selectedExamId);
+        }
+
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        if ($dateFrom) {
+            $query->whereDate('submitted_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('submitted_at', '<=', $dateTo);
+        }
+
+        $results = $query->latest('submitted_at')->get();
+
+        $examTitle = $selectedExamId
+            ? Exam::query()->whereKey($selectedExamId)->value('title') ?? 'imtihon'
+            : 'barcha_imtihonlar';
+
+        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($results, $selectedExamId) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            $cols = ['#', 'Ism familiya'];
+            if (! $selectedExamId) {
+                $cols[] = 'Imtihon';
+            }
+            $cols = array_merge($cols, ['Ball', 'Max ball', 'Natija', 'Sana']);
+            fputcsv($out, $cols);
+
+            foreach ($results as $i => $r) {
+                $row = [
+                    $i + 1,
+                    $r->user->name ?? '-',
+                ];
+                if (! $selectedExamId) {
+                    $row[] = $r->exam->title ?? '-';
+                }
+                $row[] = $r->points_earned ?? '-';
+                $row[] = $r->points_max ?? '-';
+                $row[] = $r->passed ? "O'tdi" : 'Yiqildi';
+                $row[] = $r->submitted_at?->format('d.m.Y H:i') ?? '-';
+                fputcsv($out, $row);
+            }
+
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function showResult(Result $result)

@@ -10,6 +10,7 @@ use App\Models\Result;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -364,6 +365,77 @@ class TeacherExamController extends Controller
     }
 
     // --- Results ---
+    public function exportResults(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user->canManageExams(), 403);
+
+        $examId = $request->query('exam_id');
+        $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
+
+        $query = Result::query()
+            ->with(['exam:id,title', 'user:id,name'])
+            ->whereIn('status', ['submitted', 'expired']);
+
+        if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
+            $query->whereHas('exam', fn ($q) => $q->where('created_by', $user->id));
+        }
+
+        if ($selectedExamId) {
+            $query->where('exam_id', $selectedExamId);
+        }
+
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        if ($dateFrom) {
+            $query->whereDate('submitted_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('submitted_at', '<=', $dateTo);
+        }
+
+        $results = $query->latest('submitted_at')->get();
+
+        $examTitle = $selectedExamId
+            ? Exam::query()->whereKey($selectedExamId)->value('title') ?? 'imtihon'
+            : 'barcha_imtihonlar';
+
+        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($results, $selectedExamId) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            $cols = ['#', 'Ism familiya'];
+            if (! $selectedExamId) {
+                $cols[] = 'Imtihon';
+            }
+            $cols = array_merge($cols, ['Ball', 'Max ball', 'Natija', 'Sana']);
+            fputcsv($out, $cols);
+
+            foreach ($results as $i => $r) {
+                $row = [$i + 1, $r->user->name ?? '-'];
+                if (! $selectedExamId) {
+                    $row[] = $r->exam->title ?? '-';
+                }
+                $row[] = $r->points_earned ?? '-';
+                $row[] = $r->points_max ?? '-';
+                $row[] = $r->passed ? "O'tdi" : 'Yiqildi';
+                $row[] = $r->submitted_at?->format('d.m.Y H:i') ?? '-';
+                fputcsv($out, $row);
+            }
+
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function results(Request $request)
     {
         $user = $request->user();
@@ -408,6 +480,15 @@ class TeacherExamController extends Controller
         $status = $request->query('status');
         if ($status && in_array($status, ['started', 'submitted', 'expired'])) {
             $query->where('status', $status);
+        }
+
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        if ($dateFrom) {
+            $query->whereDate('submitted_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('submitted_at', '<=', $dateTo);
         }
 
         $results = $query

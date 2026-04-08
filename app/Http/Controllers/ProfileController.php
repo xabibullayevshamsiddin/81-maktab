@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Exam;
 use App\Models\OneTimeCode;
+use App\Models\Result;
 use App\Models\PostLike;
 use App\Models\TeacherComment;
 use App\Models\TeacherLike;
@@ -103,6 +104,14 @@ class ProfileController extends Controller
                 ->get();
         }
 
+        $examResults = Result::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['submitted', 'expired'])
+            ->with('exam:id,title,total_points,passing_points')
+            ->latest('submitted_at')
+            ->limit(50)
+            ->get();
+
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
         $passwordChangeUnlocked = $this->hasConfirmedPasswordChange($request, (int) $user->id);
 
@@ -117,6 +126,7 @@ class ProfileController extends Controller
             'courseEnrollments',
             'canViewCourseEnrollments',
             'pendingTeacherEnrollments',
+            'examResults',
             'pendingEmail',
             'passwordChangeUnlocked'
         ));
@@ -126,20 +136,29 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        $nameMsg = User::nameValidationMessage();
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
+            'first_name' => User::nameValidationRules(),
+            'last_name' => User::nameValidationRules(),
             'phone' => uz_phone_rules(false),
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ], [
             'phone.regex' => uz_phone_validation_message(),
-            'avatar.image' => 'Profil rasmi rasm bo‘lishi kerak.',
+                        'first_name.required' => 'Ism kiritilishi shart.',
+            'first_name.regex' => $nameMsg,
+            'last_name.required' => 'Familiya kiritilishi shart.',
+            'last_name.regex' => $nameMsg,
+'avatar.image' => 'Profil rasmi rasm bo‘lishi kerak.',
             'avatar.mimes' => 'Profil rasmi JPG, PNG yoki WebP formatda bo‘lishi kerak.',
             'avatar.max' => 'Profil rasmi 3 MB dan oshmasligi kerak.',
         ]);
         $validated['phone'] = uz_phone_format($validated['phone'] ?? null);
 
         $payload = [
-            'name' => $validated['name'],
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
             'phone' => $validated['phone'] ?? null,
         ];
 
@@ -639,6 +658,48 @@ class ProfileController extends Controller
     private function clearPasswordChangeConfirmation(Request $request): void
     {
         $request->session()->forget('profile_password_change_confirmation');
+    }
+
+    public function exportResults(Request $request)
+    {
+        $user = $request->user();
+
+        $results = Result::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['submitted', 'expired'])
+            ->with('exam:id,title,total_points,passing_points')
+            ->latest('submitted_at')
+            ->get();
+
+        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($results) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana']);
+
+            foreach ($results as $r) {
+                fputcsv($out, [
+                    $r->exam->title ?? '-',
+                    $r->points_earned ?? '-',
+                    $r->points_max ?? '-',
+                    $r->passed ? "O'tdi" : 'Yiqildi',
+                    $r->score,
+                    $r->total_questions,
+                    $r->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan',
+                    $r->submitted_at?->format('d.m.Y H:i') ?? '-',
+                ]);
+            }
+
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     private function hasConfirmedPasswordChange(Request $request, int $userId): bool

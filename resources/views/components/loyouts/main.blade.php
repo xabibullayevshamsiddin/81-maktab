@@ -6,6 +6,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ $title }}</title>
+    {!! \Artesaos\SEOTools\Facades\SEOMeta::generate() !!}
+    {!! \Artesaos\SEOTools\Facades\OpenGraph::generate() !!}
+    @stack('seo')
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
@@ -54,6 +57,29 @@
 	    @endphp
 	    <div class="site-shell" data-locale-shell>
 	    @unless($isExamSessionRoute)
+	    @php
+	      $announcementActive = \App\Models\SiteSetting::get('announcement_active', '0') === '1';
+	      $announcementText = \App\Models\SiteSetting::get('announcement_text', '');
+	      $announcementType = \App\Models\SiteSetting::get('announcement_type', 'info');
+	    @endphp
+	    @if($announcementActive && filled($announcementText))
+	      <div class="global-announcement global-announcement--{{ $announcementType }}" id="global-announcement" role="alert">
+	        <div class="global-announcement-inner">
+	          <span class="global-announcement-icon">
+	            @switch($announcementType)
+	              @case('success') <i class="fa-solid fa-circle-check"></i> @break
+	              @case('warning') <i class="fa-solid fa-triangle-exclamation"></i> @break
+	              @case('danger') <i class="fa-solid fa-circle-exclamation"></i> @break
+	              @default <i class="fa-solid fa-bullhorn"></i>
+	            @endswitch
+	          </span>
+	          <p class="global-announcement-text">{{ $announcementText }}</p>
+	          <button type="button" class="global-announcement-close" aria-label="Yopish" onclick="this.closest('.global-announcement').remove()">
+	            <i class="fa-solid fa-xmark"></i>
+	          </button>
+	        </div>
+	      </div>
+	    @endif
 	    <header class="page-header">
 	      <div class="container">
 	        <div class="header-main header-main--offset" id="navbar">
@@ -223,15 +249,6 @@
 	    {{ $slot }}
 
 	    @unless($isExamSessionRoute)
-	    <button
-	      id="scroll-top"
-	      class="scroll-top"
-      type="button"
-      aria-label="Yuqoriga"
-    >
-      <i class="fa-solid fa-chevron-up"></i>
-    </button>
-
     <div id="image-lightbox" class="image-lightbox" aria-hidden="true">
       <button type="button" class="image-lightbox-close" aria-label="Rasmni yopish">
         <i class="fa-solid fa-xmark"></i>
@@ -321,6 +338,17 @@
     </footer>
 	    @endunless
 	    </div>
+
+    @unless($isExamSessionRoute)
+    <button
+      id="scroll-top"
+      class="scroll-top"
+      type="button"
+      aria-label="Yuqoriga"
+    >
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+    @endunless
 
     <div id="global-modal-root"></div>
 

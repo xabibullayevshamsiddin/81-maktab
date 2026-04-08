@@ -3,7 +3,7 @@
     <div class="container">
       <div class="news-hero-content reveal">
         <span class="badge">{{ __('public.calendar.badge') }}</span>
-        <h1><strong>{{ __('public.calendar.hero_title') }}</strong></h1>
+        <h1 class="js-split-text"><strong>{{ __('public.calendar.hero_title') }}</strong></h1>
         <p>{{ __('public.calendar.hero_text') }}</p>
       </div>
     </div>
@@ -26,7 +26,7 @@
         <div class="calendar-event-list">
           @foreach($grouped as $dateStr => $dayEvents)
             @php $d = \Carbon\Carbon::parse($dateStr); @endphp
-            <details class="profile-activity-block calendar-day-block calendar-day-dtls">
+            <details class="profile-activity-block calendar-day-block calendar-day-dtls reveal">
               <summary class="calendar-day-summary">
                 <span class="calendar-day-summary-inner">
                   <i class="fa-regular fa-calendar"></i>

@@ -21,6 +21,14 @@
       year.textContent = String(new Date().getFullYear());
     }
 
+    const getScrollThreshold = () => {
+      if (navbar) {
+        const rect = navbar.getBoundingClientRect();
+        return Math.max(80, (navbar.offsetHeight || 80) + 40);
+      }
+      return 120;
+    };
+
     const onScroll = () => {
       const scrollY = window.scrollY;
 
@@ -29,7 +37,7 @@
       }
 
       if (scrollTopBtn) {
-        scrollTopBtn.classList.toggle('show', scrollY > 320);
+        scrollTopBtn.classList.toggle('show', scrollY > getScrollThreshold());
       }
 
       const fromTop = scrollY + 120;
@@ -149,15 +157,51 @@
 
     let isSwitchingLocale = false;
 
+    function triggerRipple(link) {
+      const existing = link.querySelector('.locale-ripple');
+      if (existing) existing.remove();
+      const ripple = document.createElement('span');
+      ripple.className = 'locale-ripple';
+      Object.assign(ripple.style, {
+        position: 'absolute',
+        inset: '0',
+        borderRadius: 'inherit',
+        background: 'radial-gradient(circle at center, rgba(255,255,255,0.35), transparent 70%)',
+        transform: 'scale(0)',
+        opacity: '1',
+        pointerEvents: 'none',
+        animation: 'localeRippleOut 0.5s cubic-bezier(0.22,1,0.36,1) forwards',
+      });
+      link.style.position = 'relative';
+      link.style.overflow = 'hidden';
+      link.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+    }
+
+    if (!document.getElementById('locale-ripple-style')) {
+      const rs = document.createElement('style');
+      rs.id = 'locale-ripple-style';
+      rs.textContent = `
+        @keyframes localeRippleOut {
+          0%   { transform: scale(0); opacity: 1; }
+          100% { transform: scale(2.5); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(rs);
+    }
+
     async function switchLocale(link) {
       if (!link || isSwitchingLocale || link.classList.contains('active')) return;
 
       isSwitchingLocale = true;
+      triggerRipple(link);
       localeLinks.forEach((item) => item.classList.toggle('is-loading', item === link));
+
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
       document.documentElement.classList.add('locale-switching-out');
 
       try {
-        await new Promise((resolve) => window.setTimeout(resolve, 210));
+        await new Promise((resolve) => window.setTimeout(resolve, 280));
 
         const response = await fetch(link.href, {
           headers: {
@@ -1162,7 +1206,6 @@
   // 🌐 LOCALE PAGE REVEAL (smooth slide-in after switch)
   // ============================
   function initLocalePageReveal() {
-    // Check if we just did a locale switch
     let transitionData = null;
     try {
       const raw = sessionStorage.getItem('site-locale-transition');
@@ -1173,49 +1216,85 @@
     sessionStorage.removeItem('site-locale-transition');
 
     const elapsed = Date.now() - (transitionData.at || 0);
-    if (elapsed > 3500) return;
+    if (elapsed > 4000) return;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
-    // Inject the entry keyframe once
     if (!document.getElementById('locale-reveal-style')) {
       const style = document.createElement('style');
       style.id = 'locale-reveal-style';
       style.textContent = `
         @keyframes localeSlideIn {
-          0%   { opacity: 0; transform: translateX(32px) scale(0.992); filter: blur(6px); }
-          40%  { opacity: 1; filter: blur(0); }
-          100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+          0%   { opacity: 0; transform: translateY(22px) scale(0.988); filter: blur(8px); }
+          35%  { opacity: 0.7; filter: blur(2px); }
+          100% { opacity: 1; transform: none; filter: none; }
         }
         .locale-page-entering {
-          animation: localeSlideIn 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation: localeSlideIn 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes localeStaggerIn {
+          0%   { opacity: 0; transform: translateY(18px); filter: blur(6px); }
+          100% { opacity: 1; transform: none; filter: none; }
+        }
+        .locale-stagger-item {
+          animation: localeStaggerIn 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes localeBtnPop {
+          0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+          40%  { transform: scale(1.18); box-shadow: 0 0 0 6px rgba(255,255,255,0.15); }
+          70%  { transform: scale(0.95); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
         }
         .locale-switcher-link.is-active-switch {
           background: rgba(255,255,255,0.28) !important;
-          box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
-          transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-          transform: scale(1.1);
+          animation: localeBtnPop 0.65s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        [data-theme='dark'] .locale-switcher-link.is-active-switch {
+          background: rgba(96,165,250,0.25) !important;
+          box-shadow: 0 0 14px rgba(96,165,250,0.35);
         }
       `;
       document.head.appendChild(style);
     }
 
-    // Animate the main shell in
     const shell = document.querySelector('.site-shell');
     if (shell) {
       shell.classList.add('locale-page-entering');
       shell.addEventListener('animationend', () => {
         shell.classList.remove('locale-page-entering');
       }, { once: true });
+
+      const staggerTargets = shell.querySelectorAll(
+        '.page-header, main > *:not(script):not(style), .page-footer, .exam-hero, .exam-grid, .exam-filter-panel, .news, .hero, .section, article, .card-style, .post-card, .teacher-card, .course-card'
+      );
+
+      const seen = new Set();
+      const uniqueTargets = [];
+      staggerTargets.forEach((el) => {
+        if (!seen.has(el)) {
+          seen.add(el);
+          uniqueTargets.push(el);
+        }
+      });
+
+      uniqueTargets.slice(0, 12).forEach((el, i) => {
+        el.style.animationDelay = (i * 60 + 80) + 'ms';
+        el.classList.add('locale-stagger-item');
+        el.addEventListener('animationend', () => {
+          el.classList.remove('locale-stagger-item');
+          el.style.animationDelay = '';
+        }, { once: true });
+      });
     }
 
-    // Highlight the now-active locale button briefly
-    const activeLocale = document.querySelector('.locale-switcher-link.active');
-    if (activeLocale) {
-      activeLocale.classList.add('is-active-switch');
-      setTimeout(() => activeLocale.classList.remove('is-active-switch'), 800);
-    }
+    const allLocaleLinks = document.querySelectorAll('.locale-switcher-link.active');
+    allLocaleLinks.forEach((link) => {
+      link.classList.add('is-active-switch');
+      setTimeout(() => link.classList.remove('is-active-switch'), 900);
+    });
   }
 
 

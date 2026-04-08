@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +16,8 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => User::nameValidationRules(),
+            'last_name' => User::nameValidationRules(),
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => uz_phone_rules(),
             'grade' => ['required', 'string', Rule::in(school_grade_options())],
@@ -32,9 +34,15 @@ class RegisterRequest extends FormRequest
 
     public function messages(): array
     {
+        $nameMsg = User::nameValidationMessage();
+
         return [
-            'name.required' => 'Ism kiritilishi shart.',
-            'name.max' => 'Ism 255 belgidan oshmasligi kerak.',
+            'first_name.required' => 'Ism kiritilishi shart.',
+            'first_name.max' => 'Ism 120 belgidan oshmasligi kerak.',
+            'first_name.regex' => $nameMsg,
+            'last_name.required' => 'Familiya kiritilishi shart.',
+            'last_name.max' => 'Familiya 120 belgidan oshmasligi kerak.',
+            'last_name.regex' => $nameMsg,
             'email.required' => 'Email kiritilishi shart.',
             'email.email' => 'To\'g\'ri email manzil kiriting.',
             'email.unique' => 'Bu email allaqachon ro\'yxatdan o\'tgan.',

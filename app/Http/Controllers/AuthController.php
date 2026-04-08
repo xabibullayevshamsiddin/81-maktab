@@ -109,9 +109,13 @@ class AuthController extends Controller
         $validated = $request->validated();
         $validated['phone'] = uz_phone_format($validated['phone']);
 
+        $fullName = trim(($validated['first_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+
         if (! self::REGISTER_EMAIL_OTP_ENABLED) {
             $user = User::create([
-                'name' => $validated['name'],
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'name' => $fullName,
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
                 'grade' => $validated['grade'],
@@ -136,7 +140,9 @@ class AuthController extends Controller
 
         try {
             $this->issueAndSendOtp($validated['email'], OneTimeCode::PURPOSE_REGISTER, [
-                'name' => $validated['name'],
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'name' => $fullName,
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
                 'grade' => $validated['grade'],
@@ -485,7 +491,7 @@ class AuthController extends Controller
         }
 
         $meta = $otp->meta ?? [];
-        if (empty($meta['email']) || empty($meta['password']) || empty($meta['name']) || empty($meta['phone']) || empty($meta['grade'])) {
+        if (empty($meta['email']) || empty($meta['password']) || (empty($meta['name']) && empty($meta['first_name'])) || empty($meta['phone']) || empty($meta['grade'])) {
             return redirect()->route('register')->withErrors(['email' => "Ro'yxatdan o'tish ma'lumotlari topilmadi."]);
         }
 
@@ -496,11 +502,13 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name' => $meta['name'],
+            'first_name' => $meta['first_name'] ?? '',
+            'last_name' => $meta['last_name'] ?? '',
+            'name' => $meta['name'] ?? trim(($meta['first_name'] ?? '') . ' ' . ($meta['last_name'] ?? '')),
             'email' => $meta['email'],
             'phone' => $meta['phone'],
             'grade' => $meta['grade'],
-            'password' => $meta['password'], // already hashed in registerStore
+            'password' => $meta['password'],
         ]);
 
         $otp->delete();

@@ -18,7 +18,7 @@
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
-        <h1>{{ __('public.posts.hero_title') }}</h1>
+        <h1 class="js-split-text">{{ __('public.posts.hero_title') }}</h1>
         <p>{{ __('public.posts.hero_text') }}</p>
       </div>
       <a href="#posts" class="btn" style="margin-top: 20px">
@@ -30,7 +30,7 @@
   <main class="news">
     <section class="container news reveal glass-section" id="posts" style="padding-bottom:30px;">
       <div class="section-head">
-        <h2>{{ __('public.posts.section_title') }}</h2>
+        <h2 class="js-split-text">{{ __('public.posts.section_title') }}</h2>
         <p>{{ __('public.posts.section_text') }}</p>
       </div>
 

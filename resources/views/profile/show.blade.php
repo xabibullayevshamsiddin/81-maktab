@@ -123,7 +123,7 @@
     <div class="container">
       <div class="news-hero-content reveal">
         <span class="badge">{{ __('profile.badge') }}</span>
-        <h1><strong>{{ __('profile.title') }}</strong></h1>
+        <h1 class="js-split-text"><strong>{{ __('profile.title') }}</strong></h1>
         <p>{{ __('profile.intro') }}</p>
       </div>
     </div>
@@ -218,15 +218,26 @@
 
               <div class="profile-form-grid">
                 <div class="profile-field">
-                  <label for="profile-name">{{ __('profile.main_card.name_label') }}</label>
-                  <span class="profile-field-hint">{{ __('profile.main_card.name_hint') }}</span>
-                  <input type="text" id="profile-name" name="name" value="{{ old('name', $user->name) }}" required
-                    maxlength="120" autocomplete="name" />
-                  @error('name')
+                  <label for="profile-first-name">Ism</label>
+                  <span class="profile-field-hint">Faqat harflar, probel va defis</span>
+                  <input type="text" id="profile-first-name" name="first_name" value="{{ old('first_name', $user->first_name) }}" required
+                    maxlength="120" autocomplete="given-name" />
+                  @error('first_name')
                     <p class="form-message profile-form-error">{{ $message }}</p>
                   @enderror
                 </div>
+                <div class="profile-field">
+                  <label for="profile-last-name">Familiya</label>
+                  <span class="profile-field-hint">Faqat harflar, probel va defis</span>
+                  <input type="text" id="profile-last-name" name="last_name" value="{{ old('last_name', $user->last_name) }}" required
+                    maxlength="120" autocomplete="family-name" />
+                  @error('last_name')
+                    <p class="form-message profile-form-error">{{ $message }}</p>
+                  @enderror
+                </div>
+              </div>
 
+              <div class="profile-form-grid">
                 <div class="profile-field">
                   <label for="profile-phone">{{ __('profile.main_card.phone_label') }}</label>
                   <span class="profile-field-hint">{{ __('profile.main_card.phone_hint') }}</span>
@@ -302,6 +313,64 @@
               <a href="{{ route('exam.index') }}" class="btn btn-sm">{{ __('profile.blocks.exams.button') }}</a>
             </div>
           </section>
+
+          @if(($examResults ?? collect())->isNotEmpty())
+            <section class="profile-activity-block reveal" id="exam-results-section">
+              <div class="profile-block-head">
+                <div class="profile-block-copy">
+                  <h3><i class="fa-solid fa-chart-column"></i> Mening natijalarim</h3>
+                  <p>Topshirgan imtihonlaringiz natijalari.</p>
+                </div>
+                <span class="profile-section-count">{{ $examResults->count() }} ta</span>
+              </div>
+
+              <div class="profile-results-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+                <button type="button" class="btn btn-sm btn-outline" onclick="window.print()">
+                  <i class="fa-solid fa-print"></i> Chop etish
+                </button>
+                <a href="{{ route('profile.results.export') }}" class="btn btn-sm btn-outline">
+                  <i class="fa-solid fa-file-csv"></i> Excel (CSV)
+                </a>
+              </div>
+
+              <div class="table-wrapper table-responsive" id="exam-results-table">
+                <table class="table profile-results-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Imtihon</th>
+                      <th>Ball</th>
+                      <th>Natija</th>
+                      <th>To'g'ri</th>
+                      <th>Holat</th>
+                      <th>Sana</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($examResults as $i => $er)
+                      <tr>
+                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $er->exam->title ?? '-' }}</td>
+                        <td>{{ $er->points_earned ?? '-' }} / {{ $er->points_max ?? '-' }}</td>
+                        <td>
+                          @if($er->passed === null)
+                            <span style="color:var(--muted);">—</span>
+                          @elseif($er->passed)
+                            <span style="color:#16a34a;font-weight:700;">O'tdi</span>
+                          @else
+                            <span style="color:#b91c1c;font-weight:700;">Yiqildi</span>
+                          @endif
+                        </td>
+                        <td>{{ $er->score }} / {{ $er->total_questions }}</td>
+                        <td>{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</td>
+                        <td style="white-space:nowrap;font-size:13px;">{{ $er->submitted_at?->format('d.m.Y H:i') ?? '-' }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          @endif
 
           @if($canViewCourseEnrollments ?? false)
             <section class="profile-activity-block reveal">

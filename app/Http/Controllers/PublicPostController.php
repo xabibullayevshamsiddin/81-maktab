@@ -10,6 +10,8 @@ use App\Models\PostLike;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -155,6 +157,15 @@ class PublicPostController extends Controller
             ->get();
 
         $likedCommentIds = $this->likedPostCommentIdsForUser($comments);
+
+        $postTitle = localized_model_value($post, 'title');
+        SEOMeta::setTitle($postTitle);
+        SEOMeta::setDescription(Str::limit(localized_model_value($post, 'short_content'), 160));
+        OpenGraph::setUrl(route('post.show', $post));
+        OpenGraph::setTitle($postTitle);
+        if ($post->image) {
+            OpenGraph::addImage(app_storage_asset($post->image));
+        }
 
         return view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds'));
     }
