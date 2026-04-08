@@ -989,12 +989,9 @@ body.chat-fullscreen-active::before {
   inset: 0;
   z-index: 10190;
   pointer-events: none;
-  background:
-    radial-gradient(1100px 600px at 14% 8%, rgba(56, 189, 248, 0.2), transparent 55%),
-    radial-gradient(900px 520px at 86% 92%, rgba(99, 102, 241, 0.2), transparent 55%),
-    rgba(2, 6, 23, 0.42);
-  backdrop-filter: blur(8px) saturate(115%);
-  animation: chatBackdropIn 0.45s ease both;
+  background: transparent;
+  backdrop-filter: none;
+  animation: none;
 }
 
 @keyframes chatBackdropIn {
