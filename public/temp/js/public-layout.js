@@ -1349,8 +1349,8 @@
       var rect = widget.getBoundingClientRect();
       var vw = window.innerWidth;
       var vh = window.innerHeight;
-      var pw = 360;
-      var ph = 480;
+      var pw = Math.min(360, vw - 16);
+      var ph = Math.min(480, vh - 16);
       var gap = 12;
 
       var cx = rect.left + rect.width / 2;
@@ -1598,6 +1598,12 @@
 
     closeBtn.addEventListener('click', closePanel);
     fullBtn.addEventListener('click', toggleFullscreen);
+
+    window.addEventListener('resize', function () {
+      if (!isOpen) return;
+      if (panel.classList.contains('is-fullscreen')) return;
+      positionPanel();
+    });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
