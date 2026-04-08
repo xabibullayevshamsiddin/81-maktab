@@ -229,6 +229,9 @@
               @endforeach
               <span class="locale-switcher-slider"></span>
             </div>
+            <button class="search-toggle" type="button" aria-label="Qidirish" title="Qidirish" id="search-open-btn">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
             <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
               <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
@@ -351,6 +354,25 @@
       <i class="fa-solid fa-chevron-up"></i>
     </button>
     @endunless
+
+    <div id="search-modal" class="search-modal" hidden role="dialog" aria-modal="true" aria-label="Qidirish">
+      <div class="search-modal-backdrop"></div>
+      <div class="search-modal-box">
+        <div class="search-modal-input-wrap">
+          <i class="fa-solid fa-magnifying-glass search-modal-icon"></i>
+          <input type="search" id="search-modal-input" class="search-modal-input" placeholder="Yangilik, ustoz, kurs, imtihon qidirish..." autocomplete="off" autofocus />
+          <kbd class="search-modal-kbd">ESC</kbd>
+        </div>
+        <div id="search-modal-results" class="search-modal-results"></div>
+        <div id="search-modal-empty" class="search-modal-empty" hidden>
+          <i class="fa-solid fa-magnifying-glass" style="font-size:28px;opacity:0.2;"></i>
+          <p>Hech narsa topilmadi</p>
+        </div>
+        <div id="search-modal-hint" class="search-modal-hint">
+          <p>Kamida 2 ta belgi yozing</p>
+        </div>
+      </div>
+    </div>
 
     <div id="global-modal-root"></div>
 

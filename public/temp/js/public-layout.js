@@ -1343,6 +1343,116 @@
   }
 
 
+  function initGlobalSearch() {
+    var modal = document.getElementById('search-modal');
+    var input = document.getElementById('search-modal-input');
+    var resultsEl = document.getElementById('search-modal-results');
+    var emptyEl = document.getElementById('search-modal-empty');
+    var hintEl = document.getElementById('search-modal-hint');
+    var openBtn = document.getElementById('search-open-btn');
+    if (!modal || !input || !resultsEl) return;
+
+    var searchUrl = '/search';
+    var debounce = null;
+    var controller = null;
+
+    function openModal() {
+      modal.hidden = false;
+      modal.classList.remove('is-closing');
+      input.value = '';
+      resultsEl.innerHTML = '';
+      if (emptyEl) emptyEl.hidden = true;
+      if (hintEl) hintEl.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(function () { input.focus(); }, 50);
+    }
+
+    function closeModal() {
+      modal.classList.add('is-closing');
+      document.body.style.overflow = '';
+      setTimeout(function () {
+        modal.hidden = true;
+        modal.classList.remove('is-closing');
+      }, 220);
+    }
+
+    function renderResults(data) {
+      var items = data.results || [];
+      if (hintEl) hintEl.hidden = true;
+
+      if (!items.length) {
+        resultsEl.innerHTML = '';
+        if (emptyEl) emptyEl.hidden = false;
+        return;
+      }
+
+      if (emptyEl) emptyEl.hidden = true;
+      var html = '';
+      items.forEach(function (item, i) {
+        var visual = item.image
+          ? '<img src="' + item.image + '" alt="" class="search-result-img" loading="lazy" />'
+          : '<div class="search-result-icon"><i class="' + item.icon + '"></i></div>';
+
+        html += '<a href="' + item.url + '" class="search-result-item" style="animation-delay:' + (i * 40) + 'ms">'
+          + visual
+          + '<div class="search-result-body">'
+          + '<p class="search-result-title">' + item.title + '</p>'
+          + (item.subtitle ? '<p class="search-result-sub">' + item.subtitle + '</p>' : '')
+          + '</div>'
+          + '<span class="search-result-badge">' + item.type_label + '</span>'
+          + '</a>';
+      });
+      resultsEl.innerHTML = html;
+    }
+
+    function doSearch(q) {
+      if (controller) controller.abort();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '';
+        if (emptyEl) emptyEl.hidden = true;
+        if (hintEl) hintEl.hidden = false;
+        return;
+      }
+      if (hintEl) hintEl.hidden = true;
+
+      controller = new AbortController();
+      fetch(searchUrl + '?q=' + encodeURIComponent(q), {
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      })
+        .then(function (r) { return r.json(); })
+        .then(renderResults)
+        .catch(function (e) {
+          if (e.name !== 'AbortError') {
+            resultsEl.innerHTML = '';
+            if (emptyEl) emptyEl.hidden = false;
+          }
+        });
+    }
+
+    input.addEventListener('input', function () {
+      clearTimeout(debounce);
+      debounce = setTimeout(function () {
+        doSearch(input.value.trim());
+      }, 250);
+    });
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+
+    modal.querySelector('.search-modal-backdrop').addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        if (modal.hidden) openModal();
+        else closeModal();
+      }
+      if (e.key === 'Escape' && !modal.hidden) {
+        closeModal();
+      }
+    });
+  }
+
   moveGlobalModals();
   initShellUi();
   initRevealAnimations();
@@ -1359,4 +1469,5 @@
   initProMaxAnimations();
   initThemeBurstEffect();
   initLocalePageReveal();
+  initGlobalSearch();
 })();
