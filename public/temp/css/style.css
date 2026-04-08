@@ -871,9 +871,7 @@ section {
 }
 
 .chat-panel {
-  position: absolute;
-  bottom: 68px;
-  right: 0;
+  position: fixed;
   width: 360px;
   height: 480px;
   border-radius: 18px;
@@ -883,29 +881,31 @@ section {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: chatPanelIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  transform-origin: bottom right;
+  animation: chatPanelIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: var(--chat-origin, bottom right);
 }
 
 .chat-panel[hidden] { display: none !important; }
 
 @keyframes chatPanelIn {
-  from { opacity: 0; transform: scale(0.8) translateY(20px); }
-  to { opacity: 1; transform: none; }
+  0% { opacity: 0; transform: scale(0.5); }
+  60% { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .chat-panel.is-closing {
-  animation: chatPanelOut 0.2s ease both;
+  animation: chatPanelOut 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes chatPanelOut {
-  to { opacity: 0; transform: scale(0.85) translateY(16px); }
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.6); }
 }
 
 .chat-panel.is-fullscreen {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0 !important;
+  left: 0 !important;
   right: 0;
   bottom: 0;
   width: 100%;
@@ -1092,7 +1092,52 @@ section {
   color: transparent;
 }
 
-.chat-msg-time { font-size: 10px; color: var(--muted); margin-left: auto; }
+.chat-msg-time { font-size: 10px; color: var(--muted); }
+
+.chat-msg-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.chat-msg:hover .chat-msg-actions {
+  opacity: 1;
+}
+
+.chat-msg-action {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.chat-msg-action:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text);
+}
+
+.chat-msg-action--block:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+:root[data-theme='dark'] .chat-msg-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .chat-msg-action--block:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
 
 .chat-msg-text {
   font-size: 14px;

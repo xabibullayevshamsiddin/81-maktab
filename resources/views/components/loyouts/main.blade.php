@@ -346,6 +346,8 @@
       <div id="chat-widget" class="chat-widget"
         data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
         data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
+        data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
+        data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
         data-csrf="{{ csrf_token() }}"
         data-user-id="{{ auth()->id() }}"
       >

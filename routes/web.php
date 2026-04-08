@@ -99,6 +99,8 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
     Route::post('chat/send', [ChatController::class, 'send'])->middleware('throttle:30,1')->name('chat.send');
+    Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->name('chat.destroy');
+    Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->name('chat.block');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

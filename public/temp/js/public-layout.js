@@ -1337,12 +1337,55 @@
 
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
+    var deleteUrl = widget.getAttribute('data-chat-delete-url');
+    var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
     var lastId = 0;
     var isOpen = false;
     var pollTimer = null;
 
+    function positionPanel() {
+      var rect = widget.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var pw = 360;
+      var ph = 480;
+      var gap = 12;
+
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+
+      var openRight = cx < vw / 2;
+      var openUp = cy > vh / 2;
+
+      var left, top, origin;
+
+      if (openRight) {
+        left = Math.min(rect.left, vw - pw - 8);
+      } else {
+        left = Math.max(8, rect.right - pw);
+      }
+
+      if (openUp) {
+        top = Math.max(8, rect.top - ph - gap);
+        origin = (openRight ? 'bottom left' : 'bottom right');
+      } else {
+        top = rect.bottom + gap;
+        origin = (openRight ? 'top left' : 'top right');
+      }
+
+      if (top + ph > vh - 8) top = vh - ph - 8;
+      if (top < 8) top = 8;
+      if (left + pw > vw - 8) left = vw - pw - 8;
+      if (left < 8) left = 8;
+
+      panel.style.left = left + 'px';
+      panel.style.top = top + 'px';
+      panel.style.setProperty('--chat-origin', origin);
+    }
+
     function openPanel() {
+      positionPanel();
       panel.hidden = false;
       panel.classList.remove('is-closing');
       isOpen = true;
@@ -1391,13 +1434,22 @@
       var avatarInner = m.avatar_url
         ? '<img src="' + m.avatar_url + '" alt="" class="chat-msg-avatar-img" />'
         : m.user_initial;
-      return '<div class="' + cls + '">'
+      var actions = '';
+      if (m.can_delete) {
+        actions += '<button type="button" class="chat-msg-action" data-chat-delete="' + m.id + '" title="O\'chirish"><i class="fa-solid fa-trash-can"></i></button>';
+      }
+      if (m.can_block) {
+        actions += '<button type="button" class="chat-msg-action chat-msg-action--block" data-chat-block="' + m.user_id + '" title="Bloklash"><i class="fa-solid fa-ban"></i></button>';
+      }
+      var actionsHtml = actions ? '<div class="chat-msg-actions">' + actions + '</div>' : '';
+      return '<div class="' + cls + '" data-msg-id="' + m.id + '">'
         + '<div class="' + avatarCls + '">' + avatarInner + '</div>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
         + '<span class="chat-msg-name">' + m.user_name + '</span>'
         + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
+        + actionsHtml
         + '</div>'
         + '<div class="chat-msg-text">' + m.body + '</div>'
         + '</div></div>';
@@ -1533,6 +1585,47 @@
       if (!text) return;
       input.value = '';
       sendMessage(text);
+    });
+
+    messagesEl.addEventListener('click', function (e) {
+      var delBtn = e.target.closest('[data-chat-delete]');
+      if (delBtn) {
+        var msgId = delBtn.getAttribute('data-chat-delete');
+        fetch(deleteUrl + '/' + msgId, {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+          credentials: 'same-origin',
+        }).then(function (r) {
+          if (r.ok) {
+            var el = messagesEl.querySelector('[data-msg-id="' + msgId + '"]');
+            if (el) {
+              el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+              el.style.opacity = '0';
+              el.style.transform = 'scale(0.9)';
+              setTimeout(function () { el.remove(); }, 220);
+            }
+          }
+        });
+        return;
+      }
+
+      var blockBtn = e.target.closest('[data-chat-block]');
+      if (blockBtn) {
+        if (!window.confirm('Bu foydalanuvchini bloklaysizmi?')) return;
+        var userId = blockBtn.getAttribute('data-chat-block');
+        fetch(blockUrl + '/' + userId, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+          credentials: 'same-origin',
+        }).then(function (r) {
+          if (r.ok) {
+            messagesEl.querySelectorAll('[data-msg-id]').forEach(function (el) {
+              var btn = el.querySelector('[data-chat-block="' + userId + '"]');
+              if (btn) btn.remove();
+            });
+          }
+        });
+      }
     });
 
     document.addEventListener('keydown', function (e) {
