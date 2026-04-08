@@ -11,8 +11,8 @@ WORKDIR /app
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
-RUN cp .env.example .env && php artisan key:generate
+RUN echo "APP_KEY=" > .env && php artisan key:generate
 
 EXPOSE 8080
 
-CMD php artisan migrate --force && php -S 0.0.0.0:${PORT:-8080} -t public
+CMD php artisan config:clear && php artisan migrate --force && php -S 0.0.0.0:${PORT:-8080} -t public
