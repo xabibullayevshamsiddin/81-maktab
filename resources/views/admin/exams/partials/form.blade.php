@@ -32,13 +32,16 @@
   <p class="text-sm mb-10" style="color:#64748b;">
     Faqat tanlangan sinflar topshira oladi. Hech narsa tanlanmasa, imtihon barcha sinflar uchun ochiq bo'ladi.
   </p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;">
+  <div class="grade-picker-grid">
     @foreach (school_grade_grouped_options() as $groupLabel => $options)
-      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;background:#fff;">
-        <strong style="display:block;font-size:13px;color:#0f172a;">{{ $groupLabel }}</strong>
-        <div style="display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:10px;">
+      <div class="grade-picker-group">
+        <button type="button" class="grade-picker-group-btn" data-grade-group-toggle>
+          <span>{{ $groupLabel }}</span>
+          <i class="fa-solid fa-check-double" style="font-size:11px;opacity:0.5;"></i>
+        </button>
+        <div class="grade-picker-options">
           @foreach ($options as $value => $label)
-            <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#334155;min-width:68px;">
+            <label class="grade-picker-label">
               <input type="checkbox" name="allowed_grades[]" value="{{ $value }}" {{ in_array($value, $selectedAllowedGrades, true) ? 'checked' : '' }}>
               <span>{{ $label }}</span>
             </label>
@@ -47,6 +50,17 @@
       </div>
     @endforeach
   </div>
+  <script>
+    document.querySelectorAll('[data-grade-group-toggle]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var group = btn.closest('.grade-picker-group');
+        if (!group) return;
+        var boxes = group.querySelectorAll('input[type=checkbox]');
+        var allChecked = Array.prototype.every.call(boxes, function(b) { return b.checked; });
+        boxes.forEach(function(b) { b.checked = !allChecked; });
+      });
+    });
+  </script>
   @if ($errors->has('allowed_grades') || $errors->has('allowed_grades.*'))
     <p class="text-sm mt-10" style="color:#dc2626;">{{ $errors->first('allowed_grades') ?: $errors->first('allowed_grades.*') }}</p>
   @endif
