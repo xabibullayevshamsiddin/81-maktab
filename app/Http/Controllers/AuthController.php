@@ -24,13 +24,13 @@ class AuthController extends Controller
      * Vaqtincha: false bo‘lsa ro‘yxatdan o‘tish email kodisiz, darhol hisob ochiladi.
      * Email OTP ni qayta yoqish uchun true qiling.
      */
-    private const REGISTER_EMAIL_OTP_ENABLED = true;
+    private const REGISTER_EMAIL_OTP_ENABLED = false;
 
     /**
      * Vaqtincha: false bo‘lsa kirish email kodisiz — faqat email + parol.
      * Kirish OTP ni qayta yoqish uchun true qiling.
      */
-    private const LOGIN_EMAIL_OTP_ENABLED = true;
+    private const LOGIN_EMAIL_OTP_ENABLED = false;
 
     public function login()
     {
