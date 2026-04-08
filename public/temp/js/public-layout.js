@@ -1388,8 +1388,11 @@
         badge = '<span class="chat-msg-admin-badge">Admin</span>';
       }
       var avatarCls = 'chat-msg-avatar' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
+      var avatarInner = m.avatar_url
+        ? '<img src="' + m.avatar_url + '" alt="" class="chat-msg-avatar-img" />'
+        : m.user_initial;
       return '<div class="' + cls + '">'
-        + '<div class="' + avatarCls + '">' + m.user_initial + '</div>'
+        + '<div class="' + avatarCls + '">' + avatarInner + '</div>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
         + '<span class="chat-msg-name">' + m.user_name + '</span>'
@@ -1504,39 +1507,21 @@
       widget.classList.remove('is-dragging');
     }
 
-    bubble.addEventListener('mousedown', function (e) {
+    bubble.addEventListener('pointerdown', function (e) {
       e.preventDefault();
+      bubble.setPointerCapture(e.pointerId);
       onDragStart(e.clientX, e.clientY);
     });
-    document.addEventListener('mousemove', function (e) { onDragMove(e.clientX, e.clientY); });
-    document.addEventListener('mouseup', function () {
-      if (isDragging) {
-        onDragEnd();
-        if (hasDragged) return;
-      }
-      // click handled separately
+    bubble.addEventListener('pointermove', function (e) {
+      onDragMove(e.clientX, e.clientY);
     });
-
-    bubble.addEventListener('touchstart', function (e) {
-      var t = e.touches[0];
-      onDragStart(t.clientX, t.clientY);
-    }, { passive: true });
-    document.addEventListener('touchmove', function (e) {
-      if (!isDragging) return;
-      var t = e.touches[0];
-      onDragMove(t.clientX, t.clientY);
-    }, { passive: false });
-    document.addEventListener('touchend', function () {
-      if (isDragging) {
-        onDragEnd();
-        if (hasDragged) return;
+    bubble.addEventListener('pointerup', function (e) {
+      onDragEnd();
+      if (!hasDragged) {
+        if (isOpen) closePanel();
+        else openPanel();
       }
-    });
-
-    bubble.addEventListener('click', function () {
-      if (hasDragged) { hasDragged = false; return; }
-      if (isOpen) closePanel();
-      else openPanel();
+      hasDragged = false;
     });
 
     closeBtn.addEventListener('click', closePanel);

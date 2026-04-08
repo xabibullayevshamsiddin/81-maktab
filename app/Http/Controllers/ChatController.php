@@ -13,7 +13,7 @@ class ChatController extends Controller
         $afterId = (int) $request->query('after', 0);
 
         $query = ChatMessage::query()
-            ->with('user:id,first_name,name,role_id')
+            ->with('user:id,first_name,name,role_id,avatar')
             ->with('user.roleRelation:id,name');
 
         if ($afterId > 0) {
@@ -33,6 +33,7 @@ class ChatController extends Controller
             $role = $user?->roleRelation?->name ?? 'user';
             $isSuperAdmin = $role === 'super_admin';
             $isAdmin = in_array($role, ['super_admin', 'admin'], true);
+            $avatarUrl = $user && $user->avatar ? app_storage_asset($user->avatar) : null;
 
             return [
                 'id' => $m->id,
@@ -42,6 +43,7 @@ class ChatController extends Controller
                 'is_super_admin' => $isSuperAdmin,
                 'user_name' => $user->first_name ?: $user->name ?? '?',
                 'user_initial' => mb_strtoupper(mb_substr(trim($user->first_name ?: $user->name ?? '?'), 0, 1)),
+                'avatar_url' => $avatarUrl,
                 'time' => $m->created_at?->format('H:i'),
                 'date' => $m->created_at?->format('d.m'),
             ];
