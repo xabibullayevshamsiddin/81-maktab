@@ -82,6 +82,7 @@ class User extends Authenticatable
         'password',
         'role_id',
         'is_active',
+        'is_parent',
     ];
 
     public static function nameValidationRules(bool $required = true): array
@@ -110,6 +111,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'is_parent' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -417,13 +419,31 @@ class User extends Authenticatable
         };
     }
 
+    public function isParent(): bool
+    {
+        return (bool) $this->is_parent;
+    }
+
+    public function canTakeExams(): bool
+    {
+        return ! $this->is_parent;
+    }
+
     public function hasUniversalGrade(): bool
     {
+        if ($this->is_parent) {
+            return true;
+        }
+
         return $this->role !== self::ROLE_USER;
     }
 
     public function displayGrade(string $emptyLabel = 'Kiritilmagan'): string
     {
+        if ($this->is_parent) {
+            return 'Ota-ona';
+        }
+
         if ($this->hasUniversalGrade()) {
             return self::UNIVERSAL_GRADE_LABEL;
         }

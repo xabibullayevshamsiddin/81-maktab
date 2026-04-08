@@ -20,7 +20,8 @@ class RegisterRequest extends FormRequest
             'last_name' => User::nameValidationRules(),
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => uz_phone_rules(),
-            'grade' => ['required', 'string', Rule::in(school_grade_options())],
+            'is_parent' => ['nullable', 'in:1'],
+            'grade' => ['required_unless:is_parent,1', 'nullable', 'string', Rule::in(school_grade_options())],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
@@ -28,7 +29,7 @@ class RegisterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'grade' => normalize_school_grade($this->input('grade')),
+            'grade' => $this->input('is_parent') ? null : normalize_school_grade($this->input('grade')),
         ]);
     }
 

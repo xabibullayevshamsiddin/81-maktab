@@ -18,6 +18,13 @@
         @endif
       </header>
 
+      @if($isParent ?? false)
+        <div class="exam-card" style="text-align:center;padding:28px 22px;">
+          <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:var(--text);"><i class="fa-solid fa-user-shield" style="margin-right:6px;opacity:0.7;"></i> Siz ota-ona sifatida ro'yxatdan o'tgansiz</p>
+          <p style="margin:0;font-size:14px;color:var(--muted);">Ota-onalar imtihon topshira olmaydi. Imtihonlar faqat o'quvchilar uchun.</p>
+        </div>
+      @endif
+
       @if($exams->isEmpty())
         <div class="exam-grid">
           <div class="exam-empty">

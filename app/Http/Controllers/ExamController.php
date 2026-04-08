@@ -34,11 +34,19 @@ class ExamController extends Controller
             fn (Exam $exam) => ! $exam->allowsUser($user) && ! $resultByExam->has($exam->id)
         );
 
-        return view('exam.index', compact('exams', 'resultByExam', 'user', 'hasRestrictedExams'));
+        $isParent = $user->isParent();
+
+        return view('exam.index', compact('exams', 'resultByExam', 'user', 'hasRestrictedExams', 'isParent'));
     }
 
     public function startPage(Request $request, Exam $exam)
     {
+        if ($request->user()->isParent()) {
+            return redirect()->route('exam.index')
+                ->with('error', 'Ota-onalar imtihon topshira olmaydi.')
+                ->with('toast_type', 'error');
+        }
+
         $existing = Result::query()
             ->where('exam_id', $exam->id)
             ->where('user_id', $request->user()->id)
@@ -58,6 +66,12 @@ class ExamController extends Controller
 
     public function start(Request $request, Exam $exam)
     {
+        if ($request->user()->isParent()) {
+            return redirect()->route('exam.index')
+                ->with('error', 'Ota-onalar imtihon topshira olmaydi.')
+                ->with('toast_type', 'error');
+        }
+
         $existing = Result::query()
             ->where('exam_id', $exam->id)
             ->where('user_id', $request->user()->id)

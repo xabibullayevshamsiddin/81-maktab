@@ -14,9 +14,7 @@
     \Illuminate\Support\Str::substr(trim((string) ($user->name ?: 'U')), 0, 1)
   );
   $profileAvatarUrl = $user->avatar_url;
-  $profileGradeLabel = $user->hasUniversalGrade()
-    ? __('profile.all_grades')
-    : (trim((string) $user->grade) !== '' ? (string) $user->grade : __('public.common.not_entered'));
+  $profileGradeLabel = $user->displayGrade(__('public.common.not_entered'));
 
   $postCommentCount = $postComments->count();
   $teacherCommentCount = $teacherComments->count();

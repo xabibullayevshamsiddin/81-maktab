@@ -96,10 +96,10 @@
                   <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
                 @enderror
               </div>
-              <div class="register-field">
+              <div class="register-field" id="reg-grade-field">
                 <label for="reg-grade">{{ __('auth_pages.register.grade') }}</label>
                 <div class="register-select-wrap">
-                  <select id="reg-grade" name="grade" required>
+                  <select id="reg-grade" name="grade" {{ old('is_parent') ? '' : 'required' }}>
                     <option value="">{{ __('auth_pages.register.grade_placeholder') }}</option>
                     @foreach (school_grade_grouped_options() as $groupLabel => $options)
                       @php
@@ -122,6 +122,33 @@
                 @enderror
               </div>
             </div>
+            <div class="register-field" style="margin-top:4px;">
+              <label class="register-parent-toggle" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text);">
+                <input type="checkbox" id="reg-is-parent" name="is_parent" value="1" {{ old('is_parent') ? 'checked' : '' }} style="width:18px;height:18px;accent-color:var(--primary-2);">
+                <span>Men ota-onaman</span>
+              </label>
+              <p class="register-field-note" style="margin-top:6px;font-size:12px;color:var(--muted);">Ota-onalar sinf tanlamaslik mumkin. Imtihon topshirish cheklanadi.</p>
+            </div>
+            <script>
+              (function() {
+                var cb = document.getElementById('reg-is-parent');
+                var gradeField = document.getElementById('reg-grade-field');
+                var gradeSelect = document.getElementById('reg-grade');
+                if (!cb || !gradeField || !gradeSelect) return;
+                function toggle() {
+                  if (cb.checked) {
+                    gradeField.style.display = 'none';
+                    gradeSelect.removeAttribute('required');
+                    gradeSelect.value = '';
+                  } else {
+                    gradeField.style.display = '';
+                    gradeSelect.setAttribute('required', '');
+                  }
+                }
+                cb.addEventListener('change', toggle);
+                toggle();
+              })();
+            </script>
             <p class="register-field-note">{{ __('auth_pages.register.grade_note') }}</p>
             <div class="register-field">
               <label for="reg-password">{{ __('auth_pages.register.password') }}</label>

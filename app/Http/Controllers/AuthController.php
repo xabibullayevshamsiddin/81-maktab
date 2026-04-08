@@ -110,6 +110,7 @@ class AuthController extends Controller
         $validated['phone'] = uz_phone_format($validated['phone']);
 
         $fullName = trim(($validated['first_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+        $isParent = ! empty($validated['is_parent']);
 
         if (! self::REGISTER_EMAIL_OTP_ENABLED) {
             $user = User::create([
@@ -118,7 +119,8 @@ class AuthController extends Controller
                 'name' => $fullName,
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
-                'grade' => $validated['grade'],
+                'grade' => $isParent ? null : $validated['grade'],
+                'is_parent' => $isParent,
                 'password' => $validated['password'],
             ]);
             $user->email_verified_at = now();
@@ -145,7 +147,8 @@ class AuthController extends Controller
                 'name' => $fullName,
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
-                'grade' => $validated['grade'],
+                'grade' => $isParent ? null : $validated['grade'],
+                'is_parent' => $isParent,
                 'password' => Hash::make($validated['password']),
             ]);
         } catch (\Throwable $e) {
@@ -491,7 +494,8 @@ class AuthController extends Controller
         }
 
         $meta = $otp->meta ?? [];
-        if (empty($meta['email']) || empty($meta['password']) || (empty($meta['name']) && empty($meta['first_name'])) || empty($meta['phone']) || empty($meta['grade'])) {
+        $metaIsParent = ! empty($meta['is_parent']);
+        if (empty($meta['email']) || empty($meta['password']) || (empty($meta['name']) && empty($meta['first_name'])) || empty($meta['phone']) || (! $metaIsParent && empty($meta['grade']))) {
             return redirect()->route('register')->withErrors(['email' => "Ro'yxatdan o'tish ma'lumotlari topilmadi."]);
         }
 
@@ -507,7 +511,8 @@ class AuthController extends Controller
             'name' => $meta['name'] ?? trim(($meta['first_name'] ?? '') . ' ' . ($meta['last_name'] ?? '')),
             'email' => $meta['email'],
             'phone' => $meta['phone'],
-            'grade' => $meta['grade'],
+            'grade' => $metaIsParent ? null : ($meta['grade'] ?? null),
+            'is_parent' => $metaIsParent,
             'password' => $meta['password'],
         ]);
 
