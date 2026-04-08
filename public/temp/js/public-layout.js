@@ -155,6 +155,21 @@
     const localeLinks = Array.from(document.querySelectorAll('.locale-switcher-link[data-locale-switch]'));
     if (!localeLinks.length) return;
 
+    function positionSliders() {
+      document.querySelectorAll('.locale-switcher').forEach(function (switcher) {
+        var slider = switcher.querySelector('.locale-switcher-slider');
+        var activeLink = switcher.querySelector('.locale-switcher-link.active');
+        if (!slider || !activeLink) return;
+        var parentRect = switcher.getBoundingClientRect();
+        var linkRect = activeLink.getBoundingClientRect();
+        slider.style.left = (linkRect.left - parentRect.left) + 'px';
+        slider.style.width = linkRect.width + 'px';
+      });
+    }
+
+    positionSliders();
+    window.addEventListener('resize', positionSliders, { passive: true });
+
     let isSwitchingLocale = false;
 
     function triggerRipple(link) {

@@ -180,6 +180,7 @@
                     {{ $localeLabel }}
                   </a>
                 @endforeach
+                <span class="locale-switcher-slider"></span>
               </div>
 
               @guest
@@ -226,6 +227,7 @@
                   {{ $localeLabel }}
                 </a>
               @endforeach
+              <span class="locale-switcher-slider"></span>
             </div>
             <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
