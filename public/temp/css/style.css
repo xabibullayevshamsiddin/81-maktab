@@ -958,27 +958,56 @@ section {
   width: 100%;
   height: 100%;
   border-radius: 0;
+  border: 0;
   z-index: 10200;
   transform-origin: center;
-  animation: chatFullIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chatFullIn 0.52s cubic-bezier(0.18, 0.92, 0.28, 1) both;
 }
 
 .chat-panel.is-fullscreen-enter {
-  animation: chatFullIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chatFullIn 0.52s cubic-bezier(0.18, 0.92, 0.28, 1) both;
 }
 
 .chat-panel.is-fullscreen-exit {
-  animation: chatFullOut 0.3s cubic-bezier(0.4, 0, 1, 1) both;
+  animation: chatFullOut 0.4s cubic-bezier(0.55, 0, 0.9, 0.4) both;
 }
 
 @keyframes chatFullIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: none; }
+  0% { opacity: 0.4; transform: scale(0.88) translateY(20px); filter: blur(6px); }
+  60% { opacity: 1; transform: scale(1.015) translateY(0); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
 }
 
 @keyframes chatFullOut {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0.92; transform: scale(0.94); }
+  0% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+  100% { opacity: 0.55; transform: scale(0.92) translateY(16px); filter: blur(5px); }
+}
+
+body.chat-fullscreen-active::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 10190;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 600px at 14% 8%, rgba(56, 189, 248, 0.2), transparent 55%),
+    radial-gradient(900px 520px at 86% 92%, rgba(99, 102, 241, 0.2), transparent 55%),
+    rgba(2, 6, 23, 0.42);
+  backdrop-filter: blur(8px) saturate(115%);
+  animation: chatBackdropIn 0.45s ease both;
+}
+
+@keyframes chatBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.chat-panel.is-fullscreen .chat-panel-header {
+  padding: 16px 20px;
+}
+
+.chat-panel.is-fullscreen .chat-messages {
+  padding: 18px 20px;
 }
 
 .chat-panel-header {

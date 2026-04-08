@@ -1405,6 +1405,8 @@
       setTimeout(function () {
         panel.hidden = true;
         panel.classList.remove('is-closing', 'is-fullscreen');
+        panel.classList.remove('is-fullscreen-enter', 'is-fullscreen-exit');
+        document.body.classList.remove('chat-fullscreen-active');
         panel.style.removeProperty('left');
         panel.style.removeProperty('top');
       }, 350);
@@ -1415,6 +1417,7 @@
       if (!panel.classList.contains('is-fullscreen')) {
         panel.classList.remove('is-fullscreen-exit');
         panel.classList.add('is-fullscreen', 'is-fullscreen-enter');
+        document.body.classList.add('chat-fullscreen-active');
         setTimeout(function () {
           panel.classList.remove('is-fullscreen-enter');
         }, 360);
@@ -1425,6 +1428,7 @@
         panel.classList.add('is-fullscreen-exit');
         setTimeout(function () {
           panel.classList.remove('is-fullscreen', 'is-fullscreen-exit');
+          document.body.classList.remove('chat-fullscreen-active');
           panel.style.removeProperty('left');
           panel.style.removeProperty('top');
           if (isOpen) positionPanel();
