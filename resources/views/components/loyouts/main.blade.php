@@ -360,7 +360,7 @@
           <div class="chat-panel-header">
             <div class="chat-panel-title">
               <i class="fa-solid fa-comments"></i>
-              <span>Global chat</span>
+              <span class="chat-panel-title-text">Global chat <small class="chat-panel-title-hint">Pastda qoidalar bor</small></span>
             </div>
             <div class="chat-panel-actions">
               <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="Kengaytirish" title="To'liq ekran">
@@ -371,8 +371,8 @@
               </button>
             </div>
           </div>
-          <details class="chat-rules">
-            <summary>Chat qoidalari</summary>
+          <details class="chat-rules" open>
+            <summary>Chat qoidalari (ixtiyoriy emas — o‘qing)</summary>
             <ul>
               <li>Hurmat bilan yozing, haqorat va trolling qilmang.</li>
               <li>Spam, reklama va takroriy xabarlarni yubormang.</li>
