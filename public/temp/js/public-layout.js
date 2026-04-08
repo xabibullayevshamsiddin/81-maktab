@@ -1463,7 +1463,78 @@
         .catch(function () {});
     }
 
+    // Drag support
+    var isDragging = false;
+    var dragStartX = 0, dragStartY = 0;
+    var widgetStartX = 0, widgetStartY = 0;
+    var hasDragged = false;
+
+    function onDragStart(ex, ey) {
+      isDragging = true;
+      hasDragged = false;
+      dragStartX = ex;
+      dragStartY = ey;
+      var rect = widget.getBoundingClientRect();
+      widgetStartX = rect.left;
+      widgetStartY = rect.top;
+      widget.classList.add('is-dragging');
+    }
+
+    function onDragMove(ex, ey) {
+      if (!isDragging) return;
+      var dx = ex - dragStartX;
+      var dy = ey - dragStartY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasDragged = true;
+      if (!hasDragged) return;
+      var newX = widgetStartX + dx;
+      var newY = widgetStartY + dy;
+      var maxX = window.innerWidth - 66;
+      var maxY = window.innerHeight - 66;
+      newX = Math.max(4, Math.min(newX, maxX));
+      newY = Math.max(4, Math.min(newY, maxY));
+      widget.style.left = newX + 'px';
+      widget.style.top = newY + 'px';
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+    }
+
+    function onDragEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      widget.classList.remove('is-dragging');
+    }
+
+    bubble.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      onDragStart(e.clientX, e.clientY);
+    });
+    document.addEventListener('mousemove', function (e) { onDragMove(e.clientX, e.clientY); });
+    document.addEventListener('mouseup', function () {
+      if (isDragging) {
+        onDragEnd();
+        if (hasDragged) return;
+      }
+      // click handled separately
+    });
+
+    bubble.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      onDragStart(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!isDragging) return;
+      var t = e.touches[0];
+      onDragMove(t.clientX, t.clientY);
+    }, { passive: false });
+    document.addEventListener('touchend', function () {
+      if (isDragging) {
+        onDragEnd();
+        if (hasDragged) return;
+      }
+    });
+
     bubble.addEventListener('click', function () {
+      if (hasDragged) { hasDragged = false; return; }
       if (isOpen) closePanel();
       else openPanel();
     });

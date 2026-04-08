@@ -808,6 +808,17 @@ section {
   bottom: 20px;
   right: 20px;
   z-index: 1000;
+  touch-action: none;
+}
+
+.chat-widget.is-dragging {
+  transition: none !important;
+}
+
+.chat-widget.is-dragging .chat-bubble {
+  transform: scale(1.12);
+  box-shadow: 0 12px 36px rgba(21, 101, 192, 0.5);
+  cursor: grabbing;
 }
 
 .chat-bubble {
@@ -818,7 +829,7 @@ section {
   background: linear-gradient(135deg, var(--primary-2), var(--primary));
   color: #fff;
   font-size: 22px;
-  cursor: pointer;
+  cursor: grab;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1138,11 +1149,53 @@ section {
 .chat-send-btn:hover { transform: scale(1.06); }
 .chat-send-btn:active { transform: scale(0.94); }
 
-:root[data-theme='dark'] .chat-bubble { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5); }
-:root[data-theme='dark'] .chat-panel { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+:root[data-theme='dark'] .chat-bubble {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  background-size: 200% 200%;
+  animation: chatBubbleShimmer 3s ease infinite;
+}
+
+@keyframes chatBubbleShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+:root[data-theme='dark'] .chat-panel {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(160deg, #0f172a 0%, #1a1040 50%, #0f172a 100%);
+  background-size: 200% 200%;
+  animation: chatPanelBgShift 8s ease infinite;
+}
+
+@keyframes chatPanelBgShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+:root[data-theme='dark'] .chat-panel-header {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
 :root[data-theme='dark'] .chat-msg-text { background: rgba(255, 255, 255, 0.06); }
-:root[data-theme='dark'] .chat-msg.is-mine .chat-msg-text { background: #4d94ff; }
-:root[data-theme='dark'] .chat-msg-avatar { background: rgba(96, 165, 250, 0.15); color: #93c5fd; }
+:root[data-theme='dark'] .chat-msg.is-mine .chat-msg-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+:root[data-theme='dark'] .chat-msg-avatar { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+
+:root[data-theme='dark'] .chat-send-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+:root[data-theme='dark'] .chat-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+:root[data-theme='dark'] .chat-input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
 
 @media (max-width: 480px) {
   .chat-panel {
