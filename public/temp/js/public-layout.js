@@ -1397,13 +1397,16 @@
     }
 
     function closePanel() {
+      if (!isOpen) return;
       panel.classList.add('is-closing');
+      isOpen = false;
+      stopPolling();
       setTimeout(function () {
         panel.hidden = true;
         panel.classList.remove('is-closing', 'is-fullscreen');
-        isOpen = false;
-        stopPolling();
-      }, 220);
+        panel.style.removeProperty('left');
+        panel.style.removeProperty('top');
+      }, 350);
     }
 
     function toggleFullscreen() {

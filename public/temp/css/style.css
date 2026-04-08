@@ -938,12 +938,14 @@ section {
 }
 
 .chat-panel.is-closing {
-  animation: chatPanelOut 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chatPanelOut 0.32s cubic-bezier(0.55, 0, 1, 0.45) both;
+  pointer-events: none;
 }
 
 @keyframes chatPanelOut {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.6); }
+  0% { opacity: 1; transform: scale(1) translateY(0); }
+  40% { opacity: 0.7; transform: scale(1.02) translateY(-4px); }
+  100% { opacity: 0; transform: scale(0.5) translateY(30px); }
 }
 
 .chat-panel.is-fullscreen {
