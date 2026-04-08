@@ -1333,6 +1333,7 @@
     var messagesEl = document.getElementById('chat-messages');
     var form = document.getElementById('chat-form');
     var input = document.getElementById('chat-input');
+    var stickerButtons = panel.querySelectorAll('[data-chat-sticker]');
     var badge = document.getElementById('chat-badge');
 
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
@@ -1410,12 +1411,24 @@
     }
 
     function toggleFullscreen() {
-      panel.classList.toggle('is-fullscreen');
       var icon = fullBtn.querySelector('i');
-      if (panel.classList.contains('is-fullscreen')) {
+      if (!panel.classList.contains('is-fullscreen')) {
+        panel.classList.remove('is-fullscreen-exit');
+        panel.classList.add('is-fullscreen', 'is-fullscreen-enter');
+        setTimeout(function () {
+          panel.classList.remove('is-fullscreen-enter');
+        }, 360);
         icon.className = 'fa-solid fa-compress';
         fullBtn.title = 'Kichiklashtirish';
       } else {
+        panel.classList.remove('is-fullscreen-enter');
+        panel.classList.add('is-fullscreen-exit');
+        setTimeout(function () {
+          panel.classList.remove('is-fullscreen', 'is-fullscreen-exit');
+          panel.style.removeProperty('left');
+          panel.style.removeProperty('top');
+          if (isOpen) positionPanel();
+        }, 320);
         icon.className = 'fa-solid fa-expand';
         fullBtn.title = "To'liq ekran";
       }
@@ -1588,6 +1601,15 @@
       if (!text) return;
       input.value = '';
       sendMessage(text);
+    });
+
+    stickerButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var sticker = btn.getAttribute('data-chat-sticker');
+        if (!sticker) return;
+        sendMessage(sticker);
+        input.focus();
+      });
     });
 
     messagesEl.addEventListener('click', function (e) {

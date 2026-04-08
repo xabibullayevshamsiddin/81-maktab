@@ -373,6 +373,14 @@
           </div>
           <div class="chat-messages" id="chat-messages"></div>
           <form class="chat-input-wrap" id="chat-form">
+            <div class="chat-sticker-row" aria-label="Tezkor stikerlar">
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="😄" title="Smile">😄</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👍" title="Like">👍</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
+            </div>
             <input type="text" id="chat-input" class="chat-input" placeholder="Xabar yozing..." maxlength="1000" autocomplete="off" />
             <button type="submit" class="chat-send-btn" aria-label="Yuborish">
               <i class="fa-solid fa-paper-plane"></i>

@@ -963,9 +963,22 @@ section {
   animation: chatFullIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.chat-panel.is-fullscreen-enter {
+  animation: chatFullIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chat-panel.is-fullscreen-exit {
+  animation: chatFullOut 0.3s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
 @keyframes chatFullIn {
   from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: none; }
+}
+
+@keyframes chatFullOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0.92; transform: scale(0.94); }
 }
 
 .chat-panel-header {
@@ -1208,10 +1221,43 @@ section {
 
 .chat-input-wrap {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.chat-sticker-row {
+  width: 100%;
+  display: flex;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.chat-sticker-btn {
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface, #fff);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.chat-sticker-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  border-color: var(--primary-2);
+  box-shadow: 0 6px 16px rgba(21, 101, 192, 0.18);
+}
+
+.chat-sticker-btn:active {
+  transform: scale(0.94);
 }
 
 .chat-input {
@@ -1289,6 +1335,16 @@ section {
 :root[data-theme='dark'] .chat-input {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(139, 92, 246, 0.2);
+}
+
+:root[data-theme='dark'] .chat-sticker-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(139, 92, 246, 0.26);
+}
+
+:root[data-theme='dark'] .chat-sticker-btn:hover {
+  border-color: rgba(167, 139, 250, 0.75);
+  box-shadow: 0 8px 18px rgba(139, 92, 246, 0.24);
 }
 
 :root[data-theme='dark'] .chat-input:focus {
