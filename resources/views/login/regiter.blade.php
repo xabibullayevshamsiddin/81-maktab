@@ -127,7 +127,7 @@
                 <input type="checkbox" id="reg-is-parent" name="is_parent" value="1" {{ old('is_parent') ? 'checked' : '' }} style="width:18px;height:18px;accent-color:var(--primary-2);">
                 <span>Men ota-onaman</span>
               </label>
-              <p class="register-field-note" style="margin-top:6px;font-size:12px;color:var(--muted);">Ota-onalar sinf tanlamaslik mumkin. Imtihon topshirish cheklanadi.</p>
+              <p class="register-field-note" style="margin-top:6px;font-size:12px;color:var(--muted);">Agar siz ota-ona bo'lsangiz, sinf tanlash shart emas.</p>
             </div>
             <script>
               (function() {
