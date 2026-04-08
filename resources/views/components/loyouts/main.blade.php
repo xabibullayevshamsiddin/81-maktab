@@ -229,9 +229,6 @@
               @endforeach
               <span class="locale-switcher-slider"></span>
             </div>
-            <button class="search-toggle" type="button" aria-label="Qidirish" title="Qidirish" id="search-open-btn">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
             <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
               <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
@@ -344,6 +341,46 @@
 	    @endunless
 	    </div>
 
+    @auth
+      @unless($isExamSessionRoute)
+      <div id="chat-widget" class="chat-widget"
+        data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
+        data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
+        data-csrf="{{ csrf_token() }}"
+        data-user-id="{{ auth()->id() }}"
+      >
+        <button type="button" class="chat-bubble" id="chat-bubble" aria-label="Chat">
+          <i class="fa-solid fa-comments"></i>
+          <span class="chat-bubble-badge" id="chat-badge" hidden>0</span>
+        </button>
+
+        <div class="chat-panel" id="chat-panel" hidden>
+          <div class="chat-panel-header">
+            <div class="chat-panel-title">
+              <i class="fa-solid fa-comments"></i>
+              <span>Global chat</span>
+            </div>
+            <div class="chat-panel-actions">
+              <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="Kengaytirish" title="To'liq ekran">
+                <i class="fa-solid fa-expand"></i>
+              </button>
+              <button type="button" class="chat-panel-btn" id="chat-close-btn" aria-label="Yopish">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <form class="chat-input-wrap" id="chat-form">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Xabar yozing..." maxlength="1000" autocomplete="off" />
+            <button type="submit" class="chat-send-btn" aria-label="Yuborish">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      @endunless
+    @endauth
+
     @unless($isExamSessionRoute)
     <button
       id="scroll-top"
@@ -354,25 +391,6 @@
       <i class="fa-solid fa-chevron-up"></i>
     </button>
     @endunless
-
-    <div id="search-modal" class="search-modal" hidden role="dialog" aria-modal="true" aria-label="Qidirish" data-search-url="{{ request()->getBaseUrl() }}/search">
-      <div class="search-modal-backdrop"></div>
-      <div class="search-modal-box">
-        <div class="search-modal-input-wrap">
-          <i class="fa-solid fa-magnifying-glass search-modal-icon"></i>
-          <input type="search" id="search-modal-input" class="search-modal-input" placeholder="Yangilik, ustoz, kurs, imtihon qidirish..." autocomplete="off" autofocus />
-          <kbd class="search-modal-kbd">ESC</kbd>
-        </div>
-        <div id="search-modal-results" class="search-modal-results"></div>
-        <div id="search-modal-empty" class="search-modal-empty" hidden>
-          <i class="fa-solid fa-magnifying-glass" style="font-size:28px;opacity:0.2;"></i>
-          <p>Hech narsa topilmadi</p>
-        </div>
-        <div id="search-modal-hint" class="search-modal-hint">
-          <p>Kamida 2 ta belgi yozing</p>
-        </div>
-      </div>
-    </div>
 
     <div id="global-modal-root"></div>
 

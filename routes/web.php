@@ -5,7 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\AdminSettingsController;
-use App\Http\Controllers\SearchController;
+use App\Http\Controllers\ChatController;
+
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\TeacherCommentController;
@@ -43,7 +44,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/',[HomeController::class, 'home'])->name('home');
 Route::get('lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
-Route::get('search', [SearchController::class, 'search'])->name('search');
+
 Route::get('about',[HomeController::class, 'about'])->name('about');
 Route::get('courses',[PublicCourseController::class, 'index'])->name('courses');
 Route::get('courses/{course}', [PublicCourseController::class, 'show'])->name('courses.show');
@@ -96,6 +97,9 @@ Route::post('reset-password/resend', [AuthController::class, 'resendPasswordRese
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
+    Route::post('chat/send', [ChatController::class, 'send'])->middleware('throttle:30,1')->name('chat.send');
+
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
