@@ -62,7 +62,7 @@
         </button>
       </form>
 
-      @if ($showReplyForm)
+      @if ($showReplyForm && auth()->check())
         <button
           type="button"
           class="comment-reply js-comment-reply-toggle"
@@ -81,17 +81,6 @@
           >
             @csrf
             <input type="hidden" name="parent_id" value="{{ $comment->id }}" />
-
-            @guest
-              <input
-                type="text"
-                class="comment-input"
-                name="author_name"
-                placeholder="Ismingiz (ixtiyoriy)"
-                maxlength="80"
-              />
-            @endguest
-
               <input
                 type="text"
                 class="comment-input"

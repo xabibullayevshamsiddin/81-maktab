@@ -148,33 +148,31 @@
             <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> {{ __('public.posts.leave_comment') }}</h3>
             <x-site-rule-items area="comment" />
           </div>
-          <form class="comment-form js-comment-form" action="{{ route('teacher.comments.store', $teacher) }}" method="POST">
-            @csrf
-
-            @guest
-              <input
-                type="text"
+          @auth
+            <form class="comment-form js-comment-form" action="{{ route('teacher.comments.store', $teacher) }}" method="POST">
+              @csrf
+              <textarea
+                rows="4"
                 class="comment-input"
-                name="author_name"
-                placeholder="{{ __('public.posts.guest_name') }}"
-                maxlength="80"
-                value="{{ old('author_name') }}"
-              />
-            @endguest
+                name="body"
+                placeholder="{{ __('public.posts.comment_placeholder') }}"
+                maxlength="100"
+                required
+              >{{ old('body') }}</textarea>
 
-            <textarea
-              rows="4"
-              class="comment-input"
-              name="body"
-              placeholder="{{ __('public.posts.comment_placeholder') }}"
-              maxlength="100"
-              required
-            >{{ old('body') }}</textarea>
-
-            <button type="submit" class="btn">
-              <i class="fa-solid fa-paper-plane"></i> {{ __('public.posts.submit_comment') }}
-            </button>
-          </form>
+              <button type="submit" class="btn">
+                <i class="fa-solid fa-paper-plane"></i> {{ __('public.posts.submit_comment') }}
+              </button>
+            </form>
+          @else
+            <p class="comment-hint" style="margin-bottom: 10px;">
+              <i class="fa-solid fa-lock"></i> Izoh yozish uchun avval tizimga kiring.
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+              <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+            </div>
+          @endauth
           <p class="comment-hint">
             <i class="fa-solid fa-info-circle"></i> {{ __('public.posts.comment_hint') }}
           </p>
