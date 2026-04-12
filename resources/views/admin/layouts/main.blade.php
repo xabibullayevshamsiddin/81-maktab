@@ -362,6 +362,7 @@
 	    <script src="{{ app_public_asset('panel-assets/js/main.js') }}"></script>
       <script src="{{ app_public_asset('temp/js/extracted-admin.js') }}?v={{ filemtime(public_path('temp/js/extracted-admin.js')) }}"></script>
 
+    @stack('admin_page_scripts')
     @yield('page_scripts')
 
     <!-- Admin toast (session flash -> top-right toast) -->

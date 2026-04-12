@@ -164,6 +164,13 @@
 
       document.body.classList.add('exam-session-print-lock');
 
+      // Natija sahifasidan "Orqaga" (BFCache) — eski imtihon ko‘rinmasin; server holatini qayta olamiz
+      window.addEventListener('pageshow', function (ev) {
+        if (ev.persisted) {
+          window.location.reload();
+        }
+      });
+
       function reportRuleViolation() {
         if (disqualifiedNav) return;
         fetch(violationUrl, {
@@ -395,9 +402,82 @@
     });
     document.getElementById('exam-finish-confirm-cancel')?.addEventListener('click', hideFinishConfirmModal);
     finishConfirmModal?.querySelector('[data-exam-finish-backdrop]')?.addEventListener('click', hideFinishConfirmModal);
+
+    var examSubmitLocked = false;
+    var examTimerIntervalId = null;
+    var examTimerExpiredHandled = false;
+
+    function showExamGradingLoader() {
+      var loader = document.querySelector('.prime-exam-loader');
+      if (!loader) {
+        loader = document.createElement('div');
+        loader.className = 'prime-exam-loader';
+        loader.innerHTML =
+          '<div class="prime-grading-container">' +
+          '<div class="prime-grading-title">Natijalaringiz tahlil qilinmoqda...</div>' +
+          '<div class="prime-grading-bar-wrap"><div class="prime-grading-bar"></div></div>' +
+          '</div>';
+        document.body.appendChild(loader);
+      }
+      window.setTimeout(function () {
+        loader.classList.add('is-active');
+      }, 50);
+    }
+
+    /** POST → JSON (ExamController@submit) → ovoz/konfetti (public-layout.js), keyin redirect */
+    function submitExamWithFeedback() {
+      if (examSubmitLocked) return;
+      examSubmitLocked = true;
+
+      var form = document.getElementById('submit-form');
+      if (!form) return;
+
+      showExamGradingLoader();
+
+      var tokenEl = form.querySelector('input[name="_token"]');
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': tokenEl ? tokenEl.value : '',
+        },
+        body: new FormData(form),
+      })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data || !data.redirect) {
+            form.submit();
+            return;
+          }
+          var passed = data.passed;
+          window.setTimeout(function () {
+            if (passed === true) {
+              if (typeof window.playPrimeResultPass === 'function') window.playPrimeResultPass();
+              if (typeof window.playPrimeConfetti === 'function') {
+                window.playPrimeConfetti(window.innerWidth / 2, window.innerHeight / 2, true);
+              }
+              document.body.classList.add('prime-success-glow');
+            } else {
+              if (typeof window.playPrimeResultFail === 'function') window.playPrimeResultFail();
+              document.body.classList.add('prime-failure-shake');
+            }
+            window.setTimeout(function () {
+              window.location.href = data.redirect;
+            }, 2400);
+          }, 1200);
+        })
+        .catch(function () {
+          form.submit();
+        });
+    }
+
     document.getElementById('exam-finish-confirm-submit')?.addEventListener('click', async function () {
       await flushPendingTextAnswers();
-      document.getElementById('submit-form').submit();
+      hideFinishConfirmModal();
+      submitExamWithFeedback();
     });
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape' || !finishConfirmModal || finishConfirmModal.hidden) return;
@@ -413,9 +493,14 @@
       const sec = String(totalSec % 60).padStart(2, '0');
       timerEl.textContent = min + ':' + sec;
 
-      if (diff <= 0) {
+      if (diff <= 0 && !examTimerExpiredHandled) {
+        examTimerExpiredHandled = true;
+        if (examTimerIntervalId) {
+          clearInterval(examTimerIntervalId);
+          examTimerIntervalId = null;
+        }
         flushPendingTextAnswers().finally(function () {
-          document.getElementById('submit-form').submit();
+          submitExamWithFeedback();
         });
       }
     }
@@ -543,7 +628,7 @@
     });
 
     tick();
-    setInterval(tick, 1000);
+    examTimerIntervalId = setInterval(tick, 1000);
     updateProgress();
     showStep(0);
   </script>

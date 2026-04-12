@@ -138,7 +138,7 @@
           <div class="profile-overview-copy">
             <span class="profile-kicker">{{ __('profile.overview_kicker') }}</span>
             <h2>{{ $user->name }}</h2>
-            <p>{{ __('profile.overview_text') }}</p>
+            <p class="profile-overview-intro">{{ __('profile.overview_text') }}</p>
 
             <div class="profile-overview-tags">
               <span
@@ -166,8 +166,8 @@
         </div>
       </section>
 
-      <div class="profile-layout">
-        <div class="profile-column profile-column-settings">
+      <div class="profile-layout profile-layout--stack-mobile">
+        <div class="profile-column profile-column-settings profile-column-settings--mobile-last">
           <div class="signin-card profile-card {{ $profileCardStaffClass }}">
             <div class="profile-card-head">
               <span class="profile-card-kicker">{{ __('profile.steps.primary') }}</span>
@@ -262,12 +262,12 @@
           @include('profile.partials.password-card')
         </div>
 
-        <div class="profile-column profile-column-activity">
+        <div class="profile-column profile-column-activity profile-column-activity--mobile-first">
           @if(auth()->user()->canManageExams())
             <section class="profile-activity-block reveal">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
-                  <h3><i class="fa-solid fa-pen-nib"></i> Mening imtihonlarim (Ustoz)</h3>
+                  <h3><i class="fa-solid fa-pen-nib"></i> Mening imtihonlarim</h3>
                   <p>Siz yaratgan imtihonlar va o'quvchilar natijalarini boshqaring.</p>
                 </div>
                 <span class="profile-section-count">{{ $createdExams->count() }}</span>

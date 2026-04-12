@@ -204,6 +204,32 @@
   .profile-stats-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
+
+  /* Mobil: avvalo ism/teglar, keyin imtihon/kurs/tez kirish bloklari, oxirida email/parol va profil formasi */
+  .profile-layout--stack-mobile {
+    gap: 28px !important;
+  }
+
+  .profile-layout--stack-mobile .profile-column-activity--mobile-first {
+    order: 1 !important;
+  }
+
+  .profile-layout--stack-mobile .profile-column-settings--mobile-last {
+    order: 2 !important;
+  }
+
+  .profile-overview-intro {
+    display: none !important;
+  }
+
+  .profile-overview-panel {
+    padding: 28px 22px !important;
+    margin-bottom: 28px !important;
+  }
+
+  .profile-overview-main {
+    align-items: flex-start !important;
+  }
 }
 
 @media (max-width: 640px) {

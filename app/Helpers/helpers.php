@@ -549,3 +549,33 @@ if (! function_exists('normalize_school_grade_list')) {
             ->all();
     }
 }
+
+if (! function_exists('sanitize_plain_text')) {
+    /**
+     * Foydalanuvchi matnidan HTML/script va boshqaruv belgilarini olib tashlash (XSS oldini olish).
+     */
+    function sanitize_plain_text(?string $value): string
+    {
+        $value = (string) ($value ?? '');
+        $value = strip_tags($value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? '';
+
+        return trim($value);
+    }
+}
+
+if (! function_exists('turnstile_site_key')) {
+    function turnstile_site_key(): ?string
+    {
+        $key = config('services.turnstile.site_key');
+
+        return is_string($key) && $key !== '' ? $key : null;
+    }
+}
+
+if (! function_exists('turnstile_enabled')) {
+    function turnstile_enabled(): bool
+    {
+        return (bool) config('services.turnstile.enabled') && turnstile_site_key() !== null;
+    }
+}

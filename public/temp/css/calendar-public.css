@@ -9,6 +9,10 @@
   --cal-today-soft: rgba(245, 158, 11, 0.18);
   --cal-border: rgba(148, 163, 184, 0.35);
   --cal-card-bg: linear-gradient(165deg, #ffffff 0%, #f4f7fc 100%);
+  /* Prime bilan bir xil “premium” easing */
+  --cal-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --cal-accordion-duration: 0.58s;
+  --cal-accordion-stagger: 0.055s;
 }
 
 :root[data-theme='dark'] .calendar-page {
@@ -278,8 +282,29 @@ details.profile-activity-block.calendar-day-dtls {
   margin-bottom: 20px;
   border-radius: 14px;
   border: 1px solid var(--cal-border);
-  overflow: hidden;
+  overflow: visible;
   background: var(--cal-card-bg);
+  transform: translateZ(0);
+  transition:
+    border-color 0.45s var(--cal-ease-out),
+    box-shadow 0.55s var(--cal-ease-out),
+    transform 0.45s var(--cal-ease-out);
+}
+
+details.profile-activity-block.calendar-day-dtls[open] {
+  border-color: rgba(37, 99, 235, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.12),
+    0 18px 48px -16px rgba(15, 23, 42, 0.18),
+    0 8px 28px -12px rgba(37, 99, 235, 0.22);
+}
+
+:root[data-theme='dark'] details.profile-activity-block.calendar-day-dtls[open] {
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.14),
+    0 20px 50px -18px rgba(0, 0, 0, 0.55),
+    0 10px 32px -14px rgba(96, 165, 250, 0.18);
 }
 
 details.profile-activity-block.calendar-day-dtls:last-child {
@@ -299,6 +324,33 @@ details.profile-activity-block.calendar-day-dtls:last-child {
   font-weight: 700;
   color: var(--primary, #0f3f78);
   background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent);
+  border-radius: 13px;
+  transition:
+    background 0.45s var(--cal-ease-out),
+    box-shadow 0.45s var(--cal-ease-out),
+    border-radius 0.35s var(--cal-ease-out);
+  position: relative;
+}
+
+details.calendar-day-dtls[open] .calendar-day-summary {
+  border-radius: 13px 13px 0 0;
+  background: linear-gradient(
+    100deg,
+    rgba(37, 99, 235, 0.11) 0%,
+    rgba(37, 99, 235, 0.04) 42%,
+    transparent 100%
+  );
+  box-shadow: inset 0 -1px 0 rgba(37, 99, 235, 0.12);
+}
+
+:root[data-theme='dark'] details.calendar-day-dtls[open] .calendar-day-summary {
+  background: linear-gradient(
+    100deg,
+    rgba(96, 165, 250, 0.14) 0%,
+    rgba(96, 165, 250, 0.05) 45%,
+    transparent 100%
+  );
+  box-shadow: inset 0 -1px 0 rgba(96, 165, 250, 0.18);
 }
 
 .calendar-day-summary-inner {
@@ -314,16 +366,31 @@ details.profile-activity-block.calendar-day-dtls:last-child {
 .calendar-day-chevron {
   flex-shrink: 0;
   font-size: 12px;
-  opacity: 0.65;
-  transition: transform 0.25s ease;
+  opacity: 0.72;
+  transition:
+    transform var(--cal-accordion-duration) var(--cal-ease-out),
+    opacity 0.35s ease;
+}
+
+.calendar-day-summary:hover .calendar-day-chevron {
+  opacity: 1;
 }
 
 .calendar-day-summary::-webkit-details-marker {
   display: none;
 }
 
+.calendar-day-summary:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.55);
+  outline-offset: 2px;
+}
+
+:root[data-theme='dark'] .calendar-day-summary:focus-visible {
+  outline-color: rgba(96, 165, 250, 0.65);
+}
+
 details.calendar-day-dtls[open] .calendar-day-chevron {
-  transform: rotate(180deg);
+  transform: rotate(180deg) scale(1.08);
 }
 
 :root[data-theme='dark'] .calendar-day-summary {
@@ -347,17 +414,79 @@ details.calendar-day-dtls[open] .calendar-day-chevron {
   color: #b8cef5;
 }
 
-.calendar-day-dtls .calendar-day-activity-list {
-  margin: 14px 0 0;
+/* Grid 0fr → 1fr: silliq balandlik (barcha zamonaviy brauzerlar) */
+.calendar-day-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--cal-accordion-duration) var(--cal-ease-out);
 }
 
-/* --- Toolbar: skroll paytida tepada --- */
-@media (min-width: 769px) {
-  .profile-main.calendar-page .calendar-toolbar {
-    position: sticky;
-    top: 80px;
-    z-index: 20;
+details.calendar-day-dtls[open] .calendar-day-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+.calendar-day-accordion-body-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 16px 18px;
+  border-radius: 0 0 13px 13px;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.03), transparent 52%);
+}
+
+:root[data-theme='dark'] .calendar-day-accordion-body-inner {
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.06), transparent 55%);
+}
+
+.calendar-day-dtls .calendar-day-activity-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Ro‘yxat qatorlari: Prime-style stagger + blur */
+@keyframes calendar-day-li-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+    filter: blur(5px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+details.calendar-day-dtls[open] .calendar-day-activity-list > li {
+  animation: calendar-day-li-in 0.52s var(--cal-ease-out) backwards;
+}
+
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(1) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 1);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(2) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 2);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(3) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 3);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(4) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 4);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(5) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 5);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(6) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 6);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(7) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 7);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(8) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 8);
+}
+details.calendar-day-dtls[open] .calendar-day-activity-list > li:nth-child(n + 9) {
+  animation-delay: calc(var(--cal-accordion-stagger) * 9);
 }
 
 @media (max-width: 640px) {
@@ -375,17 +504,8 @@ details.calendar-day-dtls[open] .calendar-day-chevron {
   }
 }
 
+/* Desktop: ham accordion bosiladi (oldingi pointer-events:none tufayli ochilmayotgandi) */
 @media (min-width: 769px) {
-  .calendar-day-dtls .calendar-day-chevron {
-    display: none;
-  }
-
-  .calendar-day-summary {
-    cursor: default;
-    pointer-events: none;
-    margin-bottom: 0;
-  }
-
   .calendar-day-dtls .calendar-day-activity-list {
     margin-top: 0;
   }
@@ -403,5 +523,23 @@ details.calendar-day-dtls[open] .calendar-day-chevron {
   .calendar-cell,
   .calendar-month-card {
     transition: none !important;
+  }
+
+  details.profile-activity-block.calendar-day-dtls,
+  .calendar-day-summary,
+  .calendar-day-chevron {
+    transition: none !important;
+  }
+
+  .calendar-day-accordion-body {
+    transition: none !important;
+  }
+
+  details.calendar-day-dtls[open] .calendar-day-activity-list > li {
+    animation: none !important;
+  }
+
+  details.profile-activity-block.calendar-day-dtls[open] {
+    box-shadow: none;
   }
 }

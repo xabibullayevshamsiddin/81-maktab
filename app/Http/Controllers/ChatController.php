@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\ChatMessage;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
+    use ValidatesTurnstile;
+
     private const MAX_MESSAGES = 50;
 
     public function messages(Request $request): JsonResponse
@@ -95,10 +98,9 @@ class ChatController extends Controller
             ? asset('storage/'.ltrim($user->avatar, '/'))
             : null;
 
-        $grade = $user->grade ? trim((string) $user->grade) : null;
-        if ($grade === '') {
-            $grade = null;
-        }
+        // O‘z profilidagi kabi: xodimlar uchun «Barcha sinflar», xom `grade` ustunini emas
+        $gradeDisplay = trim($user->displayGrade(''));
+        $grade = $gradeDisplay !== '' ? $gradeDisplay : null;
 
         $payload = [
             'display_name' => $displayName,
@@ -296,13 +298,24 @@ class ChatController extends Controller
             return response()->json(['ok' => false, 'error' => 'Sizning akkauntingiz bloklangan.'], 403);
         }
 
+        $this->validateTurnstile($request);
+
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:1000'],
         ]);
 
+        $body = sanitize_plain_text($validated['body']);
+        if ($body === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Matn bo‘sh.',
+                'errors' => ['body' => ['Matn kiritilishi kerak.']],
+            ], 422);
+        }
+
         $message = ChatMessage::create([
             'user_id' => $user->id,
-            'body' => trim($validated['body']),
+            'body' => $body,
         ]);
 
         return response()->json(['ok' => true, 'id' => $message->id]);

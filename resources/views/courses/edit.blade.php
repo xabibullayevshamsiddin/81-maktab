@@ -123,7 +123,16 @@
           <input type="text" name="price_en" class="comment-input" placeholder="Price (EN, optional)" value="{{ old('price_en', $course->price_en) }}">
           <input type="text" name="duration" class="comment-input" placeholder="Davomiyligi" value="{{ old('duration', $course->duration) }}" required>
           <input type="text" name="duration_en" class="comment-input" placeholder="Duration (EN, optional)" value="{{ old('duration_en', $course->duration_en) }}">
-          <input type="date" name="start_date" class="comment-input" value="{{ old('start_date', $course->start_date?->format('Y-m-d')) }}" required>
+          <label class="comment-label" for="course-start-date-edit">Boshlanish sanasi</label>
+          @include('partials.flatpickr-inline-date-field', [
+            'name' => 'start_date',
+            'id' => 'course-start-date-edit',
+            'value' => old('start_date', $course->start_date?->format('Y-m-d')),
+            'required' => true,
+          ])
+          @error('start_date')
+            <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
+          @enderror
           <textarea name="description" rows="5" class="comment-input" placeholder="Kurs tavsifi" required>{{ old('description', $course->description) }}</textarea>
           <textarea name="description_en" rows="5" class="comment-input" placeholder="Course description (EN, optional)">{{ old('description_en', $course->description_en) }}</textarea>
 

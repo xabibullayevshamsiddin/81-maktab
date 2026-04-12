@@ -335,14 +335,14 @@ class User extends Authenticatable
     }
 
     /**
-     * Izohlar va aloqa xabarlari (moderator va editor ham kirishi mumkin).
+     * Izohlar va aloqa xabarlari — faqat super admin, admin va moderator.
+     * Editor faqat yangiliklar/taqvim/kategoriyalar (canManageContent) bilan cheklanadi.
      */
     public function canManageInbox(): bool
     {
         return $this->hasAnyRole([
             self::ROLE_SUPER_ADMIN,
             self::ROLE_ADMIN,
-            self::ROLE_EDITOR,
             self::ROLE_MODERATOR,
         ]);
     }
@@ -402,7 +402,7 @@ class User extends Authenticatable
 
     public function canManageExams(): bool
     {
-        return $this->isAdmin() || ($this->isTeacher() && $this->hasLinkedActiveTeacherProfile());
+        return $this->isAdmin() || $this->isTeacher();
     }
 
     public function canManageTeachers(): bool
@@ -482,13 +482,21 @@ class User extends Authenticatable
         return ! $this->is_parent;
     }
 
+    /** O‘quvchi sinfi faqat oddiy foydalanuvchilar uchun; xodimlar — «Barcha sinflar» (role_id.level asosida). */
     public function hasUniversalGrade(): bool
     {
         if ($this->is_parent) {
             return true;
         }
 
-        return $this->role !== self::ROLE_USER;
+        $this->loadMissing('roleRelation');
+
+        $relationLevel = (int) ($this->roleRelation?->level ?? 0);
+        if ($relationLevel > self::ROLE_HIERARCHY[self::ROLE_USER]) {
+            return true;
+        }
+
+        return $this->resolvedRoleName() !== self::ROLE_USER;
     }
 
     public function displayGrade(string $emptyLabel = 'Kiritilmagan'): string

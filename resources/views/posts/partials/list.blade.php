@@ -1,6 +1,6 @@
 @php $likedPostIds = $likedPostIds ?? collect(); @endphp
 
-<div class="post-grid">
+<div class="post-grid prime-stagger">
   @forelse($posts as $post)
     @php
       $postTitle = localized_model_value($post, 'title');
@@ -8,7 +8,7 @@
       $postCategory = localized_model_value($post->category, 'name');
       $kindLabel = localized_post_kind_label($post->post_kind ?? 'general');
     @endphp
-    <article class="news-card post-card">
+    <article class="news-card post-card prime-glow-hover">
       <img
         src="{{ app_storage_asset($post->image) }}"
         alt="{{ $postTitle }}"
@@ -64,7 +64,7 @@
         </div>
       </div>
 
-      <a href="{{ route('post.show', $post) }}" class="btn btn-sm" style="margin: 0 16px 16px;">{{ __('public.common.details') }}</a>
+      <a href="{{ route('post.show', $post) }}" class="btn btn-sm btn-prime" style="margin: 0 16px 16px;">{{ __('public.common.details') }}</a>
     </article>
   @empty
     <p>{{ __('public.posts.empty') }}</p>

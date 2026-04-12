@@ -15,7 +15,7 @@
             <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
             <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
           </h1>
-          <p class="hero-text-fade">{{ __('public.home.hero_text') }}</p>
+          <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
         </div>
         <div class="home-btn">
           <a
@@ -52,12 +52,12 @@
   </section>
 
   <main>
-    <section class="container reveal glass-section home-about-section" id="about">
+    <section class="container prime-reveal glass-section home-about-section" id="about">
       <div class="section-head">
         <h2 class="js-split-text">{{ __('public.home.welcome_title') }}</h2>
         <p>{{ __('public.home.welcome_text') }}</p>
       </div>
-      <div class="about-modern">
+      <div class="about-modern prime-stagger">
         <article class="about-card">
           <h3>{{ __('public.home.students_title') }}</h3>
           <p>{{ __('public.home.students_text') }}</p>
@@ -76,7 +76,7 @@
       </div>
     </section>
 
-    <section class="container news reveal glass-section home-news-section" id="news">
+    <section class="container news prime-reveal glass-section home-news-section" id="news">
       <div class="section-head home-news-head">
         <div>
           <h2 class="js-split-text">{{ __('public.home.news_title') }}</h2>
@@ -84,9 +84,8 @@
         </div>
         <a href="{{ route('post') }}" class="btn btn-sm">{{ __('public.home.news_all') }}</a>
       </div>
-
-      <div class="news-container">
-        @php $likedPostIds = $likedPostIds ?? collect(); @endphp
+      
+      <div class="news-container prime-stagger">
         @forelse($posts as $post)
           @php
             $postTitle = localized_model_value($post, 'title');
@@ -94,7 +93,7 @@
             $postCategory = localized_model_value($post->category, 'name');
             $kindLabel = localized_post_kind_label($post->post_kind ?? 'general');
           @endphp
-          <article class="news-card">
+          <article class="news-card prime-glow-hover">
             <img
               src="{{ app_storage_asset($post->image) }}"
               alt="{{ $postTitle }}"
@@ -129,13 +128,6 @@
               <div class="icon-link">
                 <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
                 <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
-                <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
-                  @csrf
-                  <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
-                    <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
-                    <span class="like-count">{{ $post->likes_count }}</span>
-                  </button>
-                </form>
               </div>
               <div class="icon-link-actions">
                 <button
@@ -148,7 +140,7 @@
                 >
                   <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
                 </button>
-                <a href="{{ route('post.show', $post) }}" class="btn btn-sm">{{ __('public.common.details') }}</a>
+                  <a href="{{ route('post.show', $post) }}" class="btn btn-sm btn-prime">{{ __('public.common.details') }}</a>
               </div>
             </div>
           </article>
@@ -158,12 +150,12 @@
       </div>
     </section>
 
-    <section class="teachers reveal" id="teachers">
+    <section class="teachers prime-reveal" id="teachers">
       <div class="container teacher">
         <div class="teacher-content">
           <h2 class="js-split-text">{{ __('public.home.teachers_title') }}</h2>
           <p>{{ __('public.home.teachers_text') }}</p>
-          <a href="{{ route('teacher') }}" class="btn">{{ __('public.home.teachers_action') }}</a>
+          <a href="{{ route('teacher') }}" class="btn btn-prime">{{ __('public.home.teachers_action') }}</a>
         </div>
 
         @if(isset($featuredTeacher) && $featuredTeacher)
@@ -171,7 +163,7 @@
             $featuredTeacherSubject = localized_model_value($featuredTeacher, 'subject');
             $featuredTeacherMetaLine = $featuredTeacherSubject ?: localized_model_value($featuredTeacher, 'lavozim');
           @endphp
-          <article class="teacher-img">
+          <article class="teacher-img prime-reveal prime-reveal--scale">
             <img
               src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
               alt="{{ $featuredTeacher->full_name }} profil rasmi"

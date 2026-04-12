@@ -24,6 +24,256 @@
   /** Chat panel uchun Escape; dialog ochiq bo‘lsa avvalo dialog yopiladi. */
   let chatPanelEscapeHandler = null;
 
+  // Cinematic Audio System
+  let primeAudioMuted = localStorage.getItem('site-audio-muted') === 'true';
+  let primeAudioCtx = null;
+  function getPrimeAudioCtx() {
+    if (!primeAudioCtx) primeAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (primeAudioCtx.state === 'suspended') primeAudioCtx.resume();
+    return primeAudioCtx;
+  }
+
+  function playPrimeChatTick() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1180, t);
+      osc.frequency.exponentialRampToValueAtTime(920, t + 0.03);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.05, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.07);
+    } catch (e) {}
+  }
+
+  function playPrimeSuccess() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const notes = [
+        { f: 880, o: 0, d: 0.16, v: 0.1 },
+        { f: 1174.66, o: 0.07, d: 0.2, v: 0.09 },
+      ];
+      notes.forEach(({ f, o, d, v }) => {
+        const t0 = now + o;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t0);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.02);
+      });
+    } catch (e) {}
+  }
+
+  /** Imtihon qoidasi: eslatuvchi, lekin keskin emas */
+  window.playPrimeViolationSound = function() {
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const pulse = (freq, start, dur, peak) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, start);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.85, start + dur * 0.85);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(peak, start + 0.035);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.02);
+      };
+      pulse(305, now, 0.32, 0.17);
+      pulse(265, now + 0.4, 0.42, 0.15);
+    } catch (e) {}
+  };
+
+  function scrambleText(el, text, duration = 800) {
+    if (!el || !text) return;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+';
+    let start = null;
+    const originalText = text;
+    
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = timestamp - start;
+      const length = Math.floor((progress / duration) * originalText.length);
+      
+      let currentText = originalText.substring(0, length);
+      for (let i = length; i < originalText.length; i++) {
+        if (originalText[i] === ' ') {
+          currentText += ' ';
+        } else {
+          currentText += chars[Math.floor(Math.random() * chars.length)];
+        }
+      }
+      
+      el.textContent = currentText;
+      
+      if (progress < duration) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = originalText;
+      }
+    };
+    requestAnimationFrame(step);
+  }
+
+  function playPrimeConfetti(x, y, isGold = false) {
+    const colors = isGold 
+        ? ['#f59e0b', '#fbbf24', '#fcd34d', '#ffffff'] 
+        : ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#dc2626'];
+    const count = isGold ? 48 : 32;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'prime-particle' + (isGold ? ' is-gold' : '');
+      const size = isGold ? Math.random() * 12 + 6 : Math.random() * 8 + 4;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      
+      const angle = Math.random() * Math.PI * 2;
+      const dist = isGold ? Math.random() * 200 + 80 : Math.random() * 120 + 50;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      
+      p.style.setProperty('--tx', tx + 'px');
+      p.style.setProperty('--ty', ty + 'px');
+      
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), isGold ? 1200 : 800);
+    }
+  }
+
+  /** Imtihon o‘tdi: major arpeggio + yumshoq envelope + eng oxirida yengil “sparkle” */
+  window.playPrimeResultPass = function() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const notes = [
+        { f: 523.25, o: 0, d: 0.45, v: 0.11 },
+        { f: 659.25, o: 0.09, d: 0.45, v: 0.1 },
+        { f: 783.99, o: 0.18, d: 0.45, v: 0.1 },
+        { f: 1046.5, o: 0.28, d: 0.58, v: 0.12 },
+      ];
+      notes.forEach(({ f, o, d, v }) => {
+        const t0 = now + o;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t0);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.03);
+      });
+      const spark = ctx.createOscillator();
+      const sg = ctx.createGain();
+      spark.type = 'sine';
+      spark.frequency.setValueAtTime(2093, now + 0.28);
+      sg.gain.setValueAtTime(0, now + 0.28);
+      sg.gain.linearRampToValueAtTime(0.035, now + 0.33);
+      sg.gain.exponentialRampToValueAtTime(0.001, now + 0.72);
+      spark.connect(sg);
+      sg.connect(ctx.destination);
+      spark.start(now + 0.28);
+      spark.stop(now + 0.75);
+    } catch (e) {}
+  };
+
+  /** Yiqilish: past tonli, pastga siljigan minor — keskin emas */
+  window.playPrimeResultFail = function() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const phrase = [
+        { f: 311.13, o: 0, d: 0.4, v: 0.095 },
+        { f: 277.18, o: 0.13, d: 0.44, v: 0.085 },
+        { f: 246.94, o: 0.28, d: 0.52, v: 0.075 },
+      ];
+      phrase.forEach(({ f, o, d, v }) => {
+        const t0 = now + o;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t0);
+        osc.frequency.exponentialRampToValueAtTime(f * 0.96, t0 + d);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.03);
+      });
+    } catch (e) {}
+  };
+
+  function initSeniorInteractions() {
+    // 1. 3D Card Tilt
+    const tiltTargets = document.querySelectorAll('.news-card, .teacher-card, .detail-image-card, .course-card, .card-style, .about-card, .exam-card');
+    tiltTargets.forEach(card => {
+      card.classList.add('prime-3d-target');
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = (y - centerY) / centerY * 10; 
+        const rotateY = (x - centerX) / centerX * -10;
+        
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+      });
+    });
+
+    // 3. Text Scramble on Scroll
+    const scrambleObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          if (el.dataset.scrambled) return;
+          el.dataset.scrambled = 'true';
+          scrambleText(el, el.innerText);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('h3, .section-head h1, .news-hero-content h1, .section-title, .results-title').forEach(h => {
+      if (h.closest('.chat-panel')) return; // Avoid scrambling chat messages
+      h.classList.add('prime-scramble-active');
+      scrambleObserver.observe(h);
+    });
+  }
+
+
   function initChatUserPreviewChrome() {
     var dlg = document.getElementById('chat-user-preview-dialog');
     if (!dlg) return;
@@ -185,7 +435,12 @@
         })
         .then(function (d) {
           if (previewLoadingForId !== String(userId)) return;
-          if (previewNameEl) previewNameEl.textContent = d.display_name || '';
+          previewLoading.hidden = true;
+          previewContent.hidden = false;
+          if (previewNameEl) {
+            previewNameEl.textContent = d.display_name || '';
+            scrambleText(previewNameEl, d.display_name || '');
+          }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
             if (d.is_super_admin) {
@@ -227,6 +482,9 @@
           }
           if (previewExtraEl) {
             previewExtraEl.innerHTML = buildChatUserPreviewExtra(d);
+            previewExtraEl.querySelectorAll('strong, .chat-user-preview-section-title').forEach(el => {
+              scrambleText(el, el.innerText);
+            });
           }
           if (previewContactEl && d.contact) {
             previewContactEl.hidden = false;
@@ -925,6 +1183,12 @@
             icon.classList.toggle('fa-regular', !data.liked);
           }
           if (countEl) countEl.textContent = String(data.likes_count);
+
+          if (data.liked) {
+            btn.classList.remove('prime-like-trigger');
+            void btn.offsetWidth; // reflow
+            btn.classList.add('prime-like-trigger');
+          }
         }
 
         window.showToast?.(data.message || (data.liked ? "Like qo'shildi." : 'Like olib tashlandi.'), data.toast_type || 'success');
@@ -982,6 +1246,34 @@
 
       if (wrapper) {
         wrapper.hidden = !wrapper.hidden;
+      }
+    });
+
+    document.addEventListener('submit', async (event) => {
+      const form = event.target.closest('#contact-form');
+      if (!form) return;
+      event.preventDefault();
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+          body: new FormData(form),
+        });
+        const data = await response.json();
+        if (data && data.ok) {
+          playPrimeSuccess();
+          playPrimeConfetti(event.clientX || window.innerWidth / 2, event.clientY || window.innerHeight / 2);
+          window.showToast?.(data.message || 'Xabar yuborildi', 'success');
+          form.reset();
+        } else {
+          window.showToast?.(data?.message || 'Xatolik', 'error');
+        }
+      } catch (e) {
+        window.showToast?.('Ba’zi ma’lumotlar kiritilmagan yoki xatolik yuz berdi.', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     });
 
@@ -1051,13 +1343,38 @@
       const deletingId = form.dataset.commentId || null;
 
       try {
+        let submitBody = new FormData(form);
+
+        const needsCommentTurnstile = methodOverride !== 'delete';
+
+        const commentTsHost = document.getElementById('comment-turnstile-host');
+        if (
+          needsCommentTurnstile &&
+          commentTsHost &&
+          commentTsHost.getAttribute('data-sitekey') &&
+          window.turnstile &&
+          typeof window.turnstile.execute === 'function'
+        ) {
+          await new Promise(function (resolve, reject) {
+            window.turnstile.execute(commentTsHost, {
+              callback: function (token) {
+                submitBody.set('cf-turnstile-response', token);
+                resolve();
+              },
+              'error-callback': function () {
+                reject(new Error('Robot tekshiruvi bajarilmadi. Qayta urinib ko‘ring.'));
+              },
+            });
+          });
+        }
+
         const response = await fetch(form.action, {
           method: 'POST',
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
           },
-          body: new FormData(form),
+          body: submitBody,
         });
 
         const raw = await response.text();
@@ -1116,6 +1433,11 @@
 
         const toastType = data.toast_type || 'success';
         window.showToast?.(data.message || 'OK', toastType);
+
+        if (data.ok && (toastType === 'success' || !toastType)) {
+          playPrimeSuccess();
+          playPrimeConfetti(event.clientX || window.innerWidth / 2, event.clientY || window.innerHeight / 2);
+        }
 
         if (methodOverride === 'put' && data.comment?.id) {
           const el = document.querySelector(`article.comment-card[data-comment-id="${data.comment.id}"]`);
@@ -1305,7 +1627,7 @@
 
         form.reset();
       } catch (error) {
-        window.showToast?.('Izoh yuborishda xatolik', 'error');
+        window.showToast?.(error && error.message ? error.message : 'Izoh yuborishda xatolik', 'error');
       } finally {
         if (button) button.disabled = false;
       }
@@ -2011,81 +2333,116 @@
       if (isSending) return Promise.resolve();
 
       options = options || {};
-      isSending = true;
-      setComposeState('sending');
 
-      if (sendBtn) {
-        sendBtn.disabled = true;
-        sendBtn.setAttribute('aria-busy', 'true');
+      var turnstileHost = document.getElementById('chat-turnstile-host');
+
+      function doFetch(turnstileToken) {
+        isSending = true;
+        setComposeState('sending');
+
+        if (sendBtn) {
+          sendBtn.disabled = true;
+          sendBtn.setAttribute('aria-busy', 'true');
+        }
+
+        input.setAttribute('aria-busy', 'true');
+        input.disabled = true;
+
+        stickerButtons.forEach(function (btn) {
+          btn.disabled = true;
+        });
+
+        var payload = { body: text };
+        if (turnstileToken) {
+          payload.turnstile_token = turnstileToken;
+        }
+
+        return fetch(sendUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrf,
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload),
+        })
+          .then(function (r) {
+            if (!r.ok) {
+              return r.text().then(function (t) {
+                var msg = 'Xabar yuborilmadi.';
+                if (r.status === 419) {
+                  msg = 'Sessiya tugagan — sahifani yangilang.';
+                } else {
+                  try {
+                    var d = JSON.parse(t);
+                    msg = (d && (d.error || d.message)) || msg;
+                    if (d && d.errors) {
+                      var firstErr = Object.values(d.errors)[0];
+                      if (Array.isArray(firstErr) && firstErr[0]) {
+                        msg = firstErr[0];
+                      }
+                    }
+                  } catch (e) {
+                    /* HTML yoki boshqa javob */
+                  }
+                }
+                throw new Error(msg);
+              });
+            }
+            input.value = '';
+            playPrimeSuccess();
+            playPrimeConfetti(window.innerWidth / 2, window.innerHeight / 2);
+            return pollNew({ burst: true });
+          })
+          .catch(function (err) {
+            if (options.restoreText && !input.value.trim()) {
+              input.value = text;
+            }
+            if (window.showToast) {
+              window.showToast(err && err.message ? err.message : 'Chat: tarmoq xatosi', 'error');
+            }
+          })
+          .finally(function () {
+            isSending = false;
+            input.disabled = false;
+            input.removeAttribute('aria-busy');
+            if (sendBtn) {
+              sendBtn.disabled = false;
+              sendBtn.removeAttribute('aria-busy');
+            }
+            stickerButtons.forEach(function (btn) {
+              btn.disabled = false;
+            });
+            if (isOpen) {
+              input.focus();
+            }
+            syncComposeState();
+          });
       }
 
-      input.setAttribute('aria-busy', 'true');
-      input.disabled = true;
-
-      stickerButtons.forEach(function (btn) {
-        btn.disabled = true;
-      });
-
-      return fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': csrf,
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ body: text }),
-      })
-        .then(function (r) {
-          if (!r.ok) {
-            return r.text().then(function (t) {
-              var msg = 'Xabar yuborilmadi.';
-              if (r.status === 419) {
-                msg = 'Sessiya tugagan — sahifani yangilang.';
-              } else {
-                try {
-                  var d = JSON.parse(t);
-                  msg = (d && (d.error || d.message)) || msg;
-                  if (d && d.errors) {
-                    var firstErr = Object.values(d.errors)[0];
-                    if (Array.isArray(firstErr) && firstErr[0]) {
-                      msg = firstErr[0];
-                    }
-                  }
-                } catch (e) {
-                  /* HTML yoki boshqa javob */
-                }
+      if (
+        turnstileHost &&
+        turnstileHost.getAttribute('data-sitekey') &&
+        window.turnstile &&
+        typeof window.turnstile.execute === 'function'
+      ) {
+        return new Promise(function (resolve) {
+          window.turnstile.execute(turnstileHost, {
+            callback: function (token) {
+              resolve(doFetch(token));
+            },
+            'error-callback': function () {
+              if (window.showToast) {
+                window.showToast('Robot tekshiruvi bajarilmadi. Qayta urinib ko‘ring.', 'error');
               }
-              throw new Error(msg);
-            });
-          }
-          input.value = '';
-          return pollNew({ burst: true });
-        })
-        .catch(function (err) {
-          if (options.restoreText && !input.value.trim()) {
-            input.value = text;
-          }
-          if (window.showToast) {
-            window.showToast(err && err.message ? err.message : 'Chat: tarmoq xatosi', 'error');
-          }
-        })
-        .finally(function () {
-          isSending = false;
-          input.disabled = false;
-          input.removeAttribute('aria-busy');
-          if (sendBtn) {
-            sendBtn.disabled = false;
-            sendBtn.removeAttribute('aria-busy');
-          }
-          stickerButtons.forEach(function (btn) {
-            btn.disabled = false;
+              resolve(Promise.resolve());
+            },
           });
-          if (isOpen) {
-            input.focus();
-          }
-          syncComposeState();
         });
+      }
+
+      return doFetch(null);
     }
 
     // Drag support
@@ -2170,13 +2527,25 @@
         setTimeout(function () {
           btn.classList.remove('is-fired');
         }, 420);
-        sendMessage(sticker);
+        
+        // Append sticker instead of sending immediately
+        input.value += sticker;
         input.focus();
+        
+        // Trigger UI updates & sound
+        syncComposeState();
+        if (typeof playPrimeChatTick === 'function') playPrimeChatTick();
+        
+        // Dispatch input event for other potential listeners
+        input.dispatchEvent(new Event('input', { bubbles: true }));
       });
     });
 
     input.addEventListener('focus', syncComposeState);
-    input.addEventListener('input', syncComposeState);
+    input.addEventListener('input', function() {
+      syncComposeState();
+      playPrimeChatTick();
+    });
     input.addEventListener('blur', function () {
       setTimeout(syncComposeState, 80);
     });
@@ -2252,6 +2621,52 @@
     };
   }
 
+  /** Yangilik / ustoz izohlari: global chatdagi bilan bir xil yozish «tik» ovozi */
+  function initCommentTypingSound() {
+    document.addEventListener(
+      'input',
+      function (e) {
+        const t = e.target;
+        if (!t || !t.classList || !t.classList.contains('comment-input')) return;
+        if (t.id === 'chat-input') return;
+        playPrimeChatTick();
+      },
+      true
+    );
+  }
+
+  function initPrimeAudioControl() {
+    const toggle = document.createElement('div');
+    toggle.className = 'prime-audio-toggle' + (primeAudioMuted ? ' is-muted' : '');
+    toggle.id = 'prime-audio-control';
+    toggle.innerHTML = '<i class="fa-solid ' + (primeAudioMuted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
+    toggle.title = primeAudioMuted ? 'Ovozlarni yoqish' : 'Ovozlarni o‘chirish';
+    document.body.appendChild(toggle);
+
+    toggle.addEventListener('click', function() {
+      primeAudioMuted = !primeAudioMuted;
+      localStorage.setItem('site-audio-muted', String(primeAudioMuted));
+      toggle.classList.toggle('is-muted', primeAudioMuted);
+      toggle.innerHTML = '<i class="fa-solid ' + (primeAudioMuted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
+      toggle.title = primeAudioMuted ? 'Ovozlarni yoqish' : 'Ovozlarni o‘chirish';
+      
+      if (!primeAudioMuted) {
+        playPrimeSuccess();
+      }
+    });
+
+    // Handle symmetrical position check (make sure it doesn't overlap chat if it moves)
+    const syncPos = () => {
+      const chatWidget = document.getElementById('chat-widget');
+      if (chatWidget && chatWidget.style.right && chatWidget.style.right !== 'auto') {
+        const r = parseInt(chatWidget.style.right);
+        if (r > 10) toggle.style.right = (r + 70) + 'px';
+      }
+    };
+    syncPos();
+    window.addEventListener('resize', syncPos);
+  }
+
   moveGlobalModals();
   initChatUserPreviewChrome();
   initUserProfilePreview();
@@ -2271,4 +2686,26 @@
   initThemeBurstEffect();
   initLocalePageReveal();
   initGlobalChat();
+  initCommentTypingSound();
+  initPrimeAudioControl();
+  initSeniorInteractions();
+
+  // Pointer interaction to unlock AudioContext
+  const unlockAudio = () => {
+    try {
+      const ctx = getPrimeAudioCtx();
+      // Industry standard: play a microscopic silent tone to force unlock the audio engine
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001; 
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(0);
+      osc.stop(ctx.currentTime + 0.001);
+    } catch(e) {}
+    document.removeEventListener('pointerdown', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+  document.addEventListener('pointerdown', unlockAudio);
+  document.addEventListener('keydown', unlockAudio);
 })();

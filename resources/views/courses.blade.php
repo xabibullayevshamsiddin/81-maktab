@@ -1,7 +1,7 @@
 <x-loyouts.main title="{{ __('public.courses.page_title') }}">
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">{{ __('public.courses.badge') }}</span>
         <h1 class="js-split-text">{{ __('public.courses.hero_title') }}</h1>
         <p>{{ __('public.courses.hero_text') }}</p>
@@ -10,13 +10,13 @@
   </section>
 
   <main>
-    <section class="container courses-filter-section" id="courses-list">
+    <section class="container courses-filter-section prime-reveal" id="courses-list">
       <div class="section-head">
         <h2 class="js-split-text">{{ __('public.courses.section_title') }}</h2>
         <p>{{ __('public.courses.section_text') }}</p>
       </div>
 
-      <div class="courses-grid" id="courses-grid">
+      <div class="courses-grid prime-stagger" id="courses-grid">
         @forelse($courses as $course)
           @php
             $teacher = $course->teacher;
@@ -25,7 +25,7 @@
             $coursePrice = localized_model_value($course, 'price');
             $courseDuration = localized_model_value($course, 'duration');
           @endphp
-          <article class="course-card reveal">
+          <article class="course-card prime-glow-hover">
             <div class="course-card-media">
               <img
                 src="{{ $course->coverImageUrl() }}"
@@ -77,7 +77,7 @@
                       $destroyCourseUrl = $useAdminCourseRoutes ? route('admin.courses.destroy', $course) : route('teacher.courses.destroy', $course);
                     @endphp
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-                      <a href="{{ $editCourseUrl }}" class="btn btn-sm">Kursni tahrirlash</a>
+                      <a href="{{ $editCourseUrl }}" class="btn btn-sm btn-prime">Kursni tahrirlash</a>
                       <form action="{{ $destroyCourseUrl }}" method="POST" data-confirm="Kurs o‘chirilsinmi?" data-confirm-title="Kursni o‘chirish" data-confirm-variant="danger" data-confirm-ok="O‘chirish" style="display:inline;">
                         @csrf
                         @method('DELETE')
@@ -127,7 +127,7 @@
                           <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
                         @enderror
                       @endforeach
-                      <button type="submit" class="btn course-enroll-submit">
+                      <button type="submit" class="btn btn-prime course-enroll-submit">
                         <i class="fa-solid fa-paper-plane"></i> {{ __('public.courses.resubmit') }}
                       </button>
                     </form>
@@ -147,7 +147,7 @@
                           <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
                         @enderror
                       @endforeach
-                      <button type="submit" class="btn course-enroll-submit">
+                      <button type="submit" class="btn btn-prime course-enroll-submit">
                         <i class="fa-solid fa-pen-to-square"></i> {{ __('public.courses.submit') }}
                       </button>
                     </form>
@@ -155,7 +155,7 @@
                 @else
                   <p class="course-enroll-guest">
                     <a href="{{ route('login') }}" class="btn btn-outline">Kirish</a>
-                    <a href="{{ route('register') }}" class="btn">Ro‘yxatdan o‘tish</a>
+                    <a href="{{ route('register') }}" class="btn btn-prime">Ro‘yxatdan o‘tish</a>
                     <span class="course-enroll-hint">{{ __('public.courses.login_needed') }}</span>
                   </p>
                 @endauth

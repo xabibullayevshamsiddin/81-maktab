@@ -35,4 +35,14 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    /*
+    | Cloudflare Turnstile (https://developers.cloudflare.com/turnstile/)
+    | TURNSTILE_ENABLED=false bo‘lsa tekshiruv o‘tkazilmaydi (mahalliy ishlab chiqish).
+    */
+    'turnstile' => [
+        'enabled' => env('TURNSTILE_ENABLED', false),
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

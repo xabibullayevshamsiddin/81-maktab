@@ -272,7 +272,7 @@ a {
   top: 18px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 40px);
+  width: calc(100% - 20px);
   max-width: 1140px;
   z-index: 20;
   display: flex;
@@ -311,20 +311,30 @@ a {
   display: block;
 }
 
+.logo {
+  flex-shrink: 0;
+}
+
 #site-nav ul {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 24px;
+  flex-wrap: nowrap;
+  gap: 20px;
+}
+
+#site-nav ul li {
+  flex-shrink: 0;
 }
 
 .nav-link {
   color: #fff;
   font-weight: 500;
   font-size: 15px;
-  padding-bottom: 4px;
+  padding: 4px 6px;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .nav-link:hover,
@@ -332,11 +342,9 @@ a {
   border-bottom-color: #fff;
 }
 
-.login {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
+  gap: 20px;
 
 .lang {
   font-weight: 700;
@@ -436,6 +444,14 @@ a {
   opacity: 1;
   filter: blur(0);
   transform: translate(0, 0) !important;
+}
+
+/* Hero: blur gradient matn bilan muammo; harflar esa ota rangni meros qiladi */
+.hero-title .letter,
+.hero-title .letter.active {
+  filter: none;
+  color: inherit;
+  -webkit-text-fill-color: inherit;
 }
 
 .home-content p {
@@ -939,7 +955,7 @@ section {
 .chat-widget {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  left: 20px;
   z-index: 1000;
   touch-action: none;
 }
@@ -2243,6 +2259,7 @@ button.chat-msg-avatar-btn:focus-visible {
   color: var(--text);
   background: var(--bg, #f8fafc);
   outline: none;
+  text-align: left;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
@@ -2417,7 +2434,7 @@ button.chat-msg-avatar-btn:focus-visible {
 
 @media (max-width: 480px) {
   .chat-widget {
-    right: max(10px, env(safe-area-inset-right));
+    left: max(10px, env(safe-area-inset-left));
     bottom: max(10px, env(safe-area-inset-bottom));
   }
 
@@ -2627,6 +2644,117 @@ section.teachers.reveal::before {
   display: none;
 }
 
+/* ==========================================================================
+   PRIME ANIMATION SYSTEM (Elite UI/UX)
+   ========================================================================== */
+
+:root {
+  --prime-bezier: cubic-bezier(0.16, 1, 0.3, 1);
+  --prime-duration: 0.8s;
+  --prime-stagger-delay: 0.12s;
+}
+
+/* Glass Scroll Progress Bar */
+.prime-progress-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.prime-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--primary-2), var(--accent));
+  background-size: 200% 100%;
+  animation: primeGradientFlow 3s linear infinite;
+  box-shadow: 0 0 10px var(--accent);
+  transition: width 0.2s ease-out;
+}
+
+@keyframes primeGradientFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Global Reveal Classes */
+.prime-reveal {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+  filter: blur(5px);
+  transition: opacity var(--prime-duration) var(--prime-bezier),
+              transform var(--prime-duration) var(--prime-bezier),
+              filter var(--prime-duration) var(--prime-bezier);
+  will-change: transform, opacity, filter;
+}
+
+.prime-reveal.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.prime-reveal--scale {
+  transform: scale(0.92);
+}
+
+.prime-reveal--scale.active {
+  transform: scale(1);
+}
+
+.prime-reveal--blur {
+  filter: blur(15px);
+}
+
+.prime-reveal--blur.active {
+  filter: blur(0);
+}
+
+/* Stagger Support */
+.prime-stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.7s var(--prime-bezier);
+}
+
+.prime-stagger.active > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Glow Hover Effect */
+.prime-glow-hover {
+  position: relative;
+  transition: transform 0.3s var(--prime-bezier), box-shadow 0.3s var(--prime-bezier);
+}
+
+.prime-glow-hover:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(13, 63, 120, 0.18), 0 0 25px rgba(20, 184, 166, 0.15);
+}
+
+/* Magnetic Button Base */
+.btn-prime {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-prime::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s var(--prime-bezier);
+}
+
+.btn-prime:hover::after {
+  transform: translateX(100%);
+}
+
 @media (max-width: 980px) {
   .menu-toggle {
     display: inline-flex;
@@ -2639,15 +2767,43 @@ section.teachers.reveal::before {
     top: calc(100% + 10px);
     left: 0;
     right: 0;
-    background: rgba(6, 31, 58, 0.96);
+    background: rgba(6, 31, 58, 0.94);
+    backdrop-filter: blur(14px);
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     padding: 14px;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-12px);
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+    display: block !important;
+    z-index: 100;
   }
 
   #site-nav.open {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* Staggered Mobile Menu Animation */
+  #site-nav.open ul li {
+    opacity: 0;
+    animation: primeSlideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  #site-nav.open ul li:nth-child(1) { animation-delay: 0.1s; }
+  #site-nav.open ul li:nth-child(2) { animation-delay: 0.16s; }
+  #site-nav.open ul li:nth-child(3) { animation-delay: 0.22s; }
+  #site-nav.open ul li:nth-child(4) { animation-delay: 0.28s; }
+  #site-nav.open ul li:nth-child(5) { animation-delay: 0.34s; }
+  #site-nav.open ul li:nth-child(6) { animation-delay: 0.4s; }
+  #site-nav.open ul li:nth-child(7) { animation-delay: 0.46s; }
+  #site-nav.open ul li:nth-child(n+8) { animation-delay: 0.52s; }
+
+  @keyframes primeSlideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   #site-nav ul {
@@ -10582,4 +10738,401 @@ body {
   -webkit-background-clip: padding-box !important;
   border-color: var(--border) !important;
   transition: background-color 999999s ease-out 0s, color 999999s ease-out 0s;
+}
+
+
+/* --- Prime Like Animation --- */
+.like-btn.prime-like-trigger i {
+    animation: primeHeartPulse 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.like-btn.prime-like-trigger {
+    position: relative;
+}
+
+.like-btn.prime-like-trigger::after {
+    content: " \;
+ position: absolute;
+ top: 50%;
+ left: 50%;
+ width: 32px;
+ height: 32px;
+ margin: -16px 0 0 -16px;
+ border: 2px solid var(--primary-2);
+ border-radius: 50%;
+ opacity: 0;
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 2px solid var(--primary-2);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    animation: primeHeartSparks 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+@keyframes primeHeartPulse {
+ 0% { transform: scale(1); }
+ 40% { transform: scale(1.4); filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.5)); }
+ 100% { transform: scale(1); }
+}
+
+@keyframes primeHeartSparks {
+ 0% { transform: scale(0.2); opacity: 0.8; border-width: 4px; }
+ 100% { transform: scale(1.8); opacity: 0; border-width: 1px; }
+}
+
+/* --- Prime Audio Toggle --- */
+.prime-audio-toggle {
+    position: fixed;
+    right: 24px;
+    bottom: 84px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--primary);
+    font-size: 18px;
+}
+
+.prime-audio-toggle:hover {
+    transform: scale(1.08) translateY(-2px);
+    background: #ffffff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.prime-audio-toggle:active {
+    transform: scale(0.95);
+}
+
+.prime-audio-toggle.is-muted {
+    color: #94a3b8;
+    background: rgba(241, 245, 249, 0.8);
+}
+
+.prime-audio-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.prime-audio-toggle:hover i {
+    transform: rotate(12deg);
+}
+
+:root[data-theme='dark'] .prime-audio-toggle {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+}
+
+:root[data-theme='dark'] .prime-audio-toggle.is-muted {
+    color: #64748b;
+    background: rgba(15, 23, 42, 0.8);
+}
+
+@media (max-width: 480px) {
+    .prime-audio-toggle {
+        right: 16px;
+        bottom: 74px;
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+}
+/* --- Senior Prime Bomba Animations --- */
+.prime-particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    border-radius: 50%;
+    animation: primeParticleFade 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+@keyframes primeParticleFade {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+.prime-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.prime-shimmer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 100%
+    );
+    animation: primeShimmerMove 2s infinite;
+}
+
+:root[data-theme='dark'] .prime-shimmer::after {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        transparent 100%
+    );
+}
+
+@keyframes primeShimmerMove {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.prime-3d-target {
+    transform-style: preserve-3d;
+    transition: transform 0.2s cubic-bezier(0.1, 0, 0.3, 1);
+    will-change: transform;
+}
+
+.prime-magnetic-target {
+    display: inline-block;
+    will-change: transform;
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.prime-scramble-active {
+    opacity: 1 !important;
+}
+
+/* --- Prime Profile Preview Royale --- */
+#chat-user-preview-dialog {
+    padding: 0;
+    border: none;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 420px;
+    width: 90%;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    overflow: hidden;
+}
+
+#chat-user-preview-dialog[open] {
+    animation: primeProfileFocus 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+#chat-user-preview-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
+
+@keyframes primeProfileFocus {
+    0% { transform: scale(0.9) translateY(20px); opacity: 0; filter: blur(10px); }
+    100% { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+}
+
+.chat-user-preview-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    padding: 30px 20px;
+    text-align: center;
+    color: white;
+    position: relative;
+}
+
+.chat-user-preview-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    background: #f1f5f9;
+}
+
+.chat-user-preview-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.chat-user-preview-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.chat-user-preview-body {
+    padding: 24px;
+    color: var(--text);
+}
+
+.chat-user-preview-section-title {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+:root[data-theme='dark'] #chat-user-preview-dialog {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark'] .chat-user-preview-body {
+    color: #cbd5e1;
+}
+
+/* --- Exam Result Royale --- */
+.prime-exam-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(25px) saturate(200%);
+    -webkit-backdrop-filter: blur(25px) saturate(200%);
+    z-index: 20000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.prime-exam-loader.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.prime-grading-container {
+    width: 320px;
+    text-align: center;
+}
+
+.prime-grading-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 24px;
+    letter-spacing: -0.5px;
+}
+
+.prime-grading-bar-wrap {
+    height: 8px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.prime-grading-bar {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-2), var(--primary));
+    background-size: 200% 100%;
+    animation: primeGradingMove 2.5s infinite linear;
+}
+
+@keyframes primeGradingMove {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.prime-success-glow {
+    animation: primeSuccessPulse 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes primeSuccessPulse {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); background: white; }
+    50% { box-shadow: 0 0 100px 50px rgba(245, 158, 11, 0.2); background: #fffcf0; }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); background: white; }
+}
+
+.prime-failure-shake {
+    animation: primeShake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes primeShake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.prime-particle.is-gold {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+:root[data-theme='dark'] .prime-exam-loader {
+    background: rgba(15, 23, 42, 0.88);
+}
+
+:root[data-theme='dark'] .prime-grading-bar-wrap {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Senior Animation Architecture --- */
+.prime-3d-target, .news-card, .teacher-card, .course-card, .card-style {
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
+    will-change: transform;
+    transform-style: preserve-3d;
+}
+
+.prime-3d-target:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.prime-scramble-active {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+[data-scrambled='true'] {
+    color: inherit;
+}
+
+/*
+ * Hero sarlavha: background-clip:text + -webkit-text-fill-color:transparent
+ * split .letter (opacity/transform) bilan birga ko‘pincha matnni butunlay yo‘qotadi.
+ * Gradient o‘rniga ochiq rang + soyalar — matn har doim ko‘rinadi.
+ */
+.hero-title {
+    display: inline-block;
+    font-weight: 800;
+    color: #f2f7ff;
+    background: none;
+    -webkit-text-fill-color: unset;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    text-shadow:
+      0 2px 24px rgba(0, 14, 40, 0.6),
+      0 1px 0 rgba(255, 255, 255, 0.1);
 }

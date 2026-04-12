@@ -17,18 +17,18 @@
 
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <h1 class="js-split-text">{{ __('public.posts.hero_title') }}</h1>
         <p>{{ __('public.posts.hero_text') }}</p>
       </div>
-      <a href="#posts" class="btn" style="margin-top: 20px">
+      <a href="#posts" class="btn btn-prime" style="margin-top: 20px">
         {{ __('public.posts.jump') }} <i class="fa-solid fa-arrow-down" style="margin-left: 10px;"></i>
       </a>
     </div>
   </section>
 
   <main class="news">
-    <section class="container news reveal glass-section" id="posts" style="padding-bottom:30px;">
+    <section class="container news prime-reveal glass-section" id="posts" style="padding-bottom:30px;">
       <div class="section-head">
         <h2 class="js-split-text">{{ __('public.posts.section_title') }}</h2>
         <p>{{ __('public.posts.section_text') }}</p>

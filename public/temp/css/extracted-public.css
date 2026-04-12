@@ -43,7 +43,7 @@
 }
 
 .header-main {
-  width: calc(100% - 72px);
+  width: calc(100% - 20px);
   max-width: 1108px;
   padding-inline: 14px;
 }
@@ -58,7 +58,12 @@
 }
 
 #site-nav ul {
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+#site-nav ul li {
+  flex-shrink: 0;
 }
 
 .login {
@@ -797,4 +802,19 @@ nav.d-flex .small.text-muted {
 
 :root[data-theme='dark'] .site-credits-item {
   background: rgba(255, 255, 255, 0.04);
+}
+
+/* Turnstile */
+.turnstile-field-wrap {
+  margin: 14px 0 10px;
+}
+
+.comment-turnstile-host,
+.chat-turnstile-host {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }

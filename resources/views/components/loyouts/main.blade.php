@@ -4,7 +4,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{{ $title }}</title>
     {!! \Artesaos\SEOTools\Facades\SEOMeta::generate() !!}
     {!! \Artesaos\SEOTools\Facades\OpenGraph::generate() !!}
@@ -24,9 +24,16 @@
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
+    @unless(request()->routeIs('exam.session'))
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ filemtime(public_path('temp/css/site-boot-loader.css')) }}" />
+    @endunless
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ filemtime(public_path('temp/css/mobile-public.css')) }}" />
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
+    @if(turnstile_enabled())
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
     <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ filemtime(public_path('temp/img/favicon-32.png')) }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
@@ -34,6 +41,7 @@
   </head>
 
 	    <body
+        @class(['site-boot-loading' => ! request()->routeIs('exam.session')])
         data-theme="light"
         data-site-success="{{ session('success') }}"
         data-site-error="{{ session('error') }}"
@@ -42,6 +50,26 @@
         data-phone-pattern="{{ uz_phone_input_pattern() }}"
         data-phone-title="{{ uz_phone_input_title() }}"
       >
+    @unless(request()->routeIs('exam.session'))
+    <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
+      <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
+      <div class="site-boot-loader__content">
+        <div class="site-boot-loader__orbit" aria-hidden="true">
+          <div class="site-boot-loader__ring"></div>
+          <div class="site-boot-loader__ring-inner"></div>
+          <div class="site-boot-loader__glow"></div>
+          <div class="site-boot-loader__brand">
+            <span class="site-boot-loader__num">81</span>
+            <span class="site-boot-loader__name">IDUM</span>
+          </div>
+        </div>
+        <p class="site-boot-loader__hint">{{ __('public.layout.boot_loading') }}</p>
+        <div class="site-boot-loader__bar" aria-hidden="true">
+          <span class="site-boot-loader__bar-fill"></span>
+        </div>
+      </div>
+    </div>
+    @endunless
 		    @php
 		      $authUser = auth()->user();
 		      $teacherWithProfile = $authUser && $authUser->isTeacher() && $authUser->hasLinkedActiveTeacherProfile();
@@ -66,6 +94,9 @@
 	      );
 	    @endphp
 	    <div class="site-shell" data-locale-shell>
+      <div class="prime-progress-container" aria-hidden="true">
+        <div class="prime-progress-bar" id="prime-scroll-bar"></div>
+      </div>
 	    @unless($isExamSessionRoute)
 	    @php
 	      $announcementActive = \App\Models\SiteSetting::get('announcement_active', '0') === '1';
@@ -141,30 +172,30 @@
                         <i class="fa-solid fa-user"></i>
                         {{ __('public.layout.menu.profile') }}
                       </a>
-		                      @if($canCreateCourse)
-		                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
-		                          <i class="fa-solid fa-book-open"></i>
-		                          {{ __('public.layout.menu.course_open') }}
-		                        </a>
-		                      @elseif($teacherCourseOpenPending)
-		                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
-		                          <i class="fa-solid fa-hourglass-half"></i>
-		                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">Admin ruxsatini kuting (profil).</small></span>
-		                        </span>
-		                      @elseif($teacherNeedsCourseOpenRequest)
-		                        <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
-		                          <i class="fa-solid fa-paper-plane"></i>
-		                          Kurs ochish — ruxsat so'rang
-		                        </a>
-		                      @elseif($needsTeacherProfileLink)
-		                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
-		                          <i class="fa-solid fa-circle-info"></i>
-	                          <span>
-	                            {{ __('public.layout.menu.course_open') }}
-	                            <small class="nav-dropdown-item-note">Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak.</small>
-	                          </span>
-	                        </span>
-	                      @endif
+                      @if($canCreateCourse)
+                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
+                          <i class="fa-solid fa-book-open"></i>
+                          {{ __('public.layout.menu.course_open') }}
+                        </a>
+                      @elseif($teacherCourseOpenPending)
+                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
+                          <i class="fa-solid fa-hourglass-half"></i>
+                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">Admin ruxsatini kuting (profil).</small></span>
+                        </span>
+                      @elseif($teacherNeedsCourseOpenRequest)
+                        <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
+                          <i class="fa-solid fa-paper-plane"></i>
+                          Kurs ochish — ruxsat so'rang
+                        </a>
+                      @elseif($needsTeacherProfileLink)
+                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
+                          <i class="fa-solid fa-circle-info"></i>
+                          <span>
+                            {{ __('public.layout.menu.course_open') }}
+                            <small class="nav-dropdown-item-note">Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak.</small>
+                          </span>
+                        </span>
+                      @endif
                       @if($canAccessDashboard)
                         <a class="nav-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                           <i class="fa-solid fa-table-columns"></i>
@@ -284,8 +315,8 @@
       </div>
     </div>
 
-    <footer class="footer">
-      <div class="footer-container container">
+    <footer class="footer prime-reveal">
+      <div class="footer-container container prime-stagger">
         <!-- Column 1: Branding -->
         <div class="footer-column footer-brand">
           <a href="{{ route('home') }}" class="footer-logo">
@@ -344,7 +375,7 @@
             </li>
           </ul>
           <div class="footer-map-action">
-            <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer">
+            <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer btn-prime">
               <i class="fa-solid fa-map-location-dot"></i> Xaritada ko'rish
             </a>
           </div>
@@ -424,6 +455,14 @@
             </span>
           </div>
           <form class="chat-input-wrap" id="chat-form">
+            @if(turnstile_enabled())
+            <div
+              id="chat-turnstile-host"
+              class="cf-turnstile chat-turnstile-host"
+              data-sitekey="{{ turnstile_site_key() }}"
+              data-size="invisible"
+            ></div>
+            @endif
             <div class="chat-sticker-row" aria-label="Tezkor stikerlar">
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
@@ -486,6 +525,16 @@
       @endunless
     @endauth
 
+    @if(turnstile_enabled())
+    <div
+      id="comment-turnstile-host"
+      class="cf-turnstile comment-turnstile-host"
+      data-sitekey="{{ turnstile_site_key() }}"
+      data-size="invisible"
+      aria-hidden="true"
+    ></div>
+    @endif
+
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
@@ -493,98 +542,144 @@
     <script>
       (function() {
         /**
-         * Universal Premium Letter Animation Engine v2.0 (Pro Max)
-         * Supports nested HTML tags and high-performance scroll triggers.
+         * PRIME ANIMATION ENGINE v3.0 (Pro Max Ultra)
+         * - Letter-by-letter split text
+         * - Scroll progress bar tracking
+         * - Staggered grid/list entry
+         * - Universal intersection reveals
          */
-        const splitTextProcessor = {
-          getRandomOffset() {
-            const range = 100;
-            const offsets = [
-              { x: 0, y: -range }, { x: 0, y: range },
-              { x: -range, y: 0 }, { x: range, y: 0 }
-            ];
-            return offsets[Math.floor(Math.random() * offsets.length)];
+        
+        const primeEngine = {
+          initProgressBar() {
+            const bar = document.getElementById('prime-scroll-bar');
+            if (!bar) return;
+            
+            const updateBar = () => {
+              const h = document.documentElement;
+              const st = h.scrollTop || document.body.scrollTop;
+              const sh = h.scrollHeight || document.body.scrollHeight;
+              const scrollPercent = (st / (sh - h.clientHeight)) * 100;
+              bar.style.width = scrollPercent + "%";
+            };
+            
+            window.addEventListener('scroll', updateBar, { passive: true });
+            updateBar();
           },
 
-          processNode(node, state) {
-            if (node.nodeType === 3) { // Text node
-              const text = node.textContent;
-              const fragment = document.createDocumentFragment();
-              const words = text.split(/(\s+)/);
+          splitText(target) {
+            if (target.dataset.animated === 'true') return;
+            target.dataset.animated = 'true';
 
-              words.forEach((word) => {
-                if (word.trim() === '') {
-                  fragment.appendChild(document.createTextNode(word));
-                  return;
-                }
+            const processNode = (node, state) => {
+              if (node.nodeType === 3) {
+                const fragment = document.createDocumentFragment();
+                const words = node.textContent.split(/(\s+)/);
 
-                const wordSpan = document.createElement('span');
-                wordSpan.className = 'anim-word';
-                wordSpan.style.display = 'inline-block';
-                wordSpan.style.whiteSpace = 'nowrap';
-                wordSpan.style.verticalAlign = 'top';
+                words.forEach((word) => {
+                  if (word.trim() === '') {
+                    fragment.appendChild(document.createTextNode(word));
+                    return;
+                  }
 
-                [...word].forEach((char) => {
-                  const letter = document.createElement('span');
-                  letter.textContent = char;
-                  letter.className = 'letter';
-                  
-                  const offset = this.getRandomOffset();
-                  letter.style.transform = `translate(${offset.x}px, ${offset.y}px)`;
-                  
-                  wordSpan.appendChild(letter);
-                  
-                  setTimeout(() => {
-                    letter.classList.add('active');
-                  }, 100 + state.delay);
-                  
-                  state.delay += 30;
+                  const wordSpan = document.createElement('span');
+                  wordSpan.className = 'anim-word';
+                  wordSpan.style.cssText = 'display:inline-block; white-space:nowrap; vertical-align:top;';
+
+                  [...word].forEach((char) => {
+                    const letter = document.createElement('span');
+                    letter.textContent = char;
+                    letter.className = 'letter';
+                    const lift = 88;
+                    /* Klassik: barcha harflar yuqoridan pastga (eski Prime split-text) */
+                    letter.style.transform = `translate3d(0, ${-lift}px, 0)`;
+                    wordSpan.appendChild(letter);
+                    setTimeout(() => letter.classList.add('active'), 100 + state.delay);
+                    state.delay += 25;
+                  });
+                  fragment.appendChild(wordSpan);
                 });
+                node.parentNode.replaceChild(fragment, node);
+              } else if (node.nodeType === 1) {
+                Array.from(node.childNodes).forEach(child => processNode(child, state));
+              }
+            };
 
-                fragment.appendChild(wordSpan);
-              });
-
-              node.parentNode.replaceChild(fragment, node);
-            } else if (node.nodeType === 1) { // Element node
-              const children = Array.from(node.childNodes);
-              children.forEach(child => this.processNode(child, state));
-            }
+            const state = { delay: 0 };
+            Array.from(target.childNodes).forEach(c => processNode(c, state));
+            /* Brauzer/setTimeout xatolari uchun: ba’zi harflar .active olmasa ham matn ko‘rinsin */
+            const safetyMs = 100 + state.delay + 400;
+            window.setTimeout(() => {
+              target.querySelectorAll('.letter:not(.active)').forEach((el) => el.classList.add('active'));
+            }, safetyMs);
           },
 
-          animate(target) {
+          stagger(target) {
             if (target.dataset.animated === 'true') return;
             target.dataset.animated = 'true';
             
-            const state = { delay: 0 };
-            const children = Array.from(target.childNodes);
-            children.forEach(child => this.processNode(child, state));
+            const children = target.children;
+            const delayStep = 100;
+            
+            Array.from(children).forEach((child, i) => {
+              setTimeout(() => {
+                child.style.opacity = '1';
+                child.style.transform = 'translateY(0)';
+              }, i * delayStep);
+            });
+            target.classList.add('active');
+          },
+
+          reveal(target) {
+            target.classList.add('active');
           }
         };
 
-        const initGlobalAnimations = () => {
-          const splitTargets = document.querySelectorAll('.js-split-text');
-          if (!splitTargets.length) return;
+        const initAllAnimations = () => {
+          primeEngine.initProgressBar();
 
-          const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+          const activatePrimeEl = (el) => {
+            if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
+            else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
+            else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
           };
 
           const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
               if (entry.isIntersecting) {
-                splitTextProcessor.animate(entry.target);
+                activatePrimeEl(entry.target);
                 observer.unobserve(entry.target);
               }
             });
-          }, observerOptions);
+          }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
 
-          splitTargets.forEach(target => observer.observe(target));
+          const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
+          nodes.forEach(el => observer.observe(el));
+
+          /* Birinchi ekrandagi bloklar uchun: load/video kutmasdan, layout bo‘lgach darhol */
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const vh = window.innerHeight || document.documentElement.clientHeight;
+              nodes.forEach((el) => {
+                const r = el.getBoundingClientRect();
+                if (r.bottom > 0 && r.top < vh) {
+                  activatePrimeEl(el);
+                  observer.unobserve(el);
+                }
+              });
+            });
+          });
         };
 
-        window.addEventListener('load', initGlobalAnimations);
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initAllAnimations);
+        } else {
+          initAllAnimations();
+        }
       })();
     </script>
+    @unless(request()->routeIs('exam.session'))
+    <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ filemtime(public_path('temp/js/site-boot-loader.js')) }}"></script>
+    @endunless
     @stack('page_scripts')
   </body>
 </html>

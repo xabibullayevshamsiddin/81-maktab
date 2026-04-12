@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SanitizesUserInput;
+use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\CommentLike;
@@ -17,6 +19,9 @@ use Illuminate\Support\Str;
 
 class PublicPostController extends Controller
 {
+    use SanitizesUserInput;
+    use ValidatesTurnstile;
+
     private const COMMENT_BODY_MAX = 100;
 
     private const REPLY_BODY_MAX = 50;
@@ -208,7 +213,10 @@ class PublicPostController extends Controller
             return $response;
         }
 
+        $this->validateTurnstile($request);
+
         $validated = $this->validateCommentPayload($request, $request->filled('parent_id'));
+        $validated = $this->sanitizeCommentFields($validated);
 
         $parentComment = null;
         if (! empty($validated['parent_id'])) {
@@ -265,7 +273,10 @@ class PublicPostController extends Controller
             abort(403);
         }
 
+        $this->validateTurnstile($request);
+
         $validated = $this->validateCommentPayload($request, (bool) $comment->parent_id, false);
+        $validated = $this->sanitizeCommentFields($validated);
 
         $comment->update([
             'body' => $validated['body'],

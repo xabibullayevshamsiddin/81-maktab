@@ -6,6 +6,7 @@ return [
         'logo_alt' => '81-IDUM logotipi',
         'mobile_menu' => 'Menyuni ochish',
         'theme_toggle' => 'Tungi rejimni yoqish yoki o\'chirish',
+        'boot_loading' => 'Sayt yuklanmoqda…',
         'account' => 'Kabinet',
         'nav' => [
             'home' => 'Bosh sahifa',

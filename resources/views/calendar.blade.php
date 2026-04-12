@@ -4,7 +4,7 @@
 <x-loyouts.main title="{{ __('public.calendar.page_title') }}">
   <section class="news-hero profile-hero">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">{{ __('public.calendar.badge') }}</span>
         <h1 class="js-split-text"><strong>{{ __('public.calendar.hero_title') }}</strong></h1>
         <p>{{ __('public.calendar.hero_text') }}</p>
@@ -14,7 +14,7 @@
 
   <main class="profile-main calendar-page">
     <div class="container">
-      <div class="calendar-toolbar reveal">
+      <div class="calendar-toolbar prime-reveal">
         <form method="get" action="{{ route('calendar') }}" class="calendar-year-form">
           <label for="cal-y">{{ __('public.calendar.year') }}</label>
           <select id="cal-y" name="y" data-calendar-year-select>
@@ -23,23 +23,13 @@
             @endfor
           </select>
         </form>
-        @if($hasAnyEventsInYear)
-          <div class="calendar-legend" aria-hidden="true">
-            <span class="calendar-legend-item">
-              <span class="cal-dot cal-dot--event"></span> {{ __('public.calendar.legend_events') }}
-            </span>
-            <span class="calendar-legend-item">
-              <span class="cal-dot cal-dot--today"></span> {{ __('public.calendar.legend_today') }}
-            </span>
-          </div>
-        @endif
       </div>
 
       @if($events->isEmpty())
         <p class="profile-muted">{{ __('public.calendar.empty', ['year' => $year]) }}</p>
       @else
         @if($hasAnyEventsInYear)
-          <section class="calendar-visual reveal" aria-label="{{ __('public.calendar.badge') }}">
+          <section class="calendar-visual prime-reveal" aria-label="{{ __('public.calendar.badge') }}">
             <div class="calendar-visual-head">
               <p class="calendar-visual-hint">{{ __('public.calendar.visual_hint') }}</p>
             </div>
@@ -50,11 +40,11 @@
           </section>
         @endif
 
-        <section class="calendar-list-section reveal">
+        <section class="calendar-list-section prime-reveal">
           <h2 class="calendar-list-heading">{{ __('public.calendar.list_title') }}</h2>
           <p class="calendar-list-lead">{{ __('public.calendar.list_lead') }}</p>
 
-          <div class="calendar-event-list">
+          <div class="calendar-event-list prime-stagger">
             @foreach($grouped as $dateStr => $dayEvents)
               @php
                 $d = \Carbon\Carbon::parse($dateStr);
@@ -74,24 +64,28 @@
                   </span>
                   <i class="fa-solid fa-chevron-down calendar-day-chevron" aria-hidden="true"></i>
                 </summary>
-                <ul class="profile-activity-list calendar-day-activity-list" style="margin:0;">
-                  @foreach($dayEvents as $ev)
-                    @php
-                      $eventTitle = localized_model_value($ev, 'title');
-                      $eventTime = localized_model_value($ev, 'time_note');
-                      $eventBody = localized_model_value($ev, 'body');
-                    @endphp
-                    <li style="border:none;padding:0;margin:0 0 14px;">
-                      <p class="profile-activity-title">{{ $eventTitle }}</p>
-                      @if($eventTime)
-                        <span class="profile-muted" style="font-size:13px;"><i class="fa-regular fa-clock"></i> {{ $eventTime }}</span>
-                      @endif
-                      @if($eventBody)
-                        <p class="profile-activity-body" style="margin-top:8px;">{{ $eventBody }}</p>
-                      @endif
-                    </li>
-                  @endforeach
-                </ul>
+                <div class="calendar-day-accordion-body">
+                  <div class="calendar-day-accordion-body-inner">
+                    <ul class="profile-activity-list calendar-day-activity-list">
+                      @foreach($dayEvents as $ev)
+                        @php
+                          $eventTitle = localized_model_value($ev, 'title');
+                          $eventTime = localized_model_value($ev, 'time_note');
+                          $eventBody = localized_model_value($ev, 'body');
+                        @endphp
+                        <li style="border:none;padding:0;margin:0 0 14px;">
+                          <p class="profile-activity-title">{{ $eventTitle }}</p>
+                          @if($eventTime)
+                            <span class="profile-muted" style="font-size:13px;"><i class="fa-regular fa-clock"></i> {{ $eventTime }}</span>
+                          @endif
+                          @if($eventBody)
+                            <p class="profile-activity-body" style="margin-top:8px;">{{ $eventBody }}</p>
+                          @endif
+                        </li>
+                      @endforeach
+                    </ul>
+                  </div>
+                </div>
               </details>
             @endforeach
           </div>

@@ -87,9 +87,14 @@
             <input type="text" name="duration_en" class="form-control" value="{{ old('duration_en', $course->duration_en) }}" maxlength="120">
           </div>
 
-          <div class="mb-3">
+          <div class="mb-3 fp-inline-date-only--admin">
             <label class="form-label">Boshlanish sanasi *</label>
-            <input type="date" name="start_date" class="form-control" value="{{ old('start_date', $course->start_date?->format('Y-m-d')) }}" required>
+            @include('partials.flatpickr-inline-date-field', [
+              'name' => 'start_date',
+              'id' => 'admin-course-start-date',
+              'value' => old('start_date', $course->start_date?->format('Y-m-d')),
+              'required' => true,
+            ])
             @error('start_date')
               <p class="text-danger small mt-1">{{ $message }}</p>
             @enderror

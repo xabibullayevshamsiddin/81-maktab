@@ -33,16 +33,6 @@
                 @endfor
               </select>
             </form>
-            @if($hasGridEvents)
-              <div class="calendar-legend" aria-hidden="true">
-                <span class="calendar-legend-item">
-                  <span class="cal-dot cal-dot--event"></span> Tadbir bor
-                </span>
-                <span class="calendar-legend-item">
-                  <span class="cal-dot cal-dot--today"></span> Bugun
-                </span>
-              </div>
-            @endif
           </div>
 
           @if($hasGridEvents)

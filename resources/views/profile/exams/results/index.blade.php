@@ -28,14 +28,26 @@
                 </select>
             </div>
 
-            <div style="min-width: 140px;">
+            <div class="fp-inline-date-only--admin" style="min-width: 260px;">
                 <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Boshlanish</label>
-                <input type="date" name="date_from" class="form-control" style="border-radius: 12px;" value="{{ request('date_from') }}" onchange="this.form.submit()" />
+                @include('partials.flatpickr-inline-date-field', [
+                    'name' => 'date_from',
+                    'id' => 'profile-exam-results-date-from',
+                    'value' => request('date_from'),
+                    'autoSubmit' => true,
+                    'optional' => true,
+                ])
             </div>
 
-            <div style="min-width: 140px;">
+            <div class="fp-inline-date-only--admin" style="min-width: 260px;">
                 <label class="form-label fw-bold small text-uppercase mb-2" style="color: var(--primary);">Tugash</label>
-                <input type="date" name="date_to" class="form-control" style="border-radius: 12px;" value="{{ request('date_to') }}" onchange="this.form.submit()" />
+                @include('partials.flatpickr-inline-date-field', [
+                    'name' => 'date_to',
+                    'id' => 'profile-exam-results-date-to',
+                    'value' => request('date_to'),
+                    'autoSubmit' => true,
+                    'optional' => true,
+                ])
             </div>
 
             @if(request()->filled('q'))

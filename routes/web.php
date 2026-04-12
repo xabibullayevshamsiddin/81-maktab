@@ -56,13 +56,21 @@ Route::delete('courses/{course}/enroll', [CourseEnrollmentController::class, 'de
 Route::get('taqvim', [CalendarController::class, 'index'])->name('calendar');
 Route::get('post', [PublicPostController::class, 'index'])->name('post');
 Route::get('post/{post:slug}', [PublicPostController::class, 'show'])->name('post.show');
-Route::post('post/{post:slug}/comments', [PublicPostController::class, 'storeComment'])->name('post.comments.store');
-Route::put('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'updateComment'])->name('post.comments.update');
+Route::post('post/{post:slug}/comments', [PublicPostController::class, 'storeComment'])
+    ->middleware('throttle:comments')
+    ->name('post.comments.store');
+Route::put('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'updateComment'])
+    ->middleware('throttle:comments')
+    ->name('post.comments.update');
 Route::delete('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'destroyComment'])->name('post.comments.destroy');
 Route::post('post/{post:slug}/comments/{comment}/like', [PublicPostController::class, 'toggleCommentLike'])->name('post.comments.like');
 Route::post('post/{post:slug}/like', [PublicPostController::class, 'toggleLike'])->name('post.like');
-Route::post('teacher/{teacher:slug}/comments', [TeacherCommentController::class, 'store'])->name('teacher.comments.store');
-Route::put('teacher/comments/{comment}', [TeacherCommentController::class, 'update'])->name('teacher.comments.update');
+Route::post('teacher/{teacher:slug}/comments', [TeacherCommentController::class, 'store'])
+    ->middleware('throttle:comments')
+    ->name('teacher.comments.store');
+Route::put('teacher/comments/{comment}', [TeacherCommentController::class, 'update'])
+    ->middleware('throttle:comments')
+    ->name('teacher.comments.update');
 Route::delete('teacher/comments/{comment}', [TeacherCommentController::class, 'destroy'])->name('teacher.comments.destroy');
 Route::post('teacher/comments/{comment}/like', [TeacherCommentController::class, 'toggleCommentLike'])->name('teacher.comments.like');
 Route::get('teacher', [PublicTeacherController::class, 'index'])->name('teacher');
@@ -106,7 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::post('chat/user/{user}/activate', [ChatController::class, 'superAdminActivateUser'])
         ->middleware('throttle:30,1')
         ->name('chat.user.activate');
-    Route::post('chat/send', [ChatController::class, 'send'])->middleware('throttle:30,1')->name('chat.send');
+    Route::post('chat/send', [ChatController::class, 'send'])->middleware('throttle:chat-send')->name('chat.send');
     Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->name('chat.destroy');
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->name('chat.block');
 
@@ -194,7 +202,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
         Route::resource('calendar-events', AdminCalendarEventController::class)->except(['show']);
     });
 
-    Route::middleware('role:super_admin,admin,editor,moderator')->group(function () {
+    Route::middleware('role:super_admin,admin,moderator')->group(function () {
         Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('admin.contact-messages.index');
         Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('admin.contact-messages.show');
         Route::post('contact-messages/{contactMessage}/read', [AdminContactMessageController::class, 'markRead'])->name('admin.contact-messages.read');

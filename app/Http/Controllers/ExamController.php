@@ -166,7 +166,10 @@ class ExamController extends Controller
 
         $result->load('exam');
 
-        return view('exam.session', compact('result', 'orderedQuestions', 'answerMap'));
+        return response()
+            ->view('exam.session', compact('result', 'orderedQuestions', 'answerMap'))
+            ->header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 
     public function answer(Request $request, Result $result)
@@ -310,12 +313,31 @@ class ExamController extends Controller
         $this->authorizeResult($request, $result);
 
         if ($result->status !== 'started') {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'ok' => true,
+                    'redirect' => route('exam.result.show', $result),
+                    'passed' => (isset($result->passed) ? (bool)$result->passed : null),
+                    'score_raw' => $result->points_earned
+                ]);
+            }
             return redirect()->route('exam.result.show', $result);
         }
 
         $this->finalizeResult($result, $this->isExpired($result));
+        $fresh = $result->fresh();
 
-        return redirect()->route('exam.result.show', $result)
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('exam.result.show', $fresh),
+                'passed' => (isset($fresh->passed) ? (bool)$fresh->passed : null),
+                'score_raw' => $fresh->points_earned
+            ]);
+        }
+
+        // 303: POST → GET; brauzer tarixida imtihon sessiyasiga "qayta yuborish" chalkashmasin
+        return redirect()->route('exam.result.show', $fresh, 303)
             ->with('success', 'Imtihon yakunlandi.');
     }
 

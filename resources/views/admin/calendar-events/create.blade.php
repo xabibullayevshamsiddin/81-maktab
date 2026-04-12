@@ -19,9 +19,14 @@
               <label class="form-label">Sarlavha (EN, ixtiyoriy)</label>
               <input type="text" name="title_en" class="form-control" value="{{ old('title_en') }}" maxlength="255">
             </div>
-            <div class="mb-3">
+            <div class="mb-3 fp-inline-date-only--admin">
               <label class="form-label">Sana</label>
-              <input type="date" name="event_date" class="form-control" value="{{ old('event_date', now()->toDateString()) }}" required>
+              @include('partials.flatpickr-inline-date-field', [
+                'name' => 'event_date',
+                'id' => 'calendar-event-date-create',
+                'value' => old('event_date', now()->toDateString()),
+                'required' => true,
+              ])
             </div>
             <div class="mb-3">
               <label class="form-label">Vaqt (ixtiyoriy, matn)</label>

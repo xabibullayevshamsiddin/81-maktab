@@ -13,11 +13,11 @@
 
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">{{ __('public.about.badge') }}</span>
         <h1 class="js-split-text">{!! __('public.about.hero_title') !!}</h1>
         <p>{{ __('public.about.hero_text') }}</p>
-        <a href="#overview" class="btn">
+        <a href="#overview" class="btn btn-prime">
           {{ __('public.about.jump') }}
           <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i>
         </a>
@@ -26,30 +26,30 @@
   </section>
 
   <main>
-    <section class="container about-overview" id="overview">
+    <section class="container about-overview prime-reveal" id="overview">
       <div class="section-head">
         <h2 class="js-split-text">{{ __('public.about.overview_title') }}</h2>
         <p>{{ __('public.about.overview_text') }}</p>
       </div>
 
-      <div class="about-grid">
-        <article class="about-card reveal">
+      <div class="about-grid prime-stagger">
+        <article class="about-card prime-glow-hover">
           <h3>{{ __('public.about.cards.location_title') }}</h3>
           <p>{{ __('public.about.cards.location_text') }}</p>
         </article>
 
-        <article class="about-card reveal">
+        <article class="about-card prime-glow-hover">
           <h3>{{ __('public.about.cards.education_title') }}</h3>
           <p>{{ __('public.about.cards.education_text') }}</p>
         </article>
 
-        <article class="about-card reveal">
+        <article class="about-card prime-glow-hover">
           <h3>{{ __('public.about.cards.staff_title') }}</h3>
           <p>{{ __('public.about.cards.staff_text') }}</p>
         </article>
       </div>
 
-      <div class="glass-section" style="margin-top: 26px">
+      <div class="glass-section prime-reveal" style="margin-top: 26px">
         <h3 style="margin-bottom: 12px; color: var(--primary)">
           {{ __('public.about.quick_facts_title') }}
         </h3>
@@ -61,10 +61,10 @@
       </div>
     </section>
 
-    <section class="about-stats-section">
-      <div class="container about-stats">
+    <section class="about-stats-section prime-reveal">
+      <div class="container about-stats prime-stagger">
         @foreach($stats as $stat)
-          <div class="about-stat-item reveal">
+          <div class="about-stat-item">
             <strong class="num-counter" data-count="{{ preg_replace('/[^0-9]/', '', $stat['value']) }}" data-suffix="{{ preg_replace('/[0-9,\s]/', '', $stat['value']) }}">{{ $stat['value'] }}</strong>
             <span>{{ $stat['label'] }}</span>
           </div>
@@ -78,8 +78,8 @@
         <p>{{ __('public.about.official_text') }}</p>
       </div>
 
-      <div class="about-grid">
-        <article class="about-card reveal">
+      <div class="about-grid prime-stagger">
+        <article class="about-card prime-glow-hover">
           <h3>{{ __('public.about.passport_title') }}</h3>
           <ul class="fact-list">
             @foreach($passportFacts as $fact)
@@ -88,7 +88,7 @@
           </ul>
         </article>
 
-        <article class="about-card reveal">
+        <article class="about-card prime-glow-hover">
           <h3>{{ __('public.about.education_process_title') }}</h3>
           <ul class="fact-list">
             @foreach($educationFacts as $fact)
@@ -97,7 +97,7 @@
           </ul>
         </article>
 
-        <article class="about-card reveal">
+        <article class="about-card prime-glow-hover">
           <h3>{{ __('public.about.staffing_title') }}</h3>
           <ul class="fact-list">
             @foreach($staffFacts as $fact)
@@ -107,7 +107,7 @@
         </article>
       </div>
 
-      <div class="glass-section reveal" style="margin-top: 26px">
+      <div class="glass-section prime-reveal" style="margin-top: 26px">
         <h3 style="margin-bottom: 12px; color: var(--primary)">
           {{ __('public.about.results_title') }}
         </h3>
@@ -125,9 +125,9 @@
         <p>{{ __('public.about.facilities_text') }}</p>
       </div>
 
-      <div class="about-grid">
+      <div class="about-grid prime-stagger">
         @foreach($facilityFacts as $facility)
-          <article class="about-card reveal">
+          <article class="about-card prime-glow-hover">
             <h3>{{ $facility['title'] }}</h3>
             <ul class="fact-list">
               @foreach($facility['items'] as $item)
@@ -138,8 +138,8 @@
         @endforeach
       </div>
 
-      <div class="about-grid" style="margin-top: 26px">
-        <article class="about-card reveal about-card--wide">
+      <div class="about-grid prime-stagger" style="margin-top: 26px">
+        <article class="about-card prime-glow-hover about-card--wide">
           <h3>{{ $facilityDomestic['title'] }}</h3>
           <ul class="fact-list">
             @foreach($facilityDomestic['items'] as $item)
@@ -149,7 +149,7 @@
         </article>
       </div>
 
-      <div class="glass-section site-credits-block reveal" style="margin-top: 26px">
+      <div class="glass-section site-credits-block prime-reveal" style="margin-top: 26px">
         <h3 style="margin-bottom: 10px; color: var(--primary)">{{ __('public.about.site_credits_title') }}</h3>
         <p class="site-credits-intro">{{ __('public.about.site_credits_intro') }}</p>
         <ul class="site-credits-list">
@@ -163,13 +163,13 @@
       </div>
     </section>
 
-    <section class="container about-cta reveal">
+    <section class="container about-cta prime-reveal">
       <div class="glass-section about-cta-box">
         <div>
           <h2 class="js-split-text">{{ __('public.about.cta_title') }}</h2>
           <p>{{ __('public.about.cta_text') }}</p>
         </div>
-        <a href="{{ route('contact') }}" class="btn">
+        <a href="{{ route('contact') }}" class="btn btn-prime">
           {{ __('public.about.cta_button') }}
           <i class="fa-solid fa-arrow-right" style="margin-left: 6px"></i>
         </a>

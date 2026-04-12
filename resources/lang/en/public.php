@@ -6,6 +6,7 @@ return [
         'logo_alt' => '81-IDUM logo',
         'mobile_menu' => 'Open menu',
         'theme_toggle' => 'Toggle dark mode',
+        'boot_loading' => 'Loading…',
         'account' => 'Account',
         'nav' => [
             'home' => 'Home',

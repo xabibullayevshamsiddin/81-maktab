@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SanitizesUserInput;
+use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\TeacherCommentLike;
@@ -11,6 +13,9 @@ use Illuminate\Support\Str;
 
 class TeacherCommentController extends Controller
 {
+    use SanitizesUserInput;
+    use ValidatesTurnstile;
+
     private const COMMENT_BODY_MAX = 100;
 
     private const REPLY_BODY_MAX = 50;
@@ -23,7 +28,10 @@ class TeacherCommentController extends Controller
             return $response;
         }
 
+        $this->validateTurnstile($request);
+
         $validated = $this->validateCommentPayload($request, $request->filled('parent_id'));
+        $validated = $this->sanitizeCommentFields($validated);
 
         $parentComment = null;
         if (! empty($validated['parent_id'])) {
@@ -77,7 +85,10 @@ class TeacherCommentController extends Controller
             abort(403);
         }
 
+        $this->validateTurnstile($request);
+
         $validated = $this->validateCommentPayload($request, (bool) $comment->parent_id, false);
+        $validated = $this->sanitizeCommentFields($validated);
 
         $comment->update([
             'body' => $validated['body'],

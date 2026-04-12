@@ -31,13 +31,25 @@
           @if($selectedExamId)
             <input type="hidden" name="exam_id" value="{{ $selectedExamId }}">
           @endif
-          <div>
+          <div class="fp-inline-date-only--admin" style="min-width:260px;">
             <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Boshlanish</label>
-            <input type="date" name="date_from" class="form-control" style="padding:9px 12px;border-radius:8px;border:1px solid #e2e8f0;" value="{{ request('date_from') }}" onchange="this.form.submit()" />
+            @include('partials.flatpickr-inline-date-field', [
+              'name' => 'date_from',
+              'id' => 'admin-exam-results-date-from',
+              'value' => request('date_from'),
+              'autoSubmit' => true,
+              'optional' => true,
+            ])
           </div>
-          <div>
+          <div class="fp-inline-date-only--admin" style="min-width:260px;">
             <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Tugash</label>
-            <input type="date" name="date_to" class="form-control" style="padding:9px 12px;border-radius:8px;border:1px solid #e2e8f0;" value="{{ request('date_to') }}" onchange="this.form.submit()" />
+            @include('partials.flatpickr-inline-date-field', [
+              'name' => 'date_to',
+              'id' => 'admin-exam-results-date-to',
+              'value' => request('date_to'),
+              'autoSubmit' => true,
+              'optional' => true,
+            ])
           </div>
         </form>
       </div>

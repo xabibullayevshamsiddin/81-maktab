@@ -59,6 +59,9 @@
         event.preventDefault();
         event.stopPropagation();
       }
+      if (typeof window.playPrimeViolationSound === 'function') {
+        window.playPrimeViolationSound();
+      }
       showRuleModal();
       reportRuleViolation();
     }
@@ -270,8 +273,73 @@
   });
   document.getElementById('exam-finish-confirm-cancel')?.addEventListener('click', hideFinishConfirmModal);
   finishConfirmModal?.querySelector('[data-exam-finish-backdrop]')?.addEventListener('click', hideFinishConfirmModal);
-  document.getElementById('exam-finish-confirm-submit')?.addEventListener('click', () => {
-    submitForm?.submit();
+  document.getElementById('exam-finish-confirm-submit')?.addEventListener('click', async () => {
+    if (!submitForm) return;
+    
+    // 1. Show Senior Loader
+    let loader = document.querySelector('.prime-exam-loader');
+    if (!loader) {
+      loader = document.createElement('div');
+      loader.className = 'prime-exam-loader';
+      loader.innerHTML = `
+        <div class="prime-grading-container">
+          <div class="prime-grading-title">Natijalaringiz tahlil qilinmoqda...</div>
+          <div class="prime-grading-bar-wrap">
+            <div class="prime-grading-bar"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(loader);
+    }
+    
+    hideFinishConfirmModal();
+    setTimeout(() => loader.classList.add('is-active'), 50);
+
+    // 2. AJAX Submission
+    try {
+      const response = await fetch(submitForm.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': sessionConfig.csrfToken
+        },
+        body: new FormData(submitForm)
+      });
+
+      const data = await response.json();
+      
+      // 3. Royale Feedback
+      if (data.redirect) {
+        const passed = data.passed;
+        const score = data.score_raw || 0;
+        
+        // Let the loader settle for a moment
+        setTimeout(() => {
+          if (passed) {
+            if (typeof window.playPrimeResultPass === 'function') window.playPrimeResultPass();
+            if (typeof window.playPrimeConfetti === 'function') {
+                window.playPrimeConfetti(window.innerWidth / 2, window.innerHeight / 2, true);
+            }
+            document.body.classList.add('prime-success-glow');
+          } else {
+            if (typeof window.playPrimeResultFail === 'function') window.playPrimeResultFail();
+            document.body.classList.add('prime-failure-shake');
+          }
+
+          // 4. Final Redirect
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 2400);
+        }, 1200);
+      } else {
+        // Fallback if no redirect but data ok
+        submitForm.submit();
+      }
+    } catch (err) {
+      // Fallback on error
+      submitForm.submit();
+    }
   });
 
   document.addEventListener('keydown', (event) => {

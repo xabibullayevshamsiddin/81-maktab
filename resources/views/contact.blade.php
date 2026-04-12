@@ -1,7 +1,7 @@
 <x-loyouts.main title="81-IDUM | Aloqa">
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
           <span class="badge">81-IDUM Aloqa</span>
           <h1 class="js-split-text">Biz bilan <strong>bog'laning</strong></h1>
           <p>
@@ -9,7 +9,7 @@
             Parolni tiklash yoki maktabga oid boshqa masalalarda ham shu yerda murojaat qoldirishingiz mumkin.
             Tez orada siz bilan bog'lanamiz.
           </p>
-          <a href="#contact-main" class="btn" style="margin-top:30px;"
+          <a href="#contact-main" class="btn btn-prime" style="margin-top:30px;"
             >Xabar yuborish
             <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
           ></a>
@@ -20,7 +20,7 @@
     <main id="contact-main" class="contact-main">
       <div class="container">
         <div class="contact-layout">
-          <div class="contact-cards reveal">
+          <div class="contact-cards prime-stagger">
             <article class="contact-card">
               <div class="contact-card-icon">
                 <i class="fa-solid fa-location-dot"></i>
@@ -31,7 +31,7 @@
                 <p style="margin:0 0 10px;color:#64748b;">Maktab joylashuvini Google Maps orqali ochib ko'ring.</p>
                 <a
                   href="https://maps.app.goo.gl/erCMfrDY42DCogHL6"
-                  class="btn"
+                  class="btn btn-prime"
                   target="_blank"
                   rel="noopener"
                 >
@@ -69,7 +69,7 @@
             </article>
           </div>
 
-          <div class="contact-form-wrap reveal">
+          <div class="contact-form-wrap prime-reveal">
             <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
               <h2 style="margin:0;">Xabar yuborish</h2>
               <x-site-rule-items area="contact" />
@@ -92,7 +92,8 @@
                 placeholder="Xabaringiz"
                 required
               >{{ old('message') }}</textarea>
-              <button class="btn" type="submit">Yuborish</button>
+              <x-turnstile-field />
+              <button class="btn btn-prime" type="submit">Yuborish</button>
               <p id="form-message" class="form-message" aria-live="polite"></p>
             </form>
           </div>

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\ContactMessage;
 use App\Models\Post;
-use App\Models\PostLike;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use Artesaos\SEOTools\Facades\OpenGraph;
@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
+    use ValidatesTurnstile;
+
     public function home()
     {
         $posts = Cache::remember(cache_key_home_posts(), now()->addMinutes(5), function () {
@@ -34,22 +36,11 @@ class HomeController extends Controller
                     'created_at',
                 ])
                 ->with(['category:id,name,name_en'])
-                ->withCount(['comments', 'likes'])
+                ->withCount(['comments'])
                 ->latest()
                 ->take(3)
                 ->get();
         });
-
-        $likedPostIds = collect();
-        if (auth()->check() && auth()->user()->isActive()) {
-            $ids = $posts->pluck('id');
-            if ($ids->isNotEmpty()) {
-                $likedPostIds = PostLike::query()
-                    ->where('user_id', auth()->id())
-                    ->whereIn('post_id', $ids)
-                    ->pluck('post_id');
-            }
-        }
 
         $featuredTeacherId = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
             return Teacher::query()
@@ -83,7 +74,7 @@ class HomeController extends Controller
         SEOMeta::setDescription('81-IDUM maktab sayti — yangiliklar, o\'qituvchilar, kurslar va imtihonlar.');
         OpenGraph::setUrl(route('home'));
 
-        return view('home', compact('posts', 'likedPostIds', 'featuredTeacher', 'postKindLabels'));
+        return view('home', compact('posts', 'featuredTeacher', 'postKindLabels'));
     }
 
     public function about()
@@ -126,6 +117,8 @@ class HomeController extends Controller
 
     public function storeContact(Request $request)
     {
+        $this->validateTurnstile($request);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -136,11 +129,22 @@ class HomeController extends Controller
             'phone.regex' => uz_phone_validation_message(),
         ]);
         $validated['phone'] = uz_phone_format($validated['phone']);
+        $validated['name'] = sanitize_plain_text($validated['name']);
+        $validated['note'] = isset($validated['note']) && $validated['note'] !== ''
+            ? sanitize_plain_text($validated['note'])
+            : null;
+        $validated['message'] = sanitize_plain_text($validated['message']);
 
         ContactMessage::query()->create($validated);
 
+        $msg = 'Xabaringiz qabul qilindi. Tez orada siz bilan bog‘lanamiz.';
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'message' => $msg]);
+        }
+
         return redirect()
             ->route('contact')
-            ->with('success', 'Xabaringiz qabul qilindi. Tez orada siz bilan bog‘lanamiz.');
+            ->with('success', $msg);
     }
 }

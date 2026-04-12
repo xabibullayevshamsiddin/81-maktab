@@ -1,14 +1,41 @@
-<div class="input-style-1">
-  <label>Foydalanuvchi (teacher akkaunt) <span class="text-muted" style="font-weight:400;">— ixtiyoriy</span></label>
-  <select name="user_id" aria-label="Teacher akkaunt (ixtiyoriy)">
-    <option value="">Tanlanmagan</option>
+@pushOnce('admin_styles', 'admin-teacher-user-select-css')
+  <link rel="stylesheet" href="{{ app_public_asset('temp/css/admin-teacher-user-select.css') }}?v={{ filemtime(public_path('temp/css/admin-teacher-user-select.css')) }}">
+@endpushOnce
+@pushOnce('admin_page_scripts', 'admin-teacher-user-select-js')
+  <script src="{{ app_public_asset('temp/js/admin-teacher-user-select.js') }}?v={{ filemtime(public_path('temp/js/admin-teacher-user-select.js')) }}"></script>
+@endpushOnce
+
+<div class="input-style-1 teacher-user-link-field js-teacher-user-link-field">
+  <label for="teacher-user-search">Foydalanuvchi (teacher akkaunt) <span class="text-muted" style="font-weight:400;">— ixtiyoriy</span></label>
+  <input
+    type="search"
+    id="teacher-user-search"
+    class="js-teacher-user-search"
+    placeholder="Qidirish: ism, email yoki telefon…"
+    autocomplete="off"
+    aria-label="Teacher akkauntni qidirish"
+  >
+  <p class="js-teacher-user-count" aria-live="polite"></p>
+  <select
+    name="user_id"
+    id="teacher-user-select"
+    class="js-teacher-user-select"
+    aria-label="Teacher akkaunt (ixtiyoriy)"
+  >
+    <option value="">— Tanlanmagan (faqat saytda kartochka) —</option>
     @foreach(($teacherUsers ?? collect()) as $u)
       <option value="{{ $u->id }}" {{ (string) old('user_id', $teacher?->user_id) === (string) $u->id ? 'selected' : '' }}>
-        {{ $u->name }} ({{ $u->email }})
+        {{ $u->name }} — {{ $u->email }}@if(filled($u->phone)) · {{ $u->phone }}@endif
       </option>
     @endforeach
   </select>
-  <small style="color:#64748b;">Ixtiyoriy: faqat ustoz o‘zi tizimga kirib kurs ochishi kerak bo‘lsa, shu yerda akkauntni tanlang. Bo‘lmasa «Tanlanmagan» qoldiring.</small>
+  @error('user_id')
+    <p class="text-danger small mt-2 mb-0">{{ $message }}</p>
+  @enderror
+  <small style="color:#64748b;display:block;margin-top:10px;max-width:640px;line-height:1.5;">
+    <strong>Qanday biriktirish:</strong> avval <a href="{{ route('user') }}">Foydalanuvchilar</a> bo‘limida akkauntga <strong>«O‘qituvchi»</strong> rolini bering. Keyin shu yerda qidiruv maydoniga ism, email yoki telefon yozib, to‘g‘ri akkauntni tanlang — u kabinetdan kurs ochishi va shu ustoz kartochkasiga bog‘lanadi.
+    Biriktirish shart emas: agar ustoz faqat saytda kartochka sifatida ko‘rinsa, «Tanlanmagan» qoldiring.
+  </small>
 </div>
 
 <div class="table-responsive teacher-admin-main-grid mb-25">
