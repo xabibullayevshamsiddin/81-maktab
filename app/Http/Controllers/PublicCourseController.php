@@ -79,7 +79,7 @@ class PublicCourseController extends Controller
                     'start_date',
                     'status',
                 ])
-                ->with(['teacher:id,full_name,slug,subject,subject_en,experience_years,grades,achievements,achievements_en,bio,bio_en,image,is_active'])
+                ->with(['teacher:id,full_name,slug,subject,subject_en,lavozim,lavozim_en,toifa,toifa_en,experience_years,grades,achievements,achievements_en,image,is_active'])
                 ->findOrFail($course->id);
         });
 

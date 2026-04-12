@@ -89,7 +89,7 @@
                       @csrf
                       <button type="submit" class="btn btn-sm btn-success">Tasdiqlash</button>
                     </form>
-                    <form action="{{ route('admin.courses.enrollments.reject', [$row->course, $row]) }}" method="POST" class="d-inline" onsubmit="return confirm('Rad etilsinmi?');">
+                    <form action="{{ route('admin.courses.enrollments.reject', [$row->course, $row]) }}" method="POST" class="d-inline" data-confirm="Rad etilsinmi?" data-confirm-title="Rad etish" data-confirm-variant="primary" data-confirm-ok="Rad etish">
                       @csrf
                       <button type="submit" class="btn btn-sm btn-outline-danger">Rad</button>
                     </form>

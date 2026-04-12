@@ -42,7 +42,7 @@
           <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
           <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span></span>
 
-          <form action="{{ route('post.like', $post) }}" method="POST" style="margin-left: 10px;" class="js-like-form">
+          <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
             @csrf
             <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
               <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>

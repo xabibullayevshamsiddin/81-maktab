@@ -8,6 +8,7 @@ use App\Models\Option;
 use App\Models\Question;
 use App\Models\Result;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -47,12 +48,12 @@ class ExamController extends Controller
                 ->with('toast_type', 'error');
         }
 
+        abort_unless($exam->is_active, 404);
+
         $existing = Result::query()
             ->where('exam_id', $exam->id)
             ->where('user_id', $request->user()->id)
             ->first();
-
-        $this->ensureExamAvailable($exam);
 
         if (! $exam->allowsUser($request->user()) && ! $existing) {
             return redirect()
@@ -61,7 +62,11 @@ class ExamController extends Controller
                 ->with('toast_type', 'error');
         }
 
-        return view('exam.start', compact('exam', 'existing'));
+        return view('exam.start', [
+            'exam' => $exam,
+            'existing' => $existing,
+            'canStartNow' => $exam->isOpenForStarting(),
+        ]);
     }
 
     public function start(Request $request, Exam $exam)
@@ -77,7 +82,9 @@ class ExamController extends Controller
             ->where('user_id', $request->user()->id)
             ->first();
 
-        $this->ensureExamAvailable($exam);
+        if ($redirect = $this->ensureExamAvailable($exam, $existing)) {
+            return $redirect;
+        }
 
         if ($existing) {
             if ($existing->status === 'submitted' || $existing->status === 'expired') {
@@ -391,9 +398,29 @@ class ExamController extends Controller
         return now()->greaterThan($result->expires_at);
     }
 
-    private function ensureExamAvailable(Exam $exam): void
+    /**
+     * @return RedirectResponse|null
+     */
+    private function ensureExamAvailable(Exam $exam, ?Result $existing = null)
     {
         abort_unless($exam->is_active, 404);
+
+        if ($existing && $existing->status === 'started') {
+            return null;
+        }
+
+        if (! $exam->isOpenForStarting()) {
+            $dateLabel = $exam->availableFromLabel() ?? '';
+
+            return redirect()
+                ->route('exam.index')
+                ->with('error', $dateLabel !== ''
+                    ? "Bu imtihonni {$dateLabel} dan boshlash mumkin (shu kundan)."
+                    : 'Bu imtihon hozircha boshlash uchun ochilmagan.')
+                ->with('toast_type', 'error');
+        }
+
+        return null;
     }
 
     private function authorizeResult(Request $request, Result $result): void

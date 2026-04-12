@@ -114,9 +114,6 @@
                 </thead>
                 <tbody>
                   @forelse ($users as $user)
-                    @php
-                      $isTeacherRole = $user->hasRole(\App\Models\User::ROLE_TEACHER);
-                    @endphp
                     <tr>
                       <td><p>{{ $user->id }}</p></td>
                       <td>
@@ -202,7 +199,7 @@
                             <i class="lni lni-envelope"></i>
                           </a>
                           @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
-                            <form action="{{ route('user.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Foydalanuvchini o\'chirishni xohlaysizmi?');">
+                            <form action="{{ route('user.destroy', $user->id) }}" method="POST" style="display:inline;" data-confirm="Foydalanuvchini o'chirishni xohlaysizmi?" data-confirm-title="Foydalanuvchini o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                               @csrf
                               @method('DELETE')
                               <button type="submit" class="text-danger" style="background:none;border:none;padding:0;" title="O'chirish">

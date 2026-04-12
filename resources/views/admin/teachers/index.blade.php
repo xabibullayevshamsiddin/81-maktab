@@ -23,7 +23,7 @@
             </div>
 
             @include('admin.partials.search-bar', [
-              'placeholder' => 'Ism, fan, bogвЂlangan user email/telefon...',
+              'placeholder' => 'Ism, lavozim, fan, bog\'langan user email/telefon...',
               'action' => route('teachers.index'),
             ])
 
@@ -33,10 +33,12 @@
                   <tr>
                     <th><h6>#</h6></th>
                     <th><h6>Rasm</h6></th>
-                    <th><h6>Ism</h6></th>
+                    <th><h6>F.I.Sh</h6></th>
+                    <th><h6>Lavozim</h6></th>
+                    <th><h6>Staj</h6></th>
+                    <th><h6>Toifa</h6></th>
                     <th><h6>Bog'langan user</h6></th>
                     <th><h6>Fan</h6></th>
-                    <th><h6>Tajriba</h6></th>
                     <th><h6>Status</h6></th>
                     <th><h6>Amallar</h6></th>
                   </tr>
@@ -53,18 +55,20 @@
                         @endif
                       </td>
                       <td><p><strong>{{ $teacher->full_name }}</strong></p></td>
+                      <td><p>{{ $teacher->lavozim ?: '—' }}</p></td>
+                      <td><p>{{ $teacher->experience_years }} yil</p></td>
+                      <td><p>{{ $teacher->toifa ?: '—' }}</p></td>
                       <td>
                         <p>
                           @if($teacher->user)
                             {{ $teacher->user->name }}<br>
                             <small style="color:#64748b;">{{ $teacher->user->email }}</small>
                           @else
-                            вЂ”
+                            —
                           @endif
                         </p>
                       </td>
-                      <td><p>{{ $teacher->subject }}</p></td>
-                      <td><p>{{ $teacher->experience_years }} yil</p></td>
+                      <td><p>{{ $teacher->subject ?: '—' }}</p></td>
                       <td>
                         <span class="badge {{ $teacher->is_active ? 'bg-success' : 'bg-danger' }}">
                           {{ $teacher->is_active ? 'Faol' : 'Nofaol' }}
@@ -74,7 +78,7 @@
                         <div class="action">
                           <a href="{{ route('teachers.show', $teacher) }}" class="text-primary me-2"><i class="lni lni-eye"></i></a>
                           <a href="{{ route('teachers.edit', $teacher) }}" class="text-warning me-2"><i class="lni lni-pencil"></i></a>
-                          <form action="{{ route('teachers.destroy', $teacher) }}" method="POST" style="display:inline;" onsubmit="return confirm('Ustozni o\\'chirmoqchimisiz?')">
+                          <form action="{{ route('teachers.destroy', $teacher) }}" method="POST" style="display:inline;" data-confirm="Ustozni o'chirmoqchimisiz?" data-confirm-title="Ustozni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-danger" style="background:none;border:none;padding:0;"><i class="lni lni-trash-can"></i></button>
@@ -84,7 +88,7 @@
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="8"><p>Hozircha ustozlar qo'shilmagan.</p></td>
+                      <td colspan="10"><p>Hozircha ustozlar qo'shilmagan.</p></td>
                     </tr>
                   @endforelse
                 </tbody>

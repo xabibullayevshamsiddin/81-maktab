@@ -1,0 +1,407 @@
+/**
+ * Maktab taqvimi — vizual oylik grid + ro‘yxat
+ */
+
+.calendar-page {
+  --cal-accent: #2563eb;
+  --cal-accent-soft: rgba(37, 99, 235, 0.12);
+  --cal-today: #f59e0b;
+  --cal-today-soft: rgba(245, 158, 11, 0.18);
+  --cal-border: rgba(148, 163, 184, 0.35);
+  --cal-card-bg: linear-gradient(165deg, #ffffff 0%, #f4f7fc 100%);
+}
+
+:root[data-theme='dark'] .calendar-page {
+  --cal-accent: #60a5fa;
+  --cal-accent-soft: rgba(96, 165, 250, 0.14);
+  --cal-today: #fbbf24;
+  --cal-today-soft: rgba(251, 191, 36, 0.16);
+  --cal-border: rgba(148, 163, 184, 0.22);
+  --cal-card-bg: linear-gradient(165deg, #1e293b 0%, #0f172a 100%);
+}
+
+/* --- Toolbar --- */
+.calendar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--cal-border);
+  background: var(--cal-card-bg);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+}
+
+.calendar-year-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.calendar-year-form label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted, #64748b);
+}
+
+.calendar-year-form select {
+  min-width: 140px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid var(--cal-border);
+  background: var(--surface, #fff);
+  color: var(--text, #0f172a);
+  cursor: pointer;
+}
+
+:root[data-theme='dark'] .calendar-year-form select {
+  background: rgba(30, 41, 59, 0.85);
+  color: #f1f5f9;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted, #64748b);
+  font-weight: 500;
+}
+
+.cal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cal-dot--event {
+  background: var(--cal-accent);
+  box-shadow: 0 0 0 3px var(--cal-accent-soft);
+}
+
+.cal-dot--today {
+  background: var(--cal-today);
+  box-shadow: 0 0 0 3px var(--cal-today-soft);
+}
+
+/* --- Vizual yil grid --- */
+.calendar-visual {
+  margin-bottom: 40px;
+}
+
+.calendar-visual-head {
+  margin-bottom: 18px;
+}
+
+.calendar-visual-hint {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--muted, #64748b);
+  max-width: 52rem;
+}
+
+.calendar-year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.calendar-month-card {
+  border-radius: 16px;
+  border: 1px solid var(--cal-border);
+  background: var(--cal-card-bg);
+  padding: 14px 12px 12px;
+  box-shadow: 0 2px 16px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.calendar-month-card:hover {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
+}
+
+.calendar-month-title {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--text, #0f172a);
+}
+
+:root[data-theme='dark'] .calendar-month-title {
+  color: #f1f5f9;
+}
+
+.calendar-month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted, #94a3b8);
+}
+
+.calendar-month-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text, #334155);
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+.calendar-cell--empty {
+  pointer-events: none;
+  visibility: hidden;
+  min-height: 34px;
+}
+
+.calendar-cell:not(.calendar-cell--empty):hover {
+  background: rgba(148, 163, 184, 0.12);
+  transform: scale(1.06);
+}
+
+.calendar-cell--muted {
+  color: var(--muted, #94a3b8);
+}
+
+.calendar-cell--today {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: var(--cal-today-soft);
+  color: #b45309;
+}
+
+:root[data-theme='dark'] .calendar-cell--today {
+  color: #fcd34d;
+}
+
+.calendar-cell--events {
+  background: var(--cal-accent-soft);
+  color: var(--cal-accent);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+:root[data-theme='dark'] .calendar-cell--events {
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.calendar-cell--events.calendar-cell--today {
+  background: linear-gradient(135deg, var(--cal-today-soft), var(--cal-accent-soft));
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.calendar-cell-badge {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 14px;
+  background: var(--cal-accent);
+  color: #fff;
+}
+
+.calendar-cell--today .calendar-cell-badge {
+  background: #d97706;
+}
+
+/* --- Ro‘yxat bo‘limi --- */
+.calendar-list-section {
+  margin-top: 8px;
+}
+
+.calendar-list-heading {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text, #0f172a);
+}
+
+:root[data-theme='dark'] .calendar-list-heading {
+  color: #f1f5f9;
+}
+
+.calendar-list-lead {
+  margin: 0 0 22px;
+  font-size: 0.95rem;
+  color: var(--muted, #64748b);
+}
+
+/* --- Kun bloklari (scroll anchor) --- */
+details.calendar-day-dtls[id^='calendar-day-'] {
+  scroll-margin-top: 100px;
+}
+
+details.profile-activity-block.calendar-day-dtls {
+  margin-bottom: 20px;
+  border-radius: 14px;
+  border: 1px solid var(--cal-border);
+  overflow: hidden;
+  background: var(--cal-card-bg);
+}
+
+details.profile-activity-block.calendar-day-dtls:last-child {
+  margin-bottom: 0;
+}
+
+.calendar-day-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary, #0f3f78);
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent);
+}
+
+.calendar-day-summary-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.calendar-day-chevron {
+  flex-shrink: 0;
+  font-size: 12px;
+  opacity: 0.65;
+  transition: transform 0.25s ease;
+}
+
+.calendar-day-summary::-webkit-details-marker {
+  display: none;
+}
+
+details.calendar-day-dtls[open] .calendar-day-chevron {
+  transform: rotate(180deg);
+}
+
+:root[data-theme='dark'] .calendar-day-summary {
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.08), transparent);
+}
+
+.calendar-day-count {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(13, 63, 120, 0.08);
+  border: 1px solid var(--cal-border);
+  color: var(--muted, #64748b);
+}
+
+:root[data-theme='dark'] .calendar-day-count {
+  background: rgba(125, 180, 255, 0.12);
+  border-color: rgba(125, 180, 255, 0.22);
+  color: #b8cef5;
+}
+
+.calendar-day-dtls .calendar-day-activity-list {
+  margin: 14px 0 0;
+}
+
+/* --- Toolbar: skroll paytida tepada --- */
+@media (min-width: 769px) {
+  .profile-main.calendar-page .calendar-toolbar {
+    position: sticky;
+    top: 80px;
+    z-index: 20;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendar-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendar-legend {
+    justify-content: flex-start;
+  }
+
+  .calendar-year-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) {
+  .calendar-day-dtls .calendar-day-chevron {
+    display: none;
+  }
+
+  .calendar-day-summary {
+    cursor: default;
+    pointer-events: none;
+    margin-bottom: 0;
+  }
+
+  .calendar-day-dtls .calendar-day-activity-list {
+    margin-top: 0;
+  }
+}
+
+/* Admin panel: jadval kartasi ichida */
+.admin-content .card-style.calendar-page {
+  --text: #1e293b;
+  --muted: #64748b;
+  --surface: #fff;
+  --primary: #0f3f78;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-cell,
+  .calendar-month-card {
+    transition: none !important;
+  }
+}

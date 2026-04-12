@@ -3,19 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\CalendarEvent;
+use App\Support\CalendarYearGrid;
 use Illuminate\Http\Request;
 
 class AdminCalendarEventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $year = (int) $request->query('y', now()->year);
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) now()->year;
+        }
+
+        $countsByDate = CalendarEvent::query()
+            ->whereYear('event_date', $year)
+            ->get(['event_date'])
+            ->groupBy(fn (CalendarEvent $e) => $e->event_date->format('Y-m-d'))
+            ->map(fn ($group) => $group->count())
+            ->all();
+
+        $calendarMonths = CalendarYearGrid::build($year, $countsByDate);
+
         $events = CalendarEvent::query()
             ->orderByDesc('event_date')
             ->orderBy('sort_order')
             ->orderByDesc('id')
             ->paginate(30);
 
-        return view('admin.calendar-events.index', compact('events'));
+        return view('admin.calendar-events.index', compact('events', 'year', 'calendarMonths', 'countsByDate'));
     }
 
     public function create()

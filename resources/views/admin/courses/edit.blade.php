@@ -3,6 +3,11 @@
 @section('title', 'Kursni tahrirlash')
 
 @section('content')
+@php
+  $isAdminEditor = $isAdmin ?? true;
+  $courseUpdateRoute = $isAdminEditor ? route('admin.courses.update', $course) : route('teacher.courses.update', $course);
+  $courseBackRoute = $isAdminEditor ? route('admin.courses.index') : route('courses');
+@endphp
 <section class="table-components">
   <div class="container-fluid">
     <div class="title-wrapper pt-30">
@@ -12,26 +17,32 @@
           <p class="text-sm text-muted mb-0">{{ $course->title }}</p>
         </div>
         <div class="col-md-4 text-end">
-          <a href="{{ route('admin.courses.index') }}" class="btn btn-outline btn-sm">Orqaga</a>
+          <a href="{{ $courseBackRoute }}" class="btn btn-outline btn-sm">Orqaga</a>
         </div>
       </div>
     </div>
 
     <div class="card-style mb-30">
       <div class="card-body">
-        <form action="{{ route('admin.courses.update', $course) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ $courseUpdateRoute }}" method="POST" enctype="multipart/form-data">
           @csrf
           @method('PUT')
 
           <div class="mb-3">
             <label class="form-label">Ustoz *</label>
-            <select name="teacher_id" class="form-select" required>
-              @foreach($teachers as $teacher)
-                <option value="{{ $teacher->id }}" {{ (int) old('teacher_id', $course->teacher_id) === (int) $teacher->id ? 'selected' : '' }}>
-                  {{ $teacher->full_name }} — {{ $teacher->subject }}
-                </option>
-              @endforeach
-            </select>
+            @if($isAdminEditor)
+              <select name="teacher_id" class="form-select" required>
+                @foreach($teachers as $teacher)
+                  <option value="{{ $teacher->id }}" {{ (int) old('teacher_id', $course->teacher_id) === (int) $teacher->id ? 'selected' : '' }}>
+                    {{ $teacher->full_name }}{{ filled($teacher->subject) ? ' — '.$teacher->subject : '' }}
+                  </option>
+                @endforeach
+              </select>
+            @else
+              <input type="hidden" name="teacher_id" value="{{ $course->teacher_id }}">
+              <p class="form-control mb-0" style="background:#f8fafc;">{{ $course->teacher?->full_name ?? '—' }}</p>
+              <p class="text-muted small mt-1 mb-0">Ustozni faqat admin o‘zgartira oladi.</p>
+            @endif
             @error('teacher_id')
               <p class="text-danger small mt-1">{{ $message }}</p>
             @enderror

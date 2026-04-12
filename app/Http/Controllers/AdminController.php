@@ -231,4 +231,54 @@ class AdminController extends Controller
             ->with('error', "Foydalanuvchi o'chirildi.")
             ->with('toast_type', 'error');
     }
+
+    public function approveCourseOpenRequest(User $user)
+    {
+        $currentUser = auth()->user();
+        abort_unless($currentUser && $currentUser->canManage($user), 403);
+        abort_unless($user->isTeacher(), 422);
+
+        if (! $user->course_open_request_pending) {
+            return redirect()
+                ->route('admin.courses.requests')
+                ->with('error', "Bu foydalanuvchida kutilayotgan kurs ochish so'rovi yo'q.")
+                ->with('toast_type', 'warning');
+        }
+
+        $user->update([
+            'course_open_approved' => true,
+            'course_open_request_pending' => false,
+            'course_open_approved_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('admin.courses.requests')
+            ->with('success', "Kurs ochish ruxsati berildi ({$user->email}).")
+            ->with('toast_type', 'success');
+    }
+
+    public function rejectCourseOpenRequest(User $user)
+    {
+        $currentUser = auth()->user();
+        abort_unless($currentUser && $currentUser->canManage($user), 403);
+        abort_unless($user->isTeacher(), 422);
+
+        if (! $user->course_open_request_pending) {
+            return redirect()
+                ->route('admin.courses.requests')
+                ->with('error', "Bu foydalanuvchida kutilayotgan so'rov yo'q.")
+                ->with('toast_type', 'warning');
+        }
+
+        $user->update([
+            'course_open_approved' => false,
+            'course_open_request_pending' => false,
+            'course_open_approved_at' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.courses.requests')
+            ->with('success', "Kurs ochish so'rovi rad etildi ({$user->email}).")
+            ->with('toast_type', 'warning');
+    }
 }

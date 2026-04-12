@@ -6,43 +6,44 @@ use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\TeacherCommentLike;
 use App\Models\TeacherLike;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 class PublicTeacherController extends Controller
 {
     public function index(Request $request)
     {
-        $teachers = Cache::remember('public_teachers_all', now()->addMinutes(10), function () {
-            return Teacher::query()
-                ->select([
-                    'id',
-                    'full_name',
-                    'slug',
-                    'subject',
-                    'subject_en',
-                    'experience_years',
-                    'grades',
-                    'achievements',
-                    'achievements_en',
-                    'bio',
-                    'bio_en',
-                    'image',
-                    'sort_order',
-                    'is_active',
-                ])
-                ->withCount('likes')
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->orderBy('full_name')
-                ->get();
-        });
+        $teachers = Teacher::query()
+            ->select([
+                'id',
+                'full_name',
+                'slug',
+                'subject',
+                'subject_en',
+                'lavozim',
+                'lavozim_en',
+                'toifa',
+                'toifa_en',
+                'experience_years',
+                'grades',
+                'achievements',
+                'achievements_en',
+                'image',
+                'sort_order',
+                'is_active',
+            ])
+            ->withCount('likes')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('full_name')
+            ->paginate(12)
+            ->withQueryString();
 
         $likedTeacherIds = collect();
         if (auth()->check()) {
-            $ids = $teachers->pluck('id');
+            $ids = $teachers->getCollection()->pluck('id');
             if ($ids->isNotEmpty()) {
                 $likedTeacherIds = TeacherLike::query()
                     ->where('user_id', auth()->id())
@@ -51,7 +52,50 @@ class PublicTeacherController extends Controller
             }
         }
 
-        return view('teacher', compact('teachers', 'likedTeacherIds'));
+        $teacherStats = $this->teacherPageStats();
+
+        return view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats'));
+    }
+
+    /**
+     * @return array{experienced_teachers:int, subject_areas:int, students:int, satisfaction_percent:int}
+     */
+    private function teacherPageStats(): array
+    {
+        $activeTeachers = Teacher::query()->where('is_active', true);
+
+        $experienced = (clone $activeTeachers)->where('experience_years', '>=', 3)->count();
+        if ($experienced === 0) {
+            $experienced = (clone $activeTeachers)->count();
+        }
+
+        $subjectAreas = (clone $activeTeachers)
+            ->whereNotNull('subject')
+            ->where('subject', '!=', '')
+            ->distinct()
+            ->count('subject');
+
+        $students = User::query()->active()->byRole(User::ROLE_USER)->count();
+
+        $commentBase = TeacherComment::query()
+            ->whereNotNull('teacher_id')
+            ->whereNull('parent_id')
+            ->where('is_approved', true);
+
+        $totalApproved = (clone $commentBase)->count();
+        if ($totalApproved > 0) {
+            $withLikes = (clone $commentBase)->has('likes')->count();
+            $satisfaction = (int) round(min(100, max(0, (100 * $withLikes) / $totalApproved)));
+        } else {
+            $satisfaction = 96;
+        }
+
+        return [
+            'experienced_teachers' => $experienced,
+            'subject_areas' => $subjectAreas,
+            'students' => $students,
+            'satisfaction_percent' => $satisfaction,
+        ];
     }
 
     public function show(Teacher $teacher)
@@ -84,7 +128,61 @@ class PublicTeacherController extends Controller
 
         $likedCommentIds = $this->likedTeacherCommentIdsForUser($comments);
 
-        return view('teacherShow', compact('teacher', 'comments', 'liked', 'likedCommentIds'));
+        $relatedTeachers = $this->relatedTeachersFor($teacher, 3);
+
+        $likedTeacherIds = collect();
+        if (auth()->check()) {
+            $teacherIds = collect([$teacher->id])->merge($relatedTeachers->pluck('id'));
+            if ($teacherIds->isNotEmpty()) {
+                $likedTeacherIds = TeacherLike::query()
+                    ->where('user_id', auth()->id())
+                    ->whereIn('teacher_id', $teacherIds)
+                    ->pluck('teacher_id');
+            }
+        }
+
+        return view('teacherShow', compact(
+            'teacher',
+            'comments',
+            'liked',
+            'likedCommentIds',
+            'relatedTeachers',
+            'likedTeacherIds'
+        ));
+    }
+
+    private function relatedTeachersFor(Teacher $teacher, int $limit = 3): Collection
+    {
+        $q = Teacher::query()
+            ->select([
+                'id',
+                'full_name',
+                'slug',
+                'subject',
+                'subject_en',
+                'lavozim',
+                'lavozim_en',
+                'toifa',
+                'toifa_en',
+                'experience_years',
+                'grades',
+                'achievements',
+                'achievements_en',
+                'image',
+                'sort_order',
+                'is_active',
+            ])
+            ->withCount('likes')
+            ->where('is_active', true)
+            ->where('id', '!=', $teacher->id);
+
+        if (filled($teacher->subject)) {
+            $q->orderByRaw('CASE WHEN subject = ? THEN 0 ELSE 1 END', [$teacher->subject]);
+        } elseif (filled($teacher->lavozim)) {
+            $q->orderByRaw('CASE WHEN lavozim = ? THEN 0 ELSE 1 END', [$teacher->lavozim]);
+        }
+
+        return $q->orderBy('sort_order')->orderBy('full_name')->limit($limit)->get();
     }
 
     public function toggleLike(Request $request, Teacher $teacher)

@@ -578,6 +578,8 @@
   .logo img {
     width: 48px;
     height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
   }
 
   #site-nav {
@@ -663,4 +665,136 @@
   .mobile-nav-extras .locale-switcher-link {
     flex: 1 1 0;
   }
+}
+
+/* Laravel paginator (Bootstrap 5 markup) — public / profil (Bootstrap yo‘q) */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: 0;
+  margin: 0;
+  list-style: none;
+  gap: 6px;
+  align-items: center;
+}
+
+.page-link {
+  position: relative;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.page-link:hover {
+  color: #0f4aa1;
+  background-color: rgba(13, 63, 120, 0.06);
+  border-color: rgba(13, 63, 120, 0.2);
+}
+
+.page-item.active .page-link {
+  z-index: 1;
+  color: #fff;
+  background-color: #0f4aa1;
+  border-color: #0f4aa1;
+}
+
+.page-item.disabled .page-link {
+  color: #94a3b8;
+  pointer-events: none;
+  background-color: #f8fafc;
+  border-color: #e8edf3;
+}
+
+nav[aria-label] .pagination {
+  margin-bottom: 0;
+}
+
+nav.d-flex.justify-content-between {
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+nav.d-flex .small.text-muted {
+  color: #64748b;
+  font-size: 0.8125rem;
+  margin-bottom: 0;
+}
+
+.related-posts-section {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(15, 63, 120, 0.12);
+}
+
+.related-teachers-section {
+  margin-top: 2.5rem;
+  margin-bottom: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(15, 63, 120, 0.12);
+}
+
+.related-section-title {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.6rem);
+}
+
+.related-section-more {
+  margin: 1.5rem 0 0;
+  text-align: center;
+}
+
+.about-card--wide {
+  grid-column: 1 / -1;
+}
+
+.site-credits-intro {
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.site-credits-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.site-credits-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f7fbff;
+}
+
+.site-credits-name {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.site-credits-date {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .site-credits-item {
+  background: rgba(255, 255, 255, 0.04);
 }

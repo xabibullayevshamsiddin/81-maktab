@@ -54,7 +54,7 @@
     <p>{{ $comment->body }}</p>
 
     <div class="comment-actions">
-      <form action="{{ route('post.comments.like', [$post, $comment]) }}" method="POST" class="js-like-form" style="display:inline;">
+      <form action="{{ route('post.comments.like', [$post, $comment]) }}" method="POST" class="js-like-form">
         @csrf
         <button type="submit" class="like-btn comment-like {{ $commentIsLiked ? 'liked' : '' }}" aria-label="Yoqtirish">
           <i class="{{ $commentIsLiked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
@@ -122,7 +122,7 @@
           action="{{ route('post.comments.destroy', [$post, $comment]) }}"
           method="POST"
           data-comment-id="{{ $comment->id }}"
-          onsubmit="return confirm('Izohni o\\'chirmoqchimisiz?')"
+          data-confirm="Izohni o'chirmoqchimisiz?" data-confirm-title="Izohni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish"
         >
           @csrf
           @method('DELETE')

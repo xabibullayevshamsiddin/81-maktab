@@ -52,7 +52,7 @@
 
       <div class="mt-4 d-flex flex-wrap gap-2">
         @if(!$message->is_blocked)
-          <form method="POST" action="{{ route('admin.contact-messages.block', $message) }}" class="d-inline" onsubmit="return confirm('Bu xabarni bloklaysizmi? (spam yoki arxaiv)');">
+          <form method="POST" action="{{ route('admin.contact-messages.block', $message) }}" class="d-inline" data-confirm="Bu xabarni bloklaysizmi? (spam yoki arxaiv)" data-confirm-title="Bloklash" data-confirm-variant="danger" data-confirm-ok="Bloklash">
             @csrf
             <button type="submit" class="btn btn-sm btn-warning">Bloklash</button>
           </form>
@@ -62,7 +62,7 @@
             <button type="submit" class="btn btn-sm btn-outline-secondary">Blokdan chiqarish</button>
           </form>
         @endif
-        <form method="POST" action="{{ route('admin.contact-messages.destroy', $message) }}" class="d-inline" onsubmit="return confirm('Butunlay o‘chirilsinmi?');">
+        <form method="POST" action="{{ route('admin.contact-messages.destroy', $message) }}" class="d-inline" data-confirm="Butunlay o‘chirilsinmi?" data-confirm-title="Xabarni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
           @csrf
           @method('DELETE')
           <button type="submit" class="btn btn-sm btn-danger">O‘chirish</button>

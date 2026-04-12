@@ -71,9 +71,14 @@
                     $canManageCourse = auth()->user()->canManageSystem() || $isOwnCourse;
                   @endphp
                   @if($canManageCourse)
+                    @php
+                      $useAdminCourseRoutes = auth()->user()->canManageSystem();
+                      $editCourseUrl = $useAdminCourseRoutes ? route('admin.courses.edit', $course) : route('teacher.courses.edit', $course);
+                      $destroyCourseUrl = $useAdminCourseRoutes ? route('admin.courses.destroy', $course) : route('teacher.courses.destroy', $course);
+                    @endphp
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-                      <a href="{{ route('admin.courses.edit', $course) }}" class="btn btn-sm">Kursni tahrirlash</a>
-                      <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Kurs o‘chirilsinmi?');" style="display:inline;">
+                      <a href="{{ $editCourseUrl }}" class="btn btn-sm">Kursni tahrirlash</a>
+                      <form action="{{ $destroyCourseUrl }}" method="POST" data-confirm="Kurs o‘chirilsinmi?" data-confirm-title="Kursni o‘chirish" data-confirm-variant="danger" data-confirm-ok="O‘chirish" style="display:inline;">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline btn-sm">Kursni o‘chirish</button>
@@ -83,7 +88,7 @@
                   @if($isOwnCourse)
                     <p class="course-enroll-hint" style="font-size:13px;margin:0;">Bu siz yaratgan kurs — o‘z kursingizga yozilmaysiz.</p>
                     @if($en)
-                      <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" style="margin-top:10px;" onsubmit="return confirm('Yozilishni olib tashlaysizmi?');">
+                      <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" style="margin-top:10px;" data-confirm="Yozilishni olib tashlaysizmi?" data-confirm-title="Yozilishni olib tashlash" data-confirm-variant="primary" data-confirm-ok="Ha">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline btn-sm">Yozilishni olib tashlash</button>
@@ -91,7 +96,7 @@
                     @endif
                   @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_APPROVED)
                     <span class="course-enrolled-pill"><i class="fa-solid fa-check"></i> {{ __('public.courses.approved') }}</span>
-                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" onsubmit="return confirm('Yozilishni bekor qilasizmi?');">
+                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="Yozilishni bekor qilasizmi?" data-confirm-title="Yozilishni bekor qilish" data-confirm-variant="primary" data-confirm-ok="Ha">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
@@ -99,7 +104,7 @@
                   @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_PENDING)
                     <span class="course-enrolled-pill" style="background:rgba(245,158,11,.2);color:#b45309;"><i class="fa-regular fa-clock"></i> {{ __('public.courses.pending') }}</span>
                     <p class="course-enroll-hint" style="font-size:13px;margin:8px 0;">{{ __('public.courses.teacher_label') }} maʼlumotlarni ko‘rib, tasdiqlaydi.</p>
-                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" onsubmit="return confirm('Arizani bekor qilasizmi?');">
+                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="Arizani bekor qilasizmi?" data-confirm-title="Arizani bekor qilish" data-confirm-variant="primary" data-confirm-ok="Ha">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>

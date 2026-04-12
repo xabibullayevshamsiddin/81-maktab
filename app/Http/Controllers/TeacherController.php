@@ -21,9 +21,11 @@ class TeacherController extends Controller
                 $w->where('full_name', 'like', '%'.$q.'%')
                     ->orWhere('subject', 'like', '%'.$q.'%')
                     ->orWhere('subject_en', 'like', '%'.$q.'%')
+                    ->orWhere('lavozim', 'like', '%'.$q.'%')
+                    ->orWhere('lavozim_en', 'like', '%'.$q.'%')
+                    ->orWhere('toifa', 'like', '%'.$q.'%')
+                    ->orWhere('toifa_en', 'like', '%'.$q.'%')
                     ->orWhere('grades', 'like', '%'.$q.'%')
-                    ->orWhere('bio', 'like', '%'.$q.'%')
-                    ->orWhere('bio_en', 'like', '%'.$q.'%')
                     ->orWhere('achievements', 'like', '%'.$q.'%')
                     ->orWhere('achievements_en', 'like', '%'.$q.'%')
                     ->orWhereHas('user', function ($u) use ($q): void {
@@ -48,26 +50,39 @@ class TeacherController extends Controller
 
     public function store(Request $request)
     {
+        if (! $request->filled('user_id')) {
+            $request->merge(['user_id' => null]);
+        }
+
         $validated = $request->validate([
             'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id'],
             'full_name' => ['required', 'string', 'max:255'],
-            'subject' => ['required', 'string', 'max:255'],
+            'lavozim' => ['nullable', 'string', 'max:255'],
+            'lavozim_en' => ['nullable', 'string', 'max:255'],
+            'toifa' => ['nullable', 'string', 'max:255'],
+            'toifa_en' => ['nullable', 'string', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
             'subject_en' => ['nullable', 'string', 'max:255'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:60'],
             'grades' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:10000'],
             'achievements_en' => ['nullable', 'string', 'max:10000'],
-            'bio' => ['nullable', 'string'],
-            'bio_en' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $this->normalizeTeacherSubjectFields($validated);
+
         $validated['slug'] = $this->makeUniqueSlug($validated['full_name']);
         $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
         $validated['sort_order'] = $this->nextSortOrder();
+        $validated['user_id'] = $validated['user_id'] ?? null;
+        $gradesTrim = trim((string) ($validated['grades'] ?? ''));
+        $validated['grades'] = $gradesTrim !== '' ? $gradesTrim : null;
 
-        if ($request->hasFile('image')) {
+        if (! $request->hasFile('image')) {
+            unset($validated['image']);
+        } else {
             $validated['image'] = $request->file('image')->store('teachers', 'public');
         }
 
@@ -93,28 +108,41 @@ class TeacherController extends Controller
 
     public function update(Request $request, Teacher $teacher)
     {
+        if (! $request->filled('user_id')) {
+            $request->merge(['user_id' => null]);
+        }
+
         $validated = $request->validate([
             'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id,'.$teacher->id],
             'full_name' => ['required', 'string', 'max:255'],
-            'subject' => ['required', 'string', 'max:255'],
+            'lavozim' => ['nullable', 'string', 'max:255'],
+            'lavozim_en' => ['nullable', 'string', 'max:255'],
+            'toifa' => ['nullable', 'string', 'max:255'],
+            'toifa_en' => ['nullable', 'string', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
             'subject_en' => ['nullable', 'string', 'max:255'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:60'],
             'grades' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:10000'],
             'achievements_en' => ['nullable', 'string', 'max:10000'],
-            'bio' => ['nullable', 'string'],
-            'bio_en' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        $this->normalizeTeacherSubjectFields($validated);
 
         if ($teacher->full_name !== $validated['full_name']) {
             $validated['slug'] = $this->makeUniqueSlug($validated['full_name'], $teacher->id);
         }
 
         $validated['is_active'] = (bool) ($validated['is_active'] ?? false);
+        $validated['user_id'] = $validated['user_id'] ?? null;
+        $gradesTrim = trim((string) ($validated['grades'] ?? ''));
+        $validated['grades'] = $gradesTrim !== '' ? $gradesTrim : null;
 
-        if ($request->hasFile('image')) {
+        if (! $request->hasFile('image')) {
+            unset($validated['image']);
+        } else {
             if (! empty($teacher->image)) {
                 Storage::disk('public')->delete($teacher->image);
             }
@@ -125,7 +153,7 @@ class TeacherController extends Controller
         forget_public_teacher_caches();
 
         return redirect()->route('teachers.index')
-            ->with('success', "Ustoz yangilandi.")
+            ->with('success', 'Ustoz yangilandi.')
             ->with('toast_type', 'warning');
     }
 
@@ -186,5 +214,16 @@ class TeacherController extends Controller
     private function nextSortOrder(): int
     {
         return (int) Teacher::query()->max('sort_order') + 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function normalizeTeacherSubjectFields(array &$validated): void
+    {
+        $subject = trim((string) ($validated['subject'] ?? ''));
+        $validated['subject'] = $subject !== '' ? $subject : null;
+        $subjectEn = trim((string) ($validated['subject_en'] ?? ''));
+        $validated['subject_en'] = $subjectEn !== '' ? $subjectEn : null;
     }
 }

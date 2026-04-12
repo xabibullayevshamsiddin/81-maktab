@@ -28,7 +28,7 @@
     $postCommentConfig = [
       'currentUserId' => auth()->check() ? auth()->id() : null,
       'currentUserIsAdmin' => auth()->check() && auth()->user()->isAdmin(),
-      'currentUserIsModerator' => auth()->check() && auth()->user()->hasRole('moderator'),
+      'currentUserIsModerator' => auth()->check() && auth()->user()->isModerator(),
       'currentUserIsOnlyModerator' => auth()->check() && auth()->user()->isOnlyModerator(),
       'updateUrlTemplate' => route('post.comments.update', [$post, '__COMMENT_ID__']),
       'destroyUrlTemplate' => route('post.comments.destroy', [$post, '__COMMENT_ID__']),
@@ -111,9 +111,9 @@
             <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span></span>
 
             @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
-            <form action="{{ route('post.like', $post) }}" method="POST" style="display:inline;" class="js-like-form">
+            <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
               @csrf
-              <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}" style="padding-left: 10px;">
+              <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                 <i class="{{ $postLikedByMe ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
                 <span class="like-count">{{ $post->likes_count }}</span>
               </button>
@@ -147,7 +147,7 @@
         @if($canEdit)
           <div class="post-admin-actions">
             <a href="{{ route('posts.edit', $post->id) }}" class="btn btn-sm post-admin-btn post-admin-btn-edit">Tahrirlash</a>
-            <form action="{{ route('posts.destroy', $post->id) }}" method="POST" onsubmit="return confirm('Postni o\'chirmoqchimisiz?')">
+            <form action="{{ route('posts.destroy', $post->id) }}" method="POST" data-confirm="Postni o'chirmoqchimisiz?" data-confirm-title="Postni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
               @csrf
               @method('DELETE')
               <button type="submit" class="btn btn-sm post-admin-btn post-admin-btn-delete">O'chirish</button>
@@ -204,6 +204,18 @@
           </p>
         </div>
       </div>
+
+      @if(isset($relatedPosts) && $relatedPosts->isNotEmpty())
+        <section class="related-posts-section reveal" aria-labelledby="related-posts-heading">
+          <h2 id="related-posts-heading" class="js-split-text related-section-title">
+            {{ __('public.posts.related_title') }}
+          </h2>
+          @include('posts.partials.related-grid', ['relatedPosts' => $relatedPosts, 'likedPostIds' => $likedPostIds])
+          <p class="related-section-more">
+            <a href="{{ route('post') }}" class="btn btn-outline btn-sm">{{ __('public.posts.related_all') }}</a>
+          </p>
+        </section>
+      @endif
     </section>
   </main>
 </x-loyouts.main>

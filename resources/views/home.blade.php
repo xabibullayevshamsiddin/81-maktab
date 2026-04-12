@@ -129,7 +129,7 @@
               <div class="icon-link">
                 <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
                 <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
-                <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form home-like-form">
+                <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
                   @csrf
                   <button class="like-btn {{ $likedPostIds->contains($post->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                     <i class="{{ $likedPostIds->contains($post->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
@@ -169,7 +169,7 @@
         @if(isset($featuredTeacher) && $featuredTeacher)
           @php
             $featuredTeacherSubject = localized_model_value($featuredTeacher, 'subject');
-            $featuredTeacherBio = localized_model_value($featuredTeacher, 'bio');
+            $featuredTeacherMetaLine = $featuredTeacherSubject ?: localized_model_value($featuredTeacher, 'lavozim');
           @endphp
           <article class="teacher-img">
             <img
@@ -180,14 +180,21 @@
             />
             <h3>{{ $featuredTeacher->full_name }}</h3>
             <p>
-              {{ $featuredTeacherBio ?: ($featuredTeacherSubject . ' fani bo\'yicha tajribali ustoz.') }}
+              {{ $featuredTeacher->shortBio(180) }}
             </p>
-            <p class="profile-muted home-featured-teacher-meta">
-              {{ $featuredTeacherSubject }}
-              @if($featuredTeacher->experience_years)
-                Р’В· {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
-              @endif
-            </p>
+            @if(filled($featuredTeacherMetaLine) || $featuredTeacher->experience_years)
+              <p class="profile-muted home-featured-teacher-meta">
+                @if(filled($featuredTeacherMetaLine))
+                  {{ $featuredTeacherMetaLine }}
+                @endif
+                @if(filled($featuredTeacherMetaLine) && $featuredTeacher->experience_years)
+                  ·
+                @endif
+                @if($featuredTeacher->experience_years)
+                  {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
+                @endif
+              </p>
+            @endif
             <div class="teacher-img-actions">
               <a href="{{ route('teacher.show', $featuredTeacher) }}" class="btn1">{{ __('public.teachers.about_button') }}</a>
               <button

@@ -109,7 +109,7 @@
               <td style="white-space:nowrap;font-size:13px;">{{ $result->submitted_at?->format('d.m.Y H:i') ?? '-' }}</td>
               <td>
                 <a href="{{ route('admin.exams.results.show', $result) }}" class="main-btn info-btn btn-hover btn-sm">Ko'rish</a>
-                <form method="POST" action="{{ route('admin.exams.results.destroy', $result) }}" onsubmit="return confirm('Bu natijani o‘chirishni tasdiqlaysizmi?');" style="display:inline;">
+                <form method="POST" action="{{ route('admin.exams.results.destroy', $result) }}" data-confirm="Bu natijani o‘chirishni tasdiqlaysizmi?" data-confirm-title="Natijani o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish" style="display:inline;">
                   @csrf
                   @method('DELETE')
                   <button type="submit" class="main-btn danger-btn btn-hover btn-sm">O‘chirish</button>

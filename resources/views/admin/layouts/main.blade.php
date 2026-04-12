@@ -16,6 +16,9 @@
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/fullcalendar.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/main.css') }}" />
       <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ filemtime(public_path('temp/css/extracted-admin.css')) }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
+      @stack('admin_styles')
   </head>
 	  <body
       data-admin-success="{{ session('success') }}"
@@ -131,9 +134,15 @@
     <span class="text">Kurs so'rovlari</span>
     @php
       $pendingCoursesCount = \App\Models\Course::where('status', \App\Models\Course::STATUS_PENDING_VERIFICATION)->count();
+      $pendingCourseOpenCount = \App\Models\User::query()
+          ->whereHas('roleRelation', fn ($r) => $r->where('name', \App\Models\User::ROLE_TEACHER))
+          ->where('course_open_request_pending', true)
+          ->where('course_open_approved', false)
+          ->count();
+      $pendingRequestsTotal = $pendingCoursesCount + $pendingCourseOpenCount;
     @endphp
-    @if($pendingCoursesCount > 0)
-      <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem;">{{ $pendingCoursesCount }}</span>
+    @if($pendingRequestsTotal > 0)
+      <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem;">{{ $pendingRequestsTotal }}</span>
     @endif
   </a>
 </li>
@@ -359,6 +368,8 @@
 
     <div id="admin-toast-container" aria-live="polite" aria-atomic="true"></div>
 
+    @include('components.confirm-modal')
+    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
 
   </body>
 </html>

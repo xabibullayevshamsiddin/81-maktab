@@ -107,7 +107,7 @@
                       </form>
                     @endif
                     @if(!$row->is_blocked)
-                      <form method="POST" action="{{ route('admin.contact-messages.block', $row) }}" class="d-inline" onsubmit="return confirm('Bloklaysizmi?');">
+                      <form method="POST" action="{{ route('admin.contact-messages.block', $row) }}" class="d-inline" data-confirm="Bloklaysizmi?" data-confirm-title="Bloklash" data-confirm-variant="danger" data-confirm-ok="Bloklash">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-outline-warning w-100">Bloklash</button>
                       </form>
@@ -118,7 +118,7 @@
                       </form>
                     @endif
                     @if($canInbox)
-                      <form method="POST" action="{{ route('admin.contact-messages.destroy', $row) }}" class="d-inline" onsubmit="return confirm('O‘chirilsinmi?');">
+                      <form method="POST" action="{{ route('admin.contact-messages.destroy', $row) }}" class="d-inline" data-confirm="O‘chirilsinmi?" data-confirm-title="Xabarni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-danger w-100">O‘chirish</button>

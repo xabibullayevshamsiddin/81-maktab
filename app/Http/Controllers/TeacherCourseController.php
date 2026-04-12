@@ -108,6 +108,7 @@ class TeacherCourseController extends Controller
             }
 
             Course::create($payload);
+            $this->resetTeacherCourseOpenFlagsAfterCreate($user, $isAdmin);
             forget_public_course_caches();
 
             return redirect()
@@ -140,6 +141,8 @@ class TeacherCourseController extends Controller
         }
 
         $course = Course::create($payload);
+
+        $this->resetTeacherCourseOpenFlagsAfterCreate($user, $isAdmin);
 
         $this->sendPublishCode($user->email, $course, $code);
 
@@ -269,12 +272,29 @@ class TeacherCourseController extends Controller
         $user = $this->authorizeCreator();
         $this->ensureCanManageCourse($user, $course);
 
-        $teachers = Teacher::query()
-            ->where('is_active', true)
-            ->orderBy('full_name')
-            ->get();
+        $course->loadMissing('teacher');
 
-        return view('admin.courses.edit', compact('course', 'teachers'));
+        if (request()->routeIs('admin.courses.edit')) {
+            $isAdmin = true;
+            $teachers = Teacher::query()
+                ->where('is_active', true)
+                ->orderBy('full_name')
+                ->get();
+
+            return view('admin.courses.edit', compact('course', 'teachers', 'isAdmin'));
+        }
+
+        $selectedTeacher = $this->teacherProfileLinkedToUser($user);
+        abort_unless(
+            $selectedTeacher && (int) $course->teacher_id === (int) $selectedTeacher->id,
+            403,
+            "Bu kursni tahrirlash huquqingiz yo'q."
+        );
+
+        $isAdmin = false;
+        $teachers = collect();
+
+        return view('courses.edit', compact('course', 'selectedTeacher', 'isAdmin', 'teachers'));
     }
 
     public function update(Request $request, Course $course)
@@ -282,8 +302,9 @@ class TeacherCourseController extends Controller
         $user = $this->authorizeCreator();
         $this->ensureCanManageCourse($user, $course);
 
-        $validated = $request->validate([
-            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+        $isAdmin = $user->isAdmin();
+
+        $rules = [
             'title' => ['required', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'string', 'max:100'],
@@ -294,13 +315,27 @@ class TeacherCourseController extends Controller
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-        ]);
+        ];
 
-        $teacher = Teacher::query()->findOrFail((int) $validated['teacher_id']);
+        if ($isAdmin) {
+            $rules['teacher_id'] = ['required', 'integer', 'exists:teachers,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $teacherId = $isAdmin
+            ? (int) $validated['teacher_id']
+            : (int) $course->teacher_id;
+
+        $teacher = Teacher::query()->findOrFail($teacherId);
         abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
 
+        if (! $isAdmin && (int) $course->teacher_id !== $teacherId) {
+            abort(403);
+        }
+
         $payload = [
-            'teacher_id' => (int) $validated['teacher_id'],
+            'teacher_id' => $teacherId,
             'title' => $validated['title'],
             'title_en' => $validated['title_en'] ?? null,
             'price' => $validated['price'],
@@ -322,8 +357,15 @@ class TeacherCourseController extends Controller
         $course->update($payload);
         forget_public_course_caches();
 
+        if (request()->routeIs('admin.courses.update')) {
+            return redirect()
+                ->route('admin.courses.index')
+                ->with('success', 'Kurs yangilandi.')
+                ->with('toast_type', 'success');
+        }
+
         return redirect()
-            ->route('admin.courses.index')
+            ->to(route('profile.show').'#profile-created-courses')
             ->with('success', 'Kurs yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -340,8 +382,15 @@ class TeacherCourseController extends Controller
         $course->delete();
         forget_public_course_caches();
 
+        if (request()->routeIs('admin.courses.destroy')) {
+            return redirect()
+                ->route('admin.courses.index')
+                ->with('success', "Kurs o'chirildi.")
+                ->with('toast_type', 'warning');
+        }
+
         return redirect()
-            ->route('admin.courses.index')
+            ->to(route('profile.show').'#profile-created-courses')
             ->with('success', "Kurs o'chirildi.")
             ->with('toast_type', 'warning');
     }
@@ -431,6 +480,42 @@ class TeacherCourseController extends Controller
                 ->with('toast_type', 'error');
         }
 
+        if ($user->hasReachedCourseOpenLimit()) {
+            return redirect()
+                ->route('profile.show')
+                ->with('error', "Teacher akkaunti faqat bitta kurs yaratishi mumkin.")
+                ->with('toast_type', 'warning');
+        }
+
+        if (! $user->hasCourseOpenApproval()) {
+            if ($user->hasPendingCourseOpenRequest()) {
+                return redirect()
+                    ->route('profile.show')
+                    ->with('error', "Kurs ochish uchun admin ruxsatini kuting.")
+                    ->with('toast_type', 'warning');
+            }
+
+            return redirect()
+                ->route('profile.show')
+                ->with('error', "Kurs ochishdan oldin profildan admin ruxsatini so'rang.")
+                ->with('toast_type', 'warning');
+        }
+
         return null;
+    }
+
+    /**
+     * Bir martalik ruxsat ishlatilgandan keyin flaglarni tozalash (keyingi marta yana so'rash tartibi).
+     */
+    private function resetTeacherCourseOpenFlagsAfterCreate(User $user, bool $isAdmin): void
+    {
+        if ($isAdmin) {
+            return;
+        }
+
+        $user->update([
+            'course_open_approved' => false,
+            'course_open_request_pending' => false,
+        ]);
     }
 }

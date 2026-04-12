@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Exam extends Model
 {
@@ -16,13 +17,44 @@ class Exam extends Model
         'passing_points',
         'allowed_grades',
         'is_active',
+        'available_from',
         'created_by',
     ];
 
     protected $casts = [
         'allowed_grades' => 'array',
         'is_active' => 'boolean',
+        'available_from' => 'datetime',
     ];
+
+    /**
+     * Reja sanasi/vaqti berilgan bo‘lsa, faqat shu vaqtdan keyin boshlash mumkin (ilova vaqti — odatda Asia/Tashkent).
+     * null = vaqt cheklovi yo‘q.
+     */
+    public function isOpenForStarting(): bool
+    {
+        if ($this->available_from === null) {
+            return true;
+        }
+
+        $from = $this->available_from instanceof Carbon
+            ? $this->available_from->copy()
+            : Carbon::parse($this->available_from);
+
+        return now()->greaterThanOrEqualTo($from);
+    }
+
+    /**
+     * O‘zbekiston (ilova timezone) bo‘yicha ko‘rinish: sana + soat:daqiqa.
+     */
+    public function availableFromLabel(): ?string
+    {
+        if ($this->available_from === null) {
+            return null;
+        }
+
+        return $this->available_from->timezone(config('app.timezone'))->format('d.m.Y H:i');
+    }
 
     public function allowedGradeItems(): array
     {

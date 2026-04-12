@@ -141,7 +141,10 @@ class PublicPostController extends Controller
         $post->load('category');
         $post->loadCount(['comments', 'likes']);
 
-        $likedPostIds = $this->likedPostIdsForUser(collect([$post->id]));
+        $relatedPosts = $this->relatedPostsFor($post, 4);
+        $likedPostIds = $this->likedPostIdsForUser(
+            collect([$post->id])->merge($relatedPosts->pluck('id'))
+        );
 
         // Load top-level comments and their replies.
         $comments = $post->comments()
@@ -167,7 +170,36 @@ class PublicPostController extends Controller
             OpenGraph::addImage(app_storage_asset($post->image));
         }
 
-        return view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds'));
+        return view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds', 'relatedPosts'));
+    }
+
+    private function relatedPostsFor(Post $post, int $limit = 4): Collection
+    {
+        $q = Post::query()
+            ->where('id', '!=', $post->id)
+            ->select([
+                'id',
+                'category_id',
+                'title',
+                'title_en',
+                'short_content',
+                'short_content_en',
+                'image',
+                'slug',
+                'views',
+                'post_kind',
+                'video_path',
+                'video_url',
+                'created_at',
+            ])
+            ->with(['category:id,name,name_en'])
+            ->withCount(['comments', 'likes']);
+
+        if ($post->category_id) {
+            $q->orderByRaw('CASE WHEN category_id = ? THEN 0 ELSE 1 END', [$post->category_id]);
+        }
+
+        return $q->orderByDesc('created_at')->limit($limit)->get();
     }
 
     public function storeComment(Request $request, Post $post)

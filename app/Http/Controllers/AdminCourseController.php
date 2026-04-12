@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminCourseController extends Controller
@@ -66,7 +67,23 @@ class AdminCourseController extends Controller
 
         $courses = $query->paginate(10)->withQueryString();
 
-        return view('admin.courses.requests', compact('courses'));
+        $courseOpenRequestUsers = User::query()
+            ->withCount([
+                'teacherProfile as active_teacher_profile_count' => function ($builder): void {
+                    $builder->where('is_active', true);
+                },
+            ])
+            ->withCount('createdCourses')
+            ->whereHas('roleRelation', function ($r): void {
+                $r->where('name', User::ROLE_TEACHER);
+            })
+            ->where('course_open_request_pending', true)
+            ->where('course_open_approved', false)
+            ->orderByDesc('course_open_requested_at')
+            ->paginate(15, ['*'], 'open_page')
+            ->withQueryString();
+
+        return view('admin.courses.requests', compact('courses', 'courseOpenRequestUsers'));
     }
 
     public function updateStatus(Request $request, Course $course)

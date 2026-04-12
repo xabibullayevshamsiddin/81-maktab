@@ -24,6 +24,7 @@
               <th>Ball</th>
               <th>O'tish</th>
               <th>Davomiylik</th>
+              <th>Boshlash (reja)</th>
               <th>Sinflar</th>
               <th>Holat</th>
               <th>Amal</th>
@@ -32,7 +33,7 @@
           <tbody>
             @if($exams->isEmpty())
               <tr>
-                <td colspan="9">Hozircha imtihon yo'q.</td>
+                <td colspan="10">Hozircha imtihon yo'q.</td>
               </tr>
             @else
               @foreach($exams as $exam)
@@ -43,6 +44,7 @@
                   <td>{{ $exam->total_points }}</td>
                   <td>{{ $exam->passing_points ?? '-' }}</td>
                   <td>{{ $exam->duration_minutes }} daq.</td>
+                  <td>{{ $exam->availableFromLabel() ?? '—' }}</td>
                   <td title="{{ $exam->allowedGradesLabel() }}">{{ $exam->allowedGradesLabel() }}</td>
                   <td>{{ $exam->is_active ? 'Faol' : 'Tayyorlanmoqda' }}</td>
                   <td style="display:flex;gap:8px;flex-wrap:wrap;">

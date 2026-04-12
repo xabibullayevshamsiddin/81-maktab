@@ -73,14 +73,14 @@
                       @csrf
                       <button type="submit" class="btn btn-sm btn-success">Tasdiqlash</button>
                     </form>
-                    <form action="{{ route('admin.courses.enrollments.reject', [$course, $row]) }}" method="POST" class="d-inline" onsubmit="return confirm('Rad etilsinmi?');">
+                    <form action="{{ route('admin.courses.enrollments.reject', [$course, $row]) }}" method="POST" class="d-inline" data-confirm="Rad etilsinmi?" data-confirm-title="Arizani rad etish" data-confirm-variant="primary" data-confirm-ok="Rad etish">
                       @csrf
                       <button type="submit" class="btn btn-sm btn-outline-danger">Rad</button>
                     </form>
                   @else
                     <span class="text-muted small">—</span>
                   @endif
-                  <form action="{{ route('admin.courses.enrollments.destroy', [$course, $row]) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('Yozilish butunlay olib tashlansinmi?');">
+                  <form action="{{ route('admin.courses.enrollments.destroy', [$course, $row]) }}" method="POST" class="d-inline ms-1" data-confirm="Yozilish butunlay olib tashlansinmi?" data-confirm-title="Yozilishni olib tashlash" data-confirm-variant="danger" data-confirm-ok="Olib tashlash">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-outline-secondary">Olib tashlash</button>

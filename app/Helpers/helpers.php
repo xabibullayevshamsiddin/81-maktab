@@ -31,6 +31,10 @@ if (! function_exists('app_public_asset')) {
 }
 
 if (! function_exists('app_storage_asset')) {
+    /**
+     * Public diskdagi fayl uchun to‘liq URL (admin va sayt bir xil ishlashi uchun).
+     * Eski yozuvlarda "storage/..." takrori yoki to‘liq http URL bo‘lishi mumkin — normalize qilinadi.
+     */
     function app_storage_asset(?string $path): ?string
     {
         $path = trim((string) $path);
@@ -39,7 +43,31 @@ if (! function_exists('app_storage_asset')) {
             return null;
         }
 
-        return app_public_asset('storage/'.$path);
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        $path = str_replace('\\', '/', $path);
+        $path = ltrim($path, '/');
+
+        while (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+
+        if ($path === '') {
+            return null;
+        }
+
+        // APP_URL pastki papkani hisobga olmasa, Storage::url() noto‘g‘ri URL beradi.
+        // app_public_asset bilan bir xil: joriy so‘rovning base URL + /storage/...
+        if (! app()->runningInConsole()) {
+            $baseUrl = request()->getBaseUrl();
+            if ($baseUrl !== '') {
+                return rtrim($baseUrl, '/').'/storage/'.$path;
+            }
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
     }
 }
 
@@ -119,6 +147,13 @@ if (! function_exists('cache_key_public_calendar_page')) {
     function cache_key_public_calendar_page(int $year, int $page = 1): string
     {
         return 'public.calendar.year.'.$year.'.page.'.$page.'.v'.cache_namespace_version('public_calendar');
+    }
+}
+
+if (! function_exists('cache_key_public_calendar_counts')) {
+    function cache_key_public_calendar_counts(int $year): string
+    {
+        return 'public.calendar.year.'.$year.'.counts.v'.cache_namespace_version('public_calendar');
     }
 }
 

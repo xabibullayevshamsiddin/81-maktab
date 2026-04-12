@@ -83,6 +83,10 @@ class User extends Authenticatable
         'role_id',
         'is_active',
         'is_parent',
+        'course_open_approved',
+        'course_open_request_pending',
+        'course_open_requested_at',
+        'course_open_approved_at',
     ];
 
     public static function nameValidationRules(bool $required = true): array
@@ -130,6 +134,10 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'is_parent' => 'boolean',
+        'course_open_approved' => 'boolean',
+        'course_open_request_pending' => 'boolean',
+        'course_open_requested_at' => 'datetime',
+        'course_open_approved_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -366,6 +374,30 @@ class User extends Authenticatable
         }
 
         return $this->createdCourses()->exists();
+    }
+
+    /**
+     * Teacher bitta kurs yaratgandan keyin yana ocholmaydi.
+     */
+    public function hasReachedCourseOpenLimit(): bool
+    {
+        if (array_key_exists('created_courses_count', $this->attributes)) {
+            return (int) $this->attributes['created_courses_count'] >= 1;
+        }
+
+        return $this->createdCourses()->count() >= 1;
+    }
+
+    public function hasCourseOpenApproval(): bool
+    {
+        return (bool) ($this->course_open_approved ?? false);
+    }
+
+    /** Admin javobini kutayotgan so'rov (ruxsat berilmagan). */
+    public function hasPendingCourseOpenRequest(): bool
+    {
+        return (bool) ($this->course_open_request_pending ?? false)
+            && ! $this->hasCourseOpenApproval();
     }
 
     public function canManageExams(): bool

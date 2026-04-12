@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CalendarEvent;
+use App\Support\CalendarYearGrid;
 use Illuminate\Support\Facades\Cache;
 
 class CalendarController extends Controller
@@ -15,6 +16,16 @@ class CalendarController extends Controller
         }
 
         $page = max(1, (int) request()->query('page', 1));
+
+        /** @var array<string, int> $countsByDate */
+        $countsByDate = Cache::remember(cache_key_public_calendar_counts($year), now()->addMinutes(10), function () use ($year) {
+            return CalendarEvent::query()
+                ->whereYear('event_date', $year)
+                ->get(['event_date'])
+                ->groupBy(fn (CalendarEvent $e) => $e->event_date->format('Y-m-d'))
+                ->map(fn ($group) => $group->count())
+                ->all();
+        });
 
         $events = Cache::remember(cache_key_public_calendar_page($year, $page), now()->addMinutes(10), function () use ($year) {
             return CalendarEvent::query()
@@ -29,6 +40,8 @@ class CalendarController extends Controller
 
         $grouped = $events->getCollection()->groupBy(fn (CalendarEvent $e) => $e->event_date->format('Y-m-d'));
 
-        return view('calendar', compact('events', 'grouped', 'year'));
+        $calendarMonths = CalendarYearGrid::build($year, $countsByDate);
+
+        return view('calendar', compact('events', 'grouped', 'year', 'calendarMonths', 'countsByDate'));
     }
 }

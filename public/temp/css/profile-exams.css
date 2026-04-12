@@ -4,6 +4,228 @@
     padding-bottom: 60px;
     min-height: 80vh;
 }
+
+/* Create / edit: bo‘limlar va reja sanasi */
+.exam-create-lead {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #4b6282;
+}
+
+.mb-10 { margin-bottom: 10px; }
+.mb-24 { margin-bottom: 24px; }
+
+.exam-form-section {
+    margin-bottom: 28px;
+    padding: 22px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(13, 63, 120, 0.12);
+    background: rgba(255, 255, 255, 0.65);
+}
+
+.exam-form-section-title {
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #0d3f78;
+}
+
+.exam-form-section--schedule {
+    border-color: rgba(37, 99, 235, 0.35);
+    background: linear-gradient(145deg, rgba(239, 246, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    box-shadow: 0 4px 24px rgba(37, 99, 235, 0.08);
+}
+
+.exam-schedule-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.exam-schedule-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    font-size: 20px;
+}
+
+.exam-form-section-title--schedule {
+    margin-bottom: 6px;
+    color: #1e40af;
+}
+
+.exam-field {
+    margin-bottom: 0;
+}
+
+.exam-field label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.exam-field input {
+    margin-bottom: 16px;
+}
+
+.exam-field:last-child input {
+    margin-bottom: 0;
+}
+
+.exam-field--date input[type="date"] {
+    max-width: 280px;
+    font-weight: 600;
+}
+
+/* Inline Flatpickr — tushunarli kalendar (native date o‘rniga) */
+.exam-field--schedule-calendar .exam-form-hint--schedule-calendar {
+    margin-bottom: 12px;
+}
+
+.exam-inline-calendar-wrap {
+    margin-top: 4px;
+}
+
+.exam-calendar-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.exam-clear-date {
+    font-weight: 600;
+}
+
+.exam-inline-calendar-wrap .flatpickr-calendar {
+    margin: 0 auto;
+    max-width: 100%;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(13, 63, 120, 0.12);
+}
+
+.exam-inline-calendar-wrap .flatpickr-calendar.inline {
+    display: block;
+}
+
+/* Ko‘rinadigan qiymat: alt maydon (Flatpickr asl inputni o‘zi yashiradi) */
+.exam-inline-calendar-wrap input.exam-fp-alt-input,
+.exam-inline-calendar-wrap .flatpickr-alt-input.exam-fp-alt-input {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 12px;
+    border: 1px solid rgba(13, 63, 120, 0.22);
+    background: rgba(255, 255, 255, 0.98);
+    color: #0d3f78;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.exam-inline-calendar-wrap input.exam-fp-alt-input::placeholder,
+.exam-inline-calendar-wrap .flatpickr-alt-input.exam-fp-alt-input::placeholder {
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.exam-tz-code {
+    font-size: 0.88em;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+}
+
+/* Vaqt tanlash (soat · daqiqa) */
+.exam-inline-calendar-wrap .flatpickr-time {
+    border-top: 1px solid rgba(13, 63, 120, 0.12);
+    margin: 0 10px 10px;
+    padding: 12px 4px 8px;
+    max-width: 100%;
+}
+
+.exam-inline-calendar-wrap .flatpickr-time input {
+    font-weight: 700;
+    color: #0d3f78;
+}
+
+.exam-inline-calendar-wrap .flatpickr-time .numInputWrapper {
+    border-radius: 8px;
+    border: 1px solid rgba(13, 63, 120, 0.15);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.exam-inline-calendar-wrap .flatpickr-time .arrowUp,
+.exam-inline-calendar-wrap .flatpickr-time .arrowDown {
+    border-color: rgba(13, 63, 120, 0.25);
+}
+
+.exam-inline-calendar-wrap .flatpickr-time .flatpickr-am-pm {
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.exam-available-from--admin {
+    margin-bottom: 18px;
+}
+
+.exam-inline-calendar-wrap .flatpickr-months {
+    padding-top: 8px;
+}
+
+.exam-inline-calendar-wrap .flatpickr-weekday {
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.exam-inline-calendar-wrap .flatpickr-day {
+    border-radius: 8px;
+    line-height: 38px;
+    max-height: 38px;
+}
+
+.exam-inline-calendar-wrap .flatpickr-day.selected,
+.exam-inline-calendar-wrap .flatpickr-day.startRange,
+.exam-inline-calendar-wrap .flatpickr-day.endRange {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.exam-inline-calendar-wrap .flatpickr-day.today {
+    border-color: #2563eb;
+}
+
+.exam-form-hint {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #64748b;
+}
+
+.exam-form-hint--compact {
+    margin-top: 10px;
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.exam-form-error {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: #dc2626;
+    font-weight: 600;
+}
+
 .exam-public-card {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(16px);
@@ -243,6 +465,132 @@ h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }
 [data-theme='dark'] .exam-builder-toolbar button:hover {
     background: #3b82f6;
     color: #ffffff;
+}
+
+[data-theme='dark'] .exam-create-lead {
+    color: #94a3b8;
+}
+
+[data-theme='dark'] .exam-form-section {
+    background: rgba(15, 27, 45, 0.75);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .exam-form-section--schedule {
+    border-color: rgba(59, 130, 246, 0.35);
+    background: linear-gradient(145deg, rgba(30, 58, 138, 0.35) 0%, rgba(15, 27, 45, 0.85) 100%);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .exam-form-section-title,
+[data-theme='dark'] .exam-form-section-title--schedule {
+    color: #e2e8f0;
+}
+
+[data-theme='dark'] .exam-form-section-title--schedule {
+    color: #93c5fd;
+}
+
+[data-theme='dark'] .exam-form-hint,
+[data-theme='dark'] .exam-form-hint--compact {
+    color: #94a3b8;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap input.exam-fp-alt-input,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-alt-input.exam-fp-alt-input {
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #f1f5f9;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap input.exam-fp-alt-input::placeholder,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-alt-input.exam-fp-alt-input::placeholder {
+    color: #64748b;
+}
+
+[data-theme='dark'] .exam-tz-code {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-calendar {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-months .flatpickr-month,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-current-month .flatpickr-monthDropdown-months,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-current-month input.cur-year {
+    background: transparent;
+    color: #e2e8f0;
+    fill: #e2e8f0;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-months .flatpickr-prev-month,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-months .flatpickr-next-month {
+    fill: #e2e8f0;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-weekday {
+    color: #94a3b8;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day {
+    color: #e2e8f0;
+    border-color: transparent;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day.prevMonthDay,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day.nextMonthDay {
+    color: #475569;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day.today {
+    border-color: #60a5fa;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time {
+    border-top-color: rgba(148, 163, 184, 0.2);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time input {
+    color: #f1f5f9;
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time .numInputWrapper {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time .arrowUp:hover,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time .arrowDown:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time .arrowUp,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time .arrowDown {
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-time .flatpickr-am-pm {
+    color: #e2e8f0;
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day.selected,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day.startRange,
+[data-theme='dark'] .exam-inline-calendar-wrap .flatpickr-day.endRange {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
 }
 
 

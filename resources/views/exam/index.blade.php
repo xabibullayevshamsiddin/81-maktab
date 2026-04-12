@@ -54,6 +54,7 @@
               <select id="exam-filter-state" class="exam-filter-select">
                 <option value="">Hammasi</option>
                 <option value="open">Boshlash mumkin</option>
+                <option value="scheduled">Reja: kutilmoqda</option>
                 <option value="done">Topshirilgan</option>
                 <option value="locked">Qulflangan</option>
               </select>
@@ -81,7 +82,8 @@
             $row = $resultByExam[$exam->id] ?? null;
             $isLocked = ! $row && ! $exam->allowsUser($user);
             $isDone = $row && in_array($row->status, ['submitted', 'expired'], true);
-            $cardState = $isLocked ? 'locked' : ($isDone ? 'done' : 'open');
+            $isScheduled = ! $isLocked && ! $isDone && ! $exam->isOpenForStarting();
+            $cardState = $isLocked ? 'locked' : ($isDone ? 'done' : ($isScheduled ? 'scheduled' : 'open'));
             $gradeNums = collect($exam->allowedGradeItems())
               ->map(function ($gg) {
                 return preg_match('/^(\d{1,2})-/', (string) $gg, $m) ? $m[1] : null;
@@ -145,6 +147,18 @@
                   <i class="fa-solid fa-chart-simple"></i> Natijani ko'rish
                 </a>
               </div>
+            @elseif($isScheduled)
+              <span class="exam-hero-badge" style="display:inline-flex;margin-bottom:12px;background:rgba(245,158,11,.15);color:#b45309;border:1px solid rgba(245,158,11,.35);">
+                <i class="fa-regular fa-calendar-days"></i>
+                {{ $exam->availableFromLabel() }} dan boshlash
+              </span>
+              <p class="exam-card-locked-text" style="margin:0 0 14px;font-size:14px;">
+                Reja sanasi kelguncha imtihonni boshlash mumkin emas.
+              </p>
+              <a href="{{ route('exam.start.page', $exam) }}" class="exam-btn-secondary">
+                Batafsil
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
             @else
               <a href="{{ route('exam.start.page', $exam) }}" class="exam-btn-primary">
                 Boshlash

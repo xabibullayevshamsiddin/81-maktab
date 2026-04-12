@@ -25,6 +25,8 @@
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
     <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ filemtime(public_path('temp/img/favicon-32.png')) }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
@@ -42,9 +44,15 @@
       >
 		    @php
 		      $authUser = auth()->user();
-		      // Any admin or teacher with a linked profile can create a course now.
-		      // The course itself will need approval before publication.
-		      $canCreateCourse = $authUser && ($authUser->isAdmin() || ($authUser->isTeacher() && $authUser->hasLinkedActiveTeacherProfile()));
+		      $teacherWithProfile = $authUser && $authUser->isTeacher() && $authUser->hasLinkedActiveTeacherProfile();
+		      $teacherAtCourseLimit = $teacherWithProfile && $authUser->hasReachedCourseOpenLimit();
+		      $canOpenCourseForm = $authUser && (
+		        $authUser->isAdmin()
+		        || ($teacherWithProfile && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
+		      );
+		      $teacherNeedsCourseOpenRequest = $teacherWithProfile && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
+		      $teacherCourseOpenPending = $teacherWithProfile && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
+		      $canCreateCourse = $canOpenCourseForm;
 		      $needsTeacherProfileLink = $authUser && $authUser->isTeacher() && ! $authUser->hasLinkedActiveTeacherProfile();
 		      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
 		      $currentLocale = current_locale();
@@ -138,7 +146,16 @@
 		                          <i class="fa-solid fa-book-open"></i>
 		                          {{ __('public.layout.menu.course_open') }}
 		                        </a>
-
+		                      @elseif($teacherCourseOpenPending)
+		                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
+		                          <i class="fa-solid fa-hourglass-half"></i>
+		                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">Admin ruxsatini kuting (profil).</small></span>
+		                        </span>
+		                      @elseif($teacherNeedsCourseOpenRequest)
+		                        <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
+		                          <i class="fa-solid fa-paper-plane"></i>
+		                          Kurs ochish — ruxsat so'rang
+		                        </a>
 		                      @elseif($needsTeacherProfileLink)
 		                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
 		                          <i class="fa-solid fa-circle-info"></i>
@@ -201,6 +218,10 @@
 	                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
+	                  @elseif($teacherNeedsCourseOpenRequest)
+	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">Kurs — ruxsat so'rang</a>
+	                  @elseif($teacherCourseOpenPending)
+	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">Kurs — kutilmoqda</span>
 	                  @endif
 	                  @if($canAccessDashboard)
 	                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
@@ -374,6 +395,13 @@
               </button>
             </div>
           </div>
+          <div class="chat-panel-intro">
+            <div class="chat-panel-kicker">
+              <span class="chat-panel-live-dot" aria-hidden="true"></span>
+              <span>Jonli suhbat</span>
+            </div>
+            <p class="chat-panel-subtitle">Savol bering, tezkor fikr yozing yoki sticker bilan javob qoldiring.</p>
+          </div>
           <details class="chat-rules">
             <summary>Chat qoidalari</summary>
             <ul>
@@ -383,7 +411,18 @@
               <li>Muammo bo‘lsa admin/moderator xabarni o‘chirishi yoki foydalanuvchini cheklashi mumkin.</li>
             </ul>
           </details>
-          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          <div class="chat-compose-status" id="chat-compose-status" hidden>
+            <span class="chat-compose-status-icon" aria-hidden="true">
+              <i class="fa-solid fa-pen-nib"></i>
+            </span>
+            <span class="chat-compose-status-text" id="chat-compose-status-text">Yozilyapti</span>
+            <span class="chat-compose-status-dots" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </div>
           <form class="chat-input-wrap" id="chat-form">
             <div class="chat-sticker-row" aria-label="Tezkor stikerlar">
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
@@ -394,7 +433,7 @@
               <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
             </div>
             <input type="text" id="chat-input" class="chat-input" placeholder="Xabar yozing..." maxlength="1000" autocomplete="off" />
-            <button type="submit" class="chat-send-btn" aria-label="Yuborish">
+            <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="Yuborish">
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </form>
@@ -420,6 +459,7 @@
     </button>
     @endunless
 
+    @include('components.confirm-modal')
     <div id="global-modal-root"></div>
 
     @auth
@@ -448,6 +488,7 @@
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
+    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
     <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
     <script>
       (function() {

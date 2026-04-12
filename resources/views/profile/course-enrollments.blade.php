@@ -68,7 +68,7 @@
                         @csrf
                         <button type="submit" class="btn btn-sm" style="margin-bottom:6px;">Tasdiqlash</button>
                       </form>
-                      <form action="{{ route('teacher.enrollments.reject', $row) }}" method="POST" style="display:inline;" onsubmit="return confirm('Rad etilsinmi?');">
+                      <form action="{{ route('teacher.enrollments.reject', $row) }}" method="POST" style="display:inline;" data-confirm="Rad etilsinmi?" data-confirm-title="Rad etish" data-confirm-variant="primary" data-confirm-ok="Rad etish">
                         @csrf
                         <button type="submit" class="btn btn-outline btn-sm profile-btn-danger">Rad etish</button>
                       </form>
@@ -77,7 +77,7 @@
                     @endif
                   </td>
                   <td>
-                    <form action="{{ route('teacher.enrollments.destroy', $row) }}" method="POST" onsubmit="return confirm('Yozilish olib tashlansinmi?');">
+                    <form action="{{ route('teacher.enrollments.destroy', $row) }}" method="POST" data-confirm="Yozilish olib tashlansinmi?" data-confirm-title="Yozilishni olib tashlash" data-confirm-variant="danger" data-confirm-ok="Olib tashlash">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-outline btn-sm profile-btn-danger">Olib tashlash</button>

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Artesaos\SEOTools\Facades\OpenGraph;
-use Artesaos\SEOTools\Facades\SEOMeta;
-use Illuminate\Http\Request;
 use App\Models\ContactMessage;
 use App\Models\Post;
 use App\Models\PostLike;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -66,8 +66,10 @@ class HomeController extends Controller
                     'slug',
                     'subject',
                     'subject_en',
-                    'bio',
-                    'bio_en',
+                    'lavozim',
+                    'lavozim_en',
+                    'toifa',
+                    'toifa_en',
                     'image',
                     'experience_years',
                     'is_active',
@@ -84,23 +86,28 @@ class HomeController extends Controller
         return view('home', compact('posts', 'likedPostIds', 'featuredTeacher', 'postKindLabels'));
     }
 
-     public function about(){
+    public function about()
+    {
         return view('about');
     }
 
-     public function courses(){
+    public function courses()
+    {
         return view('courses');
     }
 
-    public function post(){
+    public function post()
+    {
         return view('post');
     }
 
-     public function teacher(){
+    public function teacher()
+    {
         return view('teacher');
     }
 
-     public function teacherShow(){
+    public function teacherShow()
+    {
         $comments = TeacherComment::query()
             ->whereNull('parent_id')
             ->with(['replies' => function ($query) {

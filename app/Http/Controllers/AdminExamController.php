@@ -38,6 +38,10 @@ class AdminExamController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->input('available_from') === '') {
+            $request->merge(['available_from' => null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
@@ -46,6 +50,7 @@ class AdminExamController extends Controller
             'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
             'allowed_grades' => ['nullable', 'array'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
+            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
         ]);
 
         $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
@@ -63,6 +68,7 @@ class AdminExamController extends Controller
             'total_points' => $validated['total_points'],
             'passing_points' => $validated['passing_points'],
             'allowed_grades' => $validated['allowed_grades'],
+            'available_from' => $validated['available_from'] ?? null,
             'is_active' => false,
         ]);
         forget_public_exam_caches();
@@ -81,6 +87,10 @@ class AdminExamController extends Controller
 
     public function update(Request $request, Exam $exam)
     {
+        if ($request->input('available_from') === '') {
+            $request->merge(['available_from' => null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
@@ -89,6 +99,7 @@ class AdminExamController extends Controller
             'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
             'allowed_grades' => ['nullable', 'array'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
+            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
         ]);
 
         $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
@@ -113,6 +124,7 @@ class AdminExamController extends Controller
             'total_points' => $validated['total_points'],
             'passing_points' => $validated['passing_points'],
             'allowed_grades' => $validated['allowed_grades'],
+            'available_from' => $validated['available_from'] ?? null,
         ]);
 
         $exam->syncActiveFromQuestions();

@@ -96,7 +96,7 @@
                   <div class="d-flex flex-wrap gap-1">
                     @if(auth()->user()->canModerateCommentAuthor($comment->user))
                       <a href="{{ route('admin.comments.edit', ['type' => $type, 'id' => $comment->id]) }}" class="btn btn-sm btn-warning">Tahrirlash</a>
-                      <form action="{{ route('admin.comments.destroy', ['type' => $type, 'id' => $comment->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Izohni o‘chirasizmi?');">
+                      <form action="{{ route('admin.comments.destroy', ['type' => $type, 'id' => $comment->id]) }}" method="POST" class="d-inline" data-confirm="Izohni o‘chirasizmi?" data-confirm-title="Izohni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-danger">O‘chirish</button>
@@ -105,7 +105,7 @@
                       <span class="text-muted small">Huquq yo‘q</span>
                     @endif
                     @if($comment->user && auth()->user()->canManageSystem() && auth()->user()->canManage($comment->user) && (int)$comment->user->id !== (int)auth()->id())
-                      <form action="{{ route('admin.comments.block-user', $comment->user) }}" method="POST" class="d-inline" onsubmit="return confirm('Bu foydalanuvchini bloklaysizmi?');">
+                      <form action="{{ route('admin.comments.block-user', $comment->user) }}" method="POST" class="d-inline" data-confirm="Bu foydalanuvchini bloklaysizmi?" data-confirm-title="Bloklash" data-confirm-variant="danger" data-confirm-ok="Bloklash">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-dark">Bloklash</button>
                       </form>

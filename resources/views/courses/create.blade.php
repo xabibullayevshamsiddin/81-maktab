@@ -115,7 +115,7 @@
               <option value="">Ustozni tanlang</option>
               @foreach($teachers as $teacher)
                 <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
-                  {{ $teacher->full_name }} - {{ $teacher->subject }}
+                  {{ $teacher->full_name }}{{ filled($teacher->subject) ? ' — '.$teacher->subject : '' }}
                 </option>
               @endforeach
             </select>
@@ -124,7 +124,7 @@
               <i class="fa-solid fa-user-check"></i>
               Kurs <strong>sizning ustoz profilingizga</strong> biriktiriladi - ustozni tanlash shart emas.
               @if(!empty($selectedTeacher))
-                <span class="profile-muted" style="display:block;margin-top:8px;font-size:13px;">Profil: {{ $selectedTeacher->full_name }} - {{ $selectedTeacher->subject }}</span>
+                <span class="profile-muted" style="display:block;margin-top:8px;font-size:13px;">Profil: {{ $selectedTeacher->full_name }}{{ filled($selectedTeacher->subject) ? ' — '.$selectedTeacher->subject : '' }}</span>
               @endif
             </p>
           @endif

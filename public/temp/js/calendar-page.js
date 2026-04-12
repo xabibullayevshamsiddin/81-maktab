@@ -1,48 +1,31 @@
 (() => {
-  const list = document.querySelector('.calendar-event-list');
-  if (!list) return;
-
-  const days = list.querySelectorAll('details.calendar-day-dtls');
-  if (!days.length) return;
-
-  const wide = window.matchMedia('(min-width: 769px)');
   const yearSelect = document.querySelector('[data-calendar-year-select]');
-
-  function thresholdY() {
-    return window.innerHeight * 0.11;
-  }
-
-  function setAllOpen(open) {
-    days.forEach((day) => {
-      day.open = open;
-    });
-  }
-
-  function sync() {
-    if (wide.matches) {
-      setAllOpen(true);
-    } else {
-      setAllOpen(window.scrollY >= thresholdY());
-    }
-  }
-
-  function onScroll() {
-    if (!wide.matches && window.scrollY >= thresholdY()) {
-      setAllOpen(true);
-    }
-  }
-
-  if (typeof wide.addEventListener === 'function') {
-    wide.addEventListener('change', sync);
-  } else if (typeof wide.addListener === 'function') {
-    wide.addListener(sync);
-  }
-
-  window.addEventListener('scroll', onScroll, { passive: true });
   yearSelect?.addEventListener('change', () => {
     yearSelect.form?.submit();
   });
 
-  sync();
-  onScroll();
+  function openTargetFromHash() {
+    const h = window.location.hash;
+    if (!h || h.indexOf('#calendar-day-') !== 0) return;
+    const id = h.slice(1);
+    const el = document.getElementById(id);
+    if (el && el.tagName === 'DETAILS') {
+      el.open = true;
+    }
+  }
+
+  openTargetFromHash();
+  window.addEventListener('hashchange', openTargetFromHash);
+
+  document.querySelectorAll('a.calendar-cell[href^="#calendar-day-"]').forEach((a) => {
+    a.addEventListener('click', () => {
+      const id = (a.getAttribute('href') || '').slice(1);
+      window.setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el && el.tagName === 'DETAILS') {
+          el.open = true;
+        }
+      }, 0);
+    });
+  });
 })();

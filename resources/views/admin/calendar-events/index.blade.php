@@ -16,9 +16,55 @@
       </div>
     </div>
 
+    @php
+      $hasGridEvents = count($countsByDate ?? []) > 0;
+      $publicCalendarUrl = route('calendar', ['y' => $year]);
+    @endphp
+
     <div class="row">
       <div class="col-lg-12">
-        <div class="card-style mb-30">
+        <div class="card-style mb-30 calendar-page" style="padding: 24px 20px 28px;">
+          <div class="calendar-toolbar" style="margin-bottom: 20px;">
+            <form method="get" action="{{ route('calendar-events.index') }}" class="calendar-year-form">
+              <label for="admin-cal-y">Yil (ko‘rinish)</label>
+              <select id="admin-cal-y" name="y" onchange="this.form.submit()">
+                @for($yy = (int) now()->year + 1; $yy >= 2020; $yy--)
+                  <option value="{{ $yy }}" {{ (int) $year === $yy ? 'selected' : '' }}>{{ $yy }}</option>
+                @endfor
+              </select>
+            </form>
+            @if($hasGridEvents)
+              <div class="calendar-legend" aria-hidden="true">
+                <span class="calendar-legend-item">
+                  <span class="cal-dot cal-dot--event"></span> Tadbir bor
+                </span>
+                <span class="calendar-legend-item">
+                  <span class="cal-dot cal-dot--today"></span> Bugun
+                </span>
+              </div>
+            @endif
+          </div>
+
+          @if($hasGridEvents)
+            <div class="calendar-visual-head" style="margin-bottom: 14px;">
+              <p class="calendar-visual-hint" style="margin:0;">
+                Ommaviy saytdagi taqvim bilan bir xil ko‘rinish. Kunning ustiga bosing — ochiq <strong>Taqvim</strong> sahifasida shu kun ochiladi (yangi oynada).
+              </p>
+            </div>
+            @include('partials.calendar-year-grid', [
+              'calendarMonths' => $calendarMonths,
+              'year' => $year,
+              'dayLinkPrefix' => $publicCalendarUrl,
+              'openPublicInNewTab' => true,
+            ])
+          @else
+            <p class="text-muted mb-4" style="font-size: 14px;">{{ $year }} yil uchun hozircha tadbir yo‘q — pastdagi jadvalda boshqa yillar bo‘lishi mumkin.</p>
+          @endif
+
+          <hr class="my-4" style="opacity:0.35;" />
+
+          <h6 class="mb-3" style="font-weight:700;">Barcha tadbirlar (ro‘yxat)</h6>
+
           @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
           @endif
@@ -41,7 +87,7 @@
                     <td>{{ $ev->time_note ?: '—' }}</td>
                     <td>
                       <a href="{{ route('calendar-events.edit', $ev) }}" class="btn btn-sm btn-warning">Tahrirlash</a>
-                      <form action="{{ route('calendar-events.destroy', $ev) }}" method="POST" class="d-inline" onsubmit="return confirm('O‘chirilsinmi?');">
+                      <form action="{{ route('calendar-events.destroy', $ev) }}" method="POST" class="d-inline" data-confirm="O‘chirilsinmi?" data-confirm-title="Voqeani o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-danger">O‘chirish</button>

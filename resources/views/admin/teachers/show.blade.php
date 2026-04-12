@@ -21,8 +21,10 @@
           >
         </div>
         <div class="col-md-8">
-          <p><strong>Fan:</strong> {{ $teacher->subject }}</p>
-          <p><strong>Tajriba:</strong> {{ $teacher->experience_years }} yil</p>
+          <p><strong>Lavozim:</strong> {{ $teacher->lavozim ?: '—' }}</p>
+          <p><strong>Toifa:</strong> {{ $teacher->toifa ?: '—' }}</p>
+          <p><strong>Fan:</strong> {{ $teacher->subject ?: '—' }}</p>
+          <p><strong>Staj:</strong> {{ $teacher->experience_years }} yil</p>
           <p><strong>Sinflar:</strong> {{ $teacher->grades ?: '-' }}</p>
           <p><strong>Status:</strong> {{ $teacher->is_active ? 'Faol' : 'Nofaol' }}</p>
           <p><strong>Slug:</strong> {{ $teacher->slug }}</p>
@@ -32,7 +34,6 @@
             <pre style="white-space:pre-wrap;font-size:14px;">{{ $teacher->achievements }}</pre>
             <hr>
           @endif
-          <p>{{ $teacher->bio ?: 'Bio kiritilmagan.' }}</p>
           <a href="{{ route('teachers.edit', $teacher) }}" class="main-btn warning-btn btn-hover btn-sm">Tahrirlash</a>
           <a href="{{ route('teachers.index') }}" class="main-btn light-btn btn-hover btn-sm">Orqaga</a>
         </div>

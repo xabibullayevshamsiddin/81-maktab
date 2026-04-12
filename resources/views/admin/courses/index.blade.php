@@ -71,8 +71,12 @@
                 </td>
                 <td>
                   @if($canManage)
-                    <a href="{{ route('admin.courses.edit', $course) }}" class="btn btn-sm btn-outline-primary mb-1">Tahrirlash</a>
-                    <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" class="d-inline" onsubmit="return confirm('Kurs o‘chirilsinmi? Barcha yozilishlar ham o‘chadi.');">
+                    @php
+                      $editCourseUrl = $canManageAllCourses ? route('admin.courses.edit', $course) : route('teacher.courses.edit', $course);
+                      $destroyCourseUrl = $canManageAllCourses ? route('admin.courses.destroy', $course) : route('teacher.courses.destroy', $course);
+                    @endphp
+                    <a href="{{ $editCourseUrl }}" class="btn btn-sm btn-outline-primary mb-1">Tahrirlash</a>
+                    <form action="{{ $destroyCourseUrl }}" method="POST" class="d-inline" data-confirm="Kurs o‘chirilsinmi? Barcha yozilishlar ham o‘chadi." data-confirm-title="Kursni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-sm btn-outline-danger">O‘chirish</button>

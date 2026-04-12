@@ -61,7 +61,7 @@ Route::put('post/{post:slug}/comments/{comment}', [PublicPostController::class, 
 Route::delete('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'destroyComment'])->name('post.comments.destroy');
 Route::post('post/{post:slug}/comments/{comment}/like', [PublicPostController::class, 'toggleCommentLike'])->name('post.comments.like');
 Route::post('post/{post:slug}/like', [PublicPostController::class, 'toggleLike'])->name('post.like');
-Route::post('teacher/comments', [TeacherCommentController::class, 'store'])->name('teacher.comments.store');
+Route::post('teacher/{teacher:slug}/comments', [TeacherCommentController::class, 'store'])->name('teacher.comments.store');
 Route::put('teacher/comments/{comment}', [TeacherCommentController::class, 'update'])->name('teacher.comments.update');
 Route::delete('teacher/comments/{comment}', [TeacherCommentController::class, 'destroy'])->name('teacher.comments.destroy');
 Route::post('teacher/comments/{comment}/like', [TeacherCommentController::class, 'toggleCommentLike'])->name('teacher.comments.like');
@@ -168,6 +168,8 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::put('user/{user}', [AdminController::class, 'updateUser'])->name('user.update');
     Route::delete('user/{user}', [AdminController::class, 'destroyUser'])->name('user.destroy');
     Route::post('user/{user}/password-reset', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
+    Route::post('user/{user}/course-open/approve', [AdminController::class, 'approveCourseOpenRequest'])->name('user.course-open.approve');
+    Route::post('user/{user}/course-open/reject', [AdminController::class, 'rejectCourseOpenRequest'])->name('user.course-open.reject');
 });
 
 Route::middleware(['auth', 'role:teacher'])->group(function () {
@@ -177,6 +179,9 @@ Route::middleware(['auth', 'role:teacher'])->group(function () {
 Route::middleware(['auth', 'role:teacher,super_admin,admin'])->group(function () {
     Route::get('course-open', [TeacherCourseController::class, 'create'])->name('teacher.courses.create');
     Route::post('course-open', [TeacherCourseController::class, 'store'])->name('teacher.courses.store');
+    Route::get('course-open/{course}/edit', [TeacherCourseController::class, 'edit'])->name('teacher.courses.edit');
+    Route::put('course-open/{course}', [TeacherCourseController::class, 'update'])->name('teacher.courses.update');
+    Route::delete('course-open/{course}', [TeacherCourseController::class, 'destroy'])->name('teacher.courses.destroy');
     Route::get('course-open/{course}/verify', [TeacherCourseController::class, 'verifyForm'])->name('teacher.courses.verify.form');
     Route::post('course-open/{course}/verify', [TeacherCourseController::class, 'verifyCode'])->name('teacher.courses.verify');
     Route::post('course-open/{course}/resend', [TeacherCourseController::class, 'resendCode'])->name('teacher.courses.verify.resend');

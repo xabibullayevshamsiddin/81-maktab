@@ -18,6 +18,10 @@ class Teacher extends Model
         'slug',
         'subject',
         'subject_en',
+        'lavozim',
+        'lavozim_en',
+        'toifa',
+        'toifa_en',
         'experience_years',
         'grades',
         'achievements',
@@ -76,13 +80,23 @@ class Teacher extends Model
     public function shortBio(int $limit = 220, ?string $locale = null): string
     {
         $subject = localized_model_value($this, 'subject', $locale);
-        $bio = localized_model_value($this, 'bio', $locale);
+        $lavozim = trim((string) localized_model_value($this, 'lavozim', $locale));
+        $toifa = trim((string) localized_model_value($this, 'toifa', $locale));
 
-        $fallback = $subject
-            ? $subject." fani bo'yicha ".$this->experience_years." yillik tajribaga ega ustoz."
-            : 'Tajribali va natijaga yonaltirilgan ustoz.';
+        $parts = array_values(array_filter([
+            $lavozim !== '' ? $lavozim : null,
+            $subject !== '' ? $subject.' fani' : null,
+            $this->experience_years > 0 ? $this->experience_years.' yillik staj' : null,
+            $toifa !== '' ? $toifa : null,
+        ]));
 
-        return Str::limit(trim((string) ($bio ?: $fallback)), $limit);
+        $text = $parts !== []
+            ? implode(' · ', $parts)
+            : ($subject !== ''
+                ? $subject." fani bo'yicha ".$this->experience_years.' yillik tajribaga ega ustoz.'
+                : 'Tajribali va natijaga yonaltirilgan ustoz.');
+
+        return Str::limit(trim($text), $limit);
     }
 
     public function imageUrl(): string

@@ -1,6 +1,7 @@
 @php
   $teacherSubject = localized_model_value($teacher, 'subject');
-  $teacherBio = localized_model_value($teacher, 'bio');
+  $teacherLavozim = localized_model_value($teacher, 'lavozim');
+  $teacherToifa = localized_model_value($teacher, 'toifa');
   $teacherAchievements = localized_model_value($teacher, 'achievements');
 @endphp
 <x-loyouts.main title="81-IDUM | {{ $teacher->full_name }}">
@@ -24,13 +25,22 @@
       <div class="detail-grid">
         <div class="detail-content reveal">
           <span class="eyebrow">{{ __('public.teachers.detail_badge') }}</span>
-          <h2 class="js-split-text">{{ $teacherSubject }}</h2>
-          <p>
-            {{ $teacherBio ?: __('public.teachers.detail_fallback') }}
-          </p>
+          @php
+            $detailHeading = $teacherSubject ?: $teacherLavozim;
+          @endphp
+          <h2 class="js-split-text">{{ $detailHeading ?: $teacher->full_name }}</h2>
+          @if(filled($teacherLavozim))
+            <p class="teacher-detail-lavozim">{{ $teacherLavozim }}</p>
+          @endif
+          <p class="teacher-detail-summary">{{ $teacher->shortBio(320) }}</p>
           <ul class="detail-list">
             <li><i class="fa-solid fa-check"></i> {{ __('public.common.years_experience', ['count' => $teacher->experience_years]) }}</li>
-            <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_subject') }}: {{ $teacherSubject }}</li>
+            @if(filled($teacherToifa))
+              <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_toifa') }}: {{ $teacherToifa }}</li>
+            @endif
+            @if(filled($teacherSubject))
+              <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_subject') }}: {{ $teacherSubject }}</li>
+            @endif
             <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_grades') }}: {{ $teacher->grades ?: __('public.common.all_grades') }}</li>
           </ul>
           @if(filled($teacherAchievements))
@@ -47,7 +57,7 @@
             </div>
           @endif
           @auth
-            <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="margin-bottom: 14px;">
+            <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form">
               @csrf
               <button class="like-btn {{ ($liked ?? false) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                 <i class="{{ ($liked ?? false) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
@@ -79,7 +89,7 @@
           />
           <div class="image-caption">
             <h3>{{ $teacher->full_name }}</h3>
-            <p>{{ $teacherSubject }}</p>
+            <p>{{ $teacherLavozim ?: ($teacherSubject ?: '—') }}</p>
           </div>
         </article>
       </div>
@@ -94,7 +104,7 @@
       $teacherCommentConfig = [
         'currentUserId' => auth()->check() ? auth()->id() : null,
         'currentUserIsAdmin' => auth()->check() && auth()->user()->isAdmin(),
-        'currentUserIsModerator' => auth()->check() && auth()->user()->hasRole('moderator'),
+        'currentUserIsModerator' => auth()->check() && auth()->user()->isModerator(),
         'currentUserIsOnlyModerator' => auth()->check() && auth()->user()->isOnlyModerator(),
         'updateUrlTemplate' => route('teacher.comments.update', '__COMMENT_ID__'),
         'destroyUrlTemplate' => route('teacher.comments.destroy', '__COMMENT_ID__'),
@@ -179,5 +189,14 @@
         </div>
       </div>
     </section>
+
+    @if(isset($relatedTeachers) && $relatedTeachers->isNotEmpty())
+      <section class="related-teachers-section container reveal" aria-labelledby="related-teachers-heading">
+        <h2 id="related-teachers-heading" class="js-split-text related-section-title">
+          {{ __('public.teachers.related_title') }}
+        </h2>
+        @include('teacher.partials.related-grid', ['relatedTeachers' => $relatedTeachers, 'likedTeacherIds' => $likedTeacherIds ?? collect()])
+      </section>
+    @endif
   </main>
 </x-loyouts.main>

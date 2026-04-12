@@ -53,6 +53,10 @@ class TeacherExamController extends Controller
         $user = $request->user();
         abort_unless($user->canManageExams(), 403);
 
+        if ($request->input('available_from') === '') {
+            $request->merge(['available_from' => null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
@@ -61,6 +65,7 @@ class TeacherExamController extends Controller
             'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
             'allowed_grades' => ['nullable', 'array'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
+            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
         ]);
 
         $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
@@ -78,6 +83,7 @@ class TeacherExamController extends Controller
             'total_points' => $validated['total_points'],
             'passing_points' => $validated['passing_points'],
             'allowed_grades' => $validated['allowed_grades'],
+            'available_from' => $validated['available_from'] ?? null,
             'is_active' => false,
             'created_by' => $user->id,
         ]);
@@ -103,6 +109,10 @@ class TeacherExamController extends Controller
         $user = $request->user();
         abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
 
+        if ($request->input('available_from') === '') {
+            $request->merge(['available_from' => null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
@@ -111,6 +121,7 @@ class TeacherExamController extends Controller
             'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
             'allowed_grades' => ['nullable', 'array'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
+            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
         ]);
 
         $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
@@ -135,6 +146,7 @@ class TeacherExamController extends Controller
             'total_points' => $validated['total_points'],
             'passing_points' => $validated['passing_points'],
             'allowed_grades' => $validated['allowed_grades'],
+            'available_from' => $validated['available_from'] ?? null,
         ]);
 
         $exam->syncActiveFromQuestions();

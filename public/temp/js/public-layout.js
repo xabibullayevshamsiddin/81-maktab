@@ -307,7 +307,7 @@
       var confirmMsg = isDeact
         ? 'Bu foydalanuvchini bloklaysizmi? U saytga kira olmaydi.'
         : 'Akkauntni qayta faollashtirasizmi?';
-      if (!window.confirm(confirmMsg)) return;
+      function doFetch() {
       fetch(previewBase + '/' + uid + '/' + (isDeact ? 'deactivate' : 'activate'), {
         method: 'POST',
         headers: {
@@ -337,6 +337,18 @@
             window.showToast(err && err.message ? err.message : 'Amal bajarilmadi.', 'error');
           }
         });
+      }
+      var p = window.primeConfirm && window.primeConfirm({
+        message: confirmMsg,
+        title: isDeact ? 'Foydalanuvchini bloklash' : 'Akkauntni faollashtirish',
+        variant: isDeact ? 'danger' : 'primary',
+        okText: isDeact ? 'Bloklash' : 'Ha',
+      });
+      if (p && typeof p.then === 'function') {
+        p.then(function (ok) { if (ok) doFetch(); });
+      } else if (window.confirm(confirmMsg)) {
+        doFetch();
+      }
     });
   }
 
@@ -825,7 +837,8 @@
       });
     }
 
-    function resolveToastType(defaultType) {
+    /** Sessiya flash: success/error uchun `data-site-toast-type` (warning/error/success) */
+    function resolveFlashToastType(defaultType) {
       if (!toastType) return defaultType;
       if (toastType === 'warning') return 'warning';
       if (toastType === 'error') return 'error';
@@ -846,8 +859,8 @@
       });
     }
 
-    if (successMsg) showToast(successMsg, resolveToastType('success'));
-    if (errorMsg) showToast(errorMsg, 'error');
+    if (successMsg) showToast(successMsg, resolveFlashToastType('success'));
+    if (errorMsg) showToast(errorMsg, resolveFlashToastType('error'));
     if (firstError) showToast(firstError, 'error');
 
     window.showToast = showToast;
@@ -1047,9 +1060,57 @@
           body: new FormData(form),
         });
 
-        const data = await response.json();
-        if (!data || !data.ok) {
-          window.showToast?.(data?.message || 'Izoh bilan ishlashda xatolik', data?.toast_type || 'error');
+        const raw = await response.text();
+        let data = null;
+
+        if (raw) {
+          try {
+            data = JSON.parse(raw);
+          } catch (parseError) {
+            data = null;
+          }
+        }
+
+        if (!response.ok || !data || !data.ok) {
+          let message = data?.message || 'Izoh bilan ishlashda xatolik';
+          let toastLevel = data?.toast_type;
+
+          if (data?.errors && typeof data.errors === 'object') {
+            const keys = Object.keys(data.errors);
+            if (keys.length) {
+              const first = data.errors[keys[0]];
+              if (Array.isArray(first) && first[0]) {
+                message = first[0];
+              } else if (typeof first === 'string') {
+                message = first;
+              }
+            }
+          }
+
+          if (!toastLevel || (toastLevel !== 'warning' && toastLevel !== 'error' && toastLevel !== 'success')) {
+            if (response.status === 401 || response.status === 403) {
+              toastLevel = 'warning';
+            } else if (response.status === 422) {
+              toastLevel = 'warning';
+            } else {
+              toastLevel = 'error';
+            }
+          }
+
+          if (!data) {
+            if (response.status === 404) {
+              message = "Izoh yuborish yo'li topilmadi. Sahifani yangilang.";
+              toastLevel = 'error';
+            } else if (response.status === 419) {
+              message = 'Sessiya tugagan. Sahifani yangilang.';
+              toastLevel = 'warning';
+            } else if (response.status === 422) {
+              message = "Kiritilgan ma'lumotlarni tekshirib qayta urinib ko'ring.";
+              toastLevel = 'warning';
+            }
+          }
+
+          window.showToast?.(message, toastLevel);
           return;
         }
 
@@ -1118,7 +1179,7 @@
                   <button class="btn btn-sm" type="submit">Saqlash</button>
                 </form>
               </details>
-              <form class="js-comment-form js-comment-delete-form" action="${destroyUrl}" method="POST" data-comment-id="${comment.id}" onsubmit="return confirm(\"Izohni o'chirmoqchimisiz?\")">
+              <form class="js-comment-form js-comment-delete-form" action="${destroyUrl}" method="POST" data-comment-id="${comment.id}" data-confirm="Izohni o'chirmoqchimisiz?" data-confirm-title="Izohni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                 <input type="hidden" name="_token" value="${escapeHtml(csrfToken)}" />
                 <input type="hidden" name="_method" value="DELETE" />
                 <button type="submit" class="btn btn-sm comment-delete-btn">
@@ -1135,7 +1196,9 @@
               ? ' comment-card--admin'
               : roleKey === 'moderator'
                 ? ' comment-card--moderator'
-                : '';
+                : roleKey === 'teacher'
+                  ? ' comment-card--teacher'
+                  : '';
 
           return `
             <article class="comment-card reveal comment-item-reply${staffCardCls}" data-comment-id="${escapeHtml(comment.id)}">
@@ -1186,7 +1249,9 @@
               ? ' comment-card--admin'
               : roleKey === 'moderator'
                 ? ' comment-card--moderator'
-                : '';
+                : roleKey === 'teacher'
+                  ? ' comment-card--teacher'
+                  : '';
 
           return `
             <article class="comment-card reveal${staffCardCls}" data-comment-id="${escapeHtml(comment.id)}">
@@ -1662,8 +1727,11 @@
     var messagesEl = document.getElementById('chat-messages');
     var form = document.getElementById('chat-form');
     var input = document.getElementById('chat-input');
+    var sendBtn = document.getElementById('chat-send-btn');
     var stickerButtons = panel.querySelectorAll('[data-chat-sticker]');
     var badge = document.getElementById('chat-badge');
+    var composeStatus = document.getElementById('chat-compose-status');
+    var composeStatusText = document.getElementById('chat-compose-status-text');
 
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
@@ -1672,6 +1740,7 @@
     var csrf = widget.getAttribute('data-csrf');
     var lastId = 0;
     var isOpen = false;
+    var isSending = false;
     var pollTimer = null;
 
     function positionPanel() {
@@ -1718,27 +1787,39 @@
       positionPanel();
       panel.hidden = false;
       panel.classList.remove('is-closing');
+      panel.classList.add('is-opening');
+      widget.classList.add('is-open');
       isOpen = true;
       if (badge) badge.hidden = true;
       loadMessages();
       scrollDown();
       input.focus();
       startPolling();
+      syncComposeState();
+      setTimeout(function () {
+        panel.classList.remove('is-opening');
+      }, 520);
     }
 
     function closePanel() {
       if (!isOpen) return;
       panel.classList.add('is-closing');
+      widget.classList.remove('is-open');
+      widget.classList.add('is-bubble-return');
       isOpen = false;
       stopPolling();
+      setComposeState('idle');
+      setTimeout(function () {
+        widget.classList.remove('is-bubble-return');
+      }, 460);
       setTimeout(function () {
         panel.hidden = true;
-        panel.classList.remove('is-closing', 'is-fullscreen');
+        panel.classList.remove('is-closing', 'is-fullscreen', 'is-opening');
         panel.classList.remove('is-fullscreen-enter', 'is-fullscreen-exit');
         document.body.classList.remove('chat-fullscreen-active');
         panel.style.removeProperty('left');
         panel.style.removeProperty('top');
-      }, 350);
+      }, 440);
     }
 
     function toggleFullscreen() {
@@ -1769,6 +1850,73 @@
 
     function scrollDown() {
       setTimeout(function () { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
+    }
+
+    function setComposeState(state) {
+      var typing = state === 'typing';
+      var sending = state === 'sending';
+
+      widget.classList.toggle('is-typing', typing);
+      widget.classList.toggle('is-sending', sending);
+      form.classList.toggle('is-sending', sending);
+
+      if (!composeStatus || !composeStatusText) return;
+
+      if (state === 'idle' || !isOpen) {
+        composeStatus.hidden = true;
+        composeStatus.setAttribute('data-state', 'idle');
+        return;
+      }
+
+      composeStatus.hidden = false;
+      composeStatus.setAttribute('data-state', state);
+      composeStatusText.textContent = sending ? 'Yuborilmoqda' : 'Yozilyapti';
+    }
+
+    function syncComposeState() {
+      if (isSending) {
+        setComposeState('sending');
+        return;
+      }
+
+      if (!isOpen) {
+        setComposeState('idle');
+        return;
+      }
+
+      if (document.activeElement === input && input.value.trim()) {
+        setComposeState('typing');
+        return;
+      }
+
+      setComposeState('idle');
+    }
+
+    function appendMessages(msgs, options) {
+      if (!msgs.length) return [];
+
+      var temp = document.createElement('div');
+      temp.innerHTML = msgs.map(renderMsg).join('');
+
+      var nodes = Array.prototype.slice.call(temp.children);
+      var animateClass = options && options.seeded ? 'is-seeded' : (options && options.fresh ? 'is-fresh' : '');
+
+      if (options && options.replace) {
+        messagesEl.innerHTML = '';
+      }
+
+      nodes.forEach(function (node, index) {
+        if (animateClass) {
+          node.classList.add(animateClass);
+          node.style.setProperty('--chat-msg-delay', (Math.min(index, 5) * 55) + 'ms');
+        }
+        if (options && options.burst && node.classList.contains('is-mine')) {
+          node.classList.add('is-burst');
+        }
+        messagesEl.appendChild(node);
+      });
+
+      return nodes;
     }
 
     function renderMsg(m) {
@@ -1807,55 +1955,78 @@
     }
 
     function loadMessages() {
-      fetch(messagesUrl + '?after=' + lastId, {
+      return fetch(messagesUrl + '?after=' + lastId, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
         credentials: 'same-origin',
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           var msgs = data.messages || [];
-          if (!msgs.length) return;
+          if (!msgs.length) return [];
 
-          if (lastId === 0) {
-            messagesEl.innerHTML = msgs.map(renderMsg).join('');
-          } else {
-            messagesEl.insertAdjacentHTML('beforeend', msgs.map(renderMsg).join(''));
-          }
+          appendMessages(msgs, {
+            replace: lastId === 0,
+            seeded: lastId === 0,
+            fresh: lastId !== 0,
+          });
 
           lastId = data.last_id || lastId;
           scrollDown();
+          return msgs;
         })
-        .catch(function () {});
+        .catch(function () { return []; });
     }
 
-    function pollNew() {
-      if (!isOpen) return;
-      fetch(messagesUrl + '?after=' + lastId, {
+    function pollNew(options) {
+      if (!isOpen) return Promise.resolve([]);
+      options = options || {};
+      return fetch(messagesUrl + '?after=' + lastId, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
         credentials: 'same-origin',
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           var msgs = data.messages || [];
-          if (!msgs.length) return;
-          messagesEl.insertAdjacentHTML('beforeend', msgs.map(renderMsg).join(''));
+          if (!msgs.length) return [];
+          appendMessages(msgs, { fresh: true, burst: !!options.burst });
           lastId = data.last_id || lastId;
           scrollDown();
+          return msgs;
         })
-        .catch(function () {});
+        .catch(function () { return []; });
     }
 
     function startPolling() {
       stopPolling();
-      pollTimer = setInterval(pollNew, 5000);
+      pollTimer = setInterval(function () {
+        pollNew();
+      }, 5000);
     }
 
     function stopPolling() {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     }
 
-    function sendMessage(text) {
-      fetch(sendUrl, {
+    function sendMessage(text, options) {
+      if (isSending) return Promise.resolve();
+
+      options = options || {};
+      isSending = true;
+      setComposeState('sending');
+
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.setAttribute('aria-busy', 'true');
+      }
+
+      input.setAttribute('aria-busy', 'true');
+      input.disabled = true;
+
+      stickerButtons.forEach(function (btn) {
+        btn.disabled = true;
+      });
+
+      return fetch(sendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1888,12 +2059,32 @@
               throw new Error(msg);
             });
           }
-          pollNew();
+          input.value = '';
+          return pollNew({ burst: true });
         })
         .catch(function (err) {
+          if (options.restoreText && !input.value.trim()) {
+            input.value = text;
+          }
           if (window.showToast) {
             window.showToast(err && err.message ? err.message : 'Chat: tarmoq xatosi', 'error');
           }
+        })
+        .finally(function () {
+          isSending = false;
+          input.disabled = false;
+          input.removeAttribute('aria-busy');
+          if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.removeAttribute('aria-busy');
+          }
+          stickerButtons.forEach(function (btn) {
+            btn.disabled = false;
+          });
+          if (isOpen) {
+            input.focus();
+          }
+          syncComposeState();
         });
     }
 
@@ -1967,24 +2158,34 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var text = input.value.trim();
-      if (!text) return;
-      input.value = '';
-      sendMessage(text);
+      if (!text || isSending) return;
+      sendMessage(text, { restoreText: true });
     });
 
     stickerButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {
         var sticker = btn.getAttribute('data-chat-sticker');
-        if (!sticker) return;
+        if (!sticker || isSending) return;
+        btn.classList.add('is-fired');
+        setTimeout(function () {
+          btn.classList.remove('is-fired');
+        }, 420);
         sendMessage(sticker);
         input.focus();
       });
+    });
+
+    input.addEventListener('focus', syncComposeState);
+    input.addEventListener('input', syncComposeState);
+    input.addEventListener('blur', function () {
+      setTimeout(syncComposeState, 80);
     });
 
     messagesEl.addEventListener('click', function (e) {
       var delBtn = e.target.closest('[data-chat-delete]');
       if (delBtn) {
         var msgId = delBtn.getAttribute('data-chat-delete');
+        function doDelete() {
         fetch(deleteUrl + '/' + msgId, {
           method: 'DELETE',
           headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
@@ -2000,13 +2201,25 @@
             }
           }
         });
+        }
+        var dp = window.primeConfirm && window.primeConfirm({
+          message: 'Bu xabar o‘chirilsinmi?',
+          title: 'Xabarni o‘chirish',
+          variant: 'danger',
+          okText: 'O‘chirish',
+        });
+        if (dp && typeof dp.then === 'function') {
+          dp.then(function (ok) { if (ok) doDelete(); });
+        } else if (window.confirm('Bu xabar o‘chirilsinmi?')) {
+          doDelete();
+        }
         return;
       }
 
       var blockBtn = e.target.closest('[data-chat-block]');
       if (blockBtn) {
-        if (!window.confirm('Bu foydalanuvchini bloklaysizmi?')) return;
         var userId = blockBtn.getAttribute('data-chat-block');
+        function doBlock() {
         fetch(blockUrl + '/' + userId, {
           method: 'POST',
           headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
@@ -2019,6 +2232,18 @@
             });
           }
         });
+        }
+        var bp = window.primeConfirm && window.primeConfirm({
+          message: 'Bu foydalanuvchini bloklaysizmi?',
+          title: 'Bloklash',
+          variant: 'danger',
+          okText: 'Bloklash',
+        });
+        if (bp && typeof bp.then === 'function') {
+          bp.then(function (ok) { if (ok) doBlock(); });
+        } else if (window.confirm('Bu foydalanuvchini bloklaysizmi?')) {
+          doBlock();
+        }
       }
     });
 

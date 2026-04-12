@@ -403,6 +403,30 @@
             </section>
           @endif
 
+          @if($user->isTeacher() && $user->hasLinkedActiveTeacherProfile())
+            <section class="profile-activity-block reveal" id="course-open-request">
+              <div class="profile-block-head">
+                <div class="profile-block-copy">
+                  <h3><i class="fa-solid fa-book-open"></i> Kurs ochish ruxsati</h3>
+                  <p>Teacher akkaunti faqat <strong>bitta</strong> kurs yaratishi mumkin. Kurs ochishdan oldin adminga ruxsat so'rashingiz kerak.</p>
+                </div>
+              </div>
+              @if($user->hasReachedCourseOpenLimit())
+                <p class="profile-empty" style="margin:0;">Siz ruxsat asosida kurs yaratgansiz (bitta chegara).</p>
+              @elseif($user->hasCourseOpenApproval())
+                <p style="margin:0 0 12px;">Admin ruxsat berdi — endi forma orqali kurs ochishingiz mumkin.</p>
+                <a href="{{ route('teacher.courses.create') }}" class="btn btn-sm">Kurs ochish sahifasiga o'tish</a>
+              @elseif($user->hasPendingCourseOpenRequest())
+                <p class="profile-empty" style="margin:0;">So'rovingiz adminga yuborilgan. Admin javobini kuting.</p>
+              @else
+                <form action="{{ route('teacher.courses.request') }}" method="POST" class="profile-inline-form">
+                  @csrf
+                  <button type="submit" class="btn btn-sm">Kurs ochish uchun admin ruxsatini so'rash</button>
+                </form>
+              @endif
+            </section>
+          @endif
+
           @if($canViewCourseEnrollments ?? false)
             <section class="profile-activity-block reveal">
               <div class="profile-block-head">
@@ -437,7 +461,10 @@
                         </form>
                         <form action="{{ route('teacher.enrollments.reject', $pen) }}" method="POST"
                           class="profile-inline-form"
-                          onsubmit="return confirm(@js(__('profile.blocks.teacher_requests.reject_confirm')));">
+                          data-confirm="{{ __('profile.blocks.teacher_requests.reject_confirm') }}"
+                          data-confirm-title="{{ __('profile.blocks.teacher_requests.reject') }}"
+                          data-confirm-variant="primary"
+                          data-confirm-ok="{{ __('profile.blocks.teacher_requests.reject') }}">
                           @csrf
                           <button type="submit"
                             class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.reject') }}</button>
@@ -451,7 +478,12 @@
               @endif
 
 @php
-                    $canCreateCourse = $user->isAdmin() || ($user->isTeacher() && $user->hasLinkedActiveTeacherProfile());
+                    $canCreateCourse = $user->isAdmin() || (
+                      $user->isTeacher()
+                      && $user->hasLinkedActiveTeacherProfile()
+                      && ! $user->hasReachedCourseOpenLimit()
+                      && $user->hasCourseOpenApproval()
+                    );
                     $needsLink = $user->isTeacher() && ! $user->hasLinkedActiveTeacherProfile();
                   @endphp
                   <div class="profile-actions-row">
@@ -460,6 +492,9 @@
                     @if($canCreateCourse)
                       <a href="{{ route('teacher.courses.create') }}"
                         class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
+                    @elseif($user->isTeacher() && $user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit())
+                      <a href="{{ route('profile.show') }}#course-open-request"
+                        class="btn btn-outline btn-sm">Kurs — ruxsat</a>
                     @endif
                     @if(auth()->user()->isAdmin())
                       <a href="{{ route('admin.courses.index') }}"
@@ -626,7 +661,7 @@
           </section>
 
           @if($createdCourses->isNotEmpty())
-            <section class="profile-activity-block reveal">
+            <section class="profile-activity-block reveal" id="profile-created-courses">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-book-open"></i> {{ __('profile.blocks.created_courses.title') }}</h3>
@@ -662,6 +697,15 @@
                         <span><i class="fa-solid fa-user-tie"></i> {{ $course->teacher->full_name }}</span>
                       </div>
                     @endif
+
+                    <div class="profile-actions-row" style="margin-top:10px;">
+                      @if($user->isTeacher() && (int) $course->created_by === (int) $user->id)
+                        <a href="{{ route('teacher.courses.edit', $course) }}" class="btn btn-outline btn-sm">
+                          <i class="fa-solid fa-pen"></i> Tahrirlash
+                        </a>
+                        <a href="{{ route('courses.show', $course) }}" class="btn btn-sm">{{ __('public.common.details') }}</a>
+                      @endif
+                    </div>
 
                     <span class="profile-activity-date">{{ $course->created_at?->diffForHumans() }}</span>
                   </li>

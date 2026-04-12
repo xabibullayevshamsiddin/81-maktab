@@ -31,6 +31,12 @@
             Davom ettirish
             <i class="fa-solid fa-arrow-right"></i>
           </a>
+        @elseif(!($canStartNow ?? true))
+          <p style="margin:0 0 12px;font-size:15px;color:var(--text);line-height:1.5;">
+            <i class="fa-regular fa-calendar-days" style="margin-right:6px;opacity:0.85;"></i>
+            Bu imtihon reja bo‘yicha <strong>{{ $exam->availableFromLabel() }}</strong> dan boshlash mumkin.
+          </p>
+          <p style="margin:0;font-size:14px;color:var(--muted);">Hozircha taymer ishga tushmaydi — sanasi kelgach «Boshlash» tugmasi ochiladi.</p>
         @else
           <form action="{{ route('exam.start', $exam) }}" method="POST">
             @csrf
