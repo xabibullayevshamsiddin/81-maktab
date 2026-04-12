@@ -31,7 +31,10 @@
               <select id="teacher-filter-subject" class="exam-filter-select">
                 <option value="">Barcha fanlar</option>
                 @php
-                  $uniqueSubjects = $teachers->map(fn($t) => localized_model_value($t, 'subject'))->filter()->unique()->sort()->values();
+                  $teacherItems = $teachers instanceof \Illuminate\Pagination\AbstractPaginator
+                    ? $teachers->getCollection()
+                    : collect($teachers);
+                  $uniqueSubjects = $teacherItems->map(fn($t) => localized_model_value($t, 'subject'))->filter()->unique()->sort()->values();
                 @endphp
                 @foreach($uniqueSubjects as $subj)
                   <option value="{{ e(mb_strtolower($subj)) }}">{{ $subj }}</option>
@@ -46,7 +49,7 @@
           @forelse($teachers as $teacher)
             @php
               $teacherSubject = localized_model_value($teacher, 'subject');
-              $teacherBio = localized_model_value($teacher, 'bio');
+              $teacherLavozim = localized_model_value($teacher, 'lavozim');
               $teacherAchievements = localized_model_value($teacher, 'achievements');
               $teacherAchievementPreview = \Illuminate\Support\Str::limit(trim((string) strtok($teacherAchievements, "\n")), 100);
             @endphp
@@ -63,12 +66,13 @@
               <div class="teacher-top">
                 <div>
                   <h3>{{ $teacher->full_name }}</h3>
-                  <p class="teacher-role">{{ $teacherSubject }}</p>
+                  @php $teacherRoleLine = $teacherLavozim ?: $teacherSubject; @endphp
+                  @if(filled($teacherRoleLine))
+                    <p class="teacher-role">{{ $teacherRoleLine }}</p>
+                  @endif
                 </div>
               </div>
-              <p class="teacher-desc">
-                {{ $teacherBio ?: __('public.teachers.fallback_bio') }}
-              </p>
+              <p class="teacher-desc">{{ $teacher->shortBio(220) }}</p>
               <ul class="teacher-meta">
                 <li><i class="fa-solid fa-award"></i> {{ __('public.common.years_experience', ['count' => $teacher->experience_years]) }}</li>
                 <li><i class="fa-solid fa-users"></i> {{ $teacher->grades ?: __('public.common.all_grades') }}</li>
@@ -79,7 +83,7 @@
               <div class="teacher-actions">
                 @php $likedTeacherIds = $likedTeacherIds ?? collect(); @endphp
                 @auth
-                  <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form" style="display:inline;">
+                  <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form">
                     @csrf
                     <button class="like-btn {{ $likedTeacherIds->contains($teacher->id) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
                       <i class="{{ $likedTeacherIds->contains($teacher->id) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
@@ -108,6 +112,48 @@
         <div class="exam-empty exam-filter-zero" id="teacher-filter-zero" hidden>
           <p style="margin:0;font-size:16px;"><i class="fa-solid fa-filter-circle-xmark" style="opacity:0.55;"></i> Filtr bo'yicha ustoz topilmadi.</p>
         </div>
+
+        @if($teachers instanceof \Illuminate\Pagination\AbstractPaginator && $teachers->hasPages())
+          @php
+            $current = $teachers->currentPage();
+            $last = $teachers->lastPage();
+            $start = max(1, $current - 2);
+            $end = min($last, $current + 2);
+          @endphp
+          <nav class="teachers-pagination" aria-label="Ustozlar pagination">
+            @if($teachers->onFirstPage())
+              <span class="teachers-page-btn is-disabled" aria-disabled="true">
+                <i class="fa-solid fa-chevron-left"></i> Oldingi
+              </span>
+            @else
+              <a class="teachers-page-btn" href="{{ $teachers->previousPageUrl() }}">
+                <i class="fa-solid fa-chevron-left"></i> Oldingi
+              </a>
+            @endif
+
+            <div class="teachers-page-numbers">
+              @for($page = $start; $page <= $end; $page++)
+                @if($page === $current)
+                  <span class="teachers-page-number is-active" aria-current="page">{{ $page }}</span>
+                @else
+                  <a class="teachers-page-number" href="{{ $teachers->url($page) }}">{{ $page }}</a>
+                @endif
+              @endfor
+            </div>
+
+            <span class="teachers-page-info">Sahifa {{ $current }} / {{ $last }}</span>
+
+            @if($teachers->hasMorePages())
+              <a class="teachers-page-btn" href="{{ $teachers->nextPageUrl() }}">
+                Keyingi <i class="fa-solid fa-chevron-right"></i>
+              </a>
+            @else
+              <span class="teachers-page-btn is-disabled" aria-disabled="true">
+                Keyingi <i class="fa-solid fa-chevron-right"></i>
+              </span>
+            @endif
+          </nav>
+        @endif
 
         <script>
           (function () {
@@ -159,38 +205,25 @@
               <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.approach_item_3') }}</li>
             </ul>
           </article>
-
-          <article class="approach-image-card reveal">
-            <img
-              src="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-              alt="{{ __('public.layout.nav.teachers') }}"
-              loading="lazy"
-              decoding="async"
-            />
-            <div class="approach-caption">
-              <h3>{{ __('public.teachers.approach_caption_title') }}</h3>
-              <p>{{ __('public.teachers.approach_caption_text') }}</p>
-            </div>
-          </article>
         </div>
       </section>
 
       <section class="teachers-stats-section">
         <div class="container teachers-stats">
           <div class="teachers-stat-item reveal">
-            <strong data-target="40" class="stat-num">0</strong>
+            <strong class="stat-num">{{ number_format($teacherStats['experienced_teachers']) }}</strong>
             <span>{{ __('public.teachers.stat_1') }}</span>
           </div>
           <div class="teachers-stat-item reveal">
-            <strong data-target="18" class="stat-num">0</strong>
+            <strong class="stat-num">{{ number_format($teacherStats['subject_areas']) }}</strong>
             <span>{{ __('public.teachers.stat_2') }}</span>
           </div>
           <div class="teachers-stat-item reveal">
-            <strong data-target="1200" class="stat-num">0</strong>
+            <strong class="stat-num">{{ number_format($teacherStats['students']) }}</strong>
             <span>{{ __('public.teachers.stat_3') }}</span>
           </div>
           <div class="teachers-stat-item reveal">
-            <strong data-target="96" class="stat-num">0</strong>
+            <strong class="stat-num">{{ number_format($teacherStats['satisfaction_percent']) }}</strong>
             <span>{{ __('public.teachers.stat_4') }}</span>
           </div>
         </div>
