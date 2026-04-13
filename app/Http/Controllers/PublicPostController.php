@@ -25,6 +25,7 @@ class PublicPostController extends Controller
     private const COMMENT_BODY_MAX = 100;
 
     private const REPLY_BODY_MAX = 50;
+    private const REPLY_LIMIT_PER_COMMENT = 4;
 
     public function index(Request $request)
     {
@@ -221,8 +222,17 @@ class PublicPostController extends Controller
         $parentComment = null;
         if (! empty($validated['parent_id'])) {
             $parentComment = $post->comments()
+                ->whereNull('parent_id')
                 ->whereKey($validated['parent_id'])
                 ->firstOrFail();
+
+            if ($parentComment->replies()->count() >= self::REPLY_LIMIT_PER_COMMENT) {
+                return $this->denyInteraction(
+                    $request,
+                    "Bitta izohga ko'pi bilan ".self::REPLY_LIMIT_PER_COMMENT." ta javob yozish mumkin.",
+                    422
+                );
+            }
         }
 
         $comment = new Comment();

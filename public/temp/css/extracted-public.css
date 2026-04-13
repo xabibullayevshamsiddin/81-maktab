@@ -87,6 +87,18 @@
   padding-inline: 14px;
 }
 
+/* Header (light mode): "Kirish" tugmasi kontrasti aniq ko'rinsin */
+:root:not([data-theme='dark']) .page-header .login--guest .btn-outline {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+:root:not([data-theme='dark']) .page-header .login--guest .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.82);
+}
+
 .login--guest {
   gap: 5px;
   flex-basis: auto;

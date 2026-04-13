@@ -266,7 +266,7 @@
       });
     }, { threshold: 0.15 });
 
-    document.querySelectorAll('h3, .section-head h1, .news-hero-content h1, .section-title, .results-title').forEach(h => {
+    document.querySelectorAll('.section-head h1, .news-hero-content h1, .section-title, .results-title').forEach(h => {
       if (h.closest('.chat-panel')) return; // Avoid scrambling chat messages
       h.classList.add('prime-scramble-active');
       scrambleObserver.observe(h);
@@ -439,7 +439,6 @@
           previewContent.hidden = false;
           if (previewNameEl) {
             previewNameEl.textContent = d.display_name || '';
-            scrambleText(previewNameEl, d.display_name || '');
           }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
@@ -2516,6 +2515,7 @@
       e.preventDefault();
       var text = input.value.trim();
       if (!text || isSending) return;
+      playPrimeChatTick(); // "chiqchiq" — eski click ovozi
       sendMessage(text, { restoreText: true });
     });
 

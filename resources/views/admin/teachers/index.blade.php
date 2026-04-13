@@ -46,7 +46,7 @@
                 <tbody>
                   @forelse($teachers as $teacher)
                     <tr>
-                      <td><p>{{ $teacher->id }}</p></td>
+                      <td><p>{{ ($teachers->firstItem() ?? 1) + $loop->index }}</p></td>
                       <td>
                         @if($teacher->image)
                           <img src="{{ app_storage_asset($teacher->image) }}" alt="{{ $teacher->full_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">

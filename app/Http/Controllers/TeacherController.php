@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -164,6 +165,7 @@ class TeacherController extends Controller
         }
 
         $teacher->delete();
+        $this->resetTeachersAutoIncrement();
         forget_public_teacher_caches();
 
         return redirect()->route('teachers.index')
@@ -214,6 +216,16 @@ class TeacherController extends Controller
     private function nextSortOrder(): int
     {
         return (int) Teacher::query()->max('sort_order') + 1;
+    }
+
+    private function resetTeachersAutoIncrement(): void
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
+        $nextId = ((int) Teacher::query()->max('id')) + 1;
+        DB::statement('ALTER TABLE teachers AUTO_INCREMENT = '.$nextId);
     }
 
     /**

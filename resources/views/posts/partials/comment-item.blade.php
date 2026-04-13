@@ -23,6 +23,10 @@
 @endphp
 
 <article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
+  @php
+    $replyCount = $comment->replies->count();
+    $canReplyMore = $replyCount < 4;
+  @endphp
   @if(auth()->check() && $comment->user_id)
     <button type="button" class="comment-avatar comment-avatar--btn {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}" data-user-preview-id="{{ $comment->user_id }}" title="Profil" aria-label="Foydalanuvchi profili">
       @if($avatarUrl)
@@ -62,7 +66,7 @@
         </button>
       </form>
 
-      @if ($showReplyForm && auth()->check())
+      @if ($showReplyForm && auth()->check() && $canReplyMore)
         <button
           type="button"
           class="comment-reply js-comment-reply-toggle"
@@ -135,10 +139,13 @@
   </div>
 
   @if ($comment->replies->isNotEmpty())
-    <div class="comment-list comment-replies">
-      @foreach($comment->replies as $reply)
-        @include('posts.partials.comment-item', ['comment' => $reply, 'post' => $post, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])
-      @endforeach
-    </div>
+    <details class="comment-replies-toggle">
+      <summary>Javoblarni o'qish ({{ $replyCount }})</summary>
+      <div class="comment-list comment-replies">
+        @foreach($comment->replies as $reply)
+          @include('posts.partials.comment-item', ['comment' => $reply, 'post' => $post, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])
+        @endforeach
+      </div>
+    </details>
   @endif
 </article>

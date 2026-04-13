@@ -251,11 +251,22 @@
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) maybeContextWarn();
       });
+
       window.addEventListener('blur', function () {
-        if (document.hidden) return;
+        // Telefonda skrinshot paytida ba'zan faqat oyna fokusini yo'qotadi
         maybeContextWarn();
       });
 
+      window.addEventListener('pagehide', function () {
+        maybeContextWarn();
+      });
+
+      // iOS ba'zan oynani tepadan/pastdan tushirilganda mouseleave ham berishi mumkin
+      document.addEventListener('mouseleave', function (e) {
+        if (e.clientY <= 0 || e.clientX <= 0 || (e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
+           maybeContextWarn();
+        }
+      });
       window.addEventListener('beforeprint', function () {
         warnAndReport(null);
       });
