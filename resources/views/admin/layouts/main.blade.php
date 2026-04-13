@@ -200,6 +200,13 @@
                   <span class="text">Sozlamalar</span>
                 </a>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('ai-knowledges.*') ? 'active' : '' }}">
+                <a href="{{ route('ai-knowledges.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI Bilimlar</span>
+                </a>
+              </li>
             @endif
           @endif
 

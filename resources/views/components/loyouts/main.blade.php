@@ -141,16 +141,6 @@
             <i class="fa-solid fa-bars"></i>
           </button>
 
-          <button
-            class="ai-header-toggle"
-            id="ai-header-toggle"
-            type="button"
-            aria-label="AI Yordamchi"
-            title="AI Yordamchi"
-          >
-            <i class="fa-solid fa-magic-wand-sparkles"></i>
-          </button>
-
           <nav id="site-nav">
             <ul>
               <li><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
@@ -165,6 +155,20 @@
                   <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
                 </button>
               </li>
+              @auth
+                <li class="mobile-ai-toggle-wrap">
+                  <button
+                    class="nav-link ai-header-toggle"
+                    id="ai-header-toggle"
+                    type="button"
+                    aria-label="AI Yordamchi"
+                    title="AI Yordamchi"
+                  >
+                    <i class="fa-solid fa-magic-wand-sparkles"></i>
+                    <span>AI Bot</span>
+                  </button>
+                </li>
+              @endauth
               @auth
 	                <li class="nav-dropdown nav-dropdown--offset">
                   <details class="nav-dropdown-details js-header-dropdown">
@@ -690,6 +694,7 @@
     @unless(request()->routeIs('exam.session'))
     <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ filemtime(public_path('temp/js/site-boot-loader.js')) }}"></script>
     @endunless
+    @auth
     @unless(request()->routeIs('exam.session'))
     <div id="ai-widget" class="ai-widget" data-ai-url="{{ route('ai.chat') }}" data-csrf="{{ csrf_token() }}">
       <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="AI Yordamchi" style="width:70px; height:70px; border-radius:24px; background:linear-gradient(135deg, #a855f7, #6366f1, #3b82f6); display:flex; align-items:center; justify-content:center; flex-direction:column; color:#fff; font-size:26px; border:2px solid rgba(255,255,255,0.4); box-shadow:0 12px 34px rgba(99,102,241,0.5); cursor:pointer; overflow:hidden;">
@@ -732,7 +737,6 @@
           <button type="button" class="ai-action-btn" data-msg="Bugun qanday darslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Darslar 🗓️</button>
           <button type="button" class="ai-action-btn" data-msg="Mening natijalarim qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Natijalarim 📝</button>
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili qayerda?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Manzil 📍</button>
-          <button type="button" class="ai-action-btn" data-msg="Meni geografiyadan imtihon qil" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Viktoriya 🎓</button>
         </div>
 
         <form class="chat-input-wrap" id="ai-chat-form">
@@ -922,6 +926,7 @@
       })();
     </script>
     @endunless
+    @endauth
     @stack('page_scripts')
   </body>
 </html>

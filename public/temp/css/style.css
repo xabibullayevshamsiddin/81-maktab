@@ -402,6 +402,21 @@ a {
   cursor: pointer;
 }
 
+.ai-header-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mobile-ai-toggle-wrap {
+  display: none;
+}
+
 .card-home {
   min-height: 100vh;
   display: flex;
@@ -2884,6 +2899,29 @@ section.teachers.reveal::before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .mobile-ai-toggle-wrap {
+    display: block;
+  }
+
+  .ai-header-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: auto;
+    gap: 8px;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 6px;
+    color: #fff;
+    text-align: left;
+    background: transparent;
+  }
+
+  #ai-bubble {
+    display: none !important;
   }
 
   #site-nav {
