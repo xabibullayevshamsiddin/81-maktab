@@ -40,7 +40,7 @@
     @stack('page_styles')
   </head>
 
-	    <body
+      <body
         @class(['site-boot-loading' => ! request()->routeIs('exam.session')])
         data-theme="light"
         data-site-success="{{ session('success') }}"
@@ -139,6 +139,16 @@
             aria-expanded="false"
           >
             <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <button
+            class="ai-header-toggle"
+            id="ai-header-toggle"
+            type="button"
+            aria-label="AI Yordamchi"
+            title="AI Yordamchi"
+          >
+            <i class="fa-solid fa-magic-wand-sparkles"></i>
           </button>
 
           <nav id="site-nav">
@@ -679,6 +689,238 @@
     </script>
     @unless(request()->routeIs('exam.session'))
     <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ filemtime(public_path('temp/js/site-boot-loader.js')) }}"></script>
+    @endunless
+    @unless(request()->routeIs('exam.session'))
+    <div id="ai-widget" class="ai-widget" data-ai-url="{{ route('ai.chat') }}" data-csrf="{{ csrf_token() }}">
+      <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="AI Yordamchi" style="width:70px; height:70px; border-radius:24px; background:linear-gradient(135deg, #a855f7, #6366f1, #3b82f6); display:flex; align-items:center; justify-content:center; flex-direction:column; color:#fff; font-size:26px; border:2px solid rgba(255,255,255,0.4); box-shadow:0 12px 34px rgba(99,102,241,0.5); cursor:pointer; overflow:hidden;">
+        <i class="fa-solid fa-magic-wand-sparkles" style="margin-bottom:2px"></i>
+        <span style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px">AI Bot</span>
+      </button>
+
+      <div class="chat-panel ai-panel" id="ai-panel">
+        <div class="chat-panel-header">
+          <div class="chat-panel-title">
+            <i class="fa-solid fa-robot"></i>
+            <span>81-AI Yordamchi</span>
+          </div>
+          <div class="chat-panel-actions">
+            <button type="button" class="chat-panel-btn" id="ai-close-btn" aria-label="Yopish">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <div class="chat-panel-intro">
+          <div class="chat-panel-kicker">
+            <span class="chat-panel-live-dot" style="background:#10b981" aria-hidden="true"></span>
+            <span>Online AI</span>
+          </div>
+          <p class="chat-panel-subtitle">Assalomu alaykum! Maktabimiz haqida har qanday savolingizga javob beraman!</p>
+        </div>
+        <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
+          <div class="chat-msg is-ai reveal">
+            <div class="chat-msg-content">Salom! Men 81-maktabning AI yordamchisiman. Sizga qanday yordam bera olaman? 😊</div>
+          </div>
+        </div>
+        <div class="chat-compose-status ai-status" id="ai-compose-status" hidden>
+          <span class="chat-compose-status-icon ai-typing-indicator">
+             <i class="fa-solid fa-circle-notch fa-spin"></i>
+          </span>
+          <span class="chat-compose-status-text">O'ylamoqda...</span>
+        </div>
+
+        <div class="ai-quick-actions" style="display:flex; gap:8px; padding:0 12px 10px; overflow-x:auto; scrollbar-width:none">
+          <button type="button" class="ai-action-btn" data-msg="Bugun qanday darslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Darslar 🗓️</button>
+          <button type="button" class="ai-action-btn" data-msg="Mening natijalarim qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Natijalarim 📝</button>
+          <button type="button" class="ai-action-btn" data-msg="Maktab manzili qayerda?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Manzil 📍</button>
+          <button type="button" class="ai-action-btn" data-msg="Meni geografiyadan imtihon qil" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Viktoriya 🎓</button>
+        </div>
+
+        <form class="chat-input-wrap" id="ai-chat-form">
+          <textarea
+            class="chat-textarea"
+            id="ai-textarea"
+            placeholder="Savolingizni yozing..."
+            rows="1"
+            maxlength="800"
+            style="resize:none; padding:10px; border-radius:12px; font-family:inherit"
+          ></textarea>
+          <button type="submit" class="chat-send-btn" id="ai-send-btn" aria-label="Yuborish">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    @endunless
+    @unless(request()->routeIs('exam.session'))
+    <script>
+      (function() {
+        console.log('AI Script Initialized');
+        var widget = document.getElementById('ai-widget');
+        if (!widget) { console.log('AI Widget not found'); return; }
+
+        var bubble = document.getElementById('ai-bubble');
+        var panel = document.getElementById('ai-panel');
+        var closeBtn = document.getElementById('ai-close-btn');
+        var messagesEl = document.getElementById('ai-messages');
+        var form = document.getElementById('ai-chat-form');
+        var input = document.getElementById('ai-textarea');
+        var sendBtn = document.getElementById('ai-send-btn');
+        var statusWrap = document.getElementById('ai-compose-status');
+
+        var aiUrl = widget.getAttribute('data-ai-url');
+        var csrfToken = widget.getAttribute('data-csrf');
+        var headerToggle = document.getElementById('ai-header-toggle');
+        var isSending = false;
+
+        function openPanel() {
+          console.log('Opening AI Panel');
+          panel.classList.add('is-open');
+          if (window.playPrimeSuccess) window.playPrimeSuccess();
+          input.focus();
+        }
+
+        function closePanel() {
+          console.log('Closing AI Panel');
+          panel.classList.remove('is-open');
+        }
+
+        function togglePanel(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (panel.classList.contains('is-open')) {
+            closePanel();
+          } else {
+            openPanel();
+          }
+        }
+
+        bubble.addEventListener('click', togglePanel);
+        if (headerToggle) headerToggle.addEventListener('click', togglePanel);
+
+        document.addEventListener('click', function (e) {
+          if (panel.classList.contains('is-open') && !panel.contains(e.target) && !bubble.contains(e.target)) {
+            closePanel();
+          }
+        });
+
+        closeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          closePanel();
+        });
+
+        function scrollToBottom() {
+          messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+        }
+
+        function addMessage(text, isAi) {
+          if (!text || !text.trim()) return;
+          var el = document.createElement('div');
+          el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
+          
+          // Strip Markdown bold symbols if AI slips up
+          var cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+          
+          var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
+          
+          el.innerHTML = avatarHtml + '<div class="chat-msg-content">' + cleanText.replace(/<[^>]+>/g, '') + '</div>';
+          messagesEl.appendChild(el);
+          
+          // Force a tiny reflow for animation
+          void el.offsetWidth;
+          el.classList.add('reveal');
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+          
+          scrollToBottom();
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var txt = input.value.trim();
+          if (!txt || isSending) return;
+
+          console.log('Sending message:', txt);
+          isSending = true;
+          addMessage(txt, false);
+          input.value = '';
+          sendBtn.disabled = true;
+          if (window.playPrimeChatTick) window.playPrimeChatTick();
+          statusWrap.style.display = 'flex';
+          statusWrap.removeAttribute('hidden');
+          scrollToBottom();
+
+          fetch(aiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ message: txt })
+          })
+          .then(function(res) { 
+             console.log('Fetch response status:', res.status);
+             return res.json(); 
+          })
+          .then(function(data) {
+            console.log('AI Data received:', data);
+            statusWrap.style.display = 'none';
+            statusWrap.setAttribute('hidden', '');
+            isSending = false;
+            sendBtn.disabled = false;
+            if (data && data.success) {
+              addMessage(data.text, true);
+              if (window.playPrimeResultPass) window.playPrimeResultPass();
+            } else {
+              addMessage(data.error || "Xatolik yuz berdi.", true);
+            }
+          })
+          .catch(function(err) {
+            console.error('AI Fetch error:', err);
+            statusWrap.style.display = 'none';
+            statusWrap.setAttribute('hidden', '');
+            isSending = false;
+            sendBtn.disabled = false;
+            addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true);
+          });
+        });
+
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+          }
+        });
+
+        input.addEventListener('input', function() {
+          if (window.playPrimeChatTick && !isSending) window.playPrimeChatTick();
+        });
+
+        // Quick Action Buttons Handler (with Cooldown)
+        var actionBtns = document.querySelectorAll('.ai-action-btn');
+        actionBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+             if (btn.disabled || isSending) return;
+             
+             // Visual feedback and cooldown
+             actionBtns.forEach(b => {
+                 b.disabled = true;
+                 b.style.opacity = '0.5';
+                 b.style.cursor = 'not-allowed';
+             });
+
+             var msg = this.getAttribute('data-msg');
+             input.value = msg;
+             form.dispatchEvent(new Event('submit'));
+
+             // Re-enable after 3 seconds
+             setTimeout(() => {
+                 actionBtns.forEach(b => {
+                     b.disabled = false;
+                     b.style.opacity = '1';
+                     b.style.cursor = 'pointer';
+                 });
+             }, 3000);
+          });
+        });
+      })();
+    </script>
     @endunless
     @stack('page_scripts')
   </body>

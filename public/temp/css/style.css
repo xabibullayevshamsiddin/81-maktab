@@ -960,6 +960,130 @@ section {
   touch-action: none;
 }
 
+.ai-widget {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  z-index: 100000 !important;
+  touch-action: none !important;
+}
+
+.ai-bubble {
+  width: 60px;
+  height: 60px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #a855f7, #6366f1, #3b82f6);
+  background-size: 200% 200%;
+  animation: bgPulse 6s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), inset 0 2px 10px rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: transform 0.4s var(--prime-bezier), box-shadow 0.4s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.ai-bubble:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 16px 36px rgba(99, 102, 241, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.8);
+}
+
+.ai-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  position: fixed !important;
+  right: 15px !important;
+  bottom: 84px !important;
+  z-index: 100000 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(20px) scale(0.95) !important;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  visibility: hidden !important;
+}
+
+.ai-panel.is-open {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(0) scale(1) !important;
+  visibility: visible !important;
+}
+
+.ai-messages .chat-msg {
+  display: flex !important;
+  flex-direction: column !important;
+  margin-bottom: 16px !important;
+  max-width: 85% !important;
+}
+
+.ai-messages .is-user {
+  align-self: flex-end !important;
+  align-items: flex-end !important;
+}
+
+.ai-messages .is-ai {
+  align-self: flex-start !important;
+  align-items: flex-start !important;
+}
+
+.ai-messages .chat-msg-content {
+  padding: 10px 14px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  position: relative !important;
+  white-space: pre-wrap !important;
+}
+
+.ai-messages .is-user .chat-msg-content {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: #ffffff !important;
+  border-bottom-right-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+}
+
+.ai-messages .is-ai .chat-msg-content {
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+  border-bottom-left-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root[data-theme="dark"] .ai-messages .is-ai .chat-msg-content {
+  background: linear-gradient(145deg, #1e293b, #0f172a) !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.ai-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.is-user .ai-avatar {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.is-ai .ai-avatar {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+
 .chat-widget.is-dragging {
   transition: none !important;
 }
@@ -6528,6 +6652,8 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   gap: 10px;
   margin-top: auto;
   padding-top: 12px;
+  position: relative;
+  z-index: 10;
 }
 .teacher-top {
   display: flex;
@@ -11154,7 +11280,6 @@ body {
 }
 
 .prime-3d-target {
-    transform-style: preserve-3d;
     transition: transform 0.2s cubic-bezier(0.1, 0, 0.3, 1);
     will-change: transform;
 }
@@ -11355,7 +11480,6 @@ body {
 .prime-3d-target, .news-card, .teacher-card, .course-card, .card-style {
     transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
     will-change: transform;
-    transform-style: preserve-3d;
 }
 
 .prime-3d-target:hover {

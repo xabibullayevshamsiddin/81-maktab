@@ -273,6 +273,8 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 });
 
+Route::post('ai-chat', [App\Http\Controllers\SiteAiController::class, 'generate'])->middleware('throttle:30,1')->name('ai.chat');
+
 // Qolgan barcha yo‘llar uchun custom 404 sahifa
 Route::fallback(function () {
     abort(404);

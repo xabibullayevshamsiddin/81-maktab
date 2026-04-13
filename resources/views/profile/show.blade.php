@@ -366,7 +366,6 @@
                       <div class="profile-exam-result-info">
                         <h4 class="profile-exam-result-title">{{ $er->exam->title ?? '-' }}</h4>
                         <span class="profile-exam-result-date">
-                          <i class="fa-regular fa-calendar"></i>
                           {{ $er->submitted_at?->format('d.m.Y H:i') ?? '-' }}
                         </span>
                       </div>

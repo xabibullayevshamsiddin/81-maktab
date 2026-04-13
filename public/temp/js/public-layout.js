@@ -33,7 +33,7 @@
     return primeAudioCtx;
   }
 
-  function playPrimeChatTick() {
+  window.playPrimeChatTick = function() {
     if (primeAudioMuted) return;
     try {
       const ctx = getPrimeAudioCtx();
@@ -53,7 +53,7 @@
     } catch (e) {}
   }
 
-  function playPrimeSuccess() {
+  window.playPrimeSuccess = function() {
     if (primeAudioMuted) return;
     try {
       const ctx = getPrimeAudioCtx();
@@ -2621,6 +2621,7 @@
     };
   }
 
+
   /** Yangilik / ustoz izohlari: global chatdagi bilan bir xil yozish «tik» ovozi */
   function initCommentTypingSound() {
     document.addEventListener(
@@ -2667,45 +2668,53 @@
     window.addEventListener('resize', syncPos);
   }
 
-  moveGlobalModals();
-  initChatUserPreviewChrome();
-  initUserProfilePreview();
-  initShellUi();
-  initRevealAnimations();
-  initPasswordToggles();
-  initMobileMenu();
-  initHeaderClearance();
-  initLocaleSwitcher();
-  initSiteRules();
-  initPhoneInputs();
-  initImageLightbox();
-  initToastAndTheme();
-  initHeaderDropdowns();
-  initInteractiveActions();
-  initProMaxAnimations();
-  initThemeBurstEffect();
-  initLocalePageReveal();
-  initGlobalChat();
-  initCommentTypingSound();
-  initPrimeAudioControl();
-  initSeniorInteractions();
+  function runInitializers() {
+    moveGlobalModals();
+    initChatUserPreviewChrome();
+    initUserProfilePreview();
+    initShellUi();
+    initRevealAnimations();
+    initPasswordToggles();
+    initMobileMenu();
+    initHeaderClearance();
+    initLocaleSwitcher();
+    initSiteRules();
+    initPhoneInputs();
+    initImageLightbox();
+    initToastAndTheme();
+    initHeaderDropdowns();
+    initInteractiveActions();
+    initProMaxAnimations();
+    initThemeBurstEffect();
+    initLocalePageReveal();
+    initGlobalChat();
+    initCommentTypingSound();
+    initPrimeAudioControl();
+    initSeniorInteractions();
 
-  // Pointer interaction to unlock AudioContext
-  const unlockAudio = () => {
-    try {
-      const ctx = getPrimeAudioCtx();
-      // Industry standard: play a microscopic silent tone to force unlock the audio engine
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      gain.gain.value = 0.0001; 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(0);
-      osc.stop(ctx.currentTime + 0.001);
-    } catch(e) {}
-    document.removeEventListener('pointerdown', unlockAudio);
-    document.removeEventListener('keydown', unlockAudio);
-  };
-  document.addEventListener('pointerdown', unlockAudio);
-  document.addEventListener('keydown', unlockAudio);
+    // Pointer interaction to unlock AudioContext
+    const unlockAudio = () => {
+      try {
+        const ctx = getPrimeAudioCtx();
+        // Industry standard: play a microscopic silent tone to force unlock the audio engine
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001; 
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(0);
+        osc.stop(ctx.currentTime + 0.001);
+      } catch(e) {}
+      document.removeEventListener('pointerdown', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+    document.addEventListener('pointerdown', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runInitializers);
+  } else {
+    runInitializers();
+  }
 })();
