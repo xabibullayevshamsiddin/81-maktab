@@ -2,7 +2,7 @@
   <section class="hero" id="home">
     <video autoplay muted loop playsinline class="bg-video">
       <source
-        src="{{ app_public_asset('temp/img/IMG_3577.MOV') }}"
+        src="{{ app_public_asset('temp/img/video_40mb.mp4') }}"
         type="video/mp4"
       />
     </video>
