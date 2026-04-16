@@ -2,7 +2,7 @@
   <section class="hero" id="home">
     <video autoplay muted loop playsinline class="bg-video">
       <source
-        src="{{ app_public_asset('temp/img/PixVerse_V5.6_Image_Text_540P_tiriltirib_ber.mp4') }}"
+        src="{{ app_public_asset('temp/img/IMG_3577.MOV') }}"
         type="video/mp4"
       />
     </video>
@@ -84,7 +84,7 @@
         </div>
         <a href="{{ route('post') }}" class="btn btn-sm">{{ __('public.home.news_all') }}</a>
       </div>
-      
+
       <div class="news-container prime-stagger">
         @forelse($posts as $post)
           @php
