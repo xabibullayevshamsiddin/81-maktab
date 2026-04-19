@@ -11720,3 +11720,18 @@ body:has(#chat-widget) .prime-audio-toggle {
 :root:not([data-theme='dark']) .chat-input::placeholder {
   color: #5e7088 !important;
 }
+
+/* --- LIGHT MODE INNER PAGE NAVBAR FIX --- */
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .nav-link,
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .lang,
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .header-user-name,
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .menu-toggle,
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .theme-toggle,
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .ai-header-toggle {
+  color: var(--text);
+}
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .nav-link:hover,
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .nav-link.active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}

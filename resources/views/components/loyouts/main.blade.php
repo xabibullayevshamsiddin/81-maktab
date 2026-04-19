@@ -41,7 +41,11 @@
   </head>
 
       <body
-        @class(['site-boot-loading' => ! request()->routeIs('exam.session')])
+        @class([
+          'site-boot-loading' => ! request()->routeIs('exam.session'),
+          'page-home' => request()->routeIs('home'),
+          'page-inner' => ! request()->routeIs('home')
+        ])
         data-theme="light"
         data-site-success="{{ session('success') }}"
         data-site-error="{{ session('error') }}"
