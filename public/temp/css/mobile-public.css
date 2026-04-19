@@ -746,7 +746,8 @@
    ==================================================================== */
 @media (max-width: 480px) {
   .chat-widget {
-    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
+    left: auto !important;
     bottom: max(10px, env(safe-area-inset-bottom));
   }
 

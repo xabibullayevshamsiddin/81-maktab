@@ -966,27 +966,57 @@ section {
   font-size: 13px;
 }
 
-/* ===== Global Chat Widget ===== */
+/* ===== Global Chat Widget + AI + ovoz (o‘ng past — vertikal «dock») ===== */
+:root {
+  --dock-edge: max(12px, env(safe-area-inset-right));
+  --dock-bottom: max(12px, env(safe-area-inset-bottom));
+  --dock-chat-bubble: 56px;
+  --dock-ai-bubble: 56px;
+  --dock-gap: 12px;
+  /* chat + gap + ai + gap → ovoz tugmasi balandligi */
+  --dock-audio-lift: calc(
+    var(--dock-chat-bubble) + var(--dock-gap) + var(--dock-ai-bubble) + var(--dock-gap)
+  );
+  --dock-ai-lift: calc(var(--dock-chat-bubble) + var(--dock-gap));
+}
+
+/* left/right/bottom da !important bo‘lmasin — surilganda JS inline left/top qo‘llansin */
 .chat-widget {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  z-index: 1000;
+  bottom: var(--dock-bottom);
+  right: var(--dock-edge);
+  left: auto;
+  z-index: 10050;
   touch-action: none;
 }
 
 .ai-widget {
   position: fixed !important;
-  bottom: 30px !important;
-  right: 30px !important;
-  z-index: 100000 !important;
+  bottom: calc(var(--dock-bottom) + var(--dock-ai-lift)) !important;
+  right: var(--dock-edge) !important;
+  left: auto;
+  z-index: 10050;
   touch-action: none !important;
 }
 
+.prime-audio-slot {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+}
+
+.prime-audio-slot .prime-audio-toggle {
+  pointer-events: auto;
+}
+
+/* Global chat tugmasi bilan bir xil o‘lcham va dumaloq */
 .ai-bubble {
-  width: 60px;
-  height: 60px;
-  border-radius: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
   background: linear-gradient(135deg, #a855f7, #6366f1, #3b82f6);
   background-size: 200% 200%;
   animation: bgPulse 6s ease infinite;
@@ -994,27 +1024,30 @@ section {
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), inset 0 2px 10px rgba(255, 255, 255, 0.5);
+  font-size: 22px;
+  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
   cursor: pointer;
-  transition: transform 0.4s var(--prime-bezier), box-shadow 0.4s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
   position: relative;
   z-index: 2;
 }
 
 .ai-bubble:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 16px 36px rgba(99, 102, 241, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.8);
+  transform: scale(1.1);
+  box-shadow: 0 10px 32px rgba(99, 102, 241, 0.5);
+}
+
+.ai-bubble:active {
+  transform: scale(0.95);
 }
 
 .ai-panel {
   display: flex !important;
   flex-direction: column !important;
   position: fixed !important;
-  right: 15px !important;
-  bottom: 84px !important;
-  z-index: 100000 !important;
+  right: var(--dock-edge, max(12px, env(safe-area-inset-right))) !important;
+  bottom: calc(var(--dock-bottom, max(12px, env(safe-area-inset-bottom))) + var(--dock-ai-bubble, 56px) + 12px) !important;
+  z-index: 10100 !important;
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(20px) scale(0.95) !important;
@@ -1242,6 +1275,7 @@ section {
 
 .chat-panel {
   position: fixed;
+  z-index: 10100;
   width: 360px;
   height: 480px;
   border-radius: 18px;
@@ -1256,6 +1290,77 @@ section {
 }
 
 .chat-panel[hidden] { display: none !important; }
+
+.chat-panel-main,
+.ai-panel-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* [hidden] brauzer standarti .chat-panel-main ichidagi display:flex dan kuchli bo‘lishi kerak */
+#chat-panel-main[hidden],
+#chat-disabled-panel[hidden],
+#ai-panel-main[hidden],
+#ai-disabled-panel[hidden] {
+  display: none !important;
+}
+
+.chat-panel-intro,
+.chat-rules {
+  flex-shrink: 0;
+}
+
+/* Xabarlar oqimi (flex ustun) */
+.chat-feed-stack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-disabled-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 20px;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+.chat-disabled-panel[hidden] {
+  display: none !important;
+}
+
+.chat-disabled-panel-icon {
+  font-size: 2.1rem;
+  line-height: 1;
+  opacity: 0.5;
+  color: var(--muted-foreground, #64748b);
+}
+
+.chat-disabled-panel-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--foreground, #0f172a);
+  max-width: 32ch;
+}
+
+:root[data-theme="dark"] .chat-disabled-panel-text {
+  color: var(--foreground, #f1f5f9);
+}
+
+:root[data-theme="dark"] .chat-disabled-panel-icon {
+  color: var(--muted-foreground, #94a3b8);
+}
 
 @keyframes chatPanelIn {
   0% { opacity: 0; transform: scale(0.5); }
@@ -1358,7 +1463,7 @@ body.chat-fullscreen-active::before {
 .chat-panel.is-opening .chat-panel-header,
 .chat-panel.is-opening .chat-panel-intro,
 .chat-panel.is-opening .chat-rules,
-.chat-panel.is-opening .chat-messages,
+.chat-panel.is-opening .chat-feed-stack,
 .chat-panel.is-opening .chat-compose-status,
 .chat-panel.is-opening .chat-input-wrap {
   animation: chatPanelSectionIn 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1366,14 +1471,14 @@ body.chat-fullscreen-active::before {
 
 .chat-panel.is-opening .chat-panel-intro { animation-delay: 0.05s; }
 .chat-panel.is-opening .chat-rules { animation-delay: 0.08s; }
-.chat-panel.is-opening .chat-messages { animation-delay: 0.11s; }
+.chat-panel.is-opening .chat-feed-stack { animation-delay: 0.11s; }
 .chat-panel.is-opening .chat-compose-status { animation-delay: 0.14s; }
 .chat-panel.is-opening .chat-input-wrap { animation-delay: 0.17s; }
 
 .chat-panel.is-closing .chat-panel-header,
 .chat-panel.is-closing .chat-panel-intro,
 .chat-panel.is-closing .chat-rules,
-.chat-panel.is-closing .chat-messages,
+.chat-panel.is-closing .chat-feed-stack,
 .chat-panel.is-closing .chat-compose-status,
 .chat-panel.is-closing .chat-input-wrap {
   animation: chatPanelSectionOut 0.28s cubic-bezier(0.4, 0, 1, 1) both;
@@ -1382,7 +1487,7 @@ body.chat-fullscreen-active::before {
 .chat-panel.is-closing .chat-panel-header { animation-delay: 0ms; }
 .chat-panel.is-closing .chat-panel-intro { animation-delay: 25ms; }
 .chat-panel.is-closing .chat-rules { animation-delay: 45ms; }
-.chat-panel.is-closing .chat-messages { animation-delay: 70ms; }
+.chat-panel.is-closing .chat-feed-stack { animation-delay: 70ms; }
 .chat-panel.is-closing .chat-compose-status { animation-delay: 95ms; }
 .chat-panel.is-closing .chat-input-wrap { animation-delay: 115ms; }
 
@@ -1457,6 +1562,35 @@ body.chat-fullscreen-active::before {
   background: #22c55e;
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.38);
   animation: chatLiveDot 1.6s ease-out infinite;
+}
+
+/* Umumiy chat: jonli odam «onlayn» emas — faol kanal (ko‘k puls) */
+.chat-panel-live-dot--channel {
+  background: #3b82f6;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.35);
+  animation: chatLiveDotChannel 1.6s ease-out infinite;
+}
+
+@keyframes chatLiveDotChannel {
+  0% {
+    transform: scale(0.94);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.35);
+  }
+  70% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* AI: «onlayn» yashil nuqta emas — brend rang, pulsatsiyasiz (avtomatik xizmat) */
+.chat-panel-live-dot--ai {
+  background: #6366f1;
+  animation: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
 }
 
 .chat-panel-subtitle {
@@ -2494,6 +2628,10 @@ button.chat-msg-avatar-btn:focus-visible {
   animation: chatBubbleShimmer 3s ease infinite;
 }
 
+:root[data-theme='dark'] .ai-bubble {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
 @keyframes chatBubbleShimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -2643,7 +2781,8 @@ button.chat-msg-avatar-btn:focus-visible {
 
 .scroll-top {
   position: fixed;
-  right: 20px;
+  left: max(16px, env(safe-area-inset-left));
+  right: auto;
   bottom: 24px;
   width: 44px;
   height: 44px;
@@ -11205,8 +11344,6 @@ body {
 /* --- Prime Audio Toggle --- */
 .prime-audio-toggle {
     position: fixed;
-    right: 24px;
-    bottom: 84px;
     width: 48px;
     height: 48px;
     border-radius: 50%;
@@ -11259,10 +11396,19 @@ body {
     background: rgba(15, 23, 42, 0.8);
 }
 
+/* Joylashuv: mehmon — past o‘ng; tizimga kirgan — chat+AI ustida */
+body:not(:has(#chat-widget)) .prime-audio-toggle {
+    right: var(--dock-edge);
+    bottom: var(--dock-bottom);
+}
+
+body:has(#chat-widget) .prime-audio-toggle {
+    right: var(--dock-edge);
+    bottom: calc(var(--dock-bottom) + var(--dock-audio-lift));
+}
+
 @media (max-width: 480px) {
     .prime-audio-toggle {
-        right: 16px;
-        bottom: 74px;
         width: 42px;
         height: 42px;
         font-size: 16px;

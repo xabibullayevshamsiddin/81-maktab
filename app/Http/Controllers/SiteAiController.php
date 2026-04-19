@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\SiteSetting;
 use App\Services\Ai\AiService;
 
 class SiteAiController extends Controller
@@ -30,9 +31,48 @@ class SiteAiController extends Controller
             ], 401);
         }
 
+        if (SiteSetting::get('ai_chat_enabled', '1') !== '1') {
+            return response()->json([
+                'success' => false,
+                'error' => SiteSetting::get(
+                    'ai_chat_disabled_message',
+                    'AI yordamchi vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.'
+                ),
+                'disabled' => true,
+            ], 403);
+        }
+
         $request->validate([
-            'message' => 'required|string|max:1000',
+            'message' => 'required|string|max:5000',
         ]);
+
+        $rawMessage = (string) $request->input('message');
+        $mockDelimiter = (string) config('ai.mock_delimiter', '<<<MOCK>>>');
+
+        /*
+         * Mock: bitta maydonda `savol + ajratgich + javob` (Gemini chaqirilmaydi).
+         * Local: har kim; host: faqat admin + AI_LOCAL_MOCK_ON_HOST.
+         */
+        $mockAllowed = config('ai.local_mock')
+            && (
+                app()->environment('local')
+                || (config('ai.local_mock_on_host') && $user->isAdmin())
+            );
+
+        if ($mockAllowed && str_contains($rawMessage, $mockDelimiter)) {
+            $parts = explode($mockDelimiter, $rawMessage, 2);
+            $questionPart = trim((string) ($parts[0] ?? ''));
+            $mock = trim((string) ($parts[1] ?? ''));
+            Log::debug('AI local mock response', ['user_id' => $user->id, 'env' => app()->environment()]);
+
+            return response()->json([
+                'success' => true,
+                'text' => $mock !== ''
+                    ? $this->decorateAiText($mock, $questionPart !== '' ? $questionPart : $rawMessage)
+                    : "✨ Mock javob bo'sh. Ajratgichdan keyin javob matnini yozing.",
+                'source' => 'local_mock',
+            ]);
+        }
 
         if (! $user->isAdmin() && ! $this->consumeDailyQuestionQuota((int) $user->id)) {
             return response()->json([

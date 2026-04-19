@@ -21,7 +21,8 @@
         @csrf
         @method('PUT')
 
-        <h6 class="mb-10" style="font-size:14px;margin-top:20px;">Global e'lon (sayt yuqorisida chiqadi)</h6>
+        <h6 class="mb-10" style="font-size:14px;margin-top:20px;">Global e'lon (sayt tepasida)</h6>
+        <p class="text-sm" style="color:#64748b;margin-bottom:16px;">Barcha tashrifchilar uchun sahifa yuqorisidagi tasma. Chat va AI vidjetlari alohida sozlanadi (pastdagi bo‘lim).</p>
 
         <div class="input-style-1 mb-20">
           <label>E'lon holati</label>
@@ -51,6 +52,49 @@
             <option value="warning" {{ old('announcement_type', $settings['announcement_type'] ?? '') === 'warning' ? 'selected' : '' }}>Ogohlantirish (sariq)</option>
             <option value="danger" {{ old('announcement_type', $settings['announcement_type'] ?? '') === 'danger' ? 'selected' : '' }}>Muhim (qizil)</option>
           </select>
+        </div>
+
+        <hr style="margin:28px 0;border-color:#e2e8f0;">
+
+        <h6 class="mb-10" style="font-size:14px;margin-top:20px;">Global chat va AI (sayt vidjetlari)</h6>
+        <p class="text-sm" style="color:#64748b;margin-bottom:16px;">O‘chirilganida foydalanuvchilar xabar yozolmaydi; ochilganda faqat siz yozgan matn ko‘rinadi.</p>
+
+        <div class="input-style-1 mb-20">
+          <label>Global chat</label>
+          <div style="display:flex;gap:16px;align-items:center;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="global_chat_enabled" value="1" {{ old('global_chat_enabled', $settings['global_chat_enabled'] ?? '1') === '1' ? 'checked' : '' }} />
+              <span style="font-size:14px;">Yoqilgan</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="global_chat_enabled" value="0" {{ old('global_chat_enabled', $settings['global_chat_enabled'] ?? '1') !== '1' ? 'checked' : '' }} />
+              <span style="font-size:14px;">O‘chirilgan (xabar yozish mumkin emas)</span>
+            </label>
+          </div>
+        </div>
+        <div class="input-style-1 mb-20">
+          <label>Global chat o‘chiq bo‘lganda matn</label>
+          <textarea name="global_chat_disabled_message" rows="3" maxlength="1000" class="form-control" style="padding:10px 12px;border-radius:8px;width:100%;" placeholder="Masalan: Texnik ishlar olib borilmoqda.">{{ old('global_chat_disabled_message', $settings['global_chat_disabled_message'] ?? '') }}</textarea>
+          @error('global_chat_disabled_message') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="input-style-1 mb-20">
+          <label>AI yordamchi</label>
+          <div style="display:flex;gap:16px;align-items:center;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="ai_chat_enabled" value="1" {{ old('ai_chat_enabled', $settings['ai_chat_enabled'] ?? '1') === '1' ? 'checked' : '' }} />
+              <span style="font-size:14px;">Yoqilgan</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="ai_chat_enabled" value="0" {{ old('ai_chat_enabled', $settings['ai_chat_enabled'] ?? '1') !== '1' ? 'checked' : '' }} />
+              <span style="font-size:14px;">O‘chirilgan (savol yozish mumkin emas)</span>
+            </label>
+          </div>
+        </div>
+        <div class="input-style-1 mb-20">
+          <label>AI o‘chiq bo‘lganda matn</label>
+          <textarea name="ai_chat_disabled_message" rows="3" maxlength="1000" class="form-control" style="padding:10px 12px;border-radius:8px;width:100%;" placeholder="Masalan: AI vaqtincha texnik ishlar uchun yopiq.">{{ old('ai_chat_disabled_message', $settings['ai_chat_disabled_message'] ?? '') }}</textarea>
+          @error('ai_chat_disabled_message') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
         </div>
 
         <hr style="margin:28px 0;border-color:#e2e8f0;">

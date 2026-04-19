@@ -20,7 +20,26 @@ class SiteSetting extends Model
     {
         $all = static::allCached();
 
-        return $all[$key] ?? $default;
+        if (! array_key_exists($key, $all)) {
+            return $default;
+        }
+
+        $value = $all[$key];
+
+        /*
+         * Ma’lumot bazasida value NULL bo‘lsa, `$v ?? $default` ilgari defaultni berardi.
+         * Yoqilgan/o‘chirilgan kalitlar uchun NULL ni «o‘chiq» deb qabul qilamiz.
+         */
+        if ($value === null) {
+            $toggleKeys = ['announcement_active', 'global_chat_enabled', 'ai_chat_enabled'];
+            if (in_array($key, $toggleKeys, true)) {
+                return '0';
+            }
+
+            return $default;
+        }
+
+        return (string) $value;
     }
 
     public static function set(string $key, ?string $value): void

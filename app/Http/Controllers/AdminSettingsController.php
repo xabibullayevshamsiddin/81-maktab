@@ -19,13 +19,23 @@ class AdminSettingsController extends Controller
         'announcement_text',
         'announcement_type',
         'announcement_active',
+        'global_chat_enabled',
+        'global_chat_disabled_message',
+        'ai_chat_enabled',
+        'ai_chat_disabled_message',
     ];
 
     public function index()
     {
+        $defaults = [
+            'announcement_active' => '0',
+            'announcement_type' => 'info',
+            'global_chat_enabled' => '1',
+            'ai_chat_enabled' => '1',
+        ];
         $settings = [];
         foreach (self::KEYS as $key) {
-            $settings[$key] = SiteSetting::get($key, '');
+            $settings[$key] = SiteSetting::get($key, $defaults[$key] ?? '');
         }
 
         return view('admin.settings.index', compact('settings'));
@@ -45,9 +55,22 @@ class AdminSettingsController extends Controller
             'announcement_text' => ['nullable', 'string', 'max:500'],
             'announcement_type' => ['nullable', 'string', 'in:info,success,warning,danger'],
             'announcement_active' => ['nullable', 'string', 'in:1,0'],
+            'global_chat_enabled' => ['nullable', 'string', 'in:1,0'],
+            'global_chat_disabled_message' => ['nullable', 'string', 'max:1000'],
+            'ai_chat_enabled' => ['nullable', 'string', 'in:1,0'],
+            'ai_chat_disabled_message' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $toggleKeys = ['announcement_active', 'global_chat_enabled', 'ai_chat_enabled'];
+
         foreach (self::KEYS as $key) {
+            if (in_array($key, $toggleKeys, true)) {
+                $v = $request->input($key);
+                SiteSetting::set($key, ((string) $v) === '1' ? '1' : '0');
+
+                continue;
+            }
+
             SiteSetting::set($key, $validated[$key] ?? null);
         }
 

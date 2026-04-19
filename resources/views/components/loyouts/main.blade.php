@@ -411,6 +411,10 @@
 
     @auth
       @unless($isExamSessionRoute)
+      @php
+        $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
+        $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: 'Global chat vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.';
+      @endphp
       <div id="chat-widget" class="chat-widget"
         data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
         data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
@@ -419,6 +423,8 @@
         data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
         data-csrf="{{ csrf_token() }}"
         data-user-id="{{ auth()->id() }}"
+        data-chat-enabled="{{ $globalChatEnabled ? '1' : '0' }}"
+        data-chat-disabled-message="{{ e($globalChatDisabledMsg) }}"
       >
         <button type="button" class="chat-bubble" id="chat-bubble" aria-label="Chat">
           <i class="fa-solid fa-comments"></i>
@@ -440,10 +446,15 @@
               </button>
             </div>
           </div>
+          <div id="chat-disabled-panel" class="chat-disabled-panel" @if($globalChatEnabled) hidden @endif>
+            <div class="chat-disabled-panel-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+            <p id="chat-disabled-panel-text" class="chat-disabled-panel-text"></p>
+          </div>
+          <div id="chat-panel-main" class="chat-panel-main" @if(!$globalChatEnabled) hidden @endif>
           <div class="chat-panel-intro">
             <div class="chat-panel-kicker">
-              <span class="chat-panel-live-dot" aria-hidden="true"></span>
-              <span>Jonli suhbat</span>
+              <span class="chat-panel-live-dot chat-panel-live-dot--channel" aria-hidden="true"></span>
+              <span>Umumiy chat</span>
             </div>
             <p class="chat-panel-subtitle">Savol bering, tezkor fikr yozing yoki sticker bilan javob qoldiring.</p>
           </div>
@@ -456,7 +467,9 @@
               <li>Muammo bo‘lsa admin/moderator xabarni o‘chirishi yoki foydalanuvchini cheklashi mumkin.</li>
             </ul>
           </details>
-          <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          <div class="chat-feed-stack">
+            <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          </div>
           <div class="chat-compose-status" id="chat-compose-status" hidden>
             <span class="chat-compose-status-icon" aria-hidden="true">
               <i class="fa-solid fa-pen-nib"></i>
@@ -490,6 +503,7 @@
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </form>
+          </div>
         </div>
       </div>
 
@@ -550,6 +564,11 @@
     @endif
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    @unless($isExamSessionRoute)
+    {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
+    <div id="prime-audio-slot" class="prime-audio-slot"></div>
+    @endunless
 
     <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
     <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
@@ -696,10 +715,21 @@
     @endunless
     @auth
     @unless(request()->routeIs('exam.session'))
-    <div id="ai-widget" class="ai-widget" data-ai-url="{{ route('ai.chat') }}" data-csrf="{{ csrf_token() }}">
-      <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="AI Yordamchi" style="width:70px; height:70px; border-radius:24px; background:linear-gradient(135deg, #a855f7, #6366f1, #3b82f6); display:flex; align-items:center; justify-content:center; flex-direction:column; color:#fff; font-size:26px; border:2px solid rgba(255,255,255,0.4); box-shadow:0 12px 34px rgba(99,102,241,0.5); cursor:pointer; overflow:hidden;">
-        <i class="fa-solid fa-magic-wand-sparkles" style="margin-bottom:2px"></i>
-        <span style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px">AI Bot</span>
+    @php
+      $aiChatEnabled = \App\Models\SiteSetting::get('ai_chat_enabled', '1') === '1';
+      $aiChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('ai_chat_disabled_message', '')) ?: 'AI yordamchi vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.';
+    @endphp
+    <div
+      id="ai-widget"
+      class="ai-widget"
+      data-ai-url="{{ route('ai.chat') }}"
+      data-csrf="{{ csrf_token() }}"
+      data-ai-mock-delim="{{ config('ai.mock_delimiter') }}"
+      data-ai-enabled="{{ $aiChatEnabled ? '1' : '0' }}"
+      data-ai-disabled-message="{{ e($aiChatDisabledMsg) }}"
+    >
+      <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="AI Yordamchi" title="AI Yordamchi">
+        <i class="fa-solid fa-magic-wand-sparkles" aria-hidden="true"></i>
       </button>
 
       <div class="chat-panel ai-panel" id="ai-panel">
@@ -714,13 +744,19 @@
             </button>
           </div>
         </div>
+        <div id="ai-disabled-panel" class="ai-disabled-panel chat-disabled-panel" @if($aiChatEnabled) hidden @endif>
+          <div class="chat-disabled-panel-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+          <p id="ai-disabled-panel-text" class="chat-disabled-panel-text"></p>
+        </div>
+        <div id="ai-panel-main" class="ai-panel-main" @if(!$aiChatEnabled) hidden @endif>
         <div class="chat-panel-intro">
           <div class="chat-panel-kicker">
-            <span class="chat-panel-live-dot" style="background:#10b981" aria-hidden="true"></span>
-            <span>Online AI</span>
+            <span class="chat-panel-live-dot chat-panel-live-dot--ai" aria-hidden="true"></span>
+            <span>AI yordamchi</span>
           </div>
-          <p class="chat-panel-subtitle">Assalomu alaykum! Maktabimiz haqida har qanday savolingizga javob beraman!</p>
+          <p class="chat-panel-subtitle">Assalomu alaykum! Maktabimiz haqida savolingizni yozing — javob avvalo saytdagi ma’lumotlar va admin bilim bazasidan, keyin esa tashqi AI dan keladi.</p>
         </div>
+
         <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
           <div class="chat-msg is-ai reveal">
             <div class="chat-msg-content">Salom! Men 81-maktabning AI yordamchisiman. Sizga qanday yordam bera olaman? 😊</div>
@@ -733,25 +769,26 @@
           <span class="chat-compose-status-text">O'ylamoqda...</span>
         </div>
 
-        <div class="ai-quick-actions" style="display:flex; gap:8px; padding:0 12px 10px; overflow-x:auto; scrollbar-width:none">
+        <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
           <button type="button" class="ai-action-btn" data-msg="Bugun qanday darslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Darslar 🗓️</button>
-          <button type="button" class="ai-action-btn" data-msg="Mening natijalarim qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Natijalarim 📝</button>
-          <button type="button" class="ai-action-btn" data-msg="Maktab manzili qayerda?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Manzil 📍</button>
+          <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Natijalarim 📝</button>
+          <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer">Aloqa 📞</button>
         </div>
 
         <form class="chat-input-wrap" id="ai-chat-form">
           <textarea
             class="chat-textarea"
             id="ai-textarea"
-            placeholder="Savolingizni yozing..."
+            placeholder="savolingizni kiriting..."
             rows="1"
-            maxlength="800"
+            maxlength="5000"
             style="resize:none; padding:10px; border-radius:12px; font-family:inherit"
           ></textarea>
           <button type="submit" class="chat-send-btn" id="ai-send-btn" aria-label="Yuborish">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </form>
+        </div>
       </div>
     </div>
     @endunless
@@ -773,20 +810,41 @@
 
         var aiUrl = widget.getAttribute('data-ai-url');
         var csrfToken = widget.getAttribute('data-csrf');
+        var aiMockDelim = widget.getAttribute('data-ai-mock-delim') || '';
         var headerToggle = document.getElementById('ai-header-toggle');
         var isSending = false;
+        var aiDisabledPanel = document.getElementById('ai-disabled-panel');
+        var aiPanelMain = document.getElementById('ai-panel-main');
+        var aiDisabledText = document.getElementById('ai-disabled-panel-text');
+        var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
+
+        function closePanel() {
+          panel.classList.remove('is-open');
+        }
 
         function openPanel() {
-          console.log('Opening AI Panel');
+          if (typeof window.primeCloseGlobalChatPanel === 'function') {
+            window.primeCloseGlobalChatPanel();
+          }
           panel.classList.add('is-open');
+          if (!aiEnabled && aiDisabledPanel && aiPanelMain) {
+            aiPanelMain.hidden = true;
+            aiDisabledPanel.hidden = false;
+            if (aiDisabledText) {
+              aiDisabledText.textContent = widget.getAttribute('data-ai-disabled-message') || 'AI yordamchi vaqtincha o‘chirilgan.';
+            }
+            if (window.playPrimeSuccess) window.playPrimeSuccess();
+            return;
+          }
+          if (aiDisabledPanel) aiDisabledPanel.hidden = true;
+          if (aiPanelMain) aiPanelMain.hidden = false;
           if (window.playPrimeSuccess) window.playPrimeSuccess();
           input.focus();
         }
 
-        function closePanel() {
-          console.log('Closing AI Panel');
-          panel.classList.remove('is-open');
-        }
+        window.primeCloseAiPanel = function() {
+          if (panel.classList.contains('is-open')) closePanel();
+        };
 
         function togglePanel(e) {
           e.preventDefault();
@@ -816,6 +874,12 @@
           messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
         }
 
+        function stripMockTailForDisplay(full) {
+          if (!aiMockDelim || full.indexOf(aiMockDelim) === -1) return full;
+          var head = full.split(aiMockDelim)[0].trim();
+          return head || '…';
+        }
+
         function addMessage(text, isAi) {
           if (!text || !text.trim()) return;
           var el = document.createElement('div');
@@ -840,12 +904,13 @@
 
         form.addEventListener('submit', function (e) {
           e.preventDefault();
+          if (!aiEnabled) return;
           var txt = input.value.trim();
           if (!txt || isSending) return;
 
           console.log('Sending message:', txt);
           isSending = true;
-          addMessage(txt, false);
+          addMessage(stripMockTailForDisplay(txt), false);
           input.value = '';
           sendBtn.disabled = true;
           if (window.playPrimeChatTick) window.playPrimeChatTick();
@@ -858,12 +923,13 @@
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
             body: JSON.stringify({ message: txt })
           })
-          .then(function(res) { 
-             console.log('Fetch response status:', res.status);
-             return res.json(); 
+          .then(function(res) {
+            return res.json().then(function(data) {
+              return { ok: res.ok, status: res.status, data: data };
+            });
           })
-          .then(function(data) {
-            console.log('AI Data received:', data);
+          .then(function(payload) {
+            var data = payload.data;
             statusWrap.style.display = 'none';
             statusWrap.setAttribute('hidden', '');
             isSending = false;
@@ -871,8 +937,12 @@
             if (data && data.success) {
               addMessage(data.text, true);
               if (window.playPrimeResultPass) window.playPrimeResultPass();
+            } else if (data && data.disabled) {
+              aiEnabled = false;
+              widget.setAttribute('data-ai-enabled', '0');
+              addMessage(data.error || 'AI vaqtincha o‘chirilgan.', true);
             } else {
-              addMessage(data.error || "Xatolik yuz berdi.", true);
+              addMessage((data && data.error) || "Xatolik yuz berdi.", true);
             }
           })
           .catch(function(err) {
@@ -900,7 +970,7 @@
         var actionBtns = document.querySelectorAll('.ai-action-btn');
         actionBtns.forEach(function(btn) {
           btn.addEventListener('click', function() {
-             if (btn.disabled || isSending) return;
+             if (!aiEnabled || btn.disabled || isSending) return;
              
              // Visual feedback and cooldown
              actionBtns.forEach(b => {

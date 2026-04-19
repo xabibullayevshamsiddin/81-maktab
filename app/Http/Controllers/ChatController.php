@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\ChatMessage;
+use App\Models\SiteSetting;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Result;
@@ -19,6 +20,19 @@ class ChatController extends Controller
 
     public function messages(Request $request): JsonResponse
     {
+        if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
+            return response()->json([
+                'messages' => [],
+                'last_id' => (int) $request->query('after', 0),
+                'can_moderate' => false,
+                'chat_disabled' => true,
+                'disabled_message' => SiteSetting::get(
+                    'global_chat_disabled_message',
+                    'Global chat vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.'
+                ),
+            ]);
+        }
+
         $afterId = (int) $request->query('after', 0);
         $currentUser = $request->user()->loadMissing('roleRelation');
         $currentUserId = (int) $currentUser->id;
@@ -292,6 +306,16 @@ class ChatController extends Controller
 
     public function send(Request $request): JsonResponse
     {
+        if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
+            return response()->json([
+                'ok' => false,
+                'error' => SiteSetting::get(
+                    'global_chat_disabled_message',
+                    'Global chat vaqtincha o‘chirilgan.'
+                ),
+            ], 403);
+        }
+
         $user = $request->user();
 
         if (! $user->is_active) {

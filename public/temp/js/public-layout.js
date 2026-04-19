@@ -2054,6 +2054,11 @@
     var composeStatus = document.getElementById('chat-compose-status');
     var composeStatusText = document.getElementById('chat-compose-status-text');
 
+    var chatDisabledPanel = document.getElementById('chat-disabled-panel');
+    var chatPanelMain = document.getElementById('chat-panel-main');
+    var chatDisabledText = document.getElementById('chat-disabled-panel-text');
+    var chatEnabled = widget.getAttribute('data-chat-enabled') !== '0';
+
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
@@ -2105,6 +2110,9 @@
     }
 
     function openPanel() {
+      if (typeof window.primeCloseAiPanel === 'function') {
+        window.primeCloseAiPanel();
+      }
       positionPanel();
       panel.hidden = false;
       panel.classList.remove('is-closing');
@@ -2112,6 +2120,24 @@
       widget.classList.add('is-open');
       isOpen = true;
       if (badge) badge.hidden = true;
+
+      if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
+        if (fullBtn) fullBtn.style.display = 'none';
+        chatPanelMain.hidden = true;
+        chatDisabledPanel.hidden = false;
+        if (chatDisabledText) {
+          chatDisabledText.textContent = widget.getAttribute('data-chat-disabled-message') || 'Global chat vaqtincha o‘chirilgan.';
+        }
+        setTimeout(function () {
+          panel.classList.remove('is-opening');
+        }, 520);
+        return;
+      }
+
+      if (chatDisabledPanel) chatDisabledPanel.hidden = true;
+      if (chatPanelMain) chatPanelMain.hidden = false;
+      if (fullBtn) fullBtn.style.display = '';
+
       loadMessages();
       scrollDown();
       input.focus();
@@ -2144,6 +2170,7 @@
     }
 
     function toggleFullscreen() {
+      if (!fullBtn) return;
       var icon = fullBtn.querySelector('i');
       if (!panel.classList.contains('is-fullscreen')) {
         panel.classList.remove('is-fullscreen-exit');
@@ -2282,6 +2309,20 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          if (data.chat_disabled) {
+            chatEnabled = false;
+            widget.setAttribute('data-chat-enabled', '0');
+            stopPolling();
+            if (data.disabled_message && chatDisabledText) {
+              chatDisabledText.textContent = data.disabled_message;
+            }
+            if (isOpen && chatDisabledPanel && chatPanelMain) {
+              chatPanelMain.hidden = true;
+              chatDisabledPanel.hidden = false;
+              if (fullBtn) fullBtn.style.display = 'none';
+            }
+            return [];
+          }
           var msgs = data.messages || [];
           if (!msgs.length) return [];
 
@@ -2307,6 +2348,20 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          if (data.chat_disabled) {
+            chatEnabled = false;
+            widget.setAttribute('data-chat-enabled', '0');
+            stopPolling();
+            if (data.disabled_message && chatDisabledText) {
+              chatDisabledText.textContent = data.disabled_message;
+            }
+            if (isOpen && chatDisabledPanel && chatPanelMain) {
+              chatPanelMain.hidden = true;
+              chatDisabledPanel.hidden = false;
+              if (fullBtn) fullBtn.style.display = 'none';
+            }
+            return [];
+          }
           var msgs = data.messages || [];
           if (!msgs.length) return [];
           appendMessages(msgs, { fresh: true, burst: !!options.burst });
@@ -2329,6 +2384,7 @@
     }
 
     function sendMessage(text, options) {
+      if (!chatEnabled) return Promise.resolve();
       if (isSending) return Promise.resolve();
 
       options = options || {};
@@ -2503,7 +2559,7 @@
     });
 
     closeBtn.addEventListener('click', closePanel);
-    fullBtn.addEventListener('click', toggleFullscreen);
+    if (fullBtn) fullBtn.addEventListener('click', toggleFullscreen);
 
     window.addEventListener('resize', function () {
       if (!isOpen) return;
@@ -2513,6 +2569,7 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      if (!chatEnabled) return;
       var text = input.value.trim();
       if (!text || isSending) return;
       playPrimeChatTick(); // "chiqchiq" — eski click ovozi
@@ -2522,7 +2579,7 @@
     stickerButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {
         var sticker = btn.getAttribute('data-chat-sticker');
-        if (!sticker || isSending) return;
+        if (!chatEnabled || !sticker || isSending) return;
         btn.classList.add('is-fired');
         setTimeout(function () {
           btn.classList.remove('is-fired');
@@ -2619,6 +2676,10 @@
     chatPanelEscapeHandler = function () {
       if (isOpen) closePanel();
     };
+
+    window.primeCloseGlobalChatPanel = function () {
+      if (isOpen) closePanel();
+    };
   }
 
 
@@ -2642,7 +2703,12 @@
     toggle.id = 'prime-audio-control';
     toggle.innerHTML = '<i class="fa-solid ' + (primeAudioMuted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
     toggle.title = primeAudioMuted ? 'Ovozlarni yoqish' : 'Ovozlarni o‘chirish';
-    document.body.appendChild(toggle);
+    var audioSlot = document.getElementById('prime-audio-slot');
+    if (audioSlot) {
+      audioSlot.appendChild(toggle);
+    } else {
+      document.body.appendChild(toggle);
+    }
 
     toggle.addEventListener('click', function() {
       primeAudioMuted = !primeAudioMuted;
@@ -2656,16 +2722,6 @@
       }
     });
 
-    // Handle symmetrical position check (make sure it doesn't overlap chat if it moves)
-    const syncPos = () => {
-      const chatWidget = document.getElementById('chat-widget');
-      if (chatWidget && chatWidget.style.right && chatWidget.style.right !== 'auto') {
-        const r = parseInt(chatWidget.style.right);
-        if (r > 10) toggle.style.right = (r + 70) + 'px';
-      }
-    };
-    syncPos();
-    window.addEventListener('resize', syncPos);
   }
 
   function runInitializers() {

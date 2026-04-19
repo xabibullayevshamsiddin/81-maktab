@@ -269,7 +269,8 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 
     Route::middleware('role:super_admin')->group(function () {
-        Route::resource('settings', AdminSettingsController::class)->names('admin.settings')->only(['index', 'update']);
+        Route::get('settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
+        Route::put('settings', [AdminSettingsController::class, 'update'])->name('admin.settings.update');
         Route::resource('ai-knowledges', AdminAiKnowledgeController::class)->except('show');
     });
 });

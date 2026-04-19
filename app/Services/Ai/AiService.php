@@ -15,6 +15,7 @@ use App\Models\Result;
 use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class AiService
@@ -31,6 +32,11 @@ class AiService
         // 0. Smart analytics (intent-based, not keyword-locked)
         if ($analytics = $this->matchAnalyticalData($message)) {
             return ['success' => true, 'text' => $analytics, 'source' => 'analytics_data'];
+        }
+
+        // 0.05 Taqvim / sanaga bog‘liq tadbirlar (DB: calendar_events)
+        if ($calendar = $this->matchCalendarAndEvents($message)) {
+            return ['success' => true, 'text' => $calendar, 'source' => 'calendar_data'];
         }
 
         // 0.1 School profile / director / internal data summary
@@ -60,6 +66,179 @@ class AiService
 
         // 5. Fallback to Gemini API
         return $this->callGemini($message, $user);
+    }
+
+    /**
+     * Taqvimdagi tadbirlar: aniq sana (masalan 20 aprel) yoki «taqvim» so‘zi bilan yaqinlashuvchi voqealar.
+     */
+    private function matchCalendarAndEvents(string $message): ?string
+    {
+        $q = mb_strtolower(trim($message));
+
+        $hasCalendarWords = Str::contains($q, [
+            'taqvim', 'tadbir', 'kalendar', 'kalendr', 'sanada', 'voqea', 'voqe', 'jadval', 'calendar',
+        ]);
+
+        $parsedDate = $this->parseCalendarDateFromMessage($message);
+
+        $hasDateQuestionIntent = Str::contains($q, [
+            'nima', 'qanday', 'qachon', 'dars', 'kun', 'reja', 'uchrashuv', 'bo\'ladi', 'boladi', 'bo‘ladi',
+            'boshlan', 'tugay', 'bo\'ladi', 'qanaqa',
+        ]);
+
+        if ($parsedDate === null && ! $hasCalendarWords) {
+            return null;
+        }
+
+        // Sana topildi, lekin «taqvim» emas — faqat savol kontekstida (tug‘ilgan kun va hok. chalkashmasin)
+        if ($parsedDate !== null && ! $hasCalendarWords && ! $hasDateQuestionIntent) {
+            return null;
+        }
+
+        $maxEvents = max(1, (int) config('ai.calendar_max_events_per_answer', 15));
+        $maxBody = max(0, (int) config('ai.calendar_max_body_chars', 280));
+        $calendarUrl = route('calendar');
+
+        if ($parsedDate !== null) {
+            $rows = CalendarEvent::query()
+                ->whereDate('event_date', $parsedDate->format('Y-m-d'))
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->limit($maxEvents)
+                ->get();
+
+            $dateLabel = $parsedDate->format('d.m.Y');
+            if ($rows->isEmpty()) {
+                return "📅 **{$dateLabel}** sanasi bo‘yicha taqvimda tadbir yozuvi topilmadi.\n"
+                    . "📆 To‘liq jadval: {$calendarUrl}";
+            }
+
+            $lines = [];
+            foreach ($rows as $ev) {
+                $lines[] = $this->formatCalendarEventLine($ev, $maxBody);
+            }
+
+            return "📅 **{$dateLabel}** kuni taqvim bo‘yicha:\n"
+                . implode("\n\n", $lines)
+                . "\n\n📆 Batafsil: {$calendarUrl}";
+        }
+
+        $rows = CalendarEvent::query()
+            ->where('event_date', '>=', Carbon::today()->startOfDay())
+            ->orderBy('event_date')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->limit($maxEvents)
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return "📆 Hozircha rejalashtirilgan yaqin tadbirlar yo‘q.\n"
+                . "Taqvim: {$calendarUrl}";
+        }
+
+        $lines = [];
+        foreach ($rows as $ev) {
+            $d = $ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date);
+            $lines[] = '• ' . $d->format('d.m.Y') . ' — ' . $this->formatCalendarEventLine($ev, $maxBody);
+        }
+
+        return "📆 **Yaqinlashayotgan tadbirlar** (oxirgi {$maxEvents} ta):\n"
+            . implode("\n\n", $lines)
+            . "\n\n📆 To‘liq taqvim: {$calendarUrl}";
+    }
+
+    private function formatCalendarEventLine(CalendarEvent $ev, int $maxBody): string
+    {
+        $title = localized_model_value($ev, 'title');
+        $time = localized_model_value($ev, 'time_note');
+        $body = localized_model_value($ev, 'body');
+        $line = $title;
+        if (filled($time)) {
+            $line .= "\n  ⏱ " . $time;
+        }
+        if ($maxBody > 0 && filled($body)) {
+            $plain = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $body)) ?? '');
+            $line .= "\n  " . Str::limit($plain, $maxBody);
+        }
+
+        return $line;
+    }
+
+    private function parseCalendarDateFromMessage(string $message): ?Carbon
+    {
+        $q = mb_strtolower($message);
+        $tz = (string) config('app.timezone', 'UTC');
+
+        if (preg_match('/\bbugun\b/u', $q)) {
+            return Carbon::now($tz)->startOfDay();
+        }
+        if (preg_match('/\bertaga\b/u', $q)) {
+            return Carbon::now($tz)->addDay()->startOfDay();
+        }
+
+        $year = (int) Carbon::now($tz)->year;
+        if (preg_match('/\b(20[0-9]{2})\b/', $message, $ym)) {
+            $y = (int) $ym[1];
+            if ($y >= 2000 && $y <= 2100) {
+                $year = $y;
+            }
+        }
+
+        $monthRx = $this->calendarMonthRegexFragment();
+
+        if (preg_match('/\b([1-9]|[12]\d|3[01])\s*[-]?\s*(' . $monthRx . ')\b/u', $q, $m)) {
+            $day = (int) $m[1];
+            $month = $this->monthNameToNumber($m[2]);
+            if ($month !== null) {
+                return $this->safeCalendarDate($year, $month, $day, $tz);
+            }
+        }
+
+        if (preg_match('/\b(' . $monthRx . ')\s*[-]?\s*([1-9]|[12]\d|3[01])\b/u', $q, $m)) {
+            $month = $this->monthNameToNumber($m[1]);
+            $day = (int) $m[2];
+            if ($month !== null) {
+                return $this->safeCalendarDate($year, $month, $day, $tz);
+            }
+        }
+
+        return null;
+    }
+
+    private function calendarMonthRegexFragment(): string
+    {
+        return 'yanvar(?:da|dan|dagi)?|fevral(?:da|dan|dagi)?|mart(?:da|dan|dagi)?|aprel(?:da|dan|dagi)?|april(?:da|dan|dagi)?'
+            . '|may(?:da|dan|dagi)?|iyun(?:da|dan|dagi)?|iyul(?:da|dan|dagi)?|avgust(?:da|dan|dagi)?'
+            . '|sentyabr(?:da|dan|dagi)?|oktyabr(?:da|dan|dagi)?|noyabr(?:da|dan|dagi)?|dekabr(?:da|dan|dagi)?';
+    }
+
+    private function monthNameToNumber(string $name): ?int
+    {
+        $base = mb_strtolower(preg_replace('/(da|dan|dagi)$/u', '', mb_strtolower(trim($name))) ?? '');
+        $map = [
+            'yanvar' => 1, 'fevral' => 2, 'mart' => 3, 'aprel' => 4, 'april' => 4,
+            'may' => 5, 'iyun' => 6, 'iyul' => 7, 'avgust' => 8,
+            'sentyabr' => 9, 'oktyabr' => 10, 'noyabr' => 11, 'dekabr' => 12,
+        ];
+
+        return $map[$base] ?? null;
+    }
+
+    private function safeCalendarDate(int $year, int $month, int $day, string $tz): ?Carbon
+    {
+        if ($day < 1 || $day > 31 || $month < 1 || $month > 12) {
+            return null;
+        }
+        try {
+            $d = Carbon::createFromDate($year, $month, $day, $tz)->startOfDay();
+            if ((int) $d->day !== $day || (int) $d->month !== $month) {
+                return null;
+            }
+
+            return $d;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -578,7 +757,15 @@ class AiService
         $model = (string) config('services.gemini.model', 'gemini-1.5-flash');
 
         if ($apiKey === '') {
-            return ['success' => false, 'error' => 'API Key missing'];
+            $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
+                . "• Maktab haqida ma'lumotlar 🏫\n"
+                . "• Eng so'nggi yangiliklar va tadbirlar 📅\n"
+                . "• Kurslar va ustozlar haqida 👨‍🏫\n"
+                . "• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
+                . "GEMINI_API_KEY sozlanmagani uchun tashqi AI o‘chiq. Admin bilim bazasi va sayt ichki ma’lumotlari ishlaydi.\n"
+                . "Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
+
+            return ['success' => true, 'text' => $fallbackText, 'source' => 'no_gemini_key'];
         }
 
         $systemInstruction = $this->buildSystemInstruction($user);
