@@ -11722,6 +11722,12 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 /* --- LIGHT MODE INNER PAGE NAVBAR FIX --- */
+:root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(13, 63, 120, 0.1) !important;
+  box-shadow: 0 4px 20px rgba(13, 63, 120, 0.05);
+}
+
 :root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .nav-link,
 :root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .lang,
 :root:not([data-theme='dark']) .page-inner .header-main:not(.scrolled) .header-user-name,
