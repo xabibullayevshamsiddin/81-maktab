@@ -28,7 +28,7 @@
   }
 
   .site-shell img,
-  .site-shell video,
+  .site-shell video:not(.bg-video),
   .site-shell iframe,
   .site-shell svg,
   .site-shell canvas {
