@@ -11696,3 +11696,27 @@ body:has(#chat-widget) .prime-audio-toggle {
       0 2px 24px rgba(0, 14, 40, 0.6),
       0 1px 0 rgba(255, 255, 255, 0.1);
 }
+
+/* --- GLOBAL DAY MODE INPUT ACCESSIBILITY FIX --- */
+:root:not([data-theme='dark']) input,
+:root:not([data-theme='dark']) textarea,
+:root:not([data-theme='dark']) select {
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+:root:not([data-theme='dark']) input::placeholder,
+:root:not([data-theme='dark']) textarea::placeholder {
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+
+/* AI Chat input override for day mode if needed */
+:root:not([data-theme='dark']) .chat-input {
+  background-color: #ffffff !important;
+  color: #11243d !important;
+}
+:root:not([data-theme='dark']) .chat-input::placeholder {
+  color: #5e7088 !important;
+}
