@@ -488,10 +488,16 @@ class AiService
     {
         $q = $this->cleanMessage($message);
 
+        $wantsCount = Str::contains($q, ['nechta', 'qancha', 'soni', 'statistika', 'jami', 'umumiy', 'ta', 'miqdor']);
+        $wantsGrowth = Str::contains($q, ['osish', 'o\'sish', 'kopay', 'ko\'pay', 'kamay', 'dinamika', 'taqqos', 'solishtir']);
+        $wantsRanking = preg_match('/\b(eng kop|eng ko\'p|top|mashhur|popular|least|eng kam)\b/i', $q) === 1;
+
+        if (! $wantsCount && ! $wantsGrowth && ! $wantsRanking) {
+            return null; // Tahliliy maqsad (intent) yo'q
+        }
+
         $entities = $this->extractRequestedEntities($q);
         $period = $this->extractRequestedPeriod($q);
-        $wantsGrowth = Str::contains($q, ['osish', 'o\'sish', 'kopay', 'ko\'pay', 'kamay', 'dinamika', 'taqqos', 'solishtir']);
-        $wantsRanking = Str::contains($q, ['eng kop', 'eng ko\'p', 'top', 'mashhur', 'popular', 'least', 'eng kam']);
 
         if ($entities === [] && ! $wantsRanking) {
             return null;

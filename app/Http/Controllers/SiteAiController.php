@@ -74,10 +74,11 @@ class SiteAiController extends Controller
             ]);
         }
 
-        if (! $user->isAdmin() && ! $this->consumeDailyQuestionQuota((int) $user->id)) {
+        $userLimit = $this->getUserDailyLimit($user);
+        if ($userLimit !== -1 && ! $this->consumeDailyQuestionQuota((int) $user->id, $userLimit)) {
             return response()->json([
                 'success' => true,
-                'text' => "📌 Sizning kunlik limitingiz tugadi. Kuniga faqat " . self::DAILY_QUESTION_LIMIT_PER_USER . " ta savol yubora olasiz. Ertaga yana yozib ko'ring. 😊",
+                'text' => "📌 Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring. 😊",
                 'source' => 'daily_limit',
             ]);
         }
@@ -148,7 +149,18 @@ class SiteAiController extends Controller
         return $clean;
     }
 
-    private function consumeDailyQuestionQuota(int $userId): bool
+    private function getUserDailyLimit($user): int
+    {
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
+            return -1; // unlimited
+        }
+        if ($user->isTeacher() || $user->isEditor() || $user->isModerator()) {
+            return 10;
+        }
+        return 7;
+    }
+
+    private function consumeDailyQuestionQuota(int $userId, int $limit): bool
     {
         $todayKey = now()->format('Ymd');
         $counterKey = "ai:user:{$userId}:daily:{$todayKey}";
@@ -160,6 +172,6 @@ class SiteAiController extends Controller
             $count = 1;
         }
 
-        return $count <= self::DAILY_QUESTION_LIMIT_PER_USER;
+        return $count <= $limit;
     }
 }
