@@ -11,10 +11,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
+# Dependency install (dev tools yo'q)
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
+# Build vaqtida minimal .env bilan key yaratamiz
 RUN echo "APP_KEY=" > .env && php artisan key:generate
 
 EXPOSE 8080
 
-CMD php artisan config:clear && (php artisan storage:link || true) && php artisan migrate --force && php -S 0.0.0.0:${PORT:-8080} -t public
+# Ishga tushganda: storage link, migrate, keyin serve
+CMD php artisan storage:link --force 2>/dev/null || true \
+    && php artisan migrate --force \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache \
+    && php -S 0.0.0.0:${PORT:-8080} -t public

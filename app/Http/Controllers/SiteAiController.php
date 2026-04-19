@@ -117,27 +117,30 @@ class SiteAiController extends Controller
     private function decorateAiText(string $text, string $userMessage): string
     {
         $clean = trim((string) preg_replace('/\s+/u', ' ', $text));
+
         if ($clean === '') {
             return "✨ Kechirasiz, hozir javob bo'sh chiqdi. Iltimos, savolni qayta yuboring.";
         }
 
+        // Markdown belgilarini olib tashlaymiz
         $clean = preg_replace('/[*_#`>\-]+/u', '', $clean) ?? $clean;
 
         $q = mb_strtolower($userMessage);
-        $isImportantQuery = Str::contains($q, [
-            'muhim', 'qanday', 'nima', 'qayer', 'kim', 'narx', 'vaqt', 'muddat', 'aloqa',
-        ]);
 
-        if ($isImportantQuery && ! Str::contains(mb_strtolower($clean), 'muhim:')) {
-            $parts = preg_split('/(?<=[.!?])\s+/u', $clean, 2);
-            $first = trim((string) ($parts[0] ?? $clean));
-            $rest = trim((string) ($parts[1] ?? ''));
-
-            if ($rest !== '') {
-                return "📌 MUHIM: {$first}\n✨ {$rest}";
+        // Muhim savollarga MUHIM: prefiksi
+        $importantKeywords = ['muhim', 'qanday', 'nima', 'qayer', 'kim', 'narx', 'vaqt', 'muddat', 'aloqa'];
+        if (Str::contains($q, $importantKeywords) && ! Str::contains(mb_strtolower($clean), 'muhim:')) {
+            if (preg_match('/(?<=[.!?])\s+/u', $clean)) {
+                $parts = preg_split('/(?<=[.!?])\s+/u', $clean, 2);
+                $first = trim((string) ($parts[0] ?? $clean));
+                $rest  = trim((string) ($parts[1] ?? ''));
+                if ($rest !== '') {
+                    return "📌 MUHIM: {$first}\n✨ {$rest}";
+                }
             }
         }
 
+        // Emoji yo'q bo'lsa — ✨ qo'shamiz
         if (! preg_match('/[\x{1F300}-\x{1FAFF}✅✨📌🚀]/u', $clean)) {
             return "✨ {$clean}";
         }

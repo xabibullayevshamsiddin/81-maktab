@@ -361,7 +361,7 @@ class AiService
             $teachers = Teacher::count();
             $users = \App\Models\User::count();
             $results = Result::count();
-            
+
             return "Bizning maktabimiz haqida qisqacha ma'lumotlar:\n"
                 . "• Ustozlarimiz soni: **{$teachers} ta** 👨‍🏫\n"
                 . "• Ro'yxatdan o'tgan o'quvchilar: **{$users} ta** 🎓\n"
@@ -369,17 +369,21 @@ class AiService
                 . "Biz doimo o'sib bormoqdamiz! 🚀";
         }
 
-        // 2. Contact & Location
+        // 2. Contact & Location — admin paneldan olinadi (SiteSetting orqali)
         if ($this->isMatch($q, $qClean, ['telefon', 'raqam', 'nomer', 'manzil', 'lokatsiya', 'qayerda', 'aloqa'])) {
+            $phone   = SiteSetting::get('school_phone', '+998 71 123 45 67');
+            $address = SiteSetting::get('school_address', (string) __('public.about.quick_facts.0.value'));
+
             return "Biz bilan bog'lanish uchun:\n"
-                . "📞 Telefon: **+998 71 123 45 67**\n"
-                . "📍 Manzil: **Toshkent viloyati, Zangiota tumani**\n"
+                . "📞 Telefon: **{$phone}**\n"
+                . "📍 Manzil: **{$address}**\n"
                 . "Batafsil ma'lumotni 'Aloqa' sahifasidan olishingiz mumkin. ✨";
         }
 
         // 3. School Identity / Principal
         if ($this->isMatch($q, $qClean, ['direktor', 'maktab haqida', 'idum nima', '81'])) {
-            $schoolName = (string) __('public.layout.school_name');
+            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
             return "**{$schoolName}** - bu zamonaviy ta'lim texnologiyalari va tajribali ustozlar jamlangan ilm maskani. ✨\n"
                 . "Direktor va ma'muriyat haqida ma'lumot 'Maktab ma'muriyati' bo'limida keltirilgan. 😊";
         }
