@@ -247,13 +247,44 @@ class AiService
     private function matchStaticKnowledge(string $message): ?string
     {
         $q = $this->cleanMessage($message);
+        $hour = (int) Carbon::now((string) config('app.timezone', 'UTC'))->format('H');
 
-        // Greetings & Persona
-        if (Str::contains($q, ['salom', 'assalom', 'qalay', 'ishlar', 'hayrli tun', 'hayrli kun', 'keling'])) {
-            return "Assalomu alaykum! Men 81-IDUM saytining aqlli yordamchisiman. Sizga qanday yordam bera olaman? 😊🚀";
+        // Salom / Xayrli
+        $greetWords = ['salom', 'assalom', 'assalomu alaykum', 'alaykum', 'hayrli', 'xayrli',
+            'qalay', 'ishlar', 'keling', 'xush kelibsiz', 'hi ', 'hey ', 'hello'];
+        if (Str::contains($q, $greetWords)) {
+            if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
+            elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
+            elseif ($hour >= 17 && $hour < 22) $greeting = 'Hayrli kech';
+            else $greeting = 'Assalomu alaykum';
+
+            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+            return "{$greeting}! 😊 Men **{$schoolName}** saytining AI yordamchisiman.\n"
+                . "Quyidagi mavzularda yordam bera olaman:\n"
+                . "• Maktab, kurslar, o'qituvchilar haqida 🏫\n"
+                . "• Imtihon natijalari va taqvim 📅\n"
+                . "• Matematika, fan, tarix va boshqa umumiy bilim savollar 📚\n"
+                . "• Ota-onalar va o'quvchilar uchun ma'lumotlar 👨‍👩‍👧\n\n"
+                . "Savolingizni yozing! 🚀";
         }
 
-        if (Str::contains($q, ['kim yasagan', 'muallif', 'kim yaratgan', 'saytni kim'])) {
+        // Xayr / Ko'rishguncha
+        if (Str::contains($q, ['xayr', 'ko\'rishguncha', 'sog\'lik', 'hayr', 'bye', 'goodbye', 'chao'])) {
+            return "Xayr! 👋 Sizga yordam bera olganimdan mamnunman. Yana savollaringiz bo'lsa, doim shu yerdaman! 😊✨";
+        }
+
+        // Rahmat
+        if (Str::contains($q, ['rahmat', 'katta rahmat', 'minnatdor', 'bor bo\'ling', 'tashakkur', 'raxmat', 'thanks', 'thank you'])) {
+            return "Arziydi! 😊 Yordam bera olganimdan xursandman. Boshqa savollaringiz bo'lsa, yozing! ✅";
+        }
+
+        // Kimsan / Qandaysan
+        if (Str::contains($q, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan', 'sen kimsan', 'siz kimsiz'])) {
+            return "Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, math va fan savollariga — hammaga javob berishga harakat qilaman. Savol bering! 🚀";
+        }
+
+        // Kim yaratgan
+        if (Str::contains($q, ['kim yasagan', 'muallif', 'kim yaratgan', 'saytni kim', 'developer', 'dasturchi'])) {
             $siteCreditsIntro = (string) __('public.about.site_credits_intro');
             $siteCredits = trans('public.about.site_credits_members');
             $names = [];
@@ -262,19 +293,19 @@ class AiService
                     if ($name = trim((string) ($member['name'] ?? ''))) $names[] = $name;
                 }
             }
-            return $siteCreditsIntro . ' Mualliflar: ' . implode(', ', $names) . '.';
+            $nameStr = empty($names) ? 'Jamoa' : implode(', ', $names);
+            return "{$siteCreditsIntro} ✨ Mualliflar: **{$nameStr}**. 👨‍💻";
         }
 
-        if (Str::contains($q, ['admin', 'boshqaruvchi', 'kim yuritadi', 'mas\'ul', 'yordamchi'])) {
-            return "Hozirgi paytda saytni Xabibullayev Shamsiddin boshqaradi. Qolgan hamkorlar moderator va editor sifatida yordam beradi. ✨";
+        // Admin / Boshqaruvchi
+        if (Str::contains($q, ['admin', 'boshqaruvchi', 'kim yuritadi', 'mas\'ul'])) {
+            return "Hozirgi paytda saytni **Xabibullayev Shamsiddin** boshqaradi. Qolgan hamkorlar moderator va editor sifatida yordam beradi. ✨";
         }
 
-        if (Str::contains($q, ['rahmat', 'katta rahmat', 'minnatdor', 'bor bo\'ling'])) {
-            return "Arziydi! Sizga yordam berganimdan xursandman. Savollaringiz bo'lsa, har doim tayyorman! 😊✅";
-        }
-
-        if (Str::contains($q, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan'])) {
-            return "Men 81-IDUM saytining virtual yordamchisiman. Maktab, darslar, yangiliklar va natijalaringiz haqida savollarga javob bera olaman. ✨🚀";
+        // Hozir soat nechchi / bugungi sana
+        if (Str::contains($q, ['soat nech', 'vaqt nech', 'bugun necha', 'bugungi sana', 'nechinchi'])) {
+            $now = Carbon::now((string) config('app.timezone', 'UTC'));
+            return "🕐 Hozir soat **{$now->format('H:i')}** ({$now->format('d.m.Y')}, {$now->translatedFormat('l')}).";
         }
 
         return null;
@@ -681,57 +712,71 @@ class AiService
         $qClean = $this->cleanMessage($q);
 
         // 1. User Results
-        if ($this->isMatch($q, $qClean, ['natija', 'bal', 'imtihonim', 'score', 'imtihon natija'])) {
-            if (!$user) return "Sizning natijalaringizni ko'rish uchun avval tizimga kiring. 😊";
-
+        if ($this->isMatch($q, $qClean, ['natija', 'ball', 'bal', 'imtihonim', 'score', 'imtihon natija', 'ochko', 'foiz'])) {
+            if (! $user) {
+                return "Sizning natijalaringizni ko'rish uchun avval tizimga kiring. 😊";
+            }
             $lastResult = Result::where('user_id', $user->id)->with('exam')->latest()->first();
             if ($lastResult) {
-                $status = $lastResult->passed ? "o'tdingiz ✅" : "yeta olmadingiz ❌";
-                return "Sizning oxirgi imtihoningiz: **{$lastResult->exam->title}**.\nNatijangiz: **{$lastResult->score}%**. Siz ushbu imtihondan {$status}.\nBatafsil ma'lumotni 'Profil' bo'limida ko'rishingiz mumkin. 🎓";
+                $passed = $lastResult->passed;
+                $status = $passed === true ? "o'tdingiz ✅" : ($passed === false ? "yeta olmadingiz ❌" : "natija tekshirilmoqda ⏳");
+                $points = $lastResult->points_earned !== null
+                    ? " ({$lastResult->points_earned}/{$lastResult->points_max} ball)"
+                    : '';
+                return "Sizning oxirgi imtihoningiz: **{$lastResult->exam->title}**{$points}.\n"
+                    . "Natijangiz: **{$lastResult->score}%** — {$status}.\n"
+                    . "Batafsil ma'lumotni 'Profil' bo'limida ko'rishingiz mumkin. 🎓";
             }
-            return "Siz hali imtihon topshirmagansiz yoki natijalaringiz hali chiqmagan. 📝";
+            return "Siz hali imtihon topshirmagansiz. Imtihon bo'limiga o'tib sinab ko'ring! 📝";
         }
 
         // 2. User Profile
-        if ($this->isMatch($q, $qClean, ['men kimman', 'ismim nima', 'profilim', 'akkauntim'])) {
-            if (!$user) return "Siz tizimga kirmagansiz. Iltimos, ro'yxatdan o'ting! 😊";
-            return "Sizning ismingiz **{$user->first_name} {$user->last_name}**. Siz saytimizda **{$user->role_label}** maqomiga egasiz. ✨";
+        if ($this->isMatch($q, $qClean, ['men kimman', 'ismim nima', 'profilim', 'akkauntim', 'mening ismim', 'mening rolim'])) {
+            if (! $user) {
+                return "Siz tizimga kirmagansiz. Iltimos, ro'yxatdan o'ting! 😊";
+            }
+            return "Sizning ismingiz **{$user->first_name} {$user->last_name}**. "
+                . "Siz saytimizda **{$user->role_label}** maqomiga egasiz. ✨";
         }
 
-        // 3. Courses
-        if ($this->isMatch($q, $qClean, ['kurs', 'dars', 'o\'quv', 'fanlar', 'kusrlar'])) {
-            $courses = Course::where('status', 'published')->latest()->take(3)->get();
+        // 3. Courses — kengaytirilgan sinonimlar
+        if ($this->isMatch($q, $qClean, ['kurs', 'dars', "o'quv", 'fanlar', 'kusrlar', 'kurslar', 'o\'rganish', 'dastur', 'program'])) {
+            $courses = Course::where('status', 'published')->latest()->take(5)->get();
             if ($courses->isNotEmpty()) {
-                $list = $courses->map(fn($c) => "• {$c->title}")->implode("\n");
-                return "Hozirgi mavjud kurslarimiz:\n{$list}\nBatafsil ma'lumotni 'Kurslar' bo'limidan olishingiz mumkin. ✅";
+                $list = $courses->map(fn ($c) => "• {$c->title}")->implode("\n");
+                return "Hozirgi faol kurslarimiz:\n{$list}\n\nBatafsil: 'Kurslar' bo'limidan ko'rishingiz mumkin. ✅";
             }
-            return "Hozircha saytida kurslar haqida ma'lumot yo'q. Tez orada yangi kurslar qo'shiladi! 😊";
+            return "Hozircha nashr etilgan kurslar yo'q. Tez orada yangi kurslar qo'shiladi! 😊";
         }
 
-        // 4. Teachers
-        if ($this->isMatch($q, $qClean, ['ustoz', 'o\'qituvchi', 'domla', 'muallim', 'teacher'])) {
-            $teachers = Teacher::where('is_active', true)->latest()->take(5)->get();
+        // 4. Teachers — kengaytirilgan sinonimlar
+        if ($this->isMatch($q, $qClean, ['ustoz', "o'qituvchi", 'domla', 'muallim', 'teacher', 'pedagog', 'o\'qtuvchi', 'o\'qi'])) {
+            $teachers = Teacher::where('is_active', true)->latest()->take(6)->get();
             if ($teachers->isNotEmpty()) {
-                $list = $teachers->map(fn($t) => "• {$t->full_name} ({$t->subject})")->implode("\n");
-                return "Bizning ba'zi tajribali ustozlarimiz:\n{$list}\nTo'liq ro'yxatni 'Ustozlar' sahifasida ko'rishingiz mumkin. 👨‍🏫👩‍🏫";
+                $list = $teachers->map(fn ($t) => "• {$t->full_name}" . ($t->subject ? " — {$t->subject}" : ''))->implode("\n");
+                return "Bizning tajribali ustozlarimizdan ba'zilari:\n{$list}\n\nTo'liq ro'yxat: 'Ustozlar' sahifasida. 👨‍🏫";
             }
-            return "Hozircha o'qituvchilar haqida ma'lumot kiritilmagan. Keyinroq tekshirib ko'ring! ✨";
+            return "Hozircha o'qituvchilar ma'lumoti kiritilmagan. Keyinroq tekshirib ko'ring! ✨";
         }
 
-        // 5. News/Events
-        if ($this->isMatch($q, $qClean, ['yangilik', 'tadbir', 'nima gap', 'e\'lon', 'post'])) {
-            $posts = Post::latest()->take(2)->pluck('title')->toArray();
-            $events = CalendarEvent::where('event_date', '>=', now())->orderBy('event_date')->take(2)->pluck('title')->toArray();
-            
+        // 5. News/Events — kengaytirilgan sinonimlar
+        if ($this->isMatch($q, $qClean, ['yangilik', 'tadbir', 'nima gap', "e'lon", 'post', 'xabar', 'yangililar', 'voqea', 'maqola'])) {
+            $posts  = Post::latest()->take(3)->pluck('title')->toArray();
+            $events = CalendarEvent::where('event_date', '>=', now())->orderBy('event_date')->take(3)->pluck('title')->toArray();
+
             if (empty($posts) && empty($events)) {
-                return "Hozircha yangi xabarlar va tadbirlar yo'q. Bizni kuzatishda davom eting! ✨";
+                return "Hozircha yangi xabarlar va tadbirlar yo'q. Yana bir oz kutib ko'ring! ✨";
             }
 
-            $res = "So'nggi yangiliklarimiz:\n";
-            if (!empty($posts)) $res .= "• " . implode("\n• ", $posts) . "\n";
-            if (!empty($events)) $res .= "Yaqin kunlardagi tadbirlar:\n• " . implode("\n• ", $events);
-            
-            return $res;
+            $res = '';
+            if (! empty($posts)) {
+                $res .= "📰 **So'nggi yangiliklar:**\n• " . implode("\n• ", $posts) . "\n\n";
+            }
+            if (! empty($events)) {
+                $res .= "📅 **Yaqin kunlardagi tadbirlar:**\n• " . implode("\n• ", $events);
+            }
+
+            return trim($res);
         }
 
         return null;
@@ -824,10 +869,78 @@ class AiService
 
     private function buildSystemInstruction(?object $user): string
     {
-        $schoolName = (string) __('public.layout.school_name');
-        $userContext = $user ? "Foydalanuvchi ismi: {$user->first_name}. Unga ism bilan murojaat qiling.\n" : "";
-        
-        return "Siz {$schoolName} saytining aqlli yordamchisiz. Faqat o'zbek tilida, qisqa va emojilar bilan javob bering. 😊✨\n" . $userContext;
+        $tz          = (string) config('app.timezone', 'UTC');
+        $now         = Carbon::now($tz);
+        $schoolName  = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+        $phone       = SiteSetting::get('school_phone', '');
+        $address     = SiteSetting::get('school_address', '');
+        $email       = SiteSetting::get('school_email', '');
+
+        // Maktab statistikasi
+        $teacherCount = Teacher::where('is_active', true)->count();
+        $studentCount = \App\Models\User::whereHas('roleRelation', fn ($q) => $q->where('name', \App\Models\User::ROLE_USER))->count();
+        $courseCount  = Course::where('status', Course::STATUS_PUBLISHED)->count();
+
+        // O'qituvchilar ro'yxati (top 8)
+        $teachersList = Teacher::where('is_active', true)
+            ->latest('id')
+            ->take(8)
+            ->get()
+            ->map(fn ($t) => "- {$t->full_name}" . ($t->subject ? " ({$t->subject})" : ''))
+            ->implode("\n");
+
+        // Nashr etilgan kurslar (top 6)
+        $coursesList = Course::where('status', Course::STATUS_PUBLISHED)
+            ->latest('id')
+            ->take(6)
+            ->get()
+            ->map(fn ($c) => "- {$c->title}")
+            ->implode("\n");
+
+        // Foydalanuvchi konteksti
+        $userContext = '';
+        if ($user) {
+            $userContext = "\n\n=== FOYDALANUVCHI ==="
+                . "\nIsm: {$user->first_name} {$user->last_name}"
+                . "\nRol: {$user->role_label}"
+                . "\nFoydalanuvchiga ism bilan murojaat qiling.";
+        }
+
+        return <<<PROMPT
+Sen {$schoolName} maktabi veb-saytining universal AI yordamchisisiz.
+
+=== ASOSIY QO'LLANMA ===
+1. FAQAT O'ZBEK TILIDA javob ber.
+2. Har qanday savolga javob berishga harakat qil — maktab haqida ham, umumiy bilim (matematika, fizika, biologiya, tarix, geografiya, ingliz tili va boshqa fanlar) haqida ham.
+3. Javoblar qisqa, aniq va foydali bo'lsin. Emojilar qo'sh. ✨
+4. Agar maktabga oid ma'lumot so'ralsa, avvalo quyidagi ma'lumotlardan foydalan.
+5. Bilmagan narsani taxmin qilib javob berma — "Bu haqda aniq ma'lumotim yo'q" de.
+
+=== MAKTAB MA'LUMOTLARI ===
+Maktab nomi: {$schoolName}
+Telefon: {$phone}
+Manzil: {$address}
+Email: {$email}
+Faol o'qituvchilar: {$teacherCount} ta
+Ro'yxatdagi o'quvchilar: {$studentCount} ta
+Faol kurslar: {$courseCount} ta
+
+=== O'QITUVCHILAR (faollar) ===
+{$teachersList}
+
+=== MAVJud KURSLAR ===
+{$coursesList}
+
+=== HOZIRGI VAQT ===
+Sana: {$now->format('d.m.Y')}, {$now->translatedFormat('l')}
+Vaqt: {$now->format('H:i')} (Toshkent vaqti){$userContext}
+
+=== MUHIM ===
+- Maktab haqidagi savollarga yuqoridagi ma'lumotlardan foydalanib javob ber.
+- Umumiy bilim savollarga (masalan: "Pythagoras teoremasi?", "Suv formulasi?") — oddiy, tushunarli javob ber.
+- Siyosat, zararli kontent, noqonuniy narsalar haqida javob berma.
+- Javob 5-6 jumladan oshmasin (oddiy suhbat uchun).
+PROMPT;
     }
 
     private function handleTicketCreation(string $text): string
