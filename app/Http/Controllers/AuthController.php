@@ -59,11 +59,8 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        if (! $user->isActive()) {
-            return back()
-                ->withErrors(['email' => 'Hisobingiz bloklangan. Administrator bilan bog‘laning.'])
-                ->onlyInput('email');
-        }
+        // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi, 
+        // lekin faqat `active` middleware ruxsat bergan joylargagina yoza olishadi.
 
         if (! self::LOGIN_EMAIL_OTP_ENABLED) {
             Auth::login($user, true);

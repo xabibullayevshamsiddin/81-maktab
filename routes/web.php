@@ -49,34 +49,46 @@ Route::get('about', [HomeController::class, 'about'])->name('about');
 Route::get('courses', [PublicCourseController::class, 'index'])->name('courses');
 Route::get('courses/{course}', [PublicCourseController::class, 'show'])->name('courses.show');
 Route::post('courses/{course}/enroll', [CourseEnrollmentController::class, 'store'])
-    ->middleware('auth')
+    ->middleware(['auth', 'active'])
     ->name('courses.enroll');
 Route::delete('courses/{course}/enroll', [CourseEnrollmentController::class, 'destroy'])
-    ->middleware('auth')
+    ->middleware(['auth', 'active'])
     ->name('courses.enroll.cancel');
 Route::get('taqvim', [CalendarController::class, 'index'])->name('calendar');
 Route::get('post', [PublicPostController::class, 'index'])->name('post');
 Route::get('post/{post:slug}', [PublicPostController::class, 'show'])->name('post.show');
 Route::post('post/{post:slug}/comments', [PublicPostController::class, 'storeComment'])
-    ->middleware('throttle:comments')
+    ->middleware(['throttle:comments', 'active'])
     ->name('post.comments.store');
 Route::put('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'updateComment'])
-    ->middleware('throttle:comments')
+    ->middleware(['throttle:comments', 'active'])
     ->name('post.comments.update');
-Route::delete('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'destroyComment'])->name('post.comments.destroy');
-Route::post('post/{post:slug}/comments/{comment}/like', [PublicPostController::class, 'toggleCommentLike'])->name('post.comments.like');
-Route::post('post/{post:slug}/like', [PublicPostController::class, 'toggleLike'])->name('post.like');
+Route::delete('post/{post:slug}/comments/{comment}', [PublicPostController::class, 'destroyComment'])
+    ->middleware(['active'])
+    ->name('post.comments.destroy');
+Route::post('post/{post:slug}/comments/{comment}/like', [PublicPostController::class, 'toggleCommentLike'])
+    ->middleware(['active'])
+    ->name('post.comments.like');
+Route::post('post/{post:slug}/like', [PublicPostController::class, 'toggleLike'])
+    ->middleware(['active'])
+    ->name('post.like');
 Route::post('teacher/{teacher:slug}/comments', [TeacherCommentController::class, 'store'])
-    ->middleware('throttle:comments')
+    ->middleware(['throttle:comments', 'active'])
     ->name('teacher.comments.store');
 Route::put('teacher/comments/{comment}', [TeacherCommentController::class, 'update'])
-    ->middleware('throttle:comments')
+    ->middleware(['throttle:comments', 'active'])
     ->name('teacher.comments.update');
-Route::delete('teacher/comments/{comment}', [TeacherCommentController::class, 'destroy'])->name('teacher.comments.destroy');
-Route::post('teacher/comments/{comment}/like', [TeacherCommentController::class, 'toggleCommentLike'])->name('teacher.comments.like');
+Route::delete('teacher/comments/{comment}', [TeacherCommentController::class, 'destroy'])
+    ->middleware(['active'])
+    ->name('teacher.comments.destroy');
+Route::post('teacher/comments/{comment}/like', [TeacherCommentController::class, 'toggleCommentLike'])
+    ->middleware(['active'])
+    ->name('teacher.comments.like');
 Route::get('teacher', [PublicTeacherController::class, 'index'])->name('teacher');
 Route::get('teacher/{teacher:slug}', [PublicTeacherController::class, 'show'])->name('teacher.show');
-Route::post('teacher/{teacher:slug}/like', [PublicTeacherController::class, 'toggleLike'])->name('teacher.like');
+Route::post('teacher/{teacher:slug}/like', [PublicTeacherController::class, 'toggleLike'])
+    ->middleware(['active'])
+    ->name('teacher.like');
 Route::get('contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('contact', [HomeController::class, 'storeContact'])
     ->middleware('throttle:10,1')
@@ -115,9 +127,9 @@ Route::middleware('auth')->group(function () {
     Route::post('chat/user/{user}/activate', [ChatController::class, 'superAdminActivateUser'])
         ->middleware('throttle:30,1')
         ->name('chat.user.activate');
-    Route::post('chat/send', [ChatController::class, 'send'])->middleware('throttle:chat-send')->name('chat.send');
-    Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->name('chat.destroy');
-    Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->name('chat.block');
+    Route::post('chat/send', [ChatController::class, 'send'])->middleware(['throttle:chat-send', 'active'])->name('chat.send');
+    Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->middleware(['active'])->name('chat.destroy');
+    Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -275,7 +287,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 });
 
-Route::post('ai-chat', [App\Http\Controllers\SiteAiController::class, 'generate'])->middleware(['auth', 'throttle:30,1'])->name('ai.chat');
+Route::post('ai-chat', [App\Http\Controllers\SiteAiController::class, 'generate'])->middleware(['auth', 'throttle:30,1', 'active'])->name('ai.chat');
 
 // Qolgan barcha yo‘llar uchun custom 404 sahifa
 Route::fallback(function () {
