@@ -754,7 +754,7 @@
             <span class="chat-panel-live-dot chat-panel-live-dot--ai" aria-hidden="true"></span>
             <span>AI yordamchi</span>
           </div>
-          <p class="chat-panel-subtitle">Assalomu alaykum! Maktabimiz haqida savolingizni yozing — javob avvalo saytdagi ma’lumotlar va admin bilim bazasidan, keyin esa tashqi AI dan keladi.</p>
+          <p class="chat-panel-subtitle">Assalomu alaykum! Men 81-IDUM saytining AI yordamchisiman. Maktabimiz, ta'lim, va boshqa fanlar bo'yicha yozing — sizga bajonidil yordam beraman! ✨</p>
         </div>
 
         <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
