@@ -110,9 +110,11 @@ class HomeController extends Controller
         return view('teacherShow', compact('comments'));
     }
 
-    public function contact()
+    public function contact(Request $request)
     {
-        return view('contact');
+        $conversation = null;
+
+        return view('contact', compact('conversation'));
     }
 
     public function storeContact(Request $request)
@@ -120,6 +122,7 @@ class HomeController extends Controller
         $this->validateTurnstile($request);
 
         $validated = $request->validate([
+
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'phone' => uz_phone_rules(),
@@ -134,6 +137,8 @@ class HomeController extends Controller
             ? sanitize_plain_text($validated['note'])
             : null;
         $validated['message'] = sanitize_plain_text($validated['message']);
+        
+
 
         ContactMessage::query()->create($validated);
 

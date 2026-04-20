@@ -218,6 +218,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     Route::middleware('role:super_admin,admin,moderator')->group(function () {
         Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('admin.contact-messages.index');
         Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('admin.contact-messages.show');
+
         Route::post('contact-messages/{contactMessage}/read', [AdminContactMessageController::class, 'markRead'])->name('admin.contact-messages.read');
         Route::post('contact-messages/{contactMessage}/block', [AdminContactMessageController::class, 'block'])->name('admin.contact-messages.block');
         Route::post('contact-messages/{contactMessage}/unblock', [AdminContactMessageController::class, 'unblock'])->name('admin.contact-messages.unblock');

@@ -84,7 +84,12 @@
                     <span class="badge bg-warning text-dark">Yangi</span>
                   @endif
                 </td>
-                <td>{{ $row->name }}</td>
+                <td>
+                  {{ $row->name }}
+                  @if($row->senderUser && !$row->senderUser->isActive())
+                    <br><span class="badge bg-danger mt-1 shadow-sm" style="font-size:11px; letter-spacing:0.5px;">🚫 Tizimdan bloklangan</span>
+                  @endif
+                </td>
                 <td>
                   <a
                     href="{{ gmail_compose_url($row->email, $replySubject, $replyBody) }}"

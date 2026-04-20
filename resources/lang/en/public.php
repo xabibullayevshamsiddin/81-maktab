@@ -189,6 +189,7 @@ return [
             ['name' => 'Shamsiddin Khabibullayev', 'date' => '2025–2026 academic year · 11 April 2026'],
             ['name' => 'Ezoza Abdukodirova', 'date' => '2025–2026 academic year · 11 April 2026'],
             ['name' => 'Khadicha Mirzakosimova', 'date' => '2025–2026 academic year · 11 April 2026'],
+            ['name' => 'Ismatulloh Shukurullayev', 'date' => '2025–2026 academic year · 11 April 2026'],
         ],
         'facility_domestic' => [
             'title' => 'Household conditions',

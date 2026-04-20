@@ -26,6 +26,8 @@ class ContactMessage extends Model
         'is_blocked' => 'boolean',
     ];
 
+
+
     public function readBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'read_by_user_id');
@@ -34,6 +36,14 @@ class ContactMessage extends Model
     public function blockedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'blocked_by_user_id');
+    }
+
+    /**
+     * Finds the registered user by email if they exist.
+     */
+    public function senderUser()
+    {
+        return $this->belongsTo(User::class, 'email', 'email');
     }
 
     public function isRead(): bool

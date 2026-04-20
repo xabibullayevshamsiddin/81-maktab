@@ -23,11 +23,11 @@
   $likedTeacherCount = $teacherLikes->count();
   $courseEnrollmentCount = $courseEnrollments->count();
   $createdCourseCount = $createdCourses->count();
-	  $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
-	  $canViewCourseEnrollments = $user->isAdmin() || ($user->isTeacher() && $user->hasLinkedActiveTeacherProfile());
+  $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
+  $canViewCourseEnrollments = $user->isAdmin() || ($user->isTeacher() && $user->hasLinkedActiveTeacherProfile());
 
 
-	  $profileStats = [
+  $profileStats = [
     [
       'icon' => 'fa-regular fa-comments',
       'value' => $postCommentCount + $teacherCommentCount,
@@ -92,26 +92,31 @@
 
 <x-loyouts.main :title="__('profile.page_title')">
   @push('page_styles')
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-fix.css') }}?v={{ filemtime(public_path('temp/css/profile-fix.css')) }}">
+    <link rel="stylesheet"
+      href="{{ app_public_asset('temp/css/profile-fix.css') }}?v={{ filemtime(public_path('temp/css/profile-fix.css')) }}">
     <style>
       .page-header .header-main {
         width: calc(100% - 40px) !important;
         max-width: 1140px !important;
         top: 18px !important;
       }
+
       .profile-hero {
         padding-top: 150px !important;
         padding-bottom: 60px !important;
         display: block !important;
       }
+
       .news-hero-content {
         margin-top: 20px !important;
       }
+
       @media (max-width: 991px) {
         .page-header .header-main {
           width: calc(100% - 20px) !important;
           top: 10px !important;
         }
+
         .profile-hero {
           padding-top: 120px !important;
         }
@@ -219,8 +224,9 @@
                 <div class="profile-field">
                   <label for="profile-first-name">Ism</label>
                   <span class="profile-field-hint">Faqat harflar, probel va defis</span>
-                  <input type="text" id="profile-first-name" name="first_name" value="{{ old('first_name', $user->first_name) }}" required
-                    maxlength="120" autocomplete="given-name" />
+                  <input type="text" id="profile-first-name" name="first_name"
+                    value="{{ old('first_name', $user->first_name) }}" required maxlength="120"
+                    autocomplete="given-name" />
                   @error('first_name')
                     <p class="form-message profile-form-error">{{ $message }}</p>
                   @enderror
@@ -228,8 +234,9 @@
                 <div class="profile-field">
                   <label for="profile-last-name">Familiya</label>
                   <span class="profile-field-hint">Faqat harflar, probel va defis</span>
-                  <input type="text" id="profile-last-name" name="last_name" value="{{ old('last_name', $user->last_name) }}" required
-                    maxlength="120" autocomplete="family-name" />
+                  <input type="text" id="profile-last-name" name="last_name"
+                    value="{{ old('last_name', $user->last_name) }}" required maxlength="120"
+                    autocomplete="family-name" />
                   @error('last_name')
                     <p class="form-message profile-form-error">{{ $message }}</p>
                   @enderror
@@ -240,8 +247,8 @@
                 <div class="profile-field">
                   <label for="profile-phone">{{ __('profile.main_card.phone_label') }}</label>
                   <span class="profile-field-hint">{{ __('profile.main_card.phone_hint') }}</span>
-                  <input style="margin-top:25px;" type="text" id="profile-phone" name="phone" value="{{ old('phone', $user->phone) }}"
-                    maxlength="40" placeholder="+998..." autocomplete="tel" />
+                  <input style="margin-top:25px;" type="text" id="profile-phone" name="phone"
+                    value="{{ old('phone', $user->phone) }}" maxlength="40" placeholder="+998..." autocomplete="tel" />
                   @error('phone')
                     <p class="form-message profile-form-error">{{ $message }}</p>
                   @enderror
@@ -281,7 +288,8 @@
                       @if($exm->is_active)
                         <span class="profile-tag profile-tag--approved">Faol</span>
                       @else
-                        <span class="profile-tag profile-tag--rejected">Nofaol ({{ $exm->questions_count }}/{{ $exm->required_questions }} savol)</span>
+                        <span class="profile-tag profile-tag--rejected">Nofaol
+                          ({{ $exm->questions_count }}/{{ $exm->required_questions }} savol)</span>
                       @endif
 
                       <span class="profile-activity-date">{{ $exm->created_at?->diffForHumans() }}</span>
@@ -379,11 +387,13 @@
                     </div>
                     <div class="profile-exam-result-bottom">
                       <div class="profile-exam-result-metric">
-                        <span class="profile-exam-result-metric-val">{{ $er->points_earned ?? 0 }}<small>/{{ $er->points_max ?? 0 }}</small></span>
+                        <span
+                          class="profile-exam-result-metric-val">{{ $er->points_earned ?? 0 }}<small>/{{ $er->points_max ?? 0 }}</small></span>
                         <span class="profile-exam-result-metric-label">Ball</span>
                       </div>
                       <div class="profile-exam-result-metric">
-                        <span class="profile-exam-result-metric-val">{{ $er->score }}<small>/{{ $er->total_questions }}</small></span>
+                        <span
+                          class="profile-exam-result-metric-val">{{ $er->score }}<small>/{{ $er->total_questions }}</small></span>
                         <span class="profile-exam-result-metric-label">To'g'ri</span>
                       </div>
                       <div class="profile-exam-result-metric">
@@ -392,7 +402,8 @@
                         <span class="profile-exam-result-metric-label">Foiz</span>
                       </div>
                       <div class="profile-exam-result-metric">
-                        <span class="profile-exam-result-metric-val" style="font-size:12px;">{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</span>
+                        <span class="profile-exam-result-metric-val"
+                          style="font-size:12px;">{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</span>
                         <span class="profile-exam-result-metric-label">Holat</span>
                       </div>
                     </div>
@@ -407,7 +418,8 @@
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-book-open"></i> Kurs ochish ruxsati</h3>
-                  <p>Teacher akkaunti faqat <strong>bitta</strong> kurs yaratishi mumkin. Kurs ochishdan oldin adminga ruxsat so'rashingiz kerak.</p>
+                  <p>Teacher akkaunti faqat <strong>bitta</strong> kurs yaratishi mumkin. Kurs ochishdan oldin adminga
+                    ruxsat so'rashingiz kerak.</p>
                 </div>
               </div>
               @if($user->hasReachedCourseOpenLimit())
@@ -427,83 +439,82 @@
           @endif
 
           @if($canViewCourseEnrollments ?? false)
-            <section class="profile-activity-block reveal">
-              <div class="profile-block-head">
-                <div class="profile-block-copy">
-                  <h3><i class="fa-solid fa-clipboard-check"></i> {{ __('profile.blocks.teacher_requests.title') }}</h3>
-                  <p>{{ __('profile.blocks.teacher_requests.text') }}</p>
-                </div>
-                <span class="profile-section-count">{{ $pendingTeacherEnrollmentCount }}</span>
-              </div>
+                      <section class="profile-activity-block reveal">
+                        <div class="profile-block-head">
+                          <div class="profile-block-copy">
+                            <h3><i class="fa-solid fa-clipboard-check"></i> {{ __('profile.blocks.teacher_requests.title') }}</h3>
+                            <p>{{ __('profile.blocks.teacher_requests.text') }}</p>
+                          </div>
+                          <span class="profile-section-count">{{ $pendingTeacherEnrollmentCount }}</span>
+                        </div>
 
-              @if(($pendingTeacherEnrollments ?? collect())->isNotEmpty())
-                <ul class="profile-activity-list profile-pending-enrollment-list">
-                  @foreach($pendingTeacherEnrollments as $pen)
-                    <li class="profile-pending-enrollment-item">
-                      <span
-                        class="profile-activity-title">{{ $pen->course ? localized_model_value($pen->course, 'title') : '-' }}</span>
+                        @if(($pendingTeacherEnrollments ?? collect())->isNotEmpty())
+                          <ul class="profile-activity-list profile-pending-enrollment-list">
+                            @foreach($pendingTeacherEnrollments as $pen)
+                              <li class="profile-pending-enrollment-item">
+                                <span
+                                  class="profile-activity-title">{{ $pen->course ? localized_model_value($pen->course, 'title') : '-' }}</span>
 
-                      <div class="profile-inline-meta">
-                        <span><i class="fa-regular fa-user"></i> {{ __('profile.blocks.teacher_requests.student') }}:
-                          {{ $pen->user?->name ?: '-' }}</span>
-                        @if($pen->contact_phone)
-                          <span><i class="fa-solid fa-phone"></i> {{ $pen->contact_phone }}</span>
+                                <div class="profile-inline-meta">
+                                  <span><i class="fa-regular fa-user"></i> {{ __('profile.blocks.teacher_requests.student') }}:
+                                    {{ $pen->user?->name ?: '-' }}</span>
+                                  @if($pen->contact_phone)
+                                    <span><i class="fa-solid fa-phone"></i> {{ $pen->contact_phone }}</span>
+                                  @endif
+                                </div>
+
+                                <div class="profile-pending-enrollment-actions">
+                                  <form action="{{ route('teacher.enrollments.approve', $pen) }}" method="POST"
+                                    class="profile-inline-form">
+                                    @csrf
+                                    <button type="submit"
+                                      class="btn btn-sm">{{ __('profile.blocks.teacher_requests.approve') }}</button>
+                                  </form>
+                                  <form action="{{ route('teacher.enrollments.reject', $pen) }}" method="POST"
+                                    class="profile-inline-form"
+                                    data-confirm="{{ __('profile.blocks.teacher_requests.reject_confirm') }}"
+                                    data-confirm-title="{{ __('profile.blocks.teacher_requests.reject') }}"
+                                    data-confirm-variant="primary" data-confirm-ok="{{ __('profile.blocks.teacher_requests.reject') }}">
+                                    @csrf
+                                    <button type="submit"
+                                      class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.reject') }}</button>
+                                  </form>
+                                </div>
+                              </li>
+                            @endforeach
+                          </ul>
+                        @else
+                          <p class="profile-empty">{{ __('profile.blocks.teacher_requests.empty') }}</p>
                         @endif
-                      </div>
 
-                      <div class="profile-pending-enrollment-actions">
-                        <form action="{{ route('teacher.enrollments.approve', $pen) }}" method="POST"
-                          class="profile-inline-form">
-                          @csrf
-                          <button type="submit"
-                            class="btn btn-sm">{{ __('profile.blocks.teacher_requests.approve') }}</button>
-                        </form>
-                        <form action="{{ route('teacher.enrollments.reject', $pen) }}" method="POST"
-                          class="profile-inline-form"
-                          data-confirm="{{ __('profile.blocks.teacher_requests.reject_confirm') }}"
-                          data-confirm-title="{{ __('profile.blocks.teacher_requests.reject') }}"
-                          data-confirm-variant="primary"
-                          data-confirm-ok="{{ __('profile.blocks.teacher_requests.reject') }}">
-                          @csrf
-                          <button type="submit"
-                            class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.reject') }}</button>
-                        </form>
-                      </div>
-                    </li>
-                  @endforeach
-                </ul>
-              @else
-                <p class="profile-empty">{{ __('profile.blocks.teacher_requests.empty') }}</p>
-              @endif
-
-@php
-                    $canCreateCourse = $user->isAdmin() || (
-                      $user->isTeacher()
-                      && $user->hasLinkedActiveTeacherProfile()
-                      && ! $user->hasReachedCourseOpenLimit()
-                      && $user->hasCourseOpenApproval()
-                    );
-                    $needsLink = $user->isTeacher() && ! $user->hasLinkedActiveTeacherProfile();
-                  @endphp
-                  <div class="profile-actions-row">
-                    <a href="{{ route('teacher.enrollments.index') }}"
-                      class="btn btn-sm">{{ __('profile.blocks.teacher_requests.all') }}</a>
-                    @if($canCreateCourse)
-                      <a href="{{ route('teacher.courses.create') }}"
-                        class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
-                    @elseif($user->isTeacher() && $user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit())
-                      <a href="{{ route('profile.show') }}#course-open-request"
-                        class="btn btn-outline btn-sm">Kurs — ruxsat</a>
-                    @endif
-                    @if(auth()->user()->isAdmin())
-                      <a href="{{ route('admin.courses.index') }}"
-                        class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.admin_courses') }}</a>
-                    @endif
-                  </div>
-                  @if($needsLink)
-                    <p class="profile-empty" style="margin-top:12px;">Admin teacher akkauntingizni ustoz kartasiga bog'lashi kerak.</p>
-                  @endif
-	            </section>
+            @php
+              $canCreateCourse = $user->isAdmin() || (
+                $user->isTeacher()
+                && $user->hasLinkedActiveTeacherProfile()
+                && !$user->hasReachedCourseOpenLimit()
+                && $user->hasCourseOpenApproval()
+              );
+              $needsLink = $user->isTeacher() && !$user->hasLinkedActiveTeacherProfile();
+            @endphp
+                        <div class="profile-actions-row">
+                          <a href="{{ route('teacher.enrollments.index') }}"
+                            class="btn btn-sm">{{ __('profile.blocks.teacher_requests.all') }}</a>
+                          @if($canCreateCourse)
+                            <a href="{{ route('teacher.courses.create') }}"
+                              class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
+                          @elseif($user->isTeacher() && $user->hasLinkedActiveTeacherProfile() && !$user->hasReachedCourseOpenLimit())
+                            <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline btn-sm">Kurs — ruxsat</a>
+                          @endif
+                          @if(auth()->user()->isAdmin())
+                            <a href="{{ route('admin.courses.index') }}"
+                              class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.admin_courses') }}</a>
+                          @endif
+                        </div>
+                        @if($needsLink)
+                          <p class="profile-empty" style="margin-top:12px;">Admin teacher akkauntingizni ustoz kartasiga bog'lashi
+                            kerak.</p>
+                        @endif
+                      </section>
           @endif
 
           <section class="profile-activity-block reveal">
@@ -684,7 +695,8 @@
 
                     @if($course->status === \App\Models\Course::STATUS_DRAFT && $course->rejection_reason)
                       <div class="profile-rejection-block mt-10">
-                        <span class="profile-tag profile-tag--rejected mb-5" style="display: inline-block;">{{ __('Rad etilgan') }}</span>
+                        <span class="profile-tag profile-tag--rejected mb-5"
+                          style="display: inline-block;">{{ __('Rad etilgan') }}</span>
                         <p class="profile-enroll-note" style="color: #b91c1c; border-left-color: #b91c1c;">
                           <strong>{{ __('Sabab') }}:</strong> {{ $course->rejection_reason }}
                         </p>
@@ -702,7 +714,8 @@
                         <a href="{{ route('teacher.courses.edit', $course) }}" class="btn btn-outline btn-sm">
                           <i class="fa-solid fa-pen"></i> Tahrirlash
                         </a>
-                        <a href="{{ route('courses.show', $course) }}" class="btn btn-sm">{{ __('public.common.details') }}</a>
+                        <a href="{{ route('courses.show', $course) }}"
+                          class="btn btn-sm">{{ __('public.common.details') }}</a>
                       @endif
                     </div>
 

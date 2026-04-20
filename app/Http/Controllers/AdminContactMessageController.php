@@ -15,7 +15,7 @@ class AdminContactMessageController extends Controller
 
         $q = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', 'all');
-        if (! in_array($status, ['all', 'unread', 'read', 'blocked'], true)) {
+        if (!in_array($status, ['all', 'unread', 'read', 'blocked'], true)) {
             $status = 'all';
         }
 
@@ -33,11 +33,11 @@ class AdminContactMessageController extends Controller
 
         if ($q !== '') {
             $query->where(function ($w) use ($q): void {
-                $w->where('name', 'like', '%'.$q.'%')
-                    ->orWhere('email', 'like', '%'.$q.'%')
-                    ->orWhere('phone', 'like', '%'.$q.'%')
-                    ->orWhere('note', 'like', '%'.$q.'%')
-                    ->orWhere('message', 'like', '%'.$q.'%');
+                $w->where('name', 'like', '%' . $q . '%')
+                    ->orWhere('email', 'like', '%' . $q . '%')
+                    ->orWhere('phone', 'like', '%' . $q . '%')
+                    ->orWhere('note', 'like', '%' . $q . '%')
+                    ->orWhere('message', 'like', '%' . $q . '%');
             });
         }
 
@@ -55,6 +55,8 @@ class AdminContactMessageController extends Controller
 
         return view('admin.contact-messages.show', ['message' => $contactMessage]);
     }
+
+
 
     public function markRead(Request $request, ContactMessage $contactMessage): RedirectResponse
     {

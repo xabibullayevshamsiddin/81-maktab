@@ -74,11 +74,12 @@
               <h2 style="margin:0;">Xabar yuborish</h2>
               <x-site-rule-items area="contact" />
             </div>
+
             <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
               @csrf
-              <input type="text" id="name" name="name" value="{{ old('name') }}" placeholder="Ismingiz" required />
-              <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Email" required />
-              <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Telefon" required />
+              <input type="text" id="name" name="name" value="{{ auth()->user()->name ?? old('name') }}" placeholder="Ismingiz" required />
+              <input type="email" id="email" name="email" value="{{ auth()->user()->email ?? old('email') }}" placeholder="Email" required />
+              <input type="tel" id="phone" name="phone" value="{{ auth()->user()->phone ?? old('phone') }}" placeholder="Telefon" required />
               <textarea
                 id="shikoyat"
                 name="note"
@@ -89,7 +90,7 @@
                 id="message"
                 name="message"
                 rows="5"
-                placeholder="Xabaringiz"
+                placeholder="Sizga qanday yordam bera olamiz?"
                 required
               >{{ old('message') }}</textarea>
               <x-turnstile-field />

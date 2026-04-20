@@ -189,6 +189,7 @@ return [
             ['name' => 'Xabibullayev Shamsiddin', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
             ['name' => 'Abduqodirova Ezoza', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
             ['name' => 'Mirzaqosimova Hadicha', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
+            ['name' => 'Shukurullayev Ismatulloh', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
         ],
         'facility_domestic' => [
             'title' => 'Maishiy sharoitlar',
