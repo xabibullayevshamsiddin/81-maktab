@@ -21,6 +21,8 @@
   $teacherCommentCount = $teacherComments->count();
   $likedPostCount = $likedPosts->count();
   $likedTeacherCount = $teacherLikes->count();
+  $activityPreviewLimit = 8;
+  $activityStep = 8;
   $courseEnrollmentCount = $courseEnrollments->count();
   $createdCourseCount = $createdCourses->count();
   $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
@@ -526,9 +528,9 @@
               <span class="profile-section-count">{{ $postCommentCount }}</span>
             </div>
 
-            <ul class="profile-activity-list">
+            <ul class="profile-activity-list" data-activity-list data-preview-limit="{{ $activityPreviewLimit }}">
               @forelse($postComments as $c)
-                <li>
+                <li class="profile-activity-item">
                   @if($c->parent_id)
                     <span class="profile-tag">{{ __('profile.reply_tag') }}</span>
                   @endif
@@ -543,6 +545,13 @@
                 <li class="profile-empty">{{ __('profile.blocks.post_comments.empty') }}</li>
               @endforelse
             </ul>
+            @if($postCommentCount > $activityPreviewLimit)
+              <div class="profile-actions-row profile-actions-row--activity">
+                <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
+                  Yana ko'rsatish
+                </button>
+              </div>
+            @endif
           </section>
 
           <section class="profile-activity-block reveal">
@@ -554,9 +563,9 @@
               <span class="profile-section-count">{{ $teacherCommentCount }}</span>
             </div>
 
-            <ul class="profile-activity-list">
+            <ul class="profile-activity-list" data-activity-list data-preview-limit="{{ $activityPreviewLimit }}">
               @forelse($teacherComments as $c)
-                <li>
+                <li class="profile-activity-item">
                   @if($c->parent_id)
                     <span class="profile-tag">{{ __('profile.reply_tag') }}</span>
                   @endif
@@ -569,6 +578,13 @@
                 <li class="profile-empty">{{ __('profile.blocks.teacher_comments.empty') }}</li>
               @endforelse
             </ul>
+            @if($teacherCommentCount > $activityPreviewLimit)
+              <div class="profile-actions-row profile-actions-row--activity">
+                <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
+                  Yana ko'rsatish
+                </button>
+              </div>
+            @endif
           </section>
 
           <section class="profile-activity-block reveal">
@@ -580,9 +596,10 @@
               <span class="profile-section-count">{{ $likedPostCount }}</span>
             </div>
 
-            <ul class="profile-activity-list profile-activity-list-compact">
+            <ul class="profile-activity-list profile-activity-list-compact" data-activity-list
+              data-preview-limit="{{ $activityPreviewLimit }}">
               @forelse($likedPosts as $like)
-                <li>
+                <li class="profile-activity-item">
                   @if($like->post)
                     <a class="profile-activity-link"
                       href="{{ route('post.show', $like->post->slug) }}">{{ localized_model_value($like->post, 'title') }}</a>
@@ -595,6 +612,13 @@
                 <li class="profile-empty">{{ __('profile.blocks.liked_posts.empty') }}</li>
               @endforelse
             </ul>
+            @if($likedPostCount > $activityPreviewLimit)
+              <div class="profile-actions-row profile-actions-row--activity">
+                <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
+                  Yana ko'rsatish
+                </button>
+              </div>
+            @endif
           </section>
 
           <section class="profile-activity-block reveal">
@@ -606,9 +630,10 @@
               <span class="profile-section-count">{{ $likedTeacherCount }}</span>
             </div>
 
-            <ul class="profile-activity-list profile-activity-list-compact">
+            <ul class="profile-activity-list profile-activity-list-compact" data-activity-list
+              data-preview-limit="{{ $activityPreviewLimit }}">
               @forelse($teacherLikes as $tl)
-                <li>
+                <li class="profile-activity-item">
                   @if($tl->teacher)
                     <a class="profile-activity-link"
                       href="{{ route('teacher.show', $tl->teacher->slug) }}">{{ $tl->teacher->full_name }}</a>
@@ -621,6 +646,13 @@
                 <li class="profile-empty">{{ __('profile.blocks.liked_teachers.empty') }}</li>
               @endforelse
             </ul>
+            @if($likedTeacherCount > $activityPreviewLimit)
+              <div class="profile-actions-row profile-actions-row--activity">
+                <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
+                  Yana ko'rsatish
+                </button>
+              </div>
+            @endif
           </section>
 
           <section class="profile-activity-block reveal">

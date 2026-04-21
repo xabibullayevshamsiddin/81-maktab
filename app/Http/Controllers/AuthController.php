@@ -171,10 +171,6 @@ class AuthController extends Controller
 
     public function sendPasswordResetCode(Request $request)
     {
-        return back()
-            ->withErrors(['email' => 'Parolni email orqali tiklash vaqtincha o‘chirildi.'])
-            ->onlyInput('email');
-
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
         ]);
@@ -302,10 +298,6 @@ class AuthController extends Controller
 
     public function resendPasswordResetCode(Request $request)
     {
-        return back()->withErrors([
-            'code' => 'Parolni tiklash kodini qayta yuborish vaqtincha o‘chirildi.',
-        ]);
-
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
         ]);
@@ -595,11 +587,6 @@ class AuthController extends Controller
 
     public function adminSendPasswordReset(Request $request, User $user)
     {
-        return redirect()
-            ->route('user')
-            ->with('error', 'Parol reset kodini emailga yuborish vaqtincha o‘chirildi.')
-            ->with('toast_type', 'error');
-
         $admin = $request->user();
 
         if (! $admin || ! $admin->canManage($user)) {
