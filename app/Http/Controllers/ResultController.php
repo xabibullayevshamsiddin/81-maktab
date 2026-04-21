@@ -11,7 +11,7 @@ class ResultController extends Controller
     {
         abort_unless((int) $result->user_id === (int) $request->user()->id, 403);
 
-        $result->load('exam');
+        $result->load(['exam' => fn($q) => $q->withTrashed()]);
 
         return view('exam.result', compact('result'));
     }

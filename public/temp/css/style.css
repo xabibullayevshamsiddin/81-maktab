@@ -342,9 +342,11 @@ a {
   border-bottom-color: #fff;
 }
 
+.login {
   display: flex;
   align-items: center;
   gap: 20px;
+}
 
 .lang {
   font-weight: 700;
@@ -11715,16 +11717,6 @@ body {
 }
 
 .like-btn.prime-like-trigger::after {
-    content: " \;
- position: absolute;
- top: 50%;
- left: 50%;
- width: 32px;
- height: 32px;
- margin: -16px 0 0 -16px;
- border: 2px solid var(--primary-2);
- border-radius: 50%;
- opacity: 0;
     content: " ";
     position: absolute;
     top: 50%;

@@ -1,4 +1,45 @@
 <x-loyouts.main :title="__('auth_pages.register.page_title')">
+    @push('page_styles')
+      <style>
+        .register-social-btn {
+          width: 100%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          border: 1px solid #dbe2ea;
+          border-radius: 12px;
+          padding: 11px 14px;
+          text-decoration: none;
+          font-weight: 700;
+          color: #111827;
+          background: #fff;
+          transition: all 0.2s ease;
+        }
+
+        .register-social-btn:hover {
+          border-color: #c1cedd;
+          background: #f8fafc;
+          color: #111827;
+        }
+
+        .register-social-btn .fa-google {
+          color: #ea4335;
+        }
+
+        :root[data-theme='dark'] .register-social-btn {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.18);
+          color: #e5e7eb;
+        }
+
+        :root[data-theme='dark'] .register-social-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+      </style>
+    @endpush
+
     <section class="register-hero">
       <div class="container">
         <h1>{{ __('auth_pages.register.hero_title') }}</h1>
@@ -209,6 +250,11 @@
               aria-live="polite"
             ></p>
           </form>
+
+          <a href="{{ route('auth.google.redirect') }}" class="register-social-btn">
+            <i class="fa-brands fa-google"></i>
+            Google orqali davom etish
+          </a>
 
           <div class="register-divider">
             <span>{{ __('auth_pages.common.or') }}</span>

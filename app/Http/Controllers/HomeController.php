@@ -120,27 +120,24 @@ class HomeController extends Controller
     public function storeContact(Request $request)
     {
         $this->validateTurnstile($request);
+        $user = $request->user();
 
         $validated = $request->validate([
-
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'phone' => uz_phone_rules(),
             'note' => ['nullable', 'string', 'max:2000'],
             'message' => ['required', 'string', 'max:5000'],
-        ], [
-            'phone.regex' => uz_phone_validation_message(),
         ]);
-        $validated['phone'] = uz_phone_format($validated['phone']);
-        $validated['name'] = sanitize_plain_text($validated['name']);
-        $validated['note'] = isset($validated['note']) && $validated['note'] !== ''
-            ? sanitize_plain_text($validated['note'])
-            : null;
-        $validated['message'] = sanitize_plain_text($validated['message']);
-        
 
+        $data = [
+            'name' => sanitize_plain_text($user->name ?? ($user->first_name . ' ' . $user->last_name)),
+            'email' => $user->email,
+            'phone' => uz_phone_format($user->phone),
+            'note' => isset($validated['note']) && $validated['note'] !== ''
+                ? sanitize_plain_text($validated['note'])
+                : null,
+            'message' => sanitize_plain_text($validated['message']),
+        ];
 
-        ContactMessage::query()->create($validated);
+        ContactMessage::query()->create($data);
 
         $msg = 'Xabaringiz qabul qilindi. Tez orada siz bilan bog‘lanamiz.';
 

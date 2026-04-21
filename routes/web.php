@@ -96,6 +96,8 @@ Route::post('contact', [HomeController::class, 'storeContact'])
 // login
 Route::get('login', [AuthController::class, 'login'])->name('login');
 Route::post('authenticate', [AuthController::class, 'authenticate'])->name('authenticate');
+Route::get('auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::get('login/verify-code', [AuthController::class, 'showLoginVerify'])->name('login.verify.form');
 Route::post('login/verify-code', [AuthController::class, 'verifyLoginCode'])->name('login.verify');
 Route::post('login/verify-code/resend', [AuthController::class, 'resendLoginCode'])->name('login.verify.resend');

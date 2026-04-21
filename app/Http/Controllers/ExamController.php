@@ -110,6 +110,7 @@ class ExamController extends Controller
         $result = Result::query()->create([
             'exam_id' => $exam->id,
             'user_id' => $request->user()->id,
+            'user_grade' => $request->user()->grade,
             'question_order_json' => $questionIds,
             'total_questions' => count($questionIds),
             'points_max' => (int) $exam->total_points,

@@ -51,7 +51,7 @@
     @endphp
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
       <a href="{{ route('profile.exams.results.export', $exportParams) }}" class="btn btn-sm" style="gap:6px;">
-        <i class="fa-solid fa-file-csv"></i> Excel (CSV) export
+        <i class="fa-solid fa-file-excel"></i> Excel export
       </a>
       <button type="button" class="btn btn-sm btn-outline" onclick="window.print()" style="gap:6px;">
         <i class="fa-solid fa-print"></i> Chop etish
@@ -70,6 +70,7 @@
                         <th>Ball (Jami)</th>
                         <th>Status</th>
                         <th>Natija</th>
+                        <th>Sinf</th>
                         <th>Sana</th>
                         <th style="text-align: right;">Amallar</th>
                     </tr>
@@ -103,7 +104,12 @@
                             </td>
                             @if(!$selectedExamId)
                                 <td>
-                                    <span class="fw-bold" style="color: #4b6282;">{{ $result->exam->title ?? '—' }}</span>
+                                    <span class="fw-bold" style="color: #4b6282;">
+                                        {{ $result->exam->title ?? '—' }}
+                                        @if($result->exam?->trashed())
+                                            <span style="color:#ef4444; font-size:10px; margin-left:4px;">(O'chirilgan)</span>
+                                        @endif
+                                    </span>
                                 </td>
                             @endif
                             <td>
@@ -128,6 +134,11 @@
                                 @else
                                     <span class="result-tag tag-fail"><i class="fa-solid fa-circle-xmark"></i> Yiqildi</span>
                                 @endif
+                            </td>
+                            <td>
+                                <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">
+                                    {{ $result->user_grade ?? $result->user->grade ?? '—' }}
+                                </span>
                             </td>
                             <td>
                                 <div class="d-flex flex-column" style="font-size: 13px;">

@@ -4,13 +4,19 @@
 <div class="row">
   <div class="col-lg-12">
     <div class="card-style mb-30" style="max-width: 920px; margin: 0 auto;">
-      <h6 class="mb-20">Natija: {{ $result->user->name }} - {{ $exam->title }}</h6>
+      <h6 class="mb-20">
+        Natija: {{ $result->user->name }} - {{ $exam->title }}
+        @if($exam?->trashed())
+          <span style="color:#ef4444; font-size:14px; display:block; margin-top:4px;">(Ushbu imtihon tizimdan o'chirilgan)</span>
+        @endif
+      </h6>
 
       <div class="mb-30" style="background:#f8fafc; padding:16px; border-radius:12px; border:1px solid #e2e8f0;">
         <p><strong>Boshlangan:</strong> {{ $result->started_at?->format('d.m.Y H:i') }}</p>
         <p><strong>Tugallangan:</strong> {{ $result->submitted_at?->format('d.m.Y H:i') ?? 'Tugallanmagan' }}</p>
         <p><strong>Holat:</strong> {{ $result->status === 'submitted' ? 'Topshirildi' : ($result->status === 'expired' ? 'Vaqti tugagan' : 'Jarayonda') }}</p>
-        <p><strong>To'plangan ball:</strong> {{ $result->points_earned }} / {{ $result->points_max ?? $exam->total_points }}</p>
+        <p><strong>Sinf:</strong> {{ $result->user_grade ?? $result->user->grade ?? '—' }}</p>
+        <p><strong>To'plangan ball:</strong> {{ $result->points_earned }} / {{ $result->points_max ?? $exam?->total_points }}</p>
         <p><strong>Natija:</strong>
           @if($result->passed === null)
             <span style="color:#ca8a04;font-weight:700;">Tekshiruvda</span>

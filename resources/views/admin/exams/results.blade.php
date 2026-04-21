@@ -18,7 +18,7 @@
             <option value="">— Barcha imtihonlar —</option>
             @foreach($exams as $ex)
               <option value="{{ $ex->id }}" {{ (string) $selectedExamId === (string) $ex->id ? 'selected' : '' }}>
-                {{ $ex->title }}
+                {{ $ex->title }} @if($ex->trashed()) (O'chirilgan) @endif
               </option>
             @endforeach
           </select>
@@ -31,26 +31,6 @@
           @if($selectedExamId)
             <input type="hidden" name="exam_id" value="{{ $selectedExamId }}">
           @endif
-          <div class="fp-inline-date-only--admin" style="min-width:260px;">
-            <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Boshlanish</label>
-            @include('partials.flatpickr-inline-date-field', [
-              'name' => 'date_from',
-              'id' => 'admin-exam-results-date-from',
-              'value' => request('date_from'),
-              'autoSubmit' => true,
-              'optional' => true,
-            ])
-          </div>
-          <div class="fp-inline-date-only--admin" style="min-width:260px;">
-            <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600;">Tugash</label>
-            @include('partials.flatpickr-inline-date-field', [
-              'name' => 'date_to',
-              'id' => 'admin-exam-results-date-to',
-              'value' => request('date_to'),
-              'autoSubmit' => true,
-              'optional' => true,
-            ])
-          </div>
         </form>
       </div>
 
@@ -62,7 +42,7 @@
 
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
         <a href="{{ route('admin.exams.results.export', array_filter(['exam_id' => $selectedExamId, 'date_from' => request('date_from'), 'date_to' => request('date_to')])) }}" class="main-btn primary-btn btn-hover btn-sm">
-          <i class="mdi mdi-file-excel-outline" style="margin-right:4px;"></i> Excel (CSV) export
+          <i class="mdi mdi-file-excel-outline" style="margin-right:4px;"></i> Excel export
         </a>
         <button type="button" class="main-btn light-btn btn-hover btn-sm" onclick="window.print()">
           <i class="mdi mdi-printer-outline" style="margin-right:4px;"></i> Chop etish
@@ -74,9 +54,8 @@
           <thead>
           <tr>
             <th>#</th>
-            <th>Ism</th>
-            <th>Telefon</th>
-            <th>Email</th>
+            <th>O'quvchi</th>
+            <th>Sinf</th>
             @if(!$selectedExamId)
               <th>Imtihon</th>
             @endif
@@ -84,8 +63,6 @@
             <th>Qoidabuzarlik</th>
             <th>Natija</th>
             <th>To‘g‘ri</th>
-            <th>Holat</th>
-            <th>Vaqt</th>
             <th>Amal</th>
           </tr>
           </thead>
@@ -93,11 +70,22 @@
           @forelse($results as $result)
             <tr>
               <td>{{ $result->id }}</td>
-              <td>{{ $result->user->name ?? '—' }}</td>
-              <td>{{ $result->user->phone ?? '—' }}</td>
-              <td style="font-size:13px;">{{ $result->user->email ?? '—' }}</td>
+              <td>
+                <div>
+                  <strong>{{ $result->user->name ?? '—' }}</strong>
+                  <div class="text-muted small">
+                    {{ $result->user->phone ?? '' }}@if($result->user->phone && $result->user->email) / @endif{{ $result->user->email ?? '' }}
+                  </div>
+                </div>
+              </td>
+              <td>{{ $result->user_grade ?? $result->user->grade ?? '—' }}</td>
               @if(!$selectedExamId)
-                <td>{{ $result->exam->title ?? '—' }}</td>
+                <td>
+                  {{ $result->exam->title ?? '—' }}
+                  @if($result->exam?->trashed())
+                    <span style="color:#b91c1c; font-size:10px; display:block;">(O'chirilgan)</span>
+                  @endif
+                </td>
               @endif
               <td>{{ $result->points_earned ?? '—' }} / {{ $result->points_max ?? '—' }}</td>
               <td style="white-space:nowrap;">
@@ -117,8 +105,6 @@
                 @endif
               </td>
               <td>{{ $result->score }} / {{ $result->total_questions }}</td>
-              <td>{{ $result->status }}</td>
-              <td style="white-space:nowrap;font-size:13px;">{{ $result->submitted_at?->format('d.m.Y H:i') ?? '-' }}</td>
               <td>
                 <a href="{{ route('admin.exams.results.show', $result) }}" class="main-btn info-btn btn-hover btn-sm">Ko'rish</a>
                 <form method="POST" action="{{ route('admin.exams.results.destroy', $result) }}" data-confirm="Bu natijani o‘chirishni tasdiqlaysizmi?" data-confirm-title="Natijani o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish" style="display:inline;">
