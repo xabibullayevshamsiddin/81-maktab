@@ -187,9 +187,8 @@ return [
         'site_credits_intro' => 'This website was developed by Grade 10-E students.',
         'site_credits_members' => [
             ['name' => 'Shamsiddin Khabibullayev', 'date' => '2025–2026 academic year · 11 April 2026'],
-            ['name' => 'Ezoza Abdukodirova', 'date' => '2025–2026 academic year · 11 April 2026'],
-            ['name' => 'Khadicha Mirzakosimova', 'date' => '2025–2026 academic year · 11 April 2026'],
-            ['name' => 'Ismatulloh Shukurullayev', 'date' => '2025–2026 academic year · 11 April 2026'],
+            ['name' => 'E\'zoza Abdukodirova', 'date' => '2025–2026 academic year · 11 April 2026'],
+            ['name' => 'Xadicha Mirzakosimova', 'date' => '2025–2026 academic year · 11 April 2026'],
         ],
         'facility_domestic' => [
             'title' => 'Household conditions',
@@ -324,6 +323,9 @@ return [
         'teacher_profile' => 'Open teacher profile',
         'subject_missing' => 'Subject not specified',
         'teacher_bio_empty' => 'Short information about the course author has not been added yet.',
+        'search_placeholder' => 'Search courses...',
+        'subject_filter' => 'Filter by subject',
+        'all_subjects' => 'All subjects',
     ],
     'calendar' => [
         'page_title' => '81-IDUM | Calendar',

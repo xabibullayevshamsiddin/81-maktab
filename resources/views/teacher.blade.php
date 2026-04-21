@@ -20,30 +20,60 @@
           <p>{{ __('public.teachers.list_text') }}</p>
         </div>
 
-        <div class="exam-filter-panel" style="margin-bottom:18px;">
+        <form method="GET" action="{{ route('teacher') }}" class="exam-filter-panel" style="margin-bottom:18px;" id="teacher-filter-form">
           <div class="exam-filter-row">
             <div class="exam-filter-field">
               <label class="exam-filter-label" for="teacher-filter-q">Nom bo'yicha qidirish</label>
-              <input type="search" id="teacher-filter-q" class="exam-filter-input" placeholder="Ustoz ismi..." autocomplete="off">
+              <input type="search" id="teacher-filter-q" name="q" class="exam-filter-input" placeholder="Ustoz ismi..." autocomplete="off" value="{{ $q ?? '' }}">
             </div>
             <div class="exam-filter-field">
               <label class="exam-filter-label" for="teacher-filter-subject">Fan bo'yicha</label>
-              <select id="teacher-filter-subject" class="exam-filter-select">
+              <select id="teacher-filter-subject" name="subject" class="exam-filter-select">
                 <option value="">Barcha fanlar</option>
-                @php
-                  $teacherItems = $teachers instanceof \Illuminate\Pagination\AbstractPaginator
-                    ? $teachers->getCollection()
-                    : collect($teachers);
-                  $uniqueSubjects = $teacherItems->map(fn($t) => localized_model_value($t, 'subject'))->filter()->unique()->sort()->values();
-                @endphp
-                @foreach($uniqueSubjects as $subj)
-                  <option value="{{ e(mb_strtolower($subj)) }}">{{ $subj }}</option>
+                @foreach($allSubjects as $subj)
+                  <option value="{{ e($subj) }}" {{ ($selectedSubject ?? '') === $subj ? 'selected' : '' }}>{{ $subj }}</option>
                 @endforeach
               </select>
             </div>
           </div>
-        </div>
-        <p class="exam-filter-count" id="teacher-filter-count" aria-live="polite"></p>
+        </form>
+        <script>
+          (function () {
+            var form = document.getElementById('teacher-filter-form');
+            var qInput = document.getElementById('teacher-filter-q');
+            var subjSelect = document.getElementById('teacher-filter-subject');
+            if (!form) return;
+
+            // Auto-submit on subject change immediately
+            if (subjSelect) {
+              subjSelect.addEventListener('change', function () {
+                form.submit();
+              });
+            }
+
+            // Auto-submit on text input with debounce (500ms)
+            var debounceTimer;
+            if (qInput) {
+              qInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                  form.submit();
+                }, 500);
+              });
+            }
+          })();
+        </script>
+        @php
+          $teacherTotal = $teachers->total();
+          $teacherShown = $teachers->count();
+        @endphp
+        <p class="exam-filter-count" aria-live="polite">
+          @if(($q ?? '') !== '' || ($selectedSubject ?? '') !== '')
+            Ko'rsatilmoqda: {{ $teacherShown }} / {{ $teacherTotal }}
+          @else
+            Jami: {{ $teacherTotal }} ta ustoz
+          @endif
+        </p>
 
         <div class="teachers-grid prime-stagger" id="teachers-grid">
           @forelse($teachers as $teacher)
@@ -109,9 +139,6 @@
           @endforelse
         </div>
 
-        <div class="exam-empty exam-filter-zero" id="teacher-filter-zero" hidden>
-          <p style="margin:0;font-size:16px;"><i class="fa-solid fa-filter-circle-xmark" style="opacity:0.55;"></i> Filtr bo'yicha ustoz topilmadi.</p>
-        </div>
 
         @if($teachers instanceof \Illuminate\Pagination\AbstractPaginator && $teachers->hasPages())
           @php
@@ -155,43 +182,6 @@
           </nav>
         @endif
 
-        <script>
-          (function () {
-            var grid = document.getElementById('teachers-grid');
-            var qEl = document.getElementById('teacher-filter-q');
-            var subjEl = document.getElementById('teacher-filter-subject');
-            var countEl = document.getElementById('teacher-filter-count');
-            var zeroEl = document.getElementById('teacher-filter-zero');
-            if (!grid || !qEl || !subjEl) return;
-
-            var cards = Array.prototype.slice.call(grid.querySelectorAll('[data-teacher-card]'));
-            var total = cards.length;
-
-            function apply() {
-              var t = (qEl.value || '').trim().toLowerCase();
-              var sv = (subjEl.value || '').toLowerCase();
-              var count = 0;
-
-              cards.forEach(function (c) {
-                var show = true;
-                if (t && (c.getAttribute('data-search-text') || '').indexOf(t) === -1) show = false;
-                if (show && sv && (c.getAttribute('data-subject') || '').indexOf(sv) === -1) show = false;
-                c.style.display = show ? '' : 'none';
-                if (show) count++;
-              });
-
-              if (countEl) {
-                countEl.textContent = count === total ? 'Jami: ' + total + ' ta ustoz' : "Ko'rsatilmoqda: " + count + ' / ' + total;
-              }
-              if (zeroEl) zeroEl.hidden = count > 0;
-              grid.style.display = count > 0 ? '' : 'none';
-            }
-
-            qEl.addEventListener('input', apply);
-            subjEl.addEventListener('change', apply);
-            apply();
-          })();
-        </script>
       </section>
 
       <section class="teaching-approach prime-reveal">

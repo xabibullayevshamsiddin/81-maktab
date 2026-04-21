@@ -187,9 +187,8 @@ return [
         'site_credits_intro' => 'Ushbu sayt 10-«E» sinf o\'quvchilari tomonidan ishlab chiqilgan.',
         'site_credits_members' => [
             ['name' => 'Xabibullayev Shamsiddin', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
-            ['name' => 'Abduqodirova Ezoza', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
-            ['name' => 'Mirzaqosimova Hadicha', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
-            ['name' => 'Shukurullayev Ismatulloh', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
+            ['name' => 'Abduqodirova E\'zoza', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
+            ['name' => 'Mirzaqosimova Xadicha', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
         ],
         'facility_domestic' => [
             'title' => 'Maishiy sharoitlar',
@@ -324,6 +323,9 @@ return [
         'teacher_profile' => 'Ustoz profilini ochish',
         'subject_missing' => 'Fan ko\'rsatilmagan',
         'teacher_bio_empty' => 'Kurs muallifi haqida qisqa ma\'lumot hali kiritilmagan.',
+        'search_placeholder' => 'Kurslarni qidirish...',
+        'subject_filter' => 'Fan bo\'yicha filtr',
+        'all_subjects' => 'Barcha fanlar',
     ],
     'calendar' => [
         'page_title' => '81-IDUM | Taqvim',

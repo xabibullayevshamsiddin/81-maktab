@@ -461,10 +461,32 @@ if (! function_exists('uz_phone_format')) {
     }
 }
 
+if (! function_exists('school_grade_map')) {
+    /**
+     * Maktabdagi barcha rasmiy sinflar ro'yxati (Rasm asosida lotincha harflarda).
+     */
+    function school_grade_map(): array
+    {
+        return [
+            1 => ['A', 'B', 'D', 'E', 'G', 'K', 'V', 'Z'],
+            2 => ['A', 'B', 'D', 'E', 'G', 'K', 'V'],
+            3 => ['A', 'B', 'D', 'E', 'G', 'K', 'V'],
+            4 => ['A', 'B', 'D', 'E', 'G', 'V'],
+            5 => ['A', 'G', 'V', 'B'],
+            6 => ['A', 'B', 'D', 'G', 'V'],
+            7 => ['A', 'B', 'D', 'G', 'V'],
+            8 => ['A', 'B', 'G', 'V', 'D'],
+            9 => ['A', 'D', 'E', 'V', 'B'],
+            10 => ['A', 'D', 'E', 'V', 'B'],
+            11 => ['D', 'G', 'V', 'B'],
+        ];
+    }
+}
+
 if (! function_exists('school_grade_sections')) {
     function school_grade_sections(): array
     {
-        return ['A', 'B', 'C', 'D', 'E', 'F'];
+        return ['A', 'B', 'D', 'E', 'G', 'K', 'V', 'Z'];
     }
 }
 
@@ -472,12 +494,13 @@ if (! function_exists('school_grade_grouped_options')) {
     function school_grade_grouped_options(): array
     {
         $groups = [];
+        $map = school_grade_map();
 
-        foreach (range(1, 11) as $gradeNumber) {
+        foreach ($map as $gradeNumber => $sections) {
             $groupLabel = $gradeNumber.'-sinf';
             $groups[$groupLabel] = [];
 
-            foreach (school_grade_sections() as $section) {
+            foreach ($sections as $section) {
                 $value = $gradeNumber.'-'.$section;
                 $groups[$groupLabel][$value] = $value;
             }

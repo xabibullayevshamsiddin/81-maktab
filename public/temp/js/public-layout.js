@@ -437,21 +437,40 @@
           if (previewLoadingForId !== String(userId)) return;
           previewLoading.hidden = true;
           previewContent.hidden = false;
+
+          // Super admin and Admin prime effect
+          if (d.is_super_admin) {
+            previewDialog.classList.add('is-super-admin');
+            previewDialog.classList.remove('is-admin');
+            spawnSuperAdminParticles(previewDialog);
+          } else if (d.is_admin) {
+            previewDialog.classList.add('is-admin');
+            previewDialog.classList.remove('is-super-admin');
+            var oldPfx = previewDialog.querySelector('.sa-particles');
+            if (oldPfx) oldPfx.remove();
+          } else {
+            previewDialog.classList.remove('is-super-admin', 'is-admin');
+            var oldPfx = previewDialog.querySelector('.sa-particles');
+            if (oldPfx) oldPfx.remove();
+          }
+
           if (previewNameEl) {
             previewNameEl.textContent = d.display_name || '';
           }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
+            var lvlText = d.role_level ? 'LVL ' + String(d.role_level) + ' &bull; ' : '';
             if (d.is_super_admin) {
-              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge chat-user-preview-badge--super"><i class="fa-solid fa-crown"></i> ' + rl + '</span>';
+              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge chat-user-preview-badge--super"><i class="fa-solid fa-crown"></i> ' + lvlText + rl + '</span>';
             } else if (d.is_admin) {
-              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge">' + rl + '</span>';
+              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge"><i class="fa-solid fa-shield-halved"></i> ' + lvlText + rl + '</span>';
             } else {
-              previewRoleEl.textContent = d.role_label || '';
+              previewRoleEl.innerHTML = '<span class="chat-user-preview-badge chat-user-preview-badge--base"><i class="fa-solid fa-user"></i> ' + lvlText + rl + '</span>';
             }
           }
           if (previewAvatar) {
             previewAvatar.className = 'chat-user-preview-avatar';
+            if (d.is_super_admin) previewAvatar.classList.add('chat-user-preview-avatar--super');
             previewAvatar.innerHTML = '';
             if (d.avatar_url) {
               var img = document.createElement('img');
@@ -464,6 +483,7 @@
               var ini = (d.display_name || '?').trim().charAt(0).toUpperCase();
               previewAvatar.textContent = ini;
               previewAvatar.classList.add('chat-user-preview-avatar--initial');
+              if (d.is_super_admin) previewAvatar.classList.add('chat-user-preview-avatar--super-initial');
             }
           }
           if (previewDetailsEl) {
@@ -537,6 +557,28 @@
           if (previewLoadingForId !== String(userId)) return;
           previewLoading.textContent = 'Ma’lumot yuklab bo‘lmadi.';
         });
+    }
+
+    function spawnSuperAdminParticles(container) {
+      var old = container.querySelector('.sa-particles');
+      if (old) old.remove();
+      var wrap = document.createElement('div');
+      wrap.className = 'sa-particles';
+      wrap.setAttribute('aria-hidden', 'true');
+      var ICONS = ['fa-crown', 'fa-star', 'fa-gem', 'fa-bolt'];
+      for (var i = 0; i < 14; i++) {
+        var p = document.createElement('span');
+        p.className = 'sa-particle';
+        var icon = ICONS[i % ICONS.length];
+        p.innerHTML = '<i class="fa-solid ' + icon + '"></i>';
+        p.style.setProperty('--sa-x', (Math.random() * 100).toFixed(1) + '%');
+        p.style.setProperty('--sa-delay', (Math.random() * 2.4).toFixed(2) + 's');
+        p.style.setProperty('--sa-dur', (2.2 + Math.random() * 2).toFixed(2) + 's');
+        p.style.setProperty('--sa-size', (9 + Math.random() * 8).toFixed(1) + 'px');
+        p.style.setProperty('--sa-opacity', (0.35 + Math.random() * 0.5).toFixed(2));
+        wrap.appendChild(p);
+      }
+      container.appendChild(wrap);
     }
 
     window.openUserProfilePreview = openUserProfilePreview;
@@ -2387,25 +2429,26 @@
       if (!chatEnabled) return Promise.resolve();
       if (isSending) return Promise.resolve();
 
+      isSending = true;
       options = options || {};
+
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.setAttribute('aria-busy', 'true');
+      }
+      if (input) {
+        input.setAttribute('aria-busy', 'true');
+        input.disabled = true;
+      }
+      stickerButtons.forEach(function (btn) {
+        btn.disabled = true;
+      });
 
       var turnstileHost = document.getElementById('chat-turnstile-host');
 
       function doFetch(turnstileToken) {
-        isSending = true;
         setComposeState('sending');
 
-        if (sendBtn) {
-          sendBtn.disabled = true;
-          sendBtn.setAttribute('aria-busy', 'true');
-        }
-
-        input.setAttribute('aria-busy', 'true');
-        input.disabled = true;
-
-        stickerButtons.forEach(function (btn) {
-          btn.disabled = true;
-        });
 
         var payload = { body: text };
         if (turnstileToken) {

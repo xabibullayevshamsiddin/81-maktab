@@ -102,6 +102,7 @@ class ChatController extends Controller
         $roleLabel = User::ROLE_LABELS['uz'][$roleName]
             ?? User::ROLES[$roleName]
             ?? $roleName;
+        $roleLevel = User::ROLE_HIERARCHY[$roleName] ?? 1;
 
         $displayName = trim($user->buildNameFromParts());
         if ($displayName === '') {
@@ -120,13 +121,14 @@ class ChatController extends Controller
             'display_name' => $displayName,
             'avatar_url' => $avatarUrl,
             'role_label' => $roleLabel,
+            'role_level' => $roleLevel,
             'is_super_admin' => $roleName === User::ROLE_SUPER_ADMIN,
             'is_admin' => in_array($roleName, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN], true),
             'grade' => $grade,
             'is_parent' => (bool) $user->is_parent,
             'member_year' => $user->created_at?->format('Y'),
             'courses' => $this->buildUserPreviewCourses($user),
-            'exam_stats' => $this->buildUserPreviewExamStats($user),
+            'exam_stats' => in_array($roleName, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN], true) ? null : $this->buildUserPreviewExamStats($user),
         ];
 
         if ($viewer->isSuperAdmin()) {
@@ -335,6 +337,19 @@ class ChatController extends Controller
                 'message' => 'Matn bo‘sh.',
                 'errors' => ['body' => ['Matn kiritilishi kerak.']],
             ], 422);
+        }
+
+        // Idempotency check: bir xil xabarni 2 soniya ichida qayta yuborishni cheklash
+        $lastMessage = ChatMessage::where('user_id', $user->id)
+            ->latest('id')
+            ->first();
+
+        if ($lastMessage && $lastMessage->body === $body && $lastMessage->created_at->gt(now()->subSeconds(2))) {
+            return response()->json([
+                'ok' => true,
+                'id' => $lastMessage->id,
+                'duplicated' => true,
+            ]);
         }
 
         $message = ChatMessage::create([

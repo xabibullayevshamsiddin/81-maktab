@@ -11,36 +11,19 @@ class PublicCourseController extends Controller
 {
     public function index(Request $request)
     {
+        $q = trim((string) $request->query('q', ''));
+        $selectedSubject = trim((string) $request->query('subject', ''));
         $page = max(1, (int) $request->query('page', 1));
 
-        $courses = Cache::remember(cache_key_public_courses_page($page), now()->addMinutes(10), function () use ($request) {
-            return Course::query()
-                ->select([
-                    'id',
-                    'teacher_id',
-                    'created_by',
-                    'title',
-                    'title_en',
-                    'price',
-                    'price_en',
-                    'duration',
-                    'duration_en',
-                    'description',
-                    'description_en',
-                    'image',
-                    'start_date',
-                    'status',
-                    'created_at',
-                ])
-                ->with(['teacher:id,full_name,image,is_active'])
-                ->where('status', Course::STATUS_PUBLISHED)
-                ->whereHas('teacher', function ($query) {
-                    $query->where('is_active', true);
-                })
-                ->latest()
-                ->paginate(9)
-                ->appends($request->query());
-        });
+        $isFiltered = ($q !== '' || $selectedSubject !== '');
+
+        if ($isFiltered) {
+            $courses = $this->getCoursesQuery($q, $selectedSubject)->paginate(9)->withQueryString();
+        } else {
+            $courses = Cache::remember(cache_key_public_courses_page($page), now()->addMinutes(10), function () {
+                return $this->getCoursesQuery()->paginate(9)->withQueryString();
+            });
+        }
 
         $enrolledCourseIds = collect();
         $enrollmentByCourseId = collect();
@@ -56,7 +39,64 @@ class PublicCourseController extends Controller
                 ->pluck('course_id');
         }
 
-        return view('courses', compact('courses', 'enrolledCourseIds', 'enrollmentByCourseId'));
+        $allSubjects = \App\Models\Teacher::query()
+            ->where('is_active', true)
+            ->whereNotNull('subject')
+            ->where('subject', '!=', '')
+            ->distinct()
+            ->pluck('subject')
+            ->sort()
+            ->values();
+
+        return view('courses', compact('courses', 'enrolledCourseIds', 'enrollmentByCourseId', 'q', 'selectedSubject', 'allSubjects'));
+    }
+
+    private function getCoursesQuery(string $q = '', string $selectedSubject = '')
+    {
+        $query = Course::query()
+            ->select([
+                'id',
+                'teacher_id',
+                'created_by',
+                'title',
+                'title_en',
+                'price',
+                'price_en',
+                'duration',
+                'duration_en',
+                'description',
+                'description_en',
+                'image',
+                'start_date',
+                'status',
+                'created_at',
+            ])
+            ->with(['teacher:id,full_name,image,is_active,subject,subject_en'])
+            ->where('status', Course::STATUS_PUBLISHED)
+            ->whereHas('teacher', function ($query) {
+                $query->where('is_active', true);
+            });
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q): void {
+                $w->where('title', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%")
+                    ->orWhereHas('teacher', function ($t) use ($q): void {
+                        $t->where('full_name', 'like', "%{$q}%")
+                            ->orWhere('subject', 'like', "%{$q}%")
+                            ->orWhere('subject_en', 'like', "%{$q}%");
+                    });
+            });
+        }
+
+        if ($selectedSubject !== '') {
+            $query->whereHas('teacher', function ($t) use ($selectedSubject): void {
+                $t->where('subject', $selectedSubject)
+                    ->orWhere('subject_en', $selectedSubject);
+            });
+        }
+
+        return $query->latest();
     }
 
     public function show(Course $course)

@@ -28,7 +28,9 @@ class AdminCalendarEventController extends Controller
             ->orderByDesc('event_date')
             ->orderBy('sort_order')
             ->orderByDesc('id')
-            ->paginate(30);
+            ->paginate(30)
+            ->withQueryString();
+
 
         return view('admin.calendar-events.index', compact('events', 'year', 'calendarMonths', 'countsByDate'));
     }

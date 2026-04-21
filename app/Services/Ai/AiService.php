@@ -2,7 +2,6 @@
 
 namespace App\Services\Ai;
 
-use App\Models\AiKnowledge;
 use App\Models\CalendarEvent;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
@@ -28,18 +27,23 @@ class AiService
     public function generateResponse(string $userMessage, ?object $user = null): array
     {
         $message = trim($userMessage);
-        
+
         // 0. Smart analytics (intent-based, not keyword-locked)
         if ($analytics = $this->matchAnalyticalData($message)) {
             return ['success' => true, 'text' => $analytics, 'source' => 'analytics_data'];
         }
 
-        // 0.05 Taqvim / sanaga bog‘liq tadbirlar (DB: calendar_events)
+        // 0.05 Taqvim / sanaga bog'liq tadbirlar (DB: calendar_events)
         if ($calendar = $this->matchCalendarAndEvents($message)) {
             return ['success' => true, 'text' => $calendar, 'source' => 'calendar_data'];
         }
 
-        // 0.1 School profile / director / internal data summary
+        // 0.07 Direktor haqida maxsus savol (turli yozilishlar, imlo xatolari)
+        if ($director = $this->matchDirectorQuery($message)) {
+            return ['success' => true, 'text' => $director, 'source' => 'director_data'];
+        }
+
+        // 0.1 School profile / internal data summary
         if ($schoolData = $this->matchSchoolProfileData($message)) {
             return ['success' => true, 'text' => $schoolData, 'source' => 'school_profile'];
         }
@@ -49,22 +53,17 @@ class AiService
             return ['success' => true, 'text' => $static, 'source' => 'static_knowledge'];
         }
 
-        // 2. Universal Site Stats & Contact (New)
+        // 2. Universal Site Stats & Contact
         if ($universal = $this->matchUniversalData($message)) {
             return ['success' => true, 'text' => $universal, 'source' => 'universal_data'];
         }
 
-        // 3. Try Dynamic Data (Personal Results, Courses, Teachers) - Priority for "My Results"
+        // 3. Try Dynamic Data (Personal Results, Courses, Teachers)
         if ($dynamic = $this->matchDynamicData($message, $user)) {
             return ['success' => true, 'text' => $dynamic, 'source' => 'dynamic_data'];
         }
 
-        // 4. Try Database Knowledge Base (Admin Managed Q&A)
-        if ($dbResult = $this->matchDatabaseKnowledge($message)) {
-            return ['success' => true, 'text' => $dbResult, 'source' => 'database_knowledge'];
-        }
-
-        // 5. Fallback to Gemini API
+        // 4. Fallback to Gemini API
         return $this->callGemini($message, $user);
     }
 
@@ -250,8 +249,9 @@ class AiService
         $hour = (int) Carbon::now((string) config('app.timezone', 'UTC'))->format('H');
 
         // Salom / Xayrli
+        // NB: 'hi ', 'hey ' olib tashlandi — "o'qituvchi" kabi so'zlarda xato trigger beradi
         $greetWords = ['salom', 'assalom', 'assalomu alaykum', 'alaykum', 'hayrli', 'xayrli',
-            'qalay', 'ishlar', 'keling', 'xush kelibsiz', 'hi ', 'hey ', 'hello'];
+            'qalay', 'ishlar', 'keling', 'xush kelibsiz', 'hello'];
         if (Str::contains($q, $greetWords)) {
             if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
             elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
@@ -308,75 +308,87 @@ class AiService
             return "🕐 Hozir soat **{$now->format('H:i')}** ({$now->format('d.m.Y')}, {$now->translatedFormat('l')}).";
         }
 
-        return null;
-    }
+        // --- Qoshimcha Maktab Ma'lumotlari (Static) ---
 
-    /**
-     * Advanced fuzzy matching in the ai_knowledges table.
-     */
-    private function matchDatabaseKnowledge(string $message): ?string
-    {
-        $q = mb_strtolower(trim($message));
-        $qClean = $this->cleanMessage($q);
-        
-        $knowledges = AiKnowledge::where('is_active', true)->get();
-        $matches = [];
-
-        foreach ($knowledges as $item) {
-            $bestScore = 0;
-            
-            // 1. Compare against question_name (Fuzzy)
-            similar_text($qClean, $this->cleanMessage($item->question_name), $percent);
-            $bestScore = max($bestScore, $percent);
-
-            // 2. Compare against keywords (Weighted)
-            $keywords = explode(',', (string) $item->keywords);
-            foreach ($keywords as $kw) {
-                $kw = mb_strtolower(trim($kw));
-                if ($kw === '') continue;
-
-                // Exact substring match gets a huge boost!
-                if (Str::contains($q, $kw)) {
-                    $bestScore = max($bestScore, 90);
-                }
-
-                similar_text($qClean, $this->cleanMessage($kw), $kwPercent);
-                $bestScore = max($bestScore, $kwPercent);
-            }
-
-            if ($bestScore >= 60) {
-                $matches[] = [
-                    'score' => $bestScore,
-                    'answer' => $item->answer_text
-                ];
-            }
+        // Maktab tarixi
+        if (Str::contains($q, ['tashkil', 'qachon ochilgan', 'yilida ochilgan', 'qachon qurilgan', 'tarixi'])) {
+            return "81-IDUM maktabi o'z faoliyatini 1980-yillarda boshlagan va hozirda zamonaviy ta'lim markazlaridan biri hisoblanadi. 🏫";
         }
 
-        if (!empty($matches)) {
-            usort($matches, fn($a, $b) => $b['score'] <=> $a['score']);
-            return $matches[0]['answer'];
+        // Fanlar
+        if (Str::contains($q, ['fanlar', 'nimalar oqtiladi', 'nimalar o\'qitiladi', 'chuqurlashtirilgan'])) {
+            return "Maktabimizda barcha davlat standartidagi fanlar bilan birga IT, Matematika va Ingliz tili chuqurlashtirib o'tiladi. 📚";
+        }
+
+        // Dars vaqtlari
+        if (Str::contains($q, ['dars vaqti', 'soat nechada boshlanadi', 'soat nechada tugaydi', 'dars jadvali', 'tanaffus'])) {
+            return "🏫 **Dars vaqtlari:**\n"
+                . "• 1-soat: 08:30 - 09:15\n"
+                . "• 2-soat: 09:20 - 10:05\n"
+                . "• 3-soat: 10:20 - 11:05 (Katta tanaffus)\n"
+                . "• 4-soat: 11:10 - 11:55\n"
+                . "• 5-soat: 12:00 - 12:45\n"
+                . "✨ Eslatma: Sinf darajasiga qarab o'zgarishi mumkin.";
+        }
+
+        // To'garaklar
+        if (Str::contains($q, ['togarak', 'to\'garak', 'kurslar bor'])) {
+            return "🎨 **Bizda quyidagi to'garaklar mavjud:**\n"
+                . "• Fan to'garaklari (Matematika, Ingliz tili)\n"
+                . "• Sport (Futbol, Shaxmat)\n"
+                . "• San'at (Raqs, Musiqa)\n"
+                . "Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling. 🚀";
         }
 
         return null;
     }
+
 
     /**
      * Cleans noise words while PRESERVING intent words (qachon, kim, nima).
      */
     private function cleanMessage(string $text): string
     {
+        // Faqat "shovqin" so'zlar — qidiruv mantig'iga hissa qo'shmaydigan so'zlar
         $noise = [
-            'savolim', 'bor', 'edi', 'ayting', 'bilasiz', 'haqida', 'bering', 'yana',
-            'iltimos', 'qanaqa', 'qanday',
-            '?', '!', '.', ',', '...', '-', ':', ';'
+            'savolim', 'edi', 'ayting', 'bilasiz', 'bering', 'yana',
+            'iltimos', 'menga', 'biror', 'qilib',
+            '?', '!', '.', ',', '...', '-', ':', ';',
         ];
-        
-        $text = mb_strtolower($text);
+
+        // Grammatik qo'shimchalar: -da, -dan, -ga, -ni, -ning, -lar va h.k. (18+ qo'shimcha)
+        // NB: bular so'z OXIRIAN olib tashlanadi, ildizini saqlab qoladi
+        $suffixes = [
+            'larning', 'larga', 'lardan', 'larni', 'larda',
+            'ning', 'dan', 'dagi', 'dagi', 'dagi',
+            'ga', 'ni', 'da', 'lar',
+        ];
+
+        $text = mb_strtolower(trim($text));
+
         foreach ($noise as $n) {
-            $text = str_replace($n, '', $text);
+            $text = str_replace($n, ' ', $text);
         }
-        
-        return Str::squish($text);
+
+        // So'z oxiridagi grammatik qo'shimchalarni olib tashlash
+        $words = preg_split('/\s+/', $text) ?: [];
+        $cleaned = [];
+        foreach ($words as $word) {
+            $word = trim($word);
+            if ($word === '') {
+                continue;
+            }
+            foreach ($suffixes as $suffix) {
+                if (mb_strlen($word) > mb_strlen($suffix) + 3
+                    && mb_substr($word, -mb_strlen($suffix)) === $suffix) {
+                    $word = mb_substr($word, 0, mb_strlen($word) - mb_strlen($suffix));
+                    break;
+                }
+            }
+            $cleaned[] = $word;
+        }
+
+        return Str::squish(implode(' ', $cleaned));
     }
 
     /**
@@ -422,12 +434,100 @@ class AiService
         return null;
     }
 
+    /**
+     * Direktor / rahbar haqidagi turli xil savollarni ushlab olish.
+     * Qo'llab-quvvatlash: "direktor kim", "derektir kim", "maktab direktori kimlar",
+     * "direktoru kimlar", "maktab rahbari" va shunga o'xshash 15+ variantlar.
+     */
+    private function matchDirectorQuery(string $message): ?string
+    {
+        $q = mb_strtolower(trim($message));
+
+        // Direktor so'zining barcha mumkin bo'lgan yozilishlari (imlo xatolari bilan)
+        $directorPatterns = [
+            'direktor', 'derektir', 'direktoru', 'direktorlar', 'direktori',
+            'deroktor', 'derektr', 'direkktor', 'dirktor', 'direktar',
+            'rahbar', 'mudur', 'mudiru', 'boshliq', 'boshlig',
+        ];
+
+        $hasDirWord = false;
+        foreach ($directorPatterns as $pat) {
+            if (Str::contains($q, $pat)) {
+                $hasDirWord = true;
+                break;
+            }
+        }
+
+        // Fuzzy: levenshtein orqali ham tekshiramiz
+        if (! $hasDirWord) {
+            $words = preg_split('/\s+/', $q) ?: [];
+            foreach ($words as $word) {
+                if (mb_strlen($word) >= 5) {
+                    foreach (['direktor', 'rahbar'] as $base) {
+                        if (levenshtein($word, $base) <= 2) {
+                            $hasDirWord = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (! $hasDirWord) {
+            return null;
+        }
+
+        // DB dan direktor lavozimli shaxslarni topamiz
+        $directorKeywords = ['direktor', 'rahbar', 'boshqaruvchi', 'mudur', 'boshliq'];
+        $directorsFromDb = Teacher::where('is_active', true)
+            ->where(function ($query) use ($directorKeywords) {
+                foreach ($directorKeywords as $kw) {
+                    $query->orWhere('lavozim', 'like', "%{$kw}%");
+                }
+            })
+            ->select(['full_name', 'lavozim', 'subject', 'experience_years'])
+            ->get();
+
+        // Locale dan direktori nomini olishga urinamiz
+        $localeDirector = $this->extractDirectorNameFromLocale();
+
+        $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
+        // Agar DB da direktor lavozimdagi ustoz topilsa
+        if ($directorsFromDb->isNotEmpty()) {
+            $lines = $directorsFromDb->map(function ($t) {
+                $lavozim = trim((string) $t->lavozim);
+                $staj = (int) ($t->experience_years ?? 0);
+                $stajText = $staj > 0 ? "{$staj} yil staj" : '';
+                $parts = array_filter([$lavozim, $stajText]);
+                $detail = implode(' • ', $parts);
+
+                return "👤 **{$t->full_name}**" . ($detail !== '' ? "\n   💼 {$detail}" : '');
+            })->implode("\n\n");
+
+            return "🏫 **{$schoolName}** maktabi rahbariyati:\n\n"
+                . $lines
+                . "\n\n✨ Batafsil ma'lumot 'Maktab haqida' bo'limida berilgan.";
+        }
+
+        // Faqat locale dan olingan nom bor
+        if ($localeDirector !== null) {
+            return "🏫 **{$schoolName}** direktorligi — **{$localeDirector}** tomonidan boshqariladi.\n"
+                . "✨ Batafsil 'Maktab haqida' bo'limiga o'ting.";
+        }
+
+        // Hech narsa topilmagan
+        return "🏫 **{$schoolName}** direktorlari haqida hozircha ma'lumot kiritilmagan.\n"
+            . "Admin panelida ustozlar bo'limiga lavozim qo'shing. 😊";
+    }
+
     private function matchSchoolProfileData(string $message): ?string
     {
         $q = $this->cleanMessage($message);
         $isSchoolDataIntent = Str::contains($q, [
-            'direktor', 'rahbar', 'maktab haqida', 'maktab ichi', 'ichidagi malumot', 'ichidagi ma\'lumot',
+            'maktab haqida', 'maktab ichida', 'ichidagi malumot', 'ichidagi ma\'lumot',
             'maktab malumot', 'maktab ma\'lumot', 'pasport', 'boshqaruv', 'school info',
+            'maktab statistika', 'umumiy malumot',
         ]);
 
         if (! $isSchoolDataIntent) {
@@ -447,19 +547,18 @@ class AiService
         $events = CalendarEvent::where('event_date', '>=', now())->count();
 
         $directorLine = $directorName !== null
-            ? "• Maktab direktori: {$directorName}"
-            : "• Maktab direktori: hozircha admin panelda alohida saqlanmagan";
+            ? "• 🎓 Direktor: **{$directorName}**"
+            : "• 🎓 Direktor: ma'lumot kiritilmagan";
 
-        return "🏫 {$schoolName} bo'yicha ichki ma'lumotlar:\n"
+        return "🏫 **{$schoolName}** — to'liq ma'lumot:\n\n"
             . "{$directorLine}\n"
-            . "• Faol ustozlar: {$teachers} ta\n"
-            . "• Ro'yxatdan o'tgan o'quvchilar: {$students} ta\n"
-            . "• Faol kurslar: {$courses} ta\n"
-            . "• Yangiliklar: {$posts} ta\n"
-            . "• Yaqin tadbirlar: {$events} ta\n"
-            . "• Telefon: {$schoolPhone}\n"
-            . "• Email: {$schoolEmail}\n"
-            . "• Manzil: {$schoolAddress}";
+            . "• 👨‍🏫 Faol ustozlar: **{$teachers} ta**\n"
+            . "• 🎓 Ro'yxatdagi o'quvchilar: **{$students} ta**\n"
+            . "• 📚 Faol kurslar: **{$courses} ta**\n"
+            . "• 📰 Yangiliklar: **{$posts} ta**\n"
+            . "• 📅 Yaqin tadbirlar: **{$events} ta**\n\n"
+            . "📞 Tel: {$schoolPhone} | 📧 Email: {$schoolEmail}\n"
+            . "📍 Manzil: {$schoolAddress}";
     }
 
     private function extractDirectorNameFromLocale(): ?string
@@ -717,6 +816,11 @@ class AiService
         $q = mb_strtolower(trim($message));
         $qClean = $this->cleanMessage($q);
 
+        // 0. Ustozning kimligi (ism-familya) yoki lavozim bo'yicha qidiruv
+        if ($teacherIdentity = $this->matchTeacherIdentityQuery($q, $qClean)) {
+            return $teacherIdentity;
+        }
+
         // 1. User Results
         if ($this->isMatch($q, $qClean, ['natija', 'ball', 'bal', 'imtihonim', 'score', 'imtihon natija', 'ochko', 'foiz'])) {
             if (! $user) {
@@ -786,6 +890,263 @@ class AiService
         }
 
         return null;
+    }
+
+    private function matchTeacherIdentityQuery(string $q, string $qClean): ?string
+    {
+        $teachers = Teacher::query()
+            ->where('is_active', true)
+            ->select(['full_name', 'subject', 'lavozim', 'experience_years', 'toifa'])
+            ->get();
+
+        if ($teachers->isEmpty()) {
+            return null;
+        }
+
+        // "ustoz", "domla", "muallim" kabi umumiy so'zlarni qidiruvdan ajratib tur
+        $genericTeacherWords = ['ustoz', 'domla', 'muallim', 'teacher', 'oqituvchi', 'pedagog',
+            'o\'qituvchi', 'o\'qituvchilar', 'ustozlar'];
+        $hasOnlyGenericWord = false;
+        $hasSpecificName = false;
+
+        // Agar so'rovda ism bo'lmaydigan so'z bo'lsa (3+ harf, lekin ustoz/domla emas), u aniq ism deb hisoblaymiz
+        $words = preg_split('/\s+/u', mb_strtolower(trim($q))) ?: [];
+        // Savol so'zlari (ism emas) — contentWords dan chiqariladi
+        $stopWords = [
+            'kim', 'kimlar', 'kimdir', 'u', 've', 'va', 'ni', 'ga', 'da', 'dan',
+            'haqida', 'haqida', 'menga', 'ber', 'bering', 'qiladi', 'ishlaydi',
+            'qaysi', 'ustoz', 'domla', 'muallim', 'teacher', 'oqituvchi',
+            'ustozlar', 'iltimos', 'ayting', 'malumot', 'malumotlar', 'lumi',
+            'bildir', 'kors', 'ayt', 'bilsam', 'lavozim', 'lavozimida',
+        ];
+        $contentWords = array_values(array_filter($words, fn ($w) =>
+            mb_strlen($w) >= 3
+            && ! in_array(mb_strtolower($w), $stopWords, true)
+        ));
+
+        if (count($contentWords) === 0) {
+            $hasOnlyGenericWord = true;
+        } else {
+            $hasSpecificName = true;
+        }
+
+        $normalizedQ = $this->normalizeForTeacherLookup($q);
+
+        $isWhoQuestion = Str::contains($qClean, [
+            'kim', 'kimligi', 'kim ekan', 'haqida', 'lavozimi', 'fani', 'qaysi fan', 'malumot', 'ma\'lumot',
+        ]);
+        $isRoleQuestion = Str::contains($q, [
+            'lavozimda kim', 'lavozimda kimlar', 'kim ishlaydi', 'kimlar ishlaydi',
+            'vazifada kim', 'o\'qituvchi lavozim', 'ishlagan',
+        ]);
+
+        // ──────────────────────────────────────────────────────────────────────
+        // 1) ANIQ ISM QIDIRISH (eng muhim qism — token + Levenshtein fuzzy)
+        // ──────────────────────────────────────────────────────────────────────
+        if ($hasSpecificName) {
+            $matchedByName = null;
+            $bestNameScore = 0;
+
+            foreach ($teachers as $teacher) {
+                $normalizedTeacherName = $this->normalizeForTeacherLookup((string) $teacher->full_name);
+                if ($normalizedTeacherName === '') {
+                    continue;
+                }
+
+                $score = $this->teacherNameMatchScore($normalizedQ, $normalizedTeacherName, $contentWords);
+                if ($score > $bestNameScore) {
+                    $bestNameScore = $score;
+                    $matchedByName = $teacher;
+                }
+            }
+
+            // Threshold: ism bo'yicha savol bo'lsa 40+, aks holda 70+
+            $minScore = ($isWhoQuestion) ? 40 : 70;
+            if ($matchedByName && $bestNameScore >= $minScore) {
+                return $this->formatTeacherCard($matchedByName);
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // 2) LAVOZIM BO'YICHA QIDIRUV (masalan: "o'qituvchilar" yoki "psixolog")
+        // ──────────────────────────────────────────────────────────────────────
+        $matchedRole = null;
+        $bestRoleScore = 0;
+
+        foreach ($teachers as $teacher) {
+            $role = trim((string) $teacher->lavozim);
+            if ($role === '') {
+                continue;
+            }
+
+            $normalizedRole = $this->normalizeForTeacherLookup($role);
+
+            // Fuzzy + token matching role uchun
+            foreach ($contentWords as $cw) {
+                if (Str::contains($normalizedRole, $cw) || Str::contains($cw, $normalizedRole)) {
+                    if ($bestRoleScore < 90) {
+                        $bestRoleScore = 90;
+                        $matchedRole = $role;
+                    }
+                    break;
+                }
+                similar_text($cw, $normalizedRole, $pct);
+                if ($pct > $bestRoleScore) {
+                    $bestRoleScore = (int) round($pct);
+                    $matchedRole = $role;
+                }
+            }
+        }
+
+        // Lavozim qidiruvi: minimum 45% mos kelishi kerak
+        if (! $matchedRole || $bestRoleScore < 45) {
+            // Agar faqat umumiy ustoz so'zi bo'lsa — null qaytaramiz (matchDynamicData() hal qiladi)
+            return null;
+        }
+
+        $byRole = $teachers
+            ->filter(fn ($t) => mb_strtolower(trim((string) $t->lavozim)) === mb_strtolower($matchedRole))
+            ->sortByDesc('experience_years')
+            ->values();
+
+        if ($byRole->isEmpty()) {
+            return "Bu lavozim bo'yicha faol ustoz topilmadi.";
+        }
+
+        // Limitlash: 10 ta dan ko'p chiqmasin
+        $limit = 10;
+        $total = $byRole->count();
+        $shown = $byRole->take($limit);
+
+        $lines = $shown->map(function ($t) {
+            $staj = (int) ($t->experience_years ?? 0);
+            $stajText = $staj > 0 ? "🕐 {$staj} yil staj" : '';
+            $fan = trim((string) $t->subject);
+            $fanText = $fan !== '' ? "• 📖 {$fan}" : '';
+            $detail = array_filter([$stajText, $fanText]);
+
+            return "👤 **{$t->full_name}**" . (! empty($detail) ? ' — ' . implode(' ', $detail) : '');
+        })->implode("\n");
+
+        $footer = $total > $limit
+            ? "\n\n📋 Jami **{$total} ta** ustoz. To'liq ro'yxat: 'Ustozlar' sahifasida 👨‍🏫"
+            : "\n\n✨ To'liq ma'lumot: 'Ustozlar' sahifasiga o'ting.";
+
+        return "🏫 **{$matchedRole}** lavozimidagi ustozlar:\n\n{$lines}{$footer}";
+    }
+
+    /**
+     * Bitta ustoz uchun chiroyli "card" formati.
+     */
+    private function formatTeacherCard(object $teacher): string
+    {
+        $name    = trim((string) $teacher->full_name);
+        $lavozim = trim((string) $teacher->lavozim);
+        $fan     = trim((string) $teacher->subject);
+        $staj    = (int) ($teacher->experience_years ?? 0);
+        $toifa   = trim((string) $teacher->toifa);
+
+        $lines = ["👨‍🏫 **{$name}** haqida ma'lumot:", ''];
+
+        if ($lavozim !== '') {
+            $lines[] = "💼 Lavozim: {$lavozim}";
+        }
+        if ($fan !== '') {
+            $lines[] = "📖 Fani: {$fan}";
+        }
+        if ($staj > 0) {
+            $lines[] = "🕐 Staj: {$staj} yil";
+        }
+        if ($toifa !== '') {
+            $lines[] = "🏅 Toifa: {$toifa}";
+        }
+
+        if (count($lines) === 2) {
+            // Faqat ism bor, qo'shimcha ma'lumot yo'q
+            $lines[] = "ℹ️ Qo'shimcha ma'lumot hali kiritilmagan.";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function normalizeForTeacherLookup(string $text): string
+    {
+        $text = mb_strtolower(trim($text));
+        // Maxsus belgilarni olib tashla, lekin harflarni saqla
+        $text = preg_replace('/[^\p{L}\s]+/u', ' ', $text) ?? $text;
+
+        return Str::squish($text);
+    }
+
+    /**
+     * Ustoz nomini fuzzy scoring bilan solishtirish.
+     * Levenshtein (imlo xatolari) + token overlap + similar_text kombinatsiyasi.
+     *
+     * @param string[] $contentWords Savoldan ajratilgan mazmunli tokenlar
+     */
+    private function teacherNameMatchScore(string $query, string $candidate, array $contentWords = []): int
+    {
+        if ($query === '' || $candidate === '') {
+            return 0;
+        }
+
+        // To'liq mos kelish
+        if ($query === $candidate) {
+            return 100;
+        }
+
+        // Substring mos kelish
+        if (Str::contains($query, $candidate) || Str::contains($candidate, $query)) {
+            return 95;
+        }
+
+        $candidateTokens = array_values(array_filter(preg_split('/\s+/u', $candidate) ?: []));
+
+        // ── Token darajasida Levenshtein fuzzy matching ──
+        $tokenHits = 0;
+        foreach ($contentWords as $qToken) {
+            if (mb_strlen($qToken) < 3) {
+                continue;
+            }
+            foreach ($candidateTokens as $ct) {
+                // 1. Boshlang'ich mos kelish
+                if (Str::startsWith($ct, $qToken) || Str::startsWith($qToken, $ct)) {
+                    $tokenHits += 2; // katta og'irlik
+                    break;
+                }
+                // 2. Levenshtein — 1-2 harf xatosi
+                $maxErr = mb_strlen($qToken) <= 5 ? 1 : 2;
+                if (levenshtein($qToken, $ct) <= $maxErr) {
+                    $tokenHits++;
+                    break;
+                }
+                // 3. Substring mos kelish
+                if (Str::contains($ct, $qToken) || Str::contains($qToken, $ct)) {
+                    $tokenHits++;
+                    break;
+                }
+            }
+        }
+
+        // Token score: contentWords bo'yicha (birinchi darajali signal)
+        $tokenScore = count($contentWords) > 0
+            ? (int) round(($tokenHits / (count($contentWords) * 2)) * 100)
+            : 0;
+
+        // similar_text: butun matn bo'yicha (qo'shimcha signal, shovqin bor)
+        // Faqat contentWords bo'sh bo'lganida yoki tokenScore past bo'lganda ishlatiladi
+        if ($tokenScore >= 40) {
+            // Token mos kelish yetarli — fuzzy ni ishlatmaymiz
+            return $tokenScore;
+        }
+
+        // Faqat candidate tokenlarini query tokenlari bilan solishtiramiz
+        $candidateStr = implode(' ', $candidateTokens);
+        $queryTokensStr = implode(' ', array_filter(preg_split('/\s+/u', $query) ?: []));
+        similar_text($queryTokensStr, $candidateStr, $pct);
+        $fuzzyScore = (int) round($pct);
+
+        return max($tokenScore, $fuzzyScore);
     }
 
     /**

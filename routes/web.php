@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AdminAiKnowledgeController;
 use App\Http\Controllers\AdminCalendarEventController;
 use App\Http\Controllers\AdminCommentController;
 use App\Http\Controllers\AdminContactMessageController;
@@ -284,7 +283,6 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     Route::middleware('role:super_admin')->group(function () {
         Route::get('settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
         Route::put('settings', [AdminSettingsController::class, 'update'])->name('admin.settings.update');
-        Route::resource('ai-knowledges', AdminAiKnowledgeController::class)->except('show');
     });
 });
 

@@ -16,6 +16,60 @@
         <p>{{ __('public.courses.section_text') }}</p>
       </div>
 
+      <form method="GET" action="{{ route('courses') }}" class="exam-filter-panel" style="margin-bottom:18px;" id="course-filter-form">
+        <div class="exam-filter-row">
+          <div class="exam-filter-field">
+            <label class="exam-filter-label" for="course-filter-q">{{ __('public.posts.search_placeholder') }}</label>
+            <input type="search" id="course-filter-q" name="q" class="exam-filter-input" placeholder="{{ __('public.courses.search_placeholder') }}" autocomplete="off" value="{{ $q ?? '' }}">
+          </div>
+          <div class="exam-filter-field">
+            <label class="exam-filter-label" for="course-filter-subject">{{ __('public.courses.subject_filter') }}</label>
+            <select id="course-filter-subject" name="subject" class="exam-filter-select">
+              <option value="">{{ __('public.courses.all_subjects') }}</option>
+              @foreach($allSubjects as $subj)
+                <option value="{{ e($subj) }}" {{ ($selectedSubject ?? '') === $subj ? 'selected' : '' }}>{{ $subj }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+      </form>
+      <script>
+        (function () {
+          var form = document.getElementById('course-filter-form');
+          var qInput = document.getElementById('course-filter-q');
+          var subjSelect = document.getElementById('course-filter-subject');
+          if (!form) return;
+
+          if (subjSelect) {
+            subjSelect.addEventListener('change', function () {
+              form.submit();
+            });
+          }
+
+          var debounceTimer;
+          if (qInput) {
+            qInput.addEventListener('input', function () {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(function () {
+                form.submit();
+              }, 500);
+            });
+          }
+        })();
+      </script>
+
+      @php
+        $courseTotal = $courses->total();
+        $courseShown = $courses->count();
+      @endphp
+      <p class="exam-filter-count" aria-live="polite">
+        @if(($q ?? '') !== '' || ($selectedSubject ?? '') !== '')
+          {{ __('public.posts.section_text') }}: {{ $courseShown }} / {{ $courseTotal }}
+        @else
+          {{ __('public.courses.section_title') }}: {{ $courseTotal }}
+        @endif
+      </p>
+
       <div class="courses-grid prime-stagger" id="courses-grid">
         @forelse($courses as $course)
           @php

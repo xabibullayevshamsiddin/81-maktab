@@ -15,7 +15,10 @@ class PublicTeacherController extends Controller
 {
     public function index(Request $request)
     {
-        $teachers = Teacher::query()
+        $q = trim((string) $request->query('q', ''));
+        $selectedSubject = trim((string) $request->query('subject', ''));
+
+        $query = Teacher::query()
             ->select([
                 'id',
                 'full_name',
@@ -35,11 +38,40 @@ class PublicTeacherController extends Controller
                 'is_active',
             ])
             ->withCount('likes')
-            ->where('is_active', true)
+            ->where('is_active', true);
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q): void {
+                $sub->where('full_name', 'like', "%{$q}%")
+                    ->orWhere('subject', 'like', "%{$q}%")
+                    ->orWhere('subject_en', 'like', "%{$q}%")
+                    ->orWhere('lavozim', 'like', "%{$q}%")
+                    ->orWhere('lavozim_en', 'like', "%{$q}%");
+            });
+        }
+
+        if ($selectedSubject !== '') {
+            $query->where(function ($sub) use ($selectedSubject): void {
+                $sub->where('subject', $selectedSubject)
+                    ->orWhere('subject_en', $selectedSubject);
+            });
+        }
+
+        $teachers = $query
             ->orderBy('sort_order')
             ->orderBy('full_name')
             ->paginate(12)
             ->withQueryString();
+
+        // Collect all unique subjects for the filter dropdown (from all active teachers)
+        $allSubjects = Teacher::query()
+            ->where('is_active', true)
+            ->whereNotNull('subject')
+            ->where('subject', '!=', '')
+            ->orderBy('subject')
+            ->pluck('subject')
+            ->unique()
+            ->values();
 
         $likedTeacherIds = collect();
         if (auth()->check()) {
@@ -54,7 +86,7 @@ class PublicTeacherController extends Controller
 
         $teacherStats = $this->teacherPageStats();
 
-        return view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats'));
+        return view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'));
     }
 
     /**

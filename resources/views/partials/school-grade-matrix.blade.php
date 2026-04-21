@@ -35,6 +35,7 @@
         </tr>
       </thead>
       <tbody>
+        @php $map = school_grade_map(); @endphp
         @foreach (range(1, 11) as $g)
           <tr>
             <th scope="row">
@@ -43,17 +44,22 @@
               </button>
             </th>
             @foreach ($sections as $sec)
-              @php $value = $g.'-'.$sec; @endphp
+              @php
+                $value = $g.'-'.$sec;
+                $isValid = in_array($sec, $map[$g] ?? [], true);
+              @endphp
               <td>
-                <label class="grade-matrix-cell">
-                  <input
-                    type="checkbox"
-                    name="allowed_grades[]"
-                    value="{{ $value }}"
-                    {{ in_array($value, $selected, true) ? 'checked' : '' }}
-                  >
-                  <span class="grade-matrix-sr-only">{{ $value }}</span>
-                </label>
+                @if ($isValid)
+                  <label class="grade-matrix-cell">
+                    <input
+                      type="checkbox"
+                      name="allowed_grades[]"
+                      value="{{ $value }}"
+                      {{ in_array($value, $selected, true) ? 'checked' : '' }}
+                    >
+                    <span class="grade-matrix-sr-only">{{ $value }}</span>
+                  </label>
+                @endif
               </td>
             @endforeach
           </tr>

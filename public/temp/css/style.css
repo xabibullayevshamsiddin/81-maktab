@@ -1981,6 +1981,19 @@ button.chat-msg-avatar-btn:focus-visible {
   color: #fff;
 }
 
+.chat-user-preview-badge--base {
+  background: var(--surface, #fff);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .chat-user-preview-badge--base {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #9cb1cb;
+}
+
 .chat-user-preview-details {
   list-style: none;
   margin: 0;
@@ -2199,6 +2212,393 @@ button.chat-msg-avatar-btn:focus-visible {
 :root[data-theme='dark'] .chat-user-preview-links li,
 :root[data-theme='dark'] .chat-user-preview-stat-row {
   border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* =====================================================================
+   SUPER ADMIN PRIME PROFILE — "BOMBA" EFFECT
+   ===================================================================== */
+
+/* Animated gradient border via pseudo-element */
+@keyframes sa-border-rotate {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes sa-particle-float {
+  0%   { transform: translateY(0) scale(1); opacity: var(--sa-opacity); }
+  60%  { opacity: var(--sa-opacity); }
+  100% { transform: translateY(-110px) scale(0.6); opacity: 0; }
+}
+
+@keyframes sa-glow-pulse {
+  0%, 100% { box-shadow: 0 0 22px 4px rgba(245, 158, 11, 0.45),
+                          0 0 60px 12px rgba(249, 115, 22, 0.2); }
+  50%       { box-shadow: 0 0 36px 8px rgba(251, 191, 36, 0.65),
+                          0 0 80px 20px rgba(239, 68, 68, 0.18); }
+}
+
+@keyframes sa-avatar-ring {
+  0%, 100% { box-shadow: 0 0 0 3px #f59e0b, 0 0 18px 4px rgba(245,158,11,0.55); }
+  50%       { box-shadow: 0 0 0 5px #f97316, 0 0 32px 8px rgba(249,115,22,0.7); }
+}
+
+@keyframes sa-shine {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes sa-name-in {
+  from { opacity: 0; transform: translateY(6px); letter-spacing: 0.08em; }
+  to   { opacity: 1; transform: translateY(0);   letter-spacing: normal; }
+}
+
+/* Dialog wrapper when super-admin */
+.chat-user-preview-dialog.is-super-admin[open],
+.chat-user-preview-dialog.is-super-admin:modal {
+  background: linear-gradient(160deg, #0b0f1a 0%, #12192d 55%, #0f1623 100%);
+  border: none;
+  padding: 2px;
+  box-shadow: 0 0 0 2px transparent;
+  overflow: visible;
+  animation: sa-glow-pulse 3s ease infinite;
+}
+
+/* Animated gradient border ring */
+.chat-user-preview-dialog.is-super-admin::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  z-index: 0;
+  background: linear-gradient(120deg, #f59e0b, #f97316, #ef4444, #a855f7, #6366f1, #f59e0b);
+  background-size: 300% 300%;
+  animation: sa-border-rotate 4s linear infinite;
+}
+
+/* Inner card surface */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-shell {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(160deg, #0d1526 0%, #111d34 60%, #0c1422 100%);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Subtle top aurora stripe */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-shell::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f59e0b, #f97316, #a855f7, #6366f1, #f59e0b);
+  background-size: 200% 100%;
+  animation: sa-border-rotate 3s linear infinite;
+  border-radius: 16px 16px 0 0;
+}
+
+/* Radial glow behind avatar */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-shell::after {
+  content: '';
+  position: absolute;
+  top: -40px; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(245,158,11,0.22) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Close button — on dark bg */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-close {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  z-index: 2;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-close:hover {
+  background: rgba(245, 158, 11, 0.24);
+}
+
+/* Avatar ring glow */
+.chat-user-preview-avatar.chat-user-preview-avatar--super {
+  animation: sa-avatar-ring 2.4s ease infinite;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-user-preview-avatar--super-initial {
+  background: linear-gradient(135deg, #f59e0b, #f97316) !important;
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Shining name text */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-name {
+  background: linear-gradient(90deg, #fbbf24, #fb923c, #f9a8d4, #fbbf24);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: sa-shine 3s linear infinite, sa-name-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  position: relative;
+  z-index: 1;
+}
+
+/* Role badge — super */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-badge--super {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.45);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* Details rows — dark themed */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-details li {
+  border-top-color: rgba(245, 158, 11, 0.14);
+  color: #c8d9f5;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-details li span:first-child {
+  color: rgba(245, 158, 11, 0.7);
+}
+
+/* Section titles */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-section {
+  border-top-color: rgba(245, 158, 11, 0.15);
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-section-title {
+  color: #f59e0b;
+  letter-spacing: 0.06em;
+}
+
+/* Stat rows */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-stat-row {
+  border-top-color: rgba(255,255,255,0.07);
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-stat-row span {
+  color: rgba(200, 217, 245, 0.65);
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-stat-row strong {
+  color: #fbbf24;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-stat--ok { color: #4ade80; }
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-stat--bad { color: #f87171; }
+
+/* Admin kicker / status */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-admin-kicker {
+  color: #fbbf24;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-admin-actions {
+  border-top-color: rgba(245, 158, 11, 0.28);
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-admin-status {
+  color: #c8d9f5;
+}
+
+/* Contact section */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-contact {
+  border-top-color: rgba(245, 158, 11, 0.18);
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-contact-kicker {
+  color: #f59e0b;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-contact-row {
+  color: #c8d9f5;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-contact-row span:first-child {
+  color: rgba(245, 158, 11, 0.65);
+}
+
+/* Muted text */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-muted {
+  color: rgba(200, 217, 245, 0.4);
+}
+
+/* Links */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-links a {
+  color: #fbbf24;
+}
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-links li {
+  border-top-color: rgba(255,255,255,0.07);
+  color: #c8d9f5;
+}
+
+/* Scrollbar inside super admin body */
+.chat-user-preview-dialog.is-super-admin .chat-user-preview-body::-webkit-scrollbar-thumb {
+  background: rgba(245,158,11,0.4);
+}
+
+/* Backdrop — more dramatic */
+.chat-user-preview-dialog.is-super-admin::backdrop {
+  background: rgba(4, 10, 22, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+/* Floating particle container */
+.sa-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 16px;
+  z-index: 0;
+}
+
+.sa-particle {
+  position: absolute;
+  bottom: -10px;
+  left: var(--sa-x, 50%);
+  font-size: var(--sa-size, 12px);
+  color: #f59e0b;
+  opacity: 0;
+  animation: sa-particle-float var(--sa-dur, 3s) ease-in var(--sa-delay, 0s) infinite;
+  text-shadow: 0 0 8px rgba(245,158,11,0.8);
+}
+
+.sa-particle:nth-child(even) { color: #fb923c; }
+.sa-particle:nth-child(3n)   { color: #a78bfa; }
+.sa-particle:nth-child(4n)   { color: #fbbf24; }
+
+/* =====================================================================
+   ADMIN PRIME PROFILE — "COSMIC BLUE" EFFECT
+   ===================================================================== */
+
+@keyframes admin-glow-pulse {
+  0%, 100% { box-shadow: 0 0 22px 4px rgba(56, 189, 248, 0.45),
+                          0 0 60px 12px rgba(59, 130, 246, 0.2); }
+  50%       { box-shadow: 0 0 36px 8px rgba(96, 165, 250, 0.65),
+                          0 0 80px 20px rgba(139, 92, 246, 0.18); }
+}
+
+@keyframes admin-avatar-ring {
+  0%, 100% { box-shadow: 0 0 0 3px #3b82f6, 0 0 18px 4px rgba(59, 130, 246, 0.55); }
+  50%       { box-shadow: 0 0 0 5px #60a5fa, 0 0 32px 8px rgba(96, 165, 250, 0.7); }
+}
+
+.chat-user-preview-dialog.is-admin[open],
+.chat-user-preview-dialog.is-admin:modal {
+  background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%);
+  border: none;
+  padding: 2px;
+  box-shadow: 0 0 0 2px transparent;
+  overflow: visible;
+  animation: admin-glow-pulse 3s ease infinite;
+}
+
+.chat-user-preview-dialog.is-admin::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  z-index: 0;
+  background: linear-gradient(120deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  background-size: 300% 300%;
+  animation: sa-border-rotate 4s linear infinite;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-shell {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(160deg, #0b1120 0%, #171638 60%, #080f1c 100%);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-shell::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  animation: sa-border-rotate 3s linear infinite;
+  border-radius: 16px 16px 0 0;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-shell::after {
+  content: '';
+  position: absolute;
+  top: -40px; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(59,130,246,0.22) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-close {
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  z-index: 2;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-close:hover {
+  background: rgba(59, 130, 246, 0.24);
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-avatar {
+  animation: admin-avatar-ring 2.4s ease infinite;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-avatar--initial {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-name {
+  background: linear-gradient(90deg, #93c5fd, #c4b5fd, #fbcfe8, #93c5fd);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: sa-shine 3s linear infinite, sa-name-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-badge {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.45);
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.chat-user-preview-dialog.is-admin .chat-user-preview-details li {
+  border-top-color: rgba(59, 130, 246, 0.14);
+  color: #e2e8f0;
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-details li span:first-child {
+  color: rgba(96, 165, 250, 0.8);
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-section {
+  border-top-color: rgba(59, 130, 246, 0.15);
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-section-title {
+  color: #93c5fd;
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-links a {
+  color: #93c5fd;
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-links li {
+  border-top-color: rgba(255,255,255,0.07);
+  color: #e2e8f0;
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-muted {
+  color: rgba(148, 163, 184, 0.7);
+}
+.chat-user-preview-dialog.is-admin .chat-user-preview-body::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+}
+.chat-user-preview-dialog.is-admin::backdrop {
+  background: rgba(10, 15, 30, 0.72);
+  backdrop-filter: blur(4px);
 }
 
 .chat-msg-body {
@@ -7749,15 +8149,24 @@ body {
     0 10px 32px rgba(0, 0, 0, 0.55);
 }
 
-:root[data-theme='dark'] #site-nav {
-  background: rgba(8, 18, 32, 0.98);
+@media (max-width: 980px) {
+  :root[data-theme='dark'] #site-nav {
+    background: rgba(8, 18, 32, 0.98);
+  }
 }
 
-:root[data-theme='dark'] .theme-toggle,
 :root[data-theme='dark'] .btn-outline {
   border-color: rgba(125, 180, 255, 0.28);
   background: rgba(125, 180, 255, 0.08);
   color: #e6eefb;
+}
+
+:root[data-theme='dark'] .nav-link,
+:root[data-theme='dark'] .nav-dropdown-toggle,
+:root[data-theme='dark'] .theme-toggle,
+:root[data-theme='dark'] .ai-header-toggle {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 :root[data-theme='dark'] .nav-dropdown-menu {

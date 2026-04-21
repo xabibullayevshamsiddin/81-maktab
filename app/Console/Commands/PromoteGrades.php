@@ -36,7 +36,7 @@ class PromoteGrades extends Command
         foreach ($students as $student) {
             $grade = trim((string) $student->grade);
 
-            if (! preg_match('/^(\d{1,2})-([A-Z])$/i', $grade, $m)) {
+            if (! preg_match('/^(\d{1,2})-([A-Z0-9]+)$/i', $grade, $m)) {
                 $this->warn("Noto'g'ri format: #{$student->id} {$student->name} — \"{$grade}\" (o'tkazib yuborildi)");
                 $skipped++;
                 continue;
@@ -44,6 +44,9 @@ class PromoteGrades extends Command
 
             $num = (int) $m[1];
             $section = strtoupper($m[2]);
+
+            // YT ni olib tashlash (har ehtimolga qarshi)
+            $section = str_replace('YT', '', $section);
 
             if ($num >= 11) {
                 if (! $dryRun) {
