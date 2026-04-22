@@ -70,33 +70,50 @@
           </div>
 
           <div class="contact-form-wrap prime-reveal">
-            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
-              <h2 style="margin:0;">Xabar yuborish</h2>
-              <x-site-rule-items area="contact" />
-            </div>
+            @auth
+              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;">
+                <h2 style="margin:0;">Xabar yuborish</h2>
+                <x-site-rule-items area="contact" />
+              </div>
 
-            <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
-              @csrf
-              <input type="text" id="name" name="name" value="{{ auth()->user()->name ?? old('name') }}" placeholder="Ismingiz" required />
-              <input type="email" id="email" name="email" value="{{ auth()->user()->email ?? old('email') }}" placeholder="Email" required />
-              <input type="tel" id="phone" name="phone" value="{{ auth()->user()->phone ?? old('phone') }}" placeholder="Telefon" required />
-              <textarea
-                id="shikoyat"
-                name="note"
-                placeholder="Shikoyat yoki qo'shimcha izoh (ixtiyoriy)"
-                rows="2"
-              >{{ old('note') }}</textarea>
-              <textarea
-                id="message"
-                name="message"
-                rows="5"
-                placeholder="Sizga qanday yordam bera olamiz?"
-                required
-              >{{ old('message') }}</textarea>
-              <x-turnstile-field />
-              <button class="btn btn-prime" type="submit">Yuborish</button>
-              <p id="form-message" class="form-message" aria-live="polite"></p>
-            </form>
+              <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; margin-bottom:20px; border:1px solid #e2e8f0; font-size:14px; color:#475569;">
+                  <i class="fa-solid fa-user-check" style="margin-right:6px; color:var(--primary);"></i>
+                  Murojaat quyidagi ma'lumotlar bilan yuboriladi: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->phone }})
+              </div>
+
+              <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
+                @csrf
+                <textarea
+                  id="shikoyat"
+                  name="note"
+                  placeholder="Murojaat mavzusi (masalan: Parolni tiklash, Shikoyat, Taklif)"
+                  rows="2"
+                  required
+                >{{ old('note') }}</textarea>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows="5"
+                  placeholder="Xabaringiz matnini bu yerga yozing..."
+                  required
+                >{{ old('message') }}</textarea>
+                <x-turnstile-field />
+                <button class="btn btn-prime" type="submit">Yuborish</button>
+                <p id="form-message" class="form-message" aria-live="polite"></p>
+              </form>
+            @else
+              <div class="contact-auth-prompt" style="text-align:center; padding:40px 20px; background:#fff; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+                <div class="icon-wrap" style="width:64px; height:64px; background:rgba(var(--primary-rgb), 0.1); color:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:24px;">
+                  <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 style="margin-bottom:12px;">Murojaat yuborish</h2>
+                <p style="color:#64748b; margin-bottom:24px;">Xabar yuborish uchun tizimga kirishingiz lozim. Bu bizga siz bilan bog'lanishni osonlashtiradi.</p>
+                <a href="{{ route('login') }}" class="btn btn-prime">
+                  <i class="fa-solid fa-right-to-bracket" style="margin-right:8px;"></i>
+                  Tizimga kirish
+                </a>
+              </div>
+            @endauth
           </div>
         </div>
       </div>

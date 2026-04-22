@@ -5,7 +5,7 @@
           <span class="badge">{{ __('public.teachers.badge') }}</span>
           <h1 class="js-split-text">{{ __('public.teachers.hero_title') }}</h1>
           <p>{{ __('public.teachers.hero_text') }}</p>
-          <a href="#teachers-list" class="btn btn-prime"
+          <a href="#teachers-list" style="margin-top: 15px;" class="btn btn-prime"
             >{{ __('public.teachers.hero_button') }}
             <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
           ></a>
@@ -168,8 +168,6 @@
               @endfor
             </div>
 
-            <span class="teachers-page-info">Sahifa {{ $current }} / {{ $last }}</span>
-
             @if($teachers->hasMorePages())
               <a class="teachers-page-btn" href="{{ $teachers->nextPageUrl() }}">
                 Keyingi <i class="fa-solid fa-chevron-right"></i>
@@ -198,39 +196,6 @@
         </div>
       </section>
 
-      <section class="teachers-stats-section prime-reveal">
-        <div class="container teachers-stats prime-stagger">
-          <div class="teachers-stat-item">
-            <strong class="stat-num">{{ number_format($teacherStats['experienced_teachers']) }}</strong>
-            <span>{{ __('public.teachers.stat_1') }}</span>
-          </div>
-          <div class="teachers-stat-item">
-            <strong class="stat-num">{{ number_format($teacherStats['subject_areas']) }}</strong>
-            <span>{{ __('public.teachers.stat_2') }}</span>
-          </div>
-          <div class="teachers-stat-item">
-            <strong class="stat-num">{{ number_format($teacherStats['students']) }}</strong>
-            <span>{{ __('public.teachers.stat_3') }}</span>
-          </div>
-          <div class="teachers-stat-item">
-            <strong class="stat-num">{{ number_format($teacherStats['satisfaction_percent']) }}</strong>
-            <span>{{ __('public.teachers.stat_4') }}</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="container teachers-cta-section prime-reveal">
-        <div class="glass-section teachers-cta">
-          <div>
-            <h2 class="js-split-text">{{ __('public.teachers.cta_title') }}</h2>
-            <p>{{ __('public.teachers.cta_text') }}</p>
-          </div>
-          <a href="{{ route('contact') }}" class="btn btn-prime"
-            >{{ __('public.teachers.cta_button') }}
-            <i class="fa-solid fa-arrow-right" style="margin-left: 6px"></i
-          ></a>
-        </div>
-      </section>
     </main>
 
 </x-loyouts.main>

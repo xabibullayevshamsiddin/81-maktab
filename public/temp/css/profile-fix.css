@@ -319,3 +319,56 @@
   transform: none !important;
   transition: none !important;
 }
+
+/* Activity lists: readable under high volume */
+.profile-activity-list {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.profile-activity-item {
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  background: rgba(15, 23, 42, 0.03) !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+
+.profile-activity-item:hover {
+  border-color: var(--primary-2) !important;
+  background: rgba(20, 184, 166, 0.08) !important;
+}
+
+.profile-activity-body {
+  color: var(--text) !important;
+  line-height: 1.55 !important;
+}
+
+.profile-activity-date {
+  color: var(--muted) !important;
+  font-size: 12px !important;
+}
+
+.profile-activity-link {
+  color: var(--primary-2) !important;
+  text-decoration: none !important;
+}
+
+.profile-activity-link:hover {
+  color: var(--primary) !important;
+  text-decoration: underline !important;
+}
+
+.profile-actions-row--activity {
+  margin-top: 10px !important;
+}
+
+:root[data-theme='dark'] .profile-activity-item {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:root[data-theme='dark'] .profile-activity-item:hover {
+  background: rgba(96, 165, 250, 0.14) !important;
+  border-color: rgba(96, 165, 250, 0.55) !important;
+}

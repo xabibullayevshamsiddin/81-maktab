@@ -10,8 +10,13 @@
             <i class="fa-solid fa-chevron-right" style="font-size: 10px; opacity: 0.5; align-self: center;"></i>
             <span>Natija tafsilotlari</span>
         </div>
-        <h1 class="results-title">{{ $result->user->name }} — {{ $exam->title }}</h1>
-        <p class="text-muted">Imtihon topshirish jarayoni va batafsil tahlili.</p>
+        <h1 class="results-title">
+            {{ $result->user->name }} — {{ $exam->title }}
+            @if($exam?->trashed())
+                <span class="badge bg-danger ms-2" style="font-size: 12px; vertical-align: middle;">O'chirilgan imtihon</span>
+            @endif
+        </h1>
+        <p class="text-muted">Imtihon topshirish jarayoni va batafsil tahlili. Sinf: <strong>{{ $result->user_grade ?? $result->user->grade ?? '—' }}</strong></p>
     </div>
 
     <!-- Bento Stats Grid -->
@@ -25,6 +30,11 @@
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span class="bento-label">Tugallangan vaqt</span>
             <span class="bento-value">{{ $result->submitted_at?->format('d.m.Y H:i') ?? 'Tugallanmagan' }}</span>
+        </div>
+        <div class="bento-card">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span class="bento-label">Sinf</span>
+            <span class="bento-value">{{ $result->user_grade ?? $result->user->grade ?? '—' }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-circle-info"></i>
@@ -44,7 +54,7 @@
         <div class="bento-card">
             <i class="fa-solid fa-award"></i>
             <span class="bento-label">To'plangan ball</span>
-            <span class="bento-value">{{ $result->points_earned }} / {{ $result->points_max ?? $exam->total_points }}</span>
+            <span class="bento-value">{{ $result->points_earned }} / {{ $result->points_max ?? ($exam?->total_points ?? 0) }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-shield-virus"></i>

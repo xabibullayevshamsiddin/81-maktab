@@ -6,8 +6,13 @@
           <i class="fa-solid fa-flag-checkered"></i>
           Yakunlandi
         </span>
-        <h1 class="exam-title">{{ $result->exam->title }}</h1>
-        <p class="exam-hero-lead">Holat: <strong>{{ $result->status }}</strong></p>
+        <h1 class="exam-title">
+          {{ $result->exam->title }}
+          @if($result->exam?->trashed())
+            <span style="color:#ef4444; font-size:14px; display:block; margin-top:4px;">(Ushbu imtihon tizimdan o'chirilgan)</span>
+          @endif
+        </h1>
+        <p class="exam-hero-lead">Holat: <strong>{{ $result->status }}</strong> | Sinf: <strong>{{ $result->user_grade ?? $result->user->grade ?? '—' }}</strong></p>
       </header>
 
       @if((int) ($result->rule_violation_count ?? 0) > 5)

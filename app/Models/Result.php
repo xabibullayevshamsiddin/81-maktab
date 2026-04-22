@@ -11,6 +11,7 @@ class Result extends Model
     protected $fillable = [
         'exam_id',
         'user_id',
+        'user_grade',
         'question_order_json',
         'score',
         'points_earned',
@@ -34,7 +35,7 @@ class Result extends Model
 
     public function exam(): BelongsTo
     {
-        return $this->belongsTo(Exam::class);
+        return $this->belongsTo(Exam::class)->withTrashed();
     }
 
     public function user(): BelongsTo

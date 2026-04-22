@@ -220,6 +220,10 @@
                           {{ __('public.layout.menu.dashboard') }}
                         </a>
                       @endif
+                      <a class="nav-dropdown-item {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">
+                        <i class="fa-solid fa-address-book"></i>
+                        {{ __('public.layout.nav.contact') }}
+                      </a>
 
                       <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
                         @csrf
@@ -232,7 +236,9 @@
                   </details>
                 </li>
               @endauth
-              <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
+              @guest
+                <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
+              @endguest
             </ul>
 
             <div class="mobile-nav-extras">
@@ -301,6 +307,9 @@
               @endforeach
               <span class="locale-switcher-slider"></span>
             </div>
+            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="Search" title="Search" style="text-decoration: none; color: inherit;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
             <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
               <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
@@ -343,9 +352,14 @@
           </a>
           <p class="footer-desc">{{ __('public.layout.footer.description') }}</p>
           <div class="footer-socials">
-            <a href="#" class="social-link" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
-            <a href="#" class="social-link" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#" class="social-link" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            @php
+              $tg = \App\Models\SiteSetting::get('social_telegram', '#');
+              $ig = \App\Models\SiteSetting::get('social_instagram', '#');
+              $fb = \App\Models\SiteSetting::get('social_facebook', '#');
+            @endphp
+            <a href="{{ $tg }}" {!! $tg !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
+            <a href="{{ $ig }}" {!! $ig !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="{{ $fb }}" {!! $fb !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
           </div>
         </div>
 
@@ -532,6 +546,24 @@
 
     @include('components.confirm-modal')
     <div id="global-modal-root"></div>
+    <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
+
+    <div id="global-search-modal" class="global-search-modal" hidden>
+      <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
+        <label id="global-search-label" for="global-search-input" class="global-search-label">Butun sayt bo'yicha qidiruv</label>
+        <div class="global-search-input-wrap">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input
+            id="global-search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="Post, ustoz, kurs, imtihon..."
+            maxlength="120"
+          >
+        </div>
+        <div id="global-search-results" class="global-search-results"></div>
+      </div>
+    </div>
 
     @auth
       @unless($isExamSessionRoute)
@@ -569,10 +601,12 @@
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-    @unless($isExamSessionRoute)
-    {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
-    <div id="prime-audio-slot" class="prime-audio-slot"></div>
-    @endunless
+    @auth
+      @unless($isExamSessionRoute)
+      {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
+      <div id="prime-audio-slot" class="prime-audio-slot"></div>
+      @endunless
+    @endauth
 
     <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
     <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
@@ -606,6 +640,14 @@
           splitText(target) {
             if (target.dataset.animated === 'true') return;
             target.dataset.animated = 'true';
+
+            // H1/H2 (yoki ularning ichidagi js-split-text) uchun harfma-harf animatsiyani o‘chirib,
+            // oddiy ko‘rinish qoldiramiz. Bu "son sanashga o‘xshash" effektni yo‘q qiladi.
+            const headingHost = target.closest('h1, h2');
+            if (headingHost) {
+              target.classList.add('active');
+              return;
+            }
 
             const processNode = (node, state) => {
               if (node.nodeType === 3) {
@@ -672,39 +714,48 @@
         };
 
         const initAllAnimations = () => {
-          primeEngine.initProgressBar();
+          // Delay initialization by 350ms to allow browser scroll restoration to finish
+          window.setTimeout(() => {
+            primeEngine.initProgressBar();
 
-          const activatePrimeEl = (el) => {
-            if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
-            else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
-            else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
-          };
+            const activatePrimeEl = (el, staggerIdx = 0) => {
+              const delay = staggerIdx * 100;
+              window.setTimeout(() => {
+                if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
+                else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
+                else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
+              }, delay);
+            };
 
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                activatePrimeEl(entry.target);
-                observer.unobserve(entry.target);
-              }
-            });
-          }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
-
-          const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
-          nodes.forEach(el => observer.observe(el));
-
-          /* Birinchi ekrandagi bloklar uchun: load/video kutmasdan, layout bo‘lgach darhol */
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const vh = window.innerHeight || document.documentElement.clientHeight;
-              nodes.forEach((el) => {
-                const r = el.getBoundingClientRect();
-                if (r.bottom > 0 && r.top < vh) {
-                  activatePrimeEl(el);
-                  observer.unobserve(el);
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  // No stagger needed for normal scroll reveals
+                  activatePrimeEl(entry.target, 0);
+                  observer.unobserve(entry.target);
                 }
               });
+            }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
+
+            const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
+            nodes.forEach(el => observer.observe(el));
+
+            /* Birinchi ekrandagi bloklar uchun: staggered yuklanish */
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                let inViewCount = 0;
+                nodes.forEach((el) => {
+                  const r = el.getBoundingClientRect();
+                  if (r.bottom > 0 && r.top < vh) {
+                    activatePrimeEl(el, inViewCount);
+                    observer.unobserve(el);
+                    inViewCount++;
+                  }
+                });
+              });
             });
-          });
+          }, 350);
         };
 
         if (document.readyState === 'loading') {
@@ -712,6 +763,9 @@
         } else {
           initAllAnimations();
         }
+
+        /* Expose to window for AJAX pages */
+        window.initPrimeAnimations = initAllAnimations;
       })();
     </script>
     @unless(request()->routeIs('exam.session'))
@@ -822,7 +876,25 @@
         var aiDisabledText = document.getElementById('ai-disabled-panel-text');
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
 
+        function resetAiComposeState() {
+          isSending = false;
+          if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.removeAttribute('aria-busy');
+            sendBtn.style.pointerEvents = 'auto';
+          }
+          if (input) {
+            input.disabled = false;
+            input.removeAttribute('aria-busy');
+          }
+          if (statusWrap) {
+            statusWrap.style.display = 'none';
+            statusWrap.setAttribute('hidden', '');
+          }
+        }
+
         function closePanel() {
+          resetAiComposeState();
           panel.classList.remove('is-open');
         }
 
@@ -842,6 +914,7 @@
           }
           if (aiDisabledPanel) aiDisabledPanel.hidden = true;
           if (aiPanelMain) aiPanelMain.hidden = false;
+          resetAiComposeState();
           if (window.playPrimeSuccess) window.playPrimeSuccess();
           input.focus();
         }
@@ -909,6 +982,9 @@
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           if (!aiEnabled) return;
+          if (sendBtn && sendBtn.disabled) {
+            resetAiComposeState();
+          }
           var txt = input.value.trim();
           if (!txt || isSending) return;
 

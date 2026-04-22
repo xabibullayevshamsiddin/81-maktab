@@ -267,9 +267,52 @@
     });
   }
 
+  function bindActivityLists(rootEl = profileRoot) {
+    rootEl.querySelectorAll('[data-activity-list]').forEach((list) => {
+      if (list.dataset.activityBound === 'true') return;
+      list.dataset.activityBound = 'true';
+
+      const limit = Number.parseInt(list.dataset.previewLimit || '8', 10);
+      const items = Array.from(list.querySelectorAll('.profile-activity-item'));
+      const toggleBtn = list.parentElement?.querySelector('[data-activity-more]');
+      const step = Number.parseInt(toggleBtn?.dataset.moreStep || String(limit), 10);
+
+      if (!Number.isFinite(limit) || limit <= 0 || items.length <= limit || !toggleBtn) return;
+
+      let visibleCount = limit;
+
+      const render = () => {
+        items.forEach((item, index) => {
+          item.hidden = index >= visibleCount;
+        });
+
+        if (visibleCount >= items.length) {
+          toggleBtn.textContent = "Yig'ish";
+        } else {
+          const left = items.length - visibleCount;
+          toggleBtn.textContent = `Yana ko'rsatish (${left})`;
+        }
+      };
+
+      toggleBtn.addEventListener('click', () => {
+        if (visibleCount >= items.length) {
+          visibleCount = limit;
+          list.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          visibleCount = Math.min(visibleCount + Math.max(step, 1), items.length);
+        }
+
+        render();
+      });
+
+      render();
+    });
+  }
+
   bindPwToggles(profileRoot);
   bindAvatarInput(profileRoot);
   bindProfileStagger(profileRoot);
+  bindActivityLists(profileRoot);
 
   document.addEventListener('submit', async (event) => {
     const form = event.target.closest('form[data-profile-async]');

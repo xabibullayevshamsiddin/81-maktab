@@ -79,6 +79,7 @@
     } catch (e) {}
   }
 
+
   /** Imtihon qoidasi: eslatuvchi, lekin keskin emas */
   window.playPrimeViolationSound = function() {
     try {
@@ -103,36 +104,80 @@
     } catch (e) {}
   };
 
-  function scrambleText(el, text, duration = 800) {
-    if (!el || !text) return;
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+';
-    let start = null;
-    const originalText = text;
-    
-    const step = (timestamp) => {
-      if (!start) start = timestamp;
-      const progress = timestamp - start;
-      const length = Math.floor((progress / duration) * originalText.length);
-      
-      let currentText = originalText.substring(0, length);
-      for (let i = length; i < originalText.length; i++) {
-        if (originalText[i] === ' ') {
-          currentText += ' ';
-        } else {
-          currentText += chars[Math.floor(Math.random() * chars.length)];
-        }
-      }
-      
-      el.textContent = currentText;
-      
-      if (progress < duration) {
-        requestAnimationFrame(step);
-      } else {
-        el.textContent = originalText;
-      }
-    };
-    requestAnimationFrame(step);
+  function playGlobalSearchOpenSound() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const notes = [
+        { f: 660, o: 0, d: 0.08, v: 0.05 },
+        { f: 880, o: 0.05, d: 0.1, v: 0.045 },
+      ];
+      notes.forEach(({ f, o, d, v }) => {
+        const t0 = now + o;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t0);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.02);
+      });
+    } catch (e) {}
   }
+
+  function playGlobalSearchCloseSound() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, t);
+      osc.frequency.exponentialRampToValueAtTime(300, t + 0.12);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.04, t + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    } catch (e) {}
+  }
+
+  function playGlobalSearchNotFoundSound() {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const tones = [
+        { f: 420, o: 0, d: 0.12, v: 0.05 },
+        { f: 320, o: 0.09, d: 0.16, v: 0.045 },
+      ];
+      tones.forEach(({ f, o, d, v }) => {
+        const t0 = now + o;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t0);
+        osc.frequency.exponentialRampToValueAtTime(f * 0.9, t0 + d);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.03);
+      });
+    } catch (e) {}
+  }
+
+
 
   function playPrimeConfetti(x, y, isGold = false) {
     const colors = isGold 
@@ -232,45 +277,9 @@
   };
 
   function initSeniorInteractions() {
-    // 1. 3D Card Tilt
-    const tiltTargets = document.querySelectorAll('.news-card, .teacher-card, .detail-image-card, .course-card, .card-style, .about-card, .exam-card');
-    tiltTargets.forEach(card => {
-      card.classList.add('prime-3d-target');
-      card.addEventListener('mousemove', (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const rotateX = (y - centerY) / centerY * 10; 
-        const rotateY = (x - centerX) / centerX * -10;
-        
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
-      });
-      
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-      });
-    });
+    // 1. 3D Card Tilt (Removed as per user request)
 
-    // 3. Text Scramble on Scroll
-    const scrambleObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          if (el.dataset.scrambled) return;
-          el.dataset.scrambled = 'true';
-          scrambleText(el, el.innerText);
-        }
-      });
-    }, { threshold: 0.15 });
 
-    document.querySelectorAll('.section-head h1, .news-hero-content h1, .section-title, .results-title').forEach(h => {
-      if (h.closest('.chat-panel')) return; // Avoid scrambling chat messages
-      h.classList.add('prime-scramble-active');
-      scrambleObserver.observe(h);
-    });
   }
 
 
@@ -521,7 +530,7 @@
             var cfgSelf = userPreviewConfigEl();
             var selfId = cfgSelf && cfgSelf.getAttribute('data-current-user-id');
             var admParts = [];
-            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Super Admin)</p>');
+            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Administrator)</p>');
             admParts.push(
               '<p class="chat-user-preview-admin-status">Akkaunt holati: <strong>'
               + (sa.is_active ? 'Faol' : 'Bloklangan') + '</strong></p>'
@@ -1731,27 +1740,7 @@
       numElements.forEach(el => observer.observe(el));
     }
 
-    // 3. Advanced 3D Tilt Effect on cards
-    if (!window.matchMedia("(hover: none)").matches) {
-      const tiltElements = document.querySelectorAll('.about-card, .news-card, .course-card');
-      tiltElements.forEach(el => {
-        el.addEventListener('mousemove', (e) => {
-          const rect = el.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-          const rotateX = ((y - centerY) / centerY) * -4;
-          const rotateY = ((x - centerX) / centerX) * 4;
-          el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-          el.style.transition = 'none';
-        });
-        el.addEventListener('mouseleave', () => {
-          el.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-          el.style.transition = 'all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)';
-        });
-      });
-    }
+    // 3. Advanced 3D Tilt Effect (Removed as per user request)
 
     // 4. Stagger items helper
     const containers = document.querySelectorAll('.news-container, .courses-grid, .about-grid');
@@ -2534,6 +2523,17 @@
               if (window.showToast) {
                 window.showToast('Robot tekshiruvi bajarilmadi. Qayta urinib ko‘ring.', 'error');
               }
+              isSending = false;
+              input.disabled = false;
+              input.removeAttribute('aria-busy');
+              if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.removeAttribute('aria-busy');
+              }
+              stickerButtons.forEach(function (btn) {
+                btn.disabled = false;
+              });
+              syncComposeState();
               resolve(Promise.resolve());
             },
           });
@@ -2767,6 +2767,245 @@
 
   }
 
+  function initGlobalSearchModal() {
+    var modal = document.getElementById('global-search-modal');
+    var input = document.getElementById('global-search-input');
+    var resultsWrap = document.getElementById('global-search-results');
+    var cfg = document.getElementById('global-search-config');
+    var openBtns = document.querySelectorAll('[data-global-search-open]');
+    var searchUrl = cfg && cfg.getAttribute('data-search-url');
+    if (!modal || !input || !resultsWrap || !searchUrl || !openBtns.length) return;
+
+    var debounceTimer = null;
+    var activeController = null;
+    var closeTimer = null;
+    var opened = false;
+    var selectedIndex = -1;
+    var requestSeq = 0;
+
+    function lockBody(lock) {
+      document.body.classList.toggle('global-search-open', !!lock);
+    }
+
+    function renderLoading() {
+      resultsWrap.innerHTML = '<p class="global-search-empty">Qidirilmoqda...</p>';
+    }
+
+    function renderEmpty(text) {
+      resultsWrap.innerHTML = '<p class="global-search-empty">' + text + '</p>';
+    }
+
+    function renderResults(items) {
+      if (!items || !items.length) {
+        renderEmpty('Hech narsa topilmadi.');
+        playGlobalSearchNotFoundSound();
+        return;
+      }
+
+      var html = items.map(function (item) {
+        var title = escChatHtml(String(item.title || ''));
+        var desc = escChatHtml(String(item.description || ''));
+        var href = escAttr(String(item.url || '#'));
+        var type = String(item.type || 'result');
+        var image = item.image ? '<img src="' + escAttr(String(item.image)) + '" alt="">' : '<span class="global-search-item-icon"><i class="fa-solid fa-layer-group"></i></span>';
+        return ''
+          + '<a href="' + href + '" class="global-search-item" data-global-search-result>'
+          + '  <span class="global-search-item-media">' + image + '</span>'
+          + '  <span class="global-search-item-main">'
+          + '    <span class="global-search-item-type">' + escChatHtml(type) + '</span>'
+          + '    <strong class="global-search-item-title">' + title + '</strong>'
+          + '    <span class="global-search-item-desc">' + desc + '</span>'
+          + '  </span>'
+          + '</a>';
+      }).join('');
+
+      resultsWrap.innerHTML = html;
+      selectedIndex = -1;
+      if (!primeAudioMuted) {
+        playPrimeSuccess();
+      }
+    }
+
+    function resultItems() {
+      return Array.prototype.slice.call(resultsWrap.querySelectorAll('.global-search-item'));
+    }
+
+    function setActiveIndex(nextIdx) {
+      var items = resultItems();
+      if (!items.length) {
+        selectedIndex = -1;
+        return;
+      }
+      if (nextIdx < 0) nextIdx = items.length - 1;
+      if (nextIdx >= items.length) nextIdx = 0;
+      selectedIndex = nextIdx;
+      items.forEach(function (item, idx) {
+        item.classList.toggle('is-active', idx === selectedIndex);
+      });
+      var active = items[selectedIndex];
+      if (active && typeof active.scrollIntoView === 'function') {
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function closeModal() {
+      if (modal.hidden) return;
+      modal.classList.add('is-closing');
+      modal.classList.remove('is-opening');
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+      }
+      closeTimer = window.setTimeout(function () {
+        modal.hidden = true;
+        modal.classList.remove('is-closing');
+      }, 220);
+      lockBody(false);
+      if (activeController) {
+        activeController.abort();
+        activeController = null;
+      }
+      opened = false;
+      playGlobalSearchCloseSound();
+    }
+
+    function openModal() {
+      if (opened) return;
+      opened = true;
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+      }
+      modal.hidden = false;
+      modal.classList.remove('is-closing');
+      modal.classList.add('is-opening');
+      lockBody(true);
+      if (input.value.trim() === '') {
+        renderEmpty('Qidirishni boshlash uchun so‘z kiriting.');
+      }
+      window.setTimeout(function () {
+        input.focus();
+      }, 0);
+      playGlobalSearchOpenSound();
+    }
+
+    openBtns.forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal();
+      });
+    });
+
+    modal.addEventListener('click', function (e) {
+      if (e.target === input) return;
+      var insideInputWrap = e.target && e.target.closest && e.target.closest('.global-search-input-wrap');
+      if (!insideInputWrap) {
+        closeModal();
+      }
+    });
+
+    resultsWrap.addEventListener('click', function (e) {
+      var link = e.target && e.target.closest && e.target.closest('[data-global-search-result]');
+      if (link) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'k') {
+        e.preventDefault();
+        openModal();
+        return;
+      }
+
+      if (modal.hidden) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex(selectedIndex + 1);
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex(selectedIndex - 1);
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        var items = resultItems();
+        if (selectedIndex >= 0 && items[selectedIndex]) {
+          e.preventDefault();
+          items[selectedIndex].click();
+          return;
+        }
+      }
+
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    input.addEventListener('input', function () {
+      var q = input.value.trim();
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      if (q.length < 2) {
+        renderEmpty('Kamida 2 ta harf kiriting.');
+        return;
+      }
+
+      debounceTimer = window.setTimeout(function () {
+        var seq = ++requestSeq;
+        var loadingStartedAt = Date.now();
+        var minLoadingMs = 2000;
+        if (activeController) {
+          activeController.abort();
+        }
+        activeController = new AbortController();
+        renderLoading();
+        fetch(searchUrl + '?q=' + encodeURIComponent(q), {
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          credentials: 'same-origin',
+          signal: activeController.signal,
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error('search_failed');
+            return r.json();
+          })
+          .then(function (payload) {
+            var waitMs = Math.max(0, minLoadingMs - (Date.now() - loadingStartedAt));
+            window.setTimeout(function () {
+              if (seq !== requestSeq) return;
+              renderResults(payload && payload.results ? payload.results : []);
+            }, waitMs);
+          })
+          .catch(function (err) {
+            if (err && err.name === 'AbortError') return;
+            var waitMs = Math.max(0, minLoadingMs - (Date.now() - loadingStartedAt));
+            window.setTimeout(function () {
+              if (seq !== requestSeq) return;
+              renderEmpty('Qidiruvda xatolik bo‘ldi.');
+            }, waitMs);
+          });
+      }, 220);
+    });
+
+    resultsWrap.addEventListener('mouseover', function (e) {
+      var card = e.target && e.target.closest && e.target.closest('.global-search-item');
+      if (!card) return;
+      var items = resultItems();
+      var idx = items.indexOf(card);
+      if (idx >= 0) {
+        setActiveIndex(idx);
+      }
+    });
+
+  }
+
   function runInitializers() {
     moveGlobalModals();
     initChatUserPreviewChrome();
@@ -2789,6 +3028,7 @@
     initGlobalChat();
     initCommentTypingSound();
     initPrimeAudioControl();
+    initGlobalSearchModal();
     initSeniorInteractions();
 
     // Pointer interaction to unlock AudioContext

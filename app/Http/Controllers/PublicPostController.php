@@ -73,7 +73,7 @@ class PublicPostController extends Controller
         }
 
         $allowedFilters = [
-            'all', 'video_news', 'social', 'has_video', 'new', 'popular', 'likes', 'comments',
+            'all', 'video_news', 'social', 'popular', 'likes',
         ];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'all';
@@ -154,11 +154,15 @@ class PublicPostController extends Controller
 
         // Load top-level comments and their replies.
         $comments = $post->comments()
+            ->where('is_approved', true)
             ->whereNull('parent_id')
             ->with([
                 'user.roleRelation',
                 'replies' => function ($query) {
-                    $query->with('user.roleRelation')->withCount('likes')->latest();
+                    $query->where('is_approved', true)
+                        ->with('user.roleRelation')
+                        ->withCount('likes')
+                        ->latest();
                 },
             ])
             ->withCount('likes')

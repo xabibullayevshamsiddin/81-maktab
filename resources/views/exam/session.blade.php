@@ -41,7 +41,7 @@
           </div>
           <p class="exam-secure-note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span>Skrinshot, chop etish va nusxalash taqiqlanadi. 5 martadan ortiq buzilganda imtihon 0 ball bilan yakunlanadi.</span>
+            <span>Skrinshot, chop etish va nusxalash taqiqlanadi. 5 ta qoida buzarlik bo‘lsa imtihon 0 ball bilan yakunlanadi.</span>
           </p>
         </div>
       </header>
@@ -129,7 +129,7 @@
       <h3 id="exam-rule-modal-title">Qoidalarga rioya qiling</h3>
       <p>
         Skrinshot (PrtSc, Snipping Tool, telefon ekran surati), belgilab nusxa olish va chop etish taqiqlanadi.
-        <strong>5 martadan ortiq</strong> buzilish serverda qayd etiladi va imtihon <strong>0 ball, yiqildi</strong> deb yopiladi.
+        <strong>5 ta</strong> buzilish serverda qayd etilsa, imtihon <strong>0 ball, yiqildi</strong> deb yopiladi.
       </p>
       <button type="button" class="exam-btn-primary" id="exam-rule-modal-ok" style="width:100%;justify-content:center;margin-top:8px;">Tushunarli</button>
     </div>
@@ -155,12 +155,20 @@
   <script>
     (function () {
       var modal = document.getElementById('exam-rule-modal');
+      var modalTitleEl = document.getElementById('exam-rule-modal-title');
+      var modalTextEl = modal ? modal.querySelector('p') : null;
+      var modalOkBtn = document.getElementById('exam-rule-modal-ok');
+      var defaultModalTitle = modalTitleEl ? modalTitleEl.textContent : '';
+      var defaultModalText = modalTextEl ? modalTextEl.innerHTML : '';
+      var defaultModalOkText = modalOkBtn ? modalOkBtn.textContent : '';
       var root = document.getElementById('exam-anti-root');
       var lastContextWarnAt = 0;
       var disqualifiedNav = false;
+      var modalLockActive = false;
 
       var violationUrl = @json(route('exam.violation', $result));
       var csrfToken = @json(csrf_token());
+      var violationLimit = 5;
 
       document.body.classList.add('exam-session-print-lock');
 
@@ -187,6 +195,25 @@
             if (data.redirect) {
               disqualifiedNav = true;
               window.location.href = data.redirect;
+              return;
+            }
+
+            var count = Number(data.count || 0);
+            if (!Number.isFinite(count) || count <= 0) return;
+
+            var remaining = Math.max(0, violationLimit - count);
+            var message = remaining > 0
+              ? ('Ogohlantirish: qoida buzarlik qayd etildi (' + count + '/' + violationLimit + '). Yana ' + remaining + ' ta imkon qoldi.')
+              : ('Ogohlantirish: limit tugadi (' + violationLimit + '/' + violationLimit + '). Imtihon yakunlanadi.');
+
+            if (typeof window.showToast === 'function') {
+              window.showToast(message, remaining > 0 ? 'warning' : 'error');
+            } else {
+              window.alert(message);
+            }
+
+            if (remaining === 1) {
+              showLockedLastChanceModal();
             }
           })
           .catch(function () {});
@@ -229,9 +256,45 @@
       }
 
       function hideRuleModal() {
-        if (!modal) return;
+        if (!modal || modalLockActive) return;
         modal.hidden = true;
         document.body.style.overflow = '';
+        if (modalTitleEl) modalTitleEl.textContent = defaultModalTitle;
+        if (modalTextEl) modalTextEl.innerHTML = defaultModalText;
+        if (modalOkBtn) modalOkBtn.textContent = defaultModalOkText;
+      }
+
+      function showLockedLastChanceModal() {
+        if (!modal) return;
+
+        modalLockActive = true;
+        if (modalTitleEl) modalTitleEl.textContent = 'Oxirgi ogohlantirish';
+        if (modalTextEl) {
+          modalTextEl.innerHTML = 'Sizda <strong>faqat 1 ta</strong> qoida buzarlik imkoniyati qoldi. Yana buzilsa imtihon avtomatik yopiladi.';
+        }
+        if (modalOkBtn) {
+          modalOkBtn.disabled = true;
+          modalOkBtn.textContent = 'Kutish... 5s';
+        }
+
+        showRuleModal();
+
+        var remainingSec = 5;
+        var lockTimer = setInterval(function () {
+          remainingSec -= 1;
+          if (modalOkBtn) {
+            modalOkBtn.textContent = remainingSec > 0 ? ('Kutish... ' + remainingSec + 's') : 'Tushunarli';
+          }
+
+          if (remainingSec <= 0) {
+            clearInterval(lockTimer);
+            modalLockActive = false;
+            if (modalOkBtn) {
+              modalOkBtn.disabled = false;
+            }
+            hideRuleModal();
+          }
+        }, 1000);
       }
 
       function showScreenshotWarn(e) {
@@ -246,27 +309,26 @@
       }
 
       document.getElementById('exam-rule-modal-ok')?.addEventListener('click', hideRuleModal);
-      modal?.querySelector('.exam-rule-modal-backdrop')?.addEventListener('click', hideRuleModal);
+      modal?.querySelector('.exam-rule-modal-backdrop')?.addEventListener('click', function (e) {
+        if (modalLockActive) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        hideRuleModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape' || !modal || modal.hidden) return;
+        e.preventDefault();
+        if (!modalLockActive) {
+          hideRuleModal();
+        }
+      });
 
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) maybeContextWarn();
       });
 
-      window.addEventListener('blur', function () {
-        // Telefonda skrinshot paytida ba'zan faqat oyna fokusini yo'qotadi
-        maybeContextWarn();
-      });
-
-      window.addEventListener('pagehide', function () {
-        maybeContextWarn();
-      });
-
-      // iOS ba'zan oynani tepadan/pastdan tushirilganda mouseleave ham berishi mumkin
-      document.addEventListener('mouseleave', function (e) {
-        if (e.clientY <= 0 || e.clientX <= 0 || (e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
-           maybeContextWarn();
-        }
-      });
       window.addEventListener('beforeprint', function () {
         warnAndReport(null);
       });

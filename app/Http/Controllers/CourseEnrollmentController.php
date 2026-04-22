@@ -14,17 +14,37 @@ class CourseEnrollmentController extends Controller
     {
         $this->ensureEnrollable($course);
 
+        $user = $request->user();
+        if ($user->isParent()) {
+            return redirect()
+                ->route('courses')
+                ->with('error', 'Ota-ona akkaunti bilan kursga yozilish mumkin emas.')
+                ->with('toast_type', 'warning');
+        }
+
+        $profilePhone = uz_phone_format((string) ($user->phone ?? ''));
+        $profileGrade = normalize_school_grade((string) ($user->grade ?? ''));
+
+        if (! $profilePhone) {
+            return redirect()
+                ->route('courses')
+                ->with('error', 'Kursga yozilish uchun profilingizda telefon raqami bo‘lishi kerak.')
+                ->with('toast_type', 'warning');
+        }
+
+        if (! $profileGrade) {
+            return redirect()
+                ->route('courses')
+                ->with('error', 'Kursga yozilish uchun profilingizda sinf ma’lumoti bo‘lishi kerak.')
+                ->with('toast_type', 'warning');
+        }
+
         $validated = $request->validate([
-            'contact_phone' => uz_phone_rules(),
-            'grade' => ['required', 'string', 'max:32'],
             'subject_level' => ['required', 'string', 'max:120'],
             'note' => ['nullable', 'string', 'max:500'],
-        ], [
-            'contact_phone.regex' => uz_phone_validation_message(),
         ]);
-        $validated['contact_phone'] = uz_phone_format($validated['contact_phone']);
 
-        $userId = (int) $request->user()->id;
+        $userId = (int) $user->id;
 
         if ((int) $course->created_by === $userId) {
             return redirect()
@@ -56,15 +76,15 @@ class CourseEnrollmentController extends Controller
             if ($existing->isRejected()) {
                 $existing->update([
                     'status' => CourseEnrollment::STATUS_PENDING,
-                    'contact_phone' => $validated['contact_phone'],
-                    'grade' => $validated['grade'],
+                    'contact_phone' => $profilePhone,
+                    'grade' => $profileGrade,
                     'subject_level' => $validated['subject_level'],
                     'note' => $validated['note'] ?? null,
                     'reviewed_at' => null,
                     'reviewed_by' => null,
                 ]);
 
-                $this->notifyCourseCreator($course, $existing, $request->user()->name);
+                $this->notifyCourseCreator($course, $existing, $user->name);
 
                 return redirect()
                     ->route('courses')
@@ -77,13 +97,13 @@ class CourseEnrollmentController extends Controller
             'course_id' => $course->id,
             'user_id' => $userId,
             'status' => CourseEnrollment::STATUS_PENDING,
-            'contact_phone' => $validated['contact_phone'],
-            'grade' => $validated['grade'],
+            'contact_phone' => $profilePhone,
+            'grade' => $profileGrade,
             'subject_level' => $validated['subject_level'],
             'note' => $validated['note'] ?? null,
         ]);
 
-        $this->notifyCourseCreator($course, $enrollment, $request->user()->name);
+        $this->notifyCourseCreator($course, $enrollment, $user->name);
 
         return redirect()
             ->route('courses')

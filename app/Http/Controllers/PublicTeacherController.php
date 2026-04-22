@@ -38,7 +38,9 @@ class PublicTeacherController extends Controller
                 'is_active',
             ])
             ->withCount('likes')
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->whereNotNull('image')
+            ->where('image', '!=', '');
 
         if ($q !== '') {
             $query->where(function ($sub) use ($q): void {
@@ -66,6 +68,8 @@ class PublicTeacherController extends Controller
         // Collect all unique subjects for the filter dropdown (from all active teachers)
         $allSubjects = Teacher::query()
             ->where('is_active', true)
+            ->whereNotNull('image')
+            ->where('image', '!=', '')
             ->whereNotNull('subject')
             ->where('subject', '!=', '')
             ->orderBy('subject')
@@ -94,7 +98,10 @@ class PublicTeacherController extends Controller
      */
     private function teacherPageStats(): array
     {
-        $activeTeachers = Teacher::query()->where('is_active', true);
+        $activeTeachers = Teacher::query()
+            ->where('is_active', true)
+            ->whereNotNull('image')
+            ->where('image', '!=', '');
 
         $experienced = (clone $activeTeachers)->where('experience_years', '>=', 3)->count();
         if ($experienced === 0) {
@@ -144,11 +151,13 @@ class PublicTeacherController extends Controller
 
         $comments = TeacherComment::query()
             ->where('teacher_id', $teacher->id)
+            ->where('is_approved', true)
             ->whereNull('parent_id')
             ->with([
                 'user.roleRelation',
                 'replies' => function ($query) use ($teacher) {
                     $query->where('teacher_id', $teacher->id)
+                        ->where('is_approved', true)
                         ->with('user.roleRelation')
                         ->withCount('likes')
                         ->latest();
@@ -206,6 +215,8 @@ class PublicTeacherController extends Controller
             ])
             ->withCount('likes')
             ->where('is_active', true)
+            ->whereNotNull('image')
+            ->where('image', '!=', '')
             ->where('id', '!=', $teacher->id);
 
         if (filled($teacher->subject)) {

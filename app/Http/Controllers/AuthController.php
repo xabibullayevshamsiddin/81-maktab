@@ -34,6 +34,8 @@ class AuthController extends Controller
      */
     private const LOGIN_EMAIL_OTP_ENABLED = false;
 
+    private const SOCIALITE_FACTORY = 'Laravel\\Socialite\\Contracts\\Factory';
+
     public function login()
     {
         return view('login.login');
@@ -96,6 +98,105 @@ class AuthController extends Controller
 
         return redirect()->route('login.verify.form')
             ->with('success', 'Emailga tasdiqlash kodi yuborildi.')
+            ->with('toast_type', 'success');
+    }
+
+    public function redirectToGoogle()
+    {
+        if (! $this->hasSocialite()) {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Google login paketi o‘rnatilmagan (laravel/socialite).')
+                ->with('toast_type', 'error');
+        }
+
+        if (! config('services.google.client_id') || ! config('services.google.client_secret') || ! config('services.google.redirect')) {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Google login hali sozlanmagan (GOOGLE_CLIENT_ID/SECRET/REDIRECT).')
+                ->with('toast_type', 'error');
+        }
+
+        return $this->socialiteDriver('google')
+            ->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            if (! $this->hasSocialite()) {
+                return redirect()
+                    ->route('login')
+                    ->with('error', 'Google login paketi o‘rnatilmagan (laravel/socialite).')
+                    ->with('toast_type', 'error');
+            }
+
+            $googleUser = $this->socialiteDriver('google')->user();
+        } catch (\Throwable $e) {
+            Log::warning('Google OAuth callback failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('login')
+                ->with('error', 'Google orqali kirishda xatolik yuz berdi. Qayta urinib ko‘ring.')
+                ->with('toast_type', 'error');
+        }
+
+        $email = $this->normalizeEmail((string) ($googleUser->getEmail() ?? ''));
+        if ($email === '') {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Google profilingizda email topilmadi.')
+                ->with('toast_type', 'error');
+        }
+
+        $googleId = (string) ($googleUser->getId() ?? '');
+        if ($googleId === '') {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Google hisob maʼlumoti olinmadi.')
+                ->with('toast_type', 'error');
+        }
+
+        $user = User::query()->where('google_id', $googleId)->first();
+        if (! $user) {
+            $user = User::query()->where('email', $email)->first();
+        }
+
+        if (! $user) {
+            [$firstName, $lastName] = $this->splitFullName((string) ($googleUser->getName() ?? ''));
+            $fullName = trim($firstName.' '.$lastName);
+
+            $user = User::create([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'name' => $fullName !== '' ? $fullName : 'Google User',
+                'email' => $email,
+                'password' => Hash::make(Str::random(40)),
+                'google_id' => $googleId,
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $updatePayload = [];
+            if ((string) ($user->google_id ?? '') === '') {
+                $updatePayload['google_id'] = $googleId;
+            }
+            if (! $user->email_verified_at) {
+                $updatePayload['email_verified_at'] = now();
+            }
+
+            if ($updatePayload !== []) {
+                $user->update($updatePayload);
+            }
+        }
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        return redirect()
+            ->intended(route('home'))
+            ->with('success', 'Google orqali muvaffaqiyatli kirdingiz.')
             ->with('toast_type', 'success');
     }
 
@@ -171,10 +272,6 @@ class AuthController extends Controller
 
     public function sendPasswordResetCode(Request $request)
     {
-        return back()
-            ->withErrors(['email' => 'Parolni email orqali tiklash vaqtincha o‘chirildi.'])
-            ->onlyInput('email');
-
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
         ]);
@@ -302,10 +399,6 @@ class AuthController extends Controller
 
     public function resendPasswordResetCode(Request $request)
     {
-        return back()->withErrors([
-            'code' => 'Parolni tiklash kodini qayta yuborish vaqtincha o‘chirildi.',
-        ]);
-
         $validated = $request->validate([
             'email' => ['required', 'email:rfc', 'max:255'],
         ]);
@@ -595,11 +688,6 @@ class AuthController extends Controller
 
     public function adminSendPasswordReset(Request $request, User $user)
     {
-        return redirect()
-            ->route('user')
-            ->with('error', 'Parol reset kodini emailga yuborish vaqtincha o‘chirildi.')
-            ->with('toast_type', 'error');
-
         $admin = $request->user();
 
         if (! $admin || ! $admin->canManage($user)) {
@@ -765,5 +853,35 @@ class AuthController extends Controller
     private function normalizeEmail(string $email): string
     {
         return strtolower(trim($email));
+    }
+
+    private function splitFullName(string $name): array
+    {
+        $clean = trim(preg_replace('/\s+/', ' ', $name));
+        if ($clean === '') {
+            return ['Google', 'User'];
+        }
+
+        $parts = explode(' ', $clean, 2);
+        $first = trim($parts[0] ?? '');
+        $last = trim($parts[1] ?? '');
+
+        return [
+            $first !== '' ? $first : 'Google',
+            $last !== '' ? $last : 'User',
+        ];
+    }
+
+    private function hasSocialite(): bool
+    {
+        return interface_exists(self::SOCIALITE_FACTORY) && app()->bound(self::SOCIALITE_FACTORY);
+    }
+
+    private function socialiteDriver(string $driver)
+    {
+        /** @var mixed $factory */
+        $factory = app(self::SOCIALITE_FACTORY);
+
+        return $factory->driver($driver);
     }
 }

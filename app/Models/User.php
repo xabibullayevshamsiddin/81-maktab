@@ -79,6 +79,7 @@ class User extends Authenticatable
         'phone',
         'grade',
         'avatar',
+        'google_id',
         'password',
         'role_id',
         'is_active',

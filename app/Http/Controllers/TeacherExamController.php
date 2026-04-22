@@ -412,40 +412,16 @@ class TeacherExamController extends Controller
             ? Exam::query()->whereKey($selectedExamId)->value('title') ?? 'imtihon'
             : 'barcha_imtihonlar';
 
-        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d') . '.xls';
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $html = view('exports.exam_results_excel', [
+            'results' => $results,
+            'selectedExamId' => $selectedExamId
+        ])->render();
 
-        $callback = function () use ($results, $selectedExamId) {
-            $out = fopen('php://output', 'w');
-            fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            $cols = ['#', 'Ism familiya'];
-            if (! $selectedExamId) {
-                $cols[] = 'Imtihon';
-            }
-            $cols = array_merge($cols, ['Ball', 'Max ball', 'Natija', 'Sana']);
-            fputcsv($out, $cols);
-
-            foreach ($results as $i => $r) {
-                $row = [$i + 1, $r->user->name ?? '-'];
-                if (! $selectedExamId) {
-                    $row[] = $r->exam->title ?? '-';
-                }
-                $row[] = $r->points_earned ?? '-';
-                $row[] = $r->points_max ?? '-';
-                $row[] = $r->passed ? "O'tdi" : 'Yiqildi';
-                $row[] = $r->submitted_at?->format('d.m.Y H:i') ?? '-';
-                fputcsv($out, $row);
-            }
-
-            fclose($out);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response($html, 200)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     public function results(Request $request)
@@ -514,10 +490,15 @@ class TeacherExamController extends Controller
     public function showResult(Request $request, Result $result)
     {
         $user = $request->user();
+        $result->load([
+            'exam' => fn($q) => $q->withTrashed(),
+            'answers.question.options',
+            'answers.option',
+            'user'
+        ]);
         $exam = $result->exam;
         abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
 
-        $result->load(['user', 'answers.question.options', 'answers.option']);
         return view('profile.exams.results_show', compact('exam', 'result'));
     }
 

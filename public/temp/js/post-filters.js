@@ -66,6 +66,9 @@
 
       const data = await response.json();
       results.innerHTML = data.html || '';
+      if (typeof window.initPrimeAnimations === 'function') {
+        window.initPrimeAnimations();
+      }
       history.replaceState({}, '', url);
     } catch (error) {
       if (error.name !== 'AbortError') {

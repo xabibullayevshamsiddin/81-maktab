@@ -1,6 +1,3 @@
-@php
-  $hasAnyEventsInYear = count($countsByDate ?? []) > 0;
-@endphp
 <x-loyouts.main title="{{ __('public.calendar.page_title') }}">
   <section class="news-hero profile-hero">
     <div class="container">
@@ -36,6 +33,7 @@
             @include('partials.calendar-year-grid', [
               'calendarMonths' => $calendarMonths,
               'year' => $year,
+              'calendarDayRouteName' => 'calendar',
             ])
           </section>
         @endif
