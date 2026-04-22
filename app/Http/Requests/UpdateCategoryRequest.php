@@ -15,6 +15,7 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:100', 'unique:categories,name,'.$this->category->id],
+            'name_en' => ['nullable', 'string', 'max:100', 'unique:categories,name_en,'.$this->category->id],
         ];
     }
 
@@ -24,6 +25,8 @@ class UpdateCategoryRequest extends FormRequest
             'name.required' => 'Kategoriya nomi kiritilishi shart.',
             'name.max' => 'Kategoriya nomi 100 belgidan oshmasligi kerak.',
             'name.unique' => 'Bu kategoriya allaqachon mavjud.',
+            'name_en.max' => 'English kategoriya nomi 100 belgidan oshmasligi kerak.',
+            'name_en.unique' => 'Bu English kategoriya allaqachon mavjud.',
         ];
     }
 }

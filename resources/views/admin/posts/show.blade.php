@@ -36,7 +36,7 @@
 
           @if ($post->image)
             <div class="mb-20">
-              <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" style="max-width:320px;border-radius:10px;">
+              <img src="{{ app_storage_asset($post->image) }}" alt="{{ $post->title }}" style="max-width:320px;border-radius:10px;">
             </div>
           @endif
 

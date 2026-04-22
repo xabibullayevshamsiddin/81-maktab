@@ -14,7 +14,39 @@ class Comment extends Model
 
     protected $guarded = [];
 
-    protected $appends = ['is_reply'];
+    protected $casts = [
+        'is_approved' => 'boolean',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function post(): BelongsTo
+    {
+        return $this->belongsTo(Post::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Comment::class, 'parent_id');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(Comment::class, 'parent_id');
+    }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(CommentLike::class);
+    }
+
+    public function scopeLatestFirst(Builder $query): Builder
+    {
+        return $query->latest();
+    }
 
     public function scopeApproved(Builder $query): Builder
     {
@@ -26,43 +58,8 @@ class Comment extends Model
         return $query->where('is_approved', false);
     }
 
-    public function scopeLatestFirst(Builder $query): Builder
-    {
-        return $query->latest();
-    }
-
     public function scopeForPost(Builder $query, int $postId): Builder
     {
         return $query->where('post_id', $postId);
-    }
-
-    public function post(): BelongsTo
-    {
-        return $this->belongsTo(Post::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function parent(): BelongsTo
-    {
-        return $this->belongsTo(Comment::class, 'parent_id');
-    }
-
-    public function replies(): HasMany
-    {
-        return $this->hasMany(Comment::class, 'parent_id')->latest();
-    }
-
-    public function isApproved(): bool
-    {
-        return (bool) $this->is_approved;
-    }
-
-    public function getIsReplyAttribute(): bool
-    {
-        return ! is_null($this->parent_id);
     }
 }

@@ -1,0 +1,1127 @@
+/**
+ * ====================================================================
+ * mobile-public.css — 81-IDUM Public Sahifalar Mobil UI
+ * Admin panel bundan mustasno.
+ * Breakpoints: 991px | 767px | 580px | 420px
+ * ====================================================================
+ */
+
+/* ====================================================================
+   1. GLOBAL BAZAVIY TUZATMALAR
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  html {
+  }
+
+  body {
+    min-width: 0;
+    padding-left: env(safe-area-inset-left, 0px) !important;
+    padding-right: env(safe-area-inset-right, 0px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  .site-shell {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .site-shell img,
+  .site-shell video:not(.bg-video),
+  .site-shell iframe,
+  .site-shell svg,
+  .site-shell canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .container {
+    padding-inline: 16px;
+  }
+
+  /* Uzoq URL/matnlar kenglikni buzmasin */
+  .site-shell .post-content {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+/* ====================================================================
+   2. HEADER & NAVIGATSIYA
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .header-main {
+    padding: 10px 14px;
+    gap: 12px;
+    top: 12px;
+    width: calc(100% - 20px);
+  }
+
+  .logo img {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Mobil menyu tugmasi — kattaroq bosish zonasi */
+  .menu-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 580px) {
+  .header-main {
+    top: 10px;
+    padding: 8px 12px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  .logo img {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Nav linklarni mobilda kattaroq qil */
+  #site-nav ul {
+    gap: 16px;
+  }
+
+  #site-nav .nav-link {
+    font-size: 15px;
+    padding: 10px 6px;
+  }
+}
+
+/* ====================================================================
+   3. HERO SEKTSIYASI (Bosh sahifa)
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .hero {
+    min-height: 100svh;
+  }
+
+  .card-home {
+    padding-top: 110px;
+    padding-bottom: 50px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 18px;
+    min-height: 100svh;
+  }
+
+  .home-content {
+    width: 100%;
+  }
+
+  .home-content p {
+    font-size: clamp(15px, 2.2vw, 18px);
+    max-width: 100%;
+  }
+
+  .hero-title {
+    font-size: clamp(30px, 7vw, 52px);
+    margin-bottom: 16px;
+  }
+
+  .home-btn {
+    grid-auto-flow: column;
+    justify-content: flex-start;
+    margin-top: 8px;
+  }
+
+  .home-btn a {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 580px) {
+  .card-home {
+    padding-top: 100px;
+    padding-bottom: 36px;
+  }
+
+  .hero-title {
+    font-size: clamp(28px, 8.5vw, 40px);
+    line-height: 1.18;
+    margin-bottom: 14px;
+  }
+
+  .home-content p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}
+
+/* ====================================================================
+   4. GLASS SECTION & ABOUT KARTALAR
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .glass-section {
+    margin-top: 60px;
+    padding: 40px 22px;
+    border-radius: 20px;
+  }
+
+  .section-head {
+    margin-top: 36px;
+    margin-bottom: 18px;
+  }
+
+  .about-modern {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* Ko'proq joy va o'qilishi yaxshi bo'lsin */
+  .about-card,
+  .about-highlight {
+    padding: 22px;
+    border-radius: 16px;
+  }
+
+  .about-card p,
+  .about-highlight p {
+    margin-bottom: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .glass-section {
+    padding: 32px 18px;
+    border-radius: 18px;
+    margin-top: 40px;
+  }
+
+  .glass-section::before {
+    left: 18px;
+    width: 50px;
+  }
+
+  section {
+    padding: 60px 0;
+  }
+}
+
+@media (max-width: 580px) {
+  .glass-section {
+    padding: 26px 14px;
+    border-radius: 16px;
+  }
+
+  .glass-section::before {
+    left: 14px;
+  }
+
+  section {
+    padding: 50px 0;
+  }
+}
+
+/* ====================================================================
+   5. YANGILIKLAR (NEWS) KARTALAR
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .news-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+  }
+
+  .news-card h3 {
+    font-size: 17px;
+    margin: 12px 0 6px;
+  }
+
+  /* Tugmalar — touch uchun kattaroq */
+  .news-card .btn {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 767px) {
+  .news-container {
+    gap: 14px;
+  }
+
+  .icon-links {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 14px;
+  }
+
+  .icon-link-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .icon-link-actions .btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 580px) {
+  .news-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .news-card {
+    border-radius: 14px;
+  }
+
+  .news-card h3 {
+    font-size: 16px;
+  }
+
+  .news-card p {
+    font-size: 14px;
+  }
+
+  /* Moslik uchun: karta ichidagi padding tegizish */
+  .news-card h3,
+  .news-card p,
+  .icon-links {
+    padding-inline: 14px;
+  }
+}
+
+/* ====================================================================
+   6. POST (MAQOLA) FILTER — post.blade.php
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .post-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .post-filter {
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .post-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  /* Home news head — mobil uchun bir xil */
+  .home-news-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+/* ====================================================================
+   7. USTOZLAR BO'LIMI
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .teachers {
+    margin-top: 40px;
+  }
+
+  .teacher {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .teacher h2 {
+    font-size: clamp(24px, 5vw, 36px);
+  }
+
+  .teacher p {
+    margin: 14px 0 18px;
+  }
+
+  .teacher-img {
+    padding: 14px;
+  }
+
+  .teacher-img img {
+    height: 200px;
+    border-radius: 10px;
+  }
+
+  .teacher-img-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .teacher-img-actions .btn,
+  .teacher-img-actions .btn1 {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 580px) {
+  .teacher-img {
+    padding: 12px;
+  }
+
+  .teacher-img img {
+    height: 180px;
+  }
+
+  .teacher-img h3 {
+    font-size: 18px;
+  }
+
+  .teacher-img p {
+    font-size: 14px;
+  }
+}
+
+/* ====================================================================
+   8. FOOTER
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .footer-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 20px;
+    padding-top: 36px;
+    padding-bottom: 24px;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 580px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 28px;
+    padding-bottom: 20px;
+  }
+
+  .footer-brand {
+    grid-column: auto;
+  }
+
+  .footer-bottom {
+    font-size: 12px;
+    padding: 12px;
+  }
+
+  .footer-bottom-inner {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ====================================================================
+   9. KONTAKT SAHIFASI
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .contact-hero-content {
+    padding: 130px 0 60px;
+  }
+
+  .contact-form-wrap {
+    padding: 22px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 580px) {
+  .contact-hero-content {
+    padding: 110px 0 50px;
+  }
+
+  .contact-form-wrap {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .contact-card {
+    border-radius: 14px;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .contact-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 18px;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    padding: 12px 13px;
+    border-radius: 10px;
+    font-size: 16px; /* iOS zoom oldini olish */
+  }
+
+  .contact-form .btn {
+    min-height: 46px;
+    font-size: 15px;
+  }
+}
+
+/* ====================================================================
+   10. ABOUT (BIZ HAQIMIZDA) SAHIFASI
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .about-hero-content {
+    padding: 130px 0 65px;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .milestone-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .about-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 580px) {
+  .about-hero-content {
+    padding: 110px 0 50px;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-info-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .milestone-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .about-stats-section {
+    padding: 50px 0;
+  }
+
+  .about-stat-item strong {
+    font-size: clamp(30px, 8vw, 44px);
+  }
+}
+
+/* ====================================================================
+   11. KURSLAR SAHIFASI
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .courses-hero-content {
+    padding: 130px 0 64px;
+  }
+
+  .courses-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .courses-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 580px) {
+  .courses-hero-content {
+    padding: 108px 0 50px;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .course-card {
+    border-radius: 16px;
+  }
+
+  .filter-bar {
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .course-details-content {
+    padding: 20px 16px;
+  }
+
+  .courses-stats-section {
+    padding: 50px 0;
+  }
+}
+
+/* ====================================================================
+   12. USTOZ PROFIL SAHIFASI (teacher.blade.php)
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .teacher-show-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+
+  .teacher-achievements-title {
+    font-size: 18px;
+  }
+
+  .teacher-achievements-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 580px) {
+  .teacher-show-hero {
+    padding: 110px 0 50px !important;
+  }
+
+  .teacher-show-card {
+    padding: 18px !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* ====================================================================
+   13. POST KO'RISH SAHIFASI (post.blade.php)
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .post-content {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .news-hero {
+    padding-top: 96px;
+    padding-bottom: 32px;
+  }
+
+  .news-hero-content {
+    margin-top: 36px;
+  }
+
+  .news-hero-content h1 {
+    font-size: clamp(24px, 5vw, 40px);
+  }
+
+  .news-hero-content p {
+    font-size: 16px;
+  }
+
+  /* Related posts grid */
+  .news-container.prime-stagger {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .news-hero {
+    padding-top: 90px;
+    padding-bottom: 24px;
+  }
+
+  .news-hero-content h1 {
+    font-size: clamp(22px, 6vw, 32px);
+    margin-bottom: 8px;
+  }
+
+  .news-hero-content p {
+    font-size: 15px;
+  }
+
+  .news-container.prime-stagger {
+    grid-template-columns: 1fr;
+  }
+
+  /* Maqola matni o'qilishi yaxshi bo'lsin */
+  .post-content p {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+  }
+
+  .post-content h2 {
+    font-size: 20px !important;
+  }
+
+  .post-content h3 {
+    font-size: 17px !important;
+  }
+
+  .post-content img {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 12px;
+  }
+
+  .post-content iframe {
+    width: 100% !important;
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+  }
+}
+
+/* ====================================================================
+   14. TUGMALAR — UMUMIY TOUCH OPTIMALLASHTIRISH
+   ==================================================================== */
+@media (max-width: 767px) {
+  /* Barcha asosiy tugmalar 44px min balandlik */
+  .btn,
+  .btn-outline,
+  .btn-prime,
+  .btn1,
+  .menu-toggle,
+  .scroll-top,
+  .social-link,
+  .like-btn {
+    min-height: 44px;
+  }
+
+  /* Like tugmasi */
+  .like-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  /* Share va boshqa kichik tugmalar */
+  .btn-sm {
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+
+/* ====================================================================
+   15. FORMALAR — iOS ZOOM OLDINI OLISH
+   ==================================================================== */
+@media (max-width: 540px) {
+  .site-shell input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='submit']):not([type='button']),
+  .site-shell select,
+  .site-shell textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* ====================================================================
+   16. CHAT WIDGET — MOBIL
+   ==================================================================== */
+@media (max-width: 480px) {
+  .chat-widget {
+    right: max(10px, env(safe-area-inset-right));
+    left: auto !important;
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .chat-panel:not(.is-fullscreen) {
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: calc(72px + max(8px, env(safe-area-inset-bottom))) !important;
+    width: auto !important;
+    height: min(68vh, 520px) !important;
+    border-radius: 16px;
+  }
+
+  .chat-panel:not(.is-fullscreen) .chat-panel-header {
+    padding: 12px 14px;
+  }
+
+  .chat-panel:not(.is-fullscreen) .chat-panel-intro {
+    padding: 10px 12px 8px;
+  }
+
+  .chat-panel:not(.is-fullscreen) .chat-messages {
+    padding: 10px;
+  }
+
+  .chat-panel:not(.is-fullscreen) .chat-input-wrap {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .chat-sticker-row {
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .chat-sticker-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chat-sticker-btn {
+    width: 32px;
+    height: 28px;
+    flex: 0 0 auto;
+  }
+
+  .chat-msg {
+    max-width: 94%;
+  }
+}
+
+/* ====================================================================
+   17. RASM LIGHTBOX — MOBIL
+   ==================================================================== */
+@media (max-width: 580px) {
+  .image-lightbox {
+    padding: 12px;
+  }
+
+  .image-lightbox-stage {
+    max-width: 100%;
+    gap: 10px;
+  }
+
+  .image-lightbox-img {
+    max-height: calc(100vh - 110px);
+    border-radius: 16px;
+  }
+
+  .image-lightbox-close {
+    top: 10px;
+    right: 10px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .image-lightbox-caption {
+    border-radius: 16px;
+    font-size: 13px;
+  }
+}
+
+/* ====================================================================
+   18. SAHIFA YUQORIGA QAYTISH TUGMASI
+   ==================================================================== */
+@media (max-width: 580px) {
+  .scroll-top {
+    right: 14px;
+    bottom: 14px;
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* ====================================================================
+   19. TOAST BILDIRISHNOMA — MOBIL
+   ==================================================================== */
+@media (max-width: 580px) {
+  .toast-container {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 14px !important;
+    top: auto !important;
+  }
+
+  .toast {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* ====================================================================
+   20. MULOQOT MODALI (comment-modal)
+   ==================================================================== */
+@media (max-width: 767px) {
+  .comment-modal-dialog {
+    grid-template-columns: 1fr !important;
+    height: min(90vh, 640px) !important;
+    border-radius: 16px;
+  }
+
+  .comment-modal-dialog > *:first-child {
+    display: none !important; /* Rasm qismi — mobilda yashirin */
+  }
+}
+
+/* ====================================================================
+   21. PROFIL NATIJALARI — MOBIL
+   ==================================================================== */
+@media (max-width: 767px) {
+  .results-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .result-hero {
+    padding: 100px 0 50px !important;
+  }
+}
+
+/* ====================================================================
+   22. GLOBAL E'LON BANNERI
+   ==================================================================== */
+@media (max-width: 580px) {
+  .global-announcement-inner {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .global-announcement-text {
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .global-announcement-close {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+}
+
+/* ====================================================================
+   23. KICHIK EKRANLAR UCHUN UMUMIY TYPOGRAPHY
+   ==================================================================== */
+@media (max-width: 580px) {
+  .section-head h2,
+  .teacher h2 {
+    font-size: clamp(22px, 6vw, 32px);
+  }
+
+  .section-head p {
+    font-size: 14.5px;
+  }
+
+  /* Barcha hero sarlavhalar */
+  .about-hero-content h1,
+  .contact-hero-content h1,
+  .courses-hero-content h1 {
+    font-size: clamp(26px, 7vw, 38px);
+    line-height: 1.12;
+  }
+
+  .about-hero-content p,
+  .contact-hero-content p,
+  .courses-hero-content p {
+    font-size: 14.5px;
+  }
+}
+
+/* ====================================================================
+   24. PAGINATION — MOBIL
+   ==================================================================== */
+@media (max-width: 580px) {
+  .pagination {
+    gap: 5px;
+    justify-content: center;
+  }
+
+  .page-link {
+    min-width: 2.2rem;
+    height: 2.2rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+
+  nav.d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* ====================================================================
+   25. KURS TAFSILOTLARI MODALI — MOBIL
+   ==================================================================== */
+@media (max-width: 767px) {
+  .course-details-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .course-details-dialog {
+    width: calc(100% - 16px);
+    margin: 4vh auto 0;
+    border-radius: 16px;
+  }
+
+  .course-details-content {
+    padding: 20px 16px;
+  }
+}
+
+/* ====================================================================
+   26. USTOZLAR RO'YXATI SAHIFASI (teacher.blade.php — grid)
+   ==================================================================== */
+@media (max-width: 991.98px) {
+  .teachers-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 580px) {
+  .teachers-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .teacher-card {
+    border-radius: 16px !important;
+  }
+}
+
+/* ====================================================================
+   27. MOBIL UCHUN YAXSHI SPACING
+   ==================================================================== */
+@media (max-width: 420px) {
+  .container {
+    padding-inline: 12px;
+  }
+
+  .glass-section {
+    padding: 22px 12px;
+    border-radius: 14px;
+  }
+
+  .glass-section::before {
+    left: 12px;
+    width: 44px;
+  }
+
+  .news-card h3,
+  .news-card p,
+  .icon-links {
+    padding-inline: 12px;
+  }
+
+  .news-card h3 {
+    font-size: 15px;
+    margin: 10px 0 5px;
+  }
+
+  .about-card,
+  .about-highlight {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  section {
+    padding: 42px 0;
+  }
+
+  .hero-title {
+    font-size: clamp(26px, 9vw, 36px);
+  }
+
+  .footer-container {
+    padding-top: 24px;
+  }
+}
+
+/* ====================================================================
+   28. LANDSCAPE MOBILE — KICHIK BALANDLIK
+   ==================================================================== */
+@media (max-height: 500px) and (max-width: 900px) {
+  .hero,
+  .card-home {
+    min-height: 100svh;
+    padding-top: 80px;
+  }
+
+  .hero-title {
+    font-size: clamp(22px, 4vw, 32px);
+    margin-bottom: 10px;
+  }
+
+  .home-content p {
+    font-size: 14px;
+  }
+
+  .about-hero-content,
+  .contact-hero-content,
+  .courses-hero-content {
+    padding-top: 90px !important;
+    padding-bottom: 40px !important;
+  }
+}
+
+/* ====================================================================
+   29. SAFE AREA (iPhone notch / Dynamic Island)
+   ==================================================================== */
+@supports (padding: env(safe-area-inset-left)) {
+  @media (max-width: 991.98px) {
+    .header-main {
+      padding-left: calc(14px + env(safe-area-inset-left));
+      padding-right: calc(14px + env(safe-area-inset-right));
+    }
+
+    .container {
+      padding-left: calc(16px + env(safe-area-inset-left));
+      padding-right: calc(16px + env(safe-area-inset-right));
+    }
+
+    footer.footer .container {
+      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ====================================================================
+   30. PRINTERGA YASHIRISH VA ANIMATION KAMAYTIRISH
+   ==================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .prime-reveal,
+  .prime-stagger > *,
+  .reveal,
+  .letter {
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+@media print {
+  .global-announcement,
+  .chat-widget,
+  .scroll-top,
+  .mobile-theme-toggle-wrap,
+  .menu-toggle,
+  .header-main,
+  footer.footer {
+    display: none !important;
+  }
+}

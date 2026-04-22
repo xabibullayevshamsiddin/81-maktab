@@ -2,7 +2,7 @@
   <section class="hero" id="home">
     <video autoplay muted loop playsinline class="bg-video">
       <source
-        src="{{ asset('temp/img/PixVerse_V5.6_Image_Text_540P_tiriltirib_ber.mp4') }}"
+        src="{{ app_public_asset('temp/img/video_40mb.mp4') }}"
         type="video/mp4"
       />
     </video>
@@ -11,16 +11,11 @@
     <div class="container">
       <div class="card-home">
         <div class="home-content">
-          <h1 class="hero-title">
-            <span>Har doim</span>
-            <strong>YUQORI NATIJA</strong>
+          <h1 class="hero-title" id="animated-hero">
+            <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
+            <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
           </h1>
-          <p>
-            81-ixtisoslashtirilgan umumta'lim maktabi 1963-yilda tashkil
-            etilgan. Maktabimiz matematika yo'nalishiga ixtisoslashgan bo'lib,
-            ta'lim sifati, chet tillari va zamonaviy ko'nikmalarni
-            rivojlantirishga alohida e'tibor qaratadi.
-          </p>
+          <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
         </div>
         <div class="home-btn">
           <a
@@ -57,139 +52,159 @@
   </section>
 
   <main>
-    <section class="container reveal glass-section" id="about">
+    <section class="container prime-reveal glass-section home-about-section" id="about">
       <div class="section-head">
-        <h2>81-IDUM ga xush kelibsiz</h2>
-        <p>Kelajak liderlarini tayyorlaydigan zamonaviy maktab muhiti</p>
+        <h2 class="js-split-text">{{ __('public.home.welcome_title') }}</h2>
+        <p>{{ __('public.home.welcome_text') }}</p>
       </div>
-      <div class="about-modern">
+      <div class="about-modern prime-stagger">
         <article class="about-card">
-          <h3>Fan va natija</h3>
-          <p>
-            Matematika, aniq fanlar va til yo'nalishida chuqurlashtirilgan
-            darslar orqali o'quvchilarimiz har yili yuqori natijalarga
-            erishmoqda.
-          </p>
-          <a href="#news" class="btn btn-sm">Yangiliklarni ko'rish</a>
+          <h3>{{ __('public.home.students_title') }}</h3>
+          <p>{{ __('public.home.students_text') }}</p>
+          <a href="{{ route('about') }}" class="btn btn-sm">{{ __('public.home.students_action') }}</a>
         </article>
         <article class="about-card">
-          <h3>Rivojlanish muhiti</h3>
-          <p>
-            Darsdan tashqari to'garaklar, mentorlik va zamonaviy
-            laboratoriyalar yordamida o'quvchi salohiyati bosqichma-bosqich
-            rivojlantiriladi.
-          </p>
-          <a href="{{ route('contact') }}" class="btn btn-sm">Bog'lanish</a>
+          <h3>{{ __('public.home.pedagogues_title') }}</h3>
+          <p>{{ __('public.home.pedagogues_text') }}</p>
+          <a href="{{ route('teacher') }}" class="btn btn-sm">{{ __('public.home.pedagogues_action') }}</a>
         </article>
         <article class="about-highlight">
-          <span class="badge">81-IDUM</span>
-          <h3>Yangi avlod uchun kuchli poydevor</h3>
-          <p>
-            Intizom, sifatli ta'lim va raqamli ko'nikmalarni birlashtirgan
-            holda har bir o'quvchini real hayotga tayyorlaymiz.
-          </p>
+          <span class="badge">{{ __('public.home.highlight_badge') }}</span>
+          <h3>{{ __('public.home.highlight_title') }}</h3>
+          <p>{{ __('public.home.highlight_text') }}</p>
         </article>
       </div>
     </section>
 
-    <section class="container news reveal glass-section" id="news">
-      <div class="section-head">
-        <h2>Yangiliklar</h2>
-        <p>So'nggi voqealar va tadbirlar</p>
+    <section class="container news prime-reveal glass-section home-news-section" id="news">
+      <div class="section-head home-news-head">
+        <div>
+          <h2 class="js-split-text">{{ __('public.home.news_title') }}</h2>
+          <p>{{ __('public.home.news_text') }}</p>
+        </div>
+        <a href="{{ route('post') }}" class="btn btn-sm">{{ __('public.home.news_all') }}</a>
       </div>
 
-      <div class="news-container">
-        <article class="news-card">
-          <img
-            src="{{ asset('temp/img/0131(1).jpg') }}"
-            alt="Matematika olimpiadasi yangiligi"
-          />
-          <h3>Matematika olimpiadasi natijalari</h3>
-          <p>
-            Tuman bosqichida o'quvchilarimiz yuqori natija ko'rsatib, keyingi
-            bosqichga yo'llanmani qo'lga kiritdi.
-          </p>
-          <div class="icon-links">
-            <div class="icon-link">
-              <span class="meta"><i class="fa-regular fa-eye"></i> 1.2k</span>
-              <span class="meta"><i class="fa-regular fa-comment"></i> 26</span>
-              <button class="like-btn" type="button" aria-label="Yoqtirish">
-                <i class="fa-regular fa-heart"></i>
-                <span class="like-count">18</span>
-              </button>
-            </div>
-            <a href="{{ route('post') }}" class="btn btn-sm">Batafsil</a>
-          </div>
-        </article>
+      <div class="news-container prime-stagger">
+        @forelse($posts as $post)
+          @php
+            $postTitle = localized_model_value($post, 'title');
+            $postShort = localized_model_value($post, 'short_content');
+            $postCategory = localized_model_value($post->category, 'name');
+            $kindLabel = localized_post_kind_label($post->post_kind ?? 'general');
+          @endphp
+          <article class="news-card prime-glow-hover">
+            <img
+              src="{{ app_storage_asset($post->image) }}"
+              alt="{{ $postTitle }}"
+              class="js-image-zoom-trigger zoomable-image"
+              data-zoom-src="{{ app_storage_asset($post->image) }}"
+              loading="lazy"
+              decoding="async"
+              role="button"
+              tabindex="0"
+            />
 
-        <article class="news-card">
-          <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="STEAM laboratoriya ochilishi" />
-          <h3>Yangi STEAM laboratoriya</h3>
-          <p>
-            Amaliy mashg'ulotlar uchun yangi laboratoriya ishga tushirildi.
-            O'quvchilar robototexnika bo'yicha darslarni boshlashdi.
-          </p>
-          <div class="icon-links">
-            <div class="icon-link">
-              <span class="meta"><i class="fa-regular fa-eye"></i> 980</span>
-              <span class="meta"><i class="fa-regular fa-comment"></i> 14</span>
-              <button class="like-btn" type="button" aria-label="Yoqtirish">
-                <i class="fa-regular fa-heart"></i>
-                <span class="like-count">11</span>
-              </button>
-            </div>
-            <a href="{{ route('post') }}" class="btn btn-sm">Batafsil</a>
-          </div>
-        </article>
+            @if($post->category || $post->hasVideo() || $kindLabel)
+              <div class="home-card-badges">
+                @if($post->category)
+                  <span class="badge badge-soft-primary">
+                    {{ $postCategory }}
+                  </span>
+                @endif
+                @if($kindLabel)
+                  <span class="badge badge-soft-secondary">{{ $kindLabel }}</span>
+                @endif
+                @if($post->hasVideo())
+                  <span class="badge badge-soft-danger">{{ __('public.common.video') }}</span>
+                @endif
+              </div>
+            @endif
 
-        <article class="news-card">
-          <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="Ochiq eshiklar kuni" />
-          <h3>Ochiq eshiklar kuni</h3>
-          <p>
-            Ota-onalar uchun maxsus uchrashuv tashkil etildi. Dars jarayoni,
-            to'garaklar va baholash tizimi haqida batafsil ma'lumot berildi.
-          </p>
-          <div class="icon-links">
-            <div class="icon-link">
-              <span class="meta"><i class="fa-regular fa-eye"></i> 1.6k</span>
-              <span class="meta"><i class="fa-regular fa-comment"></i> 31</span>
-              <button class="like-btn" type="button" aria-label="Yoqtirish">
-                <i class="fa-regular fa-heart"></i>
-                <span class="like-count">24</span>
-              </button>
+            <h3>{{ $postTitle }}</h3>
+            <p>{{ $postShort }}</p>
+
+            <div class="icon-links">
+              <div class="icon-link">
+                <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
+                <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
+              </div>
+              <div class="icon-link-actions">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline share-btn js-share-trigger"
+                  data-share-url="{{ route('post.show', $post) }}"
+                  data-share-title="{{ $postTitle }}"
+                  data-share-text="{{ __('public.home.news_share_text') }}"
+                  data-share-success="{{ __('public.home.news_share_success') }}"
+                >
+                  <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+                </button>
+                  <a href="{{ route('post.show', $post) }}" class="btn btn-sm btn-prime">{{ __('public.common.details') }}</a>
+              </div>
             </div>
-            <a href="{{ route('post') }}" class="btn btn-sm">Batafsil</a>
-          </div>
-        </article>
+          </article>
+        @empty
+          <p>{{ __('public.home.news_empty') }}</p>
+        @endforelse
       </div>
     </section>
 
-    <section class="teachers reveal" id="teachers">
+    <section class="teachers prime-reveal" id="teachers">
       <div class="container teacher">
         <div class="teacher-content">
-          <h2>Ustozlar jamoasi</h2>
-          <p>
-            Maktabimizda tajribali va malakali ustozlar faoliyat yuritadi.
-            Ular fan bo'yicha chuqur bilim berish bilan birga, o'quvchilarni
-            mustaqil fikrlash, jamoada ishlash va ijodkorlikka yo'naltiradi.
-          </p>
-          <a href="{{ route('teacher') }}" class="btn">Batafsil</a>
+          <h2 class="js-split-text">{{ __('public.home.teachers_title') }}</h2>
+          <p>{{ __('public.home.teachers_text') }}</p>
+          <a href="{{ route('teacher') }}" class="btn btn-prime">{{ __('public.home.teachers_action') }}</a>
         </div>
 
-        <article class="teacher-img">
-          <img
-            src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-            alt="Ustozlar jamoasi"
-          />
-          <h3>Kasbiy yondashuv va zamonaviy metodika</h3>
-          <p>
-            Har bir darsda interaktiv usullar qo'llanadi. Bu yondashuv
-            o'quvchilarni fanlarga qiziqtiradi va mustahkam natijaga olib
-            keladi.
-          </p>
-          <a href="{{ route('teacher') }}" class="btn1">Batafsil</a>
-        </article>
+        @if(isset($featuredTeacher) && $featuredTeacher)
+          @php
+            $featuredTeacherSubject = localized_model_value($featuredTeacher, 'subject');
+            $featuredTeacherMetaLine = $featuredTeacherSubject ?: localized_model_value($featuredTeacher, 'lavozim');
+          @endphp
+          <article class="teacher-img prime-reveal prime-reveal--scale">
+            <img
+              src="{{ app_storage_asset($featuredTeacher->image) }}"
+              alt="{{ $featuredTeacher->full_name }} profil rasmi"
+              loading="lazy"
+              decoding="async"
+            />
+            <h3>{{ $featuredTeacher->full_name }}</h3>
+            <p>
+              {{ $featuredTeacher->shortBio(180) }}
+            </p>
+            @if(filled($featuredTeacherMetaLine) || $featuredTeacher->experience_years)
+              <p class="profile-muted home-featured-teacher-meta">
+                @if(filled($featuredTeacherMetaLine))
+                  {{ $featuredTeacherMetaLine }}
+                @endif
+                @if(filled($featuredTeacherMetaLine) && $featuredTeacher->experience_years)
+                  ·
+                @endif
+                @if($featuredTeacher->experience_years)
+                  {{ __('public.common.years_experience', ['count' => $featuredTeacher->experience_years]) }}
+                @endif
+              </p>
+            @endif
+            <div class="teacher-img-actions">
+              <a href="{{ route('teacher.show', $featuredTeacher) }}" class="btn1">{{ __('public.teachers.about_button') }}</a>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm share-btn js-share-trigger"
+                data-share-url="{{ route('teacher.show', $featuredTeacher) }}"
+                data-share-title="{{ $featuredTeacher->full_name }}"
+                data-share-text="{{ __('public.home.teacher_share_text') }}"
+                data-share-success="{{ __('public.home.teacher_share_success') }}"
+              >
+                <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+              </button>
+            </div>
+          </article>
+        @endif
       </div>
     </section>
   </main>
+
 </x-loyouts.main>
+

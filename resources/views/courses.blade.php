@@ -1,367 +1,242 @@
-<x-loyouts.main title="81-IDUM | Kurslar">
+<x-loyouts.main title="{{ __('public.courses.page_title') }}">
   <section class="news-hero" id="home">
-
     <div class="container">
-      <!-- Hero Content -->
-      <div class="news-hero-content">
-          <span class="badge">81-IDUM Kurslar</span>
-          <h1>Bilim va kelajak shu yerda boshlanadi</h1>
-          <p>
-            Zamonaviy o'qitish metodikasi asosida tayyorlangan kurslarimiz
-            orqali o'z salohiyatingizni oching.
-          </p>
-          <a href="#courses-list" class="btn" style="margin-top: 10px">Kurslarga o'tish<i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i></a>
+      <div class="news-hero-content prime-reveal">
+        <span class="badge">{{ __('public.courses.badge') }}</span>
+        <h1 class="js-split-text">{{ __('public.courses.hero_title') }}</h1>
+        <p>{{ __('public.courses.hero_text') }}</p>
       </div>
     </div>
   </section>
 
-    <main>
-      <!-- FILTER BAR -->
-      <section class="container courses-filter-section" id="courses-list">
-        <div class="section-head">
-          <h2>Barcha kurslar</h2>
-          <p>O'zingizga mos yo'nalishni tanlang</p>
-        </div>
+  <main>
+    <section class="container courses-filter-section prime-reveal" id="courses-list">
+      <div class="section-head">
+        <h2 class="js-split-text">{{ __('public.courses.section_title') }}</h2>
+        <p>{{ __('public.courses.section_text') }}</p>
+      </div>
 
-        <div class="filter-bar">
-          <button class="filter-btn active" data-filter="all" type="button">
-            Barchasi
-          </button>
-          <button class="filter-btn" data-filter="math" type="button">
-            Matematika
-          </button>
-          <button class="filter-btn" data-filter="language" type="button">
-            Tillar
-          </button>
-          <button class="filter-btn" data-filter="science" type="button">
-            Fanlar
-          </button>
-          <button class="filter-btn" data-filter="tech" type="button">
-            Texnologiya
-          </button>
-        </div>
-
-        <!-- COURSE CARDS -->
-        <div class="courses-grid" id="courses-grid">
-          <article class="course-card course-card-v2 reveal" data-category="math">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="Chuqur matematika" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-square-root-variable"></i>
-                  <span>Matematika</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Chuqur matematika</h3>
-              <p>
-                Olimpiada va imtihonlarga tayyorlanadigan kengaytirilgan
-                matematik kurs.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 6 oy</li>
-                <li><i class="fa-solid fa-users"></i> 7–11-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.9</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 1]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="1"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="language">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/image.png') }}" alt="Ingliz tili (IELTS)" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-language"></i>
-                  <span>Tillar</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Ingliz tili (IELTS)</h3>
-              <p>
-                IELTS imtihoniga maqsadli tayyorgarlik va chet el
-                universitetlariga kirish.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 4 oy</li>
-                <li><i class="fa-solid fa-users"></i> 8–11-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.8</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 2]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="2"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="science">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Kimyo va biologiya" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-flask"></i>
-                  <span>Tabiiy fanlar</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Kimyo va biologiya</h3>
-              <p>
-                Tibbiyot va tabiiy fanlar yo'nalishiga ixtisoslashtirilgan
-                amaliy kurs.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 5 oy</li>
-                <li><i class="fa-solid fa-users"></i> 8–11-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.7</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 3]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="3"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="tech">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="Dasturlash asoslari" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-laptop-code"></i>
-                  <span>Texnologiya</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Dasturlash asoslari</h3>
-              <p>
-                Python va algoritmlar orqali zamonaviy dasturlash ko'nikmalarini
-                egallash.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 3 oy</li>
-                <li><i class="fa-solid fa-users"></i> 6–11-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.9</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 4]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="4"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="language">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/0131(1).jpg') }}" alt="Rus tili" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-globe"></i>
-                  <span>Tillar</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Rus tili</h3>
-              <p>
-                Muloqot, grammatika va rus adabiyotiga oid chuqurlashtirilgan
-                kurs.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 4 oy</li>
-                <li><i class="fa-solid fa-users"></i> 5–11-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.6</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 5]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="5"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="math">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/image.png') }}" alt="Fizika va mexanika" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-chart-line"></i>
-                  <span>Matematika</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Fizika va mexanika</h3>
-              <p>
-                Nazariy va amaliy fizikani birlashtirgan olimpiada darajasidagi
-                kurs.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 6 oy</li>
-                <li><i class="fa-solid fa-users"></i> 9–11-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.8</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 6]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="6"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="tech">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}" alt="Robototexnika" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-robot"></i>
-                  <span>Texnologiya</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Robototexnika</h3>
-              <p>
-                Arduino va Lego Mindstorms asosida qurilmalar loyihalash va
-                dasturlash.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 4 oy</li>
-                <li><i class="fa-solid fa-users"></i> 5–9-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.9</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 7]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="7"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-
-          <article class="course-card course-card-v2 reveal" data-category="science">
-            <div class="course-media">
-              <img src="{{ asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="Geografiya va ekologiya" />
-              <div class="course-media-overlay">
-                <div class="course-chip">
-                  <i class="fa-solid fa-atom"></i>
-                  <span>Tabiiy fanlar</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-body-v2">
-              <h3>Geografiya va ekologiya</h3>
-              <p>
-                Dunyo geografiyasi, ekotizimlar va atrof-muhit ilmi bo'yicha
-                kuch kurs.
-              </p>
-              <ul class="course-meta-v2">
-                <li><i class="fa-regular fa-clock"></i> 3 oy</li>
-                <li><i class="fa-solid fa-users"></i> 6–10-sinf</li>
-                <li><i class="fa-solid fa-star"></i> 4.5</li>
-              </ul>
-              <a
-                href="{{ route('courses', ['id' => 8]) }}"
-                class="btn btn-sm details-btn course-cta"
-                data-course-id="8"
-                >Batafsil</a
-              >
-            </div>
-          </article>
-        </div>
-      </section>
-      <button
-        class="mobile-courses-toggle"
-        id="mobile-show-courses"
-        type="button"
-      >
-        Barcha kurslar <i class="fa-solid fa-chevron-down"></i>
-      </button>
-
-      <!-- STATS SECTION -->
-      <section class="courses-stats-section">
-        <div class="container courses-stats">
-          <div class="stat-item reveal">
-            <span class="stat-num" data-target="1200">0</span>
-            <p>O'quvchi</p>
+      <form method="GET" action="{{ route('courses') }}" class="exam-filter-panel" style="margin-bottom:18px;" id="course-filter-form">
+        <div class="exam-filter-row">
+          <div class="exam-filter-field">
+            <label class="exam-filter-label" for="course-filter-q">{{ __('public.posts.search_placeholder') }}</label>
+            <input type="search" id="course-filter-q" name="q" class="exam-filter-input" placeholder="{{ __('public.courses.search_placeholder') }}" autocomplete="off" value="{{ $q ?? '' }}">
           </div>
-          <div class="stat-item reveal">
-            <span class="stat-num" data-target="18">0</span>
-            <p>Kurs yo'nalishi</p>
-          </div>
-          <div class="stat-item reveal">
-            <span class="stat-num" data-target="40">0</span>
-            <p>Tajribali ustoz</p>
-          </div>
-          <div class="stat-item reveal">
-            <span class="stat-num" data-target="96">0</span>
-            <p>% Muvaffaqiyat</p>
+          <div class="exam-filter-field">
+            <label class="exam-filter-label" for="course-filter-subject">{{ __('public.courses.subject_filter') }}</label>
+            <select id="course-filter-subject" name="subject" class="exam-filter-select">
+              <option value="">{{ __('public.courses.all_subjects') }}</option>
+              @foreach($allSubjects as $subj)
+                <option value="{{ e($subj) }}" {{ ($selectedSubject ?? '') === $subj ? 'selected' : '' }}>{{ $subj }}</option>
+              @endforeach
+            </select>
           </div>
         </div>
-      </section>
+      </form>
+      <script>
+        (function () {
+          var form = document.getElementById('course-filter-form');
+          var qInput = document.getElementById('course-filter-q');
+          var subjSelect = document.getElementById('course-filter-subject');
+          if (!form) return;
 
-      <!-- CTA SECTION -->
-      <section class="container courses-cta-section reveal">
-        <div class="courses-cta glass-section">
-          <div class="cta-content">
-            <h2>Kursga yozilishni xohlaysizmi?</h2>
-            <p>
-              Qo'shimcha ma'lumot olish yoki ro'yxatdan o'tish uchun biz bilan
-              bog'laning.
-            </p>
-          </div>
-          <a href="{{ route('contact') }}" class="btn"
-            >Bog'lanish
-            <i class="fa-solid fa-arrow-right" style="margin-left: 6px"></i
-          ></a>
-        </div>
-      </section>
+          if (subjSelect) {
+            subjSelect.addEventListener('change', function () {
+              form.submit();
+            });
+          }
 
-      <section
-        class="course-details-modal"
-        id="course-details-modal"
-        aria-hidden="true"
-      >
-        <div class="course-details-overlay" data-close-modal="true"></div>
-        <div
-          class="course-details-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="course-details-title"
-        >
-          <button
-            class="course-details-close"
-            type="button"
-            aria-label="Yopish"
-            data-close-modal="true"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-          <div class="course-details-content" id="course-details-content"></div>
+          var debounceTimer;
+          if (qInput) {
+            qInput.addEventListener('input', function () {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(function () {
+                form.submit();
+              }, 500);
+            });
+          }
+        })();
+      </script>
+
+      @php
+        $courseTotal = $courses->total();
+        $courseShown = $courses->count();
+      @endphp
+      <p class="exam-filter-count" aria-live="polite">
+        @if(($q ?? '') !== '' || ($selectedSubject ?? '') !== '')
+          {{ __('public.posts.section_text') }}: {{ $courseShown }} / {{ $courseTotal }}
+        @else
+          {{ __('public.courses.section_title') }}: {{ $courseTotal }}
+        @endif
+      </p>
+
+      <div class="courses-grid prime-stagger" id="courses-grid">
+        @forelse($courses as $course)
+          @php
+            $teacher = $course->teacher;
+            $courseTitle = localized_model_value($course, 'title');
+            $courseDescription = localized_model_value($course, 'description');
+            $coursePrice = localized_model_value($course, 'price');
+            $courseDuration = localized_model_value($course, 'duration');
+          @endphp
+          <article class="course-card prime-glow-hover">
+            <div class="course-card-media">
+              <img
+                src="{{ $course->coverImageUrl() }}"
+                alt="{{ $courseTitle }}"
+                loading="lazy"
+                width="640"
+                height="360"
+              />
+            </div>
+            <div class="course-body">
+              <h3>{{ $courseTitle }}</h3>
+              <p>{{ \Illuminate\Support\Str::limit(strip_tags($courseDescription), 220) }}</p>
+              <ul class="course-meta">
+                <li><i class="fa-solid fa-user"></i> {{ $course->teacher?->full_name ?: '-' }}</li>
+                <li><i class="fa-regular fa-clock"></i> {{ $courseDuration }}</li>
+                <li><i class="fa-solid fa-money-bill"></i> {{ $coursePrice }}</li>
+                <li><i class="fa-regular fa-calendar"></i> {{ $course->start_date?->format('Y-m-d') }}</li>
+              </ul>
+              <div class="course-card-actions">
+                <div class="course-card-toolbar">
+                  <a
+                    href="{{ route('courses.show', $course) }}"
+                    class="btn btn-outline btn-sm course-info-trigger"
+                  >
+                    <i class="fa-solid fa-circle-info"></i> {{ __('public.courses.info_button') }}
+                  </a>
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm share-btn js-share-trigger"
+                    data-share-url="{{ route('courses.show', $course) }}"
+                    data-share-title="{{ $courseTitle }}"
+                    data-share-text="{{ __('public.courses.share_text') }}"
+                    data-share-success="{{ __('public.courses.share_success') }}"
+                  >
+                    <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+                  </button>
+                </div>
+                @auth
+                  @php
+                    $enrollmentByCourseId = $enrollmentByCourseId ?? collect();
+                    $en = $enrollmentByCourseId->get($course->id);
+                    $isOwnCourse = (int) $course->created_by === (int) auth()->id();
+                    $canManageCourse = auth()->user()->canManageSystem() || $isOwnCourse;
+                    $isParentUser = auth()->user()->isParent();
+                  @endphp
+                  @if($canManageCourse)
+                    @php
+                      $useAdminCourseRoutes = auth()->user()->canManageSystem();
+                      $editCourseUrl = $useAdminCourseRoutes ? route('admin.courses.edit', $course) : route('teacher.courses.edit', $course);
+                      $destroyCourseUrl = $useAdminCourseRoutes ? route('admin.courses.destroy', $course) : route('teacher.courses.destroy', $course);
+                    @endphp
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                      <a href="{{ $editCourseUrl }}" class="btn btn-sm btn-prime">Kursni tahrirlash</a>
+                      <form action="{{ $destroyCourseUrl }}" method="POST" data-confirm="Kurs o‘chirilsinmi?" data-confirm-title="Kursni o‘chirish" data-confirm-variant="danger" data-confirm-ok="O‘chirish" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline btn-sm">Kursni o‘chirish</button>
+                      </form>
+                    </div>
+                  @endif
+                  @if($isParentUser)
+                    <p class="course-enroll-hint" style="font-size:13px;margin:0;">
+                      Ota-ona akkaunti bilan kursga yozilish mumkin emas.
+                    </p>
+                  @elseif($isOwnCourse)
+                    <p class="course-enroll-hint" style="font-size:13px;margin:0;">Bu siz yaratgan kurs — o‘z kursingizga yozilmaysiz.</p>
+                    @if($en)
+                      <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" style="margin-top:10px;" data-confirm="Yozilishni olib tashlaysizmi?" data-confirm-title="Yozilishni olib tashlash" data-confirm-variant="primary" data-confirm-ok="Ha">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline btn-sm">Yozilishni olib tashlash</button>
+                      </form>
+                    @endif
+                  @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_APPROVED)
+                    <span class="course-enrolled-pill"><i class="fa-solid fa-check"></i> {{ __('public.courses.approved') }}</span>
+                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="Yozilishni bekor qilasizmi?" data-confirm-title="Yozilishni bekor qilish" data-confirm-variant="primary" data-confirm-ok="Ha">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
+                    </form>
+                  @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_PENDING)
+                    <span class="course-enrolled-pill" style="background:rgba(245,158,11,.2);color:#b45309;"><i class="fa-regular fa-clock"></i> {{ __('public.courses.pending') }}</span>
+                    <p class="course-enroll-hint" style="font-size:13px;margin:8px 0;">{{ __('public.courses.teacher_label') }} maʼlumotlarni ko‘rib, tasdiqlaydi.</p>
+                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="Arizani bekor qilasizmi?" data-confirm-title="Arizani bekor qilish" data-confirm-variant="primary" data-confirm-ok="Ha">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
+                    </form>
+                  @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_REJECTED)
+                    <span class="course-enrolled-pill" style="background:rgba(185,28,28,.12);color:#b91c1c;"><i class="fa-solid fa-xmark"></i> {{ __('public.courses.rejected') }}</span>
+                    <p class="course-enroll-hint" style="font-size:13px;">{{ __('public.courses.rejected_text') }}</p>
+                    <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
+                      @csrf
+                      <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
+                      <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level', $en->subject_level) }}" placeholder="Masalan: boshlang‘ich / o‘rta" required />
+                      <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
+                      <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="Qo‘shimcha">{{ old('note') }}</textarea>
+                      @foreach (['subject_level','note'] as $f)
+                        @error($f)
+                          <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
+                        @enderror
+                      @endforeach
+                      <button type="submit" class="btn btn-prime course-enroll-submit">
+                        <i class="fa-solid fa-paper-plane"></i> {{ __('public.courses.resubmit') }}
+                      </button>
+                    </form>
+                  @else
+                    <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
+                      @csrf
+                      <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
+                      <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level') }}" placeholder="Masalan: boshlang‘ich / o‘rta" required />
+                      <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
+                      <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="Aloqa uchun qo‘shimcha">{{ old('note') }}</textarea>
+                      @foreach (['subject_level','note'] as $f)
+                        @error($f)
+                          <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
+                        @enderror
+                      @endforeach
+                      <button type="submit" class="btn btn-prime course-enroll-submit">
+                        <i class="fa-solid fa-pen-to-square"></i> {{ __('public.courses.submit') }}
+                      </button>
+                    </form>
+                  @endif
+                @else
+                  <p class="course-enroll-guest">
+                    <a href="{{ route('login') }}" class="btn btn-outline">Kirish</a>
+                    <a href="{{ route('register') }}" class="btn btn-prime">Ro‘yxatdan o‘tish</a>
+                    <span class="course-enroll-hint">{{ __('public.courses.login_needed') }}</span>
+                  </p>
+                @endauth
+              </div>
+            </div>
+          </article>
+        @empty
+          <p>{{ __('public.courses.empty') }}</p>
+        @endforelse
+      </div>
+      @if($courses->hasPages())
+        <div class="news-pagination" style="margin-top: 28px;">
+          @if ($courses->onFirstPage())
+            <span class="btn btn-sm btn-outline" aria-disabled="true">{{ __('public.posts.previous') }}</span>
+          @else
+            <a class="btn btn-sm btn-outline" href="{{ $courses->previousPageUrl() }}">{{ __('public.posts.previous') }}</a>
+          @endif
+
+          <span class="news-page-info">
+            {{ $courses->currentPage() }} / {{ $courses->lastPage() }}
+          </span>
+
+          @if ($courses->hasMorePages())
+            <a class="btn btn-sm" href="{{ $courses->nextPageUrl() }}">{{ __('public.posts.next') }}</a>
+          @else
+            <span class="btn btn-sm" aria-disabled="true">{{ __('public.posts.next') }}</span>
+          @endif
         </div>
-      </section>
-    </main>
+      @endif
+    </section>
+  </main>
 
 </x-loyouts.main>

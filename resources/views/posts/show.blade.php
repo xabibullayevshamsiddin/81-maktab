@@ -1,511 +1,221 @@
-<x-loyouts.main title="81-IDUM | {{ $post->title }}">
+@php
+  $postTitle = localized_model_value($post, 'title');
+  $postShort = localized_model_value($post, 'short_content');
+  $postContent = localized_model_value($post, 'content');
+  $postCategory = localized_model_value($post->category, 'name');
+@endphp
+<x-loyouts.main title="81-IDUM | {{ $postTitle }}">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
-        <h1>{{ $post->title }}</h1>
+        <h1 class="js-split-text">{{ $postTitle }}</h1>
         @if($post->category)
-          <p>{{ $post->category->name }}</p>
-        @else
-          <p>Yangilik</p>
+          <p>{{ $postCategory }}</p>
         @endif
       </div>
-      <a href="#post" class="btn"
-        >Pastga tushish <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
-      ></a>
+      <a href="{{ route('post') }}" class="btn">
+        {{ __('public.posts.show_back') }} <i class="fa-solid fa-arrow-left" style="margin-left: 6px"></i>
+      </a>
     </div>
   </section>
 
+  @php
+    $commentLikeUrlTemplate = str_replace(
+        '/comments/0/',
+        '/comments/__COMMENT_ID__/',
+        route('post.comments.like', ['post' => $post, 'comment' => 0])
+    );
+    $postCommentConfig = [
+      'currentUserId' => auth()->check() ? auth()->id() : null,
+      'currentUserIsAdmin' => auth()->check() && auth()->user()->isAdmin(),
+      'currentUserIsModerator' => auth()->check() && auth()->user()->isModerator(),
+      'currentUserIsOnlyModerator' => auth()->check() && auth()->user()->isOnlyModerator(),
+      'updateUrlTemplate' => route('post.comments.update', [$post, '__COMMENT_ID__']),
+      'destroyUrlTemplate' => route('post.comments.destroy', [$post, '__COMMENT_ID__']),
+      'commentLikeUrlTemplate' => $commentLikeUrlTemplate,
+      'storeUrl' => route('post.comments.store', $post),
+      'csrfToken' => csrf_token(),
+    ];
+  @endphp
   <main class="news">
-    <section class="container news reveal glass-section" id="post">
-      <article class="post-detail">
-        <div class="post-image-wrapper">
-          <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" class="post-detail-image" />
-          <div class="news-media-overlay">
-            <div class="news-chip">
-              <i class="fa-regular fa-newspaper"></i>
-              <span>{{ $post->category?->name ?? 'Yangilik' }}</span>
-            </div>
-          </div>
+    <section
+      class="container news reveal glass-section"
+      id="post-detail"
+      data-comment-config='@json($postCommentConfig)'
+    >
+      @if (session('success'))
+        <p style="margin: 0 0 12px; color: #0f766e; font-weight: 700;">
+          {{ session('success') }}
+        </p>
+      @endif
+
+      @php
+        $ytEmbed = $post->video_url ? \App\Support\YoutubeEmbed::parse($post->video_url) : null;
+        $videoExt = filled($post->video_path) ? strtolower(pathinfo($post->video_path, PATHINFO_EXTENSION)) : '';
+      @endphp
+      <article class="news-card post-detail-card">
+        <div class="post-detail-media">
+          @if($post->hasVideo())
+            @if(filled($post->video_path))
+              <video class="post-detail-video-native" controls playsinline preload="metadata" title="{{ $postTitle }}">
+                <source
+                  src="{{ app_storage_asset($post->video_path) }}"
+                  type="{{ $videoExt === 'webm' ? 'video/webm' : 'video/mp4' }}"
+                />
+                {{ __('public.posts.browser_no_video') }}
+              </video>
+            @elseif($ytEmbed)
+              <div class="post-video-embed post-video-embed--detail-hero">
+                <div class="post-video-embed-inner">
+                  <iframe
+                    src="{{ $ytEmbed[0] }}"
+                    title="Video: {{ $postTitle }}"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+              </div>
+            @elseif(filled($post->video_url))
+              <div class="post-detail-video-external">
+                <a class="btn" href="{{ $post->video_url }}" target="_blank" rel="noopener noreferrer">
+                  <i class="fa-solid fa-up-right-from-square"></i> {{ __('public.posts.open_video') }}
+                </a>
+              </div>
+            @endif
+          @else
+            <img
+              src="{{ app_storage_asset($post->image) }}"
+              alt="{{ $postTitle }}"
+              class="js-image-zoom-trigger zoomable-image"
+              data-zoom-src="{{ app_storage_asset($post->image) }}"
+              loading="lazy"
+              decoding="async"
+              role="button"
+              tabindex="0"
+            />
+          @endif
         </div>
 
-        <div class="post-content-wrapper">
-          <h2 class="post-detail-title">{{ $post->title }}</h2>
-          
-          <div class="post-meta">
-            <span><i class="fa-regular fa-eye"></i> {{ $post->views }} ko'rilish</span>
-            <span><i class="fa-regular fa-comment"></i> {{ $post->comments_count }} izoh</span>
-            <span><i class="fa-regular fa-heart"></i> {{ $post->likes_count }}</span>
+        @if($post->category)
+          <div style="padding: 12px 16px 0;">
+            <span class="badge">
+              {{ $postCategory }}
+            </span>
           </div>
+        @endif
 
-          <div class="post-detail-body">
-            {!! $post->content !!}
-          </div>
+        <div class="icon-links" style="padding-top: 8px;">
+          <div class="icon-link">
+            <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
+            <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span></span>
 
-          <div class="post-actions">
-            <form action="{{ route('post.like', $post) }}" method="POST" class="like-form">
+            @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
+            <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
               @csrf
-              <button class="like-btn {{ $liked ? 'liked' : '' }}" type="submit" id="like-btn">
-                <i class="{{ $liked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
-                <span id="like-text">{{ $liked ? 'Yoqdi' : 'Yoqtirish' }}</span>
+              <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
+                <i class="{{ $postLikedByMe ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+                <span class="like-count">{{ $post->likes_count }}</span>
               </button>
             </form>
-            <a href="{{ route('post') }}" class="btn btn-sm btn-outline">Orqaga</a>
+          </div>
+          <div class="icon-link-actions">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline share-btn js-share-trigger"
+              data-share-url="{{ route('post.show', $post) }}"
+              data-share-title="{{ $postTitle }}"
+              data-share-text="{{ __('public.posts.share_text') }}"
+              data-share-success="{{ __('public.posts.share_success') }}"
+            >
+              <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+            </button>
           </div>
         </div>
+
+        <h3>{{ $postTitle }}</h3>
+        <p>{{ $postShort }}</p>
+
+        <div class="post-content">
+          {!! nl2br(e($postContent)) !!}
+        </div>
+
+        @php
+          $canEdit = auth()->check() && auth()->user()->canAccessDashboard();
+        @endphp
+
+        @if($canEdit)
+          <div class="post-admin-actions">
+            <a href="{{ route('posts.edit', $post->id) }}" class="btn btn-sm post-admin-btn post-admin-btn-edit">Tahrirlash</a>
+            <form action="{{ route('posts.destroy', $post->id) }}" method="POST" data-confirm="Postni o'chirmoqchimisiz?" data-confirm-title="Postni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
+              @csrf
+              @method('DELETE')
+              <button type="submit" class="btn btn-sm post-admin-btn post-admin-btn-delete">O'chirish</button>
+            </form>
+          </div>
+        @endif
       </article>
 
-      <div class="comments-section">
-        <h3 class="comments-title">
-          <i class="fa-regular fa-comments"></i> Izohlar ({{ $post->comments_count }})
-        </h3>
-
-        <form class="comment-form ajax-comment-form" action="{{ route('post.comments.store', $post) }}" method="POST">
-          @csrf
-          @guest
-            <input type="text" class="comment-input" name="author_name" placeholder="Ismingiz (ixtiyoriy)" maxlength="80" value="{{ old('author_name') }}" />
-          @endguest
-          <textarea class="comment-input comment-textarea" name="body" placeholder="Fikringizni yozing..." maxlength="500" required>{{ old('body') }}</textarea>
-          <button class="btn" type="submit">Yuborish</button>
-        </form>
-
-        @if (session('success'))
-          <p class="form-message">{{ session('success') }}</p>
-        @endif
-
-        @if ($errors->any())
-          <p class="form-message" style="color:#ffb3b3;">{{ $errors->first() }}</p>
-        @endif
-
-        @if($post->comments->isEmpty())
-          <p class="comment-empty">Hozircha izohlar yo'q. Birinchi bo'lib izoh qoldiring!</p>
-        @else
-          <ul class="comment-list">
-            @foreach($post->comments as $comment)
-              @if(!$comment->parent_id)
-              <li class="comment-item" id="comment-{{ $comment->id }}">
-                <div class="comment-header">
-                  <strong class="comment-author">
-                    <i class="fa-regular fa-user"></i> {{ $comment->author_name ?? 'Mehmon' }}
-                  </strong>
-                  <span class="comment-date">{{ $comment->created_at?->format('d.m.Y H:i') }}</span>
-                </div>
-                <div class="comment-body-wrapper" id="comment-body-{{ $comment->id }}">
-                  <p class="comment-body">{{ $comment->body }}</p>
-                </div>
-                <div class="comment-actions">
-                  @auth
-                    @php
-                      $user = auth()->user();
-                      $isAdmin = in_array($user->role, ['admin', 'moderator']);
-                      $isOwner = $comment->user_id === $user->id;
-                    @endphp
-                    @if($isAdmin || $isOwner)
-                      <button class="comment-action-btn edit-btn" data-comment-id="{{ $comment->id }}"><i class="fa-solid fa-pen"></i> Tahrirlash</button>
-                      <form action="{{ route('comments.destroy', $comment) }}" method="POST" class="ajax-delete-form" data-comment-id="{{ $comment->id }}" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="comment-action-btn delete-btn"><i class="fa-solid fa-trash"></i> O'chirish</button>
-                      </form>
-                    @endif
-                    <button class="comment-action-btn reply-btn" data-comment-id="{{ $comment->id }}"><i class="fa-solid fa-reply"></i> Javob</button>
-                  @endauth
-                </div>
-                <div class="comment-edit-form" id="edit-form-{{ $comment->id }}" style="display:none;">
-                  <form action="{{ route('comments.update', $comment) }}" method="POST" class="ajax-edit-form" data-comment-id="{{ $comment->id }}">
-                    @csrf
-                    @method('PUT')
-                    <textarea name="body" class="comment-input comment-textarea" maxlength="500" required>{{ $comment->body }}</textarea>
-                    <div class="comment-edit-actions">
-                      <button type="submit" class="btn btn-sm">Saqlash</button>
-                      <button type="button" class="btn btn-sm btn-outline cancel-edit-btn" data-comment-id="{{ $comment->id }}">Bekor</button>
-                    </div>
-                  </form>
-                </div>
-                <div class="comment-reply-form" id="reply-form-{{ $comment->id }}" style="display:none;">
-                  <form action="/comments/{{ $comment->id }}/reply" method="POST" class="ajax-reply-form" data-comment-id="{{ $comment->id }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                    @guest
-                      <input type="text" class="comment-input" name="author_name" placeholder="Ismingiz (ixtiyoriy)" maxlength="80" />
-                    @endguest
-                    <textarea name="body" class="comment-input comment-textarea" placeholder="Javobingizni yozing..." maxlength="500" required></textarea>
-                    <div class="comment-edit-actions">
-                      <button type="submit" class="btn btn-sm">Yuborish</button>
-                      <button type="button" class="btn btn-sm btn-outline cancel-reply-btn" data-comment-id="{{ $comment->id }}">Bekor</button>
-                    </div>
-                  </form>
-                </div>
-                @if($comment->replies->isNotEmpty())
-                <ul class="comment-list comment-replies">
-                  @foreach($comment->replies as $reply)
-                  <li class="comment-item" id="comment-{{ $reply->id }}">
-                    <div class="comment-header">
-                      <strong class="comment-author">
-                        <i class="fa-regular fa-user"></i> {{ $reply->author_name ?? 'Mehmon' }}
-                      </strong>
-                      <span class="comment-date">{{ $reply->created_at?->format('d.m.Y H:i') }}</span>
-                    </div>
-                    <p class="comment-body">{{ $reply->body }}</p>
-                    @auth
-                      @php
-                        $user = auth()->user();
-                        $isAdmin = in_array($user->role, ['admin', 'moderator']);
-                        $isOwner = $reply->user_id === $user->id;
-                      @endphp
-                      @if($isAdmin || $isOwner)
-                      <div class="comment-actions">
-                        <form action="{{ route('comments.destroy', $reply) }}" method="POST" class="delete-comment-form" style="display:inline;">
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="comment-action-btn delete-btn"><i class="fa-solid fa-trash"></i> O'chirish</button>
-                        </form>
-                      </div>
-                      @endif
-                    @endauth
-                  </li>
-                  @endforeach
-                </ul>
-                @endif
-              </li>
-              @endif
+      <div class="comments-wrapper" style="display:grid;">
+        <div class="comments-list">
+          @if ($comments->isEmpty())
+            <p class="comment-empty">{{ __('public.posts.comments_empty') }}</p>
+          @else
+            @foreach($comments as $comment)
+              @include('posts.partials.comment-item', ['comment' => $comment, 'post' => $post, 'showReplyForm' => true, 'likedCommentIds' => $likedCommentIds])
             @endforeach
-          </ul>
-        @endif
-      </div>
+          @endif
+        </div>
 
-      @if($relatedPosts->isNotEmpty())
-      <div class="related-posts-section">
-        <h3 class="related-title">
-          <i class="fa-solid fa-newspaper"></i> Boshqa yangiliklar
-        </h3>
-        <div class="news-container">
-          @foreach($relatedPosts as $related)
-            <article class="news-card">
-              <div class="news-media">
-                <img src="{{ asset('storage/' . $related->image) }}" alt="{{ $related->title }}" />
-                <div class="news-media-overlay">
-                  <div class="news-chip">
-                    <i class="fa-regular fa-newspaper"></i>
-                    <span>{{ $related->category?->name ?? 'Yangilik' }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-body">
-                <h3>{{ $related->title }}</h3>
-                <p>{{ $related->short_content }}</p>
-                <ul class="news-meta">
-                  <li><i class="fa-regular fa-eye"></i> {{ $related->views }}</li>
-                  <li><i class="fa-regular fa-comment"></i> {{ $related->comments_count }}</li>
-                </ul>
-                <a href="{{ route('post.show', $related) }}" class="btn btn-sm news-cta">Batafsil</a>
-              </div>
-            </article>
-          @endforeach
+        <div class="comment-form-box reveal">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+            <h3 style="margin:0;"><i class="fa-solid fa-pen-to-square"></i> {{ __('public.posts.leave_comment') }}</h3>
+            <x-site-rule-items area="comment" />
+          </div>
+
+          @auth
+            <form class="comment-form js-comment-form" action="{{ route('post.comments.store', $post) }}" method="POST">
+              @csrf
+              <textarea
+                rows="4"
+                class="comment-input"
+                name="body"
+                placeholder="{{ __('public.posts.comment_placeholder') }}"
+                maxlength="100"
+                required
+              >{{ old('body') }}</textarea>
+
+              <button type="submit" class="btn">
+                <i class="fa-solid fa-paper-plane"></i> {{ __('public.posts.submit_comment') }}
+              </button>
+            </form>
+          @else
+            <p class="comment-hint" style="margin-bottom: 10px;">
+              <i class="fa-solid fa-lock"></i> Izoh yozish uchun avval tizimga kiring.
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+              <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+            </div>
+          @endauth
+
+          <p class="comment-hint">
+            <i class="fa-solid fa-info-circle"></i> {{ __('public.posts.comment_hint') }}
+          </p>
         </div>
       </div>
+
+      @if(isset($relatedPosts) && $relatedPosts->isNotEmpty())
+        <section class="related-posts-section reveal" aria-labelledby="related-posts-heading">
+          <h2 id="related-posts-heading" class="js-split-text related-section-title">
+            {{ __('public.posts.related_title') }}
+          </h2>
+          @include('posts.partials.related-grid', ['relatedPosts' => $relatedPosts, 'likedPostIds' => $likedPostIds])
+          <p class="related-section-more">
+            <a href="{{ route('post') }}" class="btn btn-outline btn-sm">{{ __('public.posts.related_all') }}</a>
+          </p>
+        </section>
       @endif
     </section>
   </main>
 </x-loyouts.main>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const likeForm = document.querySelector('.like-form');
-  const likeBtn = document.getElementById('like-btn');
-  const likeText = document.getElementById('like-text');
-  const likeIcon = likeBtn.querySelector('i');
-
-  if (likeForm) {
-    likeForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      fetch(this.action, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          likeBtn.classList.toggle('liked', data.liked);
-          likeText.textContent = data.liked ? 'Yoqdi' : 'Yoqtirish';
-          likeIcon.className = data.liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-        }
-      })
-      .catch(error => console.error('Error:', error));
-    });
-  }
-
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const commentId = this.dataset.commentId;
-      document.getElementById('comment-body-' + commentId).style.display = 'none';
-      this.style.display = 'none';
-      const replyBtn = document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]');
-      if (replyBtn) replyBtn.style.display = 'none';
-      document.getElementById('edit-form-' + commentId).style.display = 'block';
-    });
-  });
-
-  document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const commentId = this.dataset.commentId;
-      document.getElementById('comment-body-' + commentId).style.display = 'block';
-      document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
-      const replyBtn = document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]');
-      if (replyBtn) replyBtn.style.display = 'inline-block';
-      document.getElementById('edit-form-' + commentId).style.display = 'none';
-    });
-  });
-
-  document.querySelectorAll('.reply-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const commentId = this.dataset.commentId;
-      this.style.display = 'none';
-      const editBtn = document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]');
-      if (editBtn) editBtn.style.display = 'none';
-      document.getElementById('reply-form-' + commentId).style.display = 'block';
-    });
-  });
-
-  document.querySelectorAll('.cancel-reply-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const commentId = this.dataset.commentId;
-      document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
-      const editBtn = document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]');
-      if (editBtn) editBtn.style.display = 'inline-block';
-      document.getElementById('reply-form-' + commentId).style.display = 'none';
-    });
-  });
-
-  document.querySelectorAll('.ajax-edit-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const commentId = this.dataset.commentId;
-      const formData = new FormData(this);
-      
-      fetch(this.action, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        },
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('comment-body-' + commentId).querySelector('p').textContent = data.comment.body;
-          document.getElementById('comment-body-' + commentId).style.display = 'block';
-          document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
-          const replyBtn = document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]');
-          if (replyBtn) replyBtn.style.display = 'inline-block';
-          document.getElementById('edit-form-' + commentId).style.display = 'none';
-        }
-      })
-      .catch(error => console.error('Error:', error));
-    });
-  });
-
-  document.querySelectorAll('.ajax-reply-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const commentId = this.dataset.commentId;
-      const formData = new FormData(this);
-      
-      console.log('Submitting reply to comment:', commentId);
-      console.log('Action:', this.action);
-      console.log('FormData:', Object.fromEntries(formData));
-      
-      fetch(this.action, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        },
-        body: formData
-      })
-      .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-          const repliesList = document.querySelector('#comment-' + commentId + ' .comment-replies');
-          if (repliesList) {
-            const newReply = document.createElement('li');
-            newReply.className = 'comment-item';
-            newReply.id = 'comment-' + data.reply.id;
-            newReply.innerHTML = `
-              <div class="comment-header">
-                <strong class="comment-author">
-                  <i class="fa-regular fa-user"></i> ${data.reply.author_name}
-                </strong>
-                <span class="comment-date">${data.reply.created_at}</span>
-              </div>
-              <p class="comment-body">${data.reply.body}</p>
-            `;
-            repliesList.appendChild(newReply);
-          }
-          document.getElementById('reply-form-' + commentId).style.display = 'none';
-          document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
-          const editBtn = document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]');
-          if (editBtn) editBtn.style.display = 'inline-block';
-          form.reset();
-        }
-      })
-      .catch(error => console.error('Error:', error));
-    });
-  });
-
-  document.querySelector('.ajax-comment-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const form = this;
-    const formData = new FormData(form);
-    
-    fetch(form.action, {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'Accept': 'application/json'
-      },
-      body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        const commentList = document.querySelector('.comment-list');
-        if (commentList) {
-          const emptyMsg = document.querySelector('.comment-empty');
-          if (emptyMsg) emptyMsg.remove();
-          
-          const newComment = document.createElement('li');
-          newComment.className = 'comment-item';
-          newComment.id = 'comment-' + data.comment.id;
-          newComment.innerHTML = `
-            <div class="comment-header">
-              <strong class="comment-author">
-                <i class="fa-regular fa-user"></i> ${data.comment.author_name}
-              </strong>
-              <span class="comment-date">${data.comment.created_at}</span>
-            </div>
-            <div class="comment-body-wrapper" id="comment-body-${data.comment.id}">
-              <p class="comment-body">${data.comment.body}</p>
-            </div>
-            <div class="comment-actions">
-              <button class="comment-action-btn reply-btn" data-comment-id="${data.comment.id}"><i class="fa-solid fa-reply"></i> Javob</button>
-            </div>
-            <div class="comment-reply-form" id="reply-form-${data.comment.id}" style="display:none;">
-              <form action="/comments/${data.comment.id}/reply" method="POST" class="ajax-reply-form" data-comment-id="${data.comment.id}">
-                <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                <input type="text" class="comment-input" name="author_name" placeholder="Ismingiz (ixtiyoriy)" maxlength="80" />
-                <textarea name="body" class="comment-input comment-textarea" placeholder="Javobingizni yozing..." maxlength="500" required></textarea>
-                <div class="comment-edit-actions">
-                  <button type="submit" class="btn btn-sm">Yuborish</button>
-                  <button type="button" class="btn btn-sm btn-outline cancel-reply-btn" data-comment-id="${data.comment.id}">Bekor</button>
-                </div>
-              </form>
-            </div>
-            <ul class="comment-list comment-replies"></ul>
-          `;
-          commentList.appendChild(newComment);
-          
-          document.querySelectorAll('.reply-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-              const commentId = this.dataset.commentId;
-              this.style.display = 'none';
-              const editBtn = document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]');
-              if (editBtn) editBtn.style.display = 'none';
-              document.getElementById('reply-form-' + commentId).style.display = 'block';
-            });
-          });
-          
-          document.querySelectorAll('.cancel-reply-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-              const commentId = this.dataset.commentId;
-              document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
-              const editBtn = document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]');
-              if (editBtn) editBtn.style.display = 'inline-block';
-              document.getElementById('reply-form-' + commentId).style.display = 'none';
-            });
-          });
-          
-          document.querySelectorAll('.ajax-reply-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-              e.preventDefault();
-              const commentId = this.dataset.commentId;
-              const formData = new FormData(this);
-              
-              fetch(this.action, {
-                method: 'POST',
-                headers: {
-                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                  'Accept': 'application/json'
-                },
-                body: formData
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  const repliesList = document.querySelector('#comment-' + commentId + ' .comment-replies');
-                  if (repliesList) {
-                    const newReply = document.createElement('li');
-                    newReply.className = 'comment-item';
-                    newReply.id = 'comment-' + data.reply.id;
-                    newReply.innerHTML = `
-                      <div class="comment-header">
-                        <strong class="comment-author">
-                          <i class="fa-regular fa-user"></i> ${data.reply.author_name}
-                        </strong>
-                        <span class="comment-date">${data.reply.created_at}</span>
-                      </div>
-                      <p class="comment-body">${data.reply.body}</p>
-                    `;
-                    repliesList.appendChild(newReply);
-                  }
-                  document.getElementById('reply-form-' + commentId).style.display = 'none';
-                  document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
-                  const editBtn = document.querySelector('.edit-btn[data-comment-id="' + commentId + '"]');
-                  if (editBtn) editBtn.style.display = 'inline-block';
-                  form.reset();
-                }
-              })
-              .catch(error => console.error('Error:', error));
-            });
-          });
-        }
-        form.reset();
-      }
-    })
-    .catch(error => console.error('Error:', error));
-  });
-
-  document.querySelectorAll('.ajax-delete-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      if (!confirm('Izohni o\'chirishni istaysizmi?')) return;
-      
-      const commentId = this.dataset.commentId;
-      const formData = new FormData(this);
-      
-      fetch(this.action, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        },
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('comment-' + commentId)?.remove();
-        }
-      })
-      .catch(error => console.error('Error:', error));
-    });
-  });
-});
-</script>

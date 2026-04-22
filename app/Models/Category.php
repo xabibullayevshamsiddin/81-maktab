@@ -13,6 +13,7 @@ class Category extends Model
 
     protected $fillable = [
         'name',
+        'name_en',
     ];
 
     public function scopeWithPostCount(Builder $query): Builder

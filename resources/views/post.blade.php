@@ -1,121 +1,99 @@
-<x-loyouts.main title="81-IDUM | Yangiliklar">
+<x-loyouts.main title="{{ __('public.posts.page_title') }}">
+  @php
+    $f = $filter ?? 'all';
+    $filterOptions = [
+      'all' => __('public.posts.filters.all'),
+      'video_news' => __('public.posts.filters.video_news'),
+      'social' => __('public.posts.filters.social'),
+      'popular' => __('public.posts.filters.popular'),
+      'likes' => __('public.posts.filters.likes'),
+    ];
+    $activeFilterLabel = $filterOptions[$f] ?? $filterOptions['all'];
+  @endphp
+
 
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
-          <h1>81-IDUM Yangiliklari</h1>
-          <p>Maktab hayotidagi eng dolzarb voqealar, tanlovlar va tadbirlar.</p>
+      <div class="news-hero-content prime-reveal">
+        <h1 class="js-split-text">{{ __('public.posts.hero_title') }}</h1>
+        <p>{{ __('public.posts.hero_text') }}</p>
       </div>
-      <a href="#news" class="btn"
-            >Ma'lumotlarga o'tish
-            <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
-          ></a>
+      <a href="#posts" class="btn btn-prime" style="margin-top: 20px">
+        {{ __('public.posts.jump') }} <i class="fa-solid fa-arrow-down" style="margin-left: 10px;"></i>
+      </a>
     </div>
   </section>
 
-    <main class="news">
-      <section class="container news reveal glass-section" id="news">
-        <div class="section-head">
-          <h2>Yangiliklar</h2>
-          <p>Maktab hayotidagi eng dolzarb voqealar</p>
-        </div>
-        <div class="news-actions">
-          <form method="GET" action="{{ route('post') }}" class="news-search">
-            <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Qidirish..." class="comment-input" />
-          </form>
-        </div>
+  <main class="news">
+    <section class="container news prime-reveal glass-section" id="posts" style="padding-bottom:30px;">
+      <div class="section-head">
+        <h2 class="js-split-text">{{ __('public.posts.section_title') }}</h2>
+        <p>{{ __('public.posts.section_text') }}</p>
+      </div>
 
-        <div class="news-container">
-          @forelse($posts as $post)
-            <article class="news-card">
-              <div class="news-media">
-                <img
-                  src="{{ asset('storage/' . $post->image) }}"
-                  alt="{{ $post->title }}"
-                />
-                <div class="news-media-overlay">
-                  <div class="news-chip">
-                    <i class="fa-regular fa-newspaper"></i>
-                    <span>{{ $post->category?->name ?? 'Yangilik' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="news-body">
-                <h3>{{ $post->title }}</h3>
-                <p>{{ $post->short_content }}</p>
-
-                <ul class="news-meta">
-                  <li><i class="fa-regular fa-eye"></i> {{ $post->views }}</li>
-                  <li><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</li>
-                  <li>
-                    <form action="{{ route('post.like', $post) }}" method="POST" class="like-form-inline">
-                      @csrf
-                      <button class="news-like" type="submit" aria-label="Yoqtirish">
-                        <i class="fa-regular fa-heart"></i> <span class="likes-count">{{ $post->likes_count }}</span>
-                      </button>
-                    </form>
-                  </li>
-                </ul>
-
-                <a href="{{ route('post.show', $post) }}" class="btn btn-sm news-cta">Batafsil</a>
-              </div>
-            </article>
-          @empty
-            <p>Hozircha yangiliklar yo'q.</p>
-          @endforelse
+      <form method="GET" action="{{ route('post') }}" class="post-filters">
+        <div class="post-filter">
+          <input
+            type="text"
+            name="q"
+            value="{{ $q ?? '' }}"
+            placeholder="{{ __('public.posts.search_placeholder') }}"
+            class="comment-input"
+          />
         </div>
 
+        <div class="post-filter">
+          <select name="category_id" class="form-control">
+            <option value="all" {{ empty($categoryId) || $categoryId === 'all' ? 'selected' : '' }}>
+              {{ __('public.posts.all_categories') }}
+            </option>
+            @foreach($categories as $cat)
+              <option value="{{ $cat->id }}" {{ (string) ($categoryId ?? '') === (string) $cat->id ? 'selected' : '' }}>
+                {{ localized_model_value($cat, 'name') }}
+              </option>
+            @endforeach
+          </select>
+        </div>
 
+        <div class="post-filter post-filter-dropdown-wrap">
+          <input type="hidden" name="filter" value="{{ $f }}" class="post-filter-hidden-input" data-filter-input>
 
-        @if($posts->hasPages())
-          <nav class="news-pagination" aria-label="Pagination">
-            @if ($posts->onFirstPage())
-              <span class="btn btn-sm btn-outline" aria-disabled="true">Oldingi</span>
-            @else
-              <a class="btn btn-sm btn-outline" href="{{ $posts->previousPageUrl() }}">Oldingi</a>
-            @endif
+          <details class="post-filter-dropdown" data-post-filter-dropdown>
+            <summary class="post-filter-dropdown-toggle">
+              <span>{{ $activeFilterLabel }}</span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </summary>
 
-            <span class="news-page-info">
-              {{ $posts->currentPage() }} / {{ $posts->lastPage() }}
-            </span>
+            <div class="post-filter-dropdown-menu">
+              @foreach($filterOptions as $value => $label)
+                <button
+                  type="button"
+                  class="post-filter-dropdown-item {{ $f === $value ? 'active' : '' }}"
+                  data-filter-value="{{ $value }}"
+                >
+                  <span>{{ $label }}</span>
+                  @if($f === $value)
+                    <i class="fa-solid fa-check"></i>
+                  @endif
+                </button>
+              @endforeach
+            </div>
+          </details>
+        </div>
 
-            @if ($posts->hasMorePages())
-              <a class="btn btn-sm" href="{{ $posts->nextPageUrl() }}">Keyingi</a>
-            @else
-              <span class="btn btn-sm" aria-disabled="true">Keyingi</span>
-            @endif
-          </nav>
-        @endif
-      </section>
-    </main>
+      </form>
+
+      <div id="post-results" data-post-results>
+        @include('posts.partials.list', [
+          'posts' => $posts,
+          'likedPostIds' => $likedPostIds,
+          'postKindLabels' => $postKindLabels,
+        ])
+      </div>
+    </section>
+  </main>
+
+  @push('page_scripts')
+    <script src="{{ app_public_asset('temp/js/post-filters.js') }}?v={{ filemtime(public_path('temp/js/post-filters.js')) }}"></script>
+  @endpush
 </x-loyouts.main>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.like-form-inline').forEach(function(form) {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const btn = form.querySelector('.news-like');
-      const icon = btn.querySelector('i');
-      const countSpan = btn.querySelector('.likes-count');
-      
-      fetch(form.action, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          icon.className = data.liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-          countSpan.textContent = data.likes_count;
-        }
-      })
-      .catch(error => console.error('Error:', error));
-    });
-  });
-});
-</script>

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: 81-maktab
+    env: php
+    buildCommand: composer install --no-dev --optimize-autoloader
+    preDeployCommand: php artisan optimize:clear && (php artisan storage:link || true) && php artisan migrate --force && php artisan route:cache && php artisan view:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_DRIVER
+        value: database
+      - key: FILESYSTEM_DISK
+        value: public
+      - key: APP_KEY
+        generateValue: true
+      # Quyidagilarni Render.com dashboard da qo'lda kiriting:
+      # GEMINI_API_KEY, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, APP_URL

@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.main')
+@extends('admin.layouts.main')
 
 @section('title', 'Postlar')
 
@@ -38,6 +38,11 @@
               <a href="{{ route('posts.create') }}" class="btn btn-success">Post qo'shish</a>
             </div>
 
+            @include('admin.partials.search-bar', [
+              'placeholder' => 'Sarlavha yoki qisqa matn bo‘yicha...',
+              'action' => route('posts.index'),
+            ])
+
             @if (session('success'))
               <div class="alert-box success-alert mb-20">
                 <div class="alert">
@@ -61,10 +66,10 @@
                 <tbody>
                   @forelse ($posts as $post)
                     <tr>
-                      <td><p>{{ $post->id }}</p></td>
+                      <td><p>{{ ($posts->firstItem() ?? 1) + $loop->index }}</p></td>
                       <td>
                         @if ($post->image)
-                          <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                          <img src="{{ app_storage_asset($post->image) }}" alt="{{ $post->title }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
                         @else
                           <p>-</p>
                         @endif
@@ -80,7 +85,7 @@
                           <a href="{{ route('posts.edit', $post->id) }}" class="text-warning me-2" title="Tahrirlash">
                             <i class="lni lni-pencil-alt"></i>
                           </a>
-                          <form action="{{ route('posts.destroy', $post->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Postni ochirishni xohlaysizmi?');">
+                          <form action="{{ route('posts.destroy', $post->id) }}" method="POST" style="display:inline;" data-confirm="Postni ochirishni xohlaysizmi?" data-confirm-title="Postni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-danger" title="O'chirish" style="background:none;border:none;padding:0;">
@@ -98,6 +103,11 @@
                 </tbody>
               </table>
             </div>
+            @if($posts->hasPages())
+              <div class="p-3">
+                {{ $posts->links() }}
+              </div>
+            @endif
           </div>
         </div>
       </div>

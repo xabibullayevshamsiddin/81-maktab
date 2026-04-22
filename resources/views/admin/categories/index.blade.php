@@ -34,6 +34,11 @@
               <a href="{{ route('categories.create') }}" class="btn btn-success">Kategoriya qo'shish</a>
             </div>
 
+            @include('admin.partials.search-bar', [
+              'placeholder' => 'Kategoriya nomi yoki slug...',
+              'action' => route('categories.index'),
+            ])
+
             @if (session('success'))
               <div class="alert-box success-alert mb-20">
                 <div class="alert">{{ session('success') }}</div>
@@ -67,7 +72,7 @@
                           <a href="{{ route('categories.edit', $category->id) }}" class="text-warning me-2" title="Tahrirlash">
                             <i class="lni lni-pencil-alt"></i>
                           </a>
-                          <form action="{{ route('categories.destroy', $category->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Kategoriyani ochirishni xohlaysizmi?');">
+                          <form action="{{ route('categories.destroy', $category->id) }}" method="POST" style="display:inline;" data-confirm="Kategoriyani ochirishni xohlaysizmi?" data-confirm-title="Kategoriyani o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-danger" title="O'chirish" style="background:none;border:none;padding:0;">
@@ -85,6 +90,11 @@
                 </tbody>
               </table>
             </div>
+            @if($categories->hasPages())
+              <div class="p-3">
+                {{ $categories->links() }}
+              </div>
+            @endif
           </div>
         </div>
       </div>
@@ -92,4 +102,3 @@
   </div>
 </section>
 @endsection
-

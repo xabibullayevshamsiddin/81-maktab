@@ -1,0 +1,48 @@
+@extends('admin.layouts.main')
+
+@section('title', 'Taqvim: tahrirlash')
+
+@section('content')
+<section class="table-components">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card-style mb-30">
+          <h6 class="mb-20">Tahrirlash</h6>
+          <form method="POST" action="{{ route('calendar-events.update', $event) }}">
+            @csrf
+            @method('PUT')
+            <div class="mb-3">
+              <label class="form-label">Sarlavha</label>
+              <input type="text" name="title" class="form-control" value="{{ old('title', $event->title) }}" required maxlength="255">
+            </div>
+            <div class="mb-3 fp-inline-date-only--admin">
+              <label class="form-label">Sana</label>
+              @include('partials.flatpickr-inline-date-field', [
+                'name' => 'event_date',
+                'id' => 'calendar-event-date-edit',
+                'value' => old('event_date', $event->event_date->toDateString()),
+                'required' => true,
+              ])
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Vaqt (ixtiyoriy)</label>
+              <input type="text" name="time_note" class="form-control" value="{{ old('time_note', $event->time_note) }}" maxlength="64">
+</div>
+            <div class="mb-3">
+              <label class="form-label">Vaqt (EN, ixtiyoriy)</label>
+              <input type="text" name="time_note_en" class="form-control" value="{{ old('time_note_en', $event->time_note_en) }}" maxlength="64">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tavsif</label>
+              <textarea name="body" class="form-control" rows="4">{{ old('body', $event->body) }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+            <a href="{{ route('calendar-events.index') }}" class="btn btn-outline-secondary">Orqaga</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+@endsection

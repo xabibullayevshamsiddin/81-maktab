@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -10,13 +11,17 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
+        $superAdminRoleId = Role::idByName(Role::NAME_SUPER_ADMIN);
+        $editorRoleId = Role::idByName(Role::NAME_EDITOR);
+        $moderatorRoleId = Role::idByName(Role::NAME_MODERATOR);
+
         User::updateOrCreate(
             ['email' => 'admin@81maktab.uz'],
             [
                 'name' => 'Super Admin',
                 'phone' => '+998901234567',
                 'password' => Hash::make('admin123'),
-                'role' => 'super_admin',
+                'role_id' => $superAdminRoleId,
                 'is_active' => true,
             ]
         );
@@ -27,7 +32,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Editor',
                 'phone' => '+998901234568',
                 'password' => Hash::make('editor123'),
-                'role' => 'editor',
+                'role_id' => $editorRoleId,
                 'is_active' => true,
             ]
         );
@@ -38,7 +43,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Moderator',
                 'phone' => '+998901234569',
                 'password' => Hash::make('moderator123'),
-                'role' => 'moderator',
+                'role_id' => $moderatorRoleId,
                 'is_active' => true,
             ]
         );
