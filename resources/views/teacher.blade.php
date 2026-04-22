@@ -5,7 +5,7 @@
           <span class="badge">{{ __('public.teachers.badge') }}</span>
           <h1 class="js-split-text">{{ __('public.teachers.hero_title') }}</h1>
           <p>{{ __('public.teachers.hero_text') }}</p>
-          <a href="#teachers-list" class="btn btn-prime"
+          <a href="#teachers-list" style="margin-top: 15px;" class="btn btn-prime"
             >{{ __('public.teachers.hero_button') }}
             <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i
           ></a>

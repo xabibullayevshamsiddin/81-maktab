@@ -6,6 +6,7 @@
 --}}
 @php
   $dayLinkPrefix = $dayLinkPrefix ?? null;
+  $calendarDayRouteName = $calendarDayRouteName ?? null;
   $openPublicInNewTab = ! empty($openPublicInNewTab);
   $weekdayLabels = $weekdayLabels ?? __('public.calendar.weekdays_short');
   if (! is_array($weekdayLabels)) {
@@ -14,8 +15,11 @@
 @endphp
 <div class="calendar-year-grid">
   @foreach($calendarMonths as $block)
+    @php
+      $blockYear = (int) ($block['year'] ?? $year);
+    @endphp
     <div class="calendar-month-card">
-      <h3 class="calendar-month-title">{{ $block['label'] }} {{ $year }}</h3>
+      <h3 class="calendar-month-title">{{ $block['label'] }} {{ $blockYear }}</h3>
       <div class="calendar-month-weekdays">
         @foreach($weekdayLabels as $wd)
           <span>{{ $wd }}</span>
@@ -36,9 +40,11 @@
                     $cls .= ' calendar-cell--today';
                 }
                 $hash = 'calendar-day-' . $cell['dateKey'];
-                $href = $dayLinkPrefix !== null && $dayLinkPrefix !== ''
+                $href = $calendarDayRouteName
+                  ? route($calendarDayRouteName, ['y' => (int) substr((string) $cell['dateKey'], 0, 4)]) . '#' . $hash
+                  : ($dayLinkPrefix !== null && $dayLinkPrefix !== ''
                   ? rtrim((string) $dayLinkPrefix, '#') . '#' . $hash
-                  : '#' . $hash;
+                  : '#' . $hash);
               @endphp
               <a
                 href="{{ $href }}"

@@ -73,7 +73,7 @@ class PublicPostController extends Controller
         }
 
         $allowedFilters = [
-            'all', 'video_news', 'social', 'has_video', 'new', 'popular', 'likes', 'comments',
+            'all', 'video_news', 'social', 'popular', 'likes',
         ];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'all';

@@ -5,11 +5,8 @@
       'all' => __('public.posts.filters.all'),
       'video_news' => __('public.posts.filters.video_news'),
       'social' => __('public.posts.filters.social'),
-      'has_video' => __('public.posts.filters.has_video'),
-      'new' => __('public.posts.filters.new'),
       'popular' => __('public.posts.filters.popular'),
       'likes' => __('public.posts.filters.likes'),
-      'comments' => __('public.posts.filters.comments'),
     ];
     $activeFilterLabel = $filterOptions[$f] ?? $filterOptions['all'];
   @endphp

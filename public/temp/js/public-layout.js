@@ -103,36 +103,7 @@
     } catch (e) {}
   };
 
-  function scrambleText(el, text, duration = 800) {
-    if (!el || !text) return;
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+';
-    let start = null;
-    const originalText = text;
-    
-    const step = (timestamp) => {
-      if (!start) start = timestamp;
-      const progress = timestamp - start;
-      const length = Math.floor((progress / duration) * originalText.length);
-      
-      let currentText = originalText.substring(0, length);
-      for (let i = length; i < originalText.length; i++) {
-        if (originalText[i] === ' ') {
-          currentText += ' ';
-        } else {
-          currentText += chars[Math.floor(Math.random() * chars.length)];
-        }
-      }
-      
-      el.textContent = currentText;
-      
-      if (progress < duration) {
-        requestAnimationFrame(step);
-      } else {
-        el.textContent = originalText;
-      }
-    };
-    requestAnimationFrame(step);
-  }
+
 
   function playPrimeConfetti(x, y, isGold = false) {
     const colors = isGold 
@@ -254,23 +225,7 @@
       });
     });
 
-    // 3. Text Scramble on Scroll
-    const scrambleObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          if (el.dataset.scrambled) return;
-          el.dataset.scrambled = 'true';
-          scrambleText(el, el.innerText);
-        }
-      });
-    }, { threshold: 0.15 });
 
-    document.querySelectorAll('.section-head h1, .news-hero-content h1, .section-title, .results-title').forEach(h => {
-      if (h.closest('.chat-panel')) return; // Avoid scrambling chat messages
-      h.classList.add('prime-scramble-active');
-      scrambleObserver.observe(h);
-    });
   }
 
 
@@ -521,7 +476,7 @@
             var cfgSelf = userPreviewConfigEl();
             var selfId = cfgSelf && cfgSelf.getAttribute('data-current-user-id');
             var admParts = [];
-            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Super Admin)</p>');
+            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Administrator)</p>');
             admParts.push(
               '<p class="chat-user-preview-admin-status">Akkaunt holati: <strong>'
               + (sa.is_active ? 'Faol' : 'Bloklangan') + '</strong></p>'

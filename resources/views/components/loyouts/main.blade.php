@@ -569,10 +569,12 @@
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-    @unless($isExamSessionRoute)
-    {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
-    <div id="prime-audio-slot" class="prime-audio-slot"></div>
-    @endunless
+    @auth
+      @unless($isExamSessionRoute)
+      {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
+      <div id="prime-audio-slot" class="prime-audio-slot"></div>
+      @endunless
+    @endauth
 
     <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
     <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
@@ -672,39 +674,48 @@
         };
 
         const initAllAnimations = () => {
-          primeEngine.initProgressBar();
+          // Delay initialization by 350ms to allow browser scroll restoration to finish
+          window.setTimeout(() => {
+            primeEngine.initProgressBar();
 
-          const activatePrimeEl = (el) => {
-            if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
-            else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
-            else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
-          };
+            const activatePrimeEl = (el, staggerIdx = 0) => {
+              const delay = staggerIdx * 100;
+              window.setTimeout(() => {
+                if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
+                else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
+                else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
+              }, delay);
+            };
 
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                activatePrimeEl(entry.target);
-                observer.unobserve(entry.target);
-              }
-            });
-          }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
-
-          const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
-          nodes.forEach(el => observer.observe(el));
-
-          /* Birinchi ekrandagi bloklar uchun: load/video kutmasdan, layout bo‘lgach darhol */
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const vh = window.innerHeight || document.documentElement.clientHeight;
-              nodes.forEach((el) => {
-                const r = el.getBoundingClientRect();
-                if (r.bottom > 0 && r.top < vh) {
-                  activatePrimeEl(el);
-                  observer.unobserve(el);
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  // No stagger needed for normal scroll reveals
+                  activatePrimeEl(entry.target, 0);
+                  observer.unobserve(entry.target);
                 }
               });
+            }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
+
+            const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
+            nodes.forEach(el => observer.observe(el));
+
+            /* Birinchi ekrandagi bloklar uchun: staggered yuklanish */
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                let inViewCount = 0;
+                nodes.forEach((el) => {
+                  const r = el.getBoundingClientRect();
+                  if (r.bottom > 0 && r.top < vh) {
+                    activatePrimeEl(el, inViewCount);
+                    observer.unobserve(el);
+                    inViewCount++;
+                  }
+                });
+              });
             });
-          });
+          }, 350);
         };
 
         if (document.readyState === 'loading') {
@@ -712,6 +723,9 @@
         } else {
           initAllAnimations();
         }
+
+        /* Expose to window for AJAX pages */
+        window.initPrimeAnimations = initAllAnimations;
       })();
     </script>
     @unless(request()->routeIs('exam.session'))

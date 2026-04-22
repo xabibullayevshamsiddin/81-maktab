@@ -131,16 +131,21 @@ class ChatController extends Controller
             'exam_stats' => in_array($roleName, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN], true) ? null : $this->buildUserPreviewExamStats($user),
         ];
 
-        if ($viewer->isSuperAdmin()) {
-            $payload['contact'] = [
-                'email' => $user->email,
-                'phone' => $user->phone ? trim((string) $user->phone) : null,
-            ];
-            $payload['super_admin_actions'] = [
-                'is_active' => (bool) $user->is_active,
-                'can_deactivate' => (int) $user->id !== (int) $viewer->id && ! $user->isSuperAdmin(),
-                'can_activate' => (int) $user->id !== (int) $viewer->id && ! $user->isSuperAdmin() && ! $user->is_active,
-            ];
+        if ($viewer->isAdmin() || $viewer->isModerator()) {
+            $canManage = $viewer->canManage($user);
+            if ($viewer->isSuperAdmin()) {
+                $payload['contact'] = [
+                    'email' => $user->email,
+                    'phone' => $user->phone ? trim((string) $user->phone) : null,
+                ];
+            }
+            if ($canManage) {
+                $payload['super_admin_actions'] = [
+                    'is_active' => (bool) $user->is_active,
+                    'can_deactivate' => ! $user->isSuperAdmin(),
+                    'can_activate' => ! $user->isSuperAdmin() && ! $user->is_active,
+                ];
+            }
         }
 
         return response()->json($payload);
@@ -155,7 +160,7 @@ class ChatController extends Controller
         $current = $request->user()->loadMissing('roleRelation');
         $user->loadMissing('roleRelation');
 
-        if (! $current->isSuperAdmin()) {
+        if (! $current->canManage($user)) {
             return response()->json(['ok' => false, 'error' => 'Ruxsat yo‘q.'], 403);
         }
 
@@ -180,7 +185,7 @@ class ChatController extends Controller
         $current = $request->user()->loadMissing('roleRelation');
         $user->loadMissing('roleRelation');
 
-        if (! $current->isSuperAdmin()) {
+        if (! $current->canManage($user)) {
             return response()->json(['ok' => false, 'error' => 'Ruxsat yo‘q.'], 403);
         }
 
