@@ -123,6 +123,7 @@
                     $en = $enrollmentByCourseId->get($course->id);
                     $isOwnCourse = (int) $course->created_by === (int) auth()->id();
                     $canManageCourse = auth()->user()->canManageSystem() || $isOwnCourse;
+                    $isParentUser = auth()->user()->isParent();
                   @endphp
                   @if($canManageCourse)
                     @php
@@ -139,7 +140,11 @@
                       </form>
                     </div>
                   @endif
-                  @if($isOwnCourse)
+                  @if($isParentUser)
+                    <p class="course-enroll-hint" style="font-size:13px;margin:0;">
+                      Ota-ona akkaunti bilan kursga yozilish mumkin emas.
+                    </p>
+                  @elseif($isOwnCourse)
                     <p class="course-enroll-hint" style="font-size:13px;margin:0;">Bu siz yaratgan kurs — o‘z kursingizga yozilmaysiz.</p>
                     @if($en)
                       <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" style="margin-top:10px;" data-confirm="Yozilishni olib tashlaysizmi?" data-confirm-title="Yozilishni olib tashlash" data-confirm-variant="primary" data-confirm-ok="Ha">
@@ -168,15 +173,11 @@
                     <p class="course-enroll-hint" style="font-size:13px;">{{ __('public.courses.rejected_text') }}</p>
                     <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
                       @csrf
-                      <label class="course-enroll-label" for="enroll-phone-{{ $course->id }}">{{ __('public.courses.phone') }} *</label>
-                      <input type="text" id="enroll-phone-{{ $course->id }}" name="contact_phone" class="course-enroll-note" maxlength="40" value="{{ old('contact_phone', $en->contact_phone) }}" placeholder="+998 …" required />
-                      <label class="course-enroll-label" for="enroll-grade-{{ $course->id }}">{{ __('public.courses.grade') }} *</label>
-                      <input type="text" id="enroll-grade-{{ $course->id }}" name="grade" class="course-enroll-note" maxlength="32" value="{{ old('grade', $en->grade) }}" placeholder="Masalan: 9-A" required />
                       <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
                       <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level', $en->subject_level) }}" placeholder="Masalan: boshlang‘ich / o‘rta" required />
                       <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
                       <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="Qo‘shimcha">{{ old('note') }}</textarea>
-                      @foreach (['contact_phone','grade','subject_level','note'] as $f)
+                      @foreach (['subject_level','note'] as $f)
                         @error($f)
                           <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
                         @enderror
@@ -188,15 +189,11 @@
                   @else
                     <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
                       @csrf
-                      <label class="course-enroll-label" for="enroll-phone-{{ $course->id }}">{{ __('public.courses.phone') }} *</label>
-                      <input type="text" id="enroll-phone-{{ $course->id }}" name="contact_phone" class="course-enroll-note" maxlength="40" value="{{ old('contact_phone') }}" placeholder="+998 …" required />
-                      <label class="course-enroll-label" for="enroll-grade-{{ $course->id }}">{{ __('public.courses.grade') }} *</label>
-                      <input type="text" id="enroll-grade-{{ $course->id }}" name="grade" class="course-enroll-note" maxlength="32" value="{{ old('grade') }}" placeholder="Masalan: 9-A" required />
                       <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
                       <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level') }}" placeholder="Masalan: boshlang‘ich / o‘rta" required />
                       <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
                       <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="Aloqa uchun qo‘shimcha">{{ old('note') }}</textarea>
-                      @foreach (['contact_phone','grade','subject_level','note'] as $f)
+                      @foreach (['subject_level','note'] as $f)
                         @error($f)
                           <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
                         @enderror

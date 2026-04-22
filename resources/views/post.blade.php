@@ -81,9 +81,6 @@
           </details>
         </div>
 
-        <div class="post-filter post-filter-actions">
-          <a href="{{ route('post') }}" class="btn btn-sm btn-outline js-post-filter-reset">{{ __('public.common.clear') }}</a>
-        </div>
       </form>
 
       <div id="post-results" data-post-results>

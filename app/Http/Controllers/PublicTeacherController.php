@@ -151,11 +151,13 @@ class PublicTeacherController extends Controller
 
         $comments = TeacherComment::query()
             ->where('teacher_id', $teacher->id)
+            ->where('is_approved', true)
             ->whereNull('parent_id')
             ->with([
                 'user.roleRelation',
                 'replies' => function ($query) use ($teacher) {
                     $query->where('teacher_id', $teacher->id)
+                        ->where('is_approved', true)
                         ->with('user.roleRelation')
                         ->withCount('likes')
                         ->latest();

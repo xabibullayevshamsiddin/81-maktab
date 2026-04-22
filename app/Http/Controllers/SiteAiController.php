@@ -74,23 +74,24 @@ class SiteAiController extends Controller
             ]);
         }
 
-        $userLimit = $this->getUserDailyLimit($user);
-        if ($userLimit !== -1 && ! $this->consumeDailyQuestionQuota((int) $user->id, $userLimit)) {
-            return response()->json([
-                'success' => true,
-                'text' => "📌 Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring. 😊",
-                'source' => 'daily_limit',
-            ]);
-        }
-
         $userMessage = (string) $request->input('message');
-        $messageCacheKey = 'ai:answer:' . sha1(mb_strtolower(trim($userMessage)));
+        $normalizedMessage = mb_strtolower(trim($userMessage));
+        $messageCacheKey = 'ai:answer:user:' . (int) $user->id . ':' . sha1($normalizedMessage);
 
         if ($cached = Cache::get($messageCacheKey)) {
             return response()->json([
                 'success' => true,
                 'text' => $cached,
                 'source' => 'cache',
+            ]);
+        }
+
+        $userLimit = $this->getUserDailyLimit($user);
+        if ($userLimit !== -1 && ! $this->consumeDailyQuestionQuota((int) $user->id, $userLimit)) {
+            return response()->json([
+                'success' => true,
+                'text' => "📌 Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring. 😊",
+                'source' => 'daily_limit',
             ]);
         }
 

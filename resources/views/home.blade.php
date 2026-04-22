@@ -165,7 +165,7 @@
           @endphp
           <article class="teacher-img prime-reveal prime-reveal--scale">
             <img
-              src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              src="{{ app_storage_asset($featuredTeacher->image) }}"
               alt="{{ $featuredTeacher->full_name }} profil rasmi"
               loading="lazy"
               decoding="async"
@@ -196,30 +196,6 @@
                 data-share-title="{{ $featuredTeacher->full_name }}"
                 data-share-text="{{ __('public.home.teacher_share_text') }}"
                 data-share-success="{{ __('public.home.teacher_share_success') }}"
-              >
-                <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
-              </button>
-            </div>
-          </article>
-        @else
-          <article class="teacher-img">
-            <img
-              src="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-              alt="{{ __('public.layout.nav.teachers') }}"
-              loading="lazy"
-              decoding="async"
-            />
-            <h3>{{ __('public.home.teacher_fallback_title') }}</h3>
-            <p>{{ __('public.home.teacher_fallback_text') }}</p>
-            <div class="teacher-img-actions">
-              <a href="{{ route('teacher') }}" class="btn1">{{ __('public.common.details') }}</a>
-              <button
-                type="button"
-                class="btn btn-outline btn-sm share-btn js-share-trigger"
-                data-share-url="{{ route('teacher') }}"
-                data-share-title="{{ __('public.layout.nav.teachers') }}"
-                data-share-text="{{ __('public.home.teachers_page_share_text') }}"
-                data-share-success="{{ __('public.home.teachers_page_share_success') }}"
               >
                 <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
               </button>

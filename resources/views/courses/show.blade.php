@@ -22,22 +22,6 @@
 
   <main class="course-details-page">
     <section class="container course-details-page-shell">
-      <div class="course-details-page-actions reveal">
-        <a href="{{ route('courses') }}" class="btn btn-outline btn-sm">
-          <i class="fa-solid fa-arrow-left"></i> {{ __('public.common.back') }}
-        </a>
-        <button
-          type="button"
-          class="btn btn-outline btn-sm share-btn js-share-trigger"
-          data-share-url="{{ route('courses.show', $course) }}"
-          data-share-title="{{ $courseTitle }}"
-          data-share-text="{{ __('public.courses.share_text') }}"
-          data-share-success="{{ __('public.courses.share_success') }}"
-        >
-          <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
-        </button>
-      </div>
-
       <article class="course-details-page-card reveal">
         <div class="course-details-page-media">
           <img

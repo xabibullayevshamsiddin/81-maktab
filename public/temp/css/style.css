@@ -341,15 +341,41 @@ a {
   color: #fff;
   font-weight: 500;
   font-size: 15px;
-  padding: 4px 6px;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
+  padding: 4px 6px 8px;
+  border-bottom: none;
+  transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease;
   white-space: nowrap;
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 1px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #ffffff, rgba(255, 255, 255, 0));
+  transform: scaleX(0.15);
+  transform-origin: center;
+  opacity: 0;
+  filter: blur(0.3px);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
 }
 
 .nav-link:hover,
-.nav-link.active {
-  border-bottom-color: #fff;
+.nav-link.active,
+.nav-link:focus-visible {
+  transform: translateY(-1px);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.42);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 .login {
@@ -809,8 +835,9 @@ section {
 
 .teacher-img img {
   width: 100%;
-  height: 220px;
+  height: 460px;
   object-fit: cover;
+  object-position: center;
   border-radius: 12px;
   margin-bottom: 12px;
 }
@@ -2872,7 +2899,23 @@ button.chat-msg-avatar-btn:focus-visible {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   position: relative;
+  z-index: 3;
   transition: background 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+/* Invisible Turnstile hech narsani bosishni to'smasin */
+.chat-turnstile-host {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  inset: auto !important;
+}
+
+.chat-turnstile-host iframe {
+  pointer-events: none !important;
 }
 
 .chat-widget.is-typing .chat-input-wrap,
@@ -2886,6 +2929,8 @@ button.chat-msg-avatar-btn:focus-visible {
   display: flex;
   gap: 6px;
   padding-bottom: 2px;
+  position: relative;
+  z-index: 3;
 }
 
 .chat-sticker-btn {
@@ -2945,6 +2990,8 @@ button.chat-msg-avatar-btn:focus-visible {
   background: var(--bg, #f8fafc);
   outline: none;
   text-align: left;
+  position: relative;
+  z-index: 4;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
@@ -2987,11 +3034,313 @@ button.chat-msg-avatar-btn:focus-visible {
   flex-shrink: 0;
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
   position: relative;
+  z-index: 4;
   overflow: hidden;
+  pointer-events: auto !important;
+}
+
+/* Panel ochilganda pastki floating ikonlar input/send ustini to'smasin */
+body:has(#chat-widget.is-open) .prime-audio-toggle,
+body:has(#chat-widget.is-open) #ai-widget .ai-bubble,
+body:has(#chat-widget.is-open) #chat-widget .chat-bubble,
+body:has(#ai-panel.is-open) .prime-audio-toggle,
+body:has(#ai-panel.is-open) #chat-widget .chat-bubble,
+body:has(#ai-panel.is-open) #ai-widget .ai-bubble {
+  pointer-events: none !important;
+  opacity: 0.2;
 }
 
 .chat-send-btn:hover { transform: scale(1.06); }
 .chat-send-btn:active { transform: scale(0.94); }
+
+.nav-search-trigger {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+}
+
+.global-search-open {
+  overflow: hidden !important;
+}
+
+.global-search-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20050;
+  background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.16), transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.14), transparent 48%),
+              rgba(3, 8, 20, 0.9);
+  backdrop-filter: blur(8px);
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(20px, 5vw, 60px) 16px 24px;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.global-search-modal[hidden] {
+  display: none !important;
+}
+
+.global-search-modal:not([hidden]) {
+  display: flex;
+  opacity: 1;
+}
+
+.global-search-modal.is-opening .global-search-shell {
+  animation: globalSearchShellIn 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.global-search-modal.is-closing .global-search-shell {
+  animation: globalSearchShellOut 0.2s cubic-bezier(0.55, 0.08, 0.68, 0.53) both;
+}
+
+.global-search-shell {
+  width: min(980px, 100%);
+  transform-origin: top center;
+}
+
+.global-search-label {
+  display: inline-block;
+  color: #cbd5e1;
+  margin-bottom: 10px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.global-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.84);
+  border-radius: 16px;
+  padding: 0 18px;
+  box-shadow: 0 16px 50px rgba(2, 8, 23, 0.45);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.global-search-input-wrap i {
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+#global-search-input {
+  width: 100%;
+  height: 72px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f8fafc;
+  font-size: clamp(20px, 3.2vw, 34px);
+  font-weight: 600;
+}
+
+#global-search-input::placeholder {
+  color: #8ea0bc;
+}
+
+.global-search-input-wrap:focus-within {
+  border-color: rgba(147, 197, 253, 0.75);
+  box-shadow: 0 20px 56px rgba(30, 64, 175, 0.36);
+}
+
+.global-search-results {
+  margin-top: 14px;
+  max-height: calc(100vh - 180px);
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.global-search-item {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 12px;
+  text-decoration: none;
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.82);
+  border-radius: 14px;
+  padding: 10px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  animation: globalSearchItemIn 0.22s ease both;
+}
+
+.global-search-item-media {
+  width: 68px;
+  height: 54px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(30, 41, 59, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.global-search-item-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.global-search-item-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.global-search-item-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #93c5fd;
+}
+
+.global-search-item-title {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-search-item-desc {
+  font-size: 12px;
+  color: #9fb0c8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-search-item:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: rgba(147, 197, 253, 0.52);
+  background: rgba(30, 41, 59, 0.86);
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.38);
+}
+
+.global-search-item.is-active {
+  transform: translateY(-2px) scale(1.01);
+  border-color: rgba(147, 197, 253, 0.6);
+  background: rgba(30, 41, 59, 0.88);
+  box-shadow: 0 14px 32px rgba(2, 6, 23, 0.42);
+}
+
+.global-search-empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  color: #9fb0c8;
+  background: rgba(15, 23, 42, 0.55);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+:root[data-theme='light'] .global-search-modal {
+  background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.12), transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.1), transparent 48%),
+              rgba(241, 245, 249, 0.9);
+}
+
+:root[data-theme='light'] .global-search-label {
+  color: #334155;
+}
+
+:root[data-theme='light'] .global-search-input-wrap {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(100, 116, 139, 0.24);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .global-search-input-wrap i {
+  color: #334155;
+}
+
+:root[data-theme='light'] #global-search-input {
+  color: #0f172a;
+}
+
+:root[data-theme='light'] #global-search-input::placeholder {
+  color: #64748b;
+}
+
+:root[data-theme='light'] .global-search-item {
+  color: #0f172a;
+  border-color: rgba(100, 116, 139, 0.22);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+:root[data-theme='light'] .global-search-item-media {
+  background: rgba(226, 232, 240, 0.8);
+}
+
+:root[data-theme='light'] .global-search-item-type {
+  color: #1d4ed8;
+}
+
+:root[data-theme='light'] .global-search-item-desc {
+  color: #475569;
+}
+
+:root[data-theme='light'] .global-search-item:hover,
+:root[data-theme='light'] .global-search-item.is-active {
+  background: #ffffff;
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 12px 24px rgba(30, 64, 175, 0.16);
+}
+
+:root[data-theme='light'] .global-search-empty {
+  color: #1e293b;
+  border-color: rgba(100, 116, 139, 0.35);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+@keyframes globalSearchShellIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.985);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes globalSearchShellOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+    filter: blur(3px);
+  }
+}
+
+@keyframes globalSearchItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .chat-send-btn::before {
   content: "";
@@ -4041,6 +4390,11 @@ section.teachers.reveal::before {
   font-size: 13px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  min-height: 36px;
 }
 
 .courses-hero-content h1 {
@@ -4152,7 +4506,7 @@ section.teachers.reveal::before {
 
 .course-card-media {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   background: linear-gradient(135deg, #0d3f78 0%, #1565c0 100%);
   overflow: hidden;
 }
@@ -4161,6 +4515,23 @@ section.teachers.reveal::before {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.course-details-page-media {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.course-details-page-media img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -4272,15 +4643,35 @@ section.teachers.reveal::before {
 
 .course-card-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: nowrap;
   margin-bottom: 14px;
 }
 
 .course-info-trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  flex: 1 1 0;
+  min-height: 40px;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: 12px;
+  padding-inline: 10px;
+}
+
+.course-card-toolbar .share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-height: 40px;
+  white-space: nowrap;
+  min-width: 0;
+  padding-inline: 10px;
+  font-size: 12px;
 }
 
 .course-enroll-form {
@@ -4506,6 +4897,7 @@ body.modal-open {
   height: 84px;
   border-radius: 18px;
   object-fit: cover;
+  object-position: center;
   border: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -4730,6 +5122,10 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
 
+  .course-card-media {
+    aspect-ratio: 16 / 10;
+  }
+
   .courses-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -4906,6 +5302,7 @@ body.modal-open {
   height: 86px;
   border-radius: 18px;
   object-fit: cover;
+  object-position: center;
   border: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -5873,8 +6270,9 @@ body.modal-open {
 
 .detail-image-card img {
   width: 100%;
-  height: 320px;
+  height: 460px;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -7229,8 +7627,9 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 
 .teacher-photo {
   width: 100%;
-  height: 190px;
+  height: 460px;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -7249,6 +7648,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  padding: 16px 16px 0;
 }
 
 .teacher-avatar {
@@ -7301,12 +7701,15 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   color: var(--muted);
   margin-bottom: 14px;
   font-size: 15px;
+  padding-inline: 16px;
 }
 
 .teacher-meta {
   list-style: none;
   display: grid;
   gap: 8px;
+  padding-inline: 16px;
+  margin-bottom: 12px;
 }
 
 .teacher-meta li {
@@ -7328,7 +7731,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 }
 
 .teacher-achievements-preview {
-  margin: 0 0 12px;
+  margin: 0 16px 12px;
   padding: 10px 12px;
   font-size: 13px;
   line-height: 1.45;
@@ -7552,6 +7955,21 @@ body {
 .post-filter {
   min-width: 220px;
   flex: 1;
+}
+
+.post-filters .post-filter:first-child {
+  flex: 2.2;
+  min-width: 460px;
+}
+
+.post-filters .post-filter:first-child .comment-input {
+  width: 100%;
+}
+
+@media (max-width: 980px) {
+  .post-filters .post-filter:first-child {
+    min-width: 100%;
+  }
 }
 
 .post-grid {
@@ -8018,7 +8436,7 @@ body {
 @keyframes toastSpringIn {
   0% {
     opacity: 0;
-    transform: translateX(calc(100% + 20px)) scale(0.88) rotateY(-8deg);
+    transform: translateX(calc(100% + 20px)) scale(0.88);
     filter: blur(4px);
   }
   45% {
@@ -8026,7 +8444,7 @@ body {
     filter: blur(0);
   }
   65% {
-    transform: translateX(-8px) scale(1.02) rotateY(0deg);
+    transform: translateX(-8px) scale(1.02);
   }
   85% {
     transform: translateX(4px) scale(0.995);
@@ -8457,6 +8875,14 @@ body {
 :root[data-theme='dark'] select option {
   background-color: #0b1524 !important;
   color: #e6eefb !important;
+}
+
+:root[data-theme='dark'] .courses-hero-content .badge {
+  background: rgba(77, 148, 255, 0.2) !important;
+  border-color: rgba(147, 197, 253, 0.45) !important;
+  color: #eff6ff !important;
+  padding: 10px 18px;
+  min-height: 38px;
 }
 
 :root[data-theme='dark'] select {
@@ -11595,6 +12021,14 @@ body {
     height: 220px;
   }
 
+  .teacher-photo {
+    height: 240px;
+  }
+
+  .detail-image-card img {
+    height: 250px;
+  }
+
   .footer-container {
     grid-template-columns: 1fr 1fr;
     gap: 30px;
@@ -11666,7 +12100,15 @@ body {
   }
 
   .teacher-img img {
-    height: 200px;
+    height: 180px;
+  }
+
+  .teacher-photo {
+    height: 210px;
+  }
+
+  .detail-image-card img {
+    height: 220px;
   }
 
   .footer-bottom {
@@ -11875,8 +12317,7 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 .prime-3d-target {
-    transition: transform 0.2s cubic-bezier(0.1, 0, 0.3, 1);
-    will-change: transform;
+    transition: transform 0.2s ease;
 }
 
 .prime-magnetic-target {
@@ -12073,11 +12514,11 @@ body:has(#chat-widget) .prime-audio-toggle {
 
 /* --- Senior Animation Architecture --- */
 .prime-3d-target, .news-card, .teacher-card, .course-card, .card-style {
-    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
-    will-change: transform;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .prime-3d-target:hover {
+    transform: scale(1.02);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
 }
 
@@ -12088,6 +12529,30 @@ body:has(#chat-widget) .prime-audio-toggle {
 
 [data-scrambled='true'] {
     color: inherit;
+}
+
+/* Simple hover grow on content cards only (no 3D) */
+@media (hover: hover) and (pointer: fine) {
+  .news-card,
+  #news .news-card,
+  .teacher-card,
+  .course-card,
+  .card-style,
+  .about-card,
+  .detail-image-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transform-origin: center center;
+  }
+
+  .news-card:hover,
+  #news .news-card:hover,
+  .teacher-card:hover,
+  .course-card:hover,
+  .card-style:hover,
+  .about-card:hover,
+  .detail-image-card:hover {
+    transform: scale(1.02) !important;
+  }
 }
 
 /*

@@ -45,6 +45,7 @@ Route::get('/', [HomeController::class, 'home'])->name('home');
 Route::get('lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('about', [HomeController::class, 'about'])->name('about');
+Route::get('search', [HomeController::class, 'globalSearch'])->name('search');
 Route::get('courses', [PublicCourseController::class, 'index'])->name('courses');
 Route::get('courses/{course}', [PublicCourseController::class, 'show'])->name('courses.show');
 Route::post('courses/{course}/enroll', [CourseEnrollmentController::class, 'store'])

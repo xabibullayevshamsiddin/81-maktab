@@ -20,7 +20,7 @@ class CheckRole
 
         $user = $request->user();
 
-        if ($user->isSuperAdmin() || $user->isAdmin()) {
+        if ($user->isSuperAdmin()) {
             return $next($request);
         }
 

@@ -11,10 +11,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
 class ExamController extends Controller
 {
-    /** Shundan ortiq qoidabuzarlik: avtomatik 0 ball, yiqildi. */
+    /** Shu miqdorga yetsa qoidabuzarlik: avtomatik 0 ball, yiqildi. */
     private const RULE_VIOLATION_DISQUALIFY_THRESHOLD = 5;
 
     public function index(Request $request)
@@ -107,17 +108,34 @@ class ExamController extends Controller
         $startedAt = now();
         $expiresAt = (clone $startedAt)->addMinutes((int) $exam->duration_minutes);
 
-        $result = Result::query()->create([
-            'exam_id' => $exam->id,
-            'user_id' => $request->user()->id,
-            'user_grade' => $request->user()->grade,
-            'question_order_json' => $questionIds,
-            'total_questions' => count($questionIds),
-            'points_max' => (int) $exam->total_points,
-            'started_at' => $startedAt,
-            'expires_at' => $expiresAt,
-            'status' => 'started',
-        ]);
+        try {
+            $result = Result::query()->create([
+                'exam_id' => $exam->id,
+                'user_id' => $request->user()->id,
+                'user_grade' => $request->user()->grade,
+                'question_order_json' => $questionIds,
+                'total_questions' => count($questionIds),
+                'points_max' => (int) $exam->total_points,
+                'started_at' => $startedAt,
+                'expires_at' => $expiresAt,
+                'status' => 'started',
+            ]);
+        } catch (QueryException $e) {
+            $concurrentResult = Result::query()
+                ->where('exam_id', $exam->id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+
+            if ($concurrentResult) {
+                if ($concurrentResult->status === 'submitted' || $concurrentResult->status === 'expired') {
+                    return redirect()->route('exam.result.show', $concurrentResult);
+                }
+
+                return redirect()->route('exam.session', $concurrentResult);
+            }
+
+            throw $e;
+        }
 
         return redirect()->route('exam.session', $result);
     }
@@ -139,7 +157,7 @@ class ExamController extends Controller
         $result->refresh();
         if (
             $result->status === 'started'
-            && (int) $result->rule_violation_count > self::RULE_VIOLATION_DISQUALIFY_THRESHOLD
+            && (int) $result->rule_violation_count >= self::RULE_VIOLATION_DISQUALIFY_THRESHOLD
         ) {
             $this->finalizeResult($result, false);
 
@@ -292,7 +310,7 @@ class ExamController extends Controller
 
             $count = (int) $row->rule_violation_count;
 
-            if ($count > self::RULE_VIOLATION_DISQUALIFY_THRESHOLD) {
+            if ($count >= self::RULE_VIOLATION_DISQUALIFY_THRESHOLD) {
                 $this->finalizeResult($row, false);
 
                 return response()->json([
@@ -358,7 +376,7 @@ class ExamController extends Controller
             $exam = Exam::query()->find($row->exam_id);
             $maxPoints = (int) ($exam?->total_points ?? $row->points_max ?? 0);
 
-            if ((int) $row->rule_violation_count > self::RULE_VIOLATION_DISQUALIFY_THRESHOLD) {
+            if ((int) $row->rule_violation_count >= self::RULE_VIOLATION_DISQUALIFY_THRESHOLD) {
                 $row->update([
                     'score' => 0,
                     'points_earned' => 0,
