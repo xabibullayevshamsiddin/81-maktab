@@ -17,7 +17,7 @@
         <span class="badge">{{ __('public.about.badge') }}</span>
         <h1 class="js-split-text">{!! __('public.about.hero_title') !!}</h1>
         <p>{{ __('public.about.hero_text') }}</p>
-        <a href="#overview" class="btn btn-prime">
+        <a href="#overview" style="margin-top: 15px;" class="btn btn-prime">
           {{ __('public.about.jump') }}
           <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i>
         </a>

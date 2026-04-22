@@ -142,7 +142,7 @@ a {
 
 .hero {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   color: #fff;
   overflow: hidden;
 }
@@ -435,7 +435,7 @@ a {
 }
 
 .card-home {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: space-between;
