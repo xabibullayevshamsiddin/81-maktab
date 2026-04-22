@@ -641,6 +641,14 @@
             if (target.dataset.animated === 'true') return;
             target.dataset.animated = 'true';
 
+            // H1/H2 (yoki ularning ichidagi js-split-text) uchun harfma-harf animatsiyani o‘chirib,
+            // oddiy ko‘rinish qoldiramiz. Bu "son sanashga o‘xshash" effektni yo‘q qiladi.
+            const headingHost = target.closest('h1, h2');
+            if (headingHost) {
+              target.classList.add('active');
+              return;
+            }
+
             const processNode = (node, state) => {
               if (node.nodeType === 3) {
                 const fragment = document.createDocumentFragment();
