@@ -100,8 +100,6 @@ canvas {
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
-  width: 100%;
-  position: relative;
 }
 
 body {
@@ -115,9 +113,6 @@ body {
   );
   line-height: 1.6;
   transition: background 0.25s ease, color 0.25s ease;
-  overflow-x: hidden;
-  width: 100%;
-  position: relative;
 }
 
 :root[data-theme='dark'] body {
