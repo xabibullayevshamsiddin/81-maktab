@@ -497,7 +497,11 @@ class TeacherExamController extends Controller
             'user'
         ]);
         $exam = $result->exam;
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        abort_unless(
+            ($user->canManageExams() && $exam->ownsExam($user)) || 
+            ((int) $result->user_id === (int) $user->id), 
+            403
+        );
 
         return view('profile.exams.results_show', compact('exam', 'result'));
     }

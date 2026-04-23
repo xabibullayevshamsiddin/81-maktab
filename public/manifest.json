@@ -1,0 +1,22 @@
+{
+  "name": "81-IDUM Smart Maktab",
+  "short_name": "81-Maktab",
+  "description": "81-IDUM zamonaviy interaktiv o'quv platformasi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/temp/img/favicon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/temp/img/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

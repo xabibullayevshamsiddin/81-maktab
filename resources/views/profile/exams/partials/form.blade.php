@@ -47,6 +47,15 @@
     Faqat tanlangan sinflar topshira oladi. Hech narsa tanlanmasa, imtihon barcha sinflar uchun ochiq bo‘ladi.
   </p>
   @include('partials.school-grade-matrix', ['selected' => $selectedAllowedGrades])
+  
+  <div class="mt-4 p-3 rounded" style="background: var(--surface); border: 1px solid var(--border);">
+      <label class="d-flex align-items-center gap-2 cursor-pointer mb-1">
+          <input type="checkbox" name="allowed_grades[]" value="TEACHER" {{ in_array('TEACHER', $selectedAllowedGrades, true) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; cursor: pointer; accent-color: var(--primary);">
+          <span class="fw-bold" style="color: var(--text-color);">O'qituvchilar ham ushbu imtihonni topshirishi mumkin</span>
+      </label>
+      <p class="small text-muted mb-0" style="padding-left: 1.7rem;">Agar belgilansa, maktab o'qituvchilari (shu jumladan siz ham) bu imtihonni topshirish imkoniyatiga ega bo'ladilar.</p>
+  </div>
+
   @if ($errors->has('allowed_grades') || $errors->has('allowed_grades.*'))
     <p class="exam-form-error">{{ $errors->first('allowed_grades') ?: $errors->first('allowed_grades.*') }}</p>
   @endif

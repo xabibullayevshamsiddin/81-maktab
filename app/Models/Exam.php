@@ -72,17 +72,33 @@ class Exam extends Model
     {
         $grades = $this->allowedGradeItems();
 
-        return $grades !== [] ? implode(', ', $grades) : $fallback;
+        if ($grades !== []) {
+            $mapped = array_map(function($g) {
+                return $g === 'TEACHER' ? "O'qituvchilar" : $g;
+            }, $grades);
+            return implode(', ', $mapped);
+        }
+
+        return $fallback;
     }
 
     public function allowsUser(?User $user): bool
     {
-        if (! $this->hasGradeRestrictions()) {
-            return true;
-        }
-
         if (! $user) {
             return false;
+        }
+
+        $isTeacher = method_exists($user, 'isTeacher') ? ($user->isTeacher() || $user->isAdmin() || $user->isSuperAdmin()) : false;
+
+        // If the user is a teacher, they MUST have the 'TEACHER' permission explicitly set in allowedGrades.
+        // Even if hasGradeRestrictions is false (meaning all classes are allowed), we block teachers unless explicitly granted.
+        if ($isTeacher) {
+            return in_array('TEACHER', $this->allowedGradeItems(), true);
+        }
+
+        // For students:
+        if (! $this->hasGradeRestrictions()) {
+            return true;
         }
 
         if (method_exists($user, 'hasUniversalGrade') && $user->hasUniversalGrade()) {

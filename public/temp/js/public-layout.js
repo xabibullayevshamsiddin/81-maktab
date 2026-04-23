@@ -177,7 +177,31 @@
     } catch (e) {}
   }
 
-
+  window.playPrimeThemeToggleSound = function(isDark) {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = isDark ? 'sine' : 'triangle';
+      const startFreq = isDark ? 300 : 500;
+      const endFreq = isDark ? 200 : 700;
+      
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.15);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch (e) {}
+  };
 
   function playPrimeConfetti(x, y, isGold = false) {
     const colors = isGold 
@@ -1163,8 +1187,20 @@
           const nextTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
           localStorage.setItem(storageKey, nextTheme);
           applyTheme(nextTheme);
+          if (typeof window.playPrimeThemeToggleSound === 'function') {
+            window.playPrimeThemeToggleSound(nextTheme === 'dark');
+          }
         });
       });
+
+      // Tizim rejimi o'zgarganda sayt rejimini ham avtomatik moslashtirish (agar o'zi tanlamagan bo'lsa)
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+          if (!localStorage.getItem(storageKey)) {
+            applyTheme(e.matches ? 'dark' : 'light');
+          }
+        });
+      }
     }
 
     if (successMsg) showToast(successMsg, resolveFlashToastType('success'));

@@ -3,10 +3,16 @@
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ filemtime(public_path('temp/css/profile-results.css')) }}">
 @endpush
 
+@php
+    $isTeacherViewer = auth()->user()->canManageExams() && $exam->ownsExam(auth()->user());
+    $backLink = $isTeacherViewer ? route('profile.exams.results', ['exam_id' => $exam->id]) : route('profile.show') . '#exam-results-section';
+    $backLabel = $isTeacherViewer ? "Imtihonlar ro'yxati" : "Profilga qaytish";
+@endphp
+
 <div class="container exam-public-container">
     <div class="results-header">
         <div class="results-breadcrumb">
-            <a href="{{ route('profile.exams.results') }}">{{ __('public.layout.menu.exams') }}</a>
+            <a href="{{ $backLink }}">{{ $backLabel }}</a>
             <i class="fa-solid fa-chevron-right" style="font-size: 10px; opacity: 0.5; align-self: center;"></i>
             <span>Natija tafsilotlari</span>
         </div>
@@ -76,9 +82,78 @@
         </div>
     </div>
 
+    <!-- Exam Result Chart -->
+    <div class="card border-0 shadow-sm mb-4 prime-reveal" style="border-radius: 16px; overflow: hidden; background: var(--surface);">
+        <div class="card-body p-4 d-flex flex-column flex-md-row align-items-center justify-content-center gap-4">
+            <div style="width: 200px; height: 200px; position: relative;">
+                <canvas id="examResultChart"></canvas>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1.2;">
+                    @php $pct = $result->points_max > 0 ? round($result->points_earned / $result->points_max * 100) : 0; @endphp
+                    <span style="font-size: 24px; font-weight: 800; color: var(--text);">{{ $pct }}%</span><br>
+                    <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Natija</span>
+                </div>
+            </div>
+            <div class="text-md-start text-center">
+                <h3 class="fw-bold mb-2" style="color: var(--text);">Imtihon statistikasi</h3>
+                <p class="text-muted mb-3">Sizning umumiy natijangiz va o'zlashtirish ko'rsatkichi.</p>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#10b981;"></span>
+                        <span class="fw-medium text-muted">To'g'ri javoblar:</span>
+                        <strong style="color: var(--text);">{{ $result->points_earned }} ball</strong>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ef4444;"></span>
+                        <span class="fw-medium text-muted">Yo'qotilgan ball:</span>
+                        <strong style="color: var(--text);">{{ max(0, ($result->points_max ?? 0) - $result->points_earned) }} ball</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('page_scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('examResultChart').getContext('2d');
+            const earned = {{ $result->points_earned ?? 0 }};
+            const lost = {{ max(0, ($result->points_max ?? 0) - ($result->points_earned ?? 0)) }};
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ["To'plangan ball", "Yo'qotilgan ball"],
+                    datasets: [{
+                        data: [earned, lost],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ' + context.raw + ' ball';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    @endpush
+
     <div class="mb-4 d-flex justify-content-between align-items-center">
         <h4 class="mb-0 fw-bold" style="color: var(--primary);">Batafsil javoblar</h4>
-        <a href="{{ route('profile.exams.results') }}?exam_id={{ $exam->id }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $backLink }}" class="btn btn-outline-secondary btn-sm">
             <i class="fa-solid fa-arrow-left me-1"></i> Ortga qaytish
         </a>
     </div>
@@ -130,52 +205,70 @@
                         $isLocked = $isGraded && $gradedAt && $gradedAt->addMinutes($lockMinutes)->isPast();
                     @endphp
 
-                    <form action="{{ route('profile.exams.grade', [$result, $answer]) }}" method="POST">
-                        @csrf
-                        <div class="d-flex flex-wrap align-items-center gap-4">
-                            <div>
-                                <label class="fw-bold text-muted small text-uppercase mb-2 d-block">Baholash:</label>
-                                <div class="grading-options">
-                                    <label class="grading-radio-label {{ $isLocked ? 'disabled' : '' }}">
-                                        <input type="radio" name="is_correct" value="1" 
-                                            {{ $answer->is_correct_override === true ? 'checked' : '' }} 
-                                            {{ $isLocked ? 'disabled' : '' }} required>
-                                        <div class="grading-radio-card card-correct">
-                                            <i class="fa-solid fa-check"></i> To'g'ri
+                    @if(auth()->user()->canManageExams() && $exam->ownsExam(auth()->user()))
+                        <form action="{{ route('profile.exams.grade', [$result, $answer]) }}" method="POST">
+                            @csrf
+                            <div class="d-flex flex-wrap align-items-center gap-4">
+                                <div>
+                                    <label class="fw-bold text-muted small text-uppercase mb-2 d-block">Baholash:</label>
+                                    <div class="grading-options">
+                                        <label class="grading-radio-label {{ $isLocked ? 'disabled' : '' }}">
+                                            <input type="radio" name="is_correct" value="1" 
+                                                {{ $answer->is_correct_override === true ? 'checked' : '' }} 
+                                                {{ $isLocked ? 'disabled' : '' }} required>
+                                            <div class="grading-radio-card card-correct">
+                                                <i class="fa-solid fa-check"></i> To'g'ri
+                                            </div>
+                                        </label>
+                                        <label class="grading-radio-label {{ $isLocked ? 'disabled' : '' }}">
+                                            <input type="radio" name="is_correct" value="0" 
+                                                {{ $answer->is_correct_override === false ? 'checked' : '' }} 
+                                                {{ $isLocked ? 'disabled' : '' }} required>
+                                            <div class="grading-radio-card card-incorrect">
+                                                <i class="fa-solid fa-xmark"></i> Noto'g'ri
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="align-self-end">
+                                    @if(!$isLocked)
+                                        <button type="submit" class="btn btn-primary btn-sm px-4 py-2">
+                                            <i class="fa-solid fa-floppy-disk me-2"></i> {{ $isGraded ? 'Yangilash' : 'Saqlash' }}
+                                        </button>
+                                    @else
+                                        <div class="radio-lock-info text-danger fw-bold">
+                                            <i class="fa-solid fa-lock"></i> 
+                                            {{ $lockMinutes }} daqiqadan so'ng tahrirlash yopildi
                                         </div>
-                                    </label>
-                                    <label class="grading-radio-label {{ $isLocked ? 'disabled' : '' }}">
-                                        <input type="radio" name="is_correct" value="0" 
-                                            {{ $answer->is_correct_override === false ? 'checked' : '' }} 
-                                            {{ $isLocked ? 'disabled' : '' }} required>
-                                        <div class="grading-radio-card card-incorrect">
-                                            <i class="fa-solid fa-xmark"></i> Noto'g'ri
-                                        </div>
-                                    </label>
+                                    @endif
                                 </div>
                             </div>
 
-                            <div class="align-self-end">
-                                @if(!$isLocked)
-                                    <button type="submit" class="btn btn-primary btn-sm px-4 py-2">
-                                        <i class="fa-solid fa-floppy-disk me-2"></i> {{ $isGraded ? 'Yangilash' : 'Saqlash' }}
-                                    </button>
+                            @if($isGraded && !$isLocked)
+                                <div class="radio-lock-info mt-2">
+                                    <i class="fa-solid fa-clock"></i> 
+                                    Tahrirlash uchun {{ 10 - $gradedAt->diffInMinutes(now()) }} daqiqa qoldi
+                                </div>
+                            @endif
+                        </form>
+                    @else
+                        @if($isGraded)
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-muted small text-uppercase">O'qituvchi bahosi:</span>
+                                @if($answer->is_correct_override)
+                                    <span class="badge bg-success"><i class="fa-solid fa-check"></i> To'g'ri</span>
                                 @else
-                                    <div class="radio-lock-info text-danger fw-bold">
-                                        <i class="fa-solid fa-lock"></i> 
-                                        {{ $lockMinutes }} daqiqadan so'ng tahrirlash yopildi
-                                    </div>
+                                    <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Noto'g'ri</span>
                                 @endif
                             </div>
-                        </div>
-
-                        @if($isGraded && !$isLocked)
-                            <div class="radio-lock-info mt-2">
-                                <i class="fa-solid fa-clock"></i> 
-                                Tahrirlash uchun {{ 10 - $gradedAt->diffInMinutes(now()) }} daqiqa qoldi
+                        @else
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> Tekshirilmoqda</span>
+                                <span class="small text-muted">O'qituvchi ushbu javobingizni tekshirib, baholaydi.</span>
                             </div>
                         @endif
-                    </form>
+                    @endif
                 </div>
             @else
                 <div class="answer-box box-student">
@@ -199,10 +292,6 @@
         </div>
     @endforeach
 
-    <div class="mt-5 mb-5 text-center">
-        <a href="{{ route('profile.exams.results') }}?exam_id={{ $exam->id }}" class="btn btn-primary px-5 py-3">
-            <i class="fa-solid fa-arrow-left me-2"></i> Ro'yxatga qaytish
-        </a>
-    </div>
+    <div class="mb-5"></div>
 </div>
 </x-loyouts.main>

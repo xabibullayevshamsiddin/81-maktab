@@ -143,6 +143,9 @@ Route::middleware('auth')->group(function () {
     Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->name('profile.password.confirm');
     Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
+    // Imtihon natijasini ko'rish (o'quvchi o'zini, o'qituvchi barchasini)
+    Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])->name('profile.exams.results.show');
+
     Route::middleware(['role:super_admin,admin,editor,moderator,teacher'])->group(function () {
         Route::get('profile/exams', [TeacherExamController::class, 'index'])->name('profile.exams.index');
         Route::get('profile/exams/create', [TeacherExamController::class, 'create'])->name('profile.exams.create');
@@ -160,7 +163,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('profile/exams/results', [TeacherExamController::class, 'results'])->name('profile.exams.results');
         Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->name('profile.exams.results.export');
-        Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])->name('profile.exams.results.show');
         Route::post('profile/exams/results/{result}/grade/{answer}', [TeacherExamController::class, 'gradeTextAnswer'])->name('profile.exams.grade');
     });
 

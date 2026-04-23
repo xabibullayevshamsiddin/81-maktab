@@ -269,6 +269,7 @@
 
           @include('profile.partials.email-card')
           @include('profile.partials.password-card')
+          @include('profile.partials.app-settings-card')
         </div>
 
         <div class="profile-column profile-column-activity profile-column-activity--mobile-first">
@@ -408,6 +409,11 @@
                           style="font-size:12px;">{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</span>
                         <span class="profile-exam-result-metric-label">Holat</span>
                       </div>
+                    </div>
+                    <div class="profile-actions-row" style="margin-top:12px; border-top: 1px solid var(--border); padding-top: 12px;">
+                      <a href="{{ route('profile.exams.results.show', $er) }}" class="btn btn-outline btn-sm w-100" style="justify-content:center;">
+                        <i class="fa-solid fa-chart-pie me-1"></i> Batafsil grafika va xatolarni ko'rish
+                      </a>
                     </div>
                   </div>
                 @endforeach
