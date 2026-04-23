@@ -386,7 +386,7 @@ class TeacherExamController extends Controller
         $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
 
         $query = Result::query()
-            ->with(['exam:id,title', 'user:id,name'])
+            ->with(['exam:id,title', 'user:id,name,first_name,last_name,phone,email,grade'])
             ->whereIn('status', ['submitted', 'expired']);
 
         if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
@@ -412,16 +412,19 @@ class TeacherExamController extends Controller
             ? Exam::query()->whereKey($selectedExamId)->value('title') ?? 'imtihon'
             : 'barcha_imtihonlar';
 
-        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d') . '.xls';
+        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d_H-i-s') . '.xls';
 
         $html = view('exports.exam_results_excel', [
             'results' => $results,
-            'selectedExamId' => $selectedExamId
+            'selectedExamId' => $selectedExamId,
         ])->render();
 
         return response($html, 200)
-            ->header('Content-Type', 'application/vnd.ms-excel')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     public function results(Request $request)

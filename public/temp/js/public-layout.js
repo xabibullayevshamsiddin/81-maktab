@@ -521,14 +521,41 @@
           }
           if (previewDetailsEl) {
             var rows = [];
-            if (d.grade) {
-              rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
-            }
-            if (d.is_parent) {
-              rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
-            }
-            if (d.member_year) {
-              rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+            var adminProfile = d.admin_profile || null;
+            if (adminProfile) {
+              rows.push('<li><span>ID</span> #' + escChatHtml(String(adminProfile.id || '0')) + '</li>');
+              if (adminProfile.name) {
+                rows.push('<li><span>Login nomi</span> ' + escChatHtml(adminProfile.name) + '</li>');
+              }
+              if (adminProfile.first_name) {
+                rows.push('<li><span>Ism</span> ' + escChatHtml(adminProfile.first_name) + '</li>');
+              }
+              if (adminProfile.last_name) {
+                rows.push('<li><span>Familiya</span> ' + escChatHtml(adminProfile.last_name) + '</li>');
+              }
+              rows.push('<li><span>Rol kaliti</span> ' + escChatHtml(adminProfile.role_key || '—') + '</li>');
+              rows.push('<li><span>Akkaunt holati</span> ' + escChatHtml(adminProfile.status || '—') + '</li>');
+              rows.push('<li><span>Hisob turi</span> ' + (adminProfile.is_parent ? 'Ota-ona' : 'Foydalanuvchi') + '</li>');
+              if (adminProfile.grade) {
+                rows.push('<li><span>Sinf</span> ' + escChatHtml(adminProfile.grade) + '</li>');
+              }
+              if (adminProfile.registered_at) {
+                rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(adminProfile.registered_at) + '</li>');
+              }
+              rows.push('<li><span>Email tasdiqlangan</span> ' + escChatHtml(adminProfile.email_verified_at || 'Yo‘q') + '</li>');
+              rows.push('<li><span>Teacher profil</span> ' + (adminProfile.teacher_profile_linked ? 'Bog‘langan' : 'Bog‘lanmagan') + '</li>');
+              rows.push('<li><span>Kurs ochish ruxsati</span> ' + (adminProfile.course_open_approved ? 'Bor' : 'Yo‘q') + '</li>');
+              rows.push('<li><span>So‘rov holati</span> ' + (adminProfile.course_open_request_pending ? 'Kutilmoqda' : 'Yo‘q') + '</li>');
+            } else {
+              if (d.grade) {
+                rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
+              }
+              if (d.is_parent) {
+                rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
+              }
+              if (d.member_year) {
+                rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+              }
             }
             previewDetailsEl.innerHTML = rows.length ? rows.join('') : '<li class="chat-user-preview-details-empty">Qo‘shimcha maydonlar kiritilmagan.</li>';
           }
@@ -540,9 +567,17 @@
           }
           if (previewContactEl && d.contact) {
             previewContactEl.hidden = false;
-            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa (faqat Super Admin)</p>'
-              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + escChatHtml(d.contact.email || '—') + '</span></div>'
-              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + escChatHtml(d.contact.phone || '—') + '</span></div>';
+            var emailText = escChatHtml(d.contact.email || '—');
+            var phoneText = escChatHtml(d.contact.phone || '—');
+            var emailLink = d.contact.email
+              ? '<a href="mailto:' + escAttr(String(d.contact.email)) + '">' + emailText + '</a>'
+              : '<span>—</span>';
+            var phoneLink = d.contact.phone
+              ? '<a href="tel:' + escAttr(String(d.contact.phone)) + '">' + phoneText + '</a>'
+              : '<span>—</span>';
+            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa ma‘lumotlari (Super Admin)</p>'
+              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + emailLink + '</span></div>'
+              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + phoneLink + '</span></div>';
           } else if (previewContactEl) {
             previewContactEl.hidden = true;
             previewContactEl.innerHTML = '';
@@ -554,7 +589,7 @@
             var cfgSelf = userPreviewConfigEl();
             var selfId = cfgSelf && cfgSelf.getAttribute('data-current-user-id');
             var admParts = [];
-            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Administrator)</p>');
+            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (' + (d.viewer_is_super_admin ? 'Super Admin' : 'Administrator') + ')</p>');
             admParts.push(
               '<p class="chat-user-preview-admin-status">Akkaunt holati: <strong>'
               + (sa.is_active ? 'Faol' : 'Bloklangan') + '</strong></p>'
@@ -572,10 +607,10 @@
               );
             }
             if (!sa.can_deactivate && !sa.can_activate) {
-              if (d.is_super_admin) {
-                admParts.push('<p class="chat-user-preview-muted">Boshqa Super Admin akkauntini bloklash mumkin emas.</p>');
-              } else if (selfId && String(userId) === String(selfId)) {
+              if (sa.is_self || (selfId && String(userId) === String(selfId))) {
                 admParts.push('<p class="chat-user-preview-muted">Bu o‘z profilingiz.</p>');
+              } else {
+                admParts.push('<p class="chat-user-preview-muted">Bu akkaunt uchun boshqaruv amali mavjud emas.</p>');
               }
             }
             previewAdminEl2.innerHTML = admParts.join('');
@@ -2136,6 +2171,26 @@
     var isSending = false;
     var pollTimer = null;
 
+    function resetChatComposeState() {
+      isSending = false;
+      if (input) {
+        input.disabled = false;
+        input.removeAttribute('aria-busy');
+      }
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.removeAttribute('aria-busy');
+      }
+      stickerButtons.forEach(function (btn) {
+        btn.disabled = false;
+      });
+      syncComposeState();
+    }
+
+    function syncDockState() {
+      document.body.classList.toggle('chat-panel-open', isOpen);
+    }
+
     function positionPanel() {
       var rect = widget.getBoundingClientRect();
       var vw = window.innerWidth;
@@ -2186,6 +2241,8 @@
       panel.classList.add('is-opening');
       widget.classList.add('is-open');
       isOpen = true;
+      resetChatComposeState();
+      syncDockState();
       if (badge) badge.hidden = true;
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
@@ -2221,6 +2278,8 @@
       widget.classList.remove('is-open');
       widget.classList.add('is-bubble-return');
       isOpen = false;
+      resetChatComposeState();
+      syncDockState();
       stopPolling();
       setComposeState('idle');
       setTimeout(function () {
@@ -2649,6 +2708,9 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!chatEnabled) return;
+      if (sendBtn && sendBtn.disabled && !isSending) {
+        resetChatComposeState();
+      }
       var text = input.value.trim();
       if (!text || isSending) return;
       playPrimeChatTick(); // "chiqchiq" — eski click ovozi
@@ -2678,6 +2740,11 @@
     });
 
     input.addEventListener('focus', syncComposeState);
+    input.addEventListener('focus', function () {
+      if (!isSending && ((sendBtn && sendBtn.disabled) || input.disabled)) {
+        resetChatComposeState();
+      }
+    });
     input.addEventListener('input', function() {
       syncComposeState();
       playPrimeChatTick();

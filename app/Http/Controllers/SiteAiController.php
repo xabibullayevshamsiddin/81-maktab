@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SiteSetting;
+use App\Services\Ai\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Models\SiteSetting;
-use App\Services\Ai\AiService;
 
 class SiteAiController extends Controller
 {
@@ -36,7 +36,7 @@ class SiteAiController extends Controller
                 'success' => false,
                 'error' => SiteSetting::get(
                     'ai_chat_disabled_message',
-                    'AI yordamchi vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.'
+                    "AI yordamchi vaqtincha o'chirilgan. Keyinroq urinib ko'ring."
                 ),
                 'disabled' => true,
             ], 403);
@@ -69,7 +69,7 @@ class SiteAiController extends Controller
                 'success' => true,
                 'text' => $mock !== ''
                     ? $this->decorateAiText($mock, $questionPart !== '' ? $questionPart : $rawMessage)
-                    : "✨ Mock javob bo'sh. Ajratgichdan keyin javob matnini yozing.",
+                    : "Mock javob bo'sh. Ajratgichdan keyin javob matnini yozing.",
                 'source' => 'local_mock',
             ]);
         }
@@ -90,7 +90,7 @@ class SiteAiController extends Controller
         if ($userLimit !== -1 && ! $this->consumeDailyQuestionQuota((int) $user->id, $userLimit)) {
             return response()->json([
                 'success' => true,
-                'text' => "📌 Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring. 😊",
+                'text' => "Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring.",
                 'source' => 'daily_limit',
             ]);
         }
@@ -99,8 +99,7 @@ class SiteAiController extends Controller
 
         if ($result['success']) {
             $aiText = $this->decorateAiText($result['text'], $userMessage);
-            
-            // Cache the result for 5 minutes during testing
+
             Cache::put($messageCacheKey, $aiText, now()->addMinutes(5));
 
             return response()->json([
@@ -118,33 +117,28 @@ class SiteAiController extends Controller
 
     private function decorateAiText(string $text, string $userMessage): string
     {
-        $clean = trim((string) preg_replace('/\s+/u', ' ', $text));
+        $clean = trim((string) $text);
+        $clean = str_replace(["\r\n", "\r"], "\n", $clean);
+        $clean = preg_replace("/[ \t]+/u", ' ', $clean) ?? $clean;
+        $clean = preg_replace("/\n{3,}/u", "\n\n", $clean) ?? $clean;
 
         if ($clean === '') {
-            return "✨ Kechirasiz, hozir javob bo'sh chiqdi. Iltimos, savolni qayta yuboring.";
+            return "Kechirasiz, hozir javob bo'sh chiqdi. Iltimos, savolni qayta yuboring.";
         }
-
-        // Markdown belgilarini olib tashlaymiz
-        $clean = preg_replace('/[*_#`>\-]+/u', '', $clean) ?? $clean;
 
         $q = mb_strtolower($userMessage);
 
-        // Muhim savollarga MUHIM: prefiksi
-        $importantKeywords = ['muhim', 'qanday', 'nima', 'qayer', 'kim', 'narx', 'vaqt', 'muddat', 'aloqa'];
-        if (Str::contains($q, $importantKeywords) && ! Str::contains(mb_strtolower($clean), 'muhim:')) {
+        if (Str::contains($q, ['muhim', 'shoshilinch', 'urgent'])
+            && ! Str::contains(mb_strtolower($clean), 'muhim:')) {
             if (preg_match('/(?<=[.!?])\s+/u', $clean)) {
                 $parts = preg_split('/(?<=[.!?])\s+/u', $clean, 2);
                 $first = trim((string) ($parts[0] ?? $clean));
-                $rest  = trim((string) ($parts[1] ?? ''));
+                $rest = trim((string) ($parts[1] ?? ''));
+
                 if ($rest !== '') {
-                    return "📌 MUHIM: {$first}\n✨ {$rest}";
+                    return "MUHIM: {$first}\n\n{$rest}";
                 }
             }
-        }
-
-        // Emoji yo'q bo'lsa — ✨ qo'shamiz
-        if (! preg_match('/[\x{1F300}-\x{1FAFF}✅✨📌🚀]/u', $clean)) {
-            return "✨ {$clean}";
         }
 
         return $clean;
@@ -153,11 +147,12 @@ class SiteAiController extends Controller
     private function getUserDailyLimit($user): int
     {
         if ($user->isAdmin() || $user->isSuperAdmin()) {
-            return -1; // unlimited
+            return -1;
         }
         if ($user->isTeacher() || $user->isEditor() || $user->isModerator()) {
             return 10;
         }
+
         return 7;
     }
 

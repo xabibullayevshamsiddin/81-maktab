@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Models\CalendarEvent;
+use App\Models\AiKnowledge;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Exam;
@@ -14,6 +15,7 @@ use App\Models\Result;
 use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -43,9 +45,34 @@ class AiService
             return ['success' => true, 'text' => $director, 'source' => 'director_data'];
         }
 
+        // 0.08 Sayt mualliflari / ishtirokchilar / texnik jamoa
+        if ($siteCredits = $this->matchSiteCreditsQuery($message)) {
+            return ['success' => true, 'text' => $siteCredits, 'source' => 'site_credits'];
+        }
+
         // 0.1 School profile / internal data summary
         if ($schoolData = $this->matchSchoolProfileData($message)) {
             return ['success' => true, 'text' => $schoolData, 'source' => 'school_profile'];
+        }
+
+        // 0.2 Saytdagi bo'limlar va AI yordamchi imkoniyatlari
+        if ($siteGuide = $this->matchSiteGuideQuery($message, $user)) {
+            return ['success' => true, 'text' => $siteGuide, 'source' => 'site_guide'];
+        }
+
+        // 0.25 Rollar va vazifalar
+        if ($roleGuide = $this->matchRoleResponsibilitiesQuery($message)) {
+            return ['success' => true, 'text' => $roleGuide, 'source' => 'role_guide'];
+        }
+
+        // 0.26 Saytning maqsadi va vazifasi
+        if ($sitePurpose = $this->matchSitePurposeQuery($message)) {
+            return ['success' => true, 'text' => $sitePurpose, 'source' => 'site_purpose'];
+        }
+
+        // 0.3 Admin, support va aloqa bo'yicha amaliy yo'l-yo'riq
+        if ($supportContact = $this->matchSupportContactQuery($message)) {
+            return ['success' => true, 'text' => $supportContact, 'source' => 'support_contact'];
         }
 
         // 1. Try Local Machine/Static Knowledge (Greetings, Persona)
@@ -53,17 +80,22 @@ class AiService
             return ['success' => true, 'text' => $static, 'source' => 'static_knowledge'];
         }
 
-        // 2. Universal Site Stats & Contact
+        // 2. Admin tomonidan kiritilgan AI bilimlar bazasi
+        if ($knowledge = $this->matchKnowledgeBase($message)) {
+            return ['success' => true, 'text' => $knowledge, 'source' => 'knowledge_base'];
+        }
+
+        // 3. Universal Site Stats & Contact
         if ($universal = $this->matchUniversalData($message)) {
             return ['success' => true, 'text' => $universal, 'source' => 'universal_data'];
         }
 
-        // 3. Try Dynamic Data (Personal Results, Courses, Teachers)
+        // 4. Try Dynamic Data (Personal Results, Courses, Teachers)
         if ($dynamic = $this->matchDynamicData($message, $user)) {
             return ['success' => true, 'text' => $dynamic, 'source' => 'dynamic_data'];
         }
 
-        // 4. Fallback to Gemini API
+        // 5. Fallback to Gemini API
         return $this->callGemini($message, $user);
     }
 
@@ -283,6 +315,12 @@ class AiService
             return "Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, math va fan savollariga — hammaga javob berishga harakat qilaman. Savol bering! 🚀";
         }
 
+        if (Str::contains($q, ['muallfi', 'mualif', 'kim ishtirok', 'ishtirok etgan', 'saytda kim'])) {
+            if ($creditsAnswer = $this->matchSiteCreditsQuery('sayt '.$q)) {
+                return $creditsAnswer;
+            }
+        }
+
         // Kim yaratgan
         if (Str::contains($q, ['kim yasagan', 'muallif', 'kim yaratgan', 'saytni kim', 'developer', 'dasturchi'])) {
             $siteCreditsIntro = (string) __('public.about.site_credits_intro');
@@ -298,7 +336,15 @@ class AiService
         }
 
         // Admin / Boshqaruvchi
-        if (Str::contains($q, ['admin', 'boshqaruvchi', 'kim yuritadi', 'mas\'ul'])) {
+        $adminIdentityIntent = Str::contains($q, [
+            'admin kim', 'sayt admini', 'kim boshqaradi', 'kim yuritadi',
+            'boshqaruvchi', 'mas\'ul', 'kim mas\'ul', 'kim masul',
+        ]);
+        $adminContactIntent = Str::contains($q, [
+            'bog\'lan', 'boglan', 'aloqa', 'murojaat', 'xabar', 'telefon',
+            'email', 'support', 'kontakt', 'yoz',
+        ]);
+        if ($adminIdentityIntent && ! $adminContactIntent) {
             return "Hozirgi paytda saytni **Xabibullayev Shamsiddin** boshqaradi. Qolgan hamkorlar moderator va editor sifatida yordam beradi. ✨";
         }
 
@@ -341,6 +387,497 @@ class AiService
         }
 
         return null;
+    }
+
+    private function matchSiteCreditsQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasSiteWord = Str::contains($q, [
+            'sayt', 'sait', 'sayti', 'veb', 'web', 'website', 'platforma', 'portal', 'loyiha', 'dastur',
+        ]);
+
+        $hasCreatorIntent = Str::contains($q, [
+            'muallif', 'muallfi', 'muallf', 'mualif', 'avtor', 'avtori', 'yarat', 'yasag', 'qilgan', 'tuzgan', 'ishlab chiq',
+            'dasturchi', 'developer', 'programmist', 'ishtirok', 'qatnash', 'jamoa',
+            'kimlar', 'kim qildi', 'kim qilgan', 'credits', 'credits members',
+        ]);
+
+        if (! $hasSiteWord || ! $hasCreatorIntent) {
+            return null;
+        }
+
+        $credits = $this->siteCreditsPayload();
+        $members = $credits['members'];
+        $names = array_map(static fn ($member) => $member['name'], $members);
+        $memberLines = array_map(function ($member): string {
+            $date = trim((string) ($member['date'] ?? ''));
+
+            return $date !== ''
+                ? "- **{$member['name']}** ({$date})"
+                : "- **{$member['name']}**";
+        }, $members);
+
+        $memberText = $memberLines !== []
+            ? implode("\n", $memberLines)
+            : "- **10-E sinf o'quvchilari jamoasi**";
+
+        $shortNames = $names !== [] ? implode(', ', $names) : "10-E sinf o'quvchilari";
+        $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
+        return "**Sayt mualliflari**\n"
+            . "- Jamoa: 10-\"E\" sinf o'quvchilari\n"
+            . "- Qisqa javob: **{$schoolName} saytini {$shortNames} ishlab chiqqan.**\n\n"
+            . "**Ishtirokchilar**\n"
+            . "{$memberText}\n\n"
+            . "**Izoh**\n"
+            . "{$credits['intro']}";
+    }
+
+    private function matchSiteGuideQuery(string $message, ?object $user = null): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasGuideIntent = Str::contains($q, [
+            'saytda nima bor', 'sayt nima qiladi', 'sayt imkoniyat', 'funksiya',
+            'bolim', 'bo lim', 'bo\'lim', 'sahifa', 'nima qila olaman',
+            'qayerdan topaman', 'qanday ishlaydi', 'ai nima qila oladi',
+            'yordamchi nima qiladi', 'nimalarga javob beradi',
+            'qanday savollar', 'qanaqa savollar', 'nima deb sorasam', 'nima deb so\'rasam',
+            'qaysi savollar', 'hamma savollar', 'nimalarni sorash mumkin', 'nimalarni so\'rash mumkin',
+        ]);
+
+        if (! $hasGuideIntent) {
+            return null;
+        }
+
+        $posts = Post::count();
+        $teachers = Teacher::where('is_active', true)->count();
+        $courses = Course::where('status', Course::STATUS_PUBLISHED)->count();
+        $activeExams = Exam::where('is_active', true)->count();
+        $upcomingEvents = CalendarEvent::where('event_date', '>=', now())->count();
+
+        $lines = [
+            "- Yangiliklar: {$posts} ta post va e'lonlar. " . route('post'),
+            "- Ustozlar: {$teachers} ta faol ustoz profili. " . route('teacher'),
+            "- Kurslar: {$courses} ta nashr etilgan kurs. " . route('courses'),
+            "- Imtihonlar: {$activeExams} ta faol imtihon. " . route('exam.index'),
+            "- Taqvim: {$upcomingEvents} ta yaqin tadbir. " . route('calendar'),
+            "- Aloqa: murojaat yuborish va maktab bilan bog'lanish. " . route('contact'),
+        ];
+
+        if ($user && method_exists($user, 'canManageExams') && $user->canManageExams()) {
+            $lines[] = "- Sizning rolingizda imtihon yaratish, savol qo'shish va natijalarni ko'rish imkoniyati ham bor.";
+        }
+
+        $questionGroups = [
+            "- **Maktab**: direktor kim, manzil qayerda, telefon raqami nima, maktab qachon ochilgan",
+            "- **Sayt**: sayt muallifi kim, kimlar ishtirok etgan, saytda nimalar bor",
+            "- **Yangiliklar**: so'nggi yangiliklar qayerda, qaysi post yangi, tadbirlar bormi",
+            "- **Ustozlar**: falon ustoz kim, qaysi fan o'qituvchisi kim, ustozlar ro'yxati",
+            "- **Kurslar**: kursga qanday yozilaman, arizam holati qayerda, kursni kim tasdiqlaydi",
+            "- **Imtihonlar**: imtihon qayerda boshlanadi, natijam qayerda, ballim qancha, qayta topshirsa bo'ladimi",
+            "- **Profil va akkaunt**: ro'yxatdan qanday o'taman, parolni unutdim, emailni qanday o'zgartiraman",
+            "- **Aloqa va admin**: admin bilan qanday bog'lanaman, murojaatimni kim ko'radi, support uchun qayerga yozaman",
+            "- **Chat va izohlar**: global chat nima, chat o'chsa nima qilaman, izohni tahrirlasa bo'ladimi",
+            "- **Panel va rollar**: admin panelga kim kira oladi, teacher panelda nima qilish mumkin",
+        ];
+
+        return "**Sayt imkoniyatlari**\n"
+            . implode("\n", $lines)
+            . "\n\n**AI'ga berish mumkin bo'lgan savollar**\n"
+            . implode("\n", $questionGroups)
+            . "\n\nMasalan: **\"admin bilan qanday bog'lansam bo'ladi?\"**, **\"kurs arizam qayerda ko'rinadi?\"**, **\"emailimni qanday o'zgartiraman?\"**";
+    }
+
+    private function matchSupportContactQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasSupportIntent = Str::contains($q, [
+            'admin bilan', 'adminga', 'admin email', 'admin telefon',
+            'support', 'texnik yordam', 'boglan', "bog'lan", 'aloqa', 'kontakt',
+            'murojaat', 'xabar yubor', 'xat yubor', 'qayerga yoz', 'shikoyat',
+            'taklif', 'kim koradi', "kim ko'radi", 'kim javob', 'javob qayerdan',
+            'aloqa bolimi', "aloqa bo'limi",
+        ]);
+
+        if (! $hasSupportIntent) {
+            return null;
+        }
+
+        $phone = SiteSetting::get('school_phone', '+998 71 123 45 67');
+        $email = SiteSetting::get('school_email', 'info@school81.uz');
+        $address = SiteSetting::get('school_address', (string) __('public.about.quick_facts.0.value'));
+        $contactUrl = route('contact');
+
+        return "**Admin bilan bog'lanish**\n"
+            . "- Eng qulay yo'l: **Aloqa** sahifasi orqali murojaat yuborish. {$contactUrl}\n"
+            . "- Xabar yuborish uchun akkauntga kirgan bo'lishingiz kerak.\n"
+            . "- Yuborilgan murojaatlar **super admin, admin va moderatorlar** tomonidan ko'rib chiqiladi.\n"
+            . "- Javob odatda emailingiz yoki qoldirilgan aloqa ma'lumotingiz orqali beriladi.\n\n"
+            . "**Tezkor aloqa**\n"
+            . "- Telefon: **{$phone}**\n"
+            . "- Email: **{$email}**\n"
+            . "- Manzil: **{$address}**\n\n"
+            . "Texnik muammo bo'lsa, qaysi sahifada xato chiqqani va nima qilishga uringaningizni ham yozing.";
+    }
+
+    private function matchRoleResponsibilitiesQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasRoleIntent = Str::contains($q, [
+            'nima ish qiladi', 'nima qiladi', 'vazifasi nima', 'vazifasi',
+            'nimaga javobgar', 'qaysi ishlarni qiladi', 'nimalar qila oladi',
+            'roli nima', 'vakolati nima', 'ishga javobgar',
+        ]);
+
+        if (! $hasRoleIntent) {
+            return null;
+        }
+
+        if ($this->queryHasApproximateToken($q, ['moderator', 'moderato', 'moderat', 'modirator'])) {
+            return "**Moderator vazifalari**\n"
+                . "- Aloqa bo'limiga kelgan murojaatlarni ko'radi.\n"
+                . "- Post va ustozlar sahifasidagi izohlarni boshqaradi.\n"
+                . "- Global chatdagi tartibni saqlashda yordam beradi.\n"
+                . "- Odatda tizim sozlamalari, AI bilim bazasi yoki umumiy system boshqaruvi moderator vakolatiga kirmaydi.";
+        }
+
+        if ($this->queryHasApproximateToken($q, ['editor', 'editr', 'edtor'])) {
+            return "**Editor vazifalari**\n"
+                . "- Yangiliklar, postlar, kategoriyalar va taqvim materiallarini boshqaradi.\n"
+                . "- Kontentni tahrirlash va nashrga tayyorlash bilan ishlaydi.\n"
+                . "- Odatda aloqa inboxi, system sozlamalari yoki super-admin darajadagi boshqaruv editor vakolatiga kirmaydi.";
+        }
+
+        if ($this->queryHasApproximateToken($q, ['super', 'superadmin', 'super admin'])) {
+            return "**Super Admin vazifalari**\n"
+                . "- Saytning eng yuqori darajadagi boshqaruviga ega.\n"
+                . "- Sozlamalar, AI bilim bazasi, foydalanuvchilar va admin bo'limlarini to'liq boshqaradi.\n"
+                . "- Kerak bo'lsa akkauntlarni bloklaydi yoki qayta faollashtiradi.\n"
+                . "- Qolgan rollar ko'rmaydigan ko'proq texnik va maxfiy ma'lumotlarni ham ko'radi.";
+        }
+
+        if ($this->queryHasApproximateToken($q, ['admin', 'administrator', 'admn'])) {
+            return "**Admin vazifalari**\n"
+                . "- Admin paneldagi asosiy boshqaruv bo'limlari bilan ishlaydi.\n"
+                . "- Ustozlar, imtihonlar, kurslar, contact xabarlari va comment moderatsiyasini boshqaradi.\n"
+                . "- Saytdagi tartib, ta'lim bo'limlari va foydalanuvchi jarayonlarini nazorat qiladi.";
+        }
+
+        if ($this->queryHasApproximateToken($q, ['teacher', 'ustoz', "o'qituvchi", 'oqituvchi', 'muallim'])) {
+            return "**O'qituvchi vazifalari**\n"
+                . "- O'z kurslarini ochishi va boshqarishi mumkin.\n"
+                . "- Kursga yozilgan foydalanuvchilarni ko'radi, tasdiqlaydi yoki rad etadi.\n"
+                . "- Rol va ruxsatga qarab ta'lim bo'limlaridagi ayrim amallar bilan ham ishlaydi.";
+        }
+
+        return null;
+    }
+
+    private function matchSitePurposeQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasSiteWord = Str::contains($q, ['sayt', 'sait', 'platforma', 'portal']);
+        $hasPurposeIntent = Str::contains($q, [
+            'nima uchun kerak', 'nimaga kerak', 'nima ga kerak', 'qaysi maqsadda',
+            'vazifasi nima', 'maqsadi nima', 'nega kerak', 'nima uchun ishlatiladi',
+        ]);
+
+        if (! $hasSiteWord || ! $hasPurposeIntent) {
+            return null;
+        }
+
+        $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
+        return "**Saytning vazifasi**\n"
+            . "- **{$schoolName}** ga oid asosiy ma'lumotlarni bir joyga jamlaydi.\n"
+            . "- O'quvchilar uchun: kurslar, imtihonlar, natijalar, profil va chat imkoniyatlarini beradi.\n"
+            . "- Ota-ona va mehmonlar uchun: yangiliklar, ustozlar, taqvim va aloqa bo'limlarini ko'rsatadi.\n"
+            . "- Admin va xodimlar uchun: kontent, murojaatlar va ta'lim jarayonlarini boshqarishga yordam beradi.\n\n"
+            . "Qisqa javob: bu sayt maktabning raqamli platformasi.";
+    }
+
+    private function matchKnowledgeBase(string $message): ?string
+    {
+        if (! Schema::hasTable('ai_knowledges')) {
+            return null;
+        }
+
+        $q = $this->normalizeSearchText($message);
+        if ($q === '') {
+            return null;
+        }
+
+        $tokens = array_slice($this->meaningfulTokens($q), 0, 10);
+        if ($tokens === []) {
+            return null;
+        }
+
+        $rows = AiKnowledge::query()
+            ->active()
+            ->where(function ($query) use ($tokens): void {
+                foreach ($tokens as $token) {
+                    $query->orWhere('question', 'like', '%'.$token.'%')
+                        ->orWhere('question_en', 'like', '%'.$token.'%')
+                        ->orWhere('keywords', 'like', '%'.$token.'%')
+                        ->orWhere('category', 'like', '%'.$token.'%');
+                }
+            })
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->limit(80)
+            ->get(['question', 'question_en', 'answer', 'answer_en', 'keywords', 'category']);
+
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $best = null;
+        $bestScore = 0;
+
+        foreach ($rows as $row) {
+            $candidateText = trim((string) $row->question.' '.(string) $row->question_en.' '.(string) $row->keywords.' '.(string) $row->category);
+            $candidateTokens = $this->meaningfulTokens($candidateText);
+            $sharedTokens = $this->sharedTokenCount($tokens, $candidateTokens);
+
+            if (count($tokens) >= 3 && $sharedTokens < 2) {
+                continue;
+            }
+
+            if (count($tokens) === 2 && $sharedTokens < 1 && ! Str::contains($this->normalizeSearchText($candidateText), $q)) {
+                continue;
+            }
+
+            $questionScore = $this->textMatchScore($q, (string) $row->question.' '.(string) $row->question_en);
+            $keywordScore = $this->textMatchScore($q, (string) $row->keywords);
+            $categoryScore = $this->textMatchScore($q, (string) $row->category);
+            $score = max($questionScore, min(100, $keywordScore + 12), $categoryScore);
+
+            if ($sharedTokens > 0) {
+                $score = min(100, $score + min(12, $sharedTokens * 4));
+            }
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $row;
+            }
+        }
+
+        $minScore = count($tokens) >= 3 ? 58 : 50;
+        if (! $best || $bestScore < $minScore) {
+            return null;
+        }
+
+        $answer = trim((string) $best->answer);
+        if ($answer === '') {
+            return null;
+        }
+
+        $category = trim((string) $best->category);
+        $prefix = $category !== '' ? "**{$category}:**\n" : '';
+
+        return $prefix.$answer;
+    }
+
+    private function siteCreditsPayload(): array
+    {
+        $intro = trim((string) __('public.about.site_credits_intro'));
+        $rawMembers = trans('public.about.site_credits_members');
+
+        $members = [];
+        if (is_array($rawMembers)) {
+            foreach ($rawMembers as $member) {
+                $name = trim((string) ($member['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+
+                $members[] = [
+                    'name' => $name,
+                    'date' => trim((string) ($member['date'] ?? '')),
+                ];
+            }
+        }
+
+        return [
+            'intro' => $intro !== '' ? $intro : "Ushbu sayt 10-E sinf o'quvchilari tomonidan ishlab chiqilgan.",
+            'members' => $members,
+        ];
+    }
+
+    private function normalizeSearchText(string $text): string
+    {
+        $text = mb_strtolower(trim($text));
+        $text = str_replace(['`', '‘', '’', 'ʼ', 'ʻ', '´'], "'", $text);
+        $text = str_replace(['o‘', 'o’', 'g‘', 'g’'], ["o'", "o'", "g'", "g'"], $text);
+        $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
+
+        return Str::squish($text);
+    }
+
+    private function meaningfulTokens(string $text): array
+    {
+        $text = $this->normalizeSearchText($text);
+        $tokens = preg_split('/\s+/u', $text) ?: [];
+        $stopWords = [
+            'men', 'menga', 'meni', 'sen', 'siz', 'biz', 'ular', 'shu', 'bu', 'ana',
+            'kim', 'nima', 'qanday', 'qanaqa', 'qaysi', 'qayerda', 'qayer', 'qachon',
+            'necha', 'qancha', 'haqida', 'kerak', 'iltimos', 'ayt', 'ayting', 'ber',
+            'bering', 'bor', 'yoq', 'yo\'q', 'ham', 'va', 'yoki', 'bilan', 'uchun',
+            'the', 'a', 'an', 'is', 'are', 'what', 'who', 'where', 'when', 'how',
+        ];
+
+        return array_values(array_unique(array_filter($tokens, function ($token) use ($stopWords): bool {
+            return mb_strlen($token) >= 3 && ! in_array($token, $stopWords, true);
+        })));
+    }
+
+    private function textMatchScore(string $query, string $candidate): int
+    {
+        $query = $this->normalizeSearchText($query);
+        $candidate = $this->normalizeSearchText($candidate);
+
+        if ($query === '' || $candidate === '') {
+            return 0;
+        }
+
+        if ($query === $candidate) {
+            return 100;
+        }
+
+        if (mb_strlen($query) >= 5 && Str::contains($candidate, $query)) {
+            return 96;
+        }
+
+        if (mb_strlen($candidate) >= 5 && Str::contains($query, $candidate)) {
+            return 90;
+        }
+
+        $queryTokens = $this->meaningfulTokens($query);
+        $candidateTokens = $this->meaningfulTokens($candidate);
+
+        if ($queryTokens === [] || $candidateTokens === []) {
+            return 0;
+        }
+
+        $hits = 0;
+        foreach ($queryTokens as $qToken) {
+            foreach ($candidateTokens as $cToken) {
+                if ($qToken === $cToken) {
+                    $hits += 2;
+                    break;
+                }
+
+                if (Str::startsWith($cToken, $qToken) || Str::startsWith($qToken, $cToken)) {
+                    $hits++;
+                    break;
+                }
+
+                $maxErr = mb_strlen($qToken) <= 5 ? 1 : 2;
+                if (levenshtein($qToken, $cToken) <= $maxErr) {
+                    $hits++;
+                    break;
+                }
+            }
+        }
+
+        $tokenScore = (int) round(($hits / (count($queryTokens) * 2)) * 100);
+
+        similar_text(implode(' ', $queryTokens), implode(' ', $candidateTokens), $percent);
+
+        return max($tokenScore, (int) round($percent));
+    }
+
+    private function sharedTokenCount(array $queryTokens, array $candidateTokens): int
+    {
+        if ($queryTokens === [] || $candidateTokens === []) {
+            return 0;
+        }
+
+        $hits = 0;
+        foreach ($queryTokens as $qToken) {
+            foreach ($candidateTokens as $cToken) {
+                if ($qToken === $cToken) {
+                    $hits++;
+                    break;
+                }
+
+                if (Str::startsWith($cToken, $qToken) || Str::startsWith($qToken, $cToken)) {
+                    $hits++;
+                    break;
+                }
+
+                $maxErr = mb_strlen($qToken) <= 5 ? 1 : 2;
+                if (levenshtein($qToken, $cToken) <= $maxErr) {
+                    $hits++;
+                    break;
+                }
+            }
+        }
+
+        return $hits;
+    }
+
+    private function queryHasApproximateToken(string $text, array $variants): bool
+    {
+        $tokens = preg_split('/\s+/u', $this->normalizeSearchText($text)) ?: [];
+
+        foreach ($tokens as $token) {
+            foreach ($variants as $variant) {
+                $variant = $this->normalizeSearchText($variant);
+                if ($variant === '') {
+                    continue;
+                }
+
+                if ($token === $variant) {
+                    return true;
+                }
+
+                if (mb_strlen($token) >= 4 && (Str::startsWith($token, $variant) || Str::startsWith($variant, $token))) {
+                    return true;
+                }
+
+                $maxErr = mb_strlen($variant) >= 8 ? 2 : 1;
+                if (levenshtein($token, $variant) <= $maxErr) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function knowledgeSnippetsForPrompt(): string
+    {
+        if (! Schema::hasTable('ai_knowledges')) {
+            return "Bilim bazasi jadvali hali mavjud emas.";
+        }
+
+        $rows = AiKnowledge::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->take(12)
+            ->get(['question', 'answer', 'keywords', 'category']);
+
+        if ($rows->isEmpty()) {
+            return "Admin tomonidan kiritilgan maxsus savol-javoblar hali yo'q.";
+        }
+
+        return $rows->map(function ($row): string {
+            $category = trim((string) $row->category);
+            $keywords = trim((string) $row->keywords);
+            $answer = Str::limit(trim(preg_replace('/\s+/u', ' ', (string) $row->answer) ?? ''), 220);
+
+            return "- ".($category !== '' ? "[{$category}] " : '')
+                . "Savol: {$row->question}"
+                . ($keywords !== '' ? " | Kalitlar: {$keywords}" : '')
+                . " | Javob: {$answer}";
+        })->implode("\n");
     }
 
 
@@ -587,7 +1124,8 @@ class AiService
     {
         $q = $this->cleanMessage($message);
 
-        $wantsCount = Str::contains($q, ['nechta', 'qancha', 'soni', 'statistika', 'jami', 'umumiy', 'ta', 'miqdor']);
+        $wantsCount = Str::contains($q, ['nechta', 'qancha', 'soni', 'statistika', 'jami', 'umumiy', 'miqdor'])
+            || preg_match('/\b\d+\s*ta\b/u', $q) === 1;
         $wantsGrowth = Str::contains($q, ['osish', 'o\'sish', 'kopay', 'ko\'pay', 'kamay', 'dinamika', 'taqqos', 'solishtir']);
         $wantsRanking = preg_match('/\b(eng kop|eng ko\'p|top|mashhur|popular|least|eng kam)\b/i', $q) === 1;
 
@@ -1242,6 +1780,14 @@ class AiService
         $phone       = SiteSetting::get('school_phone', '');
         $address     = SiteSetting::get('school_address', '');
         $email       = SiteSetting::get('school_email', '');
+        $credits = $this->siteCreditsPayload();
+        $siteCreditsList = collect($credits['members'])
+            ->map(fn ($member) => "- {$member['name']}".($member['date'] !== '' ? " ({$member['date']})" : ''))
+            ->implode("\n");
+        if ($siteCreditsList === '') {
+            $siteCreditsList = "- 10-E sinf o'quvchilari jamoasi";
+        }
+        $knowledgeSnippets = $this->knowledgeSnippetsForPrompt();
 
         // Maktab statistikasi
         $teacherCount = Teacher::where('is_active', true)->count();
@@ -1298,12 +1844,31 @@ Faol kurslar: {$courseCount} ta
 === MAVJud KURSLAR ===
 {$coursesList}
 
+=== SAYT MUALLIFLARI VA JAMOA ===
+{$credits['intro']}
+{$siteCreditsList}
+
+=== SAYT BO'LIMLARI ===
+- Yangiliklar: post va e'lonlar
+- Ustozlar: faol o'qituvchilar profillari
+- Kurslar: kurslar, arizalar va tasdiqlash jarayoni
+- Imtihonlar: testlar, natijalar, matnli javoblarni baholash
+- Taqvim: maktab tadbirlari
+- Aloqa: murojaatlar
+- Profil: foydalanuvchi ma'lumotlari, natijalar, kurs arizalari
+- Admin panel: content, inbox, ta'lim, foydalanuvchilar va sozlamalar
+
+=== ADMIN AI BILIM BAZASI ===
+{$knowledgeSnippets}
+
 === HOZIRGI VAQT ===
 Sana: {$now->format('d.m.Y')}, {$now->translatedFormat('l')}
 Vaqt: {$now->format('H:i')} (Toshkent vaqti){$userContext}
 
 === MUHIM ===
 - Maktab haqidagi savollarga yuqoridagi ma'lumotlardan foydalanib javob ber.
+- Sayt muallifi yoki kim ishtirok etgani so'ralsa, SAYT MUALLIFLARI VA JAMOA bo'limidagi ismlarni aniq ayt.
+- Admin AI bilim bazasidagi javob savolga mos kelsa, avvalo o'sha javobga tayan.
 - Umumiy bilim savollarga (masalan: "Pythagoras teoremasi?", "Suv formulasi?") — oddiy, tushunarli javob ber.
 - Siyosat, zararli kontent, noqonuniy narsalar haqida javob berma.
 - Javob 5-6 jumladan oshmasin (oddiy suhbat uchun).

@@ -887,6 +887,10 @@
         var aiDisabledText = document.getElementById('ai-disabled-panel-text');
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
 
+        function syncAiDockState() {
+          document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
+        }
+
         function resetAiComposeState() {
           isSending = false;
           if (sendBtn) {
@@ -907,6 +911,7 @@
         function closePanel() {
           resetAiComposeState();
           panel.classList.remove('is-open');
+          syncAiDockState();
         }
 
         function openPanel() {
@@ -914,6 +919,7 @@
             window.primeCloseGlobalChatPanel();
           }
           panel.classList.add('is-open');
+          syncAiDockState();
           if (!aiEnabled && aiDisabledPanel && aiPanelMain) {
             aiPanelMain.hidden = true;
             aiDisabledPanel.hidden = false;
@@ -968,17 +974,65 @@
           return head || '…';
         }
 
+        function escapeAiHtml(value) {
+          return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        function formatPlainMessageHtml(text) {
+          return escapeAiHtml(text).replace(/\n/g, '<br>');
+        }
+
+        function formatAiMessageHtml(text) {
+          var safe = escapeAiHtml(text).replace(/\r\n?/g, '\n');
+          safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong style="color:inherit;font-weight:700;">$1</strong>');
+
+          var lines = safe.split('\n');
+          var html = '';
+          var listItems = [];
+
+          function flushList() {
+            if (!listItems.length) return;
+            html += '<ul style="margin:8px 0 10px 18px;padding:0;">' + listItems.join('') + '</ul>';
+            listItems = [];
+          }
+
+          lines.forEach(function (rawLine) {
+            var line = rawLine.trim();
+
+            if (!line) {
+              flushList();
+              html += '<div style="height:8px;"></div>';
+              return;
+            }
+
+            if (/^(-|•)\s+/.test(line)) {
+              listItems.push('<li style="margin:0 0 6px 0;">' + line.replace(/^(-|•)\s+/, '') + '</li>');
+              return;
+            }
+
+            flushList();
+            html += '<div style="margin:0 0 6px 0;line-height:1.6;color:inherit;">' + line + '</div>';
+          });
+
+          flushList();
+
+          return html;
+        }
+
         function addMessage(text, isAi) {
           if (!text || !text.trim()) return;
           var el = document.createElement('div');
           el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
           
-          // Strip Markdown bold symbols if AI slips up
-          var cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-          
           var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
-          
-          el.innerHTML = avatarHtml + '<div class="chat-msg-content">' + cleanText.replace(/<[^>]+>/g, '') + '</div>';
+          var contentHtml = isAi ? formatAiMessageHtml(text) : formatPlainMessageHtml(text);
+
+          el.innerHTML = avatarHtml + '<div class="chat-msg-content">' + contentHtml + '</div>';
           messagesEl.appendChild(el);
           
           // Force a tiny reflow for animation

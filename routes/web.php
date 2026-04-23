@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminCalendarEventController;
+use App\Http\Controllers\AdminAiKnowledgeController;
 use App\Http\Controllers\AdminCommentController;
 use App\Http\Controllers\AdminContactMessageController;
 use App\Http\Controllers\AdminController;
@@ -136,6 +137,8 @@ Route::middleware('auth')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
+    // Backward-compatible alias for older links/bookmarks.
+    Route::get('profile/results/export', [ProfileController::class, 'exportResults']);
     Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
     Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');
     Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->name('profile.email.resend');
@@ -144,7 +147,12 @@ Route::middleware('auth')->group(function () {
     Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
     // Imtihon natijasini ko'rish (o'quvchi o'zini, o'qituvchi barchasini)
-    Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])->name('profile.exams.results.show');
+    Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])
+        ->whereNumber('result')
+        ->name('profile.exams.results.show');
+    // Export route is kept at auth-level; controller enforces permissions.
+    Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->name('profile.exams.results.export');
+    Route::get('profile/exams/result/export', [TeacherExamController::class, 'exportResults']);
 
     Route::middleware(['role:super_admin,admin,editor,moderator,teacher'])->group(function () {
         Route::get('profile/exams', [TeacherExamController::class, 'index'])->name('profile.exams.index');
@@ -162,8 +170,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('profile/exams/{exam}/questions/{question}', [TeacherExamController::class, 'questionDestroy'])->name('profile.exams.questions.destroy');
 
         Route::get('profile/exams/results', [TeacherExamController::class, 'results'])->name('profile.exams.results');
-        Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->name('profile.exams.results.export');
-        Route::post('profile/exams/results/{result}/grade/{answer}', [TeacherExamController::class, 'gradeTextAnswer'])->name('profile.exams.grade');
+        Route::post('profile/exams/results/{result}/grade/{answer}', [TeacherExamController::class, 'gradeTextAnswer'])
+            ->whereNumber('result')
+            ->whereNumber('answer')
+            ->name('profile.exams.grade');
     });
 
     Route::get('profile/kurs-arizalari', [TeacherEnrollmentController::class, 'index'])->name('teacher.enrollments.index');
@@ -263,9 +273,18 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
         Route::delete('exams/{exam}/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('admin.exams.questions.destroy');
         Route::get('exam-results', [AdminExamController::class, 'results'])->name('admin.exams.results');
         Route::get('exam-results/export', [AdminExamController::class, 'exportResults'])->name('admin.exams.results.export');
-        Route::get('exam-results/{result}', [AdminExamController::class, 'showResult'])->name('admin.exams.results.show');
-        Route::post('exam-results/{result}/grade/{answer}', [AdminExamController::class, 'gradeTextAnswer'])->name('admin.exams.results.grade');
-        Route::delete('exam-results/{result}', [AdminExamController::class, 'destroyResult'])->name('admin.exams.results.destroy');
+        // Backward-compatible alias for older links/bookmarks.
+        Route::get('exams/results/export', [AdminExamController::class, 'exportResults']);
+        Route::get('exam-results/{result}', [AdminExamController::class, 'showResult'])
+            ->whereNumber('result')
+            ->name('admin.exams.results.show');
+        Route::post('exam-results/{result}/grade/{answer}', [AdminExamController::class, 'gradeTextAnswer'])
+            ->whereNumber('result')
+            ->whereNumber('answer')
+            ->name('admin.exams.results.grade');
+        Route::delete('exam-results/{result}', [AdminExamController::class, 'destroyResult'])
+            ->whereNumber('result')
+            ->name('admin.exams.results.destroy');
     });
 
     Route::middleware('role:super_admin,admin')->group(function () {
@@ -286,6 +305,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 
     Route::middleware('role:super_admin')->group(function () {
+        Route::resource('ai-knowledges', AdminAiKnowledgeController::class)->except(['show']);
         Route::get('settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
         Route::put('settings', [AdminSettingsController::class, 'update'])->name('admin.settings.update');
     });

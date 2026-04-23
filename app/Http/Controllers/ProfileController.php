@@ -671,17 +671,21 @@ class ProfileController extends Controller
             ->latest('submitted_at')
             ->get();
 
-        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ];
 
         $callback = function () use ($results) {
             $out = fopen('php://output', 'w');
             fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana']);
+            fwrite($out, "sep=;\r\n");
+            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana'], ';', '"', '\\');
 
             foreach ($results as $r) {
                 fputcsv($out, [
@@ -693,7 +697,7 @@ class ProfileController extends Controller
                     $r->total_questions,
                     $r->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan',
                     $r->submitted_at?->format('d.m.Y H:i') ?? '-',
-                ]);
+                ], ';', '"', '\\');
             }
 
             fclose($out);

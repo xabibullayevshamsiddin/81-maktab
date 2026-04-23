@@ -194,6 +194,13 @@
             </li>
 
             @if($sidebarUser->isSuperAdmin())
+              <li class="nav-item {{ request()->routeIs('ai-knowledges.*') ? 'active' : '' }}">
+                <a href="{{ route('ai-knowledges.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI bilim bazasi</span>
+                </a>
+              </li>
+
               <li class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.settings.index') }}">
                   <span class="icon"><i class="mdi mdi-cog-outline"></i></span>
