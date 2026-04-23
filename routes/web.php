@@ -16,6 +16,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CourseEnrollmentController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\FeatureRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PostController;
@@ -91,6 +92,7 @@ Route::post('teacher/{teacher:slug}/like', [PublicTeacherController::class, 'tog
     ->middleware(['active'])
     ->name('teacher.like');
 Route::get('contact', [HomeController::class, 'contact'])->name('contact');
+Route::get('feature-requests', [FeatureRequestController::class, 'index'])->name('feature-requests.index');
 Route::post('contact', [HomeController::class, 'storeContact'])
     ->middleware('throttle:10,1')
     ->name('contact.store');
@@ -145,6 +147,14 @@ Route::middleware('auth')->group(function () {
     Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->name('profile.email.cancel');
     Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->name('profile.password.confirm');
     Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::post('feature-requests', [FeatureRequestController::class, 'store'])->name('feature-requests.store');
+    Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->name('feature-requests.vote');
+    Route::post('feature-requests/{featureRequest}/replies', [FeatureRequestController::class, 'storeReply'])
+        ->middleware('role:super_admin,admin,moderator')
+        ->name('feature-requests.replies.store');
+    Route::delete('feature-request-replies/{reply}', [FeatureRequestController::class, 'destroyReply'])
+        ->name('feature-requests.replies.destroy');
+    Route::delete('feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])->name('feature-requests.destroy');
 
     // Imtihon natijasini ko'rish (o'quvchi o'zini, o'qituvchi barchasini)
     Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])
@@ -202,6 +212,7 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::get('user', [AdminController::class, 'user'])->name('user');
     Route::put('user/{user}', [AdminController::class, 'updateUser'])->name('user.update');
     Route::delete('user/{user}', [AdminController::class, 'destroyUser'])->name('user.destroy');
+    Route::post('feature-requests/{featureRequest}/status', [FeatureRequestController::class, 'updateStatus'])->name('feature-requests.status');
     Route::post('user/{user}/password-reset', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
     Route::post('user/{user}/course-open/approve', [AdminController::class, 'approveCourseOpenRequest'])->name('user.course-open.approve');
     Route::post('user/{user}/course-open/reject', [AdminController::class, 'rejectCourseOpenRequest'])->name('user.course-open.reject');

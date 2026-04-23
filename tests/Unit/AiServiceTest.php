@@ -2,9 +2,11 @@
 
 namespace Tests\Unit;
 
+use App\Models\AiKnowledge;
 use App\Services\Ai\AiService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -13,6 +15,8 @@ class AiServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        AiKnowledge::flushColumnPresenceCache();
 
         if (! Schema::hasTable('site_settings')) {
             Schema::create('site_settings', function (Blueprint $table): void {
@@ -159,6 +163,83 @@ class AiServiceTest extends TestCase
         $this->assertContains('dashboard', $routes);
     }
 
+    public function test_knowledge_base_works_with_legacy_schema_without_synonyms_and_priority(): void
+    {
+        $this->recreateLegacyAiKnowledgeTable();
+
+        DB::table('ai_knowledges')->insert([
+            'question' => 'legacy schema test savol',
+            'question_en' => null,
+            'answer' => 'Legacy schema bilan ham AI knowledge ishlaydi.',
+            'answer_en' => null,
+            'keywords' => 'legacy, schema',
+            'category' => 'Test',
+            'is_active' => true,
+            'sort_order' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $service = new AiService();
+        $result = $service->generateResponse('legacy schema test savol');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('knowledge_base', $result['source']);
+        $this->assertStringContainsString('Legacy schema bilan ham AI knowledge ishlaydi.', $result['text']);
+    }
+
+    public function test_knowledge_snippets_for_prompt_work_with_legacy_schema(): void
+    {
+        $this->recreateLegacyAiKnowledgeTable();
+
+        DB::table('ai_knowledges')->insert([
+            'question' => 'prompt uchun eski schema',
+            'question_en' => null,
+            'answer' => 'Eski schema snippet',
+            'answer_en' => null,
+            'keywords' => 'prompt',
+            'category' => 'Prompt',
+            'is_active' => true,
+            'sort_order' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $service = new AiService();
+        $result = $this->invokePrivate($service, 'knowledgeSnippetsForPrompt');
+
+        $this->assertIsString($result);
+        $this->assertStringContainsString('prompt uchun eski schema', $result);
+        $this->assertStringContainsString('Eski schema snippet', $result);
+    }
+
+    public function test_prepare_conversation_context_enriches_follow_up_with_recent_topic(): void
+    {
+        $service = new AiService();
+
+        $context = $service->prepareConversationContext('u qaysi biri?', [
+            ['role' => 'user', 'text' => 'Qaysi kurslar bor?'],
+            ['role' => 'assistant', 'text' => 'Hozirgi faol kurslarimiz mavjud.', 'source' => 'dynamic_data'],
+        ]);
+
+        $this->assertSame('course', $context['recent_topic']);
+        $this->assertTrue($context['context_applied']);
+        $this->assertStringContainsString('kurs', $context['resolved_message']);
+    }
+
+    public function test_prepare_conversation_context_does_not_touch_simple_greeting(): void
+    {
+        $service = new AiService();
+
+        $context = $service->prepareConversationContext('salom', [
+            ['role' => 'user', 'text' => 'Qaysi kurslar bor?'],
+            ['role' => 'assistant', 'text' => 'Hozirgi faol kurslarimiz mavjud.', 'source' => 'dynamic_data'],
+        ]);
+
+        $this->assertSame('salom', $context['resolved_message']);
+        $this->assertFalse($context['context_applied']);
+    }
+
     private function invokePrivate(AiService $service, string $method, array $arguments = []): mixed
     {
         $caller = \Closure::bind(
@@ -176,5 +257,25 @@ class AiServiceTest extends TestCase
             static fn (array $action): ?string => $action['route'] ?? null,
             $actions
         )));
+    }
+
+    private function recreateLegacyAiKnowledgeTable(): void
+    {
+        Schema::dropIfExists('ai_knowledges');
+
+        Schema::create('ai_knowledges', function (Blueprint $table): void {
+            $table->id();
+            $table->string('question');
+            $table->string('question_en')->nullable();
+            $table->text('answer');
+            $table->text('answer_en')->nullable();
+            $table->text('keywords')->nullable();
+            $table->string('category')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->timestamps();
+        });
+
+        AiKnowledge::flushColumnPresenceCache();
     }
 }

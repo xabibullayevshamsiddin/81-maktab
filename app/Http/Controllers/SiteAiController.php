@@ -15,7 +15,10 @@ use Illuminate\Support\Str;
 
 class SiteAiController extends Controller
 {
+    private const CHAT_HISTORY_SESSION_KEY = 'ai_chat_history';
+    private const CHAT_HISTORY_MAX_ITEMS = 10;
     private const SUPPORT_WIZARD_SESSION_KEY = 'ai_support_wizard';
+    private const SUPPORT_WIZARD_TIMEOUT_MINUTES = 10;
 
     protected $aiService;
 
@@ -57,6 +60,11 @@ class SiteAiController extends Controller
             return $wizardResponse;
         }
 
+        $conversationContext = $this->aiService->prepareConversationContext(
+            $userMessage,
+            $this->getConversationHistory()
+        );
+
         $mockAllowed = config('ai.local_mock')
             && (
                 app()->environment('local')
@@ -75,7 +83,12 @@ class SiteAiController extends Controller
                     ? $this->decorateAiText($mock, $questionPart !== '' ? $questionPart : $userMessage)
                     : "Mock javob bo'sh. Ajratgichdan keyin javob matnini yozing.",
                 'source' => 'local_mock',
-                'actions' => $this->aiService->suggestActions($questionPart !== '' ? $questionPart : $userMessage, $user, 'local_mock'),
+                'actions' => $this->aiService->suggestActions(
+                    $questionPart !== '' ? $questionPart : $userMessage,
+                    $user,
+                    'local_mock',
+                    $conversationContext
+                ),
                 'feedback_enabled' => true,
                 'clarification_requested' => false,
                 'support_converted' => false,
@@ -85,7 +98,9 @@ class SiteAiController extends Controller
         }
 
         $normalizedMessage = mb_strtolower($userMessage);
-        $messageCacheKey = 'ai:answer:user:' . (int) $user->id . ':' . sha1($normalizedMessage);
+        $messageCacheKey = 'ai:answer:user:' . (int) $user->id . ':' . sha1(
+            $normalizedMessage.'|'.(string) ($conversationContext['fingerprint'] ?? '')
+        );
 
         if ($cached = Cache::get($messageCacheKey)) {
             $payload = is_array($cached)
@@ -96,7 +111,12 @@ class SiteAiController extends Controller
                     'source' => 'cache',
                 ];
 
-            $payload['actions'] = $payload['actions'] ?? $this->aiService->suggestActions($userMessage, $user, $payload['source'] ?? 'cache');
+            $payload['actions'] = $payload['actions'] ?? $this->aiService->suggestActions(
+                $userMessage,
+                $user,
+                $payload['source'] ?? 'cache',
+                $conversationContext
+            );
             $payload['feedback_enabled'] = (bool) ($payload['feedback_enabled'] ?? (($payload['source'] ?? '') !== 'clarification'));
             $payload['clarification_requested'] = (bool) ($payload['clarification_requested'] ?? (($payload['source'] ?? '') === 'clarification'));
             $payload['support_converted'] = (bool) ($payload['support_converted'] ?? false);
@@ -126,7 +146,7 @@ class SiteAiController extends Controller
             return $this->respondWithInteraction($user, $userMessage, $payload);
         }
 
-        $result = $this->aiService->generateResponse($userMessage, $user);
+        $result = $this->aiService->generateResponse($userMessage, $user, $conversationContext);
 
         if (! ($result['success'] ?? false)) {
             return response()->json([
@@ -139,10 +159,16 @@ class SiteAiController extends Controller
             'success' => true,
             'text' => $this->decorateAiText((string) $result['text'], $userMessage),
             'source' => $result['source'] ?? 'api',
-            'actions' => $result['actions'] ?? $this->aiService->suggestActions($userMessage, $user, $result['source'] ?? 'api'),
+            'actions' => $result['actions'] ?? $this->aiService->suggestActions(
+                $userMessage,
+                $user,
+                $result['source'] ?? 'api',
+                $conversationContext
+            ),
             'feedback_enabled' => ($result['source'] ?? '') !== 'clarification',
             'clarification_requested' => ($result['source'] ?? '') === 'clarification',
             'support_converted' => false,
+            'context_applied' => (bool) ($conversationContext['context_applied'] ?? false),
         ];
 
         Cache::put($messageCacheKey, $payload, now()->addMinutes(5));
@@ -179,6 +205,14 @@ class SiteAiController extends Controller
         $wizard = $request->session()->get(self::SUPPORT_WIZARD_SESSION_KEY);
 
         if (is_array($wizard)) {
+            $startedAt = (int) ($wizard['started_at'] ?? 0);
+            if ($startedAt > 0 && \Illuminate\Support\Carbon::createFromTimestamp($startedAt)->addMinutes(self::SUPPORT_WIZARD_TIMEOUT_MINUTES)->isPast()) {
+                $request->session()->forget(self::SUPPORT_WIZARD_SESSION_KEY);
+                $wizard = null;
+            }
+        }
+
+        if (is_array($wizard)) {
             return $this->continueSupportWizard($request, $message, $user, $wizard);
         }
 
@@ -208,7 +242,7 @@ class SiteAiController extends Controller
         return $this->respondWithInteraction($user, $message, $payload);
     }
 
-    private function continueSupportWizard(Request $request, string $message, $user, array $wizard): JsonResponse
+    private function continueSupportWizard(Request $request, string $message, $user, array $wizard): ?JsonResponse
     {
         $normalized = mb_strtolower(trim($message));
 
@@ -239,6 +273,12 @@ class SiteAiController extends Controller
             ];
 
             return $this->respondWithInteraction($user, $message, $payload);
+        }
+
+        if ($this->shouldInterruptSupportWizard($message, $wizard)) {
+            $request->session()->forget(self::SUPPORT_WIZARD_SESSION_KEY);
+
+            return null;
         }
 
         $draft = is_array($wizard['draft'] ?? null) ? $wizard['draft'] : [];
@@ -331,6 +371,42 @@ class SiteAiController extends Controller
         ]);
     }
 
+    private function shouldInterruptSupportWizard(string $message, array $wizard): bool
+    {
+        $normalized = Str::lower(Str::squish($message));
+        if ($normalized === '') {
+            return false;
+        }
+
+        $step = (string) ($wizard['step'] ?? '');
+        $questionWords = ['bugun', 'ertaga', 'qanday', 'qaysi', 'qachon', 'nima', 'nega', 'kim', 'qancha'];
+        $supportWords = ['muammo', 'xato', 'ishlamayap', 'ochilmayap', 'bug', 'nosoz', 'kirolmay', 'parol', 'akkaunt'];
+
+        $hasQuestionTone = Str::contains($normalized, '?') || Str::contains($normalized, $questionWords);
+        $hasSupportTone = Str::contains($normalized, $supportWords);
+        $wordCount = count(array_filter(explode(' ', $normalized)));
+
+        if ($step === 'issue_type') {
+            $allowedAnswers = ['texnik xato', 'kurs', 'imtihon', 'akkaunt', 'boshqa'];
+
+            return ! in_array($normalized, $allowedAnswers, true)
+                && ($hasQuestionTone || $wordCount >= 3);
+        }
+
+        if ($step === 'page') {
+            $allowedAnswers = ['kurslar', 'imtihonlar', 'profil', 'aloqa', 'boshqa sahifa'];
+
+            return ! in_array($normalized, $allowedAnswers, true)
+                && ($hasQuestionTone || $wordCount >= 4);
+        }
+
+        if ($step === 'details') {
+            return $hasQuestionTone && ! $hasSupportTone;
+        }
+
+        return false;
+    }
+
     private function supportWizardReplyActions(string $step): array
     {
         return match ($step) {
@@ -374,11 +450,73 @@ class SiteAiController extends Controller
     private function respondWithInteraction($user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): JsonResponse
     {
         $interaction = $this->storeInteraction($user, $question, $payload, $contactMessage, $extraMeta);
+        $this->rememberConversationTurn($question, $payload);
 
         $payload['interaction_id'] = $interaction?->id;
         $payload['actions'] = array_values($payload['actions'] ?? []);
 
         return response()->json($payload);
+    }
+
+    private function getConversationHistory(): array
+    {
+        $history = session()->get(self::CHAT_HISTORY_SESSION_KEY, []);
+
+        if (! is_array($history)) {
+            return [];
+        }
+
+        return collect($history)
+            ->map(function ($item): ?array {
+                if (! is_array($item)) {
+                    return null;
+                }
+
+                $text = trim((string) ($item['text'] ?? ''));
+                if ($text === '') {
+                    return null;
+                }
+
+                return [
+                    'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
+                    'text' => Str::limit($text, 500, ''),
+                    'source' => trim((string) ($item['source'] ?? '')),
+                ];
+            })
+            ->filter()
+            ->take(-self::CHAT_HISTORY_MAX_ITEMS)
+            ->values()
+            ->all();
+    }
+
+    private function rememberConversationTurn(string $question, array $payload): void
+    {
+        $source = (string) ($payload['source'] ?? '');
+
+        if (Str::startsWith($source, 'support_wizard')) {
+            return;
+        }
+
+        $history = $this->getConversationHistory();
+        $history[] = [
+            'role' => 'user',
+            'text' => Str::limit(sanitize_plain_text($question), 500, ''),
+            'source' => 'user',
+        ];
+
+        $responseText = trim((string) ($payload['text'] ?? ''));
+        if ($responseText !== '') {
+            $history[] = [
+                'role' => 'assistant',
+                'text' => Str::limit(sanitize_plain_text($responseText), 700, ''),
+                'source' => $source,
+            ];
+        }
+
+        session()->put(
+            self::CHAT_HISTORY_SESSION_KEY,
+            array_slice($history, -self::CHAT_HISTORY_MAX_ITEMS)
+        );
     }
 
     private function storeInteraction($user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): ?AiInteraction

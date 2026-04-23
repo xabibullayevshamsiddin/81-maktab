@@ -201,6 +201,10 @@
                         <i class="fa-solid fa-user"></i>
                         {{ __('public.layout.menu.profile') }}
                       </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        Takliflar
+                      </a>
                       @if($canCreateCourse)
                         <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
                           <i class="fa-solid fa-book-open"></i>
@@ -282,6 +286,7 @@
 	                <div class="mobile-nav-actions mobile-nav-actions--auth">
 	                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
 	                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">Takliflar</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
@@ -391,6 +396,7 @@
           <ul class="footer-links">
             <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
             <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+            <li><a href="{{ route('feature-requests.index') }}">Takliflar</a></li>
             @auth
               <li><a href="{{ route('exam.index') }}">{{ __('public.layout.menu.exams') }}</a></li>
             @else
@@ -840,7 +846,7 @@
         </div>
 
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
-          <button type="button" class="ai-action-btn" data-msg="Bugun qanday darslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Darslar 🗓️</button>
+          <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Kurslar 📚</button>
           <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Natijalarim 📝</button>
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Aloqa 📞</button>
         </div>
@@ -1209,7 +1215,10 @@
               data.error = data.error || "AI vaqtincha o'chirilgan.";
               addMessage(data.error || 'AI vaqtincha o‘chirilgan.', true);
             } else {
-              addMessage((data && data.error) || "Xatolik yuz berdi.", true, null);
+              var backendError = (data && (data.error || data.message))
+                || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
+                || "Xatolik yuz berdi.";
+              addMessage(backendError, true, null);
             }
           })
           .catch(function(err) {

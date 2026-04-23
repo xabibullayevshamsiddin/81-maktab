@@ -26,9 +26,10 @@ class AiService
     /**
      * Main entry point for generating a response.
      */
-    public function generateResponse(string $userMessage, ?object $user = null): array
+    public function generateResponse(string $userMessage, ?object $user = null, array $conversationContext = []): array
     {
-        $message = trim($userMessage);
+        $conversationContext = $this->finalizeConversationContext($userMessage, $conversationContext);
+        $message = trim((string) ($conversationContext['resolved_message'] ?? $userMessage));
 
         // 0. Smart analytics (intent-based, not keyword-locked)
         if ($analytics = $this->matchAnalyticalData($message)) {
@@ -105,12 +106,14 @@ class AiService
         }
 
         // 5. Fallback to Gemini API
-        return $this->callGemini($message, $user);
+        return $this->callGemini($userMessage, $user, $conversationContext);
     }
 
-    public function suggestActions(string $message, ?object $user = null, ?string $source = null): array
+    public function suggestActions(string $message, ?object $user = null, ?string $source = null, array $conversationContext = []): array
     {
-        $q = $this->normalizeSearchText($message);
+        $conversationContext = $this->finalizeConversationContext($message, $conversationContext);
+        $effectiveMessage = (string) ($conversationContext['resolved_message'] ?? $message);
+        $q = $this->normalizeSearchText($effectiveMessage);
         $actions = [];
 
         if ($source === 'clarification') {
@@ -174,6 +177,168 @@ class AiService
     public function normalizeQuestionForAnalytics(string $message): string
     {
         return Str::limit($this->normalizeSearchText($message), 255, '');
+    }
+
+    public function prepareConversationContext(string $userMessage, array $history = []): array
+    {
+        $history = $this->sanitizeConversationHistory($history);
+        $recentTopic = $this->recentConversationTopic($history);
+        $resolvedMessage = trim($userMessage);
+        $contextApplied = false;
+
+        if ($recentTopic !== null && $this->shouldUseConversationContext($userMessage, $recentTopic)) {
+            $resolvedMessage = $this->enrichMessageWithConversationTopic($resolvedMessage, $recentTopic);
+            $contextApplied = $resolvedMessage !== trim($userMessage);
+        }
+
+        return [
+            'history' => $history,
+            'recent_topic' => $recentTopic,
+            'resolved_message' => $resolvedMessage,
+            'context_applied' => $contextApplied,
+            'fingerprint' => sha1(json_encode($history, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]'),
+        ];
+    }
+
+    private function finalizeConversationContext(string $userMessage, array $conversationContext = []): array
+    {
+        if (array_key_exists('resolved_message', $conversationContext) && array_key_exists('history', $conversationContext)) {
+            return $conversationContext + [
+                'recent_topic' => $conversationContext['recent_topic'] ?? $this->recentConversationTopic($conversationContext['history'] ?? []),
+                'context_applied' => (bool) ($conversationContext['context_applied'] ?? false),
+                'fingerprint' => (string) ($conversationContext['fingerprint'] ?? sha1('[]')),
+            ];
+        }
+
+        return $this->prepareConversationContext($userMessage, $conversationContext);
+    }
+
+    private function sanitizeConversationHistory(array $history): array
+    {
+        return collect($history)
+            ->map(function ($item): ?array {
+                if (! is_array($item)) {
+                    return null;
+                }
+
+                $text = trim((string) ($item['text'] ?? ''));
+                if ($text === '') {
+                    return null;
+                }
+
+                return [
+                    'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
+                    'text' => Str::limit($text, 500, ''),
+                    'source' => trim((string) ($item['source'] ?? '')),
+                ];
+            })
+            ->filter()
+            ->take(-6)
+            ->values()
+            ->all();
+    }
+
+    private function recentConversationTopic(array $history): ?string
+    {
+        foreach (array_reverse($history) as $item) {
+            $topic = $this->detectConversationTopic(
+                (string) ($item['text'] ?? ''),
+                (string) ($item['source'] ?? '')
+            );
+
+            if ($topic !== null) {
+                return $topic;
+            }
+        }
+
+        return null;
+    }
+
+    private function detectConversationTopic(string $text, string $source = ''): ?string
+    {
+        $q = $this->normalizeSearchText($text);
+
+        if ($q === '') {
+            return null;
+        }
+
+        if ($source !== '') {
+            if (Str::startsWith($source, 'support_wizard') || $source === 'support_contact') {
+                return 'contact';
+            }
+
+            if ($source === 'calendar_data') {
+                return 'calendar';
+            }
+        }
+
+        return match (true) {
+            Str::contains($q, ['kurs', 'yozil', 'ariza', 'enroll']) => 'course',
+            Str::contains($q, ['imtihon', 'natija', 'ball', 'baho', 'topshir']) => 'exam',
+            Str::contains($q, ['ustoz', "o'qituvchi", 'teacher', 'domla', 'muallim']) => 'teacher',
+            Str::contains($q, ['aloqa', 'murojaat', 'muammo', 'support', 'shikoyat']) => 'contact',
+            Str::contains($q, ['taqvim', 'tadbir', 'sanada', 'hafta', 'calendar']) => 'calendar',
+            Str::contains($q, ['profil', 'akkaunt']) => 'profile',
+            Str::contains($q, ['admin', 'panel', 'dashboard']) => 'admin',
+            default => null,
+        };
+    }
+
+    private function shouldUseConversationContext(string $message, string $recentTopic): bool
+    {
+        if ($recentTopic === '') {
+            return false;
+        }
+
+        if ($this->detectConversationTopic($message) !== null) {
+            return false;
+        }
+
+        $q = $this->normalizeSearchText($message);
+        if ($q === '') {
+            return false;
+        }
+
+        if ($this->containsNormalizedPhrase($q, [
+            'salom', 'assalomu alaykum', 'rahmat', 'ok', 'xo\'p', 'hop', 'bekor', 'cancel',
+        ])) {
+            return false;
+        }
+
+        if ($this->containsNormalizedPhrase($q, [
+            'o\'sha', 'osha', 'shu', 'u qaysi', 'qaysi biri', 'o\'shani', 'oshani', 'yana',
+        ])) {
+            return true;
+        }
+
+        if (preg_match('/\b[\p{L}\p{N}\']+chi\b/u', $q) === 1) {
+            return true;
+        }
+
+        $tokens = preg_split('/\s+/u', $q) ?: [];
+        $meaningfulTokens = $this->meaningfulTokens($q);
+
+        return count($tokens) <= 4 && count($meaningfulTokens) <= 1;
+    }
+
+    private function enrichMessageWithConversationTopic(string $message, string $recentTopic): string
+    {
+        $suffix = match ($recentTopic) {
+            'course' => 'kurslar kurs ariza yozilish',
+            'exam' => 'imtihon natija ball',
+            'teacher' => "ustoz o'qituvchi",
+            'contact' => 'aloqa murojaat muammo',
+            'calendar' => 'taqvim tadbir',
+            'profile' => 'profil akkaunt',
+            'admin' => 'admin panel',
+            default => '',
+        };
+
+        if ($suffix === '') {
+            return trim($message);
+        }
+
+        return Str::limit(Str::squish(trim($message.' '.$suffix)), 500, '');
     }
 
     /**
@@ -1219,20 +1384,40 @@ class AiService
             return null;
         }
 
+        $searchColumns = AiKnowledge::availableColumns([
+            'question',
+            'question_en',
+            'keywords',
+            'synonyms',
+            'category',
+        ]);
+        $selectColumns = AiKnowledge::availableColumns([
+            'question',
+            'question_en',
+            'answer',
+            'answer_en',
+            'keywords',
+            'synonyms',
+            'category',
+            'priority',
+        ]);
+
+        if (! in_array('question', $searchColumns, true) || ! in_array('answer', $selectColumns, true)) {
+            return null;
+        }
+
         $rows = AiKnowledge::query()
             ->active()
-            ->where(function ($query) use ($tokens): void {
+            ->where(function ($query) use ($tokens, $searchColumns): void {
                 foreach ($tokens as $token) {
-                    $query->orWhere('question', 'like', '%'.$token.'%')
-                        ->orWhere('question_en', 'like', '%'.$token.'%')
-                        ->orWhere('keywords', 'like', '%'.$token.'%')
-                        ->orWhere('synonyms', 'like', '%'.$token.'%')
-                        ->orWhere('category', 'like', '%'.$token.'%');
+                    foreach ($searchColumns as $column) {
+                        $query->orWhere($column, 'like', '%'.$token.'%');
+                    }
                 }
             })
             ->orderedForMatching()
             ->limit(80)
-            ->get(['question', 'question_en', 'answer', 'answer_en', 'keywords', 'synonyms', 'category', 'priority']);
+            ->get($selectColumns);
 
         if ($rows->isEmpty()) {
             return null;
@@ -1242,7 +1427,13 @@ class AiService
         $bestScore = 0;
 
         foreach ($rows as $row) {
-            $candidateText = trim((string) $row->question.' '.(string) $row->question_en.' '.(string) $row->keywords.' '.(string) $row->synonyms.' '.(string) $row->category);
+            $questionEn = in_array('question_en', $selectColumns, true) ? (string) $row->question_en : '';
+            $keywords = in_array('keywords', $selectColumns, true) ? (string) $row->keywords : '';
+            $synonyms = in_array('synonyms', $selectColumns, true) ? (string) $row->synonyms : '';
+            $category = in_array('category', $selectColumns, true) ? (string) $row->category : '';
+            $priority = in_array('priority', $selectColumns, true) ? (int) $row->priority : 0;
+
+            $candidateText = trim((string) $row->question.' '.$questionEn.' '.$keywords.' '.$synonyms.' '.$category);
             $candidateTokens = $this->meaningfulTokens($candidateText);
             $sharedTokens = $this->sharedTokenCount($tokens, $candidateTokens);
 
@@ -1254,17 +1445,17 @@ class AiService
                 continue;
             }
 
-            $questionScore = $this->textMatchScore($q, (string) $row->question.' '.(string) $row->question_en);
-            $keywordScore = $this->textMatchScore($q, (string) $row->keywords);
-            $synonymScore = $this->textMatchScore($q, (string) $row->synonyms);
-            $categoryScore = $this->textMatchScore($q, (string) $row->category);
+            $questionScore = $this->textMatchScore($q, (string) $row->question.' '.$questionEn);
+            $keywordScore = $this->textMatchScore($q, $keywords);
+            $synonymScore = $this->textMatchScore($q, $synonyms);
+            $categoryScore = $this->textMatchScore($q, $category);
             $score = max($questionScore, min(100, $keywordScore + 12), min(100, $synonymScore + 18), $categoryScore);
 
             if ($sharedTokens > 0) {
                 $score = min(100, $score + min(12, $sharedTokens * 4));
             }
 
-            $score = min(100, $score + max(0, (int) $row->priority));
+            $score = min(100, $score + max(0, $priority));
 
             if ($score > $bestScore) {
                 $bestScore = $score;
@@ -1282,7 +1473,9 @@ class AiService
             return null;
         }
 
-        $category = trim((string) $best->category);
+        $category = in_array('category', $selectColumns, true)
+            ? trim((string) $best->category)
+            : '';
         $prefix = $category !== '' ? "**{$category}:**\n" : '';
 
         return $prefix.$answer;
@@ -1506,27 +1699,41 @@ class AiService
             return "Bilim bazasi jadvali hali mavjud emas.";
         }
 
+        $selectColumns = AiKnowledge::availableColumns([
+            'question',
+            'answer',
+            'keywords',
+            'synonyms',
+            'category',
+            'priority',
+        ]);
+
+        if (! in_array('question', $selectColumns, true) || ! in_array('answer', $selectColumns, true)) {
+            return "Bilim bazasi eski schema bilan ishlayapti. Qo'shimcha AI maydonlari hali migratsiya qilinmagan.";
+        }
+
         $rows = AiKnowledge::query()
             ->active()
             ->orderedForMatching()
             ->take(12)
-            ->get(['question', 'answer', 'keywords', 'synonyms', 'category', 'priority']);
+            ->get($selectColumns);
 
         if ($rows->isEmpty()) {
             return "Admin tomonidan kiritilgan maxsus savol-javoblar hali yo'q.";
         }
 
-        return $rows->map(function ($row): string {
-            $category = trim((string) $row->category);
-            $keywords = trim((string) $row->keywords);
-            $synonyms = trim((string) $row->synonyms);
+        return $rows->map(function ($row) use ($selectColumns): string {
+            $category = in_array('category', $selectColumns, true) ? trim((string) $row->category) : '';
+            $keywords = in_array('keywords', $selectColumns, true) ? trim((string) $row->keywords) : '';
+            $synonyms = in_array('synonyms', $selectColumns, true) ? trim((string) $row->synonyms) : '';
+            $priority = in_array('priority', $selectColumns, true) ? (int) $row->priority : 0;
             $answer = Str::limit(trim(preg_replace('/\s+/u', ' ', (string) $row->answer) ?? ''), 220);
 
             return "- ".($category !== '' ? "[{$category}] " : '')
                 . "Savol: {$row->question}"
                 . ($keywords !== '' ? " | Kalitlar: {$keywords}" : '')
                 . ($synonyms !== '' ? " | Sinonimlar: {$synonyms}" : '')
-                . ((int) $row->priority !== 0 ? " | Priority: {$row->priority}" : '')
+                . ($priority !== 0 ? " | Priority: {$priority}" : '')
                 . " | Javob: {$answer}";
         })->implode("\n");
     }
@@ -2065,6 +2272,10 @@ class AiService
     {
         $q = $this->normalizeSearchText($message);
 
+        if ($courseByTitle = $this->matchPublishedCourseByTitle($message)) {
+            return $courseByTitle;
+        }
+
         if (! Str::contains($q, ['kurs', 'enroll', 'yozil', 'ariza', 'teacher kurs', 'ustoz kurs'])) {
             return null;
         }
@@ -2149,6 +2360,71 @@ class AiService
         }
 
         return null;
+    }
+
+    private function matchPublishedCourseByTitle(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+        if ($q === '' || mb_strlen($q) < 3) {
+            return null;
+        }
+
+        $genericTokens = [
+            'kurs', 'kurslar', 'kusr', 'kusrlar', 'dars', "o'quv", 'oqish', 'fan',
+            'fanlar', 'royxat', "ro'yxat", 'qaysi', 'nima', 'bor',
+        ];
+
+        $tokens = array_values(array_filter(
+            array_slice($this->meaningfulTokens($q), 0, 6),
+            fn (string $token): bool => ! in_array($token, $genericTokens, true) && mb_strlen($token) >= 3
+        ));
+
+        if ($tokens === [] && mb_strlen($q) < 5) {
+            return null;
+        }
+
+        $candidates = Course::query()
+            ->where('status', Course::STATUS_PUBLISHED)
+            ->with('teacher:id,full_name')
+            ->where(function ($query) use ($q, $tokens): void {
+                $query->whereRaw('LOWER(title) LIKE ?', ['%'.$q.'%']);
+                foreach ($tokens as $token) {
+                    $query->orWhereRaw('LOWER(title) LIKE ?', ['%'.$token.'%']);
+                }
+            })
+            ->latest('id')
+            ->take(10)
+            ->get();
+
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        $contentWords = $this->meaningfulTokens($q);
+        $best = $candidates
+            ->map(function (Course $course) use ($q, $contentWords): array {
+                $title = $this->normalizeSearchText((string) $course->title);
+                $score = $this->teacherNameMatchScore($q, $title, $contentWords);
+                if (Str::contains($title, $q) || Str::contains($q, $title)) {
+                    $score += 25;
+                }
+
+                return ['course' => $course, 'score' => min(100, $score)];
+            })
+            ->sortByDesc('score')
+            ->first();
+
+        if (! $best || ($best['score'] ?? 0) < 58) {
+            return null;
+        }
+
+        /** @var Course $course */
+        $course = $best['course'];
+        $teacher = $course->teacher?->full_name ? "Ustoz: **{$course->teacher->full_name}**\n" : '';
+
+        return "Topildi: **{$course->title}**\n"
+            . $teacher
+            . "Kurs haqida batafsil ma'lumotni **Kurslar** bo'limida ko'rishingiz mumkin.";
     }
 
     /**
@@ -2518,8 +2794,10 @@ class AiService
     /**
      * Gemini API call with retry and fallback logic.
      */
-    private function callGemini(string $message, ?object $user): array
+    private function callGemini(string $message, ?object $user, array $conversationContext = []): array
     {
+        $conversationContext = $this->finalizeConversationContext($message, $conversationContext);
+        $resolvedMessage = (string) ($conversationContext['resolved_message'] ?? $message);
         $apiKey = (string) config('services.gemini.key');
         $model = (string) config('services.gemini.model', 'gemini-1.5-flash');
 
@@ -2547,7 +2825,26 @@ class AiService
         }
 
         $systemInstruction = $this->buildSystemInstruction($user);
-        $contents = [['role' => 'user', 'parts' => [['text' => $message]]]];
+        $contents = [];
+
+        foreach (array_slice($conversationContext['history'] ?? [], -6) as $item) {
+            $text = trim((string) ($item['text'] ?? ''));
+            if ($text === '') {
+                continue;
+            }
+
+            $contents[] = [
+                'role' => ($item['role'] ?? 'user') === 'assistant' ? 'model' : 'user',
+                'parts' => [['text' => $text]],
+            ];
+        }
+
+        $currentPrompt = $message;
+        if (($conversationContext['context_applied'] ?? false) && $resolvedMessage !== trim($message)) {
+            $currentPrompt = "Joriy savol: {$message}\nKontekst bo'yicha izohlangan savol: {$resolvedMessage}";
+        }
+
+        $contents[] = ['role' => 'user', 'parts' => [['text' => $currentPrompt]]];
 
         $maxRetries = 2;
         $retryCount = 0;
@@ -2580,7 +2877,7 @@ class AiService
         }
 
         // Ultimate Fallback: Smart local response if Gemini fails
-        $localFallback = $this->matchDynamicData($message, $user);
+        $localFallback = $this->matchDynamicData($resolvedMessage, $user);
         
         if ($localFallback) {
             return ['success' => true, 'text' => $localFallback, 'source' => 'local_fallback'];

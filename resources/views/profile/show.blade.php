@@ -324,6 +324,22 @@
             </div>
           </section>
 
+          <section class="profile-activity-block reveal">
+            <div class="profile-block-head">
+              <div class="profile-block-copy">
+                <h3><i class="fa-solid fa-lightbulb"></i> Taklif va ovoz berish</h3>
+                <p>Yangi funksiya bo'yicha taklif qoldiring va boshqa foydalanuvchilarning takliflariga ovoz bering.</p>
+              </div>
+              <span class="profile-section-count">Feature</span>
+            </div>
+
+            <div class="profile-actions-row">
+              <a href="{{ route('feature-requests.index') }}" class="btn btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Takliflar sahifasi
+              </a>
+            </div>
+          </section>
+
           @if(($examResults ?? collect())->isNotEmpty())
             @php
               $erTotal = $examResults->count();

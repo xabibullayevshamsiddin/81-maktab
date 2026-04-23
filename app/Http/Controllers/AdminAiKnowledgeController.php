@@ -15,21 +15,26 @@ class AdminAiKnowledgeController extends Controller
     public function index(Request $request): View
     {
         $q = trim((string) $request->query('q', ''));
+        $searchColumns = AiKnowledge::availableColumns([
+            'question',
+            'question_en',
+            'answer',
+            'answer_en',
+            'keywords',
+            'synonyms',
+            'category',
+        ]);
 
         $knowledges = AiKnowledge::query()
-            ->when($q !== '', function ($query) use ($q): void {
-                $query->where(function ($w) use ($q): void {
-                    $w->where('question', 'like', '%'.$q.'%')
-                        ->orWhere('question_en', 'like', '%'.$q.'%')
-                        ->orWhere('answer', 'like', '%'.$q.'%')
-                        ->orWhere('answer_en', 'like', '%'.$q.'%')
-                        ->orWhere('keywords', 'like', '%'.$q.'%')
-                        ->orWhere('synonyms', 'like', '%'.$q.'%')
-                        ->orWhere('category', 'like', '%'.$q.'%');
+            ->when($q !== '' && $searchColumns !== [], function ($query) use ($q, $searchColumns): void {
+                $query->where(function ($w) use ($q, $searchColumns): void {
+                    foreach ($searchColumns as $column) {
+                        $w->orWhere($column, 'like', '%'.$q.'%');
+                    }
                 });
             })
-            ->orderByDesc('priority')
-            ->orderBy('sort_order')
+            ->when(AiKnowledge::hasDatabaseColumn('priority'), fn ($query) => $query->orderByDesc('priority'))
+            ->when(AiKnowledge::hasDatabaseColumn('sort_order'), fn ($query) => $query->orderBy('sort_order'))
             ->latest('id')
             ->paginate(20)
             ->withQueryString();
@@ -143,6 +148,8 @@ class AdminAiKnowledgeController extends Controller
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
         $validated['is_active'] = $request->boolean('is_active');
 
-        return $validated;
+        $allowedColumns = array_flip(AiKnowledge::availableColumns(array_keys($validated)));
+
+        return array_intersect_key($validated, $allowedColumns);
     }
 }
