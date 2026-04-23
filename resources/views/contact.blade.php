@@ -5,9 +5,9 @@
           <span class="badge">81-IDUM Aloqa</span>
           <h1 class="js-split-text">Biz bilan <strong>bog'laning</strong></h1>
           <p>
-            Savolingiz, taklifingiz yoki murojaatingiz bo'lsa, quyidagi forma orqali bizga yozing.
-            Parolni tiklash yoki maktabga oid boshqa masalalarda ham shu yerda murojaat qoldirishingiz mumkin.
-            Tez orada siz bilan bog'lanamiz.
+            Savolingiz, taklifingiz yoki texnik muammo bo'lsa, quyidagi forma orqali rasmiy murojaat qoldiring.
+            Bu sahifa to'g'ridan-to'g'ri admin chat emas: yuborilgan murojaat ichki tartibda tegishli mas'ul xodimga yetkaziladi.
+            Zarur bo'lsa siz bilan aloqa ma'lumotlaringiz orqali bog'laniladi.
           </p>
           <a href="#contact-main" class="btn btn-prime" style="margin-top:30px;"
             >Xabar yuborish
@@ -72,13 +72,13 @@
           <div class="contact-form-wrap prime-reveal">
             @auth
               <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;">
-                <h2 style="margin:0;">Xabar yuborish</h2>
+                <h2 style="margin:0;">Rasmiy Murojaat</h2>
                 <x-site-rule-items area="contact" />
               </div>
 
               <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; margin-bottom:20px; border:1px solid #e2e8f0; font-size:14px; color:#475569;">
                   <i class="fa-solid fa-user-check" style="margin-right:6px; color:var(--primary);"></i>
-                  Murojaat quyidagi ma'lumotlar bilan yuboriladi: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->phone }})
+                  Murojaat quyidagi ma'lumotlar bilan yuboriladi: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->phone }}). Xabar ichki tartibda ko'rib chiqiladi va zarur bo'lsa mas'ul xodim sizga javob beradi.
               </div>
 
               <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
@@ -86,7 +86,7 @@
                 <textarea
                   id="shikoyat"
                   name="note"
-                  placeholder="Murojaat mavzusi (masalan: Parolni tiklash, Shikoyat, Taklif)"
+                  placeholder="Murojaat mavzusi (masalan: Texnik muammo, Parolni tiklash, Taklif)"
                   rows="2"
                   required
                 >{{ old('note') }}</textarea>

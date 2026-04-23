@@ -54,9 +54,18 @@
                   <input type="text" class="form-control" name="keywords" value="{{ old('keywords') }}" placeholder="maktab, ochilish, sana">
                   <small class="text-muted">Foydalanuvchi xabarida shu so'zlar bo'lsa, ushbu javob qaytariladi.</small>
                 </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Sinonimlar (vergul bilan)</label>
+                  <input type="text" class="form-control" name="synonyms" value="{{ old('synonyms') }}" placeholder="yozilish, enroll, ariza berish">
+                  <small class="text-muted">Bir xil ma'nodagi iboralar matching sifatini oshiradi.</small>
+                </div>
                 <div class="col-md-3 mb-3">
                   <label class="form-label">Kategoriya</label>
                   <input type="text" class="form-control" name="category" value="{{ old('category', 'Umumiy') }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Priority</label>
+                  <input type="number" class="form-control" name="priority" value="{{ old('priority', 0) }}">
                 </div>
                 <div class="col-md-3 mb-3">
                   <label class="form-label">Tartib</label>

@@ -75,6 +75,10 @@ class AiService
             return ['success' => true, 'text' => $supportContact, 'source' => 'support_contact'];
         }
 
+        if ($localUtility = $this->matchLocalUtility($message)) {
+            return ['success' => true, 'text' => $localUtility, 'source' => 'local_utility'];
+        }
+
         // 1. Try Local Machine/Static Knowledge (Greetings, Persona)
         if ($static = $this->matchStaticKnowledge($message)) {
             return ['success' => true, 'text' => $static, 'source' => 'static_knowledge'];
@@ -95,8 +99,81 @@ class AiService
             return ['success' => true, 'text' => $dynamic, 'source' => 'dynamic_data'];
         }
 
+        // 4.5 Ask for clarification before falling back to a broad answer.
+        if ($clarification = $this->matchClarificationFallback($message)) {
+            return ['success' => true, 'text' => $clarification, 'source' => 'clarification'];
+        }
+
         // 5. Fallback to Gemini API
         return $this->callGemini($message, $user);
+    }
+
+    public function suggestActions(string $message, ?object $user = null, ?string $source = null): array
+    {
+        $q = $this->normalizeSearchText($message);
+        $actions = [];
+
+        if ($source === 'clarification') {
+            return $this->clarificationReplyActions();
+        }
+
+        if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            $actions[] = $this->makeLinkAction('Admin panel', route('dashboard'), 'dashboard');
+        }
+
+        if ($user && method_exists($user, 'canManageExams') && $user->canManageExams()) {
+            if (Str::contains($q, ['imtihon', 'savol', 'natija', 'bahola', 'ball'])) {
+                $actions[] = $this->makeLinkAction('Imtihonlarim', route('profile.exams.index'), 'profile.exams.index');
+                $actions[] = $this->makeLinkAction('Natijalar', route('profile.exams.results'), 'profile.exams.results');
+            }
+        } elseif ($user && Str::contains($q, ['natija', 'imtihon', 'ball'])) {
+            $actions[] = $this->makeLinkAction('Natijalarim', route('profile.show').'#exam-results-section', 'profile.show');
+        }
+
+        if (Str::contains($q, ['kurs', 'yozil', 'ariza', 'enroll'])) {
+            $actions[] = $this->makeLinkAction('Kurslar', route('courses'), 'courses');
+            if ($user) {
+                $actions[] = $this->makeLinkAction('Profil', route('profile.show'), 'profile.show');
+            }
+        }
+
+        if (Str::contains($q, ['murojaat', 'muammo', 'shikoyat', 'aloqa', 'support', 'bug', 'xato'])) {
+            $actions[] = $this->makeLinkAction('Aloqa', route('contact'), 'contact');
+            $actions[] = $this->makeReplyAction('Muammo bor', 'Muammo bor');
+        }
+
+        if ($user && method_exists($user, 'isTeacher') && $user->isTeacher()) {
+            if (Str::contains($q, ['imtihon yarat', 'savol qo', 'kurs och'])) {
+                if ($user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
+                    $actions[] = $this->makeLinkAction('Kurs ochish', route('teacher.courses.create'), 'teacher.courses.create');
+                } else {
+                    $actions[] = $this->makeLinkAction('Profil', route('profile.show').'#course-open-request', 'profile.show');
+                }
+
+                $actions[] = $this->makeLinkAction('Yangi imtihon', route('profile.exams.create'), 'profile.exams.create');
+            }
+        }
+
+        if ($source === 'site_guide' && $user) {
+            $actions = array_merge($actions, $this->roleEntryActions($user));
+        }
+
+        return $this->uniqueActions($actions);
+    }
+
+    public function shouldStartSupportWizard(string $message): bool
+    {
+        $q = $this->normalizeSearchText($message);
+
+        return Str::contains($q, [
+            'muammo bor', 'xato chiq', 'ishlamayap', 'ishga tushmayap', 'bug',
+            'shikoyat', 'murojaat qilmoq', 'texnik muammo', 'problem', 'nosozlik',
+        ]);
+    }
+
+    public function normalizeQuestionForAnalytics(string $message): string
+    {
+        return Str::limit($this->normalizeSearchText($message), 255, '');
     }
 
     /**
@@ -109,6 +186,9 @@ class AiService
         $hasCalendarWords = Str::contains($q, [
             'taqvim', 'tadbir', 'kalendar', 'kalendr', 'sanada', 'voqea', 'voqe', 'jadval', 'calendar',
         ]);
+        $hasWeekIntent = Str::contains($q, [
+            'shu hafta', 'bu hafta', 'haftadagi', 'hafta ichida', 'week',
+        ]);
 
         $parsedDate = $this->parseCalendarDateFromMessage($message);
 
@@ -117,7 +197,7 @@ class AiService
             'boshlan', 'tugay', 'bo\'ladi', 'qanaqa',
         ]);
 
-        if ($parsedDate === null && ! $hasCalendarWords) {
+        if ($parsedDate === null && ! $hasCalendarWords && ! $hasWeekIntent) {
             return null;
         }
 
@@ -129,6 +209,31 @@ class AiService
         $maxEvents = max(1, (int) config('ai.calendar_max_events_per_answer', 15));
         $maxBody = max(0, (int) config('ai.calendar_max_body_chars', 280));
         $calendarUrl = route('calendar');
+
+        if ($hasWeekIntent) {
+            $rows = CalendarEvent::query()
+                ->whereBetween('event_date', [Carbon::now()->startOfWeek()->startOfDay(), Carbon::now()->endOfWeek()->endOfDay()])
+                ->orderBy('event_date')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->limit($maxEvents)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return "рџ“… **Shu hafta** uchun taqvimda tadbir topilmadi.\n"
+                    . "рџ“† To'liq jadval: {$calendarUrl}";
+            }
+
+            $lines = [];
+            foreach ($rows as $ev) {
+                $d = $ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date);
+                $lines[] = 'вЂў '.$d->format('d.m.Y').' вЂ” '.$this->formatCalendarEventLine($ev, $maxBody);
+            }
+
+            return "рџ“… **Shu haftadagi tadbirlar**:\n"
+                . implode("\n\n", $lines)
+                . "\n\nрџ“† To'liq jadval: {$calendarUrl}";
+        }
 
         if ($parsedDate !== null) {
             $rows = CalendarEvent::query()
@@ -272,19 +377,380 @@ class AiService
         }
     }
 
+    private function matchLocalUtility(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        if ($q === '') {
+            return null;
+        }
+
+        if ($this->containsNormalizedPhrase($q, [
+            'men hayr demadim',
+            'men xayr demadim',
+            'hayr demadim',
+            'xayr demadim',
+        ])) {
+            return "Uzr, noto'g'ri tushundim. Siz xayrlashmagansiz. Savolingizni davom ettirishingiz mumkin.";
+        }
+
+        if ($this->hasAnyExactToken($q, ['jalab', 'ahmoq', 'tentak', 'eshak', 'lanati', "la'nati"])) {
+            return "Hurmat bilan yozsangiz, yaxshiroq yordam bera olaman. Men asosan maktab va sayt bo'limlari bo'yicha yordam beraman.";
+        }
+
+        if ($percent = $this->matchPercentCalculation($message)) {
+            return $percent;
+        }
+
+        if ($dateDifference = $this->matchDateDifferenceCalculation($message)) {
+            return $dateDifference;
+        }
+
+        if ($calculation = $this->matchSimpleCalculation($message)) {
+            return $calculation;
+        }
+
+        if ($this->containsNormalizedPhrase($q, [
+            'nima qila olasan',
+            'nima qila olasan san',
+            'nima qilolasan',
+            'nima qilolasan san',
+            'nima qilolisan',
+            'nima qilolisan san',
+            'nimalarga javob berasan',
+            'qanday yordam berasan',
+            'nima yordam berasan',
+            'sen nima qilasan',
+            'ai nima qila oladi',
+            'ai nima qiladi',
+            'yordam bera olasan',
+            'yordam bera olasanmi',
+            'qaysi savollarga javob berasan',
+        ])) {
+            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
+            return "Men {$schoolName} saytining ichki AI yordamchisiman.\n"
+                . "- Maktab, ustozlar, kurslar, imtihonlar, natijalar, taqvim va aloqa bo'limlari bo'yicha yordam bera olaman.\n"
+                . "- Saytdan foydalanish: ro'yxatdan o'tish, profil, kurs arizasi va imtihon jarayonlari haqida yo'l-yo'riq bera olaman.\n"
+                . "- Oddiy hisob-kitoblarni ham chiqarib bera olaman.\n"
+                . "- Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.";
+        }
+
+        return null;
+    }
+
+    private function matchSimpleCalculation(string $message): ?string
+    {
+        $expression = trim(str_replace(',', '.', $message));
+        $expression = preg_replace('/[=?]+$/', '', $expression) ?? $expression;
+        $expression = preg_replace('/\s+/u', '', $expression) ?? $expression;
+
+        if ($expression === '' || mb_strlen($expression) > 80) {
+            return null;
+        }
+
+        if (! preg_match('/\d/', $expression) || ! preg_match('/[+\-*\/()%]/', $expression)) {
+            return null;
+        }
+
+        if (! preg_match('/^[0-9+\-*\/().%]+$/', $expression)) {
+            return null;
+        }
+
+        $result = $this->evaluateMathExpression($expression);
+
+        if ($result === null) {
+            return null;
+        }
+
+        return "Javob: **".$this->formatMathResult($result)."**.";
+    }
+
+    private function evaluateMathExpression(string $expression): ?float
+    {
+        preg_match_all('/\d+(?:\.\d+)?|[()+\-*\/%]/', $expression, $matches);
+        $tokens = $matches[0] ?? [];
+
+        if ($tokens === [] || implode('', $tokens) !== $expression) {
+            return null;
+        }
+
+        $precedence = [
+            'u-' => 3,
+            '*' => 2,
+            '/' => 2,
+            '%' => 2,
+            '+' => 1,
+            '-' => 1,
+        ];
+
+        $output = [];
+        $operators = [];
+        $prevType = 'start';
+
+        foreach ($tokens as $token) {
+            if (is_numeric($token)) {
+                $output[] = $token;
+                $prevType = 'number';
+                continue;
+            }
+
+            if ($token === '(') {
+                $operators[] = $token;
+                $prevType = 'left_paren';
+                continue;
+            }
+
+            if ($token === ')') {
+                while ($operators !== [] && end($operators) !== '(') {
+                    $output[] = array_pop($operators);
+                }
+
+                if ($operators === [] || end($operators) !== '(') {
+                    return null;
+                }
+
+                array_pop($operators);
+                $prevType = 'right_paren';
+                continue;
+            }
+
+            $operator = $token;
+            if (($token === '-' || $token === '+') && in_array($prevType, ['start', 'operator', 'left_paren'], true)) {
+                if ($token === '+') {
+                    continue;
+                }
+
+                $operator = 'u-';
+            }
+
+            while ($operators !== [] && end($operators) !== '(') {
+                $top = end($operators);
+                $topPrecedence = $precedence[$top] ?? 0;
+                $operatorPrecedence = $precedence[$operator] ?? 0;
+                $rightAssociative = $operator === 'u-';
+
+                if ($topPrecedence > $operatorPrecedence || ($topPrecedence === $operatorPrecedence && ! $rightAssociative)) {
+                    $output[] = array_pop($operators);
+                    continue;
+                }
+
+                break;
+            }
+
+            $operators[] = $operator;
+            $prevType = 'operator';
+        }
+
+        if (in_array($prevType, ['start', 'operator', 'left_paren'], true)) {
+            return null;
+        }
+
+        while ($operators !== []) {
+            $operator = array_pop($operators);
+
+            if ($operator === '(') {
+                return null;
+            }
+
+            $output[] = $operator;
+        }
+
+        $stack = [];
+
+        foreach ($output as $token) {
+            if (is_numeric($token)) {
+                $stack[] = (float) $token;
+                continue;
+            }
+
+            if ($token === 'u-') {
+                if ($stack === []) {
+                    return null;
+                }
+
+                $stack[] = -array_pop($stack);
+                continue;
+            }
+
+            if (count($stack) < 2) {
+                return null;
+            }
+
+            $right = array_pop($stack);
+            $left = array_pop($stack);
+
+            $value = match ($token) {
+                '+' => $left + $right,
+                '-' => $left - $right,
+                '*' => $left * $right,
+                '/' => abs($right) < 1.0E-12 ? null : $left / $right,
+                '%' => abs($right) < 1.0E-12 ? null : fmod($left, $right),
+                default => null,
+            };
+
+            if ($value === null || is_nan($value) || is_infinite($value)) {
+                return null;
+            }
+
+            $stack[] = $value;
+        }
+
+        if (count($stack) !== 1) {
+            return null;
+        }
+
+        return $stack[0];
+    }
+
+    private function formatMathResult(float $value): string
+    {
+        if (abs($value - round($value)) < 1.0E-10) {
+            return (string) (int) round($value);
+        }
+
+        return rtrim(rtrim(number_format($value, 10, '.', ''), '0'), '.');
+    }
+
+    private function matchPercentCalculation(string $message): ?string
+    {
+        $normalized = $this->normalizeSearchText($message);
+
+        if (preg_match('/\b(\d+(?:[.,]\d+)?)\s+dan\s+(\d+(?:[.,]\d+)?)\s+necha\s+foiz\b/u', $normalized, $matches) !== 1) {
+            return null;
+        }
+
+        $base = (float) str_replace(',', '.', (string) $matches[1]);
+        $value = (float) str_replace(',', '.', (string) $matches[2]);
+
+        if ($base <= 0) {
+            return "Foizni hisoblash uchun asosiy son 0 dan katta bo'lishi kerak.";
+        }
+
+        $percent = round(($value / $base) * 100, 1);
+
+        return "**{$value}**, **{$base}** dan taxminan **{$percent}%** bo'ladi.";
+    }
+
+    private function matchDateDifferenceCalculation(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        if (! Str::contains($q, ['kun', 'qold', 'qolgan', 'necha kun', 'necha soat', 'imtihon'])) {
+            return null;
+        }
+
+        if (Str::contains($q, ['imtihon'])) {
+            $nearestExam = Exam::query()
+                ->where('is_active', true)
+                ->whereNotNull('available_from')
+                ->where('available_from', '>=', now())
+                ->orderBy('available_from')
+                ->first();
+
+            if (! $nearestExam || ! $nearestExam->available_from) {
+                return null;
+            }
+
+            $diffInHours = now()->diffInHours($nearestExam->available_from, false);
+            if ($diffInHours < 0) {
+                return null;
+            }
+
+            $diffInDays = now()->diffInDays($nearestExam->available_from);
+            $startLabel = $nearestExam->availableFromLabel() ?? $nearestExam->available_from->format('d.m.Y H:i');
+
+            if ($diffInDays >= 1) {
+                return "Eng yaqin faol imtihon **{$nearestExam->title}**. Boshlanishigacha taxminan **{$diffInDays} kun** qoldi ({$startLabel}).";
+            }
+
+            return "Eng yaqin faol imtihon **{$nearestExam->title}**. Boshlanishigacha taxminan **{$diffInHours} soat** qoldi ({$startLabel}).";
+        }
+
+        if (preg_match('/\b(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})\b/', $message, $matches) === 1) {
+            $target = Carbon::createFromDate((int) $matches[1], (int) $matches[2], (int) $matches[3])->startOfDay();
+            $now = now()->startOfDay();
+            $diff = $now->diffInDays($target, false);
+
+            if ($diff === 0) {
+                return "Bu sana **bugun**.";
+            }
+
+            if ($diff > 0) {
+                return "Bu sanagacha taxminan **{$diff} kun** qoldi.";
+            }
+
+            return "Bu sana **".abs($diff)." kun oldin** o'tgan.";
+        }
+
+        return null;
+    }
+
     /**
      * Hardcoded static knowledge and small talk.
      */
     private function matchStaticKnowledge(string $message): ?string
     {
         $q = $this->cleanMessage($message);
+        $normalized = $this->normalizeSearchText($message);
         $hour = (int) Carbon::now((string) config('app.timezone', 'UTC'))->format('H');
+
+        $hasStrictGreeting = $this->hasAnyExactToken($normalized, ['salom', 'assalom', 'alaykum', 'hello', 'qalay'])
+            || $this->containsNormalizedPhrase($normalized, [
+                'assalomu alaykum',
+                'hayrli',
+                'xayrli',
+                'hayr li',
+                'xayr li',
+                'xush kelibsiz',
+                'qalay ishlar',
+            ]);
+        if ($hasStrictGreeting) {
+            if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
+            elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
+            elseif ($hour >= 17 && $hour < 22) $greeting = 'Hayrli kech';
+            else $greeting = 'Assalomu alaykum';
+
+            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
+            return "{$greeting}! Men **{$schoolName}** saytining ichki AI yordamchisiman.\n"
+                . "Quyidagi mavzularda yordam bera olaman:\n"
+                . "- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
+                . "- Imtihonlar, natijalar va taqvim\n"
+                . "- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
+                . "- Oddiy hisob-kitoblar\n\n"
+                . "Savolingizni yozing.";
+        }
+
+        $hasStrictFarewell = $this->hasAnyExactToken($normalized, ['xayr', 'hayr', 'bye', 'goodbye', 'chao'])
+            || $this->containsNormalizedPhrase($normalized, ["ko'rishguncha", 'korishguncha', "sog' bo'ling", 'sog boling']);
+        if ($hasStrictFarewell) {
+            return "Xayr! Yana savolingiz bo'lsa, yozavering.";
+        }
+
+        $hasStrictThanks = $this->hasAnyExactToken($normalized, ['rahmat', 'raxmat', 'tashakkur', 'thanks'])
+            || $this->containsNormalizedPhrase($normalized, ['katta rahmat', 'minnatdor', "bor bo'ling", 'thank you']);
+        if ($hasStrictThanks) {
+            return "Arziydi! Boshqa savolingiz bo'lsa, yozing.";
+        }
+
+        if ($this->containsNormalizedPhrase($normalized, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'sen kimsan', 'siz kimsiz'])) {
+            return "Men 81-IDUM saytining ichki AI yordamchisiman. Asosan maktab va sayt bo'limlari bo'yicha yordam beraman, oddiy hisob-kitoblarni ham chiqarib bera olaman.";
+        }
 
         // Salom / Xayrli
         // NB: 'hi ', 'hey ' olib tashlandi — "o'qituvchi" kabi so'zlarda xato trigger beradi
-        $greetWords = ['salom', 'assalom', 'assalomu alaykum', 'alaykum', 'hayrli', 'xayrli',
-            'qalay', 'ishlar', 'keling', 'xush kelibsiz', 'hello'];
-        if (Str::contains($q, $greetWords)) {
+        $hasGreeting = $this->hasAnyExactToken($normalized, ['salom', 'assalom', 'alaykum', 'hello', 'qalay'])
+            || $this->containsNormalizedPhrase($normalized, [
+                'assalomu alaykum',
+                'hayrli',
+                'xayrli',
+                'hayr li',
+                'xayr li',
+                'xush kelibsiz',
+                'qalay ishlar',
+            ]);
+        if ($hasGreeting) {
             if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
             elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
             elseif ($hour >= 17 && $hour < 22) $greeting = 'Hayrli kech';
@@ -466,8 +932,10 @@ class AiService
             "- Aloqa: murojaat yuborish va maktab bilan bog'lanish. " . route('contact'),
         ];
 
-        if ($user && method_exists($user, 'canManageExams') && $user->canManageExams()) {
-            $lines[] = "- Sizning rolingizda imtihon yaratish, savol qo'shish va natijalarni ko'rish imkoniyati ham bor.";
+        if ($user) {
+            foreach ($this->roleGuideLines($user) as $line) {
+                $lines[] = $line;
+            }
         }
 
         $questionGroups = [
@@ -478,7 +946,7 @@ class AiService
             "- **Kurslar**: kursga qanday yozilaman, arizam holati qayerda, kursni kim tasdiqlaydi",
             "- **Imtihonlar**: imtihon qayerda boshlanadi, natijam qayerda, ballim qancha, qayta topshirsa bo'ladimi",
             "- **Profil va akkaunt**: ro'yxatdan qanday o'taman, parolni unutdim, emailni qanday o'zgartiraman",
-            "- **Aloqa va admin**: admin bilan qanday bog'lanaman, murojaatimni kim ko'radi, support uchun qayerga yozaman",
+            "- **Aloqa va support**: rasmiy murojaatni qayerga yuboraman, murojaatimni kim ko'radi, texnik muammo bo'lsa qayerga yozaman",
             "- **Chat va izohlar**: global chat nima, chat o'chsa nima qilaman, izohni tahrirlasa bo'ladimi",
             "- **Panel va rollar**: admin panelga kim kira oladi, teacher panelda nima qilish mumkin",
         ];
@@ -487,7 +955,140 @@ class AiService
             . implode("\n", $lines)
             . "\n\n**AI'ga berish mumkin bo'lgan savollar**\n"
             . implode("\n", $questionGroups)
-            . "\n\nMasalan: **\"admin bilan qanday bog'lansam bo'ladi?\"**, **\"kurs arizam qayerda ko'rinadi?\"**, **\"emailimni qanday o'zgartiraman?\"**";
+            . "\n\nMasalan: **\"texnik muammo bo'lsa qayerga murojaat qilaman?\"**, **\"kurs arizam qayerda ko'rinadi?\"**, **\"emailimni qanday o'zgartiraman?\"**";
+    }
+
+    private function roleGuideLines(object $user): array
+    {
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            $lines = [
+                "- Siz **admin** sifatida boshqaruv paneliga kirib, foydalanuvchilar, kurslar, imtihonlar va murojaatlarni nazorat qilasiz: ".route('dashboard'),
+            ];
+
+            if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+                $lines[] = "- Siz **super admin** bo'lsangiz, AI analytics va bilim bazasini ham boshqarasiz.";
+            }
+
+            return $lines;
+        }
+
+        if (method_exists($user, 'isTeacher') && $user->isTeacher()) {
+            return [
+                "- Siz **o'qituvchi** sifatida o'z profilingizdan imtihon yaratish, savol qo'shish va natijalarni ko'rishingiz mumkin: ".route('profile.exams.index'),
+                "- Kurs ochish ruxsati bo'lsa, kurs ochish formasiga shu yerdan o'tasiz: ".route('profile.show').'#course-open-request',
+            ];
+        }
+
+        return [
+            "- Siz **o'quvchi** sifatida profilingizda natijalar, kurs arizalari va email/parol sozlamalarini ko'rasiz: ".route('profile.show'),
+            "- Faol imtihonlarni boshlash uchun imtihon bo'limidan, kursga yozilish uchun esa kurslar sahifasidan foydalanasiz.",
+        ];
+    }
+
+    private function roleEntryActions(object $user): array
+    {
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            $actions = [
+                $this->makeLinkAction('Admin panel', route('dashboard'), 'dashboard'),
+            ];
+
+            if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+                $actions[] = $this->makeLinkAction('AI bilim bazasi', route('ai-knowledges.index'), 'ai-knowledges.index');
+            }
+
+            return $actions;
+        }
+
+        if (method_exists($user, 'isTeacher') && $user->isTeacher()) {
+            $actions = [
+                $this->makeLinkAction('Imtihonlarim', route('profile.exams.index'), 'profile.exams.index'),
+                $this->makeLinkAction('Yangi imtihon', route('profile.exams.create'), 'profile.exams.create'),
+            ];
+
+            if ($user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
+                $actions[] = $this->makeLinkAction('Kurs ochish', route('teacher.courses.create'), 'teacher.courses.create');
+            } else {
+                $actions[] = $this->makeLinkAction('Profil', route('profile.show').'#course-open-request', 'profile.show');
+            }
+
+            return $actions;
+        }
+
+        return [
+            $this->makeLinkAction('Profil', route('profile.show'), 'profile.show'),
+            $this->makeLinkAction('Kurslar', route('courses'), 'courses'),
+            $this->makeLinkAction('Imtihonlar', route('exam.index'), 'exam.index'),
+        ];
+    }
+
+    private function matchClarificationFallback(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+        $tokens = $this->meaningfulTokens($q);
+
+        $isVeryShort = count($tokens) <= 2;
+        $isGeneric = $this->containsNormalizedPhrase($q, [
+            'buni', 'mana bu', 'shu narsa', 'qayerda', 'qanday qilaman',
+            'bunaqa', 'shunaqa', 'yordam kerak', 'qarab ber', 'tushunmadim',
+        ]);
+
+        $hasSiteContextWord = Str::contains($q, [
+            'kurs', 'imtihon', 'natija', 'ustoz', 'teacher', 'aloqa', 'murojaat',
+            'profil', 'chat', 'taqvim', 'yangilik',
+        ]);
+
+        if (! $isVeryShort && ! $isGeneric && ! $hasSiteContextWord) {
+            return null;
+        }
+
+        return "Savol biroz noaniq ko'rindi. Aniqlashtirib yozing: **kurs**, **imtihon**, **ustoz** yoki **aloqa** haqida so'rayapsizmi?";
+    }
+
+    private function clarificationReplyActions(): array
+    {
+        return [
+            $this->makeReplyAction('Kurslar', 'Kurslar haqida'),
+            $this->makeReplyAction('Imtihonlar', 'Imtihonlar haqida'),
+            $this->makeReplyAction('Ustozlar', 'Ustozlar haqida'),
+            $this->makeReplyAction('Aloqa', 'Aloqa haqida'),
+        ];
+    }
+
+    private function makeLinkAction(string $label, string $url, string $route): array
+    {
+        return [
+            'type' => 'link',
+            'label' => $label,
+            'url' => $url,
+            'route' => $route,
+        ];
+    }
+
+    private function makeReplyAction(string $label, string $message): array
+    {
+        return [
+            'type' => 'reply',
+            'label' => $label,
+            'message' => $message,
+        ];
+    }
+
+    private function uniqueActions(array $actions): array
+    {
+        $seen = [];
+        $unique = [];
+
+        foreach ($actions as $action) {
+            $key = ($action['type'] ?? 'unknown').'|'.($action['label'] ?? '').'|'.($action['url'] ?? $action['message'] ?? '');
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $unique[] = $action;
+        }
+
+        return array_values($unique);
     }
 
     private function matchSupportContactQuery(string $message): ?string
@@ -511,16 +1112,17 @@ class AiService
         $address = SiteSetting::get('school_address', (string) __('public.about.quick_facts.0.value'));
         $contactUrl = route('contact');
 
-        return "**Admin bilan bog'lanish**\n"
-            . "- Eng qulay yo'l: **Aloqa** sahifasi orqali murojaat yuborish. {$contactUrl}\n"
-            . "- Xabar yuborish uchun akkauntga kirgan bo'lishingiz kerak.\n"
-            . "- Yuborilgan murojaatlar **super admin, admin va moderatorlar** tomonidan ko'rib chiqiladi.\n"
-            . "- Javob odatda emailingiz yoki qoldirilgan aloqa ma'lumotingiz orqali beriladi.\n\n"
-            . "**Tezkor aloqa**\n"
+        return "**Rasmiy murojaat tartibi**\n"
+            . "- Oddiy foydalanuvchi uchun **admin bilan to'g'ridan-to'g'ri yozish yoki alohida admin kontakt** mavjud emas.\n"
+            . "- Agar muammo, shikoyat yoki texnik masala bo'lsa, **Aloqa** sahifasi orqali rasmiy murojaat qoldiriladi: {$contactUrl}\n"
+            . "- Murojaat avval qabul qilinadi, keyin ichki tartibda **tegishli admin, moderator yoki mas'ul xodimga** yuboriladi.\n"
+            . "- Zarur bo'lsa javob emailingiz yoki qoldirilgan aloqa ma'lumotingiz orqali beriladi.\n\n"
+            . "**Rasmiy aloqa kanallari**\n"
             . "- Telefon: **{$phone}**\n"
             . "- Email: **{$email}**\n"
-            . "- Manzil: **{$address}**\n\n"
-            . "Texnik muammo bo'lsa, qaysi sahifada xato chiqqani va nima qilishga uringaningizni ham yozing.";
+            . "- Manzil: **{$address}**\n"
+            . "- Bu kontaktlar maktabning rasmiy aloqa yo'llari bo'lib, shaxsiy admin chat'i hisoblanmaydi.\n\n"
+            . "Texnik muammo bo'lsa, qaysi sahifada xato chiqqani, nima qilishga uringaningiz va muammo qachon chiqqanini ham yozing.";
     }
 
     private function matchRoleResponsibilitiesQuery(string $message): ?string
@@ -624,13 +1226,13 @@ class AiService
                     $query->orWhere('question', 'like', '%'.$token.'%')
                         ->orWhere('question_en', 'like', '%'.$token.'%')
                         ->orWhere('keywords', 'like', '%'.$token.'%')
+                        ->orWhere('synonyms', 'like', '%'.$token.'%')
                         ->orWhere('category', 'like', '%'.$token.'%');
                 }
             })
-            ->orderBy('sort_order')
-            ->orderBy('id')
+            ->orderedForMatching()
             ->limit(80)
-            ->get(['question', 'question_en', 'answer', 'answer_en', 'keywords', 'category']);
+            ->get(['question', 'question_en', 'answer', 'answer_en', 'keywords', 'synonyms', 'category', 'priority']);
 
         if ($rows->isEmpty()) {
             return null;
@@ -640,7 +1242,7 @@ class AiService
         $bestScore = 0;
 
         foreach ($rows as $row) {
-            $candidateText = trim((string) $row->question.' '.(string) $row->question_en.' '.(string) $row->keywords.' '.(string) $row->category);
+            $candidateText = trim((string) $row->question.' '.(string) $row->question_en.' '.(string) $row->keywords.' '.(string) $row->synonyms.' '.(string) $row->category);
             $candidateTokens = $this->meaningfulTokens($candidateText);
             $sharedTokens = $this->sharedTokenCount($tokens, $candidateTokens);
 
@@ -654,12 +1256,15 @@ class AiService
 
             $questionScore = $this->textMatchScore($q, (string) $row->question.' '.(string) $row->question_en);
             $keywordScore = $this->textMatchScore($q, (string) $row->keywords);
+            $synonymScore = $this->textMatchScore($q, (string) $row->synonyms);
             $categoryScore = $this->textMatchScore($q, (string) $row->category);
-            $score = max($questionScore, min(100, $keywordScore + 12), $categoryScore);
+            $score = max($questionScore, min(100, $keywordScore + 12), min(100, $synonymScore + 18), $categoryScore);
 
             if ($sharedTokens > 0) {
                 $score = min(100, $score + min(12, $sharedTokens * 4));
             }
+
+            $score = min(100, $score + max(0, (int) $row->priority));
 
             if ($score > $bestScore) {
                 $bestScore = $score;
@@ -717,6 +1322,50 @@ class AiService
         $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
 
         return Str::squish($text);
+    }
+
+    private function containsNormalizedPhrase(string $text, array $phrases): bool
+    {
+        $haystack = $this->normalizeSearchText($text);
+
+        if ($haystack === '') {
+            return false;
+        }
+
+        foreach ($phrases as $phrase) {
+            $needle = $this->normalizeSearchText($phrase);
+
+            if ($needle !== '' && Str::contains($haystack, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function hasAnyExactToken(string $text, array $variants): bool
+    {
+        $tokens = preg_split('/\s+/u', $this->normalizeSearchText($text)) ?: [];
+
+        if ($tokens === []) {
+            return false;
+        }
+
+        $lookup = [];
+        foreach ($variants as $variant) {
+            $needle = $this->normalizeSearchText($variant);
+            if ($needle !== '') {
+                $lookup[$needle] = true;
+            }
+        }
+
+        foreach ($tokens as $token) {
+            if (isset($lookup[$token])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function meaningfulTokens(string $text): array
@@ -859,10 +1508,9 @@ class AiService
 
         $rows = AiKnowledge::query()
             ->active()
-            ->orderBy('sort_order')
-            ->orderBy('id')
+            ->orderedForMatching()
             ->take(12)
-            ->get(['question', 'answer', 'keywords', 'category']);
+            ->get(['question', 'answer', 'keywords', 'synonyms', 'category', 'priority']);
 
         if ($rows->isEmpty()) {
             return "Admin tomonidan kiritilgan maxsus savol-javoblar hali yo'q.";
@@ -871,11 +1519,14 @@ class AiService
         return $rows->map(function ($row): string {
             $category = trim((string) $row->category);
             $keywords = trim((string) $row->keywords);
+            $synonyms = trim((string) $row->synonyms);
             $answer = Str::limit(trim(preg_replace('/\s+/u', ' ', (string) $row->answer) ?? ''), 220);
 
             return "- ".($category !== '' ? "[{$category}] " : '')
                 . "Savol: {$row->question}"
                 . ($keywords !== '' ? " | Kalitlar: {$keywords}" : '')
+                . ($synonyms !== '' ? " | Sinonimlar: {$synonyms}" : '')
+                . ((int) $row->priority !== 0 ? " | Priority: {$row->priority}" : '')
                 . " | Javob: {$answer}";
         })->implode("\n");
     }
@@ -1346,6 +1997,160 @@ class AiService
         };
     }
 
+    private function matchExamAssistantQuery(string $message, ?object $user = null): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        if (! Str::contains($q, ['imtihon', 'exam', 'natija', 'ball', 'qayta topshir'])) {
+            return null;
+        }
+
+        if ($user && method_exists($user, 'isParent') && $user->isParent()) {
+            return "Ota-ona akkaunti bilan imtihon topshirib bo'lmaydi. Farzandingiz natijalarini ko'rish uchun o'quvchi akkauntidan foydalaning.";
+        }
+
+        if ($user && method_exists($user, 'canManageExams') && $user->canManageExams() && Str::contains($q, ['yarat', 'tuz', 'qo\'sh', 'savol'])) {
+            return "Sizning rolingizda imtihon yaratish va savollar qo'shish mumkin. **Mening imtihonlarim** sahifasidan yangi imtihon oching va savollarni to'ldiring.";
+        }
+
+        if (Str::contains($q, ['faol', 'ochiq', 'aktiv'])) {
+            $activeExams = Exam::query()->where('is_active', true)->orderByDesc('id')->take(5)->get();
+            if ($activeExams->isEmpty()) {
+                return "Hozircha faol imtihonlar topilmadi.";
+            }
+
+            $lines = $activeExams->map(function (Exam $exam): string {
+                $date = $exam->availableFromLabel();
+
+                return 'вЂў '.$exam->title.($date ? " ({$date} dan)" : '');
+            })->implode("\n");
+
+            return "Hozir faol yoki ochilishi belgilangan imtihonlar:\n{$lines}";
+        }
+
+        if ($user && Str::contains($q, ['oxirgi', 'natijam', 'o\'tdim', 'otdim', 'yiqildim', 'o\'tgan', 'o\'tmagan', 'pass', 'fail'])) {
+            $lastResult = Result::query()
+                ->where('user_id', $user->id)
+                ->with('exam')
+                ->latest('submitted_at')
+                ->latest('id')
+                ->first();
+
+            if (! $lastResult) {
+                return "Sizda hozircha saqlangan imtihon natijasi yo'q.";
+            }
+
+            $status = $lastResult->passed === true
+                ? "O'tgan"
+                : ($lastResult->passed === false ? "Yiqilgan" : "Tekshiruvda");
+
+            $points = $lastResult->points_max
+                ? ($lastResult->points_earned.' / '.$lastResult->points_max.' ball')
+                : (($lastResult->score ?? 0).' ta to\'g\'ri javob');
+
+            return "Oxirgi natijangiz: **{$lastResult->exam?->title}**.\n"
+                . "- Holat: **{$status}**\n"
+                . "- Ko'rsatkich: **{$points}**\n"
+                . "- Batafsilini profil natijalari bo'limida ko'rasiz.";
+        }
+
+        if (Str::contains($q, ['qayta topshir', 'yana topshir'])) {
+            return "Hozirgi tizimda foydalanuvchi uchun bitta imtihon bo'yicha odatda bitta urinish saqlanadi. Agar urinish allaqachon yaratilgan bo'lsa, tizim sizni mavjud sessiya yoki natijaga qaytaradi. Qayta topshirish kerak bo'lsa, o'qituvchi yoki admin bilan kelishish kerak bo'ladi.";
+        }
+
+        return null;
+    }
+
+    private function matchCourseAssistantQuery(string $message, ?object $user = null): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        if (! Str::contains($q, ['kurs', 'enroll', 'yozil', 'ariza', 'teacher kurs', 'ustoz kurs'])) {
+            return null;
+        }
+
+        if ($user && method_exists($user, 'isTeacher') && $user->isTeacher() && Str::contains($q, ['och', 'yarat', 'manage', 'boshqar'])) {
+            if ($user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
+                return "Sizga kurs ochish ruxsati berilgan. Endi kurs formasini ochib, ma'lumotlarni to'ldirib nashr qilishingiz mumkin.";
+            }
+
+            if (! $user->hasLinkedActiveTeacherProfile()) {
+                return "Avval admin teacher akkauntingizni ustoz kartasiga bog'lashi kerak. Shundan keyin kurs ochish ruxsatini so'raysiz.";
+            }
+
+            if ($user->hasReachedCourseOpenLimit()) {
+                return "Teacher akkaunti bilan hozircha bitta kurs yaratish limiti qo'llanadi. Siz bu limitga yetgansiz.";
+            }
+
+            return "Kurs ochishdan oldin profildagi **Kurs ochish ruxsati** bo'limidan admin ruxsatini so'rang.";
+        }
+
+        if (Str::contains($q, ['qaysi kurs', 'kurslar bor', 'nima kurs'])) {
+            $courses = Course::query()
+                ->where('status', Course::STATUS_PUBLISHED)
+                ->with('teacher:id,full_name')
+                ->latest('id')
+                ->take(5)
+                ->get();
+
+            if ($courses->isEmpty()) {
+                return "Hozircha nashr etilgan kurslar yo'q.";
+            }
+
+            $lines = $courses->map(function (Course $course): string {
+                return 'вЂў '.$course->title.($course->teacher ? ' вЂ” '.$course->teacher->full_name : '');
+            })->implode("\n");
+
+            return "Hozir mavjud kurslardan ba'zilari:\n{$lines}\n\nTo'liq ro'yxat kurslar sahifasida bor.";
+        }
+
+        if (Str::contains($q, ['qaysi ustoz kurs', 'ustoz kurs och', 'kim kurs ochgan'])) {
+            $courses = Course::query()
+                ->where('status', Course::STATUS_PUBLISHED)
+                ->with('teacher:id,full_name')
+                ->latest('id')
+                ->take(8)
+                ->get()
+                ->filter(fn (Course $course) => $course->teacher !== null);
+
+            if ($courses->isEmpty()) {
+                return "Hozircha ustozlarga biriktirilgan nashr etilgan kurs topilmadi.";
+            }
+
+            $lines = $courses->map(fn (Course $course) => 'вЂў '.$course->teacher->full_name.' вЂ” '.$course->title)->implode("\n");
+
+            return "Kurs ochgan ustozlardan ba'zilari:\n{$lines}";
+        }
+
+        if ($user && Str::contains($q, ['arizam', 'holati', 'statusim', 'yozilganmanmi'])) {
+            $latestEnrollment = CourseEnrollment::query()
+                ->where('user_id', $user->id)
+                ->with('course:id,title')
+                ->latest('id')
+                ->first();
+
+            if (! $latestEnrollment) {
+                return "Siz hali kursga ariza yubormagansiz. Kurslar sahifasidan kerakli kursni tanlab yozilishingiz mumkin.";
+            }
+
+            $status = match ($latestEnrollment->status) {
+                CourseEnrollment::STATUS_APPROVED => 'Tasdiqlangan',
+                CourseEnrollment::STATUS_REJECTED => 'Rad etilgan',
+                default => 'Kutilmoqda',
+            };
+
+            return "Oxirgi kurs arizangiz: **{$latestEnrollment->course?->title}**.\n"
+                . "- Holat: **{$status}**\n"
+                . "- Batafsilini profilingizdagi kurslar blokida ko'rasiz.";
+        }
+
+        if (Str::contains($q, ['qanday yozil', 'qanday kiraman', 'kursga yozilish'])) {
+            return "Kursga yozilish uchun **Kurslar** sahifasiga kiring, kerakli kursni tanlang va yozilish formasini yuboring. Ariza yuborilgach, kurs egasi uni ko'rib chiqadi.";
+        }
+
+        return null;
+    }
+
     /**
      * Matches topics to actual database entities with typo tolerance.
      */
@@ -1353,6 +2158,14 @@ class AiService
     {
         $q = mb_strtolower(trim($message));
         $qClean = $this->cleanMessage($q);
+
+        if ($examAssistant = $this->matchExamAssistantQuery($message, $user)) {
+            return $examAssistant;
+        }
+
+        if ($courseAssistant = $this->matchCourseAssistantQuery($message, $user)) {
+            return $courseAssistant;
+        }
 
         // 0. Ustozning kimligi (ism-familya) yoki lavozim bo'yicha qidiruv
         if ($teacherIdentity = $this->matchTeacherIdentityQuery($q, $qClean)) {
@@ -1711,6 +2524,17 @@ class AiService
         $model = (string) config('services.gemini.model', 'gemini-1.5-flash');
 
         if ($apiKey === '') {
+            return [
+                'success' => true,
+                'text' => "Men asosan maktab saytining ichki yordamchisiman.\n\n"
+                    . "Quyidagi mavzularda yordam bera olaman:\n"
+                    . "- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
+                    . "- Imtihonlar, natijalar va taqvim\n"
+                    . "- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
+                    . "- Oddiy hisob-kitoblar\n\n"
+                    . "Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
+                'source' => 'no_gemini_key',
+            ];
             $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
                 . "• Maktab haqida ma'lumotlar 🏫\n"
                 . "• Eng so'nggi yangiliklar va tadbirlar 📅\n"
@@ -1761,6 +2585,18 @@ class AiService
         if ($localFallback) {
             return ['success' => true, 'text' => $localFallback, 'source' => 'local_fallback'];
         }
+
+        return [
+            'success' => true,
+            'text' => "Men asosan maktab saytining ichki yordamchisiman.\n\n"
+                . "Quyidagi mavzularda yordam bera olaman:\n"
+                . "- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
+                . "- Imtihonlar, natijalar va taqvim\n"
+                . "- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
+                . "- Oddiy hisob-kitoblar\n\n"
+                . "Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
+            'source' => 'ultimate_fallback',
+        ];
 
         $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
             . "• Maktab haqida ma'lumotlar 🏫\n"
@@ -1820,10 +2656,14 @@ class AiService
         }
 
         return <<<PROMPT
-Sen {$schoolName} maktabi veb-saytining universal AI yordamchisisiz.
+Sen {$schoolName} maktabi veb-saytining ichki AI yordamchisisiz.
 
 === ASOSIY QO'LLANMA ===
 1. FAQAT O'ZBEK TILIDA javob ber.
+1a. Agar keyingi ko'rsatmalarda zid joy bo'lsa, ushbu bandlarni ustun qo'y: sen GLOBAL AI emassan.
+1b. Asosiy vazifang - maktab, sayt bo'limlari, kurslar, ustozlar, imtihonlar, taqvim, aloqa, profil va admin jarayonlari bo'yicha yordam berish.
+1c. Juda sodda hisob-kitoblar (masalan 2+2 yoki 12/3) bo'lsa qisqa javob berishing mumkin.
+1d. Maktabdan tashqari keng va global mavzularda uzun javob bermagin; foydalanuvchiga bu saytning ichki yordamchisi ekaningni ayt.
 2. Har qanday savolga javob berishga harakat qil — maktab haqida ham, umumiy bilim (matematika, fizika, biologiya, tarix, geografiya, ingliz tili va boshqa fanlar) haqida ham.
 3. Javoblar qisqa, aniq va foydali bo'lsin. Emojilar qo'sh. ✨
 4. Agar maktabga oid ma'lumot so'ralsa, avvalo quyidagi ma'lumotlardan foydalan.
@@ -1869,6 +2709,7 @@ Vaqt: {$now->format('H:i')} (Toshkent vaqti){$userContext}
 - Maktab haqidagi savollarga yuqoridagi ma'lumotlardan foydalanib javob ber.
 - Sayt muallifi yoki kim ishtirok etgani so'ralsa, SAYT MUALLIFLARI VA JAMOA bo'limidagi ismlarni aniq ayt.
 - Admin AI bilim bazasidagi javob savolga mos kelsa, avvalo o'sha javobga tayan.
+- Maktabdan tashqari keng va global mavzularda javobni cheklagin; kerak bo'lsa foydalanuvchiga bu saytning ichki yordamchisi ekaningni eslat.
 - Umumiy bilim savollarga (masalan: "Pythagoras teoremasi?", "Suv formulasi?") — oddiy, tushunarli javob ber.
 - Siyosat, zararli kontent, noqonuniy narsalar haqida javob berma.
 - Javob 5-6 jumladan oshmasin (oddiy suhbat uchun).

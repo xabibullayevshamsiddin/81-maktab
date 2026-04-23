@@ -792,6 +792,7 @@
       id="ai-widget"
       class="ai-widget"
       data-ai-url="{{ route('ai.chat') }}"
+      data-ai-feedback-url="{{ route('ai.chat.feedback') }}"
       data-csrf="{{ csrf_token() }}"
       data-ai-mock-delim="{{ config('ai.mock_delimiter') }}"
       data-ai-enabled="{{ $aiChatEnabled ? '1' : '0' }}"
@@ -878,6 +879,7 @@
         var statusWrap = document.getElementById('ai-compose-status');
 
         var aiUrl = widget.getAttribute('data-ai-url');
+        var aiFeedbackUrl = widget.getAttribute('data-ai-feedback-url');
         var csrfToken = widget.getAttribute('data-csrf');
         var aiMockDelim = widget.getAttribute('data-ai-mock-delim') || '';
         var headerToggle = document.getElementById('ai-header-toggle');
@@ -902,6 +904,13 @@
             input.disabled = false;
             input.removeAttribute('aria-busy');
           }
+          if (actionBtns && actionBtns.forEach) {
+            actionBtns.forEach(function (b) {
+              b.disabled = false;
+              b.style.opacity = '1';
+              b.style.cursor = 'pointer';
+            });
+          }
           if (statusWrap) {
             statusWrap.style.display = 'none';
             statusWrap.setAttribute('hidden', '');
@@ -909,7 +918,9 @@
         }
 
         function closePanel() {
-          resetAiComposeState();
+          if (!isSending) {
+            resetAiComposeState();
+          }
           panel.classList.remove('is-open');
           syncAiDockState();
         }
@@ -931,9 +942,13 @@
           }
           if (aiDisabledPanel) aiDisabledPanel.hidden = true;
           if (aiPanelMain) aiPanelMain.hidden = false;
-          resetAiComposeState();
+          if (!isSending) {
+            resetAiComposeState();
+          }
           if (window.playPrimeSuccess) window.playPrimeSuccess();
-          input.focus();
+          if (!isSending) {
+            input.focus();
+          }
         }
 
         window.primeCloseAiPanel = function() {
@@ -1024,7 +1039,59 @@
           return html;
         }
 
-        function addMessage(text, isAi) {
+        function sendAiMessage(message) {
+          if (!message || isSending || !aiEnabled) return;
+          input.value = message;
+          form.dispatchEvent(new Event('submit'));
+        }
+
+        function buildActionNode(action) {
+          if (!action || !action.label) return null;
+
+          var commonStyle = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.04);color:inherit;font-size:12px;text-decoration:none;cursor:pointer;';
+
+          if (action.type === 'link' && action.url) {
+            var link = document.createElement('a');
+            link.href = action.url;
+            link.textContent = action.label;
+            link.style.cssText = commonStyle;
+            return link;
+          }
+
+          if (action.type === 'reply' && action.message) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = action.label;
+            btn.style.cssText = commonStyle;
+            btn.addEventListener('click', function () {
+              sendAiMessage(action.message);
+            });
+            return btn;
+          }
+
+          return null;
+        }
+
+        function submitAiFeedback(interactionId, helpful, holder) {
+          if (!interactionId || !aiFeedbackUrl || !holder) return;
+
+          fetch(aiFeedbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ interaction_id: interactionId, helpful: helpful })
+          })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            holder.innerHTML = '<small style="opacity:.8;">' + escapeAiHtml((data && data.message) || 'Rahmat!') + '</small>';
+          })
+          .catch(function () {
+            holder.innerHTML = '<small style="opacity:.8;">Feedback yuborilmadi.</small>';
+          });
+        }
+
+        function addMessage(text, isAi, meta) {
           if (!text || !text.trim()) return;
           var el = document.createElement('div');
           el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
@@ -1033,6 +1100,51 @@
           var contentHtml = isAi ? formatAiMessageHtml(text) : formatPlainMessageHtml(text);
 
           el.innerHTML = avatarHtml + '<div class="chat-msg-content">' + contentHtml + '</div>';
+
+          if (isAi && meta) {
+            if (Array.isArray(meta.actions) && meta.actions.length) {
+              var actionsWrap = document.createElement('div');
+              actionsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+              meta.actions.forEach(function (action) {
+                var node = buildActionNode(action);
+                if (node) actionsWrap.appendChild(node);
+              });
+              if (actionsWrap.childNodes.length) {
+                el.querySelector('.chat-msg-content').appendChild(actionsWrap);
+              }
+            }
+
+            if (meta.feedbackEnabled && meta.interactionId) {
+              var feedbackWrap = document.createElement('div');
+              feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;';
+
+              var label = document.createElement('small');
+              label.textContent = 'Bu javob foydali bo\'ldimi?';
+              label.style.cssText = 'opacity:.75;';
+              feedbackWrap.appendChild(label);
+
+              var yesBtn = document.createElement('button');
+              yesBtn.type = 'button';
+              yesBtn.textContent = 'Foydali';
+              yesBtn.style.cssText = 'display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);font-size:12px;cursor:pointer;';
+              yesBtn.addEventListener('click', function () {
+                submitAiFeedback(meta.interactionId, true, feedbackWrap);
+              });
+              feedbackWrap.appendChild(yesBtn);
+
+              var noBtn = document.createElement('button');
+              noBtn.type = 'button';
+              noBtn.textContent = 'Foydasiz';
+              noBtn.style.cssText = 'display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);font-size:12px;cursor:pointer;';
+              noBtn.addEventListener('click', function () {
+                submitAiFeedback(meta.interactionId, false, feedbackWrap);
+              });
+              feedbackWrap.appendChild(noBtn);
+
+              el.querySelector('.chat-msg-content').appendChild(feedbackWrap);
+            }
+          }
+
           messagesEl.appendChild(el);
           
           // Force a tiny reflow for animation
@@ -1047,9 +1159,6 @@
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           if (!aiEnabled) return;
-          if (sendBtn && sendBtn.disabled) {
-            resetAiComposeState();
-          }
           var txt = input.value.trim();
           if (!txt || isSending) return;
 
@@ -1058,6 +1167,17 @@
           addMessage(stripMockTailForDisplay(txt), false);
           input.value = '';
           sendBtn.disabled = true;
+          sendBtn.setAttribute('aria-busy', 'true');
+          sendBtn.style.pointerEvents = 'none';
+          input.disabled = true;
+          input.setAttribute('aria-busy', 'true');
+          if (actionBtns && actionBtns.forEach) {
+            actionBtns.forEach(function (b) {
+              b.disabled = true;
+              b.style.opacity = '0.5';
+              b.style.cursor = 'not-allowed';
+            });
+          }
           if (window.playPrimeChatTick) window.playPrimeChatTick();
           statusWrap.style.display = 'flex';
           statusWrap.removeAttribute('hidden');
@@ -1075,28 +1195,27 @@
           })
           .then(function(payload) {
             var data = payload.data;
-            statusWrap.style.display = 'none';
-            statusWrap.setAttribute('hidden', '');
-            isSending = false;
-            sendBtn.disabled = false;
+            resetAiComposeState();
             if (data && data.success) {
-              addMessage(data.text, true);
+              addMessage(data.text, true, {
+                actions: data.actions || [],
+                interactionId: data.interaction_id,
+                feedbackEnabled: !!data.feedback_enabled
+              });
               if (window.playPrimeResultPass) window.playPrimeResultPass();
             } else if (data && data.disabled) {
               aiEnabled = false;
               widget.setAttribute('data-ai-enabled', '0');
+              data.error = data.error || "AI vaqtincha o'chirilgan.";
               addMessage(data.error || 'AI vaqtincha o‘chirilgan.', true);
             } else {
-              addMessage((data && data.error) || "Xatolik yuz berdi.", true);
+              addMessage((data && data.error) || "Xatolik yuz berdi.", true, null);
             }
           })
           .catch(function(err) {
             console.error('AI Fetch error:', err);
-            statusWrap.style.display = 'none';
-            statusWrap.setAttribute('hidden', '');
-            isSending = false;
-            sendBtn.disabled = false;
-            addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true);
+            resetAiComposeState();
+            addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true, null);
           });
         });
 
@@ -1111,31 +1230,14 @@
           if (window.playPrimeChatTick && !isSending) window.playPrimeChatTick();
         });
 
-        // Quick Action Buttons Handler (with Cooldown)
+        // Quick Action Buttons Handler
         var actionBtns = document.querySelectorAll('.ai-action-btn');
         actionBtns.forEach(function(btn) {
           btn.addEventListener('click', function() {
              if (!aiEnabled || btn.disabled || isSending) return;
-             
-             // Visual feedback and cooldown
-             actionBtns.forEach(b => {
-                 b.disabled = true;
-                 b.style.opacity = '0.5';
-                 b.style.cursor = 'not-allowed';
-             });
 
              var msg = this.getAttribute('data-msg');
-             input.value = msg;
-             form.dispatchEvent(new Event('submit'));
-
-             // Re-enable after 3 seconds
-             setTimeout(() => {
-                 actionBtns.forEach(b => {
-                     b.disabled = false;
-                     b.style.opacity = '1';
-                     b.style.cursor = 'pointer';
-                 });
-             }, 3000);
+             sendAiMessage(msg);
           });
         });
       })();
