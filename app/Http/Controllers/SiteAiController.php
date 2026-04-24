@@ -181,6 +181,7 @@ class SiteAiController extends Controller
         $validated = $request->validate([
             'interaction_id' => ['required', 'integer', 'exists:ai_interactions,id'],
             'helpful' => ['required', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         $interaction = AiInteraction::query()
@@ -188,15 +189,35 @@ class SiteAiController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
+        $helpful = (bool) $validated['helpful'];
+        $reason = Str::limit(
+            sanitize_plain_text(trim((string) ($validated['reason'] ?? ''))),
+            500,
+            ''
+        );
+        $meta = is_array($interaction->meta) ? $interaction->meta : [];
+        $meta['feedback_type'] = $helpful ? 'helpful' : 'unhelpful';
+        $meta['feedback_at'] = now()->toIso8601String();
+
+        if ($helpful) {
+            unset($meta['feedback_reason']);
+        } elseif ($reason !== '') {
+            $meta['feedback_reason'] = $reason;
+        }
+
         $interaction->update([
-            'is_helpful' => (bool) $validated['helpful'],
+            'is_helpful' => $helpful,
+            'is_unanswered' => $helpful ? (bool) $interaction->clarification_requested : true,
+            'meta' => $meta,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => (bool) $validated['helpful']
+            'message' => $helpful
                 ? 'Fikringiz saqlandi. Rahmat!'
-                : 'Qabul qilindi. Bu savolni yaxshilash uchun analyticsga qo\'shdim.',
+                : ($reason !== ''
+                    ? 'Qabul qilindi. Sabab ham analyticsga saqlandi.'
+                    : 'Qabul qilindi. Bu savolni yaxshilash uchun analyticsga qo\'shdim.'),
         ]);
     }
 

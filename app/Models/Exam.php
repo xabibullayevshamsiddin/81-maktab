@@ -33,8 +33,12 @@ class Exam extends Model
      * Reja sanasi/vaqti berilgan bo‘lsa, faqat shu vaqtdan keyin boshlash mumkin (ilova vaqti — odatda Asia/Tashkent).
      * null = vaqt cheklovi yo‘q.
      */
-    public function isOpenForStarting(): bool
+    public function isOpenForStarting(?User $user = null): bool
     {
+        if ($user?->isAdmin()) {
+            return true;
+        }
+
         if ($this->available_from === null) {
             return true;
         }
@@ -73,6 +77,18 @@ class Exam extends Model
         $grades = $this->allowedGradeItems();
 
         if ($grades !== []) {
+            $totalOptionsCount = count(school_grade_options());
+            $gradesCount = count($grades);
+
+            if ($gradesCount === $totalOptionsCount) {
+                return 'Barcha sinflar va o\'qituvchilar';
+            }
+
+            $studentGradesCount = $totalOptionsCount - 1;
+            if ($gradesCount === $studentGradesCount && !in_array('TEACHER', $grades, true)) {
+                return 'Barcha sinflar (o\'quvchilar)';
+            }
+
             $mapped = array_map(function($g) {
                 return $g === 'TEACHER' ? "O'qituvchilar" : $g;
             }, $grades);
@@ -88,11 +104,12 @@ class Exam extends Model
             return false;
         }
 
-        $isTeacher = method_exists($user, 'isTeacher') ? ($user->isTeacher() || $user->isAdmin() || $user->isSuperAdmin()) : false;
+        if ($user->isAdmin()) {
+            return true;
+        }
 
-        // If the user is a teacher, they MUST have the 'TEACHER' permission explicitly set in allowedGrades.
-        // Even if hasGradeRestrictions is false (meaning all classes are allowed), we block teachers unless explicitly granted.
-        if ($isTeacher) {
+        // Teachers need the explicit TEACHER flag, even when student grades are unrestricted.
+        if ($user->isTeacher()) {
             return in_array('TEACHER', $this->allowedGradeItems(), true);
         }
 

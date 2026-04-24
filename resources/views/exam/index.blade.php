@@ -82,7 +82,7 @@
             $row = $resultByExam[$exam->id] ?? null;
             $isLocked = ! $row && ! $exam->allowsUser($user);
             $isDone = $row && in_array($row->status, ['submitted', 'expired'], true);
-            $isScheduled = ! $isLocked && ! $isDone && ! $exam->isOpenForStarting();
+            $isScheduled = ! $isLocked && ! $isDone && ! $exam->isOpenForStarting($user);
             $cardState = $isLocked ? 'locked' : ($isDone ? 'done' : ($isScheduled ? 'scheduled' : 'open'));
             $gradeNums = collect($exam->allowedGradeItems())
               ->map(function ($gg) {

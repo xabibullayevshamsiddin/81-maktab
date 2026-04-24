@@ -55,6 +55,15 @@ class FeatureRequestController extends Controller
             return back()->with('error', 'Feature voting jadvali hali tayyor emas. Admin migratsiyani ishga tushirsin.');
         }
 
+        $user = $request->user();
+
+        if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
+            $existing = FeatureRequest::query()->where('user_id', $user->id)->exists();
+            if ($existing) {
+                return back()->with('error', 'Siz avval taklif kiritgansiz. Har bir foydalanuvchi faqat bitta taklif qoldirishi mumkin.');
+            }
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:3000'],

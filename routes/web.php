@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminCalendarEventController;
 use App\Http\Controllers\AdminAiKnowledgeController;
+use App\Http\Controllers\AdminAiReviewController;
 use App\Http\Controllers\AdminCommentController;
 use App\Http\Controllers\AdminContactMessageController;
 use App\Http\Controllers\AdminController;
@@ -100,8 +101,6 @@ Route::post('contact', [HomeController::class, 'storeContact'])
 // login
 Route::get('login', [AuthController::class, 'login'])->name('login');
 Route::post('authenticate', [AuthController::class, 'authenticate'])->name('authenticate');
-Route::get('auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
-Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::get('login/verify-code', [AuthController::class, 'showLoginVerify'])->name('login.verify.form');
 Route::post('login/verify-code', [AuthController::class, 'verifyLoginCode'])->name('login.verify');
 Route::post('login/verify-code/resend', [AuthController::class, 'resendLoginCode'])->name('login.verify.resend');
@@ -248,6 +247,9 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
         Route::post('contact-messages/{contactMessage}/block', [AdminContactMessageController::class, 'block'])->name('admin.contact-messages.block');
         Route::post('contact-messages/{contactMessage}/unblock', [AdminContactMessageController::class, 'unblock'])->name('admin.contact-messages.unblock');
         Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
+
+        Route::get('ai-reviews', [AdminAiReviewController::class, 'index'])->name('admin.ai-reviews.index');
+        Route::delete('ai-reviews/{interaction}', [AdminAiReviewController::class, 'destroy'])->name('admin.ai-reviews.destroy');
     });
 
     Route::middleware('role:super_admin,admin,moderator')->group(function () {

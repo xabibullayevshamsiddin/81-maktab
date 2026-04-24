@@ -34,7 +34,12 @@
                 <h6 class="mb-0">AI Bilimlar va Analytics</h6>
                 <small class="text-muted">Yo'naltirish, unanswered savollar va supportga aylangan chatlar shu yerda.</small>
               </div>
-              <a href="{{ route('ai-knowledges.create') }}" class="btn btn-primary">Yangi qo'shish</a>
+              <div class="d-flex gap-2">
+                @if(auth()->user()?->canManageInbox())
+                  <a href="{{ route('admin.ai-reviews.index') }}" class="btn btn-outline-primary">AI Review</a>
+                @endif
+                <a href="{{ route('ai-knowledges.create') }}" class="btn btn-primary">Yangi qo'shish</a>
+              </div>
             </div>
 
             @if (session('success'))
@@ -102,7 +107,15 @@
                   @forelse($unansweredInteractions as $item)
                     <div class="mb-10">
                       <strong class="d-block">{{ \Illuminate\Support\Str::limit($item->question, 70) }}</strong>
-                      <small class="text-muted">{{ $item->created_at?->format('d.m.Y H:i') }}</small>
+                      @if(!empty($item->meta['feedback_reason']))
+                        <small class="d-block text-danger">{{ $item->meta['feedback_reason'] }}</small>
+                      @endif
+                      <small class="text-muted">
+                        {{ $item->created_at?->format('d.m.Y H:i') }}
+                        @if($item->response_source)
+                          | {{ $item->response_source }}
+                        @endif
+                      </small>
                     </div>
                   @empty
                     <p class="text-muted mb-0">Noaniq savollar hozircha yo'q.</p>
@@ -125,6 +138,43 @@
                   @endforelse
                 </div>
               </div>
+            </div>
+
+            <div class="border rounded p-3 mb-25">
+              <div class="d-flex justify-content-between align-items-center mb-15">
+                <h6 class="mb-0">Oxirgi Muammoli AI Savol-Javoblar</h6>
+                <small class="text-muted">Faqat moderator ko'rib chiqishi kerak bo'lgan yozuvlar. Foydali deb belgilanganlar chiqmaydi.</small>
+              </div>
+
+              @forelse($recentInteractions as $item)
+                <div class="border rounded p-3 mb-10">
+                  <strong class="d-block mb-1">Savol:</strong>
+                  <p class="mb-2">{{ $item->question }}</p>
+
+                  <strong class="d-block mb-1">Javob:</strong>
+                  <p class="mb-2">
+                    {{ \Illuminate\Support\Str::limit($item->response_text ?: 'Javob saqlanmagan', 220) }}
+                  </p>
+
+                  @if(!empty($item->meta['feedback_reason']))
+                    <small class="d-block text-danger mb-1">Sabab: {{ $item->meta['feedback_reason'] }}</small>
+                  @endif
+
+                  <small class="text-muted">
+                    {{ $item->created_at?->format('d.m.Y H:i') }}
+                    @if(!empty($item->response_source))
+                      | source: {{ $item->response_source }}
+                    @endif
+                    @if($item->is_helpful === true)
+                      | feedback: foydali
+                    @elseif($item->is_helpful === false)
+                      | feedback: foydasiz
+                    @endif
+                  </small>
+                </div>
+              @empty
+                <p class="text-muted mb-0">AI dialoglar hali saqlanmagan.</p>
+              @endforelse
             </div>
 
             <div class="table-wrapper table-responsive">

@@ -48,9 +48,12 @@ class AdminExamController extends Controller
             'required_questions' => ['required', 'integer', 'min:1', 'max:500'],
             'total_points' => ['required', 'integer', 'min:1', 'max:10000'],
             'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'allowed_grades' => ['nullable', 'array'],
+            'allowed_grades' => ['required', 'array', 'min:1'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
             'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
+        ], [
+            'allowed_grades.required' => 'Kamida bitta sinfni tanlashingiz shart.',
+            'allowed_grades.min' => 'Kamida bitta sinfni tanlashingiz shart.'
         ]);
 
         $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
@@ -97,9 +100,12 @@ class AdminExamController extends Controller
             'required_questions' => ['required', 'integer', 'min:1', 'max:500'],
             'total_points' => ['required', 'integer', 'min:1', 'max:10000'],
             'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'allowed_grades' => ['nullable', 'array'],
+            'allowed_grades' => ['required', 'array', 'min:1'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
             'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
+        ], [
+            'allowed_grades.required' => 'Kamida bitta sinfni tanlashingiz shart.',
+            'allowed_grades.min' => 'Kamida bitta sinfni tanlashingiz shart.'
         ]);
 
         $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
@@ -311,10 +317,6 @@ class AdminExamController extends Controller
     }
     private function normalizeAllowedGrades(array $grades): array
     {
-        $normalized = normalize_school_grade_list($grades);
-
-        return count($normalized) === count(school_grade_options())
-            ? []
-            : $normalized;
+        return normalize_school_grade_list($grades);
     }
 }

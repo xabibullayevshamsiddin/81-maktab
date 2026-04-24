@@ -42,8 +42,9 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
-            'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            'timeout' => env('MAIL_TIMEOUT', 15),
+            'local_domain' => env('MAIL_EHLO_DOMAIN')
+                ?: (parse_url((string) env('APP_URL', ''), PHP_URL_HOST) ?: null),
         ],
 
         'ses' => [
@@ -108,8 +109,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', env('MAIL_USERNAME', 'hello@example.com')),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', '81-maktab')),
     ],
 
     /*

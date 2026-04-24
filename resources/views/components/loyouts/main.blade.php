@@ -130,7 +130,7 @@
 	            @endswitch
 	          </span>
 	          <p class="global-announcement-text">{{ $announcementText }}</p>
-	          <button type="button" class="global-announcement-close" aria-label="Yopish" onclick="this.closest('.global-announcement').remove()">
+	          <button type="button" class="global-announcement-close" aria-label="Yopish" onclick="let el = this.closest('.global-announcement'); el.classList.add('closing'); setTimeout(() => el.remove(), 450);">
 	            <i class="fa-solid fa-xmark"></i>
 	          </button>
 	        </div>
@@ -1078,13 +1078,17 @@
           return null;
         }
 
-        function submitAiFeedback(interactionId, helpful, holder) {
+        function submitAiFeedback(interactionId, helpful, holder, reason) {
           if (!interactionId || !aiFeedbackUrl || !holder) return;
+          var payload = { interaction_id: interactionId, helpful: helpful };
+          if (typeof reason === 'string' && reason.trim()) {
+            payload.reason = reason.trim();
+          }
 
           fetch(aiFeedbackUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ interaction_id: interactionId, helpful: helpful })
+            body: JSON.stringify(payload)
           })
           .then(function (res) {
             return res.json();
@@ -1095,6 +1099,65 @@
           .catch(function () {
             holder.innerHTML = '<small style="opacity:.8;">Feedback yuborilmadi.</small>';
           });
+        }
+
+        function renderUnhelpfulFeedbackPrompt(interactionId, holder) {
+          if (!interactionId || !holder) return;
+
+          holder.innerHTML = '';
+          holder.style.cssText = 'display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding:10px;border-radius:14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);';
+
+          var title = document.createElement('small');
+          title.textContent = 'Nima noto\'g\'ri edi?';
+          title.style.cssText = 'color:var(--text);opacity:.88;font-weight:600;';
+          holder.appendChild(title);
+
+          var presetsWrap = document.createElement('div');
+          presetsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+
+          ['Noaniq javob', 'Noto\'g\'ri yo\'naltirdi', 'Ma\'lumot yetarli emas'].forEach(function (preset) {
+            var presetBtn = document.createElement('button');
+            presetBtn.type = 'button';
+            presetBtn.textContent = preset;
+            presetBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.12);color:var(--text);font-size:12px;cursor:pointer;';
+            presetBtn.addEventListener('click', function () {
+              textarea.value = preset;
+              textarea.focus();
+            });
+            presetsWrap.appendChild(presetBtn);
+          });
+
+          holder.appendChild(presetsWrap);
+
+          var textarea = document.createElement('textarea');
+          textarea.rows = 2;
+          textarea.maxLength = 500;
+          textarea.placeholder = 'Qisqacha yozing...';
+          textarea.style.cssText = 'width:100%;resize:none;padding:8px 10px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:var(--bg);color:var(--text);font:inherit;';
+          holder.appendChild(textarea);
+
+          var actionsWrap = document.createElement('div');
+          actionsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+
+          var sendBtn = document.createElement('button');
+          sendBtn.type = 'button';
+          sendBtn.textContent = 'Yuborish';
+          sendBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;';
+          sendBtn.addEventListener('click', function () {
+            submitAiFeedback(interactionId, false, holder, textarea.value);
+          });
+          actionsWrap.appendChild(sendBtn);
+
+          var skipBtn = document.createElement('button');
+          skipBtn.type = 'button';
+          skipBtn.textContent = 'Sababsiz yuborish';
+          skipBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.10);color:var(--text);font-size:12px;cursor:pointer;';
+          skipBtn.addEventListener('click', function () {
+            submitAiFeedback(interactionId, false, holder, '');
+          });
+          actionsWrap.appendChild(skipBtn);
+
+          holder.appendChild(actionsWrap);
         }
 
         function addMessage(text, isAi, meta) {
@@ -1122,17 +1185,19 @@
 
             if (meta.feedbackEnabled && meta.interactionId) {
               var feedbackWrap = document.createElement('div');
-              feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;';
+              feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
 
               var label = document.createElement('small');
               label.textContent = 'Bu javob foydali bo\'ldimi?';
-              label.style.cssText = 'opacity:.75;';
+              label.style.cssText = 'color:var(--text);opacity:.82;';
               feedbackWrap.appendChild(label);
+
+              var feedbackBtnBaseStyle = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;color:var(--text);font-size:12px;font-weight:600;line-height:1;cursor:pointer;backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;';
 
               var yesBtn = document.createElement('button');
               yesBtn.type = 'button';
               yesBtn.textContent = 'Foydali';
-              yesBtn.style.cssText = 'display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);font-size:12px;cursor:pointer;';
+              yesBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(16,185,129,.55);background:rgba(16,185,129,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
               yesBtn.addEventListener('click', function () {
                 submitAiFeedback(meta.interactionId, true, feedbackWrap);
               });
@@ -1141,9 +1206,9 @@
               var noBtn = document.createElement('button');
               noBtn.type = 'button';
               noBtn.textContent = 'Foydasiz';
-              noBtn.style.cssText = 'display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);font-size:12px;cursor:pointer;';
+              noBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
               noBtn.addEventListener('click', function () {
-                submitAiFeedback(meta.interactionId, false, feedbackWrap);
+                renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
               });
               feedbackWrap.appendChild(noBtn);
 

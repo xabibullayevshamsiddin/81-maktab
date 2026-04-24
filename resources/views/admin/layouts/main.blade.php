@@ -105,6 +105,13 @@
                   <span class="text">Aloqa xabarlari</span>
                 </a>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.ai-reviews.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.ai-reviews.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI Review</span>
+                </a>
+              </li>
             @endif
           @endif
 

@@ -73,9 +73,28 @@
         animation: featureReplyPop .22s ease both;
       }
       .feature-reply-card.is-admin {
-        background: rgba(37, 99, 235, 0.08);
-        border-color: rgba(37, 99, 235, 0.28);
-        box-shadow: none;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        background: linear-gradient(135deg, rgba(15, 118, 110, 0.16), rgba(2, 132, 199, 0.12));
+        border-color: rgba(6, 182, 212, 0.45);
+        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22), 0 10px 24px rgba(8, 145, 178, 0.18);
+        animation: featureReplyPop .22s ease both, adminGlow 2s ease-in-out infinite alternate;
+      }
+      .feature-reply-card.is-admin::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.2) 45%, transparent 65%);
+        transform: translateX(-120%);
+        z-index: 0;
+        animation: adminShine 3s ease-in-out infinite;
+      }
+      .feature-reply-card.is-admin > * {
+        position: relative;
+        z-index: 1;
       }
       .feature-reply-card.is-super-admin {
         position: relative;
@@ -156,6 +175,16 @@
         0% { transform: translateX(-120%); opacity: 0; }
         18% { opacity: .75; }
         40% { transform: translateX(120%); opacity: 0; }
+        100% { transform: translateX(120%); opacity: 0; }
+      }
+      @keyframes adminGlow {
+        from { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18), 0 8px 20px rgba(8, 145, 178, 0.14); }
+        to { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 12px 28px rgba(8, 145, 178, 0.25); }
+      }
+      @keyframes adminShine {
+        0% { transform: translateX(-120%); opacity: 0; }
+        20% { opacity: .7; }
+        45% { transform: translateX(120%); opacity: 0; }
         100% { transform: translateX(120%); opacity: 0; }
       }
     </style>
@@ -330,7 +359,7 @@
                             ? 'Admin'
                             : ($isModeratorReply ? 'Moderator' : 'Foydalanuvchi'));
                       $replyBadgeStyle = $isAdminReply
-                        ? 'background:rgba(37,99,235,.16); color:#1d4ed8;'
+                        ? 'background:rgba(6,182,212,.16); color:#0891b2;'
                         : ($isModeratorReply
                             ? 'background:rgba(217,119,6,.16); color:#92400e;'
                             : 'background:rgba(15,23,42,.08); color:#334155;');

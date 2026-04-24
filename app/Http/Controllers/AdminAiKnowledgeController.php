@@ -49,8 +49,27 @@ class AdminAiKnowledgeController extends Controller
         $topQuestions = collect();
         $unansweredInteractions = collect();
         $supportInteractions = collect();
+        $recentInteractions = collect();
 
         if (Schema::hasTable('ai_interactions')) {
+            $interactionColumns = ['id', 'question', 'created_at'];
+            $reviewBaseQuery = AiInteraction::query()
+                ->where(function ($query): void {
+                    $query->whereNull('is_helpful')
+                        ->orWhere('is_helpful', false);
+                })
+                ->where(function ($query): void {
+                    $query->where('is_unanswered', true)
+                        ->orWhere('is_helpful', false)
+                        ->orWhere('support_converted', true);
+                });
+
+            foreach (['response_text', 'response_source', 'is_helpful', 'meta'] as $column) {
+                if (Schema::hasColumn('ai_interactions', $column)) {
+                    $interactionColumns[] = $column;
+                }
+            }
+
             $analytics = [
                 'total_questions' => AiInteraction::query()->count(),
                 'clarification_count' => AiInteraction::query()->where('clarification_requested', true)->count(),
@@ -68,11 +87,11 @@ class AdminAiKnowledgeController extends Controller
                 ->limit(8)
                 ->get();
 
-            $unansweredInteractions = AiInteraction::query()
+            $unansweredInteractions = (clone $reviewBaseQuery)
                 ->where('is_unanswered', true)
                 ->latest('id')
                 ->limit(8)
-                ->get(['id', 'question', 'response_source', 'created_at']);
+                ->get(['id', 'question', 'response_source', 'meta', 'created_at']);
 
             $supportInteractions = AiInteraction::query()
                 ->with('contactMessage:id,note')
@@ -80,6 +99,11 @@ class AdminAiKnowledgeController extends Controller
                 ->latest('id')
                 ->limit(8)
                 ->get(['id', 'question', 'contact_message_id', 'created_at']);
+
+            $recentInteractions = (clone $reviewBaseQuery)
+                ->latest('id')
+                ->limit(10)
+                ->get($interactionColumns);
         }
 
         return view('admin.ai_knowledge.index', compact(
@@ -89,6 +113,7 @@ class AdminAiKnowledgeController extends Controller
             'topQuestions',
             'unansweredInteractions',
             'supportInteractions',
+            'recentInteractions',
         ));
     }
 

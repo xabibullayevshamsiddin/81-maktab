@@ -66,7 +66,7 @@ class ExamController extends Controller
         return view('exam.start', [
             'exam' => $exam,
             'existing' => $existing,
-            'canStartNow' => $exam->isOpenForStarting(),
+            'canStartNow' => $exam->isOpenForStarting($request->user()),
         ]);
     }
 
@@ -83,7 +83,7 @@ class ExamController extends Controller
             ->where('user_id', $request->user()->id)
             ->first();
 
-        if ($redirect = $this->ensureExamAvailable($exam, $existing)) {
+        if ($redirect = $this->ensureExamAvailable($exam, $existing, $request->user())) {
             return $redirect;
         }
 
@@ -442,7 +442,7 @@ class ExamController extends Controller
     /**
      * @return RedirectResponse|null
      */
-    private function ensureExamAvailable(Exam $exam, ?Result $existing = null)
+    private function ensureExamAvailable(Exam $exam, ?Result $existing = null, $user = null)
     {
         abort_unless($exam->is_active, 404);
 
@@ -450,7 +450,7 @@ class ExamController extends Controller
             return null;
         }
 
-        if (! $exam->isOpenForStarting()) {
+        if (! $exam->isOpenForStarting($user)) {
             $dateLabel = $exam->availableFromLabel() ?? '';
 
             return redirect()
