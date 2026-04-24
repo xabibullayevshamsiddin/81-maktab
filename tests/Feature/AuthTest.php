@@ -17,6 +17,11 @@ class AuthTest extends TestCase
     {
         parent::setUp();
 
+        config([
+            'mail.enabled' => true,
+            'courses.require_email_verification' => true,
+        ]);
+
         Mail::fake();
         $this->createAuthTestTables();
     }
@@ -106,6 +111,44 @@ class AuthTest extends TestCase
         ])->assertRedirect(route('home'));
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_registration_completes_immediately_when_mail_delivery_is_disabled(): void
+    {
+        config(['mail.enabled' => false]);
+
+        $this->post(route('register.store'), $this->registrationPayload())
+            ->assertRedirect(route('home'));
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'ali@example.com',
+        ]);
+        $this->assertDatabaseMissing('one_time_codes', [
+            'email' => 'ali@example.com',
+            'purpose' => OneTimeCode::PURPOSE_REGISTER,
+        ]);
+    }
+
+    public function test_login_completes_immediately_when_mail_delivery_is_disabled(): void
+    {
+        config(['mail.enabled' => false]);
+
+        $user = $this->createUser([
+            'email' => 'test@example.com',
+            'password' => 'password123',
+        ]);
+
+        $this->post(route('authenticate'), [
+            'email' => 'test@example.com',
+            'password' => 'password123',
+        ])->assertRedirect(route('home'));
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseMissing('one_time_codes', [
+            'email' => 'test@example.com',
+            'purpose' => OneTimeCode::PURPOSE_LOGIN,
+        ]);
     }
 
     private function createAuthTestTables(): void

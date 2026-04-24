@@ -62,7 +62,7 @@ class AuthController extends Controller
         // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi, 
         // lekin faqat `active` middleware ruxsat bergan joylargagina yoza olishadi.
 
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             Auth::login($user, true);
             $request->session()->regenerate();
 
@@ -111,7 +111,7 @@ class AuthController extends Controller
         $fullName = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         $isParent = ! empty($validated['is_parent']);
 
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             $user = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
@@ -179,6 +179,12 @@ class AuthController extends Controller
         if (! $user) {
             return back()
                 ->withErrors(['email' => 'Bu email bilan hisob topilmadi.'])
+                ->onlyInput('email');
+        }
+
+        if (! $this->mailDeliveryEnabled()) {
+            return back()
+                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
                 ->onlyInput('email');
         }
 
@@ -308,6 +314,12 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Bu email bilan hisob topilmadi.']);
         }
 
+        if (! $this->mailDeliveryEnabled()) {
+            return back()->withErrors([
+                'code' => $this->mailDeliveryDisabledMessage(),
+            ]);
+        }
+
         if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return back()->withErrors([
                 'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
@@ -332,7 +344,7 @@ class AuthController extends Controller
 
     public function showLoginVerify(Request $request)
     {
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             return redirect()->route('login');
         }
 
@@ -349,7 +361,7 @@ class AuthController extends Controller
 
     public function verifyLoginCode(Request $request)
     {
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             return redirect()->route('login');
         }
 
@@ -399,7 +411,7 @@ class AuthController extends Controller
 
     public function resendLoginCode(Request $request)
     {
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             return redirect()->route('login');
         }
 
@@ -437,7 +449,7 @@ class AuthController extends Controller
 
     public function showRegisterVerify(Request $request)
     {
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             return redirect()->route('register');
         }
 
@@ -454,7 +466,7 @@ class AuthController extends Controller
 
     public function verifyRegisterCode(Request $request)
     {
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             return redirect()->route('register');
         }
 
@@ -529,7 +541,7 @@ class AuthController extends Controller
 
     public function resendRegisterCode(Request $request)
     {
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             return redirect()->route('register');
         }
 
@@ -587,6 +599,13 @@ class AuthController extends Controller
                 ->with('toast_type', 'error');
         }
 
+        if (! $this->mailDeliveryEnabled()) {
+            return redirect()
+                ->route('user')
+                ->with('error', $this->mailDeliveryDisabledMessage())
+                ->with('toast_type', 'warning');
+        }
+
         if (! $this->canSendOtpNow((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return redirect()
                 ->route('user')
@@ -619,6 +638,10 @@ class AuthController extends Controller
 
     private function issueAndSendOtp(string $email, string $purpose, array $meta = []): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            throw new \RuntimeException('Mail delivery is disabled.');
+        }
+
         $code = (string) random_int(100000, 999999);
 
         OneTimeCode::query()
@@ -737,6 +760,26 @@ class AuthController extends Controller
         $this->issueAndSendOtp((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET, array_merge([
             'user_id' => (int) $user->id,
         ], $extraMeta));
+    }
+
+    private function loginEmailOtpEnabled(): bool
+    {
+        return self::LOGIN_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
+    }
+
+    private function registerEmailOtpEnabled(): bool
+    {
+        return self::REGISTER_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
+    }
+
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true);
+    }
+
+    private function mailDeliveryDisabledMessage(): string
+    {
+        return 'Email yuborish vaqtincha o\'chirilgan.';
     }
 
     private function logOtpSendFailure(string $message, \Throwable $e, array $context = []): void

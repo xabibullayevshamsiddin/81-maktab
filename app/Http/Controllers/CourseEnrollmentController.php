@@ -135,7 +135,7 @@ class CourseEnrollmentController extends Controller
     {
         $course->loadMissing('creator');
         $creator = $course->creator;
-        if (! $creator?->email) {
+        if (! $creator?->email || ! config('mail.enabled', true)) {
             return;
         }
 

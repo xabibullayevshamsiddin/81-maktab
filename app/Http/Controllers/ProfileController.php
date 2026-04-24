@@ -295,6 +295,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        if (! $this->mailDeliveryEnabled()) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
+                    'email' => [$this->mailDeliveryDisabledMessage()],
+                ]);
+            }
+
+            return back()
+                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
+                ->withInput();
+        }
+
         $validated = $request->validate([
             'email' => [
                 'required',
@@ -474,6 +486,18 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if (! $this->mailDeliveryEnabled()) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
+                    'code' => [$this->mailDeliveryDisabledMessage()],
+                ]);
+            }
+
+            return back()->withErrors([
+                'code' => $this->mailDeliveryDisabledMessage(),
+            ]);
+        }
+
         if (! $this->canSendEmailChangeOtp($pending)) {
             if ($this->wantsJson($request)) {
                 return $this->sectionErrorResponse('email', "Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting.", [
@@ -553,6 +577,10 @@ class ProfileController extends Controller
 
     private function issueEmailChangeOtp(string $email, int $userId): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            throw new \RuntimeException('Mail delivery is disabled.');
+        }
+
         $code = (string) random_int(100000, 999999);
 
         OneTimeCode::query()
@@ -634,6 +662,16 @@ class ProfileController extends Controller
     private function emailChangeVerifySecondsLeft(string $email): int
     {
         return RateLimiter::availableIn($this->emailChangeVerifyKey($email));
+    }
+
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true);
+    }
+
+    private function mailDeliveryDisabledMessage(): string
+    {
+        return 'Email yuborish vaqtincha o\'chirilgan.';
     }
 
     private function passwordChangeKey(Request $request, int $userId): string

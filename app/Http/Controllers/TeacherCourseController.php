@@ -85,7 +85,7 @@ class TeacherCourseController extends Controller
 
         abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
 
-        if (! config('courses.require_email_verification')) {
+        if (! $this->courseEmailVerificationEnabled()) {
             $payload = [
                 'teacher_id' => (int) $teacher->id,
                 'created_by' => (int) $user->id,
@@ -208,6 +208,10 @@ class TeacherCourseController extends Controller
         $user = $this->authorizeCreator();
         $this->ensureCanAccessCourse($user, $course);
 
+        if ($redirect = $this->autoPublishCourseWhenEmailVerificationDisabled($course)) {
+            return $redirect;
+        }
+
         return view('courses.verify', compact('course'));
     }
 
@@ -215,6 +219,10 @@ class TeacherCourseController extends Controller
     {
         $user = $this->authorizeCreator();
         $this->ensureCanAccessCourse($user, $course);
+
+        if ($redirect = $this->autoPublishCourseWhenEmailVerificationDisabled($course)) {
+            return $redirect;
+        }
 
         $validated = $request->validate([
             'code' => ['required', 'digits:6'],
@@ -252,6 +260,10 @@ class TeacherCourseController extends Controller
     {
         $user = $this->authorizeCreator();
         $this->ensureCanAccessCourse($user, $course);
+
+        if ($redirect = $this->autoPublishCourseWhenEmailVerificationDisabled($course)) {
+            return $redirect;
+        }
 
         $code = (string) random_int(100000, 999999);
         $course->update([
@@ -420,6 +432,15 @@ class TeacherCourseController extends Controller
 
     private function sendPublishCode(string $email, Course $course, string $code): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            Log::info('Course publish code email skipped because mail delivery is disabled', [
+                'email' => $email,
+                'course_id' => $course->id,
+            ]);
+
+            return;
+        }
+
         try {
             $html = '
             <div style="background:#f3f6fb;padding:24px 12px;font-family:Arial,sans-serif;">
@@ -462,6 +483,35 @@ class TeacherCourseController extends Controller
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->first();
+    }
+
+    private function courseEmailVerificationEnabled(): bool
+    {
+        return (bool) config('courses.require_email_verification', true);
+    }
+
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true);
+    }
+
+    private function autoPublishCourseWhenEmailVerificationDisabled(Course $course): ?RedirectResponse
+    {
+        if ($this->courseEmailVerificationEnabled() || $course->status !== Course::STATUS_PENDING_VERIFICATION) {
+            return null;
+        }
+
+        $course->update([
+            'status' => Course::STATUS_PUBLISHED,
+            'publish_code' => null,
+            'publish_code_expires_at' => null,
+        ]);
+        forget_public_course_caches();
+
+        return redirect()
+            ->route('courses')
+            ->with('success', "Email yuborish o'chirilgani uchun kurs darhol tasdiqlandi.")
+            ->with('toast_type', 'success');
     }
 
     private function teacherCourseBlockResponse(User $user): ?RedirectResponse

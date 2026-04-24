@@ -7,15 +7,16 @@ return [
     | Kursni email kod bilan tasdiqlash
     |--------------------------------------------------------------------------
     |
-    | true: kurs yaratilgach Gmail/emailga kod ketadi, keyin kod kiritiladi.
-    | false: kurs darhol saytda (published), email yuborilmaydi.
+    | Bu sozlama endi global mail switch bilan birga ishlaydi.
+    | MAIL_DELIVERY_ENABLED=true bo'lsa kurs email kodi ishlaydi.
+    | MAIL_DELIVERY_ENABLED=false bo'lsa kurs darhol saytda (published) bo'ladi.
     |
-    | .env: COURSE_REQUIRE_EMAIL_VERIFICATION=false
+    | .env: MAIL_DELIVERY_ENABLED=false
     |
     */
 
     'require_email_verification' => filter_var(
-        env('COURSE_REQUIRE_EMAIL_VERIFICATION', true),
+        env('MAIL_DELIVERY_ENABLED', true),
         FILTER_VALIDATE_BOOLEAN
     ),
 
