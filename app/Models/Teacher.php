@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +46,22 @@ class Teacher extends Model
             if (! $teacher->slug && $teacher->full_name) {
                 $teacher->slug = Str::slug($teacher->full_name);
             }
+        });
+
+        static::updating(function (Teacher $teacher): void {
+            if ($teacher->isDirty('image')) {
+                PublicStorage::delete($teacher->getOriginal('image'));
+            }
+        });
+
+        static::deleting(function (Teacher $teacher): void {
+            PublicStorage::delete($teacher->image);
+            PublicStorage::deleteMany(
+                $teacher->courses()
+                    ->whereNotNull('image')
+                    ->pluck('image')
+                    ->all()
+            );
         });
     }
 

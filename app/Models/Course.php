@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,6 +39,19 @@ class Course extends Model
         'start_date' => 'date',
         'publish_code_expires_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (Course $course): void {
+            if ($course->isDirty('image')) {
+                PublicStorage::delete($course->getOriginal('image'));
+            }
+        });
+
+        static::deleted(function (Course $course): void {
+            PublicStorage::delete($course->image);
+        });
+    }
 
     public function teacher(): BelongsTo
     {

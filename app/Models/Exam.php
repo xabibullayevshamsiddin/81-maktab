@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -28,6 +29,18 @@ class Exam extends Model
         'is_active' => 'boolean',
         'available_from' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Exam $exam): void {
+            PublicStorage::deleteMany(
+                $exam->questions()
+                    ->whereNotNull('image_path')
+                    ->pluck('image_path')
+                    ->all()
+            );
+        });
+    }
 
     /**
      * Reja sanasi/vaqti berilgan bo‘lsa, faqat shu vaqtdan keyin boshlash mumkin (ilova vaqti — odatda Asia/Tashkent).

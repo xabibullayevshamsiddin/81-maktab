@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\PublicStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -56,11 +57,7 @@ class ImageService
             return false;
         }
 
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->delete($path);
-        }
-
-        return false;
+        return PublicStorage::delete($path);
     }
 
     public function createThumbnail(string $originalPath, string $directory = 'thumbnails', int $width = 300, int $height = 200): ?string
