@@ -19,6 +19,7 @@ class AuthTest extends TestCase
 
         config([
             'mail.enabled' => true,
+            'mail.code_delivery_enabled' => true,
             'courses.require_email_verification' => true,
         ]);
 

@@ -492,7 +492,9 @@ class TeacherCourseController extends Controller
 
     private function mailDeliveryEnabled(): bool
     {
-        return (bool) config('mail.enabled', true) && $this->mailConfigurationReady();
+        return (bool) config('mail.enabled', true)
+            && (bool) config('mail.code_delivery_enabled', false)
+            && $this->mailConfigurationReady();
     }
 
     private function mailConfigurationReady(): bool
