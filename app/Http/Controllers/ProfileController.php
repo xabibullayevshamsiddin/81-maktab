@@ -666,12 +666,36 @@ class ProfileController extends Controller
 
     private function mailDeliveryEnabled(): bool
     {
-        return (bool) config('mail.enabled', true);
+        return (bool) config('mail.enabled', true) && $this->mailConfigurationReady();
     }
 
     private function mailDeliveryDisabledMessage(): string
     {
-        return 'Email yuborish vaqtincha o\'chirilgan.';
+        return 'Email yuborish vaqtincha ishlamayapti. Keyinroq qayta urinib ko\'ring.';
+    }
+
+    private function mailConfigurationReady(): bool
+    {
+        return match ((string) config('mail.default', 'smtp')) {
+            'resend' => $this->hasConfiguredResendApiKey(),
+            'smtp' => filled(config('mail.mailers.smtp.host')),
+            default => true,
+        };
+    }
+
+    private function hasConfiguredResendApiKey(): bool
+    {
+        $apiKey = trim((string) (config('resend.api_key') ?? config('services.resend.key') ?? ''));
+
+        if ($apiKey === '' || ! str_starts_with($apiKey, 're_')) {
+            return false;
+        }
+
+        $normalizedKey = strtolower($apiKey);
+
+        return ! str_contains($normalizedKey, 'sizning_kalitingiz')
+            && ! str_contains($normalizedKey, 'your_key')
+            && ! str_contains($normalizedKey, 'your-api-key');
     }
 
     private function passwordChangeKey(Request $request, int $userId): string
