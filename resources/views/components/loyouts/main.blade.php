@@ -883,6 +883,7 @@
         var input = document.getElementById('ai-textarea');
         var sendBtn = document.getElementById('ai-send-btn');
         var statusWrap = document.getElementById('ai-compose-status');
+        var statusText = statusWrap ? statusWrap.querySelector('.chat-compose-status-text') : null;
 
         var aiUrl = widget.getAttribute('data-ai-url');
         var aiFeedbackUrl = widget.getAttribute('data-ai-feedback-url');
@@ -894,9 +895,26 @@
         var aiPanelMain = document.getElementById('ai-panel-main');
         var aiDisabledText = document.getElementById('ai-disabled-panel-text');
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
+        var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!document.getElementById('ai-typewriter-style')) {
+          var typewriterStyle = document.createElement('style');
+          typewriterStyle.id = 'ai-typewriter-style';
+          typewriterStyle.textContent = '@keyframes aiTypeCursorBlink{0%,49%{opacity:1;}50%,100%{opacity:.15;}}';
+          document.head.appendChild(typewriterStyle);
+        }
 
         function syncAiDockState() {
           document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
+        }
+
+        function showAiComposeStatus(text) {
+          if (!statusWrap) return;
+          if (statusText && text) {
+            statusText.textContent = text;
+          }
+          statusWrap.style.display = 'flex';
+          statusWrap.removeAttribute('hidden');
         }
 
         function resetAiComposeState() {
@@ -920,6 +938,9 @@
           if (statusWrap) {
             statusWrap.style.display = 'none';
             statusWrap.setAttribute('hidden', '');
+          }
+          if (statusText) {
+            statusText.textContent = "O'ylamoqda...";
           }
         }
 
@@ -985,7 +1006,12 @@
           closePanel();
         });
 
-        function scrollToBottom() {
+        function scrollToBottom(immediate) {
+          if (!messagesEl) return;
+          if (immediate) {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return;
+          }
           messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
         }
 
@@ -1160,71 +1186,145 @@
           holder.appendChild(actionsWrap);
         }
 
-        function addMessage(text, isAi, meta) {
-          if (!text || !text.trim()) return;
+        function buildMessageElement(isAi) {
           var el = document.createElement('div');
           el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
-          
+
           var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
-          var contentHtml = isAi ? formatAiMessageHtml(text) : formatPlainMessageHtml(text);
 
-          el.innerHTML = avatarHtml + '<div class="chat-msg-content">' + contentHtml + '</div>';
-
-          if (isAi && meta) {
-            if (Array.isArray(meta.actions) && meta.actions.length) {
-              var actionsWrap = document.createElement('div');
-              actionsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
-              meta.actions.forEach(function (action) {
-                var node = buildActionNode(action);
-                if (node) actionsWrap.appendChild(node);
-              });
-              if (actionsWrap.childNodes.length) {
-                el.querySelector('.chat-msg-content').appendChild(actionsWrap);
-              }
-            }
-
-            if (meta.feedbackEnabled && meta.interactionId) {
-              var feedbackWrap = document.createElement('div');
-              feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
-
-              var label = document.createElement('small');
-              label.textContent = 'Bu javob foydali bo\'ldimi?';
-              label.style.cssText = 'color:var(--text);opacity:.82;';
-              feedbackWrap.appendChild(label);
-
-              var feedbackBtnBaseStyle = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;color:var(--text);font-size:12px;font-weight:600;line-height:1;cursor:pointer;backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;';
-
-              var yesBtn = document.createElement('button');
-              yesBtn.type = 'button';
-              yesBtn.textContent = 'Foydali';
-              yesBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(16,185,129,.55);background:rgba(16,185,129,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
-              yesBtn.addEventListener('click', function () {
-                submitAiFeedback(meta.interactionId, true, feedbackWrap);
-              });
-              feedbackWrap.appendChild(yesBtn);
-
-              var noBtn = document.createElement('button');
-              noBtn.type = 'button';
-              noBtn.textContent = 'Foydasiz';
-              noBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
-              noBtn.addEventListener('click', function () {
-                renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
-              });
-              feedbackWrap.appendChild(noBtn);
-
-              el.querySelector('.chat-msg-content').appendChild(feedbackWrap);
-            }
-          }
-
+          el.innerHTML = avatarHtml + '<div class="chat-msg-content"></div>';
           messagesEl.appendChild(el);
-          
-          // Force a tiny reflow for animation
+
           void el.offsetWidth;
           el.classList.add('reveal');
           el.style.opacity = '1';
           el.style.transform = 'translateY(0)';
-          
           scrollToBottom();
+
+          return el;
+        }
+
+        function attachAiMeta(contentEl, meta) {
+          if (!contentEl || !meta) return;
+
+          if (Array.isArray(meta.actions) && meta.actions.length) {
+            var actionsWrap = document.createElement('div');
+            actionsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+            meta.actions.forEach(function (action) {
+              var node = buildActionNode(action);
+              if (node) actionsWrap.appendChild(node);
+            });
+            if (actionsWrap.childNodes.length) {
+              contentEl.appendChild(actionsWrap);
+            }
+          }
+
+          if (meta.feedbackEnabled && meta.interactionId) {
+            var feedbackWrap = document.createElement('div');
+            feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
+
+            var label = document.createElement('small');
+            label.textContent = 'Bu javob foydali bo\'ldimi?';
+            label.style.cssText = 'color:var(--text);opacity:.82;';
+            feedbackWrap.appendChild(label);
+
+            var feedbackBtnBaseStyle = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;color:var(--text);font-size:12px;font-weight:600;line-height:1;cursor:pointer;backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;';
+
+            var yesBtn = document.createElement('button');
+            yesBtn.type = 'button';
+            yesBtn.textContent = 'Foydali';
+            yesBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(16,185,129,.55);background:rgba(16,185,129,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
+            yesBtn.addEventListener('click', function () {
+              submitAiFeedback(meta.interactionId, true, feedbackWrap);
+            });
+            feedbackWrap.appendChild(yesBtn);
+
+            var noBtn = document.createElement('button');
+            noBtn.type = 'button';
+            noBtn.textContent = 'Foydasiz';
+            noBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
+            noBtn.addEventListener('click', function () {
+              renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
+            });
+            feedbackWrap.appendChild(noBtn);
+
+            contentEl.appendChild(feedbackWrap);
+          }
+
+          scrollToBottom();
+        }
+
+        function animateAiMessage(contentEl, text, meta) {
+          if (!contentEl) return Promise.resolve();
+
+          var fullText = String(text || '');
+          if (!fullText.trim() || prefersReducedMotion) {
+            contentEl.innerHTML = formatAiMessageHtml(fullText);
+            attachAiMeta(contentEl, meta);
+            scrollToBottom();
+            return Promise.resolve();
+          }
+
+          var cursor = document.createElement('span');
+          cursor.setAttribute('aria-hidden', 'true');
+          cursor.style.cssText = 'display:inline-block;width:9px;height:1.05em;margin-left:2px;border-radius:999px;background:currentColor;vertical-align:-0.18em;opacity:.85;animation:aiTypeCursorBlink .85s steps(1,end) infinite;';
+
+          var index = 0;
+          var baseDelay = fullText.length > 900 ? 5 : (fullText.length > 500 ? 7 : 11);
+
+          return new Promise(function (resolve) {
+            function step() {
+              index += 1;
+              contentEl.innerHTML = formatAiMessageHtml(fullText.slice(0, index));
+              contentEl.appendChild(cursor);
+              scrollToBottom(true);
+
+              if (index >= fullText.length) {
+                cursor.remove();
+                contentEl.innerHTML = formatAiMessageHtml(fullText);
+                attachAiMeta(contentEl, meta);
+                scrollToBottom();
+                resolve();
+                return;
+              }
+
+              var currentChar = fullText.charAt(index - 1);
+              var delay = baseDelay;
+
+              if (currentChar === '\n') {
+                delay += 55;
+              } else if (/[.!?]/.test(currentChar)) {
+                delay += 35;
+              } else if (/[,:;]/.test(currentChar)) {
+                delay += 18;
+              }
+
+              window.setTimeout(step, delay);
+            }
+
+            step();
+          });
+        }
+
+        function addMessage(text, isAi, meta) {
+          if (!text || !text.trim()) return Promise.resolve(null);
+
+          var el = buildMessageElement(isAi);
+          var contentEl = el.querySelector('.chat-msg-content');
+
+          if (!contentEl) {
+            return Promise.resolve(el);
+          }
+
+          if (!isAi) {
+            contentEl.innerHTML = formatPlainMessageHtml(text);
+            scrollToBottom();
+            return Promise.resolve(el);
+          }
+
+          return animateAiMessage(contentEl, text, meta).then(function () {
+            return el;
+          });
         }
 
         form.addEventListener('submit', function (e) {
@@ -1250,8 +1350,7 @@
             });
           }
           if (window.playPrimeChatTick) window.playPrimeChatTick();
-          statusWrap.style.display = 'flex';
-          statusWrap.removeAttribute('hidden');
+          showAiComposeStatus("O'ylamoqda...");
           scrollToBottom();
 
           fetch(aiUrl, {
@@ -1266,14 +1365,38 @@
           })
           .then(function(payload) {
             var data = payload.data;
-            resetAiComposeState();
+
+            if (data && data.disabled) {
+              aiEnabled = false;
+              widget.setAttribute('data-ai-enabled', '0');
+              data.error = data.error || "AI vaqtincha o'chirilgan.";
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(data.error || "AI vaqtincha o'chirilgan.", true).then(function () {
+                resetAiComposeState();
+              });
+            }
+
+            if (!data || !data.success) {
+              var backendError = (data && (data.error || data.message))
+                || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
+                || "Xatolik yuz berdi.";
+
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(backendError, true, null).then(function () {
+                resetAiComposeState();
+              });
+            }
+
             if (data && data.success) {
-              addMessage(data.text, true, {
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(data.text, true, {
                 actions: data.actions || [],
                 interactionId: data.interaction_id,
                 feedbackEnabled: !!data.feedback_enabled
+              }).then(function () {
+                resetAiComposeState();
+                if (window.playPrimeResultPass) window.playPrimeResultPass();
               });
-              if (window.playPrimeResultPass) window.playPrimeResultPass();
             } else if (data && data.disabled) {
               aiEnabled = false;
               widget.setAttribute('data-ai-enabled', '0');

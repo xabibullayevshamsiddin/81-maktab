@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\Repositories\ExamRepositoryInterface;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CommentRepository;
+use App\Repositories\ExamRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +28,10 @@ class RepositoryServiceProvider extends ServiceProvider
 
         $this->app->singleton(CommentRepository::class, function () {
             return new CommentRepository;
+        });
+
+        $this->app->singleton(ExamRepositoryInterface::class, function () {
+            return new ExamRepository;
         });
     }
 

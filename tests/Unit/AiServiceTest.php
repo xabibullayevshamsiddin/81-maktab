@@ -240,6 +240,32 @@ class AiServiceTest extends TestCase
         $this->assertFalse($context['context_applied']);
     }
 
+    public function test_generate_response_understands_assalomu_alaykum_variants(): void
+    {
+        $service = new AiService();
+
+        foreach (['asalomu alekum', 'assalomualaykum', 'salom aleykum'] as $variant) {
+            $result = $service->generateResponse($variant);
+
+            $this->assertTrue($result['success']);
+            $this->assertSame('static_knowledge', $result['source']);
+            $this->assertStringContainsString('AI yordamchisiman', $result['text']);
+        }
+    }
+
+    public function test_prepare_conversation_context_does_not_touch_greeting_variant(): void
+    {
+        $service = new AiService();
+
+        $context = $service->prepareConversationContext('asalomu alekum', [
+            ['role' => 'user', 'text' => 'Qaysi kurslar bor?'],
+            ['role' => 'assistant', 'text' => 'Hozirgi faol kurslarimiz mavjud.', 'source' => 'dynamic_data'],
+        ]);
+
+        $this->assertSame('asalomu alekum', $context['resolved_message']);
+        $this->assertFalse($context['context_applied']);
+    }
+
     private function invokePrivate(AiService $service, string $method, array $arguments = []): mixed
     {
         $caller = \Closure::bind(

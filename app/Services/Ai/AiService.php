@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
 class AiService
 {
     private const GEMINI_CALLS_PER_MINUTE_SOFT_LIMIT = 14;
+    private static ?bool $aiKnowledgeTableExists = null;
 
     /**
      * Main entry point for generating a response.
@@ -196,6 +197,7 @@ class AiService
             'recent_topic' => $recentTopic,
             'resolved_message' => $resolvedMessage,
             'context_applied' => $contextApplied,
+            'history_signature' => $this->historySignature($history),
             'fingerprint' => sha1(json_encode($history, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]'),
         ];
     }
@@ -206,6 +208,7 @@ class AiService
             return $conversationContext + [
                 'recent_topic' => $conversationContext['recent_topic'] ?? $this->recentConversationTopic($conversationContext['history'] ?? []),
                 'context_applied' => (bool) ($conversationContext['context_applied'] ?? false),
+                'history_signature' => (string) ($conversationContext['history_signature'] ?? $this->historySignature($conversationContext['history'] ?? [])),
                 'fingerprint' => (string) ($conversationContext['fingerprint'] ?? sha1('[]')),
             ];
         }
@@ -236,6 +239,31 @@ class AiService
             ->take(-6)
             ->values()
             ->all();
+    }
+
+    private function historySignature(array $history): string
+    {
+        $normalizedHistory = collect($history)
+            ->map(function ($item): ?array {
+                if (! is_array($item)) {
+                    return null;
+                }
+
+                $text = trim((string) ($item['text'] ?? ''));
+                if ($text === '') {
+                    return null;
+                }
+
+                return [
+                    'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
+                    'text' => $this->normalizeSearchText($text),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return sha1(json_encode($normalizedHistory, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]');
     }
 
     private function recentConversationTopic(array $history): ?string
@@ -299,9 +327,12 @@ class AiService
             return false;
         }
 
-        if ($this->containsNormalizedPhrase($q, [
-            'salom', 'assalomu alaykum', 'rahmat', 'ok', 'xo\'p', 'hop', 'bekor', 'cancel',
-        ])) {
+        if (
+            $this->hasGreetingIntent($q)
+            || $this->hasThanksIntent($q)
+            || $this->hasFarewellIntent($q)
+            || $this->containsNormalizedPhrase($q, ['ok', 'xo\'p', 'hop', 'bekor', 'cancel'])
+        ) {
             return false;
         }
 
@@ -860,25 +891,30 @@ class AiService
         $normalized = $this->normalizeSearchText($message);
         $hour = (int) Carbon::now((string) config('app.timezone', 'UTC'))->format('H');
 
-        $hasStrictGreeting = $this->hasAnyExactToken($normalized, ['salom', 'assalom', 'alaykum', 'hello', 'qalay'])
-            || $this->containsNormalizedPhrase($normalized, [
-                'assalomu alaykum',
-                'hayrli',
-                'xayrli',
-                'hayr li',
-                'xayr li',
-                'xush kelibsiz',
-                'qalay ishlar',
-            ]);
+        $hasStrictGreeting = $this->hasGreetingIntent($normalized);
         if ($hasStrictGreeting) {
+            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+
+            // Islomiy salomlashuv: "assalomu alaykum" → "Va alaykum assalom!"
+            $isIslamicGreeting = $this->queryHasApproximateToken($normalized, ['assalom', 'assalomu', 'asalom', 'asalomu'])
+                && $this->queryHasApproximateToken($normalized, ['alaykum', 'aleykum', 'alekum', 'alaykom', 'alekom']);
+
+            if ($isIslamicGreeting) {
+                return "Va alaykum assalom! 🌙 Men **{$schoolName}** saytining AI yordamchisiman.\n"
+                    . "Quyidagi mavzularda yordam bera olaman:\n"
+                    . "- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
+                    . "- Imtihonlar, natijalar va taqvim\n"
+                    . "- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
+                    . "- Oddiy hisob-kitoblar\n\n"
+                    . "Savolingizni yozing.";
+            }
+
             if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
             elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
             elseif ($hour >= 17 && $hour < 22) $greeting = 'Hayrli kech';
             else $greeting = 'Assalomu alaykum';
 
-            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
-
-            return "{$greeting}! Men **{$schoolName}** saytining ichki AI yordamchisiman.\n"
+            return "{$greeting}! 😊 Men **{$schoolName}** saytining AI yordamchisiman.\n"
                 . "Quyidagi mavzularda yordam bera olaman:\n"
                 . "- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
                 . "- Imtihonlar, natijalar va taqvim\n"
@@ -887,48 +923,18 @@ class AiService
                 . "Savolingizni yozing.";
         }
 
-        $hasStrictFarewell = $this->hasAnyExactToken($normalized, ['xayr', 'hayr', 'bye', 'goodbye', 'chao'])
-            || $this->containsNormalizedPhrase($normalized, ["ko'rishguncha", 'korishguncha', "sog' bo'ling", 'sog boling']);
+        $hasStrictFarewell = $this->hasFarewellIntent($normalized);
         if ($hasStrictFarewell) {
             return "Xayr! Yana savolingiz bo'lsa, yozavering.";
         }
 
-        $hasStrictThanks = $this->hasAnyExactToken($normalized, ['rahmat', 'raxmat', 'tashakkur', 'thanks'])
-            || $this->containsNormalizedPhrase($normalized, ['katta rahmat', 'minnatdor', "bor bo'ling", 'thank you']);
+        $hasStrictThanks = $this->hasThanksIntent($normalized);
         if ($hasStrictThanks) {
             return "Arziydi! Boshqa savolingiz bo'lsa, yozing.";
         }
 
         if ($this->containsNormalizedPhrase($normalized, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'sen kimsan', 'siz kimsiz'])) {
             return "Men 81-IDUM saytining ichki AI yordamchisiman. Asosan maktab va sayt bo'limlari bo'yicha yordam beraman, oddiy hisob-kitoblarni ham chiqarib bera olaman.";
-        }
-
-        // Salom / Xayrli
-        // NB: 'hi ', 'hey ' olib tashlandi — "o'qituvchi" kabi so'zlarda xato trigger beradi
-        $hasGreeting = $this->hasAnyExactToken($normalized, ['salom', 'assalom', 'alaykum', 'hello', 'qalay'])
-            || $this->containsNormalizedPhrase($normalized, [
-                'assalomu alaykum',
-                'hayrli',
-                'xayrli',
-                'hayr li',
-                'xayr li',
-                'xush kelibsiz',
-                'qalay ishlar',
-            ]);
-        if ($hasGreeting) {
-            if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
-            elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
-            elseif ($hour >= 17 && $hour < 22) $greeting = 'Hayrli kech';
-            else $greeting = 'Assalomu alaykum';
-
-            $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
-            return "{$greeting}! 😊 Men **{$schoolName}** saytining AI yordamchisiman.\n"
-                . "Quyidagi mavzularda yordam bera olaman:\n"
-                . "• Maktab, kurslar, o'qituvchilar haqida 🏫\n"
-                . "• Imtihon natijalari va taqvim 📅\n"
-                . "• Matematika, fan, tarix va boshqa umumiy bilim savollar 📚\n"
-                . "• Ota-onalar va o'quvchilar uchun ma'lumotlar 👨‍👩‍👧\n\n"
-                . "Savolingizni yozing! 🚀";
         }
 
         // Xayr / Ko'rishguncha
@@ -1370,7 +1376,7 @@ class AiService
 
     private function matchKnowledgeBase(string $message): ?string
     {
-        if (! Schema::hasTable('ai_knowledges')) {
+        if (! $this->hasAiKnowledgeTable()) {
             return null;
         }
 
@@ -1515,6 +1521,132 @@ class AiService
         $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
 
         return Str::squish($text);
+    }
+
+    private function hasGreetingIntent(string $text): bool
+    {
+        $normalized = $this->normalizeSearchText($text);
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        if ($this->queryHasApproximateToken($normalized, [
+            'salom', 'assalom', 'assalomu', 'asalom', 'asalomu', 'salam', 'hello', 'qalay',
+            'hayrli', 'xayrli',
+        ])) {
+            return true;
+        }
+
+        if ($this->containsNormalizedPhrase($normalized, [
+            'xush kelibsiz',
+            'qalay ishlar',
+            'hayr li',
+            'xayr li',
+        ])) {
+            return true;
+        }
+
+        if (
+            $this->queryHasApproximateToken($normalized, ['assalom', 'assalomu', 'asalom', 'asalomu', 'salom', 'salam'])
+            && $this->queryHasApproximateToken($normalized, ['alaykum', 'aleykum', 'aleykum', 'alekum', 'alaykom', 'alekom'])
+        ) {
+            return true;
+        }
+
+        return $this->matchesApproximatePhraseWindow($normalized, [
+            'assalomu alaykum',
+            'assalomu aleykum',
+            'assalomu alekum',
+            'assalom alaykum',
+            'assalom aleykum',
+            'assalom alekum',
+            'asalomu alaykum',
+            'asalomu aleykum',
+            'asalomu alekum',
+            'asalom alaykum',
+            'asalom aleykum',
+            'asalom alekum',
+            'salom alaykum',
+            'salom aleykum',
+            'salom alekum',
+            'salam alaykum',
+            'salam aleykum',
+            'salam alekum',
+            'assalomualaykum',
+            'assalomualeykum',
+            'assalomualekum',
+            'asalomualaykum',
+            'asalomualeykum',
+            'asalomualekum',
+        ], 3);
+    }
+
+    private function hasFarewellIntent(string $text): bool
+    {
+        $normalized = $this->normalizeSearchText($text);
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        return $this->queryHasApproximateToken($normalized, ['xayr', 'hayr', 'bye', 'goodbye', 'chao'])
+            || $this->containsNormalizedPhrase($normalized, ["ko'rishguncha", 'korishguncha', "sog' bo'ling", 'sog boling']);
+    }
+
+    private function hasThanksIntent(string $text): bool
+    {
+        $normalized = $this->normalizeSearchText($text);
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        return $this->queryHasApproximateToken($normalized, ['rahmat', 'raxmat', 'tashakkur', 'thanks'])
+            || $this->containsNormalizedPhrase($normalized, ['katta rahmat', 'minnatdor', "bor bo'ling", 'thank you']);
+    }
+
+    private function matchesApproximatePhraseWindow(string $text, array $variants, int $maxWindowSize = 3): bool
+    {
+        $tokens = preg_split('/\s+/u', $this->normalizeSearchText($text)) ?: [];
+
+        if ($tokens === []) {
+            return false;
+        }
+
+        $windows = [];
+        $tokenCount = count($tokens);
+        $maxWindowSize = max(1, $maxWindowSize);
+
+        for ($start = 0; $start < $tokenCount; $start++) {
+            for ($length = 1; $length <= $maxWindowSize && ($start + $length) <= $tokenCount; $length++) {
+                $windows[] = implode('', array_slice($tokens, $start, $length));
+            }
+        }
+
+        foreach ($variants as $variant) {
+            $needle = str_replace(' ', '', $this->normalizeSearchText($variant));
+            if ($needle === '') {
+                continue;
+            }
+
+            foreach ($windows as $window) {
+                if ($window === $needle) {
+                    return true;
+                }
+
+                $maxErrors = mb_strlen($needle) >= 12 ? 2 : 1;
+                if (abs(mb_strlen($window) - mb_strlen($needle)) > $maxErrors) {
+                    continue;
+                }
+
+                if (levenshtein($window, $needle) <= $maxErrors) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function containsNormalizedPhrase(string $text, array $phrases): bool
@@ -1695,7 +1827,7 @@ class AiService
 
     private function knowledgeSnippetsForPrompt(): string
     {
-        if (! Schema::hasTable('ai_knowledges')) {
+        if (! $this->hasAiKnowledgeTable()) {
             return "Bilim bazasi jadvali hali mavjud emas.";
         }
 
@@ -1736,6 +1868,15 @@ class AiService
                 . ($priority !== 0 ? " | Priority: {$priority}" : '')
                 . " | Javob: {$answer}";
         })->implode("\n");
+    }
+
+    private function hasAiKnowledgeTable(): bool
+    {
+        if (self::$aiKnowledgeTableExists === null) {
+            self::$aiKnowledgeTableExists = Schema::hasTable('ai_knowledges');
+        }
+
+        return self::$aiKnowledgeTableExists;
     }
 
 

@@ -2,19 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Exams\GradeTextAnswerAction;
+use App\Actions\Exams\StoreExamAction;
+use App\Actions\Exams\UpdateExamAction;
+use App\DataTransferObjects\Exams\ExamData;
+use App\Exceptions\ExamResourceMismatchException;
+use App\Http\Requests\Exams\GradeTextAnswerRequest;
+use App\Http\Requests\Exams\SaveExamRequest;
 use App\Models\Answer;
 use App\Models\Exam;
 use App\Models\Result;
 use App\Services\ImageService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class AdminExamController extends Controller
 {
-    public function __construct(private readonly ImageService $imageService) {}
+    public function __construct(
+        private readonly ImageService $imageService,
+        private readonly StoreExamAction $storeExamAction,
+        private readonly UpdateExamAction $updateExamAction,
+        private readonly GradeTextAnswerAction $gradeTextAnswerAction,
+    ) {}
 
     public function index(Request $request)
     {
@@ -36,49 +46,13 @@ class AdminExamController extends Controller
         return view('admin.exams.create');
     }
 
-    public function store(Request $request)
+    public function store(SaveExamRequest $request): RedirectResponse
     {
-        if ($request->input('available_from') === '') {
-            $request->merge(['available_from' => null]);
-        }
-
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
-            'required_questions' => ['required', 'integer', 'min:1', 'max:500'],
-            'total_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'allowed_grades' => ['required', 'array', 'min:1'],
-            'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
-            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
-        ], [
-            'allowed_grades.required' => 'Kamida bitta sinfni tanlashingiz shart.',
-            'allowed_grades.min' => 'Kamida bitta sinfni tanlashingiz shart.'
-        ]);
-
-        $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
-
-        if ($validated['passing_points'] > $validated['total_points']) {
-            throw ValidationException::withMessages([
-                'passing_points' => 'O‘tish uchun minimal ball umumiy baldan katta bo‘lmasligi kerak.',
-            ]);
-        }
-
-        $exam = Exam::query()->create([
-            'title' => $validated['title'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'required_questions' => $validated['required_questions'],
-            'total_points' => $validated['total_points'],
-            'passing_points' => $validated['passing_points'],
-            'allowed_grades' => $validated['allowed_grades'],
-            'available_from' => $validated['available_from'] ?? null,
-            'is_active' => false,
-        ]);
-        forget_public_exam_caches();
+        $exam = $this->storeExamAction->handle(ExamData::fromRequest($request));
 
         return redirect()
             ->route('admin.exams.questions.index', $exam)
-            ->with('success', "1-bosqich saqlandi. Endi {$exam->required_questions} ta savol qo'shing — barchasi to'lgach imtihon avtomatik faol bo'ladi.");
+            ->with('success', "1-bosqich saqlandi. Endi {$exam->required_questions} ta savol qo'shing - barchasi to'lgach imtihon avtomatik faol bo'ladi.");
     }
 
     public function edit(Exam $exam)
@@ -88,58 +62,16 @@ class AdminExamController extends Controller
         return view('admin.exams.edit', compact('exam'));
     }
 
-    public function update(Request $request, Exam $exam)
+    public function update(SaveExamRequest $request, Exam $exam): RedirectResponse
     {
-        if ($request->input('available_from') === '') {
-            $request->merge(['available_from' => null]);
-        }
+        $request->ensureQuestionPointsBudget($exam);
 
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
-            'required_questions' => ['required', 'integer', 'min:1', 'max:500'],
-            'total_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'allowed_grades' => ['required', 'array', 'min:1'],
-            'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
-            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
-        ], [
-            'allowed_grades.required' => 'Kamida bitta sinfni tanlashingiz shart.',
-            'allowed_grades.min' => 'Kamida bitta sinfni tanlashingiz shart.'
-        ]);
-
-        $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
-
-        if ($validated['passing_points'] > $validated['total_points']) {
-            throw ValidationException::withMessages([
-                'passing_points' => 'O‘tish uchun minimal ball umumiy baldan katta bo‘lmasligi kerak.',
-            ]);
-        }
-
-        $sumPts = $exam->sumQuestionPoints();
-        if ($validated['total_points'] < $sumPts) {
-            throw ValidationException::withMessages([
-                'total_points' => "Umumiy bal kamida savollar ballari yig‘indisi ({$sumPts}) bo‘lishi kerak. Avval savollarni tahrirlang.",
-            ]);
-        }
-
-        $exam->update([
-            'title' => $validated['title'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'required_questions' => $validated['required_questions'],
-            'total_points' => $validated['total_points'],
-            'passing_points' => $validated['passing_points'],
-            'allowed_grades' => $validated['allowed_grades'],
-            'available_from' => $validated['available_from'] ?? null,
-        ]);
-
-        $exam->syncActiveFromQuestions();
-        forget_public_exam_caches();
+        $this->updateExamAction->handle($exam, ExamData::fromRequest($request));
 
         return redirect()->route('admin.exams.index')->with('success', 'Imtihon yangilandi.');
     }
 
-    public function destroy(Exam $exam)
+    public function destroy(Exam $exam): RedirectResponse
     {
         $imagePaths = $exam->questions()
             ->whereNotNull('image_path')
@@ -163,12 +95,14 @@ class AdminExamController extends Controller
 
         $examId = $request->query('exam_id');
         $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
-
-        if ($selectedExamId && ! Exam::query()->withTrashed()->whereKey($selectedExamId)->exists()) {
+        if ($selectedExamId && ! $exams->contains('id', $selectedExamId)) {
             $selectedExamId = null;
         }
 
-        $query = Result::query()->with(['exam', 'user']);
+        $query = Result::query()->with([
+            'exam:id,title,created_by,deleted_at',
+            'user:id,name,first_name,last_name,phone,email,grade',
+        ]);
 
         if ($selectedExamId) {
             $query->where('exam_id', $selectedExamId);
@@ -176,9 +110,9 @@ class AdminExamController extends Controller
 
         $q = trim((string) $request->query('q', ''));
         if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->whereHas('user', function ($u) use ($q): void {
-                    $u->where('name', 'like', '%'.$q.'%')
+            $query->where(function ($builder) use ($q): void {
+                $builder->whereHas('user', function ($userQuery) use ($q): void {
+                    $userQuery->where('name', 'like', '%'.$q.'%')
                         ->orWhere('email', 'like', '%'.$q.'%')
                         ->orWhere('phone', 'like', '%'.$q.'%');
                 });
@@ -208,7 +142,7 @@ class AdminExamController extends Controller
         $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
 
         $query = Result::query()
-            ->with(['exam:id,title', 'user:id,name,first_name,last_name'])
+            ->with(['exam:id,title', 'user:id,name,first_name,last_name,phone,email,grade'])
             ->whereIn('status', ['submitted', 'expired']);
 
         if ($selectedExamId) {
@@ -230,7 +164,7 @@ class AdminExamController extends Controller
             ? Exam::query()->withTrashed()->whereKey($selectedExamId)->value('title') ?? 'imtihon'
             : 'barcha_imtihonlar';
 
-        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d_H-i-s') . '.xls';
+        $filename = 'natijalar_'.Str::slug($examTitle).'_'.now()->format('Y-m-d_H-i-s').'.xls';
 
         $html = view('exports.exam_results_excel', [
             'results' => $results,
@@ -239,7 +173,7 @@ class AdminExamController extends Controller
 
         return response($html, 200)
             ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
@@ -248,75 +182,36 @@ class AdminExamController extends Controller
     public function showResult(Result $result)
     {
         $result->load([
-            'exam' => fn($q) => $q->withTrashed(),
+            'exam' => fn ($builder) => $builder->withTrashed(),
             'user',
-            'answers.question',
-            'answers.option'
+            'answers.question.options',
+            'answers.option',
         ]);
+
         $exam = $result->exam;
+
         return view('admin.exams.results_show', compact('exam', 'result'));
     }
 
-    public function gradeTextAnswer(Request $request, Result $result, Answer $answer)
+    public function gradeTextAnswer(GradeTextAnswerRequest $request, Result $result, Answer $answer): RedirectResponse
     {
-        abort_unless((int) $answer->result_id === (int) $result->id, 404);
+        if ((int) $answer->result_id !== (int) $result->id) {
+            throw new ExamResourceMismatchException('Javob ushbu natijaga tegishli emas.');
+        }
 
-        $validated = $request->validate([
-            'is_correct' => ['required', 'boolean'],
-        ]);
-
-        DB::transaction(function () use ($result, $answer, $validated): void {
-            $answer->update([
-                'is_correct_override' => $validated['is_correct'],
-            ]);
-
-            $answers = Answer::query()
-                ->where('result_id', $result->id)
-                ->with(['option:id,is_correct', 'question:id,points,question_type'])
-                ->get();
-
-            $correctCount = 0;
-            $pointsEarned = 0;
-            $hasPendingManualReview = false;
-
-            foreach ($answers as $item) {
-                if ($item->question?->isTextType()) {
-                    if ($item->is_correct_override === null && filled($item->text_answer)) {
-                        $hasPendingManualReview = true;
-                        continue;
-                    }
-                }
-
-                if ($item->isCorrectAnswer()) {
-                    $correctCount++;
-                    $pointsEarned += (int) ($item->question?->points ?? 0);
-                }
-            }
-
-            $examModel = Exam::query()->find($result->exam_id);
-            $passing = (int) ($examModel?->passing_points ?? 0);
-            $passed = $hasPendingManualReview
-                ? null
-                : ($passing > 0 ? $pointsEarned >= $passing : true);
-
-            $result->update([
-                'score' => $correctCount,
-                'points_earned' => $pointsEarned,
-                'passed' => $passed,
-            ]);
-        });
+        $this->gradeTextAnswerAction->handle(
+            $result,
+            $answer,
+            $request->boolean('is_correct')
+        );
 
         return back()->with('success', 'Matnli javob baholandi va natija yangilandi.');
     }
 
-    public function destroyResult(Result $result)
+    public function destroyResult(Result $result): RedirectResponse
     {
         $result->delete();
 
-        return back()->with('success', 'Natija o‘chirildi.');
-    }
-    private function normalizeAllowedGrades(array $grades): array
-    {
-        return normalize_school_grade_list($grades);
+        return back()->with('success', "Natija o'chirildi.");
     }
 }

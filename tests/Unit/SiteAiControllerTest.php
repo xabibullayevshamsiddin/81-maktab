@@ -4,13 +4,14 @@ namespace Tests\Unit;
 
 use App\Http\Controllers\SiteAiController;
 use App\Services\Ai\AiService;
+use App\Services\Ai\ConversationHistoryStore;
 use Tests\TestCase;
 
 class SiteAiControllerTest extends TestCase
 {
     public function test_support_wizard_interrupts_for_new_question_during_issue_type_step(): void
     {
-        $controller = new SiteAiController(new AiService());
+        $controller = new SiteAiController(new AiService(), new ConversationHistoryStore());
 
         $result = $this->invokePrivate($controller, 'shouldInterruptSupportWizard', [
             'Bugun qanday darslar bor?',
@@ -22,7 +23,7 @@ class SiteAiControllerTest extends TestCase
 
     public function test_support_wizard_keeps_valid_issue_type_answer(): void
     {
-        $controller = new SiteAiController(new AiService());
+        $controller = new SiteAiController(new AiService(), new ConversationHistoryStore());
 
         $result = $this->invokePrivate($controller, 'shouldInterruptSupportWizard', [
             'Texnik xato',
@@ -34,7 +35,7 @@ class SiteAiControllerTest extends TestCase
 
     public function test_support_wizard_interrupts_for_general_question_during_details_step(): void
     {
-        $controller = new SiteAiController(new AiService());
+        $controller = new SiteAiController(new AiService(), new ConversationHistoryStore());
 
         $result = $this->invokePrivate($controller, 'shouldInterruptSupportWizard', [
             'Natijamni qayerdan ko\'raman?',

@@ -2,34 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Ai\GenerateAiMessageRequest;
+use App\Http\Requests\Ai\StoreAiFeedbackRequest;
+use App\Http\Resources\Ai\AiFeedbackResource;
+use App\Http\Resources\Ai\AiResponseResource;
 use App\Models\AiInteraction;
 use App\Models\ContactMessage;
 use App\Models\SiteSetting;
 use App\Services\Ai\AiService;
+use App\Services\Ai\ConversationHistoryStore;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class SiteAiController extends Controller
 {
-    private const CHAT_HISTORY_SESSION_KEY = 'ai_chat_history';
-    private const CHAT_HISTORY_MAX_ITEMS = 10;
     private const SUPPORT_WIZARD_SESSION_KEY = 'ai_support_wizard';
     private const SUPPORT_WIZARD_TIMEOUT_MINUTES = 10;
+    private static ?bool $aiInteractionsTableExists = null;
 
-    protected $aiService;
+    public function __construct(
+        private readonly AiService $aiService,
+        private readonly ConversationHistoryStore $conversationHistoryStore,
+    ) {}
 
-    public function __construct(AiService $aiService)
+    public function generate(GenerateAiMessageRequest $request): JsonResponse
     {
-        $this->aiService = $aiService;
-    }
-
-    public function generate(Request $request): JsonResponse
-    {
-        $user = auth()->user();
+        $user = $request->user();
 
         if (! $user) {
             return response()->json([
@@ -49,12 +51,9 @@ class SiteAiController extends Controller
             ], 403);
         }
 
-        $request->validate([
-            'message' => 'required|string|max:5000',
-        ]);
-
-        $userMessage = trim((string) $request->input('message'));
+        $userMessage = $request->message();
         $mockDelimiter = (string) config('ai.mock_delimiter', '<<<MOCK>>>');
+        $history = $this->getConversationHistory((int) $user->id);
 
         if ($wizardResponse = $this->handleSupportWizardFlow($request, $userMessage, $user)) {
             return $wizardResponse;
@@ -62,7 +61,7 @@ class SiteAiController extends Controller
 
         $conversationContext = $this->aiService->prepareConversationContext(
             $userMessage,
-            $this->getConversationHistory()
+            $history
         );
 
         $mockAllowed = config('ai.local_mock')
@@ -97,10 +96,21 @@ class SiteAiController extends Controller
             return $this->respondWithInteraction($user, $userMessage, $payload);
         }
 
-        $normalizedMessage = mb_strtolower($userMessage);
-        $messageCacheKey = 'ai:answer:user:' . (int) $user->id . ':' . sha1(
-            $normalizedMessage.'|'.(string) ($conversationContext['fingerprint'] ?? '')
+        $normalizedMessage = $this->aiService->normalizeQuestionForAnalytics($userMessage);
+        $historySignature = (string) ($conversationContext['history_signature'] ?? 'no-context');
+        $messageCacheKey = sprintf(
+            'ai:answer:user:%d:message:%s:context:%s',
+            (int) $user->id,
+            sha1($normalizedMessage),
+            sha1($historySignature)
         );
+
+        Log::info('ai.generate.requested', [
+            'user_id' => (int) $user->id,
+            'message_hash' => sha1($normalizedMessage),
+            'history_signature' => $historySignature,
+            'history_items' => count($history),
+        ]);
 
         if ($cached = Cache::get($messageCacheKey)) {
             $payload = is_array($cached)
@@ -126,6 +136,11 @@ class SiteAiController extends Controller
 
         $userLimit = $this->getUserDailyLimit($user);
         if ($userLimit !== -1 && ! $this->consumeDailyQuestionQuota((int) $user->id, $userLimit)) {
+            Log::warning('ai.generate.daily_limit_reached', [
+                'user_id' => (int) $user->id,
+                'limit' => $userLimit,
+            ]);
+
             $payload = [
                 'success' => true,
                 'text' => "Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring.",
@@ -171,18 +186,14 @@ class SiteAiController extends Controller
             'context_applied' => (bool) ($conversationContext['context_applied'] ?? false),
         ];
 
-        Cache::put($messageCacheKey, $payload, now()->addMinutes(5));
+        Cache::put($messageCacheKey, $payload, now()->addMinutes(max(1, (int) config('ai.response_cache_ttl_minutes', 5))));
 
         return $this->respondWithInteraction($user, $userMessage, $payload);
     }
 
-    public function feedback(Request $request): JsonResponse
+    public function feedback(StoreAiFeedbackRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'interaction_id' => ['required', 'integer', 'exists:ai_interactions,id'],
-            'helpful' => ['required', 'boolean'],
-            'reason' => ['nullable', 'string', 'max:500'],
-        ]);
+        $validated = $request->validated();
 
         $interaction = AiInteraction::query()
             ->whereKey($validated['interaction_id'])
@@ -211,17 +222,17 @@ class SiteAiController extends Controller
             'meta' => $meta,
         ]);
 
-        return response()->json([
+        return (new AiFeedbackResource([
             'success' => true,
             'message' => $helpful
                 ? 'Fikringiz saqlandi. Rahmat!'
                 : ($reason !== ''
                     ? 'Qabul qilindi. Sabab ham analyticsga saqlandi.'
                     : 'Qabul qilindi. Bu savolni yaxshilash uchun analyticsga qo\'shdim.'),
-        ]);
+        ]))->response();
     }
 
-    private function handleSupportWizardFlow(Request $request, string $message, $user): ?JsonResponse
+    private function handleSupportWizardFlow(GenerateAiMessageRequest $request, string $message, $user): ?JsonResponse
     {
         $wizard = $request->session()->get(self::SUPPORT_WIZARD_SESSION_KEY);
 
@@ -263,7 +274,7 @@ class SiteAiController extends Controller
         return $this->respondWithInteraction($user, $message, $payload);
     }
 
-    private function continueSupportWizard(Request $request, string $message, $user, array $wizard): ?JsonResponse
+    private function continueSupportWizard(GenerateAiMessageRequest $request, string $message, $user, array $wizard): ?JsonResponse
     {
         $normalized = mb_strtolower(trim($message));
 
@@ -349,13 +360,15 @@ class SiteAiController extends Controller
         $draft['details'] = trim($message);
         $request->session()->forget(self::SUPPORT_WIZARD_SESSION_KEY);
 
-        $contactMessage = ContactMessage::query()->create([
-            'name' => sanitize_plain_text(trim((string) ($user->name ?: $user->buildNameFromParts()))),
-            'email' => (string) $user->email,
-            'phone' => uz_phone_format((string) $user->phone),
-            'note' => sanitize_plain_text('AI wizard: '.($draft['issue_type'] ?? 'Muammo')),
-            'message' => sanitize_plain_text($this->buildStructuredSupportMessage($draft, $user)),
-        ]);
+        $contactMessage = DB::transaction(function () use ($draft, $user) {
+            return ContactMessage::query()->create([
+                'name' => sanitize_plain_text(trim((string) ($user->name ?: $user->buildNameFromParts()))),
+                'email' => (string) $user->email,
+                'phone' => uz_phone_format((string) $user->phone),
+                'note' => sanitize_plain_text('AI wizard: '.($draft['issue_type'] ?? 'Muammo')),
+                'message' => sanitize_plain_text($this->buildStructuredSupportMessage($draft, $user)),
+            ]);
+        });
 
         $payload = [
             'success' => true,
@@ -471,78 +484,27 @@ class SiteAiController extends Controller
     private function respondWithInteraction($user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): JsonResponse
     {
         $interaction = $this->storeInteraction($user, $question, $payload, $contactMessage, $extraMeta);
-        $this->rememberConversationTurn($question, $payload);
+        $this->rememberConversationTurn((int) $user->id, $question, $payload);
 
         $payload['interaction_id'] = $interaction?->id;
         $payload['actions'] = array_values($payload['actions'] ?? []);
 
-        return response()->json($payload);
+        return (new AiResponseResource($payload))->response();
     }
 
-    private function getConversationHistory(): array
+    private function getConversationHistory(int $userId): array
     {
-        $history = session()->get(self::CHAT_HISTORY_SESSION_KEY, []);
-
-        if (! is_array($history)) {
-            return [];
-        }
-
-        return collect($history)
-            ->map(function ($item): ?array {
-                if (! is_array($item)) {
-                    return null;
-                }
-
-                $text = trim((string) ($item['text'] ?? ''));
-                if ($text === '') {
-                    return null;
-                }
-
-                return [
-                    'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
-                    'text' => Str::limit($text, 500, ''),
-                    'source' => trim((string) ($item['source'] ?? '')),
-                ];
-            })
-            ->filter()
-            ->take(-self::CHAT_HISTORY_MAX_ITEMS)
-            ->values()
-            ->all();
+        return $this->conversationHistoryStore->historyForUser($userId);
     }
 
-    private function rememberConversationTurn(string $question, array $payload): void
+    private function rememberConversationTurn(int $userId, string $question, array $payload): void
     {
-        $source = (string) ($payload['source'] ?? '');
-
-        if (Str::startsWith($source, 'support_wizard')) {
-            return;
-        }
-
-        $history = $this->getConversationHistory();
-        $history[] = [
-            'role' => 'user',
-            'text' => Str::limit(sanitize_plain_text($question), 500, ''),
-            'source' => 'user',
-        ];
-
-        $responseText = trim((string) ($payload['text'] ?? ''));
-        if ($responseText !== '') {
-            $history[] = [
-                'role' => 'assistant',
-                'text' => Str::limit(sanitize_plain_text($responseText), 700, ''),
-                'source' => $source,
-            ];
-        }
-
-        session()->put(
-            self::CHAT_HISTORY_SESSION_KEY,
-            array_slice($history, -self::CHAT_HISTORY_MAX_ITEMS)
-        );
+        $this->conversationHistoryStore->rememberTurn($userId, $question, $payload);
     }
 
     private function storeInteraction($user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): ?AiInteraction
     {
-        if (! Schema::hasTable('ai_interactions')) {
+        if (! $this->hasAiInteractionsTable()) {
             return null;
         }
 
@@ -568,6 +530,15 @@ class SiteAiController extends Controller
                 'feedback_enabled' => (bool) ($payload['feedback_enabled'] ?? false),
             ]),
         ]);
+    }
+
+    private function hasAiInteractionsTable(): bool
+    {
+        if (self::$aiInteractionsTableExists === null) {
+            self::$aiInteractionsTableExists = Schema::hasTable('ai_interactions');
+        }
+
+        return self::$aiInteractionsTableExists;
     }
 
     private function decorateAiText(string $text, string $userMessage): string

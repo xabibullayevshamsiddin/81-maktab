@@ -2,12 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Exams\GradeTextAnswerAction;
+use App\Actions\Exams\StoreExamAction;
+use App\Actions\Exams\UpdateExamAction;
+use App\DataTransferObjects\Exams\ExamData;
+use App\Exceptions\ExamAccessDeniedException;
+use App\Exceptions\ExamResourceMismatchException;
+use App\Http\Requests\Exams\GradeTextAnswerRequest;
+use App\Http\Requests\Exams\SaveExamRequest;
 use App\Models\Answer;
 use App\Models\Exam;
 use App\Models\Option;
 use App\Models\Question;
 use App\Models\Result;
 use App\Services\ImageService;
+use App\Traits\AuthorizesExamManagement;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,18 +26,25 @@ use Illuminate\Validation\ValidationException;
 
 class TeacherExamController extends Controller
 {
-    public function __construct(private readonly ImageService $imageService) {}
+    use AuthorizesExamManagement;
+
+    public function __construct(
+        private readonly ImageService $imageService,
+        private readonly StoreExamAction $storeExamAction,
+        private readonly UpdateExamAction $updateExamAction,
+        private readonly GradeTextAnswerAction $gradeTextAnswerAction,
+    ) {}
 
     public function index(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams(), 403);
+        $this->ensureUserCanManageExams($user);
 
         $q = trim((string) $request->query('q', ''));
 
         $query = Exam::query()->withCount('questions')->latest();
-        
-        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
+
+        if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
             $query->where('created_by', $user->id);
         }
 
@@ -43,128 +60,51 @@ class TeacherExamController extends Controller
     public function create(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams(), 403);
+        $this->ensureUserCanManageExams($user);
 
         return view('profile.exams.create');
     }
 
-    public function store(Request $request)
+    public function store(SaveExamRequest $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canManageExams(), 403);
+        $this->ensureUserCanManageExams($user);
 
-        if ($request->input('available_from') === '') {
-            $request->merge(['available_from' => null]);
-        }
-
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
-            'required_questions' => ['required', 'integer', 'min:1', 'max:500'],
-            'total_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'allowed_grades' => ['required', 'array', 'min:1'],
-            'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
-            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
-        ], [
-            'allowed_grades.required' => 'Kamida bitta sinfni tanlashingiz shart.',
-            'allowed_grades.min' => 'Kamida bitta sinfni tanlashingiz shart.'
-        ]);
-
-        $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
-
-        if ($validated['passing_points'] > $validated['total_points']) {
-            throw ValidationException::withMessages([
-                'passing_points' => 'O‘tish uchun minimal ball umumiy baldan katta bo‘lmasligi kerak.',
-            ]);
-        }
-
-        $exam = Exam::query()->create([
-            'title' => $validated['title'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'required_questions' => $validated['required_questions'],
-            'total_points' => $validated['total_points'],
-            'passing_points' => $validated['passing_points'],
-            'allowed_grades' => $validated['allowed_grades'],
-            'available_from' => $validated['available_from'] ?? null,
-            'is_active' => false,
-            'created_by' => $user->id,
-        ]);
-        forget_public_exam_caches();
+        $exam = $this->storeExamAction->handle(
+            ExamData::fromRequest($request),
+            (int) $user->id
+        );
 
         return redirect()
             ->route('profile.exams.questions.index', $exam)
-            ->with('success', "1-bosqich saqlandi. Endi {$exam->required_questions} ta savol qo'shing — barchasi to'lgach imtihon avtomatik faol bo'ladi.");
+            ->with('success', "1-bosqich saqlandi. Endi {$exam->required_questions} ta savol qo'shing - barchasi to'lgach imtihon avtomatik faol bo'ladi.");
     }
 
     public function edit(Request $request, Exam $exam)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        $this->ensureUserOwnsExam($user, $exam);
 
         $exam->loadCount('questions');
 
         return view('profile.exams.edit', compact('exam'));
     }
 
-    public function update(Request $request, Exam $exam)
+    public function update(SaveExamRequest $request, Exam $exam): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        $this->ensureUserOwnsExam($user, $exam);
+        $request->ensureQuestionPointsBudget($exam);
 
-        if ($request->input('available_from') === '') {
-            $request->merge(['available_from' => null]);
-        }
-
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'duration_minutes' => ['required', 'integer', 'min:1', 'max:600'],
-            'required_questions' => ['required', 'integer', 'min:1', 'max:500'],
-            'total_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'passing_points' => ['required', 'integer', 'min:1', 'max:10000'],
-            'allowed_grades' => ['required', 'array', 'min:1'],
-            'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
-            'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
-        ], [
-            'allowed_grades.required' => 'Kamida bitta sinfni tanlashingiz shart.',
-            'allowed_grades.min' => 'Kamida bitta sinfni tanlashingiz shart.'
-        ]);
-
-        $validated['allowed_grades'] = $this->normalizeAllowedGrades($request->input('allowed_grades', []));
-
-        if ($validated['passing_points'] > $validated['total_points']) {
-            throw ValidationException::withMessages([
-                'passing_points' => 'O‘tish uchun minimal ball umumiy baldan katta bo‘lmasligi kerak.',
-            ]);
-        }
-
-        $sumPts = $exam->sumQuestionPoints();
-        if ($validated['total_points'] < $sumPts) {
-            throw ValidationException::withMessages([
-                'total_points' => "Umumiy bal kamida savollar ballari yig‘indisi ({$sumPts}) bo‘lishi kerak. Avval savollarni tahrirlang.",
-            ]);
-        }
-
-        $exam->update([
-            'title' => $validated['title'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'required_questions' => $validated['required_questions'],
-            'total_points' => $validated['total_points'],
-            'passing_points' => $validated['passing_points'],
-            'allowed_grades' => $validated['allowed_grades'],
-            'available_from' => $validated['available_from'] ?? null,
-        ]);
-
-        $exam->syncActiveFromQuestions();
-        forget_public_exam_caches();
+        $this->updateExamAction->handle($exam, ExamData::fromRequest($request));
 
         return redirect()->route('profile.exams.index')->with('success', 'Imtihon yangilandi.');
     }
 
-    public function destroy(Request $request, Exam $exam)
+    public function destroy(Request $request, Exam $exam): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        $this->ensureUserOwnsExam($user, $exam);
 
         $imagePaths = $exam->questions()
             ->whereNotNull('image_path')
@@ -182,12 +122,10 @@ class TeacherExamController extends Controller
         return back()->with('success', "Imtihon o'chirildi.");
     }
 
-    // --- Questions ---
-
     public function questionsIndex(Request $request, Exam $exam)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        $this->ensureUserOwnsExam($user, $exam);
 
         $q = trim((string) $request->query('q', ''));
 
@@ -210,7 +148,7 @@ class TeacherExamController extends Controller
     public function questionCreate(Request $request, Exam $exam)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        $this->ensureUserOwnsExam($user, $exam);
 
         if ($exam->isQuestionQuotaFilled()) {
             return redirect()
@@ -221,10 +159,10 @@ class TeacherExamController extends Controller
         return view('profile.exams.questions.create', compact('exam'));
     }
 
-    public function questionStore(Request $request, Exam $exam)
+    public function questionStore(Request $request, Exam $exam): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
+        $this->ensureUserOwnsExam($user, $exam);
 
         if ($exam->isQuestionQuotaFilled()) {
             return redirect()
@@ -259,7 +197,7 @@ class TeacherExamController extends Controller
                     'model_answer' => $isTextType ? $validated['model_answer'] : null,
                 ]);
 
-                if (!$isTextType) {
+                if (! $isTextType) {
                     foreach (['A', 'B', 'C', 'D'] as $label) {
                         Option::query()->create([
                             'question_id' => $question->id,
@@ -274,6 +212,7 @@ class TeacherExamController extends Controller
             if ($uploadedImagePath) {
                 $this->imageService->deleteImage($uploadedImagePath);
             }
+
             throw $exception;
         }
 
@@ -287,19 +226,25 @@ class TeacherExamController extends Controller
     public function questionEdit(Request $request, Exam $exam, Question $question)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
-        abort_unless((int) $question->exam_id === (int) $exam->id, 404);
+        $this->ensureUserOwnsExam($user, $exam);
+
+        if ((int) $question->exam_id !== (int) $exam->id) {
+            throw new ExamResourceMismatchException('Savol ushbu imtihonga tegishli emas.');
+        }
 
         $question->load('options');
 
         return view('profile.exams.questions.edit', compact('exam', 'question'));
     }
 
-    public function questionUpdate(Request $request, Exam $exam, Question $question)
+    public function questionUpdate(Request $request, Exam $exam, Question $question): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
-        abort_unless((int) $question->exam_id === (int) $exam->id, 404);
+        $this->ensureUserOwnsExam($user, $exam);
+
+        if ((int) $question->exam_id !== (int) $exam->id) {
+            throw new ExamResourceMismatchException('Savol ushbu imtihonga tegishli emas.');
+        }
 
         $validated = $this->validateQuestion($request);
         $this->assertQuestionPointsWithinBudget($exam, (int) $validated['points'], $question->id);
@@ -349,6 +294,7 @@ class TeacherExamController extends Controller
             if ($uploadedImagePath) {
                 $this->imageService->deleteImage($uploadedImagePath);
             }
+
             throw $exception;
         }
 
@@ -363,11 +309,14 @@ class TeacherExamController extends Controller
             ->with('success', 'Savol yangilandi.');
     }
 
-    public function questionDestroy(Request $request, Exam $exam, Question $question)
+    public function questionDestroy(Request $request, Exam $exam, Question $question): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
-        abort_unless((int) $question->exam_id === (int) $exam->id, 404);
+        $this->ensureUserOwnsExam($user, $exam);
+
+        if ((int) $question->exam_id !== (int) $exam->id) {
+            throw new ExamResourceMismatchException('Savol ushbu imtihonga tegishli emas.');
+        }
 
         $imagePath = $question->image_path;
         $question->delete();
@@ -382,11 +331,10 @@ class TeacherExamController extends Controller
         return back()->with('success', "Savol o'chirildi.");
     }
 
-    // --- Results ---
     public function exportResults(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams(), 403);
+        $this->ensureUserCanManageExams($user);
 
         $examId = $request->query('exam_id');
         $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
@@ -396,7 +344,7 @@ class TeacherExamController extends Controller
             ->whereIn('status', ['submitted', 'expired']);
 
         if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
-            $query->whereHas('exam', fn ($q) => $q->where('created_by', $user->id));
+            $query->whereHas('exam', fn ($builder) => $builder->where('created_by', $user->id));
         }
 
         if ($selectedExamId) {
@@ -414,11 +362,18 @@ class TeacherExamController extends Controller
 
         $results = $query->latest('submitted_at')->get();
 
-        $examTitle = $selectedExamId
-            ? Exam::query()->whereKey($selectedExamId)->value('title') ?? 'imtihon'
-            : 'barcha_imtihonlar';
+        $examTitle = 'barcha_imtihonlar';
+        if ($selectedExamId) {
+            $examTitleQuery = Exam::query()->whereKey($selectedExamId);
 
-        $filename = 'natijalar_' . Str::slug($examTitle) . '_' . now()->format('Y-m-d_H-i-s') . '.xls';
+            if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
+                $examTitleQuery->where('created_by', $user->id);
+            }
+
+            $examTitle = $examTitleQuery->value('title') ?? 'imtihon';
+        }
+
+        $filename = 'natijalar_'.Str::slug($examTitle).'_'.now()->format('Y-m-d_H-i-s').'.xls';
 
         $html = view('exports.exam_results_excel', [
             'results' => $results,
@@ -427,7 +382,7 @@ class TeacherExamController extends Controller
 
         return response($html, 200)
             ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
@@ -436,26 +391,29 @@ class TeacherExamController extends Controller
     public function results(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->canManageExams(), 403);
+        $this->ensureUserCanManageExams($user);
 
-        $exams = Exam::query();
-        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
-            $exams->where('created_by', $user->id);
+        $examsQuery = Exam::query();
+        if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
+            $examsQuery->where('created_by', $user->id);
         }
-        $exams = $exams->orderBy('title')->get(['id', 'title']);
+
+        $exams = $examsQuery->orderBy('title')->get(['id', 'title']);
 
         $examId = $request->query('exam_id');
         $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
-
-        if ($selectedExamId && ! Exam::query()->whereKey($selectedExamId)->exists()) {
+        if ($selectedExamId && ! $exams->contains('id', $selectedExamId)) {
             $selectedExamId = null;
         }
 
-        $query = Result::query()->with(['exam', 'user']);
+        $query = Result::query()->with([
+            'exam:id,title,created_by,deleted_at',
+            'user:id,name,first_name,last_name,phone,email,grade',
+        ]);
 
-        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
-            $query->whereHas('exam', function($q) use ($user) {
-                $q->where('created_by', $user->id);
+        if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
+            $query->whereHas('exam', function ($builder) use ($user): void {
+                $builder->where('created_by', $user->id);
             });
         }
 
@@ -465,9 +423,9 @@ class TeacherExamController extends Controller
 
         $q = trim((string) $request->query('q', ''));
         if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->whereHas('user', function ($u) use ($q): void {
-                    $u->where('name', 'like', '%'.$q.'%')
+            $query->where(function ($builder) use ($q): void {
+                $builder->whereHas('user', function ($userQuery) use ($q): void {
+                    $userQuery->where('name', 'like', '%'.$q.'%')
                         ->orWhere('email', 'like', '%'.$q.'%')
                         ->orWhere('phone', 'like', '%'.$q.'%');
                 });
@@ -475,7 +433,7 @@ class TeacherExamController extends Controller
         }
 
         $status = $request->query('status');
-        if ($status && in_array($status, ['started', 'submitted', 'expired'])) {
+        if ($status && in_array($status, ['started', 'submitted', 'expired'], true)) {
             $query->where('status', $status);
         }
 
@@ -499,78 +457,53 @@ class TeacherExamController extends Controller
     public function showResult(Request $request, Result $result)
     {
         $user = $request->user();
+
         $result->load([
-            'exam' => fn($q) => $q->withTrashed(),
+            'exam' => fn ($builder) => $builder->withTrashed(),
             'answers.question.options',
             'answers.option',
-            'user'
+            'user',
         ]);
+
         $exam = $result->exam;
-        abort_unless(
-            ($user->canManageExams() && $exam->ownsExam($user)) || 
-            ((int) $result->user_id === (int) $user->id), 
-            403
-        );
+        if (! $exam) {
+            throw new ExamResourceMismatchException('Imtihon topilmadi.');
+        }
+
+        if (! (($user->canManageExams() && $exam->ownsExam($user)) || ((int) $result->user_id === (int) $user->id))) {
+            throw new ExamAccessDeniedException();
+        }
 
         return view('profile.exams.results_show', compact('exam', 'result'));
     }
 
-    public function gradeTextAnswer(Request $request, Result $result, Answer $answer)
+    public function gradeTextAnswer(GradeTextAnswerRequest $request, Result $result, Answer $answer): RedirectResponse
     {
         $user = $request->user();
-        $exam = $result->exam;
-        abort_unless($user->canManageExams() && $exam->ownsExam($user), 403);
-        abort_unless((int) $answer->result_id === (int) $result->id, 404);
+        $result->loadMissing('exam:id,created_by,passing_points');
 
-        $validated = $request->validate([
-            'is_correct' => ['required', 'boolean'],
-        ]);
+        if (! $result->exam) {
+            throw new ExamResourceMismatchException('Imtihon topilmadi.');
+        }
 
-        DB::transaction(function () use ($result, $answer, $validated) {
-            $answer->update([
-                'is_correct_override' => $validated['is_correct'],
-            ]);
+        $this->ensureUserOwnsExam($user, $result->exam);
 
-            // Recalculate result score manually
-            $answers = Answer::query()
-                ->where('result_id', $result->id)
-                ->with(['option:id,is_correct', 'question:id,points,question_type'])
-                ->get();
+        if ((int) $answer->result_id !== (int) $result->id) {
+            throw new ExamResourceMismatchException('Javob ushbu natijaga tegishli emas.');
+        }
 
-            $correctCount = 0;
-            $pointsEarned = 0;
-            $hasPendingManualReview = false;
-
-            foreach ($answers as $a) {
-                if ($a->question?->isTextType()) {
-                    if ($a->is_correct_override === null && filled($a->text_answer)) {
-                        $hasPendingManualReview = true;
-                        continue;
-                    }
-                }
-
-                if ($a->isCorrectAnswer()) {
-                    $correctCount++;
-                    $pointsEarned += (int) ($a->question?->points ?? 0);
-                }
-            }
-
-            $examModel = Exam::query()->find($result->exam_id);
-            $passing = (int) ($examModel?->passing_points ?? 0);
-            $passed = $hasPendingManualReview
-                ? null
-                : ($passing > 0 ? $pointsEarned >= $passing : true);
-
-            $result->update([
-                'score' => $correctCount,
-                'points_earned' => $pointsEarned,
-                'passed' => $passed,
-            ]);
-        });
+        $this->gradeTextAnswerAction->handle(
+            $result,
+            $answer,
+            $request->boolean('is_correct')
+        );
 
         return back()->with('success', 'Baholandi va natija qayta hisoblandi.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validateQuestion(Request $request): array
     {
         $isTextType = $request->input('question_type') === Question::TYPE_TEXT;
@@ -596,11 +529,6 @@ class TeacherExamController extends Controller
         return $request->validate($rules);
     }
 
-    private function normalizeAllowedGrades(array $grades): array
-    {
-        return normalize_school_grade_list($grades);
-    }
-
     private function nextSortOrder(Exam $exam): int
     {
         return (int) $exam->questions()->max('sort_order') + 1;
@@ -612,13 +540,15 @@ class TeacherExamController extends Controller
         if ($exceptQuestionId !== null) {
             $query->where('id', '!=', $exceptQuestionId);
         }
+
         $sum = (int) $query->sum('points');
         $total = (int) $exam->total_points;
 
         if ($sum + $questionPoints > $total) {
             $over = $sum + $questionPoints - $total;
+
             throw ValidationException::withMessages([
-                'points' => "Savollar ballari yig‘indisi imtihon umumiy balidan ({$total}) {$over} ball oshib ketdi. Shu savol bilan yig‘indi: ".($sum + $questionPoints).".",
+                'points' => "Savollar ballari yig'indisi imtihon umumiy balidan ({$total}) {$over} ball oshib ketdi. Shu savol bilan yig'indi: ".($sum + $questionPoints).'.',
             ]);
         }
     }

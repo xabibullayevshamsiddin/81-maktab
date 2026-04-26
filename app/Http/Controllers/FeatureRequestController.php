@@ -14,9 +14,11 @@ use Illuminate\View\View;
 
 class FeatureRequestController extends Controller
 {
+    private static ?array $tablePresence = null;
+
     public function index(Request $request): View
     {
-        if (! Schema::hasTable('feature_requests') || ! Schema::hasTable('feature_request_votes')) {
+        if (! $this->hasTable('feature_requests') || ! $this->hasTable('feature_request_votes')) {
             $emptyPagination = new LengthAwarePaginator([], 0, 20);
             return view('feature-requests.index', [
                 'featureRequests' => $emptyPagination,
@@ -24,7 +26,7 @@ class FeatureRequestController extends Controller
             ]);
         }
 
-        $hasRepliesTable = Schema::hasTable('feature_request_replies');
+        $hasRepliesTable = $this->hasTable('feature_request_replies');
         $featureRequests = FeatureRequest::query()
             ->where('is_active', true)
             ->with(['user:id,name,first_name,last_name,role_id'])
@@ -51,7 +53,7 @@ class FeatureRequestController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        if (! Schema::hasTable('feature_requests')) {
+        if (! $this->hasTable('feature_requests')) {
             return back()->with('error', 'Feature voting jadvali hali tayyor emas. Admin migratsiyani ishga tushirsin.');
         }
 
@@ -86,7 +88,7 @@ class FeatureRequestController extends Controller
 
     public function vote(Request $request, FeatureRequest $featureRequest): RedirectResponse
     {
-        if (! Schema::hasTable('feature_request_votes')) {
+        if (! $this->hasTable('feature_request_votes')) {
             return back()->with('error', 'Ovoz berish jadvali hali tayyor emas. Admin migratsiyani ishga tushirsin.');
         }
 
@@ -116,7 +118,7 @@ class FeatureRequestController extends Controller
 
     public function storeReply(Request $request, FeatureRequest $featureRequest): RedirectResponse
     {
-        if (! Schema::hasTable('feature_request_replies')) {
+        if (! $this->hasTable('feature_request_replies')) {
             return back()->with('error', 'Javoblar jadvali hali tayyor emas. Admin migratsiyani ishga tushirsin.');
         }
         abort_unless($this->canReply($request->user()), 403);
@@ -136,7 +138,7 @@ class FeatureRequestController extends Controller
 
     public function destroyReply(Request $request, FeatureRequestReply $reply): RedirectResponse
     {
-        if (! Schema::hasTable('feature_request_replies')) {
+        if (! $this->hasTable('feature_request_replies')) {
             return back()->with('error', 'Javoblar jadvali hali tayyor emas. Admin migratsiyani ishga tushirsin.');
         }
 
@@ -195,5 +197,14 @@ class FeatureRequestController extends Controller
         }
 
         return $user->isSuperAdmin() || $user->isAdmin() || $user->hasRole(User::ROLE_MODERATOR);
+    }
+
+    private function hasTable(string $table): bool
+    {
+        if (self::$tablePresence === null) {
+            self::$tablePresence = array_fill_keys(Schema::getTableListing(), true);
+        }
+
+        return isset(self::$tablePresence[$table]);
     }
 }
