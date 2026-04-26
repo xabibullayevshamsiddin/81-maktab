@@ -53,8 +53,8 @@ class PublicMediaCleanupTest extends TestCase
 
         $post->delete();
 
-        Storage::disk('public')->assertMissing('posts/cover.jpg');
-        Storage::disk('public')->assertMissing('posts/videos/clip.mp4');
+        $this->assertFalse(Storage::disk('public')->exists('posts/cover.jpg'));
+        $this->assertFalse(Storage::disk('public')->exists('posts/videos/clip.mp4'));
     }
 
     public function test_deleting_teacher_removes_teacher_and_cascaded_course_images(): void
@@ -92,8 +92,8 @@ class PublicMediaCleanupTest extends TestCase
 
         $teacher->delete();
 
-        Storage::disk('public')->assertMissing('teachers/teacher.jpg');
-        Storage::disk('public')->assertMissing('courses/course.jpg');
+        $this->assertFalse(Storage::disk('public')->exists('teachers/teacher.jpg'));
+        $this->assertFalse(Storage::disk('public')->exists('courses/course.jpg'));
     }
 
     public function test_prune_orphaned_media_command_deletes_only_with_delete_option(): void
@@ -115,13 +115,13 @@ class PublicMediaCleanupTest extends TestCase
         $this->artisan('storage:prune-orphaned-media')
             ->expectsOutputToContain('Orphaned media: 1 ta fayl.')
             ->assertExitCode(0);
-        Storage::disk('public')->assertExists('posts/orphan.jpg');
+        $this->assertTrue(Storage::disk('public')->exists('posts/orphan.jpg'));
 
         $this->artisan('storage:prune-orphaned-media --delete')
             ->expectsOutputToContain("O'chirildi: 1 ta fayl.")
             ->assertExitCode(0);
-        Storage::disk('public')->assertMissing('posts/orphan.jpg');
-        Storage::disk('public')->assertExists('posts/used.jpg');
+        $this->assertFalse(Storage::disk('public')->exists('posts/orphan.jpg'));
+        $this->assertTrue(Storage::disk('public')->exists('posts/used.jpg'));
     }
 
     private function createMediaTestTables(): void
