@@ -20,6 +20,7 @@
 
     $initialTeacherId = (string) old('teacher_id', $selectedTeacher?->id ?? '');
     $initialTeacher = collect($teacherPreviewData)->firstWhere('id', $initialTeacherId);
+    $requiresEmailVerification = (bool) ($courseEmailVerificationEnabled ?? false);
   @endphp
 
   <section class="news-hero" id="home">
@@ -27,7 +28,7 @@
       <div class="news-hero-content reveal">
         <h1>Kurs ochish</h1>
         <p>
-          @if(config('courses.require_email_verification'))
+          @if($requiresEmailVerification)
             Ustoz/Admin kurs ma'lumotlarini kiriting, email kod bilan tasdiqlang.
           @else
             Ustoz/Admin kurs ma'lumotlarini kiriting; kurs yaratilgach darhol saytda chiqadi.
@@ -155,7 +156,7 @@
           @enderror
 
           <button class="btn" type="submit">
-            @if(config('courses.require_email_verification'))
+            @if($requiresEmailVerification)
               <i class="fa-solid fa-paper-plane"></i> Email kod yuborish
             @else
               <i class="fa-solid fa-check"></i> Kursni joylash

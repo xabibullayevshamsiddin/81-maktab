@@ -42,7 +42,9 @@ class TeacherCourseController extends Controller
             }
         }
 
-        return view('courses.create', compact('teachers', 'isAdmin', 'selectedTeacher'));
+        $courseEmailVerificationEnabled = $this->courseEmailVerificationEnabled();
+
+        return view('courses.create', compact('teachers', 'isAdmin', 'selectedTeacher', 'courseEmailVerificationEnabled'));
     }
 
     public function store(Request $request)
@@ -148,7 +150,7 @@ class TeacherCourseController extends Controller
 
         return redirect()
             ->route('teacher.courses.verify.form', $course)
-            ->with('success', "Tasdiqlash kodi emailingizga yuborildi.")
+            ->with('success', 'Tasdiqlash kodi emailingizga yuborildi.')
             ->with('toast_type', 'success');
     }
 
@@ -172,14 +174,14 @@ class TeacherCourseController extends Controller
         if ($user->hasReachedCourseOpenLimit()) {
             return redirect()
                 ->route('profile.show')
-                ->with('error', "Bitta teacher akkaunti faqat bitta kurs ocha oladi.")
+                ->with('error', 'Bitta teacher akkaunti faqat bitta kurs ocha oladi.')
                 ->with('toast_type', 'warning');
         }
 
         if ($user->hasCourseOpenApproval()) {
             return redirect()
                 ->route('teacher.courses.create')
-                ->with('success', "Admin sizga ruxsat bergan, endi kursni ochishingiz mumkin.")
+                ->with('success', 'Admin sizga ruxsat bergan, endi kursni ochishingiz mumkin.')
                 ->with('toast_type', 'success');
         }
 
@@ -230,7 +232,7 @@ class TeacherCourseController extends Controller
 
         if ($course->status === Course::STATUS_PUBLISHED) {
             return redirect()->route('courses')
-                ->with('success', "Kurs allaqachon saytda.")
+                ->with('success', 'Kurs allaqachon saytda.')
                 ->with('toast_type', 'success');
         }
 
@@ -252,7 +254,7 @@ class TeacherCourseController extends Controller
         forget_public_course_caches();
 
         return redirect()->route('courses')
-            ->with('success', "Kurs tasdiqlandi va saytda chiqdi.")
+            ->with('success', 'Kurs tasdiqlandi va saytda chiqdi.')
             ->with('toast_type', 'success');
     }
 
@@ -275,7 +277,7 @@ class TeacherCourseController extends Controller
         $this->sendPublishCode($user->email, $course, $code);
 
         return back()
-            ->with('success', "Yangi kod yuborildi.")
+            ->with('success', 'Yangi kod yuborildi.')
             ->with('toast_type', 'warning');
     }
 
@@ -462,7 +464,7 @@ class TeacherCourseController extends Controller
             </div>';
 
             Mail::html($html, static function ($message) use ($email) {
-                $message->to($email)->subject("Kurs tasdiqlash kodi");
+                $message->to($email)->subject('Kurs tasdiqlash kodi');
             });
         } catch (\Throwable $e) {
             Log::warning('Course publish code email failed', [
@@ -487,7 +489,8 @@ class TeacherCourseController extends Controller
 
     private function courseEmailVerificationEnabled(): bool
     {
-        return (bool) config('courses.require_email_verification', true);
+        return (bool) config('courses.require_email_verification', false)
+            && $this->mailDeliveryEnabled();
     }
 
     private function mailDeliveryEnabled(): bool
@@ -559,7 +562,7 @@ class TeacherCourseController extends Controller
         if ($user->hasReachedCourseOpenLimit()) {
             return redirect()
                 ->route('profile.show')
-                ->with('error', "Teacher akkaunti faqat bitta kurs yaratishi mumkin.")
+                ->with('error', 'Teacher akkaunti faqat bitta kurs yaratishi mumkin.')
                 ->with('toast_type', 'warning');
         }
 
@@ -567,7 +570,7 @@ class TeacherCourseController extends Controller
             if ($user->hasPendingCourseOpenRequest()) {
                 return redirect()
                     ->route('profile.show')
-                    ->with('error', "Kurs ochish uchun admin ruxsatini kuting.")
+                    ->with('error', 'Kurs ochish uchun admin ruxsatini kuting.')
                     ->with('toast_type', 'warning');
             }
 
