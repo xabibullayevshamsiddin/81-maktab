@@ -12,6 +12,7 @@ use App\Http\Controllers\TeacherCommentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'home'])->name('home');
+Route::redirect('home', '/')->name('home.redirect');
 Route::get('lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('about', [HomeController::class, 'about'])->name('about');
