@@ -18,6 +18,10 @@ return new class extends Migration
             return;
         }
 
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('exams', function (Blueprint $table) {
             $table->timestamp('start_time')->nullable()->change();
             $table->timestamp('end_time')->nullable()->change();
@@ -37,6 +41,10 @@ return new class extends Migration
 
         DB::table('exams')->whereNull('start_time')->update(['start_time' => now()]);
         DB::table('exams')->whereNull('end_time')->update(['end_time' => now()]);
+
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
 
         Schema::table('exams', function (Blueprint $table) {
             $table->timestamp('start_time')->nullable(false)->change();

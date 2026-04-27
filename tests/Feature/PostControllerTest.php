@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PostControllerTest extends TestCase
@@ -18,12 +21,16 @@ class PostControllerTest extends TestCase
     {
         parent::setUp();
 
+        Storage::fake('public');
+
         $this->admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
             'phone' => '+998901234567',
             'password' => bcrypt('password'),
             'role' => 'admin',
+            'role_id' => Role::idByName(Role::NAME_ADMIN),
+            'is_active' => true,
         ]);
     }
 
@@ -45,10 +52,13 @@ class PostControllerTest extends TestCase
         $response = $this->post('/admin/posts', [
             'title' => 'New Post',
             'category_id' => $category->id,
+            'post_kind' => 'general',
             'short_content' => 'Short content',
             'content' => 'Full content',
+            'image' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
+        $response->assertRedirect('/admin/posts');
         $this->assertDatabaseHas('posts', ['title' => 'New Post']);
     }
 
@@ -64,15 +74,19 @@ class PostControllerTest extends TestCase
             'short_content' => 'Short content',
             'content' => 'Full content',
             'category_id' => $category->id,
+            'post_kind' => 'general',
+            'image' => 'posts/old-title.jpg',
         ]);
 
         $response = $this->put("/admin/posts/{$post->id}", [
             'title' => 'New Title',
             'category_id' => $category->id,
+            'post_kind' => 'general',
             'short_content' => 'Short content',
             'content' => 'Full content',
         ]);
 
+        $response->assertRedirect('/admin/posts');
         $this->assertDatabaseHas('posts', ['title' => 'New Title']);
     }
 
@@ -88,10 +102,13 @@ class PostControllerTest extends TestCase
             'short_content' => 'Short content',
             'content' => 'Full content',
             'category_id' => $category->id,
+            'post_kind' => 'general',
+            'image' => 'posts/to-delete.jpg',
         ]);
 
         $response = $this->delete("/admin/posts/{$post->id}");
 
+        $response->assertRedirect('/admin/posts');
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
 
@@ -110,8 +127,10 @@ class PostControllerTest extends TestCase
 
         $response = $this->post('/admin/posts', [
             'category_id' => $category->id,
+            'post_kind' => 'general',
             'short_content' => 'Short content',
             'content' => 'Full content',
+            'image' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
         $response->assertSessionHasErrors('title');
