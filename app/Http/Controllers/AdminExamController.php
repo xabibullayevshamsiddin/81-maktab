@@ -20,10 +20,10 @@ use Illuminate\Support\Str;
 class AdminExamController extends Controller
 {
     public function __construct(
-        private readonly ImageService $imageService,
-        private readonly StoreExamAction $storeExamAction,
-        private readonly UpdateExamAction $updateExamAction,
-        private readonly GradeTextAnswerAction $gradeTextAnswerAction,
+        private ImageService $imageService,
+        private StoreExamAction $storeExamAction,
+        private UpdateExamAction $updateExamAction,
+        private GradeTextAnswerAction $gradeTextAnswerAction,
     ) {}
 
     public function index(Request $request)

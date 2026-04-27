@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class StoreExamAction
 {
-    public function __construct(private readonly ExamRepositoryInterface $examRepository) {}
+    public function __construct(private ExamRepositoryInterface $examRepository) {}
 
     public function handle(ExamData $data, ?int $createdBy = null): Exam
     {

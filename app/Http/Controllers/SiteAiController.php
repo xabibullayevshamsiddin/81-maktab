@@ -25,8 +25,8 @@ class SiteAiController extends Controller
     private static ?bool $aiInteractionsTableExists = null;
 
     public function __construct(
-        private readonly AiService $aiService,
-        private readonly ConversationHistoryStore $conversationHistoryStore,
+        private AiService $aiService,
+        private ConversationHistoryStore $conversationHistoryStore,
     ) {}
 
     public function generate(GenerateAiMessageRequest $request): JsonResponse

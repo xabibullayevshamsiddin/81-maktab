@@ -4,7 +4,7 @@ namespace App\DataTransferObjects\Exams;
 
 use App\Http\Requests\Exams\SaveExamRequest;
 
-readonly class ExamData
+class ExamData
 {
     /**
      * @param list<string> $allowedGrades
