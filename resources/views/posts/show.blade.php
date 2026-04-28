@@ -5,6 +5,10 @@
   $postCategory = localized_model_value($post->category, 'name');
 @endphp
 <x-loyouts.main title="81-IDUM | {{ $postTitle }}">
+  @push('page_styles')
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/post-embed.css') }}?v={{ filemtime(public_path('temp/css/post-embed.css')) }}" />
+  @endpush
+
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
@@ -73,6 +77,8 @@
                     loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
+                    @if($videoData['type'] === 'instagram') scrolling="no" @endif
+                    referrerpolicy="strict-origin-when-cross-origin"
                     style="border:none; border-radius:12px;"
                   ></iframe>
                 </div>
