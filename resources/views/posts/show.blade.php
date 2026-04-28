@@ -81,13 +81,6 @@
                     style="border:none; border-radius:12px;"
                   ></iframe>
                 </div>
-                @if($videoData['type'] === 'instagram')
-                  <div class="post-video-embed-note">
-                    <i class="fa-brands fa-instagram"></i>
-                    <span>Instagram ayrim videolarni sayt ichida to'liq qayta ijro qildirmaydi.</span>
-                    <a href="{{ $post->video_url }}" target="_blank" rel="noopener noreferrer">Instagramda ochish</a>
-                  </div>
-                @endif
               </div>
             @elseif(filled($post->video_url))
               <div class="post-detail-video-external">
