@@ -163,9 +163,9 @@
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
-              <li><a class="nav-link {{ request()->routeIs('teacher*') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
               <li class="mobile-theme-toggle-wrap">
-                <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
+                <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
                   <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
                   <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
                 </button>
@@ -176,11 +176,11 @@
                     class="nav-link ai-header-toggle"
                     id="ai-header-toggle"
                     type="button"
-                    aria-label="AI Yordamchi"
-                    title="AI Yordamchi"
+                    aria-label="{{ __('public.layout.ai_assistant') }}"
+                    title="{{ __('public.layout.ai_assistant') }}"
                   >
                     <i class="fa-solid fa-magic-wand-sparkles"></i>
-                    <span>AI Bot</span>
+                    <span>{{ __('public.layout.ai_assistant') }}</span>
                   </button>
                 </li>
               @endauth
@@ -203,7 +203,7 @@
                       </a>
                       <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
                         <i class="fa-solid fa-lightbulb"></i>
-                        Takliflar
+                        {{ __('public.layout.feature_requests') }}
                       </a>
                       @if($canCreateCourse)
                         <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
@@ -213,19 +213,19 @@
                       @elseif($teacherCourseOpenPending)
                         <span class="nav-dropdown-item nav-dropdown-item-disabled">
                           <i class="fa-solid fa-hourglass-half"></i>
-                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">Admin ruxsatini kuting (profil).</small></span>
+                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">{{ __('public.layout.wait_admin_approval_profile') }}</small></span>
                         </span>
                       @elseif($teacherNeedsCourseOpenRequest)
                         <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
                           <i class="fa-solid fa-paper-plane"></i>
-                          Kurs ochish — ruxsat so'rang
+                          {{ __('public.layout.course_request_action') }}
                         </a>
                       @elseif($needsTeacherProfileLink)
                         <span class="nav-dropdown-item nav-dropdown-item-disabled">
                           <i class="fa-solid fa-circle-info"></i>
                           <span>
                             {{ __('public.layout.menu.course_open') }}
-                            <small class="nav-dropdown-item-note">Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak.</small>
+                            <small class="nav-dropdown-item-note">{{ __('public.layout.teacher_link_required') }}</small>
                           </span>
                         </span>
                       @endif
@@ -286,13 +286,13 @@
 	                <div class="mobile-nav-actions mobile-nav-actions--auth">
 	                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
 	                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
-                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">Takliflar</a>
+                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
-	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">Kurs — ruxsat so'rang</a>
+	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">{{ __('public.layout.course_request_short') }}</a>
 	                  @elseif($teacherCourseOpenPending)
-	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">Kurs — kutilmoqda</span>
+	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">{{ __('public.layout.course_pending_short') }}</span>
 	                  @endif
 	                  @if($canAccessDashboard)
 	                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
@@ -303,7 +303,7 @@
 	                  </form>
 	                </div>
 	                @if($needsTeacherProfileLink)
-	                  <p class="mobile-nav-note">Ustoz bo'lsangiz, avval admin teacher profilingizni bog'lashi kerak.</p>
+	                  <p class="mobile-nav-note">{{ __('public.layout.teacher_profile_link_note') }}</p>
 	                @endif
 	              @endguest
 	            </div>
@@ -323,10 +323,10 @@
               @endforeach
               <span class="locale-switcher-slider"></span>
             </div>
-            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="Search" title="Search" style="text-decoration: none; color: inherit;">
+            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}" style="text-decoration: none; color: inherit;">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
-            <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
+            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
               <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
             </button>
@@ -392,11 +392,11 @@
 
         <!-- Column 3: Resources -->
         <div class="footer-column">
-          <h4 class="footer-title">Resurslar</h4>
+          <h4 class="footer-title">{{ __('public.layout.resources') }}</h4>
           <ul class="footer-links">
             <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
             <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
-            <li><a href="{{ route('feature-requests.index') }}">Takliflar</a></li>
+            <li><a href="{{ route('feature-requests.index') }}">{{ __('public.layout.feature_requests') }}</a></li>
             @auth
               <li><a href="{{ route('exam.index') }}">{{ __('public.layout.menu.exams') }}</a></li>
             @else
@@ -412,7 +412,7 @@
           <ul class="footer-contact-list">
             <li>
               <i class="fa-solid fa-location-dot"></i>
-              <span>Yashnobod tumani, Toshkent, O'zbekiston</span>
+              <span>{{ __('public.layout.address') }}</span>
             </li>
             <li>
               <i class="fa-solid fa-phone"></i>
@@ -425,7 +425,7 @@
           </ul>
           <div class="footer-map-action">
             <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer btn-prime">
-              <i class="fa-solid fa-map-location-dot"></i> Xaritada ko'rish
+              <i class="fa-solid fa-map-location-dot"></i> {{ __('public.layout.view_on_map') }}
             </a>
           </div>
         </div>
@@ -435,8 +435,8 @@
         <div class="container footer-bottom-inner">
           <p>&copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}</p>
           <div class="footer-bottom-links">
-            <a href="#">Maxfiylik siyosati</a>
-            <a href="#">Foydalanish shartlari</a>
+            <a href="#">{{ __('public.layout.privacy_policy') }}</a>
+            <a href="#">{{ __('public.layout.terms') }}</a>
           </div>
         </div>
       </div>
@@ -1349,7 +1349,6 @@
               b.style.cursor = 'not-allowed';
             });
           }
-          if (window.playPrimeChatTick) window.playPrimeChatTick();
           showAiComposeStatus("O'ylamoqda...");
           scrollToBottom();
 
@@ -1421,10 +1420,6 @@
             e.preventDefault();
             form.dispatchEvent(new Event('submit'));
           }
-        });
-
-        input.addEventListener('input', function() {
-          if (window.playPrimeChatTick && !isSending) window.playPrimeChatTick();
         });
 
         // Quick Action Buttons Handler

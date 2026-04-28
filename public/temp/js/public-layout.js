@@ -1222,9 +1222,6 @@
           const nextTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
           localStorage.setItem(storageKey, nextTheme);
           applyTheme(nextTheme);
-          if (typeof window.playPrimeThemeToggleSound === 'function') {
-            window.playPrimeThemeToggleSound(nextTheme === 'dark');
-          }
         });
       });
 
@@ -2713,7 +2710,6 @@
       }
       var text = input.value.trim();
       if (!text || isSending) return;
-      playPrimeChatTick(); // "chiqchiq" — eski click ovozi
       sendMessage(text, { restoreText: true });
     });
 
@@ -2730,9 +2726,8 @@
         input.value += sticker;
         input.focus();
         
-        // Trigger UI updates & sound
+        // Trigger UI updates
         syncComposeState();
-        if (typeof playPrimeChatTick === 'function') playPrimeChatTick();
         
         // Dispatch input event for other potential listeners
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -2747,7 +2742,6 @@
     });
     input.addEventListener('input', function() {
       syncComposeState();
-      playPrimeChatTick();
     });
     input.addEventListener('blur', function () {
       setTimeout(syncComposeState, 80);
@@ -2829,7 +2823,6 @@
   }
 
 
-  /** Yangilik / ustoz izohlari: global chatdagi bilan bir xil yozish «tik» ovozi */
   function initCommentTypingSound() {
     document.addEventListener(
       'input',
@@ -2837,7 +2830,6 @@
         const t = e.target;
         if (!t || !t.classList || !t.classList.contains('comment-input')) return;
         if (t.id === 'chat-input') return;
-        playPrimeChatTick();
       },
       true
     );

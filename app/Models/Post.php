@@ -31,6 +31,22 @@ class Post extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (Post $post): void {
+            if (filled($post->category_id)) {
+                return;
+            }
+
+            $fallbackCategoryId = Category::query()->value('id');
+
+            if (! $fallbackCategoryId) {
+                $fallbackCategoryId = Category::query()->create([
+                    'name' => 'Umumiy',
+                ])->id;
+            }
+
+            $post->category_id = $fallbackCategoryId;
+        });
+
         static::updating(function (Post $post): void {
             foreach (['image', 'video_path'] as $attribute) {
                 if ($post->isDirty($attribute)) {

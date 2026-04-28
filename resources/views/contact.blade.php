@@ -76,7 +76,7 @@
                 <x-site-rule-items area="contact" />
               </div>
 
-              <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; margin-bottom:20px; border:1px solid #e2e8f0; font-size:14px; color:#475569;">
+              <div class="contact-auth-info">
                   <i class="fa-solid fa-user-check" style="margin-right:6px; color:var(--primary);"></i>
                   Murojaat quyidagi ma'lumotlar bilan yuboriladi: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->phone }}). Xabar ichki tartibda ko'rib chiqiladi va zarur bo'lsa mas'ul xodim sizga javob beradi.
               </div>
@@ -102,12 +102,12 @@
                 <p id="form-message" class="form-message" aria-live="polite"></p>
               </form>
             @else
-              <div class="contact-auth-prompt" style="text-align:center; padding:40px 20px; background:#fff; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-                <div class="icon-wrap" style="width:64px; height:64px; background:rgba(var(--primary-rgb), 0.1); color:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:24px;">
+              <div class="contact-auth-prompt">
+                <div class="icon-wrap contact-auth-prompt-icon">
                   <i class="fa-solid fa-lock"></i>
                 </div>
-                <h2 style="margin-bottom:12px;">Murojaat yuborish</h2>
-                <p style="color:#64748b; margin-bottom:24px;">Xabar yuborish uchun tizimga kirishingiz lozim. Bu bizga siz bilan bog'lanishni osonlashtiradi.</p>
+                <h2 class="contact-auth-prompt-title">Murojaat yuborish</h2>
+                <p class="contact-auth-prompt-text">Xabar yuborish uchun tizimga kirishingiz lozim. Bu bizga siz bilan bog'lanishni osonlashtiradi.</p>
                 <a href="{{ route('login') }}" class="btn btn-prime">
                   <i class="fa-solid fa-right-to-bracket" style="margin-right:8px;"></i>
                   Tizimga kirish

@@ -23,13 +23,13 @@
         <form method="GET" action="{{ route('teacher') }}" class="exam-filter-panel" style="margin-bottom:18px;" id="teacher-filter-form">
           <div class="exam-filter-row">
             <div class="exam-filter-field">
-              <label class="exam-filter-label" for="teacher-filter-q">Nom bo'yicha qidirish</label>
-              <input type="search" id="teacher-filter-q" name="q" class="exam-filter-input" placeholder="Ustoz ismi..." autocomplete="off" value="{{ $q ?? '' }}">
+              <label class="exam-filter-label" for="teacher-filter-q">{{ __('public.teachers.search_by_name') }}</label>
+              <input type="search" id="teacher-filter-q" name="q" class="exam-filter-input" placeholder="{{ __('public.teachers.search_placeholder') }}" autocomplete="off" value="{{ $q ?? '' }}">
             </div>
             <div class="exam-filter-field">
-              <label class="exam-filter-label" for="teacher-filter-subject">Fan bo'yicha</label>
+              <label class="exam-filter-label" for="teacher-filter-subject">{{ __('public.teachers.filter_by_subject') }}</label>
               <select id="teacher-filter-subject" name="subject" class="exam-filter-select">
-                <option value="">Barcha fanlar</option>
+                <option value="">{{ __('public.courses.all_subjects') }}</option>
                 @foreach($allSubjects as $subj)
                   <option value="{{ e($subj) }}" {{ ($selectedSubject ?? '') === $subj ? 'selected' : '' }}>{{ $subj }}</option>
                 @endforeach
@@ -69,9 +69,9 @@
         @endphp
         <p class="exam-filter-count" aria-live="polite">
           @if(($q ?? '') !== '' || ($selectedSubject ?? '') !== '')
-            Ko'rsatilmoqda: {{ $teacherShown }} / {{ $teacherTotal }}
+            {{ __('public.teachers.showing') }}: {{ $teacherShown }} / {{ $teacherTotal }}
           @else
-            Jami: {{ $teacherTotal }} ta ustoz
+            {{ __('public.teachers.total') }}: {{ $teacherTotal }} {{ __('public.teachers.teachers_count_label') }}
           @endif
         </p>
 
@@ -147,14 +147,14 @@
             $start = max(1, $current - 2);
             $end = min($last, $current + 2);
           @endphp
-          <nav class="teachers-pagination" aria-label="Ustozlar pagination">
+          <nav class="teachers-pagination" aria-label="{{ __('public.teachers.pagination_aria') }}">
             @if($teachers->onFirstPage())
               <span class="teachers-page-btn is-disabled" aria-disabled="true">
-                <i class="fa-solid fa-chevron-left"></i> Oldingi
+                <i class="fa-solid fa-chevron-left"></i> {{ __('public.posts.previous') }}
               </span>
             @else
               <a class="teachers-page-btn" href="{{ $teachers->previousPageUrl() }}">
-                <i class="fa-solid fa-chevron-left"></i> Oldingi
+                <i class="fa-solid fa-chevron-left"></i> {{ __('public.posts.previous') }}
               </a>
             @endif
 
@@ -170,11 +170,11 @@
 
             @if($teachers->hasMorePages())
               <a class="teachers-page-btn" href="{{ $teachers->nextPageUrl() }}">
-                Keyingi <i class="fa-solid fa-chevron-right"></i>
+                {{ __('public.posts.next') }} <i class="fa-solid fa-chevron-right"></i>
               </a>
             @else
               <span class="teachers-page-btn is-disabled" aria-disabled="true">
-                Keyingi <i class="fa-solid fa-chevron-right"></i>
+                {{ __('public.posts.next') }} <i class="fa-solid fa-chevron-right"></i>
               </span>
             @endif
           </nav>

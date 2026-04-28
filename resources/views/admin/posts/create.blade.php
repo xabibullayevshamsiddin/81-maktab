@@ -122,9 +122,9 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Yoki YouTube havolasi (ixtiyoriy)</label>
-              <input type="text" class="form-control" name="video_url" value="{{ old('video_url') }}" placeholder="https://www.youtube.com/watch?v=... yoki youtu.be/...">
-              <small class="text-muted">Agar ikkalasi ham bo‘lsa, avvalo yuklangan fayl ijro etiladi.</small>
+              <label class="form-label">Video havolasi (YouTube / Instagram, ixtiyoriy)</label>
+              <input type="text" class="form-control" name="video_url" value="{{ old('video_url') }}" placeholder="https://www.youtube.com/watch?v=... yoki https://www.instagram.com/reel/...">
+              <small class="text-muted">YouTube, Instagram (post/reel) havolasi qo‘llanadi. Agar video fayl ham yuklansa, avval fayl ijro etiladi.</small>
             </div>
 
             <button type="submit" class="btn btn-success">Qo'shish</button>

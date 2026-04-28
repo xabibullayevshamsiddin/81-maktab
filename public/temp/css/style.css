@@ -4432,6 +4432,48 @@ section.teachers.reveal::before {
   margin-top: 2px;
 }
 
+.contact-auth-info {
+  background: color-mix(in srgb, var(--surface) 82%, #ffffff 18%);
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.contact-auth-prompt {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.contact-auth-prompt-icon {
+  width: 64px;
+  height: 64px;
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 24px;
+}
+
+.contact-auth-prompt-title {
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.contact-auth-prompt-text {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
 .form-message {
   min-height: 24px;
   font-weight: 600;
