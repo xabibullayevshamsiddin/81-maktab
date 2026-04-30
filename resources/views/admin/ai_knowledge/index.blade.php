@@ -143,7 +143,23 @@
             <div class="border rounded p-3 mb-25">
               <div class="d-flex justify-content-between align-items-center mb-15">
                 <h6 class="mb-0">Oxirgi Muammoli AI Savol-Javoblar</h6>
-                <small class="text-muted">Faqat moderator ko'rib chiqishi kerak bo'lgan yozuvlar. Foydali deb belgilanganlar chiqmaydi.</small>
+                <div class="d-flex align-items-center gap-2">
+                  <small class="text-muted">Faqat moderator ko'rib chiqishi kerak bo'lgan yozuvlar. Foydali deb belgilanganlar chiqmaydi.</small>
+                  @if(auth()->user()?->canManageInbox())
+                    <form
+                      method="POST"
+                      action="{{ route('admin.ai-reviews.destroy-unhelpful') }}"
+                      data-confirm="Foydasiz deb belgilangan barcha AI review yozuvlari o‘chirilsinmi?"
+                      data-confirm-title="Foydasiz AI reviewlarni tozalash"
+                      data-confirm-variant="danger"
+                      data-confirm-ok="Ha, o'chirish"
+                    >
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-sm btn-danger">Foydasizlarni tozalash</button>
+                    </form>
+                  @endif
+                </div>
               </div>
 
               @forelse($recentInteractions as $item)
@@ -171,6 +187,21 @@
                       | feedback: foydasiz
                     @endif
                   </small>
+                  @if(auth()->user()?->canManageInbox())
+                    <form
+                      method="POST"
+                      action="{{ route('admin.ai-reviews.destroy', $item->id) }}"
+                      class="mt-2"
+                      data-confirm="Bu AI review yozuvi o‘chirilsinmi?"
+                      data-confirm-title="AI reviewni o'chirish"
+                      data-confirm-variant="danger"
+                      data-confirm-ok="O'chirish"
+                    >
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Savol-javobni o‘chirish</button>
+                    </form>
+                  @endif
                 </div>
               @empty
                 <p class="text-muted mb-0">AI dialoglar hali saqlanmagan.</p>

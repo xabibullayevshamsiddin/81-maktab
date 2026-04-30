@@ -57,7 +57,7 @@ class PublicMediaCleanupTest extends TestCase
         $this->assertFalse(Storage::disk('public')->exists('posts/videos/clip.mp4'));
     }
 
-    public function test_deleting_teacher_removes_teacher_and_cascaded_course_images(): void
+    public function test_deleting_teacher_keeps_course_images_when_course_remains_public(): void
     {
         Storage::fake('public');
         Storage::disk('public')->put('teachers/teacher.jpg', 'image');
@@ -93,7 +93,11 @@ class PublicMediaCleanupTest extends TestCase
         $teacher->delete();
 
         $this->assertFalse(Storage::disk('public')->exists('teachers/teacher.jpg'));
-        $this->assertFalse(Storage::disk('public')->exists('courses/course.jpg'));
+        $this->assertTrue(Storage::disk('public')->exists('courses/course.jpg'));
+        $this->assertDatabaseHas('courses', [
+            'title' => 'Test kurs',
+            'teacher_id' => null,
+        ]);
     }
 
     public function test_prune_orphaned_media_command_deletes_only_with_delete_option(): void
@@ -172,7 +176,7 @@ class PublicMediaCleanupTest extends TestCase
 
         Schema::create('courses', static function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('teacher_id')->constrained('teachers')->cascadeOnDelete();
+            $table->foreignId('teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->string('title');
             $table->string('price', 100);

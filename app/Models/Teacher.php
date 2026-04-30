@@ -56,12 +56,6 @@ class Teacher extends Model
 
         static::deleting(function (Teacher $teacher): void {
             PublicStorage::delete($teacher->image);
-            PublicStorage::deleteMany(
-                $teacher->courses()
-                    ->whereNotNull('image')
-                    ->pluck('image')
-                    ->all()
-            );
         });
     }
 

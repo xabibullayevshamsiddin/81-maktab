@@ -2,26 +2,26 @@
 
 namespace App\Services\Ai;
 
-use App\Models\CalendarEvent;
 use App\Models\AiKnowledge;
+use App\Models\CalendarEvent;
+use App\Models\ContactMessage;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Exam;
 use App\Models\Post;
-use App\Models\User;
-use App\Models\Teacher;
-use App\Models\ContactMessage;
 use App\Models\Result;
 use App\Models\SiteSetting;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
+use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AiService
 {
     private const GEMINI_CALLS_PER_MINUTE_SOFT_LIMIT = 14;
+
     private static ?bool $aiKnowledgeTableExists = null;
 
     /**
@@ -86,6 +86,11 @@ class AiService
             return ['success' => true, 'text' => $static, 'source' => 'static_knowledge'];
         }
 
+        // 1.5 Live course catalog must win over generic knowledge-base answers.
+        if ($courseCatalog = $this->matchCourseCatalogQuery($message)) {
+            return ['success' => true, 'text' => $courseCatalog, 'source' => 'dynamic_data'];
+        }
+
         // 2. Admin tomonidan kiritilgan AI bilimlar bazasi
         if ($knowledge = $this->matchKnowledgeBase($message)) {
             return ['success' => true, 'text' => $knowledge, 'source' => 'knowledge_base'];
@@ -114,7 +119,7 @@ class AiService
     {
         $conversationContext = $this->finalizeConversationContext($message, $conversationContext);
         $effectiveMessage = (string) ($conversationContext['resolved_message'] ?? $message);
-        $q = $this->normalizeSearchText($effectiveMessage);
+        $q = $this->normalizeCourseIntentText($effectiveMessage);
         $actions = [];
 
         if ($source === 'clarification') {
@@ -148,7 +153,7 @@ class AiService
 
         if ($user && method_exists($user, 'isTeacher') && $user->isTeacher()) {
             if (Str::contains($q, ['imtihon yarat', 'savol qo', 'kurs och'])) {
-                if ($user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
+                if (! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
                     $actions[] = $this->makeLinkAction('Kurs ochish', route('teacher.courses.create'), 'teacher.courses.create');
                 } else {
                     $actions[] = $this->makeLinkAction('Profil', route('profile.show').'#course-open-request', 'profile.show');
@@ -167,7 +172,7 @@ class AiService
 
     public function shouldStartSupportWizard(string $message): bool
     {
-        $q = $this->normalizeSearchText($message);
+        $q = $this->normalizeCourseIntentText($message);
 
         return Str::contains($q, [
             'muammo bor', 'xato chiq', 'ishlamayap', 'ishga tushmayap', 'bug',
@@ -177,7 +182,7 @@ class AiService
 
     public function normalizeQuestionForAnalytics(string $message): string
     {
-        return Str::limit($this->normalizeSearchText($message), 255, '');
+        return Str::limit($this->normalizeCourseIntentText($message), 255, '');
     }
 
     public function prepareConversationContext(string $userMessage, array $history = []): array
@@ -284,7 +289,7 @@ class AiService
 
     private function detectConversationTopic(string $text, string $source = ''): ?string
     {
-        $q = $this->normalizeSearchText($text);
+        $q = $this->normalizeCourseIntentText($text);
 
         if ($q === '') {
             return null;
@@ -417,7 +422,7 @@ class AiService
 
             if ($rows->isEmpty()) {
                 return "рџ“… **Shu hafta** uchun taqvimda tadbir topilmadi.\n"
-                    . "рџ“† To'liq jadval: {$calendarUrl}";
+                    ."рџ“† To'liq jadval: {$calendarUrl}";
             }
 
             $lines = [];
@@ -427,8 +432,8 @@ class AiService
             }
 
             return "рџ“… **Shu haftadagi tadbirlar**:\n"
-                . implode("\n\n", $lines)
-                . "\n\nрџ“† To'liq jadval: {$calendarUrl}";
+                .implode("\n\n", $lines)
+                ."\n\nрџ“† To'liq jadval: {$calendarUrl}";
         }
 
         if ($parsedDate !== null) {
@@ -442,7 +447,7 @@ class AiService
             $dateLabel = $parsedDate->format('d.m.Y');
             if ($rows->isEmpty()) {
                 return "📅 **{$dateLabel}** sanasi bo‘yicha taqvimda tadbir yozuvi topilmadi.\n"
-                    . "📆 To‘liq jadval: {$calendarUrl}";
+                    ."📆 To‘liq jadval: {$calendarUrl}";
             }
 
             $lines = [];
@@ -451,8 +456,8 @@ class AiService
             }
 
             return "📅 **{$dateLabel}** kuni taqvim bo‘yicha:\n"
-                . implode("\n\n", $lines)
-                . "\n\n📆 Batafsil: {$calendarUrl}";
+                .implode("\n\n", $lines)
+                ."\n\n📆 Batafsil: {$calendarUrl}";
         }
 
         $rows = CalendarEvent::query()
@@ -465,18 +470,18 @@ class AiService
 
         if ($rows->isEmpty()) {
             return "📆 Hozircha rejalashtirilgan yaqin tadbirlar yo‘q.\n"
-                . "Taqvim: {$calendarUrl}";
+                ."Taqvim: {$calendarUrl}";
         }
 
         $lines = [];
         foreach ($rows as $ev) {
             $d = $ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date);
-            $lines[] = '• ' . $d->format('d.m.Y') . ' — ' . $this->formatCalendarEventLine($ev, $maxBody);
+            $lines[] = '• '.$d->format('d.m.Y').' — '.$this->formatCalendarEventLine($ev, $maxBody);
         }
 
         return "📆 **Yaqinlashayotgan tadbirlar** (oxirgi {$maxEvents} ta):\n"
-            . implode("\n\n", $lines)
-            . "\n\n📆 To‘liq taqvim: {$calendarUrl}";
+            .implode("\n\n", $lines)
+            ."\n\n📆 To‘liq taqvim: {$calendarUrl}";
     }
 
     private function formatCalendarEventLine(CalendarEvent $ev, int $maxBody): string
@@ -486,11 +491,11 @@ class AiService
         $body = localized_model_value($ev, 'body');
         $line = $title;
         if (filled($time)) {
-            $line .= "\n  ⏱ " . $time;
+            $line .= "\n  ⏱ ".$time;
         }
         if ($maxBody > 0 && filled($body)) {
             $plain = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $body)) ?? '');
-            $line .= "\n  " . Str::limit($plain, $maxBody);
+            $line .= "\n  ".Str::limit($plain, $maxBody);
         }
 
         return $line;
@@ -518,7 +523,7 @@ class AiService
 
         $monthRx = $this->calendarMonthRegexFragment();
 
-        if (preg_match('/\b([1-9]|[12]\d|3[01])\s*[-]?\s*(' . $monthRx . ')\b/u', $q, $m)) {
+        if (preg_match('/\b([1-9]|[12]\d|3[01])\s*[-]?\s*('.$monthRx.')\b/u', $q, $m)) {
             $day = (int) $m[1];
             $month = $this->monthNameToNumber($m[2]);
             if ($month !== null) {
@@ -526,7 +531,7 @@ class AiService
             }
         }
 
-        if (preg_match('/\b(' . $monthRx . ')\s*[-]?\s*([1-9]|[12]\d|3[01])\b/u', $q, $m)) {
+        if (preg_match('/\b('.$monthRx.')\s*[-]?\s*([1-9]|[12]\d|3[01])\b/u', $q, $m)) {
             $month = $this->monthNameToNumber($m[1]);
             $day = (int) $m[2];
             if ($month !== null) {
@@ -540,8 +545,8 @@ class AiService
     private function calendarMonthRegexFragment(): string
     {
         return 'yanvar(?:da|dan|dagi)?|fevral(?:da|dan|dagi)?|mart(?:da|dan|dagi)?|aprel(?:da|dan|dagi)?|april(?:da|dan|dagi)?'
-            . '|may(?:da|dan|dagi)?|iyun(?:da|dan|dagi)?|iyul(?:da|dan|dagi)?|avgust(?:da|dan|dagi)?'
-            . '|sentyabr(?:da|dan|dagi)?|oktyabr(?:da|dan|dagi)?|noyabr(?:da|dan|dagi)?|dekabr(?:da|dan|dagi)?';
+            .'|may(?:da|dan|dagi)?|iyun(?:da|dan|dagi)?|iyul(?:da|dan|dagi)?|avgust(?:da|dan|dagi)?'
+            .'|sentyabr(?:da|dan|dagi)?|oktyabr(?:da|dan|dagi)?|noyabr(?:da|dan|dagi)?|dekabr(?:da|dan|dagi)?';
     }
 
     private function monthNameToNumber(string $name): ?int
@@ -626,10 +631,10 @@ class AiService
             $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
 
             return "Men {$schoolName} saytining ichki AI yordamchisiman.\n"
-                . "- Maktab, ustozlar, kurslar, imtihonlar, natijalar, taqvim va aloqa bo'limlari bo'yicha yordam bera olaman.\n"
-                . "- Saytdan foydalanish: ro'yxatdan o'tish, profil, kurs arizasi va imtihon jarayonlari haqida yo'l-yo'riq bera olaman.\n"
-                . "- Oddiy hisob-kitoblarni ham chiqarib bera olaman.\n"
-                . "- Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.";
+                ."- Maktab, ustozlar, kurslar, imtihonlar, natijalar, taqvim va aloqa bo'limlari bo'yicha yordam bera olaman.\n"
+                ."- Saytdan foydalanish: ro'yxatdan o'tish, profil, kurs arizasi va imtihon jarayonlari haqida yo'l-yo'riq bera olaman.\n"
+                ."- Oddiy hisob-kitoblarni ham chiqarib bera olaman.\n"
+                ."- Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.";
         }
 
         return null;
@@ -659,7 +664,7 @@ class AiService
             return null;
         }
 
-        return "Javob: **".$this->formatMathResult($result)."**.";
+        return 'Javob: **'.$this->formatMathResult($result).'**.';
     }
 
     private function evaluateMathExpression(string $expression): ?float
@@ -688,12 +693,14 @@ class AiService
             if (is_numeric($token)) {
                 $output[] = $token;
                 $prevType = 'number';
+
                 continue;
             }
 
             if ($token === '(') {
                 $operators[] = $token;
                 $prevType = 'left_paren';
+
                 continue;
             }
 
@@ -708,6 +715,7 @@ class AiService
 
                 array_pop($operators);
                 $prevType = 'right_paren';
+
                 continue;
             }
 
@@ -728,6 +736,7 @@ class AiService
 
                 if ($topPrecedence > $operatorPrecedence || ($topPrecedence === $operatorPrecedence && ! $rightAssociative)) {
                     $output[] = array_pop($operators);
+
                     continue;
                 }
 
@@ -757,6 +766,7 @@ class AiService
         foreach ($output as $token) {
             if (is_numeric($token)) {
                 $stack[] = (float) $token;
+
                 continue;
             }
 
@@ -766,6 +776,7 @@ class AiService
                 }
 
                 $stack[] = -array_pop($stack);
+
                 continue;
             }
 
@@ -869,14 +880,14 @@ class AiService
             $diff = $now->diffInDays($target, false);
 
             if ($diff === 0) {
-                return "Bu sana **bugun**.";
+                return 'Bu sana **bugun**.';
             }
 
             if ($diff > 0) {
                 return "Bu sanagacha taxminan **{$diff} kun** qoldi.";
             }
 
-            return "Bu sana **".abs($diff)." kun oldin** o'tgan.";
+            return 'Bu sana **'.abs($diff)." kun oldin** o'tgan.";
         }
 
         return null;
@@ -901,26 +912,31 @@ class AiService
 
             if ($isIslamicGreeting) {
                 return "Va alaykum assalom! 🌙 Men **{$schoolName}** saytining AI yordamchisiman.\n"
-                    . "Quyidagi mavzularda yordam bera olaman:\n"
-                    . "- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
-                    . "- Imtihonlar, natijalar va taqvim\n"
-                    . "- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
-                    . "- Oddiy hisob-kitoblar\n\n"
-                    . "Savolingizni yozing.";
+                    ."Quyidagi mavzularda yordam bera olaman:\n"
+                    ."- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
+                    ."- Imtihonlar, natijalar va taqvim\n"
+                    ."- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
+                    ."- Oddiy hisob-kitoblar\n\n"
+                    .'Savolingizni yozing.';
             }
 
-            if ($hour >= 5 && $hour < 12)  $greeting = 'Hayrli tong';
-            elseif ($hour >= 12 && $hour < 17) $greeting = 'Hayrli kun';
-            elseif ($hour >= 17 && $hour < 22) $greeting = 'Hayrli kech';
-            else $greeting = 'Assalomu alaykum';
+            if ($hour >= 5 && $hour < 12) {
+                $greeting = 'Hayrli tong';
+            } elseif ($hour >= 12 && $hour < 17) {
+                $greeting = 'Hayrli kun';
+            } elseif ($hour >= 17 && $hour < 22) {
+                $greeting = 'Hayrli kech';
+            } else {
+                $greeting = 'Assalomu alaykum';
+            }
 
             return "{$greeting}! 😊 Men **{$schoolName}** saytining AI yordamchisiman.\n"
-                . "Quyidagi mavzularda yordam bera olaman:\n"
-                . "- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
-                . "- Imtihonlar, natijalar va taqvim\n"
-                . "- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
-                . "- Oddiy hisob-kitoblar\n\n"
-                . "Savolingizni yozing.";
+                ."Quyidagi mavzularda yordam bera olaman:\n"
+                ."- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
+                ."- Imtihonlar, natijalar va taqvim\n"
+                ."- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
+                ."- Oddiy hisob-kitoblar\n\n"
+                .'Savolingizni yozing.';
         }
 
         $hasStrictFarewell = $this->hasFarewellIntent($normalized);
@@ -949,7 +965,7 @@ class AiService
 
         // Kimsan / Qandaysan
         if (Str::contains($q, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan', 'sen kimsan', 'siz kimsiz'])) {
-            return "Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, math va fan savollariga — hammaga javob berishga harakat qilaman. Savol bering! 🚀";
+            return 'Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, math va fan savollariga — hammaga javob berishga harakat qilaman. Savol bering! 🚀';
         }
 
         if (Str::contains($q, ['muallfi', 'mualif', 'kim ishtirok', 'ishtirok etgan', 'saytda kim'])) {
@@ -965,10 +981,13 @@ class AiService
             $names = [];
             if (is_array($siteCredits)) {
                 foreach ($siteCredits as $member) {
-                    if ($name = trim((string) ($member['name'] ?? ''))) $names[] = $name;
+                    if ($name = trim((string) ($member['name'] ?? ''))) {
+                        $names[] = $name;
+                    }
                 }
             }
             $nameStr = empty($names) ? 'Jamoa' : implode(', ', $names);
+
             return "{$siteCreditsIntro} ✨ Mualliflar: **{$nameStr}**. 👨‍💻";
         }
 
@@ -982,12 +1001,13 @@ class AiService
             'email', 'support', 'kontakt', 'yoz',
         ]);
         if ($adminIdentityIntent && ! $adminContactIntent) {
-            return "Hozirgi paytda saytni **Xabibullayev Shamsiddin** boshqaradi. Qolgan hamkorlar moderator va editor sifatida yordam beradi. ✨";
+            return 'Hozirgi paytda saytni **Xabibullayev Shamsiddin** boshqaradi. Qolgan hamkorlar moderator va editor sifatida yordam beradi. ✨';
         }
 
         // Hozir soat nechchi / bugungi sana
         if (Str::contains($q, ['soat nech', 'vaqt nech', 'bugun necha', 'bugungi sana', 'nechinchi'])) {
             $now = Carbon::now((string) config('app.timezone', 'UTC'));
+
             return "🕐 Hozir soat **{$now->format('H:i')}** ({$now->format('d.m.Y')}, {$now->translatedFormat('l')}).";
         }
 
@@ -1006,21 +1026,21 @@ class AiService
         // Dars vaqtlari
         if (Str::contains($q, ['dars vaqti', 'soat nechada boshlanadi', 'soat nechada tugaydi', 'dars jadvali', 'tanaffus'])) {
             return "🏫 **Dars vaqtlari:**\n"
-                . "• 1-soat: 08:30 - 09:15\n"
-                . "• 2-soat: 09:20 - 10:05\n"
-                . "• 3-soat: 10:20 - 11:05 (Katta tanaffus)\n"
-                . "• 4-soat: 11:10 - 11:55\n"
-                . "• 5-soat: 12:00 - 12:45\n"
-                . "✨ Eslatma: Sinf darajasiga qarab o'zgarishi mumkin.";
+                ."• 1-soat: 08:30 - 09:15\n"
+                ."• 2-soat: 09:20 - 10:05\n"
+                ."• 3-soat: 10:20 - 11:05 (Katta tanaffus)\n"
+                ."• 4-soat: 11:10 - 11:55\n"
+                ."• 5-soat: 12:00 - 12:45\n"
+                ."✨ Eslatma: Sinf darajasiga qarab o'zgarishi mumkin.";
         }
 
         // To'garaklar
-        if (Str::contains($q, ['togarak', 'to\'garak', 'kurslar bor'])) {
+        if (Str::contains($q, ['togarak', 'to\'garak', 'mashgulot', 'mashg\'ulot'])) {
             return "🎨 **Bizda quyidagi to'garaklar mavjud:**\n"
-                . "• Fan to'garaklari (Matematika, Ingliz tili)\n"
-                . "• Sport (Futbol, Shaxmat)\n"
-                . "• San'at (Raqs, Musiqa)\n"
-                . "Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling. 🚀";
+                ."• Fan to'garaklari (Matematika, Ingliz tili)\n"
+                ."• Sport (Futbol, Shaxmat)\n"
+                ."• San'at (Raqs, Musiqa)\n"
+                ."Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling. 🚀";
         }
 
         return null;
@@ -1063,12 +1083,12 @@ class AiService
         $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
 
         return "**Sayt mualliflari**\n"
-            . "- Jamoa: 10-\"E\" sinf o'quvchilari\n"
-            . "- Qisqa javob: **{$schoolName} saytini {$shortNames} ishlab chiqqan.**\n\n"
-            . "**Ishtirokchilar**\n"
-            . "{$memberText}\n\n"
-            . "**Izoh**\n"
-            . "{$credits['intro']}";
+            ."- Jamoa: 10-\"E\" sinf o'quvchilari\n"
+            ."- Qisqa javob: **{$schoolName} saytini {$shortNames} ishlab chiqqan.**\n\n"
+            ."**Ishtirokchilar**\n"
+            ."{$memberText}\n\n"
+            ."**Izoh**\n"
+            ."{$credits['intro']}";
     }
 
     private function matchSiteGuideQuery(string $message, ?object $user = null): ?string
@@ -1095,12 +1115,12 @@ class AiService
         $upcomingEvents = CalendarEvent::where('event_date', '>=', now())->count();
 
         $lines = [
-            "- Yangiliklar: {$posts} ta post va e'lonlar. " . route('post'),
-            "- Ustozlar: {$teachers} ta faol ustoz profili. " . route('teacher'),
-            "- Kurslar: {$courses} ta nashr etilgan kurs. " . route('courses'),
-            "- Imtihonlar: {$activeExams} ta faol imtihon. " . route('exam.index'),
-            "- Taqvim: {$upcomingEvents} ta yaqin tadbir. " . route('calendar'),
-            "- Aloqa: murojaat yuborish va maktab bilan bog'lanish. " . route('contact'),
+            "- Yangiliklar: {$posts} ta post va e'lonlar. ".route('post'),
+            "- Ustozlar: {$teachers} ta faol ustoz profili. ".route('teacher'),
+            "- Kurslar: {$courses} ta nashr etilgan kurs. ".route('courses'),
+            "- Imtihonlar: {$activeExams} ta faol imtihon. ".route('exam.index'),
+            "- Taqvim: {$upcomingEvents} ta yaqin tadbir. ".route('calendar'),
+            "- Aloqa: murojaat yuborish va maktab bilan bog'lanish. ".route('contact'),
         ];
 
         if ($user) {
@@ -1110,30 +1130,30 @@ class AiService
         }
 
         $questionGroups = [
-            "- **Maktab**: direktor kim, manzil qayerda, telefon raqami nima, maktab qachon ochilgan",
-            "- **Sayt**: sayt muallifi kim, kimlar ishtirok etgan, saytda nimalar bor",
+            '- **Maktab**: direktor kim, manzil qayerda, telefon raqami nima, maktab qachon ochilgan',
+            '- **Sayt**: sayt muallifi kim, kimlar ishtirok etgan, saytda nimalar bor',
             "- **Yangiliklar**: so'nggi yangiliklar qayerda, qaysi post yangi, tadbirlar bormi",
             "- **Ustozlar**: falon ustoz kim, qaysi fan o'qituvchisi kim, ustozlar ro'yxati",
-            "- **Kurslar**: kursga qanday yozilaman, arizam holati qayerda, kursni kim tasdiqlaydi",
+            '- **Kurslar**: kursga qanday yozilaman, arizam holati qayerda, kursni kim tasdiqlaydi',
             "- **Imtihonlar**: imtihon qayerda boshlanadi, natijam qayerda, ballim qancha, qayta topshirsa bo'ladimi",
             "- **Profil va akkaunt**: ro'yxatdan qanday o'taman, parolni unutdim, emailni qanday o'zgartiraman",
             "- **Aloqa va support**: rasmiy murojaatni qayerga yuboraman, murojaatimni kim ko'radi, texnik muammo bo'lsa qayerga yozaman",
             "- **Chat va izohlar**: global chat nima, chat o'chsa nima qilaman, izohni tahrirlasa bo'ladimi",
-            "- **Panel va rollar**: admin panelga kim kira oladi, teacher panelda nima qilish mumkin",
+            '- **Panel va rollar**: admin panelga kim kira oladi, teacher panelda nima qilish mumkin',
         ];
 
         return "**Sayt imkoniyatlari**\n"
-            . implode("\n", $lines)
-            . "\n\n**AI'ga berish mumkin bo'lgan savollar**\n"
-            . implode("\n", $questionGroups)
-            . "\n\nMasalan: **\"texnik muammo bo'lsa qayerga murojaat qilaman?\"**, **\"kurs arizam qayerda ko'rinadi?\"**, **\"emailimni qanday o'zgartiraman?\"**";
+            .implode("\n", $lines)
+            ."\n\n**AI'ga berish mumkin bo'lgan savollar**\n"
+            .implode("\n", $questionGroups)
+            ."\n\nMasalan: **\"texnik muammo bo'lsa qayerga murojaat qilaman?\"**, **\"kurs arizam qayerda ko'rinadi?\"**, **\"emailimni qanday o'zgartiraman?\"**";
     }
 
     private function roleGuideLines(object $user): array
     {
         if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
             $lines = [
-                "- Siz **admin** sifatida boshqaruv paneliga kirib, foydalanuvchilar, kurslar, imtihonlar va murojaatlarni nazorat qilasiz: ".route('dashboard'),
+                '- Siz **admin** sifatida boshqaruv paneliga kirib, foydalanuvchilar, kurslar, imtihonlar va murojaatlarni nazorat qilasiz: '.route('dashboard'),
             ];
 
             if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
@@ -1176,7 +1196,7 @@ class AiService
                 $this->makeLinkAction('Yangi imtihon', route('profile.exams.create'), 'profile.exams.create'),
             ];
 
-            if ($user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
+            if (! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
                 $actions[] = $this->makeLinkAction('Kurs ochish', route('teacher.courses.create'), 'teacher.courses.create');
             } else {
                 $actions[] = $this->makeLinkAction('Profil', route('profile.show').'#course-open-request', 'profile.show');
@@ -1284,16 +1304,16 @@ class AiService
         $contactUrl = route('contact');
 
         return "**Rasmiy murojaat tartibi**\n"
-            . "- Oddiy foydalanuvchi uchun **admin bilan to'g'ridan-to'g'ri yozish yoki alohida admin kontakt** mavjud emas.\n"
-            . "- Agar muammo, shikoyat yoki texnik masala bo'lsa, **Aloqa** sahifasi orqali rasmiy murojaat qoldiriladi: {$contactUrl}\n"
-            . "- Murojaat avval qabul qilinadi, keyin ichki tartibda **tegishli admin, moderator yoki mas'ul xodimga** yuboriladi.\n"
-            . "- Zarur bo'lsa javob emailingiz yoki qoldirilgan aloqa ma'lumotingiz orqali beriladi.\n\n"
-            . "**Rasmiy aloqa kanallari**\n"
-            . "- Telefon: **{$phone}**\n"
-            . "- Email: **{$email}**\n"
-            . "- Manzil: **{$address}**\n"
-            . "- Bu kontaktlar maktabning rasmiy aloqa yo'llari bo'lib, shaxsiy admin chat'i hisoblanmaydi.\n\n"
-            . "Texnik muammo bo'lsa, qaysi sahifada xato chiqqani, nima qilishga uringaningiz va muammo qachon chiqqanini ham yozing.";
+            ."- Oddiy foydalanuvchi uchun **admin bilan to'g'ridan-to'g'ri yozish yoki alohida admin kontakt** mavjud emas.\n"
+            ."- Agar muammo, shikoyat yoki texnik masala bo'lsa, **Aloqa** sahifasi orqali rasmiy murojaat qoldiriladi: {$contactUrl}\n"
+            ."- Murojaat avval qabul qilinadi, keyin ichki tartibda **tegishli admin, moderator yoki mas'ul xodimga** yuboriladi.\n"
+            ."- Zarur bo'lsa javob emailingiz yoki qoldirilgan aloqa ma'lumotingiz orqali beriladi.\n\n"
+            ."**Rasmiy aloqa kanallari**\n"
+            ."- Telefon: **{$phone}**\n"
+            ."- Email: **{$email}**\n"
+            ."- Manzil: **{$address}**\n"
+            ."- Bu kontaktlar maktabning rasmiy aloqa yo'llari bo'lib, shaxsiy admin chat'i hisoblanmaydi.\n\n"
+            ."Texnik muammo bo'lsa, qaysi sahifada xato chiqqani, nima qilishga uringaningiz va muammo qachon chiqqanini ham yozing.";
     }
 
     private function matchRoleResponsibilitiesQuery(string $message): ?string
@@ -1312,39 +1332,39 @@ class AiService
 
         if ($this->queryHasApproximateToken($q, ['moderator', 'moderato', 'moderat', 'modirator'])) {
             return "**Moderator vazifalari**\n"
-                . "- Aloqa bo'limiga kelgan murojaatlarni ko'radi.\n"
-                . "- Post va ustozlar sahifasidagi izohlarni boshqaradi.\n"
-                . "- Global chatdagi tartibni saqlashda yordam beradi.\n"
-                . "- Odatda tizim sozlamalari, AI bilim bazasi yoki umumiy system boshqaruvi moderator vakolatiga kirmaydi.";
+                ."- Aloqa bo'limiga kelgan murojaatlarni ko'radi.\n"
+                ."- Post va ustozlar sahifasidagi izohlarni boshqaradi.\n"
+                ."- Global chatdagi tartibni saqlashda yordam beradi.\n"
+                .'- Odatda tizim sozlamalari, AI bilim bazasi yoki umumiy system boshqaruvi moderator vakolatiga kirmaydi.';
         }
 
         if ($this->queryHasApproximateToken($q, ['editor', 'editr', 'edtor'])) {
             return "**Editor vazifalari**\n"
-                . "- Yangiliklar, postlar, kategoriyalar va taqvim materiallarini boshqaradi.\n"
-                . "- Kontentni tahrirlash va nashrga tayyorlash bilan ishlaydi.\n"
-                . "- Odatda aloqa inboxi, system sozlamalari yoki super-admin darajadagi boshqaruv editor vakolatiga kirmaydi.";
+                ."- Yangiliklar, postlar, kategoriyalar va taqvim materiallarini boshqaradi.\n"
+                ."- Kontentni tahrirlash va nashrga tayyorlash bilan ishlaydi.\n"
+                .'- Odatda aloqa inboxi, system sozlamalari yoki super-admin darajadagi boshqaruv editor vakolatiga kirmaydi.';
         }
 
         if ($this->queryHasApproximateToken($q, ['super', 'superadmin', 'super admin'])) {
             return "**Super Admin vazifalari**\n"
-                . "- Saytning eng yuqori darajadagi boshqaruviga ega.\n"
-                . "- Sozlamalar, AI bilim bazasi, foydalanuvchilar va admin bo'limlarini to'liq boshqaradi.\n"
-                . "- Kerak bo'lsa akkauntlarni bloklaydi yoki qayta faollashtiradi.\n"
-                . "- Qolgan rollar ko'rmaydigan ko'proq texnik va maxfiy ma'lumotlarni ham ko'radi.";
+                ."- Saytning eng yuqori darajadagi boshqaruviga ega.\n"
+                ."- Sozlamalar, AI bilim bazasi, foydalanuvchilar va admin bo'limlarini to'liq boshqaradi.\n"
+                ."- Kerak bo'lsa akkauntlarni bloklaydi yoki qayta faollashtiradi.\n"
+                ."- Qolgan rollar ko'rmaydigan ko'proq texnik va maxfiy ma'lumotlarni ham ko'radi.";
         }
 
         if ($this->queryHasApproximateToken($q, ['admin', 'administrator', 'admn'])) {
             return "**Admin vazifalari**\n"
-                . "- Admin paneldagi asosiy boshqaruv bo'limlari bilan ishlaydi.\n"
-                . "- Ustozlar, imtihonlar, kurslar, contact xabarlari va comment moderatsiyasini boshqaradi.\n"
-                . "- Saytdagi tartib, ta'lim bo'limlari va foydalanuvchi jarayonlarini nazorat qiladi.";
+                ."- Admin paneldagi asosiy boshqaruv bo'limlari bilan ishlaydi.\n"
+                ."- Ustozlar, imtihonlar, kurslar, contact xabarlari va comment moderatsiyasini boshqaradi.\n"
+                ."- Saytdagi tartib, ta'lim bo'limlari va foydalanuvchi jarayonlarini nazorat qiladi.";
         }
 
         if ($this->queryHasApproximateToken($q, ['teacher', 'ustoz', "o'qituvchi", 'oqituvchi', 'muallim'])) {
             return "**O'qituvchi vazifalari**\n"
-                . "- O'z kurslarini ochishi va boshqarishi mumkin.\n"
-                . "- Kursga yozilgan foydalanuvchilarni ko'radi, tasdiqlaydi yoki rad etadi.\n"
-                . "- Rol va ruxsatga qarab ta'lim bo'limlaridagi ayrim amallar bilan ham ishlaydi.";
+                ."- O'z kurslarini ochishi va boshqarishi mumkin.\n"
+                ."- Kursga yozilgan foydalanuvchilarni ko'radi, tasdiqlaydi yoki rad etadi.\n"
+                ."- Rol va ruxsatga qarab ta'lim bo'limlaridagi ayrim amallar bilan ham ishlaydi.";
         }
 
         return null;
@@ -1367,11 +1387,11 @@ class AiService
         $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
 
         return "**Saytning vazifasi**\n"
-            . "- **{$schoolName}** ga oid asosiy ma'lumotlarni bir joyga jamlaydi.\n"
-            . "- O'quvchilar uchun: kurslar, imtihonlar, natijalar, profil va chat imkoniyatlarini beradi.\n"
-            . "- Ota-ona va mehmonlar uchun: yangiliklar, ustozlar, taqvim va aloqa bo'limlarini ko'rsatadi.\n"
-            . "- Admin va xodimlar uchun: kontent, murojaatlar va ta'lim jarayonlarini boshqarishga yordam beradi.\n\n"
-            . "Qisqa javob: bu sayt maktabning raqamli platformasi.";
+            ."- **{$schoolName}** ga oid asosiy ma'lumotlarni bir joyga jamlaydi.\n"
+            ."- O'quvchilar uchun: kurslar, imtihonlar, natijalar, profil va chat imkoniyatlarini beradi.\n"
+            ."- Ota-ona va mehmonlar uchun: yangiliklar, ustozlar, taqvim va aloqa bo'limlarini ko'rsatadi.\n"
+            ."- Admin va xodimlar uchun: kontent, murojaatlar va ta'lim jarayonlarini boshqarishga yordam beradi.\n\n"
+            .'Qisqa javob: bu sayt maktabning raqamli platformasi.';
     }
 
     private function matchKnowledgeBase(string $message): ?string
@@ -1521,6 +1541,52 @@ class AiService
         $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
 
         return Str::squish($text);
+    }
+
+    private function normalizeCourseIntentText(string $text): string
+    {
+        $normalized = $this->normalizeSearchText($text);
+        if ($normalized === '') {
+            return '';
+        }
+
+        $tokens = preg_split('/\s+/u', $normalized) ?: [];
+        $tokens = array_map(fn (string $token): string => $this->normalizeCourseToken($token), $tokens);
+
+        return Str::squish(implode(' ', $tokens));
+    }
+
+    private function normalizeCourseToken(string $token): string
+    {
+        $plain = str_replace("'", '', $token);
+        $typos = [
+            'kusr' => 'kurs',
+            'kusir' => 'kurs',
+            'krs' => 'kurs',
+            'kusrlar' => 'kurslar',
+            'kusirlar' => 'kurslar',
+            'kursla' => 'kurslar',
+            'kurlar' => 'kurslar',
+            'kurslani' => 'kurslarni',
+        ];
+
+        if (isset($typos[$plain])) {
+            return $typos[$plain];
+        }
+
+        if (str_starts_with($plain, 'kusr')) {
+            return 'kurs'.substr($plain, 4);
+        }
+
+        if (strlen($plain) >= 3 && strlen($plain) <= 5 && levenshtein($plain, 'kurs') <= 1) {
+            return 'kurs';
+        }
+
+        if (strlen($plain) >= 5 && strlen($plain) <= 9 && levenshtein($plain, 'kurslar') <= 2) {
+            return 'kurslar';
+        }
+
+        return $token;
     }
 
     private function hasGreetingIntent(string $text): bool
@@ -1828,7 +1894,7 @@ class AiService
     private function knowledgeSnippetsForPrompt(): string
     {
         if (! $this->hasAiKnowledgeTable()) {
-            return "Bilim bazasi jadvali hali mavjud emas.";
+            return 'Bilim bazasi jadvali hali mavjud emas.';
         }
 
         $selectColumns = AiKnowledge::availableColumns([
@@ -1861,12 +1927,12 @@ class AiService
             $priority = in_array('priority', $selectColumns, true) ? (int) $row->priority : 0;
             $answer = Str::limit(trim(preg_replace('/\s+/u', ' ', (string) $row->answer) ?? ''), 220);
 
-            return "- ".($category !== '' ? "[{$category}] " : '')
-                . "Savol: {$row->question}"
-                . ($keywords !== '' ? " | Kalitlar: {$keywords}" : '')
-                . ($synonyms !== '' ? " | Sinonimlar: {$synonyms}" : '')
-                . ($priority !== 0 ? " | Priority: {$priority}" : '')
-                . " | Javob: {$answer}";
+            return '- '.($category !== '' ? "[{$category}] " : '')
+                ."Savol: {$row->question}"
+                .($keywords !== '' ? " | Kalitlar: {$keywords}" : '')
+                .($synonyms !== '' ? " | Sinonimlar: {$synonyms}" : '')
+                .($priority !== 0 ? " | Priority: {$priority}" : '')
+                ." | Javob: {$answer}";
         })->implode("\n");
     }
 
@@ -1878,7 +1944,6 @@ class AiService
 
         return self::$aiKnowledgeTableExists;
     }
-
 
     /**
      * Cleans noise words while PRESERVING intent words (qachon, kim, nima).
@@ -1932,7 +1997,7 @@ class AiService
      */
     private function matchUniversalData(string $message): ?string
     {
-        $q = mb_strtolower(trim($message));
+        $q = $this->normalizeCourseIntentText($message);
         $qClean = $this->cleanMessage($q);
 
         // 1. School Statistics
@@ -1942,21 +2007,21 @@ class AiService
             $results = Result::count();
 
             return "Bizning maktabimiz haqida qisqacha ma'lumotlar:\n"
-                . "• Ustozlarimiz soni: **{$teachers} ta** 👨‍🏫\n"
-                . "• Ro'yxatdan o'tgan o'quvchilar: **{$users} ta** 🎓\n"
-                . "• Topshirilgan imtihonlar: **{$results} ta** ✅\n"
-                . "Biz doimo o'sib bormoqdamiz! 🚀";
+                ."• Ustozlarimiz soni: **{$teachers} ta** 👨‍🏫\n"
+                ."• Ro'yxatdan o'tgan o'quvchilar: **{$users} ta** 🎓\n"
+                ."• Topshirilgan imtihonlar: **{$results} ta** ✅\n"
+                ."Biz doimo o'sib bormoqdamiz! 🚀";
         }
 
         // 2. Contact & Location — admin paneldan olinadi (SiteSetting orqali)
         if ($this->isMatch($q, $qClean, ['telefon', 'raqam', 'nomer', 'manzil', 'lokatsiya', 'qayerda', 'aloqa'])) {
-            $phone   = SiteSetting::get('school_phone', '+998 71 123 45 67');
+            $phone = SiteSetting::get('school_phone', '+998 71 123 45 67');
             $address = SiteSetting::get('school_address', (string) __('public.about.quick_facts.0.value'));
 
             return "Biz bilan bog'lanish uchun:\n"
-                . "📞 Telefon: **{$phone}**\n"
-                . "📍 Manzil: **{$address}**\n"
-                . "Batafsil ma'lumotni 'Aloqa' sahifasidan olishingiz mumkin. ✨";
+                ."📞 Telefon: **{$phone}**\n"
+                ."📍 Manzil: **{$address}**\n"
+                ."Batafsil ma'lumotni 'Aloqa' sahifasidan olishingiz mumkin. ✨";
         }
 
         // 3. School Identity / Principal
@@ -1964,7 +2029,7 @@ class AiService
             $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
 
             return "**{$schoolName}** - bu zamonaviy ta'lim texnologiyalari va tajribali ustozlar jamlangan ilm maskani. ✨\n"
-                . "Direktor va ma'muriyat haqida ma'lumot 'Maktab ma'muriyati' bo'limida keltirilgan. 😊";
+                ."Direktor va ma'muriyat haqida ma'lumot 'Maktab ma'muriyati' bo'limida keltirilgan. 😊";
         }
 
         return null;
@@ -2038,23 +2103,23 @@ class AiService
                 $parts = array_filter([$lavozim, $stajText]);
                 $detail = implode(' • ', $parts);
 
-                return "👤 **{$t->full_name}**" . ($detail !== '' ? "\n   💼 {$detail}" : '');
+                return "👤 **{$t->full_name}**".($detail !== '' ? "\n   💼 {$detail}" : '');
             })->implode("\n\n");
 
             return "🏫 **{$schoolName}** maktabi rahbariyati:\n\n"
-                . $lines
-                . "\n\n✨ Batafsil ma'lumot 'Maktab haqida' bo'limida berilgan.";
+                .$lines
+                ."\n\n✨ Batafsil ma'lumot 'Maktab haqida' bo'limida berilgan.";
         }
 
         // Faqat locale dan olingan nom bor
         if ($localeDirector !== null) {
             return "🏫 **{$schoolName}** direktorligi — **{$localeDirector}** tomonidan boshqariladi.\n"
-                . "✨ Batafsil 'Maktab haqida' bo'limiga o'ting.";
+                ."✨ Batafsil 'Maktab haqida' bo'limiga o'ting.";
         }
 
         // Hech narsa topilmagan
         return "🏫 **{$schoolName}** direktorlari haqida hozircha ma'lumot kiritilmagan.\n"
-            . "Admin panelida ustozlar bo'limiga lavozim qo'shing. 😊";
+            ."Admin panelida ustozlar bo'limiga lavozim qo'shing. 😊";
     }
 
     private function matchSchoolProfileData(string $message): ?string
@@ -2087,14 +2152,14 @@ class AiService
             : "• 🎓 Direktor: ma'lumot kiritilmagan";
 
         return "🏫 **{$schoolName}** — to'liq ma'lumot:\n\n"
-            . "{$directorLine}\n"
-            . "• 👨‍🏫 Faol ustozlar: **{$teachers} ta**\n"
-            . "• 🎓 Ro'yxatdagi o'quvchilar: **{$students} ta**\n"
-            . "• 📚 Faol kurslar: **{$courses} ta**\n"
-            . "• 📰 Yangiliklar: **{$posts} ta**\n"
-            . "• 📅 Yaqin tadbirlar: **{$events} ta**\n\n"
-            . "📞 Tel: {$schoolPhone} | 📧 Email: {$schoolEmail}\n"
-            . "📍 Manzil: {$schoolAddress}";
+            ."{$directorLine}\n"
+            ."• 👨‍🏫 Faol ustozlar: **{$teachers} ta**\n"
+            ."• 🎓 Ro'yxatdagi o'quvchilar: **{$students} ta**\n"
+            ."• 📚 Faol kurslar: **{$courses} ta**\n"
+            ."• 📰 Yangiliklar: **{$posts} ta**\n"
+            ."• 📅 Yaqin tadbirlar: **{$events} ta**\n\n"
+            ."📞 Tel: {$schoolPhone} | 📧 Email: {$schoolEmail}\n"
+            ."📍 Manzil: {$schoolAddress}";
     }
 
     private function extractDirectorNameFromLocale(): ?string
@@ -2104,7 +2169,7 @@ class AiService
             return null;
         }
 
-        if (preg_match("/muassasasiga\\s+(.+?)\\s+rahbarlik\\s+qiladi/iu", $locationText, $matches)) {
+        if (preg_match('/muassasasiga\\s+(.+?)\\s+rahbarlik\\s+qiladi/iu', $locationText, $matches)) {
             return trim((string) ($matches[1] ?? '')) ?: null;
         }
 
@@ -2159,13 +2224,14 @@ class AiService
             if ($wantsGrowth) {
                 $previousCount = $this->countEntityForPreviousPeriod($entity, $period);
                 $delta = $count - $previousCount;
-                $trend = $delta > 0 ? "o'sgan" : ($delta < 0 ? "kamaygan" : "o'zgarmagan");
+                $trend = $delta > 0 ? "o'sgan" : ($delta < 0 ? 'kamaygan' : "o'zgarmagan");
                 $lines[] = "  ↳ Oldingi davrga nisbatan: {$trend} ({$delta})";
             }
         }
 
         $periodLabel = $this->periodLabel($period);
-        return "📊 {$periodLabel} bo'yicha natijalar:\n" . implode("\n", $lines);
+
+        return "📊 {$periodLabel} bo'yicha natijalar:\n".implode("\n", $lines);
     }
 
     private function extractRequestedEntities(string $q): array
@@ -2315,9 +2381,9 @@ class AiService
         $periodLabel = $this->periodLabel($period);
 
         return "📈 {$periodLabel} bo'yicha kurslar faolligi:\n"
-            . "• Eng mashhur: " . ($top?->course?->title ?? 'Noma\'lum kurs') . " ({$top->total} ta ariza)\n"
-            . "• Nisbatan kam: " . ($least?->course?->title ?? 'Noma\'lum kurs') . " ({$least->total} ta ariza)\n"
-            . "• Top-3 ro'yxat: " . $rows->map(fn ($r) => ($r->course?->title ?? 'Noma\'lum') . " ({$r->total})")->implode(', ');
+            .'• Eng mashhur: '.($top?->course?->title ?? 'Noma\'lum kurs')." ({$top->total} ta ariza)\n"
+            .'• Nisbatan kam: '.($least?->course?->title ?? 'Noma\'lum kurs')." ({$least->total} ta ariza)\n"
+            ."• Top-3 ro'yxat: ".$rows->map(fn ($r) => ($r->course?->title ?? 'Noma\'lum')." ({$r->total})")->implode(', ');
     }
 
     private function entityLabel(string $entity): string
@@ -2364,7 +2430,7 @@ class AiService
         if (Str::contains($q, ['faol', 'ochiq', 'aktiv'])) {
             $activeExams = Exam::query()->where('is_active', true)->orderByDesc('id')->take(5)->get();
             if ($activeExams->isEmpty()) {
-                return "Hozircha faol imtihonlar topilmadi.";
+                return 'Hozircha faol imtihonlar topilmadi.';
             }
 
             $lines = $activeExams->map(function (Exam $exam): string {
@@ -2390,16 +2456,16 @@ class AiService
 
             $status = $lastResult->passed === true
                 ? "O'tgan"
-                : ($lastResult->passed === false ? "Yiqilgan" : "Tekshiruvda");
+                : ($lastResult->passed === false ? 'Yiqilgan' : 'Tekshiruvda');
 
             $points = $lastResult->points_max
                 ? ($lastResult->points_earned.' / '.$lastResult->points_max.' ball')
                 : (($lastResult->score ?? 0).' ta to\'g\'ri javob');
 
             return "Oxirgi natijangiz: **{$lastResult->exam?->title}**.\n"
-                . "- Holat: **{$status}**\n"
-                . "- Ko'rsatkich: **{$points}**\n"
-                . "- Batafsilini profil natijalari bo'limida ko'rasiz.";
+                ."- Holat: **{$status}**\n"
+                ."- Ko'rsatkich: **{$points}**\n"
+                ."- Batafsilini profil natijalari bo'limida ko'rasiz.";
         }
 
         if (Str::contains($q, ['qayta topshir', 'yana topshir'])) {
@@ -2409,9 +2475,165 @@ class AiService
         return null;
     }
 
+    private function matchCourseCatalogQuery(string $message): ?string
+    {
+        $q = $this->normalizeCourseIntentText($message);
+
+        if (! $this->isCourseCatalogQuestion($q)) {
+            return null;
+        }
+
+        if (! Schema::hasTable('courses')) {
+            return null;
+        }
+
+        $courses = Course::query()
+            ->select($this->availableColumnsForTable('courses', [
+                'id',
+                'teacher_id',
+                'title',
+                'title_en',
+                'price',
+                'price_en',
+                'duration',
+                'duration_en',
+                'start_date',
+                'status',
+                'created_at',
+            ]))
+            ->when(Schema::hasTable('teachers'), function ($query): void {
+                $query
+                    ->whereHas('teacher', fn ($teacherQuery) => $teacherQuery->where('is_active', true))
+                    ->with(['teacher' => function ($teacherQuery): void {
+                        $teacherQuery->select($this->availableColumnsForTable('teachers', [
+                            'id',
+                            'full_name',
+                            'subject',
+                            'subject_en',
+                            'is_active',
+                        ]));
+                    }]);
+            })
+            ->where('status', Course::STATUS_PUBLISHED)
+            ->latest('id')
+            ->take(8)
+            ->get();
+
+        if ($courses->isEmpty()) {
+            return "Hozircha saytda nashr qilingan faol kurslar topilmadi. Yangi kurslar qo'shilsa, ular **Kurslar** sahifasida chiqadi: ".route('courses');
+        }
+
+        $lines = $courses
+            ->values()
+            ->map(fn (Course $course, int $index): string => $this->formatCourseCatalogLine($course, $index + 1))
+            ->implode("\n");
+
+        return "**Hozir saytda nashr qilingan kurslar:**\n"
+            ."{$lines}\n\n"
+            ."To'liq ma'lumot va yozilish uchun **Kurslar** sahifasiga o'ting: ".route('courses');
+    }
+
+    private function isCourseCatalogQuestion(string $q): bool
+    {
+        if ($q === '' || ! $this->hasCourseWord($q)) {
+            return false;
+        }
+
+        if (Str::contains($q, [
+            'kurs och',
+            'kurs yarat',
+            'ochish ruxsat',
+            'tasdiqlash kodi',
+            'publish code',
+            'kursni tasdiq',
+            'kim kurs och',
+            'kurs ochgan',
+            'ustoz kurs',
+            'teacher kurs',
+        ])) {
+            return false;
+        }
+
+        if (Str::contains($q, ['qanday yozil', 'kursga yozilish', 'arizam', 'holati'])) {
+            return false;
+        }
+
+        return Str::contains($q, [
+            'kurslar',
+            'kurslarni',
+            'qaysi kurs',
+            'qanaqa kurs',
+            'nima kurs',
+            'mavjud kurs',
+            'bor kurs',
+            'kurs bor',
+            'royxat',
+            'ro\'yxat',
+            'sanab',
+            'korsat',
+            'ko\'rsat',
+            'list',
+            'hammasi',
+        ])
+            || in_array($q, ['kurs', 'kurslar'], true);
+    }
+
+    private function hasCourseWord(string $q): bool
+    {
+        return preg_match('/\bkurs[\p{L}\']*\b/u', $q) === 1
+            || preg_match('/\bcourses?\b/u', $q) === 1;
+    }
+
+    private function formatCourseCatalogLine(Course $course, int $number): string
+    {
+        $title = $this->safeAiText($this->localizedModelText($course, 'title'), 120);
+        $teacherName = $this->safeAiText((string) $course->teacher?->full_name, 80);
+        $duration = $this->safeAiText($this->localizedModelText($course, 'duration'), 80);
+        $price = $this->safeAiText($this->localizedModelText($course, 'price'), 80);
+        $startDate = $course->start_date
+            ? Carbon::parse($course->start_date)->format('d.m.Y')
+            : '';
+
+        $details = array_values(array_filter([
+            $teacherName !== '' ? "Ustoz: {$teacherName}" : null,
+            $duration !== '' ? "Davomiyligi: {$duration}" : null,
+            $price !== '' ? "Narxi: {$price}" : null,
+            $startDate !== '' ? "Boshlanishi: {$startDate}" : null,
+        ]));
+
+        return "{$number}. **{$title}**"
+            .($details !== [] ? "\n   ".implode(' | ', $details) : '');
+    }
+
+    private function localizedModelText(object $model, string $field): string
+    {
+        if (function_exists('localized_model_value')) {
+            return localized_model_value($model, $field);
+        }
+
+        return (string) data_get($model, $field, '');
+    }
+
+    private function safeAiText(string $text, int $limit): string
+    {
+        return Str::limit(Str::squish(strip_tags($text)), $limit, '');
+    }
+
+    private function availableColumnsForTable(string $table, array $columns): array
+    {
+        if (! Schema::hasTable($table)) {
+            return $columns;
+        }
+
+        return array_values(array_filter(
+            $columns,
+            static fn (string $column): bool => Schema::hasColumn($table, $column)
+        ));
+    }
+
     private function matchCourseAssistantQuery(string $message, ?object $user = null): ?string
     {
-        $q = $this->normalizeSearchText($message);
+        $q = $this->normalizeCourseIntentText($message);
 
         if ($courseByTitle = $this->matchPublishedCourseByTitle($message)) {
             return $courseByTitle;
@@ -2422,25 +2644,25 @@ class AiService
         }
 
         if ($user && method_exists($user, 'isTeacher') && $user->isTeacher() && Str::contains($q, ['och', 'yarat', 'manage', 'boshqar'])) {
-            if ($user->hasLinkedActiveTeacherProfile() && ! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
+            if (! $user->hasReachedCourseOpenLimit() && $user->hasCourseOpenApproval()) {
                 return "Sizga kurs ochish ruxsati berilgan. Endi kurs formasini ochib, ma'lumotlarni to'ldirib nashr qilishingiz mumkin.";
-            }
-
-            if (! $user->hasLinkedActiveTeacherProfile()) {
-                return "Avval admin teacher akkauntingizni ustoz kartasiga bog'lashi kerak. Shundan keyin kurs ochish ruxsatini so'raysiz.";
             }
 
             if ($user->hasReachedCourseOpenLimit()) {
                 return "Teacher akkaunti bilan hozircha bitta kurs yaratish limiti qo'llanadi. Siz bu limitga yetgansiz.";
             }
 
-            return "Kurs ochishdan oldin profildagi **Kurs ochish ruxsati** bo'limidan admin ruxsatini so'rang.";
+            return "Kurs ochishdan oldin profildagi **Kurs ochish ruxsati** bo'limidan admin ruxsatini so'rang. Ustoz kartasiga bog'lash shart emas.";
+        }
+
+        if ($courseCatalog = $this->matchCourseCatalogQuery($message)) {
+            return $courseCatalog;
         }
 
         if (Str::contains($q, ['qaysi kurs', 'kurslar bor', 'nima kurs'])) {
             $courses = Course::query()
                 ->where('status', Course::STATUS_PUBLISHED)
-                ->with('teacher:id,full_name')
+                ->with(['teacher:id,full_name', 'creator:id,name,first_name,last_name'])
                 ->latest('id')
                 ->take(5)
                 ->get();
@@ -2459,14 +2681,14 @@ class AiService
         if (Str::contains($q, ['qaysi ustoz kurs', 'ustoz kurs och', 'kim kurs ochgan'])) {
             $courses = Course::query()
                 ->where('status', Course::STATUS_PUBLISHED)
-                ->with('teacher:id,full_name')
+                ->with(['teacher:id,full_name', 'creator:id,name,first_name,last_name'])
                 ->latest('id')
                 ->take(8)
                 ->get()
                 ->filter(fn (Course $course) => $course->teacher !== null);
 
             if ($courses->isEmpty()) {
-                return "Hozircha ustozlarga biriktirilgan nashr etilgan kurs topilmadi.";
+                return 'Hozircha ustozlarga biriktirilgan nashr etilgan kurs topilmadi.';
             }
 
             $lines = $courses->map(fn (Course $course) => 'вЂў '.$course->teacher->full_name.' вЂ” '.$course->title)->implode("\n");
@@ -2482,7 +2704,7 @@ class AiService
                 ->first();
 
             if (! $latestEnrollment) {
-                return "Siz hali kursga ariza yubormagansiz. Kurslar sahifasidan kerakli kursni tanlab yozilishingiz mumkin.";
+                return 'Siz hali kursga ariza yubormagansiz. Kurslar sahifasidan kerakli kursni tanlab yozilishingiz mumkin.';
             }
 
             $status = match ($latestEnrollment->status) {
@@ -2492,8 +2714,8 @@ class AiService
             };
 
             return "Oxirgi kurs arizangiz: **{$latestEnrollment->course?->title}**.\n"
-                . "- Holat: **{$status}**\n"
-                . "- Batafsilini profilingizdagi kurslar blokida ko'rasiz.";
+                ."- Holat: **{$status}**\n"
+                ."- Batafsilini profilingizdagi kurslar blokida ko'rasiz.";
         }
 
         if (Str::contains($q, ['qanday yozil', 'qanday kiraman', 'kursga yozilish'])) {
@@ -2564,8 +2786,8 @@ class AiService
         $teacher = $course->teacher?->full_name ? "Ustoz: **{$course->teacher->full_name}**\n" : '';
 
         return "Topildi: **{$course->title}**\n"
-            . $teacher
-            . "Kurs haqida batafsil ma'lumotni **Kurslar** bo'limida ko'rishingiz mumkin.";
+            .$teacher
+            ."Kurs haqida batafsil ma'lumotni **Kurslar** bo'limida ko'rishingiz mumkin.";
     }
 
     /**
@@ -2573,7 +2795,7 @@ class AiService
      */
     private function matchDynamicData(string $message, ?object $user = null): ?string
     {
-        $q = mb_strtolower(trim($message));
+        $q = $this->normalizeCourseIntentText($message);
         $qClean = $this->cleanMessage($q);
 
         if ($examAssistant = $this->matchExamAssistantQuery($message, $user)) {
@@ -2597,14 +2819,16 @@ class AiService
             $lastResult = Result::where('user_id', $user->id)->with('exam')->latest()->first();
             if ($lastResult) {
                 $passed = $lastResult->passed;
-                $status = $passed === true ? "o'tdingiz ✅" : ($passed === false ? "yeta olmadingiz ❌" : "natija tekshirilmoqda ⏳");
+                $status = $passed === true ? "o'tdingiz ✅" : ($passed === false ? 'yeta olmadingiz ❌' : 'natija tekshirilmoqda ⏳');
                 $points = $lastResult->points_earned !== null
                     ? " ({$lastResult->points_earned}/{$lastResult->points_max} ball)"
                     : '';
+
                 return "Sizning oxirgi imtihoningiz: **{$lastResult->exam->title}**{$points}.\n"
-                    . "Natijangiz: **{$lastResult->score}%** — {$status}.\n"
-                    . "Batafsil ma'lumotni 'Profil' bo'limida ko'rishingiz mumkin. 🎓";
+                    ."Natijangiz: **{$lastResult->score}%** — {$status}.\n"
+                    ."Batafsil ma'lumotni 'Profil' bo'limida ko'rishingiz mumkin. 🎓";
             }
+
             return "Siz hali imtihon topshirmagansiz. Imtihon bo'limiga o'tib sinab ko'ring! 📝";
         }
 
@@ -2613,8 +2837,9 @@ class AiService
             if (! $user) {
                 return "Siz tizimga kirmagansiz. Iltimos, ro'yxatdan o'ting! 😊";
             }
+
             return "Sizning ismingiz **{$user->first_name} {$user->last_name}**. "
-                . "Siz saytimizda **{$user->role_label}** maqomiga egasiz. ✨";
+                ."Siz saytimizda **{$user->role_label}** maqomiga egasiz. ✨";
         }
 
         // 3. Courses — kengaytirilgan sinonimlar
@@ -2622,8 +2847,10 @@ class AiService
             $courses = Course::where('status', 'published')->latest()->take(5)->get();
             if ($courses->isNotEmpty()) {
                 $list = $courses->map(fn ($c) => "• {$c->title}")->implode("\n");
+
                 return "Hozirgi faol kurslarimiz:\n{$list}\n\nBatafsil: 'Kurslar' bo'limidan ko'rishingiz mumkin. ✅";
             }
+
             return "Hozircha nashr etilgan kurslar yo'q. Tez orada yangi kurslar qo'shiladi! 😊";
         }
 
@@ -2631,15 +2858,17 @@ class AiService
         if ($this->isMatch($q, $qClean, ['ustoz', "o'qituvchi", 'domla', 'muallim', 'teacher', 'pedagog', 'o\'qtuvchi', 'o\'qi'])) {
             $teachers = Teacher::where('is_active', true)->latest()->take(6)->get();
             if ($teachers->isNotEmpty()) {
-                $list = $teachers->map(fn ($t) => "• {$t->full_name}" . ($t->subject ? " — {$t->subject}" : ''))->implode("\n");
+                $list = $teachers->map(fn ($t) => "• {$t->full_name}".($t->subject ? " — {$t->subject}" : ''))->implode("\n");
+
                 return "Bizning tajribali ustozlarimizdan ba'zilari:\n{$list}\n\nTo'liq ro'yxat: 'Ustozlar' sahifasida. 👨‍🏫";
             }
+
             return "Hozircha o'qituvchilar ma'lumoti kiritilmagan. Keyinroq tekshirib ko'ring! ✨";
         }
 
         // 5. News/Events — kengaytirilgan sinonimlar
         if ($this->isMatch($q, $qClean, ['yangilik', 'tadbir', 'nima gap', "e'lon", 'post', 'xabar', 'yangililar', 'voqea', 'maqola'])) {
-            $posts  = Post::latest()->take(3)->pluck('title')->toArray();
+            $posts = Post::latest()->take(3)->pluck('title')->toArray();
             $events = CalendarEvent::where('event_date', '>=', now())->orderBy('event_date')->take(3)->pluck('title')->toArray();
 
             if (empty($posts) && empty($events)) {
@@ -2648,10 +2877,10 @@ class AiService
 
             $res = '';
             if (! empty($posts)) {
-                $res .= "📰 **So'nggi yangiliklar:**\n• " . implode("\n• ", $posts) . "\n\n";
+                $res .= "📰 **So'nggi yangiliklar:**\n• ".implode("\n• ", $posts)."\n\n";
             }
             if (! empty($events)) {
-                $res .= "📅 **Yaqin kunlardagi tadbirlar:**\n• " . implode("\n• ", $events);
+                $res .= "📅 **Yaqin kunlardagi tadbirlar:**\n• ".implode("\n• ", $events);
             }
 
             return trim($res);
@@ -2687,8 +2916,7 @@ class AiService
             'ustozlar', 'iltimos', 'ayting', 'malumot', 'malumotlar', 'lumi',
             'bildir', 'kors', 'ayt', 'bilsam', 'lavozim', 'lavozimida',
         ];
-        $contentWords = array_values(array_filter($words, fn ($w) =>
-            mb_strlen($w) >= 3
+        $contentWords = array_values(array_filter($words, fn ($w) => mb_strlen($w) >= 3
             && ! in_array(mb_strtolower($w), $stopWords, true)
         ));
 
@@ -2793,7 +3021,7 @@ class AiService
             $fanText = $fan !== '' ? "• 📖 {$fan}" : '';
             $detail = array_filter([$stajText, $fanText]);
 
-            return "👤 **{$t->full_name}**" . (! empty($detail) ? ' — ' . implode(' ', $detail) : '');
+            return "👤 **{$t->full_name}**".(! empty($detail) ? ' — '.implode(' ', $detail) : '');
         })->implode("\n");
 
         $footer = $total > $limit
@@ -2808,11 +3036,11 @@ class AiService
      */
     private function formatTeacherCard(object $teacher): string
     {
-        $name    = trim((string) $teacher->full_name);
+        $name = trim((string) $teacher->full_name);
         $lavozim = trim((string) $teacher->lavozim);
-        $fan     = trim((string) $teacher->subject);
-        $staj    = (int) ($teacher->experience_years ?? 0);
-        $toifa   = trim((string) $teacher->toifa);
+        $fan = trim((string) $teacher->subject);
+        $staj = (int) ($teacher->experience_years ?? 0);
+        $toifa = trim((string) $teacher->toifa);
 
         $lines = ["👨‍🏫 **{$name}** haqida ma'lumot:", ''];
 
@@ -2850,7 +3078,7 @@ class AiService
      * Ustoz nomini fuzzy scoring bilan solishtirish.
      * Levenshtein (imlo xatolari) + token overlap + similar_text kombinatsiyasi.
      *
-     * @param string[] $contentWords Savoldan ajratilgan mazmunli tokenlar
+     * @param  string[]  $contentWords  Savoldan ajratilgan mazmunli tokenlar
      */
     private function teacherNameMatchScore(string $query, string $candidate, array $contentWords = []): int
     {
@@ -2924,11 +3152,16 @@ class AiService
     {
         foreach ($keywords as $kw) {
             $kw = mb_strtolower(trim($kw));
-            if (Str::contains($q, $kw)) return true;
-            
+            if (Str::contains($q, $kw)) {
+                return true;
+            }
+
             similar_text($qClean, $this->cleanMessage($kw), $percent);
-            if ($percent >= 75) return true;
+            if ($percent >= 75) {
+                return true;
+            }
         }
+
         return false;
     }
 
@@ -2946,21 +3179,21 @@ class AiService
             return [
                 'success' => true,
                 'text' => "Men asosan maktab saytining ichki yordamchisiman.\n\n"
-                    . "Quyidagi mavzularda yordam bera olaman:\n"
-                    . "- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
-                    . "- Imtihonlar, natijalar va taqvim\n"
-                    . "- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
-                    . "- Oddiy hisob-kitoblar\n\n"
-                    . "Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
+                    ."Quyidagi mavzularda yordam bera olaman:\n"
+                    ."- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
+                    ."- Imtihonlar, natijalar va taqvim\n"
+                    ."- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
+                    ."- Oddiy hisob-kitoblar\n\n"
+                    ."Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
                 'source' => 'no_gemini_key',
             ];
             $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
-                . "• Maktab haqida ma'lumotlar 🏫\n"
-                . "• Eng so'nggi yangiliklar va tadbirlar 📅\n"
-                . "• Kurslar va ustozlar haqida 👨‍🏫\n"
-                . "• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
-                . "GEMINI_API_KEY sozlanmagani uchun tashqi AI o‘chiq. Admin bilim bazasi va sayt ichki ma’lumotlari ishlaydi.\n"
-                . "Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
+                ."• Maktab haqida ma'lumotlar 🏫\n"
+                ."• Eng so'nggi yangiliklar va tadbirlar 📅\n"
+                ."• Kurslar va ustozlar haqida 👨‍🏫\n"
+                ."• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
+                ."GEMINI_API_KEY sozlanmagani uchun tashqi AI o‘chiq. Admin bilim bazasi va sayt ichki ma’lumotlari ishlaydi.\n"
+                ."Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
 
             return ['success' => true, 'text' => $fallbackText, 'source' => 'no_gemini_key'];
         }
@@ -3008,6 +3241,7 @@ class AiService
                 if ($response->status() === 429) {
                     $retryCount++;
                     sleep(2 * $retryCount); // Linear backoff
+
                     continue;
                 }
                 break;
@@ -3019,7 +3253,7 @@ class AiService
 
         // Ultimate Fallback: Smart local response if Gemini fails
         $localFallback = $this->matchDynamicData($resolvedMessage, $user);
-        
+
         if ($localFallback) {
             return ['success' => true, 'text' => $localFallback, 'source' => 'local_fallback'];
         }
@@ -3027,33 +3261,33 @@ class AiService
         return [
             'success' => true,
             'text' => "Men asosan maktab saytining ichki yordamchisiman.\n\n"
-                . "Quyidagi mavzularda yordam bera olaman:\n"
-                . "- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
-                . "- Imtihonlar, natijalar va taqvim\n"
-                . "- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
-                . "- Oddiy hisob-kitoblar\n\n"
-                . "Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
+                ."Quyidagi mavzularda yordam bera olaman:\n"
+                ."- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
+                ."- Imtihonlar, natijalar va taqvim\n"
+                ."- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
+                ."- Oddiy hisob-kitoblar\n\n"
+                ."Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
             'source' => 'ultimate_fallback',
         ];
 
         $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
-            . "• Maktab haqida ma'lumotlar 🏫\n"
-            . "• Eng so'nggi yangiliklar va tadbirlar 📅\n"
-            . "• Kurslar va ustozlar haqida 👨‍🏫\n"
-            . "• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
-            . "Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
+            ."• Maktab haqida ma'lumotlar 🏫\n"
+            ."• Eng so'nggi yangiliklar va tadbirlar 📅\n"
+            ."• Kurslar va ustozlar haqida 👨‍🏫\n"
+            ."• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
+            ."Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
 
         return ['success' => true, 'text' => $fallbackText, 'source' => 'ultimate_fallback'];
     }
 
     private function buildSystemInstruction(?object $user): string
     {
-        $tz          = (string) config('app.timezone', 'UTC');
-        $now         = Carbon::now($tz);
-        $schoolName  = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
-        $phone       = SiteSetting::get('school_phone', '');
-        $address     = SiteSetting::get('school_address', '');
-        $email       = SiteSetting::get('school_email', '');
+        $tz = (string) config('app.timezone', 'UTC');
+        $now = Carbon::now($tz);
+        $schoolName = SiteSetting::get('school_name', (string) __('public.layout.school_name'));
+        $phone = SiteSetting::get('school_phone', '');
+        $address = SiteSetting::get('school_address', '');
+        $email = SiteSetting::get('school_email', '');
         $credits = $this->siteCreditsPayload();
         $siteCreditsList = collect($credits['members'])
             ->map(fn ($member) => "- {$member['name']}".($member['date'] !== '' ? " ({$member['date']})" : ''))
@@ -3066,14 +3300,14 @@ class AiService
         // Maktab statistikasi
         $teacherCount = Teacher::where('is_active', true)->count();
         $studentCount = \App\Models\User::whereHas('roleRelation', fn ($q) => $q->where('name', \App\Models\User::ROLE_USER))->count();
-        $courseCount  = Course::where('status', Course::STATUS_PUBLISHED)->count();
+        $courseCount = Course::where('status', Course::STATUS_PUBLISHED)->count();
 
         // O'qituvchilar ro'yxati (top 8)
         $teachersList = Teacher::where('is_active', true)
             ->latest('id')
             ->take(8)
             ->get()
-            ->map(fn ($t) => "- {$t->full_name}" . ($t->subject ? " ({$t->subject})" : ''))
+            ->map(fn ($t) => "- {$t->full_name}".($t->subject ? " ({$t->subject})" : ''))
             ->implode("\n");
 
         // Nashr etilgan kurslar (top 6)
@@ -3088,9 +3322,9 @@ class AiService
         $userContext = '';
         if ($user) {
             $userContext = "\n\n=== FOYDALANUVCHI ==="
-                . "\nIsm: {$user->first_name} {$user->last_name}"
-                . "\nRol: {$user->role_label}"
-                . "\nFoydalanuvchiga ism bilan murojaat qiling.";
+                ."\nIsm: {$user->first_name} {$user->last_name}"
+                ."\nRol: {$user->role_label}"
+                ."\nFoydalanuvchiga ism bilan murojaat qiling.";
         }
 
         return <<<PROMPT
@@ -3161,10 +3395,12 @@ PROMPT;
             $ticket = ContactMessage::create([
                 'name' => auth()->check() ? auth()->user()->name : 'AI System',
                 'email' => auth()->check() ? auth()->user()->email : 'ai@81-maktab.uz',
-                'message' => "AI Murojaat: " . $description,
+                'message' => 'AI Murojaat: '.$description,
             ]);
-            return Str::of($text)->before('[CREATE_TICKET:')->trim()->value() . "\n\n📌 №{$ticket->id} raqamli murojaat yaratildi! ✅";
+
+            return Str::of($text)->before('[CREATE_TICKET:')->trim()->value()."\n\n📌 №{$ticket->id} raqamli murojaat yaratildi! ✅";
         }
+
         return $text;
     }
 }

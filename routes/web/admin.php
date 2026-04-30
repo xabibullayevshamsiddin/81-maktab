@@ -50,6 +50,7 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
 
         Route::get('ai-reviews', [AdminAiReviewController::class, 'index'])->name('admin.ai-reviews.index');
         Route::delete('ai-reviews/{interaction}', [AdminAiReviewController::class, 'destroy'])->name('admin.ai-reviews.destroy');
+        Route::delete('ai-reviews', [AdminAiReviewController::class, 'destroyUnhelpful'])->name('admin.ai-reviews.destroy-unhelpful');
     });
 
     Route::middleware('role:super_admin,admin,moderator')->group(function () {
@@ -69,8 +70,11 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
         Route::post('comments/users/{user}/block', [AdminCommentController::class, 'blockUser'])->name('admin.comments.block-user');
     });
 
-    Route::middleware('role:super_admin,admin')->group(function () {
+    Route::middleware('role:super_admin,admin,editor')->group(function () {
         Route::resource('teachers', TeacherController::class);
+    });
+
+    Route::middleware('role:super_admin,admin')->group(function () {
         Route::get('exams', [AdminExamController::class, 'index'])->name('admin.exams.index');
         Route::get('exams/create', [AdminExamController::class, 'create'])->name('admin.exams.create');
         Route::post('exams', [AdminExamController::class, 'store'])->name('admin.exams.store');

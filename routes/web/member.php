@@ -7,9 +7,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\TeacherEnrollmentController;
 use App\Http\Controllers\TeacherExamController;
+use App\Http\Controllers\UserNotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
+    Route::get('notifications/pending', [UserNotificationController::class, 'pending'])
+        ->middleware('active')
+        ->name('notifications.pending');
+
     Route::get('chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
     Route::get('chat/user/{user}/preview', [ChatController::class, 'userPreview'])
         ->middleware('throttle:60,1')
@@ -22,6 +27,7 @@ Route::middleware('auth')->group(function () {
         ->name('chat.user.activate');
     Route::post('chat/send', [ChatController::class, 'send'])->middleware(['throttle:chat-send', 'active'])->name('chat.send');
     Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->middleware(['active'])->name('chat.destroy');
+    Route::delete('chat', [ChatController::class, 'clearAll'])->middleware(['active'])->name('chat.clear');
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');

@@ -21,14 +21,23 @@
     function showToast(message, type) {
       if (!message) return;
 
+      const icons = {
+        success: '<i class="mdi mdi-check-circle-outline" style="font-size: 20px; color: #10b981;"></i>',
+        error: '<i class="mdi mdi-alert-circle-outline" style="font-size: 20px; color: #ef4444;"></i>',
+        warning: '<i class="mdi mdi-alert-outline" style="font-size: 20px; color: #f59e0b;"></i>'
+      };
+
       const toast = document.createElement('div');
       toast.className = `admin-toast admin-${type}`;
-      toast.textContent = message;
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || ''}</div>
+        <div class="toast-content">${message}</div>
+      `;
       toastContainer.appendChild(toast);
 
       setTimeout(() => {
         toast.classList.add('admin-toast-out');
-        setTimeout(() => toast.remove(), 250);
+        setTimeout(() => toast.remove(), 400);
       }, toastTimerMs);
     }
 

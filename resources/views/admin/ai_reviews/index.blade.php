@@ -14,6 +14,20 @@
           <h6 class="mb-5">AI Review</h6>
           <p class="text-sm mb-0" style="color:#64748b;">Moderator uchun alohida bo'lim. Bu yerda faqat muammoli AI javoblar chiqadi. Foydali deb belgilanganlar ko'rsatilmaydi.</p>
         </div>
+        <form
+          method="POST"
+          action="{{ route('admin.ai-reviews.destroy-unhelpful') }}"
+          data-confirm="Foydasiz deb belgilangan barcha AI review yozuvlari o‘chirilsinmi?"
+          data-confirm-title="Foydasiz AI reviewlarni tozalash"
+          data-confirm-variant="danger"
+          data-confirm-ok="Ha, o'chirish"
+        >
+          @csrf
+          @method('DELETE')
+          <input type="hidden" name="q" value="{{ request('q') }}">
+          <input type="hidden" name="kind" value="{{ $filterKind === 'all' ? '' : $filterKind }}">
+          <button type="submit" class="btn btn-sm btn-danger">Foydasizlarni tozalash</button>
+        </form>
       </div>
 
       @if (session('success'))

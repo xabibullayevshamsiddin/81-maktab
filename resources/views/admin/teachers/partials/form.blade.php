@@ -1,43 +1,3 @@
-@pushOnce('admin_styles', 'admin-teacher-user-select-css')
-  <link rel="stylesheet" href="{{ app_public_asset('temp/css/admin-teacher-user-select.css') }}?v={{ filemtime(public_path('temp/css/admin-teacher-user-select.css')) }}">
-@endpushOnce
-@pushOnce('admin_page_scripts', 'admin-teacher-user-select-js')
-  <script src="{{ app_public_asset('temp/js/admin-teacher-user-select.js') }}?v={{ filemtime(public_path('temp/js/admin-teacher-user-select.js')) }}"></script>
-@endpushOnce
-
-<div class="input-style-1 teacher-user-link-field js-teacher-user-link-field">
-  <label for="teacher-user-search">Foydalanuvchi (teacher akkaunt) <span class="text-muted" style="font-weight:400;">— ixtiyoriy</span></label>
-  <input
-    type="search"
-    id="teacher-user-search"
-    class="js-teacher-user-search"
-    placeholder="Qidirish: ism, email yoki telefon…"
-    autocomplete="off"
-    aria-label="Teacher akkauntni qidirish"
-  >
-  <p class="js-teacher-user-count" aria-live="polite"></p>
-  <select
-    name="user_id"
-    id="teacher-user-select"
-    class="js-teacher-user-select"
-    aria-label="Teacher akkaunt (ixtiyoriy)"
-  >
-    <option value="">— Tanlanmagan (faqat saytda kartochka) —</option>
-    @foreach(($teacherUsers ?? collect()) as $u)
-      <option value="{{ $u->id }}" {{ (string) old('user_id', $teacher?->user_id) === (string) $u->id ? 'selected' : '' }}>
-        {{ $u->name }} — {{ $u->email }}@if(filled($u->phone)) · {{ $u->phone }}@endif
-      </option>
-    @endforeach
-  </select>
-  @error('user_id')
-    <p class="text-danger small mt-2 mb-0">{{ $message }}</p>
-  @enderror
-  <small style="color:#64748b;display:block;margin-top:10px;max-width:640px;line-height:1.5;">
-    <strong>Qanday biriktirish:</strong> avval <a href="{{ route('user') }}">Foydalanuvchilar</a> bo‘limida akkauntga <strong>«O‘qituvchi»</strong> rolini bering. Keyin shu yerda qidiruv maydoniga ism, email yoki telefon yozib, to‘g‘ri akkauntni tanlang — u kabinetdan kurs ochishi va shu ustoz kartochkasiga bog‘lanadi.
-    Biriktirish shart emas: agar ustoz faqat saytda kartochka sifatida ko‘rinsa, «Tanlanmagan» qoldiring.
-  </small>
-</div>
-
 <div class="table-responsive teacher-admin-main-grid mb-25">
   <table class="table table-bordered align-middle">
     <thead>
@@ -91,9 +51,9 @@
 </div>
 
 <div class="input-style-1">
-  <label>Fan yo'nalishi <span class="text-muted" style="font-weight:400;">— ixtiyoriy</span></label>
+  <label>Fan yo'nalishi <span class="text-muted" style="font-weight:400;">- ixtiyoriy</span></label>
   <input type="text" name="subject" value="{{ old('subject', $teacher?->subject) }}" placeholder="Masalan: Matematika" autocomplete="off">
-  <small style="color:#64748b;display:block;margin-top:6px;">Bo‘sh qoldirsangiz, saytda fan nomi boshqa maydonlar (lavozim va hokazo) orqali ko‘rsatiladi yoki umuman ko‘rsatilmaydi.</small>
+  <small style="color:#64748b;display:block;margin-top:6px;">Bo'sh qoldirsangiz, saytda fan nomi boshqa maydonlar orqali ko'rsatiladi yoki umuman ko'rsatilmaydi.</small>
 </div>
 
 <div class="input-style-1">
@@ -102,15 +62,15 @@
 </div>
 
 <div class="input-style-1">
-  <label>Sinflar <span class="text-muted" style="font-weight:400;">— ixtiyoriy</span></label>
+  <label>Sinflar <span class="text-muted" style="font-weight:400;">- ixtiyoriy</span></label>
   <input type="text" name="grades" value="{{ old('grades', $teacher?->grades) }}" placeholder="Masalan: 7-11-sinflar" autocomplete="off">
-  <small style="color:#64748b;display:block;margin-top:6px;">Bo‘sh qoldirsangiz, saytda «barcha sinflar» deb ko‘rinadi.</small>
+  <small style="color:#64748b;display:block;margin-top:6px;">Bo'sh qoldirsangiz, saytda "barcha sinflar" deb ko'rinadi.</small>
 </div>
 
 <div class="admin-teacher-achievements-wrap">
   <p class="admin-teacher-achievements-hint mb-15">
     <i class="fa-solid fa-trophy" style="color:#ca8a04;"></i>
-    Yutuqlar va mukofotlar — <strong>majburiy emas</strong>. Qo'shsangiz, saytda alohida ajralib turadigan blokda ko'rinadi.
+    Yutuqlar va mukofotlar - <strong>majburiy emas</strong>. Qo'shsangiz, saytda alohida ajralib turadigan blokda ko'rinadi.
   </p>
   <div class="input-style-1 mb-0">
     <label>Yutuqlar va mukofotlar</label>
@@ -123,9 +83,9 @@
 </div>
 
 <div class="input-style-1">
-  <label>Rasm <span class="text-muted" style="font-weight:400;">— ixtiyoriy</span></label>
+  <label>Rasm <span class="text-muted" style="font-weight:400;">- ixtiyoriy</span></label>
   <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp">
-  <small style="color:#64748b;display:block;margin-top:6px;">Rasm qo‘yilmasa, saytda standart rasm ishlatiladi.</small>
+  <small style="color:#64748b;display:block;margin-top:6px;">Rasm qo'yilmasa, saytda standart rasm ishlatiladi.</small>
   @if($teacher?->image)
     <div style="margin-top:10px;">
       <img src="{{ app_storage_asset($teacher->image) }}" alt="{{ $teacher->full_name }}" style="width:140px;aspect-ratio:3/2;object-fit:cover;border-radius:10px;">

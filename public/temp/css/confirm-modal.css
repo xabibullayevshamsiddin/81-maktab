@@ -1,7 +1,23 @@
 /**
- * Prime confirm modal — markazdan, backdrop + scale animatsiya.
- * Public va admin layoutda ulanadi.
+ * Prime confirm modal — PRO MAX ULTRA
+ * Glassmorphism, advanced animations, and premium styling.
  */
+
+ :root {
+  --prime-confirm-glass: rgba(255, 255, 255, 0.72);
+  --prime-confirm-border: rgba(148, 163, 184, 0.3);
+  --prime-confirm-text: #0f172a;
+  --prime-confirm-subtext: #475569;
+  --prime-confirm-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.25);
+}
+
+[data-theme='dark'] {
+  --prime-confirm-glass: rgba(15, 23, 42, 0.85);
+  --prime-confirm-border: rgba(255, 255, 255, 0.08);
+  --prime-confirm-text: #f1f5f9;
+  --prime-confirm-subtext: #94a3b8;
+  --prime-confirm-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.5);
+}
 
 .prime-confirm {
   position: fixed;
@@ -10,11 +26,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.28s ease, visibility 0.28s ease;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
 }
 
 .prime-confirm.is-open {
@@ -26,11 +42,11 @@
 .prime-confirm__backdrop {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 120% 80% at 50% 40%, rgba(15, 23, 42, 0.55), rgba(2, 6, 23, 0.78));
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.4), rgba(2, 6, 23, 0.8));
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
   opacity: 0;
-  transition: opacity 0.32s ease;
+  transition: opacity 0.5s ease;
 }
 
 .prime-confirm.is-open .prime-confirm__backdrop {
@@ -41,195 +57,185 @@
   position: relative;
   z-index: 1;
   width: min(440px, 100%);
-  max-height: min(85vh, 560px);
-  overflow: auto;
-  background: linear-gradient(165deg, #ffffff 0%, #f4f7fc 100%);
-  border-radius: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.7) inset,
-    0 24px 48px rgba(15, 23, 42, 0.2),
-    0 8px 16px rgba(15, 23, 42, 0.08);
-  padding: 28px 26px 24px;
-  transform: scale(0.94) translateY(16px);
+  background: var(--prime-confirm-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 32px;
+  border: 1px solid var(--prime-confirm-border);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    var(--prime-confirm-shadow);
+  padding: 40px 32px 32px;
+  text-align: center;
+  transform: scale(0.85) translateY(40px) rotateX(-10deg);
   opacity: 0;
-  transition:
-    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.32s ease;
+  transition: 
+    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.4s ease;
+  perspective: 1000px;
 }
 
 .prime-confirm.is-open .prime-confirm__dialog {
-  transform: scale(1) translateY(0);
+  transform: scale(1) translateY(0) rotateX(0deg);
   opacity: 1;
 }
 
 .prime-confirm__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
-  font-size: 22px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08));
-  color: #dc2626;
-  border: 1px solid rgba(248, 113, 113, 0.35);
-  animation: prime-confirm-icon-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+  margin: 0 auto 24px;
+  font-size: 28px;
+  position: relative;
+  background: white;
+  box-shadow: 0 12px 24px -6px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
+
+.prime-confirm__icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  background: currentColor;
+}
+
+.prime-confirm--danger .prime-confirm__icon { color: #ef4444; }
+.prime-confirm--primary .prime-confirm__icon { color: #3b82f6; }
+.prime-confirm--success .prime-confirm__icon { color: #22c55e; }
+.prime-confirm--info .prime-confirm__icon { color: #0ea5e9; }
 
 .prime-confirm__icon-inner {
-  font-weight: 800;
-  font-size: 1.35rem;
-  line-height: 1;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 900;
+  z-index: 1;
+  animation: prime-confirm-icon-pulse 2s infinite ease-in-out;
 }
 
-.prime-confirm--info .prime-confirm__icon {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(37, 99, 235, 0.1));
-  color: #0284c7;
-  border-color: rgba(56, 189, 248, 0.4);
+@keyframes prime-confirm-icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }
 
-.prime-confirm--success .prime-confirm__icon {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.14), rgba(22, 163, 74, 0.1));
-  color: #16a34a;
-  border-color: rgba(74, 222, 128, 0.45);
+.prime-confirm.is-open .prime-confirm__icon {
+  animation: prime-confirm-icon-entry 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-@keyframes prime-confirm-icon-pop {
-  0% {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-  70% {
-    transform: scale(1.06);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+@keyframes prime-confirm-icon-entry {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
 .prime-confirm__title {
-  margin: 0 0 10px;
-  font-size: 1.25rem;
+  margin: 0 0 12px;
+  font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  text-align: center;
-  color: #0f172a;
-  line-height: 1.25;
+  letter-spacing: -0.025em;
+  color: var(--prime-confirm-text);
+  line-height: 1.2;
 }
 
 .prime-confirm__message {
-  margin: 0 0 22px;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  text-align: center;
-  color: #475569;
+  margin: 0 0 32px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--prime-confirm-subtext);
+  font-weight: 500;
 }
 
 .prime-confirm__actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+  gap: 12px;
+  justify-content: stretch;
 }
 
 .prime-confirm__btn {
-  flex: 1 1 auto;
-  min-width: 120px;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.9rem;
+  flex: 1;
+  padding: 14px 24px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  border: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.prime-confirm__btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.prime-confirm__btn:hover::before {
+  opacity: 0.1;
 }
 
 .prime-confirm__btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .prime-confirm__btn--ghost {
-  background: #fff;
-  color: #475569;
-  border-color: rgba(148, 163, 184, 0.45);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--prime-confirm-text);
+  border-color: var(--prime-confirm-border);
 }
 
 .prime-confirm__btn--ghost:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
+  background: rgba(148, 163, 184, 0.2);
+  border-color: var(--prime-confirm-subtext);
 }
 
 .prime-confirm__btn--danger {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.35);
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  color: white;
+  box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.4);
 }
 
 .prime-confirm__btn--danger:hover {
-  box-shadow: 0 8px 22px rgba(220, 38, 38, 0.45);
+  box-shadow: 0 12px 28px -6px rgba(239, 68, 68, 0.5);
+  transform: translateY(-2px);
 }
 
 .prime-confirm__btn--primary {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32);
-}
-
-.prime-confirm__btn--primary:hover {
-  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.42);
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  color: white;
+  box-shadow: 0 8px 20px -4px rgba(59, 132, 246, 0.4);
 }
 
 .prime-confirm__btn--success {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
-}
-
-.prime-confirm__btn--success:hover {
-  box-shadow: 0 8px 22px rgba(22, 163, 74, 0.45);
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: white;
+  box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.4);
 }
 
 body.prime-confirm-open {
   overflow: hidden;
 }
 
-/* Admin — qorong‘u fon ustida */
-.admin-content .prime-confirm__dialog,
-body:not([data-theme]) .prime-confirm__dialog {
-  background: linear-gradient(165deg, #ffffff 0%, #f1f5f9 100%);
-}
-
-/* Dark (public) */
-:root[data-theme='dark'] .prime-confirm__dialog {
-  background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%);
-  border-color: rgba(148, 163, 184, 0.2);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-    0 24px 48px rgba(0, 0, 0, 0.45);
-}
-
-:root[data-theme='dark'] .prime-confirm__title {
-  color: #f1f5f9;
-}
-
-:root[data-theme='dark'] .prime-confirm__message {
-  color: #94a3b8;
-}
-
-:root[data-theme='dark'] .prime-confirm__btn--ghost {
-  background: rgba(30, 41, 59, 0.9);
-  color: #e2e8f0;
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
-:root[data-theme='dark'] .prime-confirm__backdrop {
-  background: radial-gradient(ellipse 120% 80% at 50% 40%, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.88));
+@media (max-width: 480px) {
+  .prime-confirm__dialog {
+    padding: 32px 24px 24px;
+    border-radius: 24px;
+  }
+  
+  .prime-confirm__actions {
+    flex-direction: column-reverse;
+  }
+  
+  .prime-confirm__btn {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

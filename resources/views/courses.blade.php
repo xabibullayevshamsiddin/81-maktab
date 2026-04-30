@@ -73,7 +73,6 @@
       <div class="courses-grid prime-stagger" id="courses-grid">
         @forelse($courses as $course)
           @php
-            $teacher = $course->teacher;
             $courseTitle = localized_model_value($course, 'title');
             $courseDescription = localized_model_value($course, 'description');
             $coursePrice = localized_model_value($course, 'price');
@@ -93,7 +92,7 @@
               <h3>{{ $courseTitle }}</h3>
               <p>{{ \Illuminate\Support\Str::limit(strip_tags($courseDescription), 220) }}</p>
               <ul class="course-meta">
-                <li><i class="fa-solid fa-user"></i> {{ $course->teacher?->full_name ?: '-' }}</li>
+                <li><i class="fa-solid fa-user"></i> {{ $course->instructorName() }}</li>
                 <li><i class="fa-regular fa-clock"></i> {{ $courseDuration }}</li>
                 <li><i class="fa-solid fa-money-bill"></i> {{ $coursePrice }}</li>
                 <li><i class="fa-regular fa-calendar"></i> {{ $course->start_date?->format('Y-m-d') }}</li>

@@ -69,14 +69,22 @@ class ProfileController extends Controller
 
         $createdCourses = Course::query()
             ->where('created_by', $user->id)
-            ->with(['teacher:id,full_name'])
+            ->with([
+                'teacher:id,full_name,subject,subject_en,image,is_active',
+                'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                'creator.roleRelation:id,name,label,level',
+            ])
             ->latest()
             ->limit(20)
             ->get();
 
         $courseEnrollments = CourseEnrollment::query()
             ->where('user_id', $user->id)
-            ->with(['course.teacher'])
+            ->with([
+                'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                'course.creator.roleRelation:id,name,label,level',
+            ])
             ->latest()
             ->limit(40)
             ->get();
@@ -88,7 +96,12 @@ class ProfileController extends Controller
             $pendingTeacherEnrollments = CourseEnrollment::query()
                 ->whereHas('course', fn ($q) => $q->where('created_by', $user->id))
                 ->where('status', CourseEnrollment::STATUS_PENDING)
-                ->with(['course.teacher', 'user'])
+                ->with([
+                    'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                    'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                    'course.creator.roleRelation:id,name,label,level',
+                    'user',
+                ])
                 ->latest()
                 ->limit(8)
                 ->get();

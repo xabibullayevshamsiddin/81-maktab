@@ -543,7 +543,6 @@
                 rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(adminProfile.registered_at) + '</li>');
               }
               rows.push('<li><span>Email tasdiqlangan</span> ' + escChatHtml(adminProfile.email_verified_at || 'Yo‘q') + '</li>');
-              rows.push('<li><span>Teacher profil</span> ' + (adminProfile.teacher_profile_linked ? 'Bog‘langan' : 'Bog‘lanmagan') + '</li>');
               rows.push('<li><span>Kurs ochish ruxsati</span> ' + (adminProfile.course_open_approved ? 'Bor' : 'Yo‘q') + '</li>');
               rows.push('<li><span>So‘rov holati</span> ' + (adminProfile.course_open_request_pending ? 'Kutilmoqda' : 'Yo‘q') + '</li>');
             } else {
@@ -1124,8 +1123,27 @@
     const errorMsg = body?.dataset.siteError || '';
     const toastType = body?.dataset.siteToastType || '';
     const firstError = body?.dataset.siteFirstError || '';
+    const userNotificationsUrl = body?.dataset.userNotificationsUrl || '';
+    let userNotificationsInFlight = false;
 
-    function showToast(message, type = 'success') {
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = String(value ?? '');
+      return div.innerHTML;
+    }
+
+    function normalizeToastLink(link) {
+      if (!link) return '';
+
+      try {
+        const url = new URL(String(link), window.location.origin);
+        return url.origin === window.location.origin ? url.href : '';
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function showToast(message, type = 'success', options = {}) {
       if (!message) return;
 
       var iconMap = {
@@ -1140,14 +1158,20 @@
       };
 
       var toast = document.createElement('div');
+      var toastLink = normalizeToastLink(options.link || options.url || '');
       toast.className = 'toast toast-' + type;
       toast.style.setProperty('--toast-duration', toastTimerMs + 'ms');
+      if (toastLink) {
+        toast.style.cursor = 'pointer';
+        toast.setAttribute('role', 'button');
+        toast.setAttribute('tabindex', '0');
+      }
       toast.innerHTML =
         '<div class="toast-body">' +
           '<div class="toast-icon"><i class="' + (iconMap[type] || iconMap.success) + '"></i></div>' +
           '<div class="toast-content">' +
-            '<p class="toast-title">' + (titleMap[type] || titleMap.success) + '</p>' +
-            '<p class="toast-msg">' + message + '</p>' +
+            '<p class="toast-title">' + escapeHtml(titleMap[type] || titleMap.success) + '</p>' +
+            '<p class="toast-msg">' + escapeHtml(message) + '</p>' +
           '</div>' +
         '</div>' +
         '<button type="button" class="toast-close" aria-label="Yopish"><i class="fa-solid fa-xmark"></i></button>' +
@@ -1165,9 +1189,73 @@
         e.stopPropagation();
         dismissToast();
       });
-      toast.addEventListener('click', dismissToast);
+      toast.addEventListener('click', function () {
+        if (toastLink) {
+          window.location.href = toastLink;
+          return;
+        }
+
+        dismissToast();
+      });
+      toast.addEventListener('keydown', function (event) {
+        if (!toastLink || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        window.location.href = toastLink;
+      });
 
       setTimeout(dismissToast, toastTimerMs);
+    }
+
+    function notificationMessage(notification) {
+      var title = String(notification?.title || '').trim();
+      var bodyText = String(notification?.body || '').trim();
+
+      if (title && bodyText) return title + ': ' + bodyText;
+      return title || bodyText;
+    }
+
+    async function pollUserNotifications() {
+      if (!userNotificationsUrl || userNotificationsInFlight || document.hidden) return;
+
+      userNotificationsInFlight = true;
+
+      try {
+        const response = await fetch(userNotificationsUrl, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const notifications = Array.isArray(payload.notifications) ? payload.notifications : [];
+
+        notifications.forEach((notification, index) => {
+          const message = notificationMessage(notification);
+          if (!message) return;
+
+          setTimeout(() => {
+            showToast(message, notification.type || 'success', { link: notification.link || '' });
+          }, index * 450);
+        });
+      } catch (error) {
+        // Silent fail: polling should never break page interactions.
+      } finally {
+        userNotificationsInFlight = false;
+      }
+    }
+
+    function initUserNotificationPolling() {
+      if (!userNotificationsUrl || !window.fetch) return;
+
+      pollUserNotifications();
+      setInterval(pollUserNotifications, 15000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollUserNotifications();
+      });
     }
 
     async function copyTextToClipboard(text) {
@@ -1241,6 +1329,7 @@
 
     window.showToast = showToast;
     window.copyTextToClipboard = copyTextToClipboard;
+    initUserNotificationPolling();
   }
 
   function initHeaderDropdowns() {
@@ -2144,6 +2233,7 @@
     var panel = document.getElementById('chat-panel');
     var closeBtn = document.getElementById('chat-close-btn');
     var fullBtn = document.getElementById('chat-fullscreen-btn');
+    var clearBtn = document.getElementById('chat-clear-btn');
     var messagesEl = document.getElementById('chat-messages');
     var form = document.getElementById('chat-form');
     var input = document.getElementById('chat-input');
@@ -2161,12 +2251,20 @@
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
+    var clearUrl = widget.getAttribute('data-chat-clear-url');
     var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
     var lastId = 0;
     var isOpen = false;
     var isSending = false;
     var pollTimer = null;
+    var canClearAll = false;
+
+    function syncChatAdminActions() {
+      if (!clearBtn) return;
+      clearBtn.hidden = !canClearAll;
+      clearBtn.disabled = !canClearAll;
+    }
 
     function resetChatComposeState() {
       isSending = false;
@@ -2447,6 +2545,8 @@
             return [];
           }
           var msgs = data.messages || [];
+          canClearAll = !!data.can_clear_all;
+          syncChatAdminActions();
           if (!msgs.length) return [];
 
           appendMessages(msgs, {
@@ -2486,6 +2586,8 @@
             return [];
           }
           var msgs = data.messages || [];
+          canClearAll = !!data.can_clear_all;
+          syncChatAdminActions();
           if (!msgs.length) return [];
           appendMessages(msgs, { fresh: true, burst: !!options.burst });
           lastId = data.last_id || lastId;
@@ -2695,6 +2797,45 @@
 
     closeBtn.addEventListener('click', closePanel);
     if (fullBtn) fullBtn.addEventListener('click', toggleFullscreen);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (!canClearAll || !clearUrl) return;
+
+        function doClearAll() {
+          fetch(clearUrl, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+            credentials: 'same-origin',
+          }).then(function (r) {
+            if (!r.ok) {
+              throw new Error("Chatni tozalab bo'lmadi.");
+            }
+            messagesEl.innerHTML = '';
+            lastId = 0;
+            if (window.showToast) {
+              window.showToast("Global chat tozalandi.", 'success');
+            }
+          }).catch(function (err) {
+            if (window.showToast) {
+              window.showToast(err && err.message ? err.message : "Chatni tozalab bo'lmadi.", 'error');
+            }
+          });
+        }
+
+        var cp = window.primeConfirm && window.primeConfirm({
+          message: "Global chatdagi barcha xabarlar o'chirilsinmi?",
+          title: 'Global chatni tozalash',
+          variant: 'danger',
+          okText: "Tozalash",
+        });
+
+        if (cp && typeof cp.then === 'function') {
+          cp.then(function (ok) { if (ok) doClearAll(); });
+        } else if (window.confirm("Global chatdagi barcha xabarlar o'chirilsinmi?")) {
+          doClearAll();
+        }
+      });
+    }
 
     window.addEventListener('resize', function () {
       if (!isOpen) return;
@@ -2816,6 +2957,8 @@
     chatPanelEscapeHandler = function () {
       if (isOpen) closePanel();
     };
+
+    syncChatAdminActions();
 
     window.primeCloseGlobalChatPanel = function () {
       if (isOpen) closePanel();

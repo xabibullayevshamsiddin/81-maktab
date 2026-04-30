@@ -21,6 +21,11 @@
     $initialTeacherId = (string) old('teacher_id', $selectedTeacher?->id ?? '');
     $initialTeacher = collect($teacherPreviewData)->firstWhere('id', $initialTeacherId);
     $requiresEmailVerification = (bool) ($courseEmailVerificationEnabled ?? false);
+    $courseOwner = $courseOwner ?? auth()->user();
+    $courseOwnerName = trim((string) ($courseOwner?->name ?: $courseOwner?->buildNameFromParts())) ?: 'Kurs muallifi';
+    $courseOwnerRole = $courseOwner?->localizedRoleLabel() ?: "O'qituvchi";
+    $courseOwnerImage = $courseOwner?->avatar_url ?: app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+    $isAdminEditor = ($isAdmin ?? false) === true;
   @endphp
 
   <section class="news-hero" id="home">
@@ -47,86 +52,126 @@
             <h2>Talabalar nimani ko'radi?</h2>
             <p>
               Kurs kartasida endi <strong>Kurs haqida ma'lumot</strong> tugmasi chiqadi.
-              Shu oynada kurs tavsifi bilan birga kursni ochgan ustozning bio qismi,
-              tajribasi va yutuqlari ham avtomatik ko'rsatiladi.
+              Shu oynada kurs tavsifi bilan birga kursni ochgan muallif,
+              yo'nalish va yozilish ma'lumotlari ko'rsatiladi.
             </p>
             <ul class="course-create-guide-list">
               <li><i class="fa-solid fa-check"></i> Kurs nomi va narxni tushunarli kiriting.</li>
               <li><i class="fa-solid fa-check"></i> Tavsifda natija, mavzular va kimlar uchun ekanini yozing.</li>
               <li><i class="fa-solid fa-check"></i> Boshlanish sanasi va davomiylik real jadvalga mos bo'lsin.</li>
-              <li><i class="fa-solid fa-check"></i> Ustoz profildagi yutuqlar kurs info oynasida avtomatik chiqadi.</li>
+              @if($isAdminEditor)
+                <li><i class="fa-solid fa-check"></i> Xohlasangiz kursni public ustoz kartasiga biriktiring.</li>
+              @else
+                <li><i class="fa-solid fa-check"></i> Kurs sizning akkauntingiz nomidan ochiladi; ustoz kartasiga bog'lash shart emas.</li>
+              @endif
             </ul>
           </article>
 
-          <aside
-            class="course-create-teacher-card"
-            data-course-teacher-preview
-            data-course-preview='@json($teacherPreviewData)'
-            data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-            data-course-initial-teacher-id="{{ $initialTeacherId }}"
-          >
-            <div class="course-create-teacher-media">
-              <img
-                src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-                alt="Ustoz rasmi"
-                data-preview-image
-              >
-              <div>
-                <span class="course-create-eyebrow">Kurs muallifi preview</span>
-                <h3 data-preview-name>{{ $initialTeacher['name'] ?? 'Ustoz tanlanmagan' }}</h3>
-                <p data-preview-subject>{{ $initialTeacher['subject'] ?? "Avval ustozni tanlang" }}</p>
+          @if($isAdminEditor)
+            <aside
+              class="course-create-teacher-card"
+              data-course-teacher-preview
+              data-course-preview='@json($teacherPreviewData)'
+              data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              data-course-initial-teacher-id="{{ $initialTeacherId }}"
+            >
+              <div class="course-create-teacher-media">
+                <img
+                  src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                  alt="Ustoz rasmi"
+                  data-preview-image
+                >
+                <div>
+                  <span class="course-create-eyebrow">Public ustoz kartasi</span>
+                  <h3 data-preview-name>{{ $initialTeacher['name'] ?? 'Ustoz tanlanmagan' }}</h3>
+                  <p data-preview-subject>{{ $initialTeacher['subject'] ?? "Avval ustozni tanlang" }}</p>
+                </div>
               </div>
-            </div>
 
-            <div class="course-create-teacher-stats">
-              <div class="course-create-teacher-stat">
-                <strong data-preview-experience>{{ $initialTeacher['experience_label'] ?? '-' }}</strong>
-                <span>Tajriba</span>
+              <div class="course-create-teacher-stats">
+                <div class="course-create-teacher-stat">
+                  <strong data-preview-experience>{{ $initialTeacher['experience_label'] ?? '-' }}</strong>
+                  <span>Tajriba</span>
+                </div>
+                <div class="course-create-teacher-stat">
+                  <strong data-preview-grades>{{ $initialTeacher['grades'] ?? '-' }}</strong>
+                  <span>Sinflar</span>
+                </div>
               </div>
-              <div class="course-create-teacher-stat">
-                <strong data-preview-grades>{{ $initialTeacher['grades'] ?? '-' }}</strong>
-                <span>Sinflar</span>
+
+              <p class="course-create-teacher-bio" data-preview-bio>
+                {{ $initialTeacher['bio'] ?? "Tanlangan ustozning qisqa ma'lumoti shu yerda ko'rinadi." }}
+              </p>
+
+              <div class="course-create-achievements">
+                <h3><i class="fa-solid fa-trophy"></i> Ustoz kartasi ma'lumotlari</h3>
+                <ul data-preview-achievements>
+                  @if(!empty($initialTeacher['achievements']))
+                    @foreach($initialTeacher['achievements'] as $achievement)
+                      <li><i class="fa-solid fa-award"></i> {{ $achievement }}</li>
+                    @endforeach
+                  @else
+                    <li class="course-create-placeholder">Ustoz tanlanganda yutuqlar shu yerda chiqadi.</li>
+                  @endif
+                </ul>
               </div>
-            </div>
+            </aside>
+          @else
+            <aside class="course-create-teacher-card">
+              <div class="course-create-teacher-media">
+                <img src="{{ $courseOwnerImage }}" alt="{{ $courseOwnerName }}">
+                <div>
+                  <span class="course-create-eyebrow">Kurs muallifi</span>
+                  <h3>{{ $courseOwnerName }}</h3>
+                  <p>{{ $courseOwnerRole }}</p>
+                </div>
+              </div>
 
-            <p class="course-create-teacher-bio" data-preview-bio>
-              {{ $initialTeacher['bio'] ?? "Tanlangan ustozning qisqa ma'lumoti shu yerda ko'rinadi." }}
-            </p>
+              <div class="course-create-teacher-stats">
+                <div class="course-create-teacher-stat">
+                  <strong>Admin ruxsati</strong>
+                  <span>Tekshirildi</span>
+                </div>
+                <div class="course-create-teacher-stat">
+                  <strong>1 ta kurs</strong>
+                  <span>Limit</span>
+                </div>
+              </div>
 
-            <div class="course-create-achievements">
-              <h3><i class="fa-solid fa-trophy"></i> Avtomatik chiqadigan yutuqlar</h3>
-              <ul data-preview-achievements>
-                @if(!empty($initialTeacher['achievements']))
-                  @foreach($initialTeacher['achievements'] as $achievement)
-                    <li><i class="fa-solid fa-award"></i> {{ $achievement }}</li>
-                  @endforeach
-                @else
-                  <li class="course-create-placeholder">Ustoz tanlanganda yoki profil bog'langanda yutuqlar shu yerda chiqadi.</li>
-                @endif
-              </ul>
-            </div>
-          </aside>
+              <p class="course-create-teacher-bio">
+                Kurs sizning teacher akkauntingiz nomidan ochiladi. Admin ruxsati bir martalik:
+                kurs joylangandan keyin keyingi kurs uchun qayta so'rov yuborish kerak bo'ladi.
+              </p>
+
+              <div class="course-create-achievements">
+                <h3><i class="fa-solid fa-shield-check"></i> Oqim</h3>
+                <ul>
+                  <li><i class="fa-solid fa-check"></i> Teacher akkaunt yetarli.</li>
+                  <li><i class="fa-solid fa-check"></i> Ustoz kartasiga bog'lash shart emas.</li>
+                  <li><i class="fa-solid fa-check"></i> Kursni faqat siz va admin boshqaradi.</li>
+                </ul>
+              </div>
+            </aside>
+          @endif
         </div>
 
         <form action="{{ route('teacher.courses.store') }}" method="POST" enctype="multipart/form-data" class="comment-form course-create-form" style="max-width: 720px;">
           @csrf
 
-          @if(($isAdmin ?? false) === true)
+          @if($isAdminEditor)
             <select name="teacher_id" class="form-control" required data-course-teacher-select>
               <option value="">Ustozni tanlang</option>
               @foreach($teachers as $teacher)
                 <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
-                  {{ $teacher->full_name }}{{ filled($teacher->subject) ? ' — '.$teacher->subject : '' }}
+                  {{ $teacher->full_name }}{{ filled($teacher->subject) ? ' - '.$teacher->subject : '' }}
                 </option>
               @endforeach
             </select>
           @else
             <p class="comment-hint" style="margin:0 0 16px;padding:12px 14px;background:rgba(13,63,120,0.06);border-radius:12px;border:1px solid var(--border, #d7e3f4);">
               <i class="fa-solid fa-user-check"></i>
-              Kurs <strong>sizning ustoz profilingizga</strong> biriktiriladi - ustozni tanlash shart emas.
-              @if(!empty($selectedTeacher))
-                <span class="profile-muted" style="display:block;margin-top:8px;font-size:13px;">Profil: {{ $selectedTeacher->full_name }}{{ filled($selectedTeacher->subject) ? ' — '.$selectedTeacher->subject : '' }}</span>
-              @endif
+              Kurs <strong>sizning akkauntingiz nomidan</strong> yaratiladi - public ustoz kartasini tanlash shart emas.
+              <span class="profile-muted" style="display:block;margin-top:8px;font-size:13px;">Muallif: {{ $courseOwnerName }} - {{ $courseOwnerRole }}</span>
             </p>
           @endif
 

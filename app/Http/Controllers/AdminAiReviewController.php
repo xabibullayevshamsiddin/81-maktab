@@ -109,4 +109,26 @@ class AdminAiReviewController extends Controller
             ->route('admin.ai-reviews.index', $request->only(['q', 'kind']))
             ->with('success', 'AI review yozuvi o\'chirildi.');
     }
+
+    public function destroyUnhelpful(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->canManageInbox(), 403);
+
+        if (! Schema::hasTable('ai_interactions')) {
+            return redirect()
+                ->route('admin.ai-reviews.index', $request->only(['q', 'kind']))
+                ->with('success', 'O‘chirish uchun AI review yozuvlari topilmadi.');
+        }
+
+        $deleted = AiInteraction::query()
+            ->where('is_helpful', false)
+            ->delete();
+
+        return redirect()
+            ->route('admin.ai-reviews.index', $request->only(['q', 'kind']))
+            ->with('success', $deleted > 0
+                ? "Foydasiz deb belgilangan {$deleted} ta AI review yozuvi o‘chirildi."
+                : 'Foydasiz deb belgilangan AI review yozuvlari topilmadi.'
+            );
+    }
 }

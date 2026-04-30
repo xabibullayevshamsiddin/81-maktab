@@ -17,9 +17,18 @@ Route::get('lang/{locale}', [LocaleController::class, 'switch'])->name('locale.s
 
 Route::get('about', [HomeController::class, 'about'])->name('about');
 Route::get('search', [HomeController::class, 'globalSearch'])->name('search');
+Route::get('privacy-policy', [HomeController::class, 'privacyPolicy'])->name('privacy-policy');
+Route::get('terms', [HomeController::class, 'terms'])->name('terms');
 
 Route::get('courses', [PublicCourseController::class, 'index'])->name('courses');
-Route::get('courses/{course}', [PublicCourseController::class, 'show'])->name('courses.show');
+Route::get('courses/{course}', [PublicCourseController::class, 'show'])
+    ->name('courses.show')
+    ->missing(function () {
+        return redirect()
+            ->route('courses')
+            ->with('error', "Kurs topilmadi yoki o'chirilgan.")
+            ->with('toast_type', 'warning');
+    });
 Route::post('courses/{course}/enroll', [CourseEnrollmentController::class, 'store'])
     ->middleware(['auth', 'active'])
     ->name('courses.enroll');
@@ -30,7 +39,14 @@ Route::delete('courses/{course}/enroll', [CourseEnrollmentController::class, 'de
 Route::get('taqvim', [CalendarController::class, 'index'])->name('calendar');
 
 Route::get('post', [PublicPostController::class, 'index'])->name('post');
-Route::get('post/{post:slug}', [PublicPostController::class, 'show'])->name('post.show');
+Route::get('post/{post:slug}', [PublicPostController::class, 'show'])
+    ->name('post.show')
+    ->missing(function () {
+        return redirect()
+            ->route('post')
+            ->with('error', "Yangilik topilmadi yoki o'chirilgan.")
+            ->with('toast_type', 'warning');
+    });
 Route::post('post/{post:slug}/comments', [PublicPostController::class, 'storeComment'])
     ->middleware(['throttle:comments', 'active'])
     ->name('post.comments.store');

@@ -35,6 +35,10 @@ class AdminCourseController extends Controller
                     ->orWhere('duration', 'like', '%'.$q.'%')
                     ->orWhereHas('teacher', function ($t) use ($q): void {
                         $t->where('full_name', 'like', '%'.$q.'%');
+                    })
+                    ->orWhereHas('creator', function ($creator) use ($q): void {
+                        $creator->where('name', 'like', '%'.$q.'%')
+                            ->orWhere('email', 'like', '%'.$q.'%');
                     });
             });
         }
@@ -68,11 +72,6 @@ class AdminCourseController extends Controller
         $courses = $query->paginate(10)->withQueryString();
 
         $courseOpenRequestUsers = User::query()
-            ->withCount([
-                'teacherProfile as active_teacher_profile_count' => function ($builder): void {
-                    $builder->where('is_active', true);
-                },
-            ])
             ->withCount('createdCourses')
             ->whereHas('roleRelation', function ($r): void {
                 $r->where('name', User::ROLE_TEACHER);

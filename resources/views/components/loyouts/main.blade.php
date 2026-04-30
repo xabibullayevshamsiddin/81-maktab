@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
@@ -62,6 +62,7 @@
         data-site-error="{{ session('error') }}"
         data-site-toast-type="{{ session('toast_type') }}"
         data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
+        data-user-notifications-url="{{ auth()->check() ? route('notifications.pending') : '' }}"
         data-phone-pattern="{{ uz_phone_input_pattern() }}"
         data-phone-title="{{ uz_phone_input_title() }}"
       >
@@ -87,16 +88,15 @@
     @endunless
 		    @php
 		      $authUser = auth()->user();
-		      $teacherWithProfile = $authUser && $authUser->isTeacher() && $authUser->hasLinkedActiveTeacherProfile();
-		      $teacherAtCourseLimit = $teacherWithProfile && $authUser->hasReachedCourseOpenLimit();
+		      $teacherCourseCandidate = $authUser && $authUser->isTeacher();
+		      $teacherAtCourseLimit = $teacherCourseCandidate && $authUser->hasReachedCourseOpenLimit();
 		      $canOpenCourseForm = $authUser && (
 		        $authUser->isAdmin()
-		        || ($teacherWithProfile && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
+		        || ($teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
 		      );
-		      $teacherNeedsCourseOpenRequest = $teacherWithProfile && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
-		      $teacherCourseOpenPending = $teacherWithProfile && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
+		      $teacherNeedsCourseOpenRequest = $teacherCourseCandidate && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
+		      $teacherCourseOpenPending = $teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
 		      $canCreateCourse = $canOpenCourseForm;
-		      $needsTeacherProfileLink = $authUser && $authUser->isTeacher() && ! $authUser->hasLinkedActiveTeacherProfile();
 		      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
 		      $currentLocale = current_locale();
 		      $supportedLocales = supported_locales();
@@ -220,14 +220,6 @@
                           <i class="fa-solid fa-paper-plane"></i>
                           {{ __('public.layout.course_request_action') }}
                         </a>
-                      @elseif($needsTeacherProfileLink)
-                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
-                          <i class="fa-solid fa-circle-info"></i>
-                          <span>
-                            {{ __('public.layout.menu.course_open') }}
-                            <small class="nav-dropdown-item-note">{{ __('public.layout.teacher_link_required') }}</small>
-                          </span>
-                        </span>
                       @endif
                       @if($canAccessDashboard)
                         <a class="nav-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
@@ -302,9 +294,6 @@
 	                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
 	                  </form>
 	                </div>
-	                @if($needsTeacherProfileLink)
-	                  <p class="mobile-nav-note">{{ __('public.layout.teacher_profile_link_note') }}</p>
-	                @endif
 	              @endguest
 	            </div>
           </nav>
@@ -435,8 +424,8 @@
         <div class="container footer-bottom-inner">
           <p>&copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}</p>
           <div class="footer-bottom-links">
-            <a href="#">{{ __('public.layout.privacy_policy') }}</a>
-            <a href="#">{{ __('public.layout.terms') }}</a>
+            <a href="{{ route('privacy-policy') }}">{{ __('public.layout.privacy_policy') }}</a>
+            <a href="{{ route('terms') }}">{{ __('public.layout.terms') }}</a>
           </div>
         </div>
       </div>
@@ -454,6 +443,7 @@
         data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
         data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
         data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
+        data-chat-clear-url="{{ request()->getBaseUrl() }}/chat"
         data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
         data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
         data-csrf="{{ csrf_token() }}"
@@ -473,6 +463,11 @@
               <span>Global chat</span>
             </div>
             <div class="chat-panel-actions">
+              @if($authUser && $authUser->isAdmin())
+                <button type="button" class="chat-panel-btn" id="chat-clear-btn" aria-label="Chatni tozalash" title="Barcha xabarlarni o'chirish" hidden>
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              @endif
               <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="Kengaytirish" title="To'liq ekran">
                 <i class="fa-solid fa-expand"></i>
               </button>
@@ -949,6 +944,7 @@
             resetAiComposeState();
           }
           panel.classList.remove('is-open');
+          widget.classList.remove('is-open');
           syncAiDockState();
         }
 
@@ -957,6 +953,7 @@
             window.primeCloseGlobalChatPanel();
           }
           panel.classList.add('is-open');
+          widget.classList.add('is-open');
           syncAiDockState();
           if (!aiEnabled && aiDisabledPanel && aiPanelMain) {
             aiPanelMain.hidden = true;

@@ -21,7 +21,9 @@ use Illuminate\Support\Str;
 class SiteAiController extends Controller
 {
     private const SUPPORT_WIZARD_SESSION_KEY = 'ai_support_wizard';
+
     private const SUPPORT_WIZARD_TIMEOUT_MINUTES = 10;
+
     private static ?bool $aiInteractionsTableExists = null;
 
     public function __construct(
@@ -99,7 +101,7 @@ class SiteAiController extends Controller
         $normalizedMessage = $this->aiService->normalizeQuestionForAnalytics($userMessage);
         $historySignature = (string) ($conversationContext['history_signature'] ?? 'no-context');
         $messageCacheKey = sprintf(
-            'ai:answer:user:%d:message:%s:context:%s',
+            'ai:answer:v2:user:%d:message:%s:context:%s',
             (int) $user->id,
             sha1($normalizedMessage),
             sha1($historySignature)
@@ -166,7 +168,7 @@ class SiteAiController extends Controller
         if (! ($result['success'] ?? false)) {
             return response()->json([
                 'success' => false,
-                'error' => $result['error'] ?? "Kechirasiz, hozir javob bera olmadim.",
+                'error' => $result['error'] ?? 'Kechirasiz, hozir javob bera olmadim.',
             ], 400);
         }
 
@@ -344,7 +346,7 @@ class SiteAiController extends Controller
 
             $payload = [
                 'success' => true,
-                'text' => "3. Endi qisqacha yozing: nima xato chiqdi yoki nima ishlamayapti?",
+                'text' => '3. Endi qisqacha yozing: nima xato chiqdi yoki nima ishlamayapti?',
                 'source' => 'support_wizard',
                 'response_type' => 'wizard_details',
                 'actions' => [],
@@ -373,10 +375,10 @@ class SiteAiController extends Controller
         $payload = [
             'success' => true,
             'text' => "Rasmiy murojaat tayyorlandi va yuborildi.\n\n"
-                . "- Muammo turi: **".($draft['issue_type'] ?? '-')."**\n"
-                . "- Sahifa: **".($draft['page'] ?? '-')."**\n"
-                . "- Murojaat ID: **#{$contactMessage->id}**\n\n"
-                . "Admin ichki tartibda ko'rib chiqadi. Zarur bo'lsa siz bilan bog'laniladi.",
+                .'- Muammo turi: **'.($draft['issue_type'] ?? '-')."**\n"
+                .'- Sahifa: **'.($draft['page'] ?? '-')."**\n"
+                ."- Murojaat ID: **#{$contactMessage->id}**\n\n"
+                ."Admin ichki tartibda ko'rib chiqadi. Zarur bo'lsa siz bilan bog'laniladi.",
             'source' => 'support_wizard_completed',
             'response_type' => 'wizard_completed',
             'actions' => [

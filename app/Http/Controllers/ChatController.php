@@ -25,6 +25,7 @@ class ChatController extends Controller
                 'messages' => [],
                 'last_id' => (int) $request->query('after', 0),
                 'can_moderate' => false,
+                'can_clear_all' => false,
                 'chat_disabled' => true,
                 'disabled_message' => SiteSetting::get(
                     'global_chat_disabled_message',
@@ -37,6 +38,7 @@ class ChatController extends Controller
         $currentUser = $request->user()->loadMissing('roleRelation');
         $currentUserId = (int) $currentUser->id;
         $canModerate = $currentUser->isAdmin() || $currentUser->isModerator();
+        $canClearAll = $currentUser->isAdmin();
 
         $query = ChatMessage::query()
             ->with('user:id,first_name,name,role_id,avatar,is_active')
@@ -95,6 +97,7 @@ class ChatController extends Controller
             'messages' => $data,
             'last_id' => $messages->last()?->id ?? $afterId,
             'can_moderate' => $canModerate,
+            'can_clear_all' => $canClearAll,
         ]);
     }
 
@@ -290,7 +293,6 @@ class ChatController extends Controller
             'email_verified_at' => $user->email_verified_at?->format('d.m.Y H:i'),
             'course_open_approved' => (bool) ($user->course_open_approved ?? false),
             'course_open_request_pending' => (bool) ($user->course_open_request_pending ?? false),
-            'teacher_profile_linked' => $user->hasLinkedActiveTeacherProfile(),
         ];
     }
 
@@ -416,6 +418,19 @@ class ChatController extends Controller
         }
 
         $chatMessage->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function clearAll(Request $request): JsonResponse
+    {
+        $user = $request->user()->loadMissing('roleRelation');
+
+        if (! $user->isAdmin()) {
+            return response()->json(['ok' => false], 403);
+        }
+
+        ChatMessage::query()->delete();
 
         return response()->json(['ok' => true]);
     }

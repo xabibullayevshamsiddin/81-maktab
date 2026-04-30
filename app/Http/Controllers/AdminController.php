@@ -14,7 +14,9 @@ use App\Models\Role;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -101,11 +103,6 @@ class AdminController extends Controller
 
         $query = User::with('roleRelation')
             ->withCount('createdCourses')
-            ->withCount([
-                'teacherProfile as active_teacher_profile_count' => function ($builder): void {
-                    $builder->where('is_active', true);
-                },
-            ])
             ->latest();
 
         if ($q !== '') {
@@ -245,11 +242,21 @@ class AdminController extends Controller
                 ->with('toast_type', 'warning');
         }
 
-        $user->update([
-            'course_open_approved' => true,
-            'course_open_request_pending' => false,
-            'course_open_approved_at' => now(),
-        ]);
+        DB::transaction(function () use ($user): void {
+            $user->update([
+                'course_open_approved' => true,
+                'course_open_request_pending' => false,
+                'course_open_approved_at' => now(),
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'type' => UserNotification::TYPE_SUCCESS,
+                'title' => 'Kurs ochish ruxsati berildi',
+                'body' => "Admin so'rovingizni tasdiqladi. Endi bitta kurs yaratishingiz mumkin.",
+                'link' => route('teacher.courses.create'),
+            ]);
+        });
 
         return redirect()
             ->route('admin.courses.requests')
@@ -270,11 +277,21 @@ class AdminController extends Controller
                 ->with('toast_type', 'warning');
         }
 
-        $user->update([
-            'course_open_approved' => false,
-            'course_open_request_pending' => false,
-            'course_open_approved_at' => null,
-        ]);
+        DB::transaction(function () use ($user): void {
+            $user->update([
+                'course_open_approved' => false,
+                'course_open_request_pending' => false,
+                'course_open_approved_at' => null,
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'type' => UserNotification::TYPE_WARNING,
+                'title' => "Kurs ochish so'rovi rad etildi",
+                'body' => "Admin hozircha kurs ochish so'rovingizni rad etdi. Batafsil ma'lumot uchun admin bilan bog'laning.",
+                'link' => route('profile.show').'#course-open-request',
+            ]);
+        });
 
         return redirect()
             ->route('admin.courses.requests')

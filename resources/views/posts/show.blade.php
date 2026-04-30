@@ -157,6 +157,7 @@
             <form action="{{ route('posts.destroy', $post->id) }}" method="POST" data-confirm="Postni o'chirmoqchimisiz?" data-confirm-title="Postni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
               @csrf
               @method('DELETE')
+              <input type="hidden" name="return_to" value="public">
               <button type="submit" class="btn btn-sm post-admin-btn post-admin-btn-delete">O'chirish</button>
             </form>
           </div>

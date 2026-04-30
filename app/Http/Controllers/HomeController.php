@@ -150,6 +150,16 @@ class HomeController extends Controller
         return view('contact', compact('conversation'));
     }
 
+    public function privacyPolicy()
+    {
+        return view('privacy-policy');
+    }
+
+    public function terms()
+    {
+        return view('terms');
+    }
+
     public function storeContact(Request $request)
     {
         $this->validateTurnstile($request);

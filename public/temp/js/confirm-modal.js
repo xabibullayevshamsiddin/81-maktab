@@ -7,10 +7,11 @@
   var bypass = new WeakMap();
   var pendingResolve = null;
 
-  function iconGlyph(variant) {
-    if (variant === 'info') return 'i';
-    if (variant === 'primary' || variant === 'success') return '✓';
-    return '!';
+  function iconHtml(variant) {
+    if (variant === 'info') return '<i class="fa-solid fa-circle-info"></i>';
+    if (variant === 'success') return '<i class="fa-solid fa-circle-check"></i>';
+    if (variant === 'primary') return '<i class="fa-solid fa-circle-question"></i>';
+    return '<i class="fa-solid fa-triangle-exclamation"></i>';
   }
 
   function ensureModal() {
@@ -23,12 +24,19 @@
     var btnOk = modalEl.querySelector('[data-prime-confirm-ok]');
     var titleEl = modalEl.querySelector('.prime-confirm__title');
     var msgEl = modalEl.querySelector('.prime-confirm__message');
-    var iconEl = modalEl.querySelector('.prime-confirm__icon-inner');
+    var iconContainer = modalEl.querySelector('.prime-confirm__icon-inner');
 
     function closeModal(result) {
       modalEl.classList.remove('is-open');
       modalEl.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('prime-confirm-open');
+      
+      // Delay removing the body class to allow exit animation to breathe
+      setTimeout(function() {
+        if (!modalEl.classList.contains('is-open')) {
+          document.body.classList.remove('prime-confirm-open');
+        }
+      }, 400);
+
       var fn = pendingResolve;
       pendingResolve = null;
       if (fn) fn(!!result);
@@ -40,19 +48,15 @@
       if (msgEl) msgEl.textContent = opts.message || '';
       var variant = opts.variant || 'danger';
       modalEl.classList.remove('prime-confirm--info', 'prime-confirm--success', 'prime-confirm--danger', 'prime-confirm--primary');
-      modalEl.classList.add(
-        variant === 'info' ? 'prime-confirm--info' : variant === 'success' ? 'prime-confirm--success' : variant === 'primary' ? 'prime-confirm--primary' : 'prime-confirm--danger'
-      );
-      if (iconEl) iconEl.textContent = iconGlyph(variant === 'primary' ? 'primary' : variant);
+      modalEl.classList.add('prime-confirm--' + variant);
+      
+      if (iconContainer) {
+        iconContainer.innerHTML = iconHtml(variant);
+      }
 
       if (btnOk) {
         btnOk.textContent = opts.okText || (variant === 'danger' ? 'Ha, o‘chirish' : 'Tasdiqlash');
-        var okClass =
-          variant === 'danger'
-            ? 'prime-confirm__btn--danger'
-            : variant === 'success'
-              ? 'prime-confirm__btn--success'
-              : 'prime-confirm__btn--primary';
+        var okClass = 'prime-confirm__btn--' + variant;
         btnOk.className = 'prime-confirm__btn ' + okClass;
       }
     }
