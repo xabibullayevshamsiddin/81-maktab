@@ -25,6 +25,7 @@ class ChatController extends Controller
                 'messages' => [],
                 'last_id' => (int) $request->query('after', 0),
                 'can_moderate' => false,
+                'can_clear_all' => false,
                 'chat_disabled' => true,
                 'disabled_message' => SiteSetting::get(
                     'global_chat_disabled_message',
@@ -37,6 +38,7 @@ class ChatController extends Controller
         $currentUser = $request->user()->loadMissing('roleRelation');
         $currentUserId = (int) $currentUser->id;
         $canModerate = $currentUser->isAdmin() || $currentUser->isModerator();
+        $canClearAll = $currentUser->isAdmin();
 
         $query = ChatMessage::query()
             ->with('user:id,first_name,name,role_id,avatar,is_active')
@@ -52,7 +54,7 @@ class ChatController extends Controller
             ? $query->orderBy('id')->get()
             : $query->get()->reverse()->values();
 
-        $data = $messages->map(function (ChatMessage $m) use ($currentUserId, $canModerate) {
+        $data = $messages->map(function (ChatMessage $m) use ($currentUser, $currentUserId, $canModerate) {
             $user = $m->user;
             $role = $user?->roleRelation?->name ?? 'user';
             $isSuperAdmin = $role === 'super_admin';
@@ -62,6 +64,15 @@ class ChatController extends Controller
                 ? asset('storage/'.ltrim($user->avatar, '/'))
                 : null;
             $isMine = (int) $m->user_id === $currentUserId;
+            $canBlock = false;
+
+            if ($user && ! $isMine) {
+                if ($currentUser->isSuperAdmin()) {
+                    $canBlock = $this->canControlUserFromChatPreview($currentUser, $user) && (bool) $user->is_active;
+                } elseif ($canModerate) {
+                    $canBlock = ! $user->isAdmin() && (bool) $user->is_active;
+                }
+            }
 
             return [
                 'id' => $m->id,
@@ -71,7 +82,7 @@ class ChatController extends Controller
                 'is_admin' => $isAdmin,
                 'is_super_admin' => $isSuperAdmin,
                 'can_delete' => $isMine || $canModerate,
-                'can_block' => $canModerate && ! $isMine && ! $isAdmin,
+                'can_block' => $canBlock,
                 'user_name' => $user->first_name ?: $user->name ?? '?',
                 'user_initial' => mb_strtoupper(mb_substr(trim($user->first_name ?: $user->name ?? '?'), 0, 1)),
                 'avatar_url' => $avatarUrl,
@@ -86,6 +97,7 @@ class ChatController extends Controller
             'messages' => $data,
             'last_id' => $messages->last()?->id ?? $afterId,
             'can_moderate' => $canModerate,
+            'can_clear_all' => $canClearAll,
         ]);
     }
 
@@ -97,6 +109,9 @@ class ChatController extends Controller
     {
         $viewer = $request->user()->loadMissing('roleRelation');
         $user->loadMissing('roleRelation');
+        $viewerIsSuperAdmin = $viewer->isSuperAdmin();
+        $viewerCanControl = $this->canControlUserFromChatPreview($viewer, $user);
+        $isSelf = (int) $viewer->id === (int) $user->id;
 
         $roleName = $user->roleRelation?->name ?? User::ROLE_USER;
         $roleLabel = User::ROLE_LABELS['uz'][$roleName]
@@ -127,49 +142,45 @@ class ChatController extends Controller
             'grade' => $grade,
             'is_parent' => (bool) $user->is_parent,
             'member_year' => $user->created_at?->format('Y'),
+            'viewer_is_super_admin' => $viewerIsSuperAdmin,
             'courses' => $this->buildUserPreviewCourses($user),
             'exam_stats' => in_array($roleName, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN], true) ? null : $this->buildUserPreviewExamStats($user),
         ];
 
-        if ($viewer->isAdmin() || $viewer->isModerator()) {
-            $canManage = $viewer->canManage($user);
-            if ($viewer->isSuperAdmin()) {
-                $payload['contact'] = [
-                    'email' => $user->email,
-                    'phone' => $user->phone ? trim((string) $user->phone) : null,
-                ];
-            }
-            if ($canManage) {
-                $payload['super_admin_actions'] = [
-                    'is_active' => (bool) $user->is_active,
-                    'can_deactivate' => ! $user->isSuperAdmin(),
-                    'can_activate' => ! $user->isSuperAdmin() && ! $user->is_active,
-                ];
-            }
+        if ($viewerIsSuperAdmin) {
+            $payload['contact'] = [
+                'email' => $user->email,
+                'phone' => $user->phone ? trim((string) $user->phone) : null,
+            ];
+            $payload['admin_profile'] = $this->buildUserPreviewAdminProfile($user, $roleName, $roleLabel, $roleLevel);
+        }
+
+        if (($viewer->isAdmin() || $viewer->isModerator()) && ($viewerCanControl || $isSelf)) {
+            $payload['super_admin_actions'] = [
+                'is_active' => (bool) $user->is_active,
+                'can_deactivate' => $viewerCanControl && (bool) $user->is_active,
+                'can_activate' => $viewerCanControl && ! $user->is_active,
+                'is_self' => $isSelf,
+            ];
         }
 
         return response()->json($payload);
     }
 
     /**
-     * Faqat Super Admin: akkauntni bloklash (is_active = false).
-     * Boshqa Super Admin akkauntini bloklash mumkin emas.
+     * Chat preview orqali akkauntni bloklash (is_active = false).
      */
     public function superAdminDeactivateUser(Request $request, User $user): JsonResponse
     {
         $current = $request->user()->loadMissing('roleRelation');
         $user->loadMissing('roleRelation');
 
-        if (! $current->canManage($user)) {
+        if (! $this->canControlUserFromChatPreview($current, $user)) {
             return response()->json(['ok' => false, 'error' => 'Ruxsat yo‘q.'], 403);
         }
 
         if ((int) $user->id === (int) $current->id) {
             return response()->json(['ok' => false, 'error' => 'O‘zingizni bloklab bo‘lmaydi.'], 422);
-        }
-
-        if ($user->isSuperAdmin()) {
-            return response()->json(['ok' => false, 'error' => 'Super Admin akkauntini bloklab bo‘lmaydi.'], 422);
         }
 
         $user->update(['is_active' => false]);
@@ -178,23 +189,19 @@ class ChatController extends Controller
     }
 
     /**
-     * Faqat Super Admin: bloklangan akkauntni qayta yoqish.
+     * Chat preview orqali bloklangan akkauntni qayta yoqish.
      */
     public function superAdminActivateUser(Request $request, User $user): JsonResponse
     {
         $current = $request->user()->loadMissing('roleRelation');
         $user->loadMissing('roleRelation');
 
-        if (! $current->canManage($user)) {
+        if (! $this->canControlUserFromChatPreview($current, $user)) {
             return response()->json(['ok' => false, 'error' => 'Ruxsat yo‘q.'], 403);
         }
 
         if ((int) $user->id === (int) $current->id) {
             return response()->json(['ok' => false, 'error' => 'Bu amalni bajarib bo‘lmaydi.'], 422);
-        }
-
-        if ($user->isSuperAdmin()) {
-            return response()->json(['ok' => false, 'error' => 'Super Admin akkaunti uchun bu amal mavjud emas.'], 422);
         }
 
         $user->update(['is_active' => true]);
@@ -250,6 +257,42 @@ class ChatController extends Controller
         return [
             'created' => $created,
             'enrolled' => $enrolled,
+        ];
+    }
+
+    private function canControlUserFromChatPreview(User $viewer, User $target): bool
+    {
+        if ((int) $viewer->id === (int) $target->id) {
+            return false;
+        }
+
+        if ($viewer->canManage($target)) {
+            return true;
+        }
+
+        return $viewer->isSuperAdmin();
+    }
+
+    private function buildUserPreviewAdminProfile(User $user, string $roleName, string $roleLabel, int $roleLevel): array
+    {
+        return [
+            'id' => (int) $user->id,
+            'name' => trim((string) ($user->name ?? '')) ?: null,
+            'first_name' => trim((string) ($user->first_name ?? '')) ?: null,
+            'last_name' => trim((string) ($user->last_name ?? '')) ?: null,
+            'email' => trim((string) ($user->email ?? '')) ?: null,
+            'phone' => trim((string) ($user->phone ?? '')) ?: null,
+            'role_key' => $roleName,
+            'role_label' => $roleLabel,
+            'role_level' => $roleLevel,
+            'status' => $user->is_active ? 'Faol' : 'Bloklangan',
+            'is_active' => (bool) $user->is_active,
+            'is_parent' => (bool) $user->is_parent,
+            'grade' => $user->displayGrade('Kiritilmagan'),
+            'registered_at' => $user->created_at?->format('d.m.Y H:i'),
+            'email_verified_at' => $user->email_verified_at?->format('d.m.Y H:i'),
+            'course_open_approved' => (bool) ($user->course_open_approved ?? false),
+            'course_open_request_pending' => (bool) ($user->course_open_request_pending ?? false),
         ];
     }
 
@@ -379,15 +422,33 @@ class ChatController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function clearAll(Request $request): JsonResponse
+    {
+        $user = $request->user()->loadMissing('roleRelation');
+
+        if (! $user->isAdmin()) {
+            return response()->json(['ok' => false], 403);
+        }
+
+        ChatMessage::query()->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
     public function blockUser(Request $request, User $user): JsonResponse
     {
         $current = $request->user()->loadMissing('roleRelation');
+        $user->loadMissing('roleRelation');
 
         if (! $current->isAdmin() && ! $current->isModerator()) {
             return response()->json(['ok' => false], 403);
         }
 
-        if ((int) $user->id === (int) $current->id || $user->isAdmin()) {
+        if ($current->isSuperAdmin()) {
+            if (! $this->canControlUserFromChatPreview($current, $user)) {
+                return response()->json(['ok' => false, 'error' => 'Bu foydalanuvchini bloklab bo\'lmaydi.'], 422);
+            }
+        } elseif ((int) $user->id === (int) $current->id || $user->isAdmin()) {
             return response()->json(['ok' => false, 'error' => 'Bu foydalanuvchini bloklab bo\'lmaydi.'], 422);
         }
 

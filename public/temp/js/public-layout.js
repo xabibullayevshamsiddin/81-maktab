@@ -177,7 +177,31 @@
     } catch (e) {}
   }
 
-
+  window.playPrimeThemeToggleSound = function(isDark) {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = isDark ? 'sine' : 'triangle';
+      const startFreq = isDark ? 300 : 500;
+      const endFreq = isDark ? 200 : 700;
+      
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.15);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch (e) {}
+  };
 
   function playPrimeConfetti(x, y, isGold = false) {
     const colors = isGold 
@@ -497,14 +521,40 @@
           }
           if (previewDetailsEl) {
             var rows = [];
-            if (d.grade) {
-              rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
-            }
-            if (d.is_parent) {
-              rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
-            }
-            if (d.member_year) {
-              rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+            var adminProfile = d.admin_profile || null;
+            if (adminProfile) {
+              rows.push('<li><span>ID</span> #' + escChatHtml(String(adminProfile.id || '0')) + '</li>');
+              if (adminProfile.name) {
+                rows.push('<li><span>Login nomi</span> ' + escChatHtml(adminProfile.name) + '</li>');
+              }
+              if (adminProfile.first_name) {
+                rows.push('<li><span>Ism</span> ' + escChatHtml(adminProfile.first_name) + '</li>');
+              }
+              if (adminProfile.last_name) {
+                rows.push('<li><span>Familiya</span> ' + escChatHtml(adminProfile.last_name) + '</li>');
+              }
+              rows.push('<li><span>Rol kaliti</span> ' + escChatHtml(adminProfile.role_key || '—') + '</li>');
+              rows.push('<li><span>Akkaunt holati</span> ' + escChatHtml(adminProfile.status || '—') + '</li>');
+              rows.push('<li><span>Hisob turi</span> ' + (adminProfile.is_parent ? 'Ota-ona' : 'Foydalanuvchi') + '</li>');
+              if (adminProfile.grade) {
+                rows.push('<li><span>Sinf</span> ' + escChatHtml(adminProfile.grade) + '</li>');
+              }
+              if (adminProfile.registered_at) {
+                rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(adminProfile.registered_at) + '</li>');
+              }
+              rows.push('<li><span>Email tasdiqlangan</span> ' + escChatHtml(adminProfile.email_verified_at || 'Yo‘q') + '</li>');
+              rows.push('<li><span>Kurs ochish ruxsati</span> ' + (adminProfile.course_open_approved ? 'Bor' : 'Yo‘q') + '</li>');
+              rows.push('<li><span>So‘rov holati</span> ' + (adminProfile.course_open_request_pending ? 'Kutilmoqda' : 'Yo‘q') + '</li>');
+            } else {
+              if (d.grade) {
+                rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
+              }
+              if (d.is_parent) {
+                rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
+              }
+              if (d.member_year) {
+                rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+              }
             }
             previewDetailsEl.innerHTML = rows.length ? rows.join('') : '<li class="chat-user-preview-details-empty">Qo‘shimcha maydonlar kiritilmagan.</li>';
           }
@@ -516,9 +566,17 @@
           }
           if (previewContactEl && d.contact) {
             previewContactEl.hidden = false;
-            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa (faqat Super Admin)</p>'
-              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + escChatHtml(d.contact.email || '—') + '</span></div>'
-              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + escChatHtml(d.contact.phone || '—') + '</span></div>';
+            var emailText = escChatHtml(d.contact.email || '—');
+            var phoneText = escChatHtml(d.contact.phone || '—');
+            var emailLink = d.contact.email
+              ? '<a href="mailto:' + escAttr(String(d.contact.email)) + '">' + emailText + '</a>'
+              : '<span>—</span>';
+            var phoneLink = d.contact.phone
+              ? '<a href="tel:' + escAttr(String(d.contact.phone)) + '">' + phoneText + '</a>'
+              : '<span>—</span>';
+            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa ma‘lumotlari (Super Admin)</p>'
+              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + emailLink + '</span></div>'
+              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + phoneLink + '</span></div>';
           } else if (previewContactEl) {
             previewContactEl.hidden = true;
             previewContactEl.innerHTML = '';
@@ -530,7 +588,7 @@
             var cfgSelf = userPreviewConfigEl();
             var selfId = cfgSelf && cfgSelf.getAttribute('data-current-user-id');
             var admParts = [];
-            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Administrator)</p>');
+            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (' + (d.viewer_is_super_admin ? 'Super Admin' : 'Administrator') + ')</p>');
             admParts.push(
               '<p class="chat-user-preview-admin-status">Akkaunt holati: <strong>'
               + (sa.is_active ? 'Faol' : 'Bloklangan') + '</strong></p>'
@@ -548,10 +606,10 @@
               );
             }
             if (!sa.can_deactivate && !sa.can_activate) {
-              if (d.is_super_admin) {
-                admParts.push('<p class="chat-user-preview-muted">Boshqa Super Admin akkauntini bloklash mumkin emas.</p>');
-              } else if (selfId && String(userId) === String(selfId)) {
+              if (sa.is_self || (selfId && String(userId) === String(selfId))) {
                 admParts.push('<p class="chat-user-preview-muted">Bu o‘z profilingiz.</p>');
+              } else {
+                admParts.push('<p class="chat-user-preview-muted">Bu akkaunt uchun boshqaruv amali mavjud emas.</p>');
               }
             }
             previewAdminEl2.innerHTML = admParts.join('');
@@ -1065,8 +1123,27 @@
     const errorMsg = body?.dataset.siteError || '';
     const toastType = body?.dataset.siteToastType || '';
     const firstError = body?.dataset.siteFirstError || '';
+    const userNotificationsUrl = body?.dataset.userNotificationsUrl || '';
+    let userNotificationsInFlight = false;
 
-    function showToast(message, type = 'success') {
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = String(value ?? '');
+      return div.innerHTML;
+    }
+
+    function normalizeToastLink(link) {
+      if (!link) return '';
+
+      try {
+        const url = new URL(String(link), window.location.origin);
+        return url.origin === window.location.origin ? url.href : '';
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function showToast(message, type = 'success', options = {}) {
       if (!message) return;
 
       var iconMap = {
@@ -1081,14 +1158,20 @@
       };
 
       var toast = document.createElement('div');
+      var toastLink = normalizeToastLink(options.link || options.url || '');
       toast.className = 'toast toast-' + type;
       toast.style.setProperty('--toast-duration', toastTimerMs + 'ms');
+      if (toastLink) {
+        toast.style.cursor = 'pointer';
+        toast.setAttribute('role', 'button');
+        toast.setAttribute('tabindex', '0');
+      }
       toast.innerHTML =
         '<div class="toast-body">' +
           '<div class="toast-icon"><i class="' + (iconMap[type] || iconMap.success) + '"></i></div>' +
           '<div class="toast-content">' +
-            '<p class="toast-title">' + (titleMap[type] || titleMap.success) + '</p>' +
-            '<p class="toast-msg">' + message + '</p>' +
+            '<p class="toast-title">' + escapeHtml(titleMap[type] || titleMap.success) + '</p>' +
+            '<p class="toast-msg">' + escapeHtml(message) + '</p>' +
           '</div>' +
         '</div>' +
         '<button type="button" class="toast-close" aria-label="Yopish"><i class="fa-solid fa-xmark"></i></button>' +
@@ -1106,9 +1189,73 @@
         e.stopPropagation();
         dismissToast();
       });
-      toast.addEventListener('click', dismissToast);
+      toast.addEventListener('click', function () {
+        if (toastLink) {
+          window.location.href = toastLink;
+          return;
+        }
+
+        dismissToast();
+      });
+      toast.addEventListener('keydown', function (event) {
+        if (!toastLink || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        window.location.href = toastLink;
+      });
 
       setTimeout(dismissToast, toastTimerMs);
+    }
+
+    function notificationMessage(notification) {
+      var title = String(notification?.title || '').trim();
+      var bodyText = String(notification?.body || '').trim();
+
+      if (title && bodyText) return title + ': ' + bodyText;
+      return title || bodyText;
+    }
+
+    async function pollUserNotifications() {
+      if (!userNotificationsUrl || userNotificationsInFlight || document.hidden) return;
+
+      userNotificationsInFlight = true;
+
+      try {
+        const response = await fetch(userNotificationsUrl, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const notifications = Array.isArray(payload.notifications) ? payload.notifications : [];
+
+        notifications.forEach((notification, index) => {
+          const message = notificationMessage(notification);
+          if (!message) return;
+
+          setTimeout(() => {
+            showToast(message, notification.type || 'success', { link: notification.link || '' });
+          }, index * 450);
+        });
+      } catch (error) {
+        // Silent fail: polling should never break page interactions.
+      } finally {
+        userNotificationsInFlight = false;
+      }
+    }
+
+    function initUserNotificationPolling() {
+      if (!userNotificationsUrl || !window.fetch) return;
+
+      pollUserNotifications();
+      setInterval(pollUserNotifications, 15000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollUserNotifications();
+      });
     }
 
     async function copyTextToClipboard(text) {
@@ -1165,6 +1312,15 @@
           applyTheme(nextTheme);
         });
       });
+
+      // Tizim rejimi o'zgarganda sayt rejimini ham avtomatik moslashtirish (agar o'zi tanlamagan bo'lsa)
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+          if (!localStorage.getItem(storageKey)) {
+            applyTheme(e.matches ? 'dark' : 'light');
+          }
+        });
+      }
     }
 
     if (successMsg) showToast(successMsg, resolveFlashToastType('success'));
@@ -1173,6 +1329,7 @@
 
     window.showToast = showToast;
     window.copyTextToClipboard = copyTextToClipboard;
+    initUserNotificationPolling();
   }
 
   function initHeaderDropdowns() {
@@ -2076,6 +2233,7 @@
     var panel = document.getElementById('chat-panel');
     var closeBtn = document.getElementById('chat-close-btn');
     var fullBtn = document.getElementById('chat-fullscreen-btn');
+    var clearBtn = document.getElementById('chat-clear-btn');
     var messagesEl = document.getElementById('chat-messages');
     var form = document.getElementById('chat-form');
     var input = document.getElementById('chat-input');
@@ -2093,12 +2251,40 @@
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
+    var clearUrl = widget.getAttribute('data-chat-clear-url');
     var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
     var lastId = 0;
     var isOpen = false;
     var isSending = false;
     var pollTimer = null;
+    var canClearAll = false;
+
+    function syncChatAdminActions() {
+      if (!clearBtn) return;
+      clearBtn.hidden = !canClearAll;
+      clearBtn.disabled = !canClearAll;
+    }
+
+    function resetChatComposeState() {
+      isSending = false;
+      if (input) {
+        input.disabled = false;
+        input.removeAttribute('aria-busy');
+      }
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.removeAttribute('aria-busy');
+      }
+      stickerButtons.forEach(function (btn) {
+        btn.disabled = false;
+      });
+      syncComposeState();
+    }
+
+    function syncDockState() {
+      document.body.classList.toggle('chat-panel-open', isOpen);
+    }
 
     function positionPanel() {
       var rect = widget.getBoundingClientRect();
@@ -2150,6 +2336,8 @@
       panel.classList.add('is-opening');
       widget.classList.add('is-open');
       isOpen = true;
+      resetChatComposeState();
+      syncDockState();
       if (badge) badge.hidden = true;
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
@@ -2185,6 +2373,8 @@
       widget.classList.remove('is-open');
       widget.classList.add('is-bubble-return');
       isOpen = false;
+      resetChatComposeState();
+      syncDockState();
       stopPolling();
       setComposeState('idle');
       setTimeout(function () {
@@ -2355,6 +2545,8 @@
             return [];
           }
           var msgs = data.messages || [];
+          canClearAll = !!data.can_clear_all;
+          syncChatAdminActions();
           if (!msgs.length) return [];
 
           appendMessages(msgs, {
@@ -2394,6 +2586,8 @@
             return [];
           }
           var msgs = data.messages || [];
+          canClearAll = !!data.can_clear_all;
+          syncChatAdminActions();
           if (!msgs.length) return [];
           appendMessages(msgs, { fresh: true, burst: !!options.burst });
           lastId = data.last_id || lastId;
@@ -2603,6 +2797,45 @@
 
     closeBtn.addEventListener('click', closePanel);
     if (fullBtn) fullBtn.addEventListener('click', toggleFullscreen);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (!canClearAll || !clearUrl) return;
+
+        function doClearAll() {
+          fetch(clearUrl, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+            credentials: 'same-origin',
+          }).then(function (r) {
+            if (!r.ok) {
+              throw new Error("Chatni tozalab bo'lmadi.");
+            }
+            messagesEl.innerHTML = '';
+            lastId = 0;
+            if (window.showToast) {
+              window.showToast("Global chat tozalandi.", 'success');
+            }
+          }).catch(function (err) {
+            if (window.showToast) {
+              window.showToast(err && err.message ? err.message : "Chatni tozalab bo'lmadi.", 'error');
+            }
+          });
+        }
+
+        var cp = window.primeConfirm && window.primeConfirm({
+          message: "Global chatdagi barcha xabarlar o'chirilsinmi?",
+          title: 'Global chatni tozalash',
+          variant: 'danger',
+          okText: "Tozalash",
+        });
+
+        if (cp && typeof cp.then === 'function') {
+          cp.then(function (ok) { if (ok) doClearAll(); });
+        } else if (window.confirm("Global chatdagi barcha xabarlar o'chirilsinmi?")) {
+          doClearAll();
+        }
+      });
+    }
 
     window.addEventListener('resize', function () {
       if (!isOpen) return;
@@ -2613,9 +2846,11 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!chatEnabled) return;
+      if (sendBtn && sendBtn.disabled && !isSending) {
+        resetChatComposeState();
+      }
       var text = input.value.trim();
       if (!text || isSending) return;
-      playPrimeChatTick(); // "chiqchiq" — eski click ovozi
       sendMessage(text, { restoreText: true });
     });
 
@@ -2632,9 +2867,8 @@
         input.value += sticker;
         input.focus();
         
-        // Trigger UI updates & sound
+        // Trigger UI updates
         syncComposeState();
-        if (typeof playPrimeChatTick === 'function') playPrimeChatTick();
         
         // Dispatch input event for other potential listeners
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -2642,9 +2876,13 @@
     });
 
     input.addEventListener('focus', syncComposeState);
+    input.addEventListener('focus', function () {
+      if (!isSending && ((sendBtn && sendBtn.disabled) || input.disabled)) {
+        resetChatComposeState();
+      }
+    });
     input.addEventListener('input', function() {
       syncComposeState();
-      playPrimeChatTick();
     });
     input.addEventListener('blur', function () {
       setTimeout(syncComposeState, 80);
@@ -2720,13 +2958,14 @@
       if (isOpen) closePanel();
     };
 
+    syncChatAdminActions();
+
     window.primeCloseGlobalChatPanel = function () {
       if (isOpen) closePanel();
     };
   }
 
 
-  /** Yangilik / ustoz izohlari: global chatdagi bilan bir xil yozish «tik» ovozi */
   function initCommentTypingSound() {
     document.addEventListener(
       'input',
@@ -2734,10 +2973,151 @@
         const t = e.target;
         if (!t || !t.classList || !t.classList.contains('comment-input')) return;
         if (t.id === 'chat-input') return;
-        playPrimeChatTick();
       },
       true
     );
+  }
+
+  function initExamQuestionForms() {
+    function bindExamQuestionForm(scope) {
+      const toolbar = scope.querySelector('[data-exam-toolbar]');
+      if (!toolbar || scope.dataset.examRichBound === 'true') return;
+
+      scope.dataset.examRichBound = 'true';
+
+      const labels = ['A', 'B', 'C', 'D'];
+      const optionBox = scope.querySelector('#option-box');
+      const questionTypeSelect = scope.querySelector('[data-question-type-select]');
+      const mcqFields = scope.querySelector('[data-question-mcq-fields]');
+      const textFields = scope.querySelector('[data-question-text-fields]');
+      const shuffleButton = scope.querySelector('#shuffle-options');
+      const richInputs = Array.from(scope.querySelectorAll('.js-exam-rich-input'));
+      const savedSelections = new WeakMap();
+      let activeInput = richInputs[0] || null;
+
+      function rememberSelection(input) {
+        if (!input) return;
+
+        savedSelections.set(input, {
+          start: input.selectionStart ?? input.value.length,
+          end: input.selectionEnd ?? input.value.length,
+        });
+      }
+
+      function syncActiveInput(input) {
+        activeInput = input;
+        rememberSelection(input);
+      }
+
+      function focusFirstEnabledInput() {
+        const enabledInput = richInputs.find((input) => !input.disabled);
+        if (enabledInput) {
+          activeInput = enabledInput;
+        }
+      }
+
+      richInputs.forEach((input) => {
+        ['focus', 'click', 'keyup', 'mouseup', 'select', 'input'].forEach((eventName) => {
+          input.addEventListener(eventName, () => {
+            syncActiveInput(input);
+          });
+        });
+      });
+
+      function insertIntoActive(before, after = '') {
+        if (!activeInput || activeInput.disabled) return;
+
+        const savedSelection = savedSelections.get(activeInput);
+        const start = savedSelection?.start ?? activeInput.selectionStart ?? activeInput.value.length;
+        const end = savedSelection?.end ?? activeInput.selectionEnd ?? activeInput.value.length;
+        const selected = activeInput.value.slice(start, end);
+        const replacement = before + selected + after;
+
+        activeInput.focus();
+
+        if (typeof activeInput.setSelectionRange === 'function') {
+          activeInput.setSelectionRange(start, end);
+        }
+
+        if (typeof activeInput.setRangeText === 'function') {
+          activeInput.setRangeText(replacement, start, end, 'end');
+        } else {
+          activeInput.value = activeInput.value.slice(0, start) + replacement + activeInput.value.slice(end);
+          const cursor = start + replacement.length;
+          if (typeof activeInput.setSelectionRange === 'function') {
+            activeInput.setSelectionRange(cursor, cursor);
+          }
+        }
+
+        rememberSelection(activeInput);
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      scope.querySelectorAll('.js-exam-wrap, .js-exam-insert').forEach((button) => {
+        button.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+        });
+      });
+
+      scope.querySelectorAll('.js-exam-wrap').forEach((button) => {
+        button.addEventListener('click', () => {
+          insertIntoActive(button.dataset.before || '', button.dataset.after || '');
+        });
+      });
+
+      scope.querySelectorAll('.js-exam-insert').forEach((button) => {
+        button.addEventListener('click', () => {
+          insertIntoActive(button.dataset.insert || '');
+        });
+      });
+
+      function toggleQuestionMode() {
+        if (!questionTypeSelect || !mcqFields || !textFields) return;
+
+        const isText = questionTypeSelect.value === 'text';
+        mcqFields.style.display = isText ? 'none' : '';
+        textFields.style.display = isText ? '' : 'none';
+        if (shuffleButton) {
+          shuffleButton.style.display = isText ? 'none' : 'inline-flex';
+        }
+
+        mcqFields.querySelectorAll('textarea, select, input').forEach((field) => {
+          field.disabled = isText;
+        });
+        textFields.querySelectorAll('textarea, select, input').forEach((field) => {
+          field.disabled = !isText;
+        });
+
+        focusFirstEnabledInput();
+      }
+
+      if (questionTypeSelect) {
+        questionTypeSelect.addEventListener('change', toggleQuestionMode);
+        toggleQuestionMode();
+      } else {
+        focusFirstEnabledInput();
+      }
+
+      scope.querySelector('#shuffle-options')?.addEventListener('click', () => {
+        if (!optionBox) return;
+
+        const values = labels.map((label) => optionBox.querySelector(`[name="options[${label}]"]`)?.value || '');
+        for (let i = values.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [values[i], values[j]] = [values[j], values[i]];
+        }
+
+        labels.forEach((label, index) => {
+          const field = optionBox.querySelector(`[name="options[${label}]"]`);
+          if (field) {
+            field.value = values[index];
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        });
+      });
+    }
+
+    document.querySelectorAll('form').forEach(bindExamQuestionForm);
   }
 
   function initPrimeAudioControl() {
@@ -3027,6 +3407,7 @@
     initLocalePageReveal();
     initGlobalChat();
     initCommentTypingSound();
+    initExamQuestionForms();
     initPrimeAudioControl();
     initGlobalSearchModal();
     initSeniorInteractions();

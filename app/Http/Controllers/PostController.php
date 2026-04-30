@@ -182,7 +182,7 @@ class PostController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Post $post)
+    public function destroy(Request $request, Post $post)
     {
         if (!empty($post->image)) {
             Storage::disk('public')->delete($post->image);
@@ -193,6 +193,12 @@ class PostController extends Controller
 
         $post->delete();
         $this->forgetPublicCaches();
+
+        if ($request->input('return_to') === 'public') {
+            return redirect()->route('post')
+                ->with('success', "Yangilik o'chirildi.")
+                ->with('toast_type', 'warning');
+        }
 
         return redirect()->route('posts.index')
             ->with('error', "Post o'chirildi.")

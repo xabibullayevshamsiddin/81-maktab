@@ -147,7 +147,7 @@ class PublicPostController extends Controller
         $post->load('category');
         $post->loadCount(['comments', 'likes']);
 
-        $relatedPosts = $this->relatedPostsFor($post, 4);
+        $relatedPosts = $this->relatedPostsFor($post, 3);
         $likedPostIds = $this->likedPostIdsForUser(
             collect([$post->id])->merge($relatedPosts->pluck('id'))
         );
@@ -183,7 +183,7 @@ class PublicPostController extends Controller
         return view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds', 'relatedPosts'));
     }
 
-    private function relatedPostsFor(Post $post, int $limit = 4): Collection
+    private function relatedPostsFor(Post $post, int $limit = 3): Collection
     {
         $q = Post::query()
             ->where('id', '!=', $post->id)

@@ -69,14 +69,22 @@ class ProfileController extends Controller
 
         $createdCourses = Course::query()
             ->where('created_by', $user->id)
-            ->with(['teacher:id,full_name'])
+            ->with([
+                'teacher:id,full_name,subject,subject_en,image,is_active',
+                'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                'creator.roleRelation:id,name,label,level',
+            ])
             ->latest()
             ->limit(20)
             ->get();
 
         $courseEnrollments = CourseEnrollment::query()
             ->where('user_id', $user->id)
-            ->with(['course.teacher'])
+            ->with([
+                'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                'course.creator.roleRelation:id,name,label,level',
+            ])
             ->latest()
             ->limit(40)
             ->get();
@@ -88,7 +96,12 @@ class ProfileController extends Controller
             $pendingTeacherEnrollments = CourseEnrollment::query()
                 ->whereHas('course', fn ($q) => $q->where('created_by', $user->id))
                 ->where('status', CourseEnrollment::STATUS_PENDING)
-                ->with(['course.teacher', 'user'])
+                ->with([
+                    'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                    'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                    'course.creator.roleRelation:id,name,label,level',
+                    'user',
+                ])
                 ->latest()
                 ->limit(8)
                 ->get();
@@ -295,6 +308,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        if (! $this->mailDeliveryEnabled()) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
+                    'email' => [$this->mailDeliveryDisabledMessage()],
+                ]);
+            }
+
+            return back()
+                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
+                ->withInput();
+        }
+
         $validated = $request->validate([
             'email' => [
                 'required',
@@ -474,6 +499,18 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if (! $this->mailDeliveryEnabled()) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
+                    'code' => [$this->mailDeliveryDisabledMessage()],
+                ]);
+            }
+
+            return back()->withErrors([
+                'code' => $this->mailDeliveryDisabledMessage(),
+            ]);
+        }
+
         if (! $this->canSendEmailChangeOtp($pending)) {
             if ($this->wantsJson($request)) {
                 return $this->sectionErrorResponse('email', "Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting.", [
@@ -553,6 +590,10 @@ class ProfileController extends Controller
 
     private function issueEmailChangeOtp(string $email, int $userId): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            throw new \RuntimeException('Mail delivery is disabled.');
+        }
+
         $code = (string) random_int(100000, 999999);
 
         OneTimeCode::query()
@@ -636,6 +677,42 @@ class ProfileController extends Controller
         return RateLimiter::availableIn($this->emailChangeVerifyKey($email));
     }
 
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true)
+            && (bool) config('mail.code_delivery_enabled', false)
+            && $this->mailConfigurationReady();
+    }
+
+    private function mailDeliveryDisabledMessage(): string
+    {
+        return 'Email yuborish vaqtincha ishlamayapti. Keyinroq qayta urinib ko\'ring.';
+    }
+
+    private function mailConfigurationReady(): bool
+    {
+        return match ((string) config('mail.default', 'smtp')) {
+            'resend' => $this->hasConfiguredResendApiKey(),
+            'smtp' => filled(config('mail.mailers.smtp.host')),
+            default => true,
+        };
+    }
+
+    private function hasConfiguredResendApiKey(): bool
+    {
+        $apiKey = trim((string) (config('resend.api_key') ?? config('services.resend.key') ?? ''));
+
+        if ($apiKey === '' || ! str_starts_with($apiKey, 're_')) {
+            return false;
+        }
+
+        $normalizedKey = strtolower($apiKey);
+
+        return ! str_contains($normalizedKey, 'sizning_kalitingiz')
+            && ! str_contains($normalizedKey, 'your_key')
+            && ! str_contains($normalizedKey, 'your-api-key');
+    }
+
     private function passwordChangeKey(Request $request, int $userId): string
     {
         return 'profile-password-change:'.$userId.':'.$request->ip();
@@ -671,17 +748,21 @@ class ProfileController extends Controller
             ->latest('submitted_at')
             ->get();
 
-        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ];
 
         $callback = function () use ($results) {
             $out = fopen('php://output', 'w');
             fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana']);
+            fwrite($out, "sep=;\r\n");
+            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana'], ';', '"', '\\');
 
             foreach ($results as $r) {
                 fputcsv($out, [
@@ -693,7 +774,7 @@ class ProfileController extends Controller
                     $r->total_questions,
                     $r->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan',
                     $r->submitted_at?->format('d.m.Y H:i') ?? '-',
-                ]);
+                ], ';', '"', '\\');
             }
 
             fclose($out);

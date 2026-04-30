@@ -1,374 +1,445 @@
 /* Profil sahifasi - Premium Pro Max Design System & Fixes */
 
-/* Umumiy tuzatishlar */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --profile-font-primary: 'Plus Jakarta Sans', sans-serif;
+  --profile-font-heading: 'Outfit', sans-serif;
+  
+  --profile-prime: #6366f1;
+  --profile-secondary: #a855f7;
+  --profile-accent: #14b8a6;
+  
+  --profile-bg: #f8fafc;
+  --profile-card-bg: rgba(255, 255, 255, 0.7);
+  --profile-glass-border: rgba(255, 255, 255, 0.8);
+  --profile-text-main: #1e293b;
+  --profile-text-muted: #64748b;
+  
+  --profile-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+  --profile-radius: 28px;
+}
+
+:root[data-theme='dark'] {
+  --profile-bg: #0f172a;
+  --profile-card-bg: rgba(30, 41, 59, 0.6);
+  --profile-glass-border: rgba(255, 255, 255, 0.08);
+  --profile-text-main: #f1f5f9;
+  --profile-text-muted: #94a3b8;
+}
+
 .profile-main {
-  padding: 40px 0 80px !important;
+  padding: 60px 0 100px !important;
+  font-family: var(--profile-font-primary);
+  background: var(--profile-bg);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Aurora Background for Profile */
+.profile-main::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+  z-index: 0;
+}
+
+.profile-main::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  left: -5%;
+  width: 35%;
+  height: 35%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
+  filter: blur(80px);
+  z-index: 0;
 }
 
 .container {
-  max-width: 1200px !important;
-  margin: 0 auto !important;
-  padding: 0 20px !important;
+  position: relative;
+  z-index: 1;
 }
 
-/* Overview Panel - Glassmorphism */
+/* Overview Panel - Glassmorphism Pro Max */
 .profile-overview-panel {
   display: grid !important;
-  gap: 32px !important;
-  margin-bottom: 40px !important;
-  padding: 40px !important;
-  border-radius: 32px !important;
-  border: 1px solid var(--border) !important;
-  background: rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  box-shadow: var(--shadow-bloom) !important;
-}
-
-:root[data-theme='dark'] .profile-overview-panel {
-  background: rgba(15, 23, 42, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  gap: 40px !important;
+  margin-top: 0 !important;
+  margin-bottom: 50px !important;
+  padding: 50px !important;
+  border-radius: 36px !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  background: var(--profile-card-bg) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: var(--profile-shadow) !important;
+  transition: all 0.4s ease !important;
+  position: relative !important;
+  z-index: 5 !important;
 }
 
 .profile-overview-main {
   display: flex !important;
   align-items: center !important;
-  gap: 32px !important;
+  gap: 40px !important;
 }
 
 .profile-avatar {
-  width: 120px !important;
-  height: 120px !important;
-  border-radius: 36px !important;
-  flex: 0 0 120px !important;
-  background: linear-gradient(135deg, var(--accent), var(--primary-2));
+  width: 140px !important;
+  height: 140px !important;
+  border-radius: 42px !important;
+  flex: 0 0 140px !important;
+  background: linear-gradient(135deg, var(--profile-prime), var(--profile-secondary));
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 3rem !important;
+  font-size: 3.5rem !important;
   font-weight: 900 !important;
-  box-shadow: 0 20px 40px rgba(20, 184, 166, 0.3) !important;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   color: white !important;
+  box-shadow: 0 20px 50px rgba(99, 102, 241, 0.3) !important;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  position: relative;
   overflow: hidden !important;
 }
 
-.profile-avatar.profile-avatar--image {
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  color: transparent !important;
-  background-color: transparent !important;
+.profile-avatar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1));
 }
 
 .profile-avatar:hover {
-  transform: scale(1.05) rotate(2deg) !important;
+  transform: scale(1.08) rotate(3deg) !important;
+  box-shadow: 0 30px 60px rgba(99, 102, 241, 0.4) !important;
 }
 
-/* Statistikalar - 4 ustun */
+.profile-info-content h2 {
+  font-family: var(--profile-font-heading);
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.04em;
+}
+
+/* Statistikalar */
 .profile-stats-grid {
   display: grid !important;
   grid-template-columns: repeat(4, 1fr) !important;
-  gap: 20px !important;
-  margin-top: 24px !important;
+  gap: 24px !important;
+  margin-top: 30px !important;
 }
 
 .profile-stat-card {
-  padding: 24px !important;
-  border-radius: 24px !important;
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow) !important;
-  transition: all 0.3s ease !important;
+  padding: 28px !important;
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   text-align: center !important;
 }
 
-.profile-stat-card:hover {
-  transform: translateY(-8px) !important;
-  border-color: var(--accent) !important;
+:root[data-theme='dark'] .profile-stat-card {
+  background: rgba(255, 255, 255, 0.03) !important;
 }
 
-/* Asosiy Layout - 2 ustun (Sidebar + Activity) */
+.profile-stat-card:hover {
+  transform: translateY(-10px) scale(1.02) !important;
+  background: #fff !important;
+  border-color: var(--profile-prime) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05) !important;
+}
+
+:root[data-theme='dark'] .profile-stat-card:hover {
+  background: rgba(30, 41, 59, 0.8) !important;
+}
+
+.profile-stat-value {
+  font-family: var(--profile-font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--profile-prime);
+  display: block;
+}
+
+.profile-stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--profile-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Layout */
 .profile-layout {
   display: flex !important;
-  flex-wrap: nowrap !important;
   gap: 40px !important;
   align-items: flex-start !important;
 }
 
 .profile-column-settings {
-  flex: 0 0 400px !important;
-  width: 400px !important;
-  position: sticky !important;
-  top: 100px !important;
+  flex: 0 0 420px !important;
+  width: 420px !important;
 }
 
 .profile-column-activity {
   flex: 1 1 0% !important;
-  min-width: 0 !important;
 }
 
-/* "Asosiy ma'lumotlar" kartochkasi dizayni */
-.signin-card.profile-card {
-  border-radius: 28px !important;
-  padding: 32px !important;
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow-bloom) !important;
+/* Glass Cards */
+.profile-card {
+  background: var(--profile-card-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  border-radius: 32px !important;
+  padding: 40px !important;
   margin-bottom: 30px !important;
-  overflow: hidden !important;
+  box-shadow: var(--profile-shadow) !important;
+  transition: all 0.4s ease !important;
 }
 
-/* Facts (Bento ko'rinishida) - 2 ustun bo'lishi kerak */
+.profile-card:hover {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+.profile-card-title {
+  font-family: var(--profile-font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-card-title i {
+  color: var(--profile-prime);
+}
+
+/* Facts (Bento ko'rinishida) */
 .profile-facts {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 16px !important;
-  margin: 24px 0 !important;
+  margin: 30px 0 !important;
 }
 
 .profile-fact-card {
-  padding: 16px !important;
-  border-radius: 18px !important;
+  padding: 24px !important;
+  border-radius: 24px !important;
   background: rgba(15, 23, 42, 0.03) !important;
   border: 1px solid transparent !important;
   transition: all 0.3s ease !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  word-break: break-all !important;
-  overflow-wrap: anywhere !important;
-}
-
-:root[data-theme='dark'] .profile-fact-card {
-  background: rgba(255, 255, 255, 0.05) !important;
-}
-
-.profile-fact-card:hover {
-  background: var(--surface) !important;
-  border-color: var(--primary-2) !important;
-}
-
-/* Form Grid - Ism va Telefon yonma-yon */
-.profile-form-grid {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-  margin-bottom: 24px !important;
-  align-items: start !important;
-}
-
-.profile-avatar-upload {
-  margin-bottom: 24px !important;
-  width: 100% !important;
-}
-
-.profile-field {
   display: flex !important;
   flex-direction: column !important;
   gap: 8px !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
+:root[data-theme='dark'] .profile-fact-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.profile-fact-card:hover {
+  background: #fff !important;
+  border-color: var(--profile-prime) !important;
+  transform: translateX(5px) !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.02) !important;
+}
+
+:root[data-theme='dark'] .profile-fact-card:hover {
+  background: rgba(30, 41, 59, 0.8) !important;
+}
+
+.profile-fact-icon {
+  position: absolute !important;
+  right: -10px !important;
+  top: -10px !important;
+  font-size: 4rem !important;
+  opacity: 0.05 !important;
+  color: var(--profile-prime) !important;
+  pointer-events: none !important;
+}
+
+.profile-fact-label {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--profile-text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.profile-fact-value {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: var(--profile-text-main) !important;
+  font-family: var(--profile-font-heading) !important;
+  word-break: break-all !important;
+}
+
+.profile-fact-hint {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: var(--profile-text-muted) !important;
+  margin-top: 4px !important;
+}
+
+@media (max-width: 768px) {
+  .profile-facts {
+    gap: 12px !important;
+  }
+  
+  .profile-fact-card {
+    padding: 20px !important;
+  }
+  
+  .profile-fact-value {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* Form Inputs Pro Max */
 .profile-field label {
   font-weight: 700 !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
+  color: var(--profile-text-main) !important;
+  margin-bottom: 10px !important;
 }
 
 .profile-field input {
-  padding: 12px 16px !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--border) !important;
-  background: rgba(15, 23, 42, 0.02) !important;
+  padding: 16px 20px !important;
+  border-radius: 16px !important;
+  border: 2px solid transparent !important;
+  background: rgba(15, 23, 42, 0.04) !important;
   width: 100% !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
 }
 
 :root[data-theme='dark'] .profile-field input {
   background: rgba(255, 255, 255, 0.03) !important;
 }
 
-/* Email va Maxfiylik bloklari */
-.signin-card.profile-card[data-profile-section="email"],
-.signin-card.profile-card[data-profile-section="security"] {
-  margin-top: 20px !important;
+.profile-field input:focus {
+  background: #fff !important;
+  border-color: var(--profile-prime) !important;
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.1) !important;
+  outline: none !important;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .profile-layout {
-    flex-direction: column !important;
-    gap: 28px !important;
-  }
-  .profile-column-settings {
-    flex: none !important;
-    width: 100% !important;
-    position: static !important;
-  }
-  .profile-stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 14px !important;
-  }
-
-  .profile-layout--stack-mobile {
-    gap: 24px !important;
-  }
-
-  .profile-layout--stack-mobile .profile-column-activity--mobile-first {
-    order: 1 !important;
-  }
-
-  .profile-layout--stack-mobile .profile-column-settings--mobile-last {
-    order: 2 !important;
-  }
-
-  .profile-overview-intro {
-    display: none !important;
-  }
-
-  .profile-overview-panel {
-    padding: 24px 18px !important;
-    margin-bottom: 24px !important;
-    border-radius: 24px !important;
-    gap: 22px !important;
-  }
-
-  .profile-overview-main {
-    align-items: flex-start !important;
-    gap: 18px !important;
-  }
-
-  .profile-main {
-    padding: 28px 0 60px !important;
-  }
-}
-
-@media (max-width: 767px) {
-  .profile-overview-main {
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-
-  .profile-avatar {
-    width: 96px !important;
-    height: 96px !important;
-    flex: 0 0 96px !important;
-    border-radius: 26px !important;
-    font-size: 2.4rem !important;
-  }
-
-  .profile-stat-card {
-    padding: 18px !important;
-    border-radius: 18px !important;
-  }
-
-  .signin-card.profile-card {
-    border-radius: 20px !important;
-    padding: 22px !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .profile-facts,
-  .profile-form-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .profile-stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-  }
-
-  .profile-stat-card {
-    padding: 14px !important;
-    border-radius: 16px !important;
-  }
-
-  .profile-overview-panel {
-    padding: 18px 14px !important;
-    border-radius: 20px !important;
-    gap: 18px !important;
-  }
-
-  .signin-card.profile-card {
-    border-radius: 16px !important;
-    padding: 18px !important;
-    margin-bottom: 16px !important;
-  }
-
-  .profile-field input {
-    font-size: 16px !important; /* iOS zoom oldini olish */
-  }
-}
-
-@media (max-width: 420px) {
-  .profile-avatar {
-    width: 80px !important;
-    height: 80px !important;
-    flex: 0 0 80px !important;
-    border-radius: 22px !important;
-    font-size: 2rem !important;
-  }
-
-  .profile-stats-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-  }
-}
-
-/* Animatsiyalar uchun fix */
-.reveal, .stagger-item {
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
-}
-
-/* Activity lists: readable under high volume */
+/* Activity Items */
 .profile-activity-list {
-  display: grid !important;
-  gap: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
 }
 
 .profile-activity-item {
-  border: 1px solid var(--border) !important;
-  border-radius: 14px !important;
-  padding: 12px 14px !important;
-  background: rgba(15, 23, 42, 0.03) !important;
-  transition: border-color 0.2s ease, background-color 0.2s ease !important;
-}
-
-.profile-activity-item:hover {
-  border-color: var(--primary-2) !important;
-  background: rgba(20, 184, 166, 0.08) !important;
-}
-
-.profile-activity-body {
-  color: var(--text) !important;
-  line-height: 1.55 !important;
-}
-
-.profile-activity-date {
-  color: var(--muted) !important;
-  font-size: 12px !important;
-}
-
-.profile-activity-link {
-  color: var(--primary-2) !important;
-  text-decoration: none !important;
-}
-
-.profile-activity-link:hover {
-  color: var(--primary) !important;
-  text-decoration: underline !important;
-}
-
-.profile-actions-row--activity {
-  margin-top: 10px !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  transition: all 0.3s ease !important;
 }
 
 :root[data-theme='dark'] .profile-activity-item {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
 }
 
-:root[data-theme='dark'] .profile-activity-item:hover {
-  background: rgba(96, 165, 250, 0.14) !important;
-  border-color: rgba(96, 165, 250, 0.55) !important;
+.profile-activity-item:hover {
+  transform: translateX(10px) !important;
+  border-color: var(--profile-prime) !important;
+  background: #fff !important;
 }
+
+.profile-activity-body {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--profile-text-main);
+  margin-bottom: 8px;
+}
+
+.profile-activity-date {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--profile-text-muted);
+}
+
+/* Buttons */
+.profile-btn-save {
+  background: linear-gradient(135deg, var(--profile-prime), var(--profile-secondary)) !important;
+  color: white !important;
+  border: none !important;
+  padding: 16px 32px !important;
+  border-radius: 18px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  width: 100% !important;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3) !important;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  cursor: pointer !important;
+}
+
+.profile-btn-save:hover {
+  transform: translateY(-5px) scale(1.02) !important;
+  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .profile-column-settings {
+    flex: 0 0 350px !important;
+    width: 350px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .profile-layout {
+    flex-direction: column !important;
+  }
+  .profile-column-settings {
+    width: 100% !important;
+    flex: none !important;
+  }
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-overview-panel {
+    padding: 30px !important;
+  }
+  .profile-overview-main {
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+  .profile-avatar {
+    width: 120px !important;
+    height: 120px !important;
+    flex: 0 0 120px !important;
+  }
+  .profile-info-content h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .profile-facts {
+    grid-template-columns: 1fr !important;
+  }
+}
+

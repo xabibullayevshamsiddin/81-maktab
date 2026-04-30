@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class AdminQuestionController extends Controller
 {
-    public function __construct(private readonly ImageService $imageService) {}
+    public function __construct(private ImageService $imageService) {}
 
     public function index(Request $request, Exam $exam)
     {

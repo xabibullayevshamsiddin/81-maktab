@@ -135,7 +135,7 @@ class CourseEnrollmentController extends Controller
     {
         $course->loadMissing('creator');
         $creator = $course->creator;
-        if (! $creator?->email) {
+        if (! $creator?->email || ! config('mail.enabled', true)) {
             return;
         }
 
@@ -178,7 +178,9 @@ class CourseEnrollmentController extends Controller
 
     private function ensureEnrollable(Course $course): void
     {
+        $course->loadMissing('teacher');
+
         abort_unless($course->status === Course::STATUS_PUBLISHED, 404);
-        abort_unless($course->teacher && $course->teacher->is_active, 404);
+        abort_unless(! $course->teacher_id || ($course->teacher && $course->teacher->is_active), 404);
     }
 }

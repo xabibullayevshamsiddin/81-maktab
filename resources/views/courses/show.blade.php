@@ -1,8 +1,12 @@
 @php
   $teacher = $course->teacher;
-  $teacherAchievements = $teacher?->achievementItems(null, app()->getLocale()) ?? [];
-  $teacherBio = $teacher?->shortBio(260, app()->getLocale()) ?? __('public.courses.teacher_bio_empty');
-  $teacherSubject = $teacher ? localized_model_value($teacher, 'subject') : __('public.courses.subject_missing');
+  $teacherAchievements = $course->instructorAchievements();
+  $teacherBio = $course->instructorBio(260);
+  $teacherSubject = $course->instructorSubject();
+  $teacherName = $course->instructorName();
+  $teacherImage = $course->instructorImageUrl();
+  $teacherExperience = $course->instructorExperienceLabel();
+  $teacherGrades = $course->instructorGradesLabel();
   $courseTitle = localized_model_value($course, 'title');
   $courseDescription = localized_model_value($course, 'description');
   $coursePrice = localized_model_value($course, 'price');
@@ -44,7 +48,7 @@
           <div class="course-details-grid">
             <div class="course-details-main">
               <ul class="course-details-meta">
-                <li><i class="fa-solid fa-user"></i> <span>{{ __('public.courses.author') }}: {{ $teacher?->full_name ?: '-' }}</span></li>
+                <li><i class="fa-solid fa-user"></i> <span>{{ __('public.courses.author') }}: {{ $teacherName }}</span></li>
                 <li><i class="fa-solid fa-book-open"></i> <span>{{ __('public.courses.subject') }}: {{ $teacherSubject ?: __('public.common.not_entered') }}</span></li>
                 <li><i class="fa-regular fa-clock"></i> <span>{{ __('public.courses.duration') }}: {{ $courseDuration }}</span></li>
                 <li><i class="fa-solid fa-money-bill-wave"></i> <span>{{ __('public.courses.price') }}: {{ $coursePrice }}</span></li>
@@ -59,17 +63,17 @@
 
             <aside class="course-teacher-card">
               <div class="course-teacher-card-head">
-                <img src="{{ $teacher?->imageUrl() }}" alt="{{ $teacher?->full_name ?: 'Ustoz' }}" loading="lazy" decoding="async">
+                <img src="{{ $teacherImage }}" alt="{{ $teacherName }}" loading="lazy" decoding="async">
                 <div>
                   <span class="course-teacher-label">{{ __('public.courses.teacher_label') }}</span>
-                  <h3>{{ $teacher?->full_name ?: 'Ustoz' }}</h3>
+                  <h3>{{ $teacherName }}</h3>
                   <p>{{ $teacherSubject }}</p>
                 </div>
               </div>
 
               <div class="course-teacher-facts">
-                <span><i class="fa-solid fa-award"></i> {{ (int) ($teacher?->experience_years ?? 0) }} yil tajriba</span>
-                <span><i class="fa-solid fa-layer-group"></i> {{ $teacher?->grades ?: 'Barcha sinflar' }}</span>
+                <span><i class="fa-solid fa-award"></i> {{ $teacherExperience }}</span>
+                <span><i class="fa-solid fa-layer-group"></i> {{ $teacherGrades }}</span>
               </div>
 
               <p class="course-teacher-bio">{{ $teacherBio }}</p>

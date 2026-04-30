@@ -87,6 +87,7 @@ class User extends Authenticatable
         'course_open_approved',
         'course_open_request_pending',
         'course_open_requested_at',
+        'course_open_request_reason',
         'course_open_approved_at',
     ];
 
@@ -218,6 +219,11 @@ class User extends Authenticatable
     public function createdCourses(): HasMany
     {
         return $this->hasMany(Course::class, 'created_by');
+    }
+
+    public function userNotifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
     }
 
     public function courseEnrollments(): HasMany
@@ -355,17 +361,6 @@ class User extends Authenticatable
             self::ROLE_ADMIN,
             self::ROLE_TEACHER,
         ]);
-    }
-
-    public function hasLinkedActiveTeacherProfile(): bool
-    {
-        if (array_key_exists('active_teacher_profile_count', $this->attributes)) {
-            return (int) $this->attributes['active_teacher_profile_count'] > 0;
-        }
-
-        return $this->teacherProfile()
-            ->where('is_active', true)
-            ->exists();
     }
 
     public function hasCreatedCourse(): bool

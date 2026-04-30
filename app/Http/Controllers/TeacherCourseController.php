@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RequestCourseOpenAccessRequest;
 use App\Models\Course;
 use App\Models\Teacher;
 use App\Models\User;
@@ -24,25 +25,17 @@ class TeacherCourseController extends Controller
 
         $teachers = collect();
         $selectedTeacher = null;
+        $courseOwner = $user;
         if ($isAdmin) {
             $teachers = Teacher::query()
                 ->where('is_active', true)
                 ->orderBy('full_name')
                 ->get();
-        } else {
-            $selectedTeacher = $this->teacherProfileLinkedToUser($user);
-            if (! $selectedTeacher) {
-                return redirect()
-                    ->route('profile.show')
-                    ->with(
-                        'error',
-                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin > Ustozlar > Tahrirlash > Foydalanuvchi tanlash)."
-                    )
-                    ->with('toast_type', 'error');
-            }
         }
 
-        return view('courses.create', compact('teachers', 'isAdmin', 'selectedTeacher'));
+        $courseEmailVerificationEnabled = $this->courseEmailVerificationEnabled();
+
+        return view('courses.create', compact('teachers', 'isAdmin', 'selectedTeacher', 'courseEmailVerificationEnabled', 'courseOwner'));
     }
 
     public function store(Request $request)
@@ -68,26 +61,16 @@ class TeacherCourseController extends Controller
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
+        $teacherId = null;
         if ($isAdmin) {
             $teacher = Teacher::query()->findOrFail((int) $validated['teacher_id']);
-        } else {
-            $teacher = $this->teacherProfileLinkedToUser($user);
-            if (! $teacher) {
-                return redirect()
-                    ->route('profile.show')
-                    ->with(
-                        'error',
-                        "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin > Ustozlar > Tahrirlash > Foydalanuvchi tanlash)."
-                    )
-                    ->with('toast_type', 'error');
-            }
+            abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
+            $teacherId = (int) $teacher->id;
         }
 
-        abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
-
-        if (! config('courses.require_email_verification')) {
+        if (! $this->courseEmailVerificationEnabled()) {
             $payload = [
-                'teacher_id' => (int) $teacher->id,
+                'teacher_id' => $teacherId,
                 'created_by' => (int) $user->id,
                 'title' => $validated['title'],
                 'title_en' => $validated['title_en'] ?? null,
@@ -120,7 +103,7 @@ class TeacherCourseController extends Controller
         $code = (string) random_int(100000, 999999);
 
         $payload = [
-            'teacher_id' => (int) $teacher->id,
+            'teacher_id' => $teacherId,
             'created_by' => (int) $user->id,
             'title' => $validated['title'],
             'title_en' => $validated['title_en'] ?? null,
@@ -148,38 +131,28 @@ class TeacherCourseController extends Controller
 
         return redirect()
             ->route('teacher.courses.verify.form', $course)
-            ->with('success', "Tasdiqlash kodi emailingizga yuborildi.")
+            ->with('success', 'Tasdiqlash kodi emailingizga yuborildi.')
             ->with('toast_type', 'success');
     }
 
-    public function requestAccess()
+    public function requestAccess(RequestCourseOpenAccessRequest $request)
     {
         abort_unless(auth()->check(), 403);
 
         $user = auth()->user();
         abort_unless($user->isTeacher(), 403);
 
-        if (! $user->hasLinkedActiveTeacherProfile()) {
-            return redirect()
-                ->route('profile.show')
-                ->with(
-                    'error',
-                    "Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak, keyin kurs uchun ruxsat so'raysiz."
-                )
-                ->with('toast_type', 'error');
-        }
-
         if ($user->hasReachedCourseOpenLimit()) {
             return redirect()
                 ->route('profile.show')
-                ->with('error', "Bitta teacher akkaunti faqat bitta kurs ocha oladi.")
+                ->with('error', "Bitta o'qituvchi akkaunti faqat bitta kurs ocha oladi.")
                 ->with('toast_type', 'warning');
         }
 
         if ($user->hasCourseOpenApproval()) {
             return redirect()
                 ->route('teacher.courses.create')
-                ->with('success', "Admin sizga ruxsat bergan, endi kursni ochishingiz mumkin.")
+                ->with('success', 'Admin sizga ruxsat bergan, endi kursni ochishingiz mumkin.')
                 ->with('toast_type', 'success');
         }
 
@@ -190,9 +163,13 @@ class TeacherCourseController extends Controller
                 ->with('toast_type', 'warning');
         }
 
+        $validated = $request->validated();
+        $reason = trim((string) ($validated['reason'] ?? ''));
+
         $user->update([
             'course_open_request_pending' => true,
             'course_open_requested_at' => now(),
+            'course_open_request_reason' => $reason,
             'course_open_approved' => false,
             'course_open_approved_at' => null,
         ]);
@@ -208,6 +185,10 @@ class TeacherCourseController extends Controller
         $user = $this->authorizeCreator();
         $this->ensureCanAccessCourse($user, $course);
 
+        if ($redirect = $this->autoPublishCourseWhenEmailVerificationDisabled($course)) {
+            return $redirect;
+        }
+
         return view('courses.verify', compact('course'));
     }
 
@@ -216,13 +197,17 @@ class TeacherCourseController extends Controller
         $user = $this->authorizeCreator();
         $this->ensureCanAccessCourse($user, $course);
 
+        if ($redirect = $this->autoPublishCourseWhenEmailVerificationDisabled($course)) {
+            return $redirect;
+        }
+
         $validated = $request->validate([
             'code' => ['required', 'digits:6'],
         ]);
 
         if ($course->status === Course::STATUS_PUBLISHED) {
             return redirect()->route('courses')
-                ->with('success', "Kurs allaqachon saytda.")
+                ->with('success', 'Kurs allaqachon saytda.')
                 ->with('toast_type', 'success');
         }
 
@@ -244,7 +229,7 @@ class TeacherCourseController extends Controller
         forget_public_course_caches();
 
         return redirect()->route('courses')
-            ->with('success', "Kurs tasdiqlandi va saytda chiqdi.")
+            ->with('success', 'Kurs tasdiqlandi va saytda chiqdi.')
             ->with('toast_type', 'success');
     }
 
@@ -252,6 +237,10 @@ class TeacherCourseController extends Controller
     {
         $user = $this->authorizeCreator();
         $this->ensureCanAccessCourse($user, $course);
+
+        if ($redirect = $this->autoPublishCourseWhenEmailVerificationDisabled($course)) {
+            return $redirect;
+        }
 
         $code = (string) random_int(100000, 999999);
         $course->update([
@@ -263,7 +252,7 @@ class TeacherCourseController extends Controller
         $this->sendPublishCode($user->email, $course, $code);
 
         return back()
-            ->with('success', "Yangi kod yuborildi.")
+            ->with('success', 'Yangi kod yuborildi.')
             ->with('toast_type', 'warning');
     }
 
@@ -272,7 +261,7 @@ class TeacherCourseController extends Controller
         $user = $this->authorizeCreator();
         $this->ensureCanManageCourse($user, $course);
 
-        $course->loadMissing('teacher');
+        $course->loadMissing(['teacher', 'creator']);
 
         if (request()->routeIs('admin.courses.edit')) {
             $isAdmin = true;
@@ -284,13 +273,7 @@ class TeacherCourseController extends Controller
             return view('admin.courses.edit', compact('course', 'teachers', 'isAdmin'));
         }
 
-        $selectedTeacher = $this->teacherProfileLinkedToUser($user);
-        abort_unless(
-            $selectedTeacher && (int) $course->teacher_id === (int) $selectedTeacher->id,
-            403,
-            "Bu kursni tahrirlash huquqingiz yo'q."
-        );
-
+        $selectedTeacher = $course->teacher;
         $isAdmin = false;
         $teachers = collect();
 
@@ -318,20 +301,18 @@ class TeacherCourseController extends Controller
         ];
 
         if ($isAdmin) {
-            $rules['teacher_id'] = ['required', 'integer', 'exists:teachers,id'];
+            $rules['teacher_id'] = ['nullable', 'integer', 'exists:teachers,id'];
         }
 
         $validated = $request->validate($rules);
 
         $teacherId = $isAdmin
-            ? (int) $validated['teacher_id']
-            : (int) $course->teacher_id;
+            ? (isset($validated['teacher_id']) ? (int) $validated['teacher_id'] : null)
+            : ($course->teacher_id ? (int) $course->teacher_id : null);
 
-        $teacher = Teacher::query()->findOrFail($teacherId);
-        abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
-
-        if (! $isAdmin && (int) $course->teacher_id !== $teacherId) {
-            abort(403);
+        if ($teacherId !== null) {
+            $teacher = Teacher::query()->findOrFail($teacherId);
+            abort_unless($teacher->is_active, 422, "Nofaol ustozga kurs biriktirib bo'lmaydi.");
         }
 
         $payload = [
@@ -420,6 +401,15 @@ class TeacherCourseController extends Controller
 
     private function sendPublishCode(string $email, Course $course, string $code): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            Log::info('Course publish code email skipped because mail delivery is disabled', [
+                'email' => $email,
+                'course_id' => $course->id,
+            ]);
+
+            return;
+        }
+
         try {
             $html = '
             <div style="background:#f3f6fb;padding:24px 12px;font-family:Arial,sans-serif;">
@@ -441,7 +431,7 @@ class TeacherCourseController extends Controller
             </div>';
 
             Mail::html($html, static function ($message) use ($email) {
-                $message->to($email)->subject("Kurs tasdiqlash kodi");
+                $message->to($email)->subject('Kurs tasdiqlash kodi');
             });
         } catch (\Throwable $e) {
             Log::warning('Course publish code email failed', [
@@ -453,15 +443,60 @@ class TeacherCourseController extends Controller
         }
     }
 
-    /**
-     * Teacher akkaunti uchun faqat shu userga bog'langan faol ustoz kartasi (boshqa fallback yo'q).
-     */
-    private function teacherProfileLinkedToUser(User $user): ?Teacher
+    private function courseEmailVerificationEnabled(): bool
     {
-        return Teacher::query()
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->first();
+        return (bool) config('courses.require_email_verification', false)
+            && $this->mailDeliveryEnabled();
+    }
+
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true)
+            && (bool) config('mail.code_delivery_enabled', false)
+            && $this->mailConfigurationReady();
+    }
+
+    private function mailConfigurationReady(): bool
+    {
+        return match ((string) config('mail.default', 'smtp')) {
+            'resend' => $this->hasConfiguredResendApiKey(),
+            'smtp' => filled(config('mail.mailers.smtp.host')),
+            default => true,
+        };
+    }
+
+    private function hasConfiguredResendApiKey(): bool
+    {
+        $apiKey = trim((string) (config('resend.api_key') ?? config('services.resend.key') ?? ''));
+
+        if ($apiKey === '' || ! str_starts_with($apiKey, 're_')) {
+            return false;
+        }
+
+        $normalizedKey = strtolower($apiKey);
+
+        return ! str_contains($normalizedKey, 'sizning_kalitingiz')
+            && ! str_contains($normalizedKey, 'your_key')
+            && ! str_contains($normalizedKey, 'your-api-key');
+    }
+
+    private function autoPublishCourseWhenEmailVerificationDisabled(Course $course): ?RedirectResponse
+    {
+        if ($this->courseEmailVerificationEnabled() || $course->status !== Course::STATUS_PENDING_VERIFICATION) {
+            return null;
+        }
+
+        $course->update([
+            'status' => Course::STATUS_PUBLISHED,
+            'publish_code' => null,
+            'publish_code_expires_at' => null,
+        ]);
+        forget_public_course_caches();
+
+        return redirect()
+            ->route('courses')
+            ->with('success', "Email yuborish o'chirilgani uchun kurs darhol tasdiqlandi.")
+            ->with('toast_type', 'success');
     }
 
     private function teacherCourseBlockResponse(User $user): ?RedirectResponse
@@ -470,20 +505,10 @@ class TeacherCourseController extends Controller
             return null;
         }
 
-        if (! $user->hasLinkedActiveTeacherProfile()) {
-            return redirect()
-                ->route('profile.show')
-                ->with(
-                    'error',
-                    "Kurs ochish uchun admin sizning akkauntingizni ustoz kartasiga bog'lashi kerak (Admin > Ustozlar > Tahrirlash > Foydalanuvchi tanlash)."
-                )
-                ->with('toast_type', 'error');
-        }
-
         if ($user->hasReachedCourseOpenLimit()) {
             return redirect()
                 ->route('profile.show')
-                ->with('error', "Teacher akkaunti faqat bitta kurs yaratishi mumkin.")
+                ->with('error', "O'qituvchi akkaunti faqat bitta kurs yaratishi mumkin.")
                 ->with('toast_type', 'warning');
         }
 
@@ -491,7 +516,7 @@ class TeacherCourseController extends Controller
             if ($user->hasPendingCourseOpenRequest()) {
                 return redirect()
                     ->route('profile.show')
-                    ->with('error', "Kurs ochish uchun admin ruxsatini kuting.")
+                    ->with('error', 'Kurs ochish uchun admin ruxsatini kuting.')
                     ->with('toast_type', 'warning');
             }
 

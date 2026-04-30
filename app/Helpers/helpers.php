@@ -513,10 +513,14 @@ if (! function_exists('school_grade_grouped_options')) {
 if (! function_exists('school_grade_options')) {
     function school_grade_options(): array
     {
-        return collect(school_grade_grouped_options())
+        $options = collect(school_grade_grouped_options())
             ->flatMap(static fn ($options) => array_keys($options))
             ->values()
             ->all();
+            
+        $options[] = 'TEACHER';
+        
+        return $options;
     }
 }
 

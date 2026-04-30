@@ -11,6 +11,7 @@ use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use App\Models\Course;
 use App\Models\Exam;
 
@@ -149,6 +150,16 @@ class HomeController extends Controller
         return view('contact', compact('conversation'));
     }
 
+    public function privacyPolicy()
+    {
+        return view('privacy-policy');
+    }
+
+    public function terms()
+    {
+        return view('terms');
+    }
+
     public function storeContact(Request $request)
     {
         $this->validateTurnstile($request);
@@ -228,12 +239,18 @@ class HomeController extends Controller
     private function collectGlobalSearchResults(string $q): array
     {
         $results = [];
+        $q = trim($q);
+        $searchTerms = $this->buildSearchTerms($q);
 
         $posts = Post::query()
-            ->where('title', 'like', "%{$q}%")
-            ->orWhere('title_en', 'like', "%{$q}%")
-            ->orWhere('short_content', 'like', "%{$q}%")
-            ->orWhere('content', 'like', "%{$q}%")
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%")
+                        ->orWhere('title_en', 'like', "%{$term}%")
+                        ->orWhere('short_content', 'like', "%{$term}%")
+                        ->orWhere('content', 'like', "%{$term}%");
+                }
+            })
             ->latest()
             ->take(10)
             ->get();
@@ -250,10 +267,12 @@ class HomeController extends Controller
 
         $teachers = Teacher::query()
             ->where('is_active', true)
-            ->where(function ($query) use ($q) {
-                $query->where('full_name', 'like', "%{$q}%")
-                    ->orWhere('subject', 'like', "%{$q}%")
-                    ->orWhere('lavozim', 'like', "%{$q}%");
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('full_name', 'like', "%{$term}%")
+                        ->orWhere('subject', 'like', "%{$term}%")
+                        ->orWhere('lavozim', 'like', "%{$term}%");
+                }
             })
             ->latest()
             ->take(10)
@@ -270,11 +289,13 @@ class HomeController extends Controller
         }
 
         $courses = Course::query()
-            ->where('status', 'active')
-            ->where(function ($query) use ($q) {
-                $query->where('title', 'like', "%{$q}%")
-                    ->orWhere('title_en', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%");
+            ->where('status', Course::STATUS_PUBLISHED)
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%")
+                        ->orWhere('title_en', 'like', "%{$term}%")
+                        ->orWhere('description', 'like', "%{$term}%");
+                }
             })
             ->latest()
             ->take(10)
@@ -286,13 +307,17 @@ class HomeController extends Controller
                 'title' => localized_model_value($course, 'title'),
                 'description' => strip_tags(localized_model_value($course, 'description')),
                 'url' => route('courses.show', $course->id),
-                'image' => $course->cover_image ? app_storage_asset($course->cover_image) : null,
+                'image' => $course->image ? app_storage_asset($course->image) : null,
             ];
         }
         
         $exams = Exam::query()
             ->where('is_active', true)
-            ->where('title', 'like', "%{$q}%")
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%");
+                }
+            })
             ->latest()
             ->take(10)
             ->get();
@@ -308,5 +333,24 @@ class HomeController extends Controller
         }
 
         return array_values($results);
+    }
+
+    private function buildSearchTerms(string $q): array
+    {
+        $q = Str::lower(trim($q));
+        if ($q === '') {
+            return [];
+        }
+
+        $terms = [$q];
+
+        if (Str::contains($q, 'kusr')) {
+            $terms[] = str_replace('kusr', 'kurs', $q);
+        }
+        if (Str::contains($q, 'kurs')) {
+            $terms[] = str_replace('kurs', 'kusr', $q);
+        }
+
+        return array_values(array_unique(array_filter($terms)));
     }
 }

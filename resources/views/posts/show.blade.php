@@ -5,6 +5,10 @@
   $postCategory = localized_model_value($post->category, 'name');
 @endphp
 <x-loyouts.main title="81-IDUM | {{ $postTitle }}">
+  @push('page_styles')
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/post-embed.css') }}?v={{ filemtime(public_path('temp/css/post-embed.css')) }}" />
+  @endpush
+
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
@@ -50,7 +54,7 @@
       @endif
 
       @php
-        $ytEmbed = $post->video_url ? \App\Support\YoutubeEmbed::parse($post->video_url) : null;
+        $videoData = \App\Support\VideoEmbed::parse($post->video_url);
         $videoExt = filled($post->video_path) ? strtolower(pathinfo($post->video_path, PATHINFO_EXTENSION)) : '';
       @endphp
       <article class="news-card post-detail-card">
@@ -64,15 +68,17 @@
                 />
                 {{ __('public.posts.browser_no_video') }}
               </video>
-            @elseif($ytEmbed)
-              <div class="post-video-embed post-video-embed--detail-hero">
+            @elseif($videoData)
+              <div class="post-video-embed post-video-embed--{{ $videoData['type'] }}">
                 <div class="post-video-embed-inner">
                   <iframe
-                    src="{{ $ytEmbed[0] }}"
+                    src="{{ $videoData['src'] }}"
                     title="Video: {{ $postTitle }}"
                     loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    style="border:none; border-radius:12px;"
                   ></iframe>
                 </div>
               </div>
@@ -89,6 +95,7 @@
               alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
               data-zoom-src="{{ app_storage_asset($post->image) }}"
+              onerror="this.src='{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}'; this.onerror=null; this.removeAttribute('data-zoom-src');"
               loading="lazy"
               decoding="async"
               role="button"
@@ -150,6 +157,7 @@
             <form action="{{ route('posts.destroy', $post->id) }}" method="POST" data-confirm="Postni o'chirmoqchimisiz?" data-confirm-title="Postni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
               @csrf
               @method('DELETE')
+              <input type="hidden" name="return_to" value="public">
               <button type="submit" class="btn btn-sm post-admin-btn post-admin-btn-delete">O'chirish</button>
             </form>
           </div>

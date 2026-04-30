@@ -54,9 +54,17 @@
                   <label class="form-label">Kalit so'zlar (vergul bilan)</label>
                   <input type="text" class="form-control" name="keywords" value="{{ old('keywords', $aiKnowledge->keywords) }}">
                 </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Sinonimlar (vergul bilan)</label>
+                  <input type="text" class="form-control" name="synonyms" value="{{ old('synonyms', $aiKnowledge->synonyms) }}">
+                </div>
                 <div class="col-md-3 mb-3">
                   <label class="form-label">Kategoriya</label>
                   <input type="text" class="form-control" name="category" value="{{ old('category', $aiKnowledge->category) }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Priority</label>
+                  <input type="number" class="form-control" name="priority" value="{{ old('priority', $aiKnowledge->priority) }}">
                 </div>
                 <div class="col-md-3 mb-3">
                   <label class="form-label">Tartib</label>

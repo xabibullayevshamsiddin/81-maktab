@@ -1,42 +1,6 @@
 <x-loyouts.main :title="__('auth_pages.register.page_title')">
     @push('page_styles')
       <style>
-        .register-social-btn {
-          width: 100%;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          border: 1px solid #dbe2ea;
-          border-radius: 12px;
-          padding: 11px 14px;
-          text-decoration: none;
-          font-weight: 700;
-          color: #111827;
-          background: #fff;
-          transition: all 0.2s ease;
-        }
-
-        .register-social-btn:hover {
-          border-color: #c1cedd;
-          background: #f8fafc;
-          color: #111827;
-        }
-
-        .register-social-btn .fa-google {
-          color: #ea4335;
-        }
-
-        :root[data-theme='dark'] .register-social-btn {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.18);
-          color: #e5e7eb;
-        }
-
-        :root[data-theme='dark'] .register-social-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.3);
-        }
       </style>
     @endpush
 
@@ -61,6 +25,13 @@
             <span class="register-chip"><i class="fa-solid fa-graduation-cap"></i> {{ __('auth_pages.register.chip_2') }}</span>
             <span class="register-chip"><i class="fa-solid fa-shield-halved"></i> {{ __('auth_pages.register.chip_3') }}</span>
           </div>
+
+          @if (session('error'))
+            <div class="register-alert" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ session('error') }}</span>
+            </div>
+          @endif
 
           <form action="{{ route('register.store') }}" method="POST" class="register-form" id="register-form-server">
             @csrf
@@ -250,15 +221,6 @@
               aria-live="polite"
             ></p>
           </form>
-
-          <a href="{{ route('auth.google.redirect') }}" class="register-social-btn">
-            <i class="fa-brands fa-google"></i>
-            Google orqali davom etish
-          </a>
-
-          <div class="register-divider">
-            <span>{{ __('auth_pages.common.or') }}</span>
-          </div>
 
           <p class="register-signin">
             {{ __('auth_pages.register.login_text') }} <a href="{{ route('login') }}">{{ __('auth_pages.register.login_link') }}</a>

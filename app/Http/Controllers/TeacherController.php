@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Teacher;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -44,19 +43,12 @@ class TeacherController extends Controller
 
     public function create()
     {
-        $teacherUsers = $this->teacherUsers();
-
-        return view('admin.teachers.create', compact('teacherUsers'));
+        return view('admin.teachers.create');
     }
 
     public function store(Request $request)
     {
-        if (! $request->filled('user_id')) {
-            $request->merge(['user_id' => null]);
-        }
-
         $validated = $request->validate([
-            'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id'],
             'full_name' => ['required', 'string', 'max:255'],
             'lavozim' => ['nullable', 'string', 'max:255'],
             'lavozim_en' => ['nullable', 'string', 'max:255'],
@@ -77,7 +69,6 @@ class TeacherController extends Controller
         $validated['slug'] = $this->makeUniqueSlug($validated['full_name']);
         $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
         $validated['sort_order'] = $this->nextSortOrder();
-        $validated['user_id'] = $validated['user_id'] ?? null;
         $gradesTrim = trim((string) ($validated['grades'] ?? ''));
         $validated['grades'] = $gradesTrim !== '' ? $gradesTrim : null;
 
@@ -102,19 +93,12 @@ class TeacherController extends Controller
 
     public function edit(Teacher $teacher)
     {
-        $teacherUsers = $this->teacherUsers($teacher);
-
-        return view('admin.teachers.edit', compact('teacher', 'teacherUsers'));
+        return view('admin.teachers.edit', compact('teacher'));
     }
 
     public function update(Request $request, Teacher $teacher)
     {
-        if (! $request->filled('user_id')) {
-            $request->merge(['user_id' => null]);
-        }
-
         $validated = $request->validate([
-            'user_id' => ['nullable', 'integer', 'exists:users,id', 'unique:teachers,user_id,'.$teacher->id],
             'full_name' => ['required', 'string', 'max:255'],
             'lavozim' => ['nullable', 'string', 'max:255'],
             'lavozim_en' => ['nullable', 'string', 'max:255'],
@@ -137,7 +121,6 @@ class TeacherController extends Controller
         }
 
         $validated['is_active'] = (bool) ($validated['is_active'] ?? false);
-        $validated['user_id'] = $validated['user_id'] ?? null;
         $gradesTrim = trim((string) ($validated['grades'] ?? ''));
         $validated['grades'] = $gradesTrim !== '' ? $gradesTrim : null;
 
@@ -167,6 +150,7 @@ class TeacherController extends Controller
         $teacher->delete();
         $this->resetTeachersAutoIncrement();
         forget_public_teacher_caches();
+        forget_public_course_caches();
 
         return redirect()->route('teachers.index')
             ->with('error', "Ustoz o'chirildi.")
@@ -194,23 +178,6 @@ class TeacherController extends Controller
         }
 
         return "{$slug}-{$i}";
-    }
-
-    private function teacherUsers(?Teacher $ignoreTeacher = null)
-    {
-        $ignoreId = $ignoreTeacher?->id;
-
-        $takenUserIds = Teacher::query()
-            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
-            ->whereNotNull('user_id')
-            ->pluck('user_id');
-
-        return User::query()
-            ->with('roleRelation')
-            ->whereHas('roleRelation', fn ($q) => $q->where('name', User::ROLE_TEACHER))
-            ->whereNotIn('id', $takenUserIds)
-            ->orderBy('name')
-            ->get();
     }
 
     private function nextSortOrder(): int

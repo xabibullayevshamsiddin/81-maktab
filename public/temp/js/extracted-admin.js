@@ -21,14 +21,23 @@
     function showToast(message, type) {
       if (!message) return;
 
+      const icons = {
+        success: '<i class="mdi mdi-check-circle-outline" style="font-size: 20px; color: #10b981;"></i>',
+        error: '<i class="mdi mdi-alert-circle-outline" style="font-size: 20px; color: #ef4444;"></i>',
+        warning: '<i class="mdi mdi-alert-outline" style="font-size: 20px; color: #f59e0b;"></i>'
+      };
+
       const toast = document.createElement('div');
       toast.className = `admin-toast admin-${type}`;
-      toast.textContent = message;
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || ''}</div>
+        <div class="toast-content">${message}</div>
+      `;
       toastContainer.appendChild(toast);
 
       setTimeout(() => {
         toast.classList.add('admin-toast-out');
-        setTimeout(() => toast.remove(), 250);
+        setTimeout(() => toast.remove(), 400);
       }, toastTimerMs);
     }
 
@@ -62,7 +71,7 @@
     }
   }
 
-  document.querySelectorAll('form').forEach((scope) => {
+  function bindExamQuestionForm(scope) {
     const toolbar = scope.querySelector('[data-exam-toolbar]');
     if (!toolbar || scope.dataset.examRichBound === 'true') return;
 
@@ -75,25 +84,72 @@
     const textFields = scope.querySelector('[data-question-text-fields]');
     const shuffleButton = scope.querySelector('#shuffle-options');
     const richInputs = Array.from(scope.querySelectorAll('.js-exam-rich-input'));
+    const savedSelections = new WeakMap();
     let activeInput = richInputs[0] || null;
 
+    function rememberSelection(input) {
+      if (!input) return;
+
+      savedSelections.set(input, {
+        start: input.selectionStart ?? input.value.length,
+        end: input.selectionEnd ?? input.value.length,
+      });
+    }
+
+    function syncActiveInput(input) {
+      activeInput = input;
+      rememberSelection(input);
+    }
+
+    function focusFirstEnabledInput() {
+      const enabledInput = richInputs.find((input) => !input.disabled);
+      if (enabledInput) {
+        activeInput = enabledInput;
+      }
+    }
+
     richInputs.forEach((input) => {
-      input.addEventListener('focus', () => {
-        activeInput = input;
+      ['focus', 'click', 'keyup', 'mouseup', 'select', 'input'].forEach((eventName) => {
+        input.addEventListener(eventName, () => {
+          syncActiveInput(input);
+        });
       });
     });
 
     function insertIntoActive(before, after = '') {
-      if (!activeInput) return;
+      if (!activeInput || activeInput.disabled) return;
 
-      const start = activeInput.selectionStart ?? activeInput.value.length;
-      const end = activeInput.selectionEnd ?? activeInput.value.length;
+      const savedSelection = savedSelections.get(activeInput);
+      const start = savedSelection?.start ?? activeInput.selectionStart ?? activeInput.value.length;
+      const end = savedSelection?.end ?? activeInput.selectionEnd ?? activeInput.value.length;
       const selected = activeInput.value.slice(start, end);
       const replacement = before + selected + after;
 
-      activeInput.setRangeText(replacement, start, end, 'end');
       activeInput.focus();
+
+      if (typeof activeInput.setSelectionRange === 'function') {
+        activeInput.setSelectionRange(start, end);
+      }
+
+      if (typeof activeInput.setRangeText === 'function') {
+        activeInput.setRangeText(replacement, start, end, 'end');
+      } else {
+        activeInput.value = activeInput.value.slice(0, start) + replacement + activeInput.value.slice(end);
+        const cursor = start + replacement.length;
+        if (typeof activeInput.setSelectionRange === 'function') {
+          activeInput.setSelectionRange(cursor, cursor);
+        }
+      }
+
+      rememberSelection(activeInput);
+      activeInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
+
+    scope.querySelectorAll('.js-exam-wrap, .js-exam-insert').forEach((button) => {
+      button.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+      });
+    });
 
     scope.querySelectorAll('.js-exam-wrap').forEach((button) => {
       button.addEventListener('click', () => {
@@ -123,11 +179,15 @@
       textFields.querySelectorAll('textarea, select, input').forEach((field) => {
         field.disabled = !isText;
       });
+
+      focusFirstEnabledInput();
     }
 
     if (questionTypeSelect) {
       questionTypeSelect.addEventListener('change', toggleQuestionMode);
       toggleQuestionMode();
+    } else {
+      focusFirstEnabledInput();
     }
 
     scope.querySelector('#shuffle-options')?.addEventListener('click', () => {
@@ -141,8 +201,13 @@
 
       labels.forEach((label, index) => {
         const field = optionBox.querySelector(`[name="options[${label}]"]`);
-        if (field) field.value = values[index];
+        if (field) {
+          field.value = values[index];
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
       });
     });
-  });
+  }
+
+  document.querySelectorAll('form').forEach(bindExamQuestionForm);
 })();

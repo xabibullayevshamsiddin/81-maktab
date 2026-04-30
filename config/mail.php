@@ -15,6 +15,9 @@ return [
 
     'default' => env('MAIL_MAILER', 'smtp'),
 
+    'enabled' => filter_var(env('MAIL_DELIVERY_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+    'code_delivery_enabled' => filter_var(env('MAIL_CODE_DELIVERY_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+
     /*
     |--------------------------------------------------------------------------
     | Mailer Configurations
@@ -42,8 +45,9 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
-            'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            'timeout' => env('MAIL_TIMEOUT', 15),
+            'local_domain' => env('MAIL_EHLO_DOMAIN')
+                ?: (parse_url((string) env('APP_URL', ''), PHP_URL_HOST) ?: null),
         ],
 
         'ses' => [
@@ -56,6 +60,10 @@ return [
             // 'client' => [
             //     'timeout' => 5,
             // ],
+        ],
+
+        'resend' => [
+            'transport' => 'resend',
         ],
 
         'mailgun' => [
@@ -108,8 +116,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', env('MAIL_USERNAME', 'hello@example.com')),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', '81-maktab')),
     ],
 
     /*

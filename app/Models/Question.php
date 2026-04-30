@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,6 +25,19 @@ class Question extends Model
     protected $appends = [
         'image_url',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (Question $question): void {
+            if ($question->isDirty('image_path')) {
+                PublicStorage::delete($question->getOriginal('image_path'));
+            }
+        });
+
+        static::deleted(function (Question $question): void {
+            PublicStorage::delete($question->image_path);
+        });
+    }
 
     public function exam(): BelongsTo
     {

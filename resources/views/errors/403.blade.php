@@ -37,7 +37,7 @@
                   onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ route('home') }}'; }"
                 >
                   <i class="fa-solid fa-arrow-left"></i>
-                  Oldingi sahifaga qaytish
+                  Oldingi sahifaga qaytis
                 </button>
               </div>
             </div>

@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
@@ -37,7 +37,18 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ filemtime(public_path('temp/img/favicon-32.png')) }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
     @stack('page_styles')
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('SW registration failed: ', err);
+          });
+        });
+      }
+    </script>
   </head>
 
       <body
@@ -51,6 +62,7 @@
         data-site-error="{{ session('error') }}"
         data-site-toast-type="{{ session('toast_type') }}"
         data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
+        data-user-notifications-url="{{ auth()->check() ? route('notifications.pending') : '' }}"
         data-phone-pattern="{{ uz_phone_input_pattern() }}"
         data-phone-title="{{ uz_phone_input_title() }}"
       >
@@ -76,16 +88,15 @@
     @endunless
 		    @php
 		      $authUser = auth()->user();
-		      $teacherWithProfile = $authUser && $authUser->isTeacher() && $authUser->hasLinkedActiveTeacherProfile();
-		      $teacherAtCourseLimit = $teacherWithProfile && $authUser->hasReachedCourseOpenLimit();
+		      $teacherCourseCandidate = $authUser && $authUser->isTeacher();
+		      $teacherAtCourseLimit = $teacherCourseCandidate && $authUser->hasReachedCourseOpenLimit();
 		      $canOpenCourseForm = $authUser && (
 		        $authUser->isAdmin()
-		        || ($teacherWithProfile && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
+		        || ($teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
 		      );
-		      $teacherNeedsCourseOpenRequest = $teacherWithProfile && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
-		      $teacherCourseOpenPending = $teacherWithProfile && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
+		      $teacherNeedsCourseOpenRequest = $teacherCourseCandidate && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
+		      $teacherCourseOpenPending = $teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
 		      $canCreateCourse = $canOpenCourseForm;
-		      $needsTeacherProfileLink = $authUser && $authUser->isTeacher() && ! $authUser->hasLinkedActiveTeacherProfile();
 		      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
 		      $currentLocale = current_locale();
 		      $supportedLocales = supported_locales();
@@ -119,7 +130,7 @@
 	            @endswitch
 	          </span>
 	          <p class="global-announcement-text">{{ $announcementText }}</p>
-	          <button type="button" class="global-announcement-close" aria-label="Yopish" onclick="this.closest('.global-announcement').remove()">
+	          <button type="button" class="global-announcement-close" aria-label="Yopish" onclick="let el = this.closest('.global-announcement'); el.classList.add('closing'); setTimeout(() => el.remove(), 450);">
 	            <i class="fa-solid fa-xmark"></i>
 	          </button>
 	        </div>
@@ -152,9 +163,9 @@
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
-              <li><a class="nav-link {{ request()->routeIs('teacher*') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
               <li class="mobile-theme-toggle-wrap">
-                <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
+                <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
                   <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
                   <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
                 </button>
@@ -165,11 +176,11 @@
                     class="nav-link ai-header-toggle"
                     id="ai-header-toggle"
                     type="button"
-                    aria-label="AI Yordamchi"
-                    title="AI Yordamchi"
+                    aria-label="{{ __('public.layout.ai_assistant') }}"
+                    title="{{ __('public.layout.ai_assistant') }}"
                   >
                     <i class="fa-solid fa-magic-wand-sparkles"></i>
-                    <span>AI Bot</span>
+                    <span>{{ __('public.layout.ai_assistant') }}</span>
                   </button>
                 </li>
               @endauth
@@ -190,6 +201,10 @@
                         <i class="fa-solid fa-user"></i>
                         {{ __('public.layout.menu.profile') }}
                       </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        {{ __('public.layout.feature_requests') }}
+                      </a>
                       @if($canCreateCourse)
                         <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
                           <i class="fa-solid fa-book-open"></i>
@@ -198,21 +213,13 @@
                       @elseif($teacherCourseOpenPending)
                         <span class="nav-dropdown-item nav-dropdown-item-disabled">
                           <i class="fa-solid fa-hourglass-half"></i>
-                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">Admin ruxsatini kuting (profil).</small></span>
+                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">{{ __('public.layout.wait_admin_approval_profile') }}</small></span>
                         </span>
                       @elseif($teacherNeedsCourseOpenRequest)
                         <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
                           <i class="fa-solid fa-paper-plane"></i>
-                          Kurs ochish — ruxsat so'rang
+                          {{ __('public.layout.course_request_action') }}
                         </a>
-                      @elseif($needsTeacherProfileLink)
-                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
-                          <i class="fa-solid fa-circle-info"></i>
-                          <span>
-                            {{ __('public.layout.menu.course_open') }}
-                            <small class="nav-dropdown-item-note">Avval admin akkauntingizni ustoz kartasiga bog'lashi kerak.</small>
-                          </span>
-                        </span>
                       @endif
                       @if($canAccessDashboard)
                         <a class="nav-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
@@ -271,12 +278,13 @@
 	                <div class="mobile-nav-actions mobile-nav-actions--auth">
 	                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
 	                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
-	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">Kurs — ruxsat so'rang</a>
+	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">{{ __('public.layout.course_request_short') }}</a>
 	                  @elseif($teacherCourseOpenPending)
-	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">Kurs — kutilmoqda</span>
+	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">{{ __('public.layout.course_pending_short') }}</span>
 	                  @endif
 	                  @if($canAccessDashboard)
 	                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
@@ -286,9 +294,6 @@
 	                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
 	                  </form>
 	                </div>
-	                @if($needsTeacherProfileLink)
-	                  <p class="mobile-nav-note">Ustoz bo'lsangiz, avval admin teacher profilingizni bog'lashi kerak.</p>
-	                @endif
 	              @endguest
 	            </div>
           </nav>
@@ -307,10 +312,10 @@
               @endforeach
               <span class="locale-switcher-slider"></span>
             </div>
-            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="Search" title="Search" style="text-decoration: none; color: inherit;">
+            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}" style="text-decoration: none; color: inherit;">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
-            <button class="theme-toggle js-theme-toggle" type="button" aria-label="Tungi rejimni yoqish yoki o'chirish" title="Tungi rejim">
+            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
               <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
               <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
             </button>
@@ -376,10 +381,11 @@
 
         <!-- Column 3: Resources -->
         <div class="footer-column">
-          <h4 class="footer-title">Resurslar</h4>
+          <h4 class="footer-title">{{ __('public.layout.resources') }}</h4>
           <ul class="footer-links">
             <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
             <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+            <li><a href="{{ route('feature-requests.index') }}">{{ __('public.layout.feature_requests') }}</a></li>
             @auth
               <li><a href="{{ route('exam.index') }}">{{ __('public.layout.menu.exams') }}</a></li>
             @else
@@ -395,7 +401,7 @@
           <ul class="footer-contact-list">
             <li>
               <i class="fa-solid fa-location-dot"></i>
-              <span>Yashnobod tumani, Toshkent, O'zbekiston</span>
+              <span>{{ __('public.layout.address') }}</span>
             </li>
             <li>
               <i class="fa-solid fa-phone"></i>
@@ -408,7 +414,7 @@
           </ul>
           <div class="footer-map-action">
             <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer btn-prime">
-              <i class="fa-solid fa-map-location-dot"></i> Xaritada ko'rish
+              <i class="fa-solid fa-map-location-dot"></i> {{ __('public.layout.view_on_map') }}
             </a>
           </div>
         </div>
@@ -418,8 +424,8 @@
         <div class="container footer-bottom-inner">
           <p>&copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}</p>
           <div class="footer-bottom-links">
-            <a href="#">Maxfiylik siyosati</a>
-            <a href="#">Foydalanish shartlari</a>
+            <a href="{{ route('privacy-policy') }}">{{ __('public.layout.privacy_policy') }}</a>
+            <a href="{{ route('terms') }}">{{ __('public.layout.terms') }}</a>
           </div>
         </div>
       </div>
@@ -437,6 +443,7 @@
         data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
         data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
         data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
+        data-chat-clear-url="{{ request()->getBaseUrl() }}/chat"
         data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
         data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
         data-csrf="{{ csrf_token() }}"
@@ -456,6 +463,11 @@
               <span>Global chat</span>
             </div>
             <div class="chat-panel-actions">
+              @if($authUser && $authUser->isAdmin())
+                <button type="button" class="chat-panel-btn" id="chat-clear-btn" aria-label="Chatni tozalash" title="Barcha xabarlarni o'chirish" hidden>
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              @endif
               <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="Kengaytirish" title="To'liq ekran">
                 <i class="fa-solid fa-expand"></i>
               </button>
@@ -781,6 +793,7 @@
       id="ai-widget"
       class="ai-widget"
       data-ai-url="{{ route('ai.chat') }}"
+      data-ai-feedback-url="{{ route('ai.chat.feedback') }}"
       data-csrf="{{ csrf_token() }}"
       data-ai-mock-delim="{{ config('ai.mock_delimiter') }}"
       data-ai-enabled="{{ $aiChatEnabled ? '1' : '0' }}"
@@ -828,7 +841,7 @@
         </div>
 
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
-          <button type="button" class="ai-action-btn" data-msg="Bugun qanday darslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Darslar 🗓️</button>
+          <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Kurslar 📚</button>
           <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Natijalarim 📝</button>
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Aloqa 📞</button>
         </div>
@@ -865,8 +878,10 @@
         var input = document.getElementById('ai-textarea');
         var sendBtn = document.getElementById('ai-send-btn');
         var statusWrap = document.getElementById('ai-compose-status');
+        var statusText = statusWrap ? statusWrap.querySelector('.chat-compose-status-text') : null;
 
         var aiUrl = widget.getAttribute('data-ai-url');
+        var aiFeedbackUrl = widget.getAttribute('data-ai-feedback-url');
         var csrfToken = widget.getAttribute('data-csrf');
         var aiMockDelim = widget.getAttribute('data-ai-mock-delim') || '';
         var headerToggle = document.getElementById('ai-header-toggle');
@@ -875,6 +890,27 @@
         var aiPanelMain = document.getElementById('ai-panel-main');
         var aiDisabledText = document.getElementById('ai-disabled-panel-text');
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
+        var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!document.getElementById('ai-typewriter-style')) {
+          var typewriterStyle = document.createElement('style');
+          typewriterStyle.id = 'ai-typewriter-style';
+          typewriterStyle.textContent = '@keyframes aiTypeCursorBlink{0%,49%{opacity:1;}50%,100%{opacity:.15;}}';
+          document.head.appendChild(typewriterStyle);
+        }
+
+        function syncAiDockState() {
+          document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
+        }
+
+        function showAiComposeStatus(text) {
+          if (!statusWrap) return;
+          if (statusText && text) {
+            statusText.textContent = text;
+          }
+          statusWrap.style.display = 'flex';
+          statusWrap.removeAttribute('hidden');
+        }
 
         function resetAiComposeState() {
           isSending = false;
@@ -887,15 +923,29 @@
             input.disabled = false;
             input.removeAttribute('aria-busy');
           }
+          if (actionBtns && actionBtns.forEach) {
+            actionBtns.forEach(function (b) {
+              b.disabled = false;
+              b.style.opacity = '1';
+              b.style.cursor = 'pointer';
+            });
+          }
           if (statusWrap) {
             statusWrap.style.display = 'none';
             statusWrap.setAttribute('hidden', '');
           }
+          if (statusText) {
+            statusText.textContent = "O'ylamoqda...";
+          }
         }
 
         function closePanel() {
-          resetAiComposeState();
+          if (!isSending) {
+            resetAiComposeState();
+          }
           panel.classList.remove('is-open');
+          widget.classList.remove('is-open');
+          syncAiDockState();
         }
 
         function openPanel() {
@@ -903,6 +953,8 @@
             window.primeCloseGlobalChatPanel();
           }
           panel.classList.add('is-open');
+          widget.classList.add('is-open');
+          syncAiDockState();
           if (!aiEnabled && aiDisabledPanel && aiPanelMain) {
             aiPanelMain.hidden = true;
             aiDisabledPanel.hidden = false;
@@ -914,9 +966,13 @@
           }
           if (aiDisabledPanel) aiDisabledPanel.hidden = true;
           if (aiPanelMain) aiPanelMain.hidden = false;
-          resetAiComposeState();
+          if (!isSending) {
+            resetAiComposeState();
+          }
           if (window.playPrimeSuccess) window.playPrimeSuccess();
-          input.focus();
+          if (!isSending) {
+            input.focus();
+          }
         }
 
         window.primeCloseAiPanel = function() {
@@ -947,7 +1003,12 @@
           closePanel();
         });
 
-        function scrollToBottom() {
+        function scrollToBottom(immediate) {
+          if (!messagesEl) return;
+          if (immediate) {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return;
+          }
           messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
         }
 
@@ -957,34 +1018,315 @@
           return head || '…';
         }
 
-        function addMessage(text, isAi) {
-          if (!text || !text.trim()) return;
+        function escapeAiHtml(value) {
+          return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        function formatPlainMessageHtml(text) {
+          return escapeAiHtml(text).replace(/\n/g, '<br>');
+        }
+
+        function formatAiMessageHtml(text) {
+          var safe = escapeAiHtml(text).replace(/\r\n?/g, '\n');
+          safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong style="color:inherit;font-weight:700;">$1</strong>');
+
+          var lines = safe.split('\n');
+          var html = '';
+          var listItems = [];
+
+          function flushList() {
+            if (!listItems.length) return;
+            html += '<ul style="margin:8px 0 10px 18px;padding:0;">' + listItems.join('') + '</ul>';
+            listItems = [];
+          }
+
+          lines.forEach(function (rawLine) {
+            var line = rawLine.trim();
+
+            if (!line) {
+              flushList();
+              html += '<div style="height:8px;"></div>';
+              return;
+            }
+
+            if (/^(-|•)\s+/.test(line)) {
+              listItems.push('<li style="margin:0 0 6px 0;">' + line.replace(/^(-|•)\s+/, '') + '</li>');
+              return;
+            }
+
+            flushList();
+            html += '<div style="margin:0 0 6px 0;line-height:1.6;color:inherit;">' + line + '</div>';
+          });
+
+          flushList();
+
+          return html;
+        }
+
+        function sendAiMessage(message) {
+          if (!message || isSending || !aiEnabled) return;
+          input.value = message;
+          form.dispatchEvent(new Event('submit'));
+        }
+
+        function buildActionNode(action) {
+          if (!action || !action.label) return null;
+
+          var commonStyle = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.04);color:inherit;font-size:12px;text-decoration:none;cursor:pointer;';
+
+          if (action.type === 'link' && action.url) {
+            var link = document.createElement('a');
+            link.href = action.url;
+            link.textContent = action.label;
+            link.style.cssText = commonStyle;
+            return link;
+          }
+
+          if (action.type === 'reply' && action.message) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = action.label;
+            btn.style.cssText = commonStyle;
+            btn.addEventListener('click', function () {
+              sendAiMessage(action.message);
+            });
+            return btn;
+          }
+
+          return null;
+        }
+
+        function submitAiFeedback(interactionId, helpful, holder, reason) {
+          if (!interactionId || !aiFeedbackUrl || !holder) return;
+          var payload = { interaction_id: interactionId, helpful: helpful };
+          if (typeof reason === 'string' && reason.trim()) {
+            payload.reason = reason.trim();
+          }
+
+          fetch(aiFeedbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(payload)
+          })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            holder.innerHTML = '<small style="opacity:.8;">' + escapeAiHtml((data && data.message) || 'Rahmat!') + '</small>';
+          })
+          .catch(function () {
+            holder.innerHTML = '<small style="opacity:.8;">Feedback yuborilmadi.</small>';
+          });
+        }
+
+        function renderUnhelpfulFeedbackPrompt(interactionId, holder) {
+          if (!interactionId || !holder) return;
+
+          holder.innerHTML = '';
+          holder.style.cssText = 'display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding:10px;border-radius:14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);';
+
+          var title = document.createElement('small');
+          title.textContent = 'Nima noto\'g\'ri edi?';
+          title.style.cssText = 'color:var(--text);opacity:.88;font-weight:600;';
+          holder.appendChild(title);
+
+          var presetsWrap = document.createElement('div');
+          presetsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+
+          ['Noaniq javob', 'Noto\'g\'ri yo\'naltirdi', 'Ma\'lumot yetarli emas'].forEach(function (preset) {
+            var presetBtn = document.createElement('button');
+            presetBtn.type = 'button';
+            presetBtn.textContent = preset;
+            presetBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.12);color:var(--text);font-size:12px;cursor:pointer;';
+            presetBtn.addEventListener('click', function () {
+              textarea.value = preset;
+              textarea.focus();
+            });
+            presetsWrap.appendChild(presetBtn);
+          });
+
+          holder.appendChild(presetsWrap);
+
+          var textarea = document.createElement('textarea');
+          textarea.rows = 2;
+          textarea.maxLength = 500;
+          textarea.placeholder = 'Qisqacha yozing...';
+          textarea.style.cssText = 'width:100%;resize:none;padding:8px 10px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:var(--bg);color:var(--text);font:inherit;';
+          holder.appendChild(textarea);
+
+          var actionsWrap = document.createElement('div');
+          actionsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+
+          var sendBtn = document.createElement('button');
+          sendBtn.type = 'button';
+          sendBtn.textContent = 'Yuborish';
+          sendBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;';
+          sendBtn.addEventListener('click', function () {
+            submitAiFeedback(interactionId, false, holder, textarea.value);
+          });
+          actionsWrap.appendChild(sendBtn);
+
+          var skipBtn = document.createElement('button');
+          skipBtn.type = 'button';
+          skipBtn.textContent = 'Sababsiz yuborish';
+          skipBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.10);color:var(--text);font-size:12px;cursor:pointer;';
+          skipBtn.addEventListener('click', function () {
+            submitAiFeedback(interactionId, false, holder, '');
+          });
+          actionsWrap.appendChild(skipBtn);
+
+          holder.appendChild(actionsWrap);
+        }
+
+        function buildMessageElement(isAi) {
           var el = document.createElement('div');
           el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
-          
-          // Strip Markdown bold symbols if AI slips up
-          var cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-          
+
           var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
-          
-          el.innerHTML = avatarHtml + '<div class="chat-msg-content">' + cleanText.replace(/<[^>]+>/g, '') + '</div>';
+
+          el.innerHTML = avatarHtml + '<div class="chat-msg-content"></div>';
           messagesEl.appendChild(el);
-          
-          // Force a tiny reflow for animation
+
           void el.offsetWidth;
           el.classList.add('reveal');
           el.style.opacity = '1';
           el.style.transform = 'translateY(0)';
-          
           scrollToBottom();
+
+          return el;
+        }
+
+        function attachAiMeta(contentEl, meta) {
+          if (!contentEl || !meta) return;
+
+          if (Array.isArray(meta.actions) && meta.actions.length) {
+            var actionsWrap = document.createElement('div');
+            actionsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+            meta.actions.forEach(function (action) {
+              var node = buildActionNode(action);
+              if (node) actionsWrap.appendChild(node);
+            });
+            if (actionsWrap.childNodes.length) {
+              contentEl.appendChild(actionsWrap);
+            }
+          }
+
+          if (meta.feedbackEnabled && meta.interactionId) {
+            var feedbackWrap = document.createElement('div');
+            feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
+
+            var label = document.createElement('small');
+            label.textContent = 'Bu javob foydali bo\'ldimi?';
+            label.style.cssText = 'color:var(--text);opacity:.82;';
+            feedbackWrap.appendChild(label);
+
+            var feedbackBtnBaseStyle = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;color:var(--text);font-size:12px;font-weight:600;line-height:1;cursor:pointer;backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;';
+
+            var yesBtn = document.createElement('button');
+            yesBtn.type = 'button';
+            yesBtn.textContent = 'Foydali';
+            yesBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(16,185,129,.55);background:rgba(16,185,129,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
+            yesBtn.addEventListener('click', function () {
+              submitAiFeedback(meta.interactionId, true, feedbackWrap);
+            });
+            feedbackWrap.appendChild(yesBtn);
+
+            var noBtn = document.createElement('button');
+            noBtn.type = 'button';
+            noBtn.textContent = 'Foydasiz';
+            noBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
+            noBtn.addEventListener('click', function () {
+              renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
+            });
+            feedbackWrap.appendChild(noBtn);
+
+            contentEl.appendChild(feedbackWrap);
+          }
+
+          scrollToBottom();
+        }
+
+        function animateAiMessage(contentEl, text, meta) {
+          if (!contentEl) return Promise.resolve();
+
+          var fullText = String(text || '');
+          if (!fullText.trim() || prefersReducedMotion) {
+            contentEl.innerHTML = formatAiMessageHtml(fullText);
+            attachAiMeta(contentEl, meta);
+            scrollToBottom();
+            return Promise.resolve();
+          }
+
+          var cursor = document.createElement('span');
+          cursor.setAttribute('aria-hidden', 'true');
+          cursor.style.cssText = 'display:inline-block;width:9px;height:1.05em;margin-left:2px;border-radius:999px;background:currentColor;vertical-align:-0.18em;opacity:.85;animation:aiTypeCursorBlink .85s steps(1,end) infinite;';
+
+          var index = 0;
+          var baseDelay = fullText.length > 900 ? 5 : (fullText.length > 500 ? 7 : 11);
+
+          return new Promise(function (resolve) {
+            function step() {
+              index += 1;
+              contentEl.innerHTML = formatAiMessageHtml(fullText.slice(0, index));
+              contentEl.appendChild(cursor);
+              scrollToBottom(true);
+
+              if (index >= fullText.length) {
+                cursor.remove();
+                contentEl.innerHTML = formatAiMessageHtml(fullText);
+                attachAiMeta(contentEl, meta);
+                scrollToBottom();
+                resolve();
+                return;
+              }
+
+              var currentChar = fullText.charAt(index - 1);
+              var delay = baseDelay;
+
+              if (currentChar === '\n') {
+                delay += 55;
+              } else if (/[.!?]/.test(currentChar)) {
+                delay += 35;
+              } else if (/[,:;]/.test(currentChar)) {
+                delay += 18;
+              }
+
+              window.setTimeout(step, delay);
+            }
+
+            step();
+          });
+        }
+
+        function addMessage(text, isAi, meta) {
+          if (!text || !text.trim()) return Promise.resolve(null);
+
+          var el = buildMessageElement(isAi);
+          var contentEl = el.querySelector('.chat-msg-content');
+
+          if (!contentEl) {
+            return Promise.resolve(el);
+          }
+
+          if (!isAi) {
+            contentEl.innerHTML = formatPlainMessageHtml(text);
+            scrollToBottom();
+            return Promise.resolve(el);
+          }
+
+          return animateAiMessage(contentEl, text, meta).then(function () {
+            return el;
+          });
         }
 
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           if (!aiEnabled) return;
-          if (sendBtn && sendBtn.disabled) {
-            resetAiComposeState();
-          }
           var txt = input.value.trim();
           if (!txt || isSending) return;
 
@@ -993,9 +1335,18 @@
           addMessage(stripMockTailForDisplay(txt), false);
           input.value = '';
           sendBtn.disabled = true;
-          if (window.playPrimeChatTick) window.playPrimeChatTick();
-          statusWrap.style.display = 'flex';
-          statusWrap.removeAttribute('hidden');
+          sendBtn.setAttribute('aria-busy', 'true');
+          sendBtn.style.pointerEvents = 'none';
+          input.disabled = true;
+          input.setAttribute('aria-busy', 'true');
+          if (actionBtns && actionBtns.forEach) {
+            actionBtns.forEach(function (b) {
+              b.disabled = true;
+              b.style.opacity = '0.5';
+              b.style.cursor = 'not-allowed';
+            });
+          }
+          showAiComposeStatus("O'ylamoqda...");
           scrollToBottom();
 
           fetch(aiUrl, {
@@ -1010,28 +1361,54 @@
           })
           .then(function(payload) {
             var data = payload.data;
-            statusWrap.style.display = 'none';
-            statusWrap.setAttribute('hidden', '');
-            isSending = false;
-            sendBtn.disabled = false;
+
+            if (data && data.disabled) {
+              aiEnabled = false;
+              widget.setAttribute('data-ai-enabled', '0');
+              data.error = data.error || "AI vaqtincha o'chirilgan.";
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(data.error || "AI vaqtincha o'chirilgan.", true).then(function () {
+                resetAiComposeState();
+              });
+            }
+
+            if (!data || !data.success) {
+              var backendError = (data && (data.error || data.message))
+                || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
+                || "Xatolik yuz berdi.";
+
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(backendError, true, null).then(function () {
+                resetAiComposeState();
+              });
+            }
+
             if (data && data.success) {
-              addMessage(data.text, true);
-              if (window.playPrimeResultPass) window.playPrimeResultPass();
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(data.text, true, {
+                actions: data.actions || [],
+                interactionId: data.interaction_id,
+                feedbackEnabled: !!data.feedback_enabled
+              }).then(function () {
+                resetAiComposeState();
+                if (window.playPrimeResultPass) window.playPrimeResultPass();
+              });
             } else if (data && data.disabled) {
               aiEnabled = false;
               widget.setAttribute('data-ai-enabled', '0');
+              data.error = data.error || "AI vaqtincha o'chirilgan.";
               addMessage(data.error || 'AI vaqtincha o‘chirilgan.', true);
             } else {
-              addMessage((data && data.error) || "Xatolik yuz berdi.", true);
+              var backendError = (data && (data.error || data.message))
+                || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
+                || "Xatolik yuz berdi.";
+              addMessage(backendError, true, null);
             }
           })
           .catch(function(err) {
             console.error('AI Fetch error:', err);
-            statusWrap.style.display = 'none';
-            statusWrap.setAttribute('hidden', '');
-            isSending = false;
-            sendBtn.disabled = false;
-            addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true);
+            resetAiComposeState();
+            addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true, null);
           });
         });
 
@@ -1042,35 +1419,14 @@
           }
         });
 
-        input.addEventListener('input', function() {
-          if (window.playPrimeChatTick && !isSending) window.playPrimeChatTick();
-        });
-
-        // Quick Action Buttons Handler (with Cooldown)
+        // Quick Action Buttons Handler
         var actionBtns = document.querySelectorAll('.ai-action-btn');
         actionBtns.forEach(function(btn) {
           btn.addEventListener('click', function() {
              if (!aiEnabled || btn.disabled || isSending) return;
-             
-             // Visual feedback and cooldown
-             actionBtns.forEach(b => {
-                 b.disabled = true;
-                 b.style.opacity = '0.5';
-                 b.style.cursor = 'not-allowed';
-             });
 
              var msg = this.getAttribute('data-msg');
-             input.value = msg;
-             form.dispatchEvent(new Event('submit'));
-
-             // Re-enable after 3 seconds
-             setTimeout(() => {
-                 actionBtns.forEach(b => {
-                     b.disabled = false;
-                     b.style.opacity = '1';
-                     b.style.cursor = 'pointer';
-                 });
-             }, 3000);
+             sendAiMessage(msg);
           });
         });
       })();

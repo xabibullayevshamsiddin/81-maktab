@@ -26,7 +26,8 @@
   $courseEnrollmentCount = $courseEnrollments->count();
   $createdCourseCount = $createdCourses->count();
   $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
-  $canViewCourseEnrollments = $user->isAdmin() || ($user->isTeacher() && $user->hasLinkedActiveTeacherProfile());
+  $hasCreatedCourseForEnrollments = (bool) ($canViewCourseEnrollments ?? false);
+  $canViewCourseEnrollments = $user->isAdmin() || $hasCreatedCourseForEnrollments;
 
 
   $profileStats = [
@@ -105,12 +106,21 @@
 
       .profile-hero {
         padding-top: 150px !important;
-        padding-bottom: 60px !important;
+        padding-bottom: 80px !important;
         display: block !important;
+        min-height: auto !important;
       }
 
       .news-hero-content {
         margin-top: 20px !important;
+        position: relative !important;
+        z-index: 10 !important;
+      }
+
+      .profile-overview-panel {
+        margin-top: 0 !important;
+        position: relative !important;
+        z-index: 20 !important;
       }
 
       @media (max-width: 991px) {
@@ -121,6 +131,11 @@
 
         .profile-hero {
           padding-top: 120px !important;
+          padding-bottom: 100px !important;
+        }
+
+        .news-hero-content {
+          margin-top: 10px !important;
         }
       }
     </style>
@@ -269,6 +284,7 @@
 
           @include('profile.partials.email-card')
           @include('profile.partials.password-card')
+          @include('profile.partials.app-settings-card')
         </div>
 
         <div class="profile-column profile-column-activity profile-column-activity--mobile-first">
@@ -320,6 +336,22 @@
 
             <div class="profile-actions-row">
               <a href="{{ route('exam.index') }}" class="btn btn-sm">{{ __('profile.blocks.exams.button') }}</a>
+            </div>
+          </section>
+
+          <section class="profile-activity-block reveal">
+            <div class="profile-block-head">
+              <div class="profile-block-copy">
+                <h3><i class="fa-solid fa-lightbulb"></i> Taklif va ovoz berish</h3>
+                <p>Yangi funksiya bo'yicha taklif qoldiring va boshqa foydalanuvchilarning takliflariga ovoz bering.</p>
+              </div>
+              <span class="profile-section-count">Feature</span>
+            </div>
+
+            <div class="profile-actions-row">
+              <a href="{{ route('feature-requests.index') }}" class="btn btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Takliflar sahifasi
+              </a>
             </div>
           </section>
 
@@ -409,19 +441,24 @@
                         <span class="profile-exam-result-metric-label">Holat</span>
                       </div>
                     </div>
+                    <div class="profile-actions-row" style="margin-top:12px; border-top: 1px solid var(--border); padding-top: 12px;">
+                      <a href="{{ route('profile.exams.results.show', $er) }}" class="btn btn-outline btn-sm w-100" style="justify-content:center;">
+                        <i class="fa-solid fa-chart-pie me-1"></i> Batafsil grafika va xatolarni ko'rish
+                      </a>
+                    </div>
                   </div>
                 @endforeach
               </div>
             </section>
           @endif
 
-          @if($user->isTeacher() && $user->hasLinkedActiveTeacherProfile())
+          @if($user->isTeacher())
             <section class="profile-activity-block reveal" id="course-open-request">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-book-open"></i> Kurs ochish ruxsati</h3>
-                  <p>Teacher akkaunti faqat <strong>bitta</strong> kurs yaratishi mumkin. Kurs ochishdan oldin adminga
-                    ruxsat so'rashingiz kerak.</p>
+                  <p>Teacher akkaunti faqat <strong>bitta</strong> kurs yaratishi mumkin. Ustoz kartasiga bog'lash shart emas;
+                    kurs ochishdan oldin faqat admin ruxsati kerak.</p>
                 </div>
               </div>
               @if($user->hasReachedCourseOpenLimit())
@@ -431,9 +468,25 @@
                 <a href="{{ route('teacher.courses.create') }}" class="btn btn-sm">Kurs ochish sahifasiga o'tish</a>
               @elseif($user->hasPendingCourseOpenRequest())
                 <p class="profile-empty" style="margin:0;">So'rovingiz adminga yuborilgan. Admin javobini kuting.</p>
+                @if($user->course_open_request_reason)
+                  <p class="profile-request-note">Yuborgan sababingiz: {{ $user->course_open_request_reason }}</p>
+                @endif
               @else
-                <form action="{{ route('teacher.courses.request') }}" method="POST" class="profile-inline-form">
+                <form action="{{ route('teacher.courses.request') }}" method="POST" class="profile-reason-form">
                   @csrf
+                  <label for="course_open_reason">Nima uchun kurs ochmoqchisiz?</label>
+                  <textarea
+                    id="course_open_reason"
+                    name="reason"
+                    rows="4"
+                    minlength="10"
+                    maxlength="1000"
+                    required
+                    class="profile-reason-input @error('reason') is-invalid @enderror"
+                    placeholder="Masalan: 7-sinf o'quvchilari uchun matematika bo'yicha qo'shimcha tayyorlov kursi ochmoqchiman.">{{ old('reason') }}</textarea>
+                  @error('reason')
+                    <span class="profile-field-error">{{ $message }}</span>
+                  @enderror
                   <button type="submit" class="btn btn-sm">Kurs ochish uchun admin ruxsatini so'rash</button>
                 </form>
               @endif
@@ -492,11 +545,9 @@
             @php
               $canCreateCourse = $user->isAdmin() || (
                 $user->isTeacher()
-                && $user->hasLinkedActiveTeacherProfile()
                 && !$user->hasReachedCourseOpenLimit()
                 && $user->hasCourseOpenApproval()
               );
-              $needsLink = $user->isTeacher() && !$user->hasLinkedActiveTeacherProfile();
             @endphp
                         <div class="profile-actions-row">
                           <a href="{{ route('teacher.enrollments.index') }}"
@@ -504,7 +555,7 @@
                           @if($canCreateCourse)
                             <a href="{{ route('teacher.courses.create') }}"
                               class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
-                          @elseif($user->isTeacher() && $user->hasLinkedActiveTeacherProfile() && !$user->hasReachedCourseOpenLimit())
+                          @elseif($user->isTeacher() && !$user->hasReachedCourseOpenLimit())
                             <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline btn-sm">Kurs — ruxsat</a>
                           @endif
                           @if(auth()->user()->isAdmin())
@@ -512,10 +563,6 @@
                               class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.admin_courses') }}</a>
                           @endif
                         </div>
-                        @if($needsLink)
-                          <p class="profile-empty" style="margin-top:12px;">Admin teacher akkauntingizni ustoz kartasiga bog'lashi
-                            kerak.</p>
-                        @endif
                       </section>
           @endif
 
@@ -680,9 +727,7 @@
                     @endif
 
                     <div class="profile-inline-meta">
-                      @if($enrollment->course->teacher)
-                        <span><i class="fa-solid fa-user-tie"></i> {{ $enrollment->course->teacher->full_name }}</span>
-                      @endif
+                      <span><i class="fa-solid fa-user-tie"></i> {{ $enrollment->course->instructorName() }}</span>
                       <span><i class="fa-solid fa-book-open"></i> <a class="profile-activity-link"
                           href="{{ route('courses') }}">{{ __('profile.blocks.enrolled_courses.page') }}</a></span>
                     </div>
@@ -735,11 +780,9 @@
                       </div>
                     @endif
 
-                    @if($course->teacher)
-                      <div class="profile-inline-meta">
-                        <span><i class="fa-solid fa-user-tie"></i> {{ $course->teacher->full_name }}</span>
-                      </div>
-                    @endif
+                    <div class="profile-inline-meta">
+                      <span><i class="fa-solid fa-user-tie"></i> {{ $course->instructorName() }}</span>
+                    </div>
 
                     <div class="profile-actions-row" style="margin-top:10px;">
                       @if($user->isTeacher() && (int) $course->created_by === (int) $user->id)

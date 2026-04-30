@@ -15,13 +15,10 @@ class PostTest extends TestCase
     {
         $category = Category::create(['name' => 'Test Category']);
 
-        $post = Post::create([
+        $post = Post::create($this->postPayload($category->id, [
             'title' => 'Test Post',
             'slug' => 'test-post',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+        ]));
 
         $this->assertDatabaseHas('posts', [
             'title' => 'Test Post',
@@ -33,13 +30,10 @@ class PostTest extends TestCase
     {
         $category = Category::create(['name' => 'Test Category']);
 
-        $post = Post::create([
+        $post = Post::create($this->postPayload($category->id, [
             'title' => 'Test Post',
             'slug' => 'test-post',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+        ]));
 
         $this->assertInstanceOf(Category::class, $post->category);
         $this->assertEquals($category->id, $post->category->id);
@@ -49,13 +43,10 @@ class PostTest extends TestCase
     {
         $category = Category::create(['name' => 'Test Category']);
 
-        $post = Post::create([
+        $post = Post::create($this->postPayload($category->id, [
             'title' => 'Test Post',
             'slug' => 'test-post',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+        ]));
 
         $this->assertEmpty($post->comments);
     }
@@ -64,13 +55,10 @@ class PostTest extends TestCase
     {
         $category = Category::create(['name' => 'Test Category']);
 
-        $post = Post::create([
+        $post = Post::create($this->postPayload($category->id, [
             'title' => 'Test Post',
             'slug' => 'test-post',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+        ]));
 
         $this->assertEmpty($post->likes);
     }
@@ -79,48 +67,57 @@ class PostTest extends TestCase
     {
         $category = Category::create(['name' => 'Test Category']);
 
-        Post::create([
+        Post::create($this->postPayload($category->id, [
             'title' => 'Test Post',
             'slug' => 'test-post',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+        ]));
 
         $this->expectException(\Illuminate\Database\QueryException::class);
 
-        Post::create([
+        Post::create($this->postPayload($category->id, [
             'title' => 'Test Post',
             'slug' => 'test-post',
             'short_content' => 'Short content 2',
             'content' => 'Full content 2',
-            'category_id' => $category->id,
-        ]);
+            'image' => 'posts/test-2.jpg',
+        ]));
     }
 
     public function test_post_scope_search(): void
     {
         $category = Category::create(['name' => 'Test Category']);
 
-        Post::create([
+        Post::create($this->postPayload($category->id, [
             'title' => 'Laravel Tutorial',
             'slug' => 'laravel-tutorial',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+        ]));
 
-        Post::create([
+        Post::create($this->postPayload($category->id, [
             'title' => 'PHP Guide',
             'slug' => 'php-guide',
-            'short_content' => 'Short content',
-            'content' => 'Full content',
-            'category_id' => $category->id,
-        ]);
+            'image' => 'posts/php-guide.jpg',
+        ]));
 
         $searchResults = Post::search('Laravel')->get();
 
         $this->assertCount(1, $searchResults);
         $this->assertEquals('Laravel Tutorial', $searchResults->first()->title);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function postPayload(int $categoryId, array $overrides = []): array
+    {
+        return array_merge([
+            'title' => 'Test Post',
+            'slug' => 'test-post',
+            'short_content' => 'Short content',
+            'content' => 'Full content',
+            'category_id' => $categoryId,
+            'post_kind' => 'general',
+            'image' => 'posts/test.jpg',
+        ], $overrides);
     }
 }

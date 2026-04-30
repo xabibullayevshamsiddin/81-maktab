@@ -8,6 +8,11 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
     <title>@yield('title', 'Admin Panel')</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- ========== All CSS files linkup ========= -->
     <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/bootstrap.min.css') }}" />
@@ -36,7 +41,7 @@
     <aside class="sidebar-nav-wrapper">
       <div class="navbar-logo">
         <a href="{{ route('dashboard') }}">
-          <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;" />
+          <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="logo" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;" />
         </a>
       </div>
       <nav class="sidebar-nav">
@@ -103,6 +108,13 @@
                 <a href="{{ route('admin.contact-messages.index') }}">
                   <span class="icon"><i class="mdi mdi-email-outline"></i></span>
                   <span class="text">Aloqa xabarlari</span>
+                </a>
+              </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.ai-reviews.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.ai-reviews.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI Review</span>
                 </a>
               </li>
             @endif
@@ -194,6 +206,13 @@
             </li>
 
             @if($sidebarUser->isSuperAdmin())
+              <li class="nav-item {{ request()->routeIs('ai-knowledges.*') ? 'active' : '' }}">
+                <a href="{{ route('ai-knowledges.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI bilim bazasi</span>
+                </a>
+              </li>
+
               <li class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.settings.index') }}">
                   <span class="icon"><i class="mdi mdi-cog-outline"></i></span>
@@ -206,7 +225,7 @@
 
           <li class="divider section-divider"><hr></li>
           <li class="nav-item">
-            <a href="{{ route('home') }}">
+            <a href="{{ route('home') }}" target="_blank">
               <span class="icon"><i class="mdi mdi-open-in-new"></i></span>
               <span class="text">Saytga qaytish</span>
             </a>
@@ -241,7 +260,16 @@
             </div>
             <div class="col-lg-7 col-md-7 col-6">
               <div class="header-right">
-                <!-- message start -->
+                <!-- notification start -->
+                <div class="header-notifications">
+                  <div class="notification-btn">
+                    <i class="mdi mdi-bell-outline"></i>
+                    <span class="notification-dot"></span>
+                  </div>
+                </div>
+                <!-- notification end -->
+
+                <!-- profile start -->
                 <div class="profile-box ml-15">
                   <button class="dropdown-toggle bg-transparent border-0" type="button" id="profile"
                     data-bs-toggle="dropdown" aria-expanded="false">

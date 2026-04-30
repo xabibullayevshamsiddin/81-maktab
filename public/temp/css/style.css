@@ -162,102 +162,189 @@ a {
   z-index: -1;
 }
 
-/* Global e'lon banneri */
+/* Global e'lon banneri - PRIME UI/UX */
 .global-announcement {
   position: relative;
-  z-index: 25;
+  z-index: 50;
   padding: 0;
-  animation: announcementSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  animation: announcementSlideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: top center;
+}
+
+.global-announcement.closing {
+  animation: announcementSlideOut 0.45s cubic-bezier(0.82, 0.08, 0.39, 0.89) forwards !important;
+  pointer-events: none;
+}
+
+.global-announcement::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: announcementShine 4s infinite linear;
+  pointer-events: none;
+  z-index: 1;
 }
 
 @keyframes announcementSlideIn {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(-100%);
+    transform: translateY(-100%) scale(0.95);
   }
-  to {
+  60% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(3px) scale(1.01);
   }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes announcementSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(5px) scale(0.98);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%) scale(0.95);
+  }
+}
+
+@keyframes announcementShine {
+  0% { transform: translateX(-100%) skewX(-25deg); }
+  20% { transform: translateX(400%) skewX(-25deg); }
+  100% { transform: translateX(400%) skewX(-25deg); }
+}
+
+@keyframes announcementIconPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,255,255,0.4)); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(255,255,255,0.9)); }
 }
 
 .global-announcement-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 16px;
+  padding: 12px 24px;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
 .global-announcement-icon {
   flex-shrink: 0;
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  animation: announcementIconPulse 2s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  backdrop-filter: blur(4px);
 }
 
 .global-announcement-text {
   flex: 1;
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .global-announcement-close {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.15);
   color: inherit;
   cursor: pointer;
-  font-size: 13px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .global-announcement-close:hover {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(1.1);
+  background: #ffffff;
+  color: #1e293b;
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  border-color: #ffffff;
 }
 
+@keyframes bgGradientPan {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Premium Gradient Variants */
 .global-announcement--info {
-  background: linear-gradient(135deg, #1565c0, #1e88e5);
-  color: #fff;
+  background: linear-gradient(135deg, #0284c7, #2563eb, #3b82f6);
+  background-size: 200% 200%;
+  animation: announcementSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, bgGradientPan 5s infinite alternate ease-in-out;
+  color: #ffffff;
 }
 
 .global-announcement--success {
-  background: linear-gradient(135deg, #2e7d32, #43a047);
-  color: #fff;
+  background: linear-gradient(135deg, #059669, #10b981, #34d399);
+  background-size: 200% 200%;
+  animation: announcementSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, bgGradientPan 5s infinite alternate ease-in-out;
+  color: #ffffff;
 }
 
 .global-announcement--warning {
-  background: linear-gradient(135deg, #e65100, #f57c00);
-  color: #fff;
+  background: linear-gradient(135deg, #d97706, #f59e0b, #fbbf24);
+  background-size: 200% 200%;
+  animation: announcementSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, bgGradientPan 5s infinite alternate ease-in-out;
+  color: #ffffff;
 }
 
 .global-announcement--danger {
-  background: linear-gradient(135deg, #b71c1c, #e53935);
-  color: #fff;
+  background: linear-gradient(135deg, #be123c, #e11d48, #f43f5e);
+  background-size: 200% 200%;
+  animation: announcementSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, bgGradientPan 5s infinite alternate ease-in-out;
+  color: #ffffff;
 }
 
+/* Dark mode variants */
 :root[data-theme='dark'] .global-announcement--info {
-  background: linear-gradient(135deg, #0d47a1, #1565c0);
+  background: linear-gradient(135deg, #0c4a6e, #0369a1, #0284c7);
+  background-size: 200% 200%;
 }
 
 :root[data-theme='dark'] .global-announcement--success {
-  background: linear-gradient(135deg, #1b5e20, #2e7d32);
+  background: linear-gradient(135deg, #064e3b, #047857, #059669);
+  background-size: 200% 200%;
 }
 
 :root[data-theme='dark'] .global-announcement--warning {
-  background: linear-gradient(135deg, #bf360c, #e65100);
+  background: linear-gradient(135deg, #78350f, #b45309, #d97706);
+  background-size: 200% 200%;
 }
 
 :root[data-theme='dark'] .global-announcement--danger {
-  background: linear-gradient(135deg, #7f0000, #b71c1c);
+  background: linear-gradient(135deg, #4c0519, #881337, #be123c);
+  background-size: 200% 200%;
 }
 
 @media (max-width: 640px) {
@@ -1027,6 +1114,12 @@ section {
   left: auto;
   z-index: 10050;
   touch-action: none;
+  transition: z-index 0.3s step-end;
+}
+
+.chat-widget.is-open {
+  z-index: 10200;
+  transition: z-index 0s;
 }
 
 .ai-widget {
@@ -1036,6 +1129,12 @@ section {
   left: auto;
   z-index: 10050;
   touch-action: none !important;
+  transition: z-index 0.3s step-end;
+}
+
+.ai-widget.is-open {
+  z-index: 10200 !important;
+  transition: z-index 0s !important;
 }
 
 .prime-audio-slot {
@@ -2894,11 +2993,13 @@ button.chat-msg-avatar-btn:focus-visible {
 .chat-input-wrap {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   position: relative;
+  isolation: isolate;
   z-index: 3;
   transition: background 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
 }
@@ -3039,15 +3140,33 @@ button.chat-msg-avatar-btn:focus-visible {
   pointer-events: auto !important;
 }
 
+#chat-send-btn,
+#ai-send-btn {
+  z-index: 6;
+  pointer-events: auto !important;
+}
+
 /* Panel ochilganda pastki floating ikonlar input/send ustini to'smasin */
+body.chat-panel-open .prime-audio-toggle,
+body.chat-panel-open #ai-widget, /* Widgetni o'zini ham pointer-events: none qilamiz */
+body.chat-panel-open #ai-widget .ai-bubble,
+body.chat-panel-open #chat-widget .chat-bubble,
+body.ai-panel-open .prime-audio-toggle,
+body.ai-panel-open #chat-widget, /* Widgetni o'zini ham pointer-events: none qilamiz */
+body.ai-panel-open #chat-widget .chat-bubble,
+body.ai-panel-open #ai-widget .ai-bubble,
 body:has(#chat-widget.is-open) .prime-audio-toggle,
+body:has(#chat-widget.is-open) #ai-widget,
 body:has(#chat-widget.is-open) #ai-widget .ai-bubble,
 body:has(#chat-widget.is-open) #chat-widget .chat-bubble,
 body:has(#ai-panel.is-open) .prime-audio-toggle,
+body:has(#ai-panel.is-open) #chat-widget,
 body:has(#ai-panel.is-open) #chat-widget .chat-bubble,
 body:has(#ai-panel.is-open) #ai-widget .ai-bubble {
   pointer-events: none !important;
-  opacity: 0.2;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: scale(0.85) !important;
 }
 
 .chat-send-btn:hover { transform: scale(1.06); }
@@ -4329,6 +4448,48 @@ section.teachers.reveal::before {
   margin-top: 2px;
 }
 
+.contact-auth-info {
+  background: color-mix(in srgb, var(--surface) 82%, #ffffff 18%);
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.contact-auth-prompt {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.contact-auth-prompt-icon {
+  width: 64px;
+  height: 64px;
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 24px;
+}
+
+.contact-auth-prompt-title {
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.contact-auth-prompt-text {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
 .form-message {
   min-height: 24px;
   font-weight: 600;
@@ -4489,19 +4650,27 @@ section.teachers.reveal::before {
 }
 
 .course-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(15px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 8px 28px rgba(13, 63, 120, 0.09);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.04) !important;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root[data-theme='dark'] .course-card {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
 }
 
 .course-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 42px rgba(13, 63, 120, 0.16);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12), 0 0 20px rgba(59, 130, 246, 0.2) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
 }
 
 .course-card-media {
@@ -5159,9 +5328,37 @@ body.modal-open {
 }
 
 .news-hero {
-  padding-top: 110px;
-  padding-bottom: 40px;
-  background: linear-gradient(145deg, #08284d, #14559b 55%, #1a73c7);
+  padding-top: 130px;
+  padding-bottom: 60px;
+  background: linear-gradient(135deg, #08284d, #0f172a 60%, #1e293b);
+  position: relative;
+  overflow: hidden;
+}
+
+.news-hero::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+  filter: blur(100px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.news-hero::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 50%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
+  filter: blur(100px);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .news-page .header-main {
@@ -5183,8 +5380,16 @@ body.modal-open {
 }
 
 .news-hero-content h1 {
-  font-size: clamp(30px, 5vw, 52px);
-  margin-bottom: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(38px, 6.5vw, 68px);
+  font-weight: 900;
+  margin-bottom: 20px;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
 }
 
 .news-hero-content p {
@@ -5635,74 +5840,96 @@ body.modal-open {
 
 /* вЂ”вЂ”вЂ” Ro'yxatdan o'tish kartochkasi вЂ”вЂ”вЂ” */
 .register-section {
-  padding: 0 0 80px;
-  margin-top: -32px;
+  padding: 80px 0 120px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Aurora background for auth pages */
+.register-section::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .register-card {
-  max-width: 640px;
+  max-width: 680px;
   margin: 0 auto;
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 40px;
-  border: 1px solid var(--border);
-  box-shadow: 0 24px 56px rgba(13, 63, 120, 0.15);
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 30px;
+  padding: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06) !important;
   position: relative;
-  overflow: hidden;
+  z-index: 1;
+  animation: authCardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+:root[data-theme='dark'] .register-card {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25) !important;
 }
 
 .register-card-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 16px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: rgba(21, 101, 192, 0.08);
-  border: 1px solid rgba(21, 101, 192, 0.14);
-  color: var(--primary-2);
-  font-size: 12px;
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--accent), #f59e0b);
+  color: #fff;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  border-radius: 30px;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-.register-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, var(--primary-2), var(--accent));
-  border-radius: 24px 24px 0 0;
-}
 
 .register-card-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 24px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--accent), #0d9488);
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 30px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--primary), #a855f7);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 34px;
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.register-card:hover .register-card-icon {
+  transform: rotate(-5deg) scale(1.08);
 }
 
 .register-card h2 {
-  font-size: 24px;
-  color: var(--primary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
 }
 
 .register-card .register-subtitle {
   text-align: center;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--muted);
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .register-chip-list {
@@ -7096,58 +7323,98 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 
 /* вЂ”вЂ”вЂ” Sign-in kartocha вЂ”вЂ”вЂ” */
 .signin-section {
-  padding: 0 0 80px;
-  margin-top: -32px;
+  padding: 80px 0 120px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Aurora background for auth pages */
+.signin-section::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.signin-section::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
+  filter: blur(80px);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .signin-card {
   max-width: 440px;
   margin: 0 auto;
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 40px;
-  border: 1px solid var(--border);
-  box-shadow: 0 24px 56px rgba(13, 63, 120, 0.15);
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 30px;
+  padding: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06) !important;
   position: relative;
-  overflow: hidden;
+  z-index: 1;
+  animation: authCardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-.signin-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, var(--primary-2), var(--accent));
-  border-radius: 24px 24px 0 0;
+:root[data-theme='dark'] .signin-card {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25) !important;
+}
+
+@keyframes authCardIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .signin-card-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 24px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--primary-2), var(--primary));
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 30px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--primary), #a855f7);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 34px;
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.signin-card:hover .signin-card-icon {
+  transform: rotate(-5deg) scale(1.08);
 }
 
 .signin-card h2 {
-  font-size: 24px;
-  color: var(--primary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
 }
 
 .signin-card .signin-subtitle {
   text-align: center;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--muted);
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 .signin-form {
@@ -7165,18 +7432,21 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 .signin-form input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  font: inherit;
+  border-radius: 14px;
+  padding: 16px 20px;
+  background: var(--surface);
   color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 15px;
+  transition: all 0.2s ease;
 }
 
 .signin-form input:focus {
   outline: none;
-  border-color: var(--primary-2);
-  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  background: #fff;
 }
+
 
 .signin-form .forgot {
   font-size: 13px;
@@ -7190,10 +7460,21 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 }
 
 .signin-form .btn {
+  margin-top: 10px;
   width: 100%;
-  padding: 14px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), #2563eb);
+  color: #fff;
   font-size: 16px;
-  margin-top: 8px;
+  font-weight: 700;
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.signin-form .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
 }
 
 .signin-form .form-message {
@@ -9364,6 +9645,59 @@ body {
 
 .profile-inline-form {
   display: inline-block;
+}
+
+.profile-reason-form {
+  display: grid;
+  gap: 10px;
+  max-width: 620px;
+}
+
+.profile-reason-form label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.profile-reason-input {
+  width: 100%;
+  min-height: 118px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text);
+  padding: 13px 15px;
+  line-height: 1.55;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.profile-reason-input:focus {
+  border-color: rgba(59, 130, 246, 0.72);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.profile-reason-input.is-invalid {
+  border-color: rgba(239, 68, 68, 0.8);
+}
+
+.profile-field-error {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profile-request-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:root[data-theme='dark'] .profile-reason-input {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.26);
 }
 
 .profile-actions-row {
