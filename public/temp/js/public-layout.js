@@ -2254,11 +2254,63 @@
     var clearUrl = widget.getAttribute('data-chat-clear-url');
     var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
+    var currentUserId = String(widget.getAttribute('data-user-id') || '');
     var lastId = 0;
+    var unreadCount = 0;
     var isOpen = false;
     var isSending = false;
     var pollTimer = null;
     var canClearAll = false;
+    var lastReadStorageKey = 'prime-chat-last-read:' + currentUserId;
+    var lastReadId = getStoredChatLastReadId();
+
+    function getStoredChatLastReadId() {
+      try {
+        return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0);
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    function setStoredChatLastReadId(value) {
+      var normalized = Math.max(0, parseInt(value, 10) || 0);
+      lastReadId = normalized;
+      try {
+        window.localStorage.setItem(lastReadStorageKey, String(normalized));
+      } catch (e) {
+        /* localStorage bo'lmasa ham chat ishlayveradi */
+      }
+    }
+
+    function syncChatBadge() {
+      if (!badge) return;
+
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.hidden = false;
+        return;
+      }
+
+      badge.textContent = '0';
+      badge.hidden = true;
+    }
+
+    function countUnreadMessages(msgs, thresholdId) {
+      var minId = Math.max(0, parseInt(thresholdId, 10) || 0);
+      return msgs.reduce(function (count, msg) {
+        if (!msg || msg.is_mine) return count;
+        return (parseInt(msg.id, 10) || 0) > minId ? count + 1 : count;
+      }, 0);
+    }
+
+    function markChatAsRead(uptoId) {
+      var normalized = Math.max(lastId, Math.max(0, parseInt(uptoId, 10) || 0));
+      if (normalized > lastReadId) {
+        setStoredChatLastReadId(normalized);
+      }
+      unreadCount = 0;
+      syncChatBadge();
+    }
 
     function syncChatAdminActions() {
       if (!clearBtn) return;
@@ -2338,7 +2390,7 @@
       isOpen = true;
       resetChatComposeState();
       syncDockState();
-      if (badge) badge.hidden = true;
+      markChatAsRead(lastId);
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
         if (fullBtn) fullBtn.style.display = 'none';
@@ -2357,14 +2409,15 @@
       if (chatPanelMain) chatPanelMain.hidden = false;
       if (fullBtn) fullBtn.style.display = '';
 
-      loadMessages();
-      scrollDown();
-      input.focus();
-      startPolling();
-      syncComposeState();
-      setTimeout(function () {
-        panel.classList.remove('is-opening');
-      }, 520);
+      loadMessages().finally(function () {
+        markChatAsRead(lastId);
+        scrollDown();
+        input.focus();
+        syncComposeState();
+        setTimeout(function () {
+          panel.classList.remove('is-opening');
+        }, 520);
+      });
     }
 
     function closePanel() {
@@ -2375,7 +2428,6 @@
       isOpen = false;
       resetChatComposeState();
       syncDockState();
-      stopPolling();
       setComposeState('idle');
       setTimeout(function () {
         widget.classList.remove('is-bubble-return');
@@ -2540,6 +2592,7 @@
     }
 
     function loadMessages() {
+      var isInitialSeed = lastId === 0;
       return fetch(messagesUrl + '?after=' + lastId, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
         credentials: 'same-origin',
@@ -2572,14 +2625,21 @@
           });
 
           lastId = data.last_id || lastId;
-          scrollDown();
+
+          if (isOpen) {
+            markChatAsRead(lastId);
+            scrollDown();
+          } else if (isInitialSeed) {
+            unreadCount = countUnreadMessages(msgs, lastReadId);
+            syncChatBadge();
+          }
+
           return msgs;
         })
         .catch(function () { return []; });
     }
 
     function pollNew(options) {
-      if (!isOpen) return Promise.resolve([]);
       options = options || {};
       return fetch(messagesUrl + '?after=' + lastId, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
@@ -2605,9 +2665,17 @@
           canClearAll = !!data.can_clear_all;
           syncChatAdminActions();
           if (!msgs.length) return [];
-          appendMessages(msgs, { fresh: true, burst: !!options.burst });
+          appendMessages(msgs, { fresh: isOpen, burst: isOpen && !!options.burst });
           lastId = data.last_id || lastId;
-          scrollDown();
+
+          if (isOpen) {
+            markChatAsRead(lastId);
+            scrollDown();
+          } else {
+            unreadCount += countUnreadMessages(msgs, lastReadId);
+            syncChatBadge();
+          }
+
           return msgs;
         })
         .catch(function () { return []; });
@@ -2975,6 +3043,12 @@
     };
 
     syncChatAdminActions();
+    syncChatBadge();
+
+    if (chatEnabled) {
+      loadMessages();
+      startPolling();
+    }
 
     window.primeCloseGlobalChatPanel = function () {
       if (isOpen) closePanel();
