@@ -2464,15 +2464,31 @@
     function appendMessages(msgs, options) {
       if (!msgs.length) return [];
 
+      if (options && options.replace) {
+        messagesEl.innerHTML = '';
+      }
+
+      // Parallel poll responses can contain the same message; render each id only once.
+      var existingIds = new Set(
+        Array.prototype.map.call(messagesEl.querySelectorAll('[data-msg-id]'), function (node) {
+          return String(node.getAttribute('data-msg-id') || '');
+        })
+      );
+      msgs = msgs.filter(function (msg) {
+        var id = String(msg && msg.id ? msg.id : '');
+        if (!id || existingIds.has(id)) {
+          return false;
+        }
+        existingIds.add(id);
+        return true;
+      });
+      if (!msgs.length) return [];
+
       var temp = document.createElement('div');
       temp.innerHTML = msgs.map(renderMsg).join('');
 
       var nodes = Array.prototype.slice.call(temp.children);
       var animateClass = options && options.seeded ? 'is-seeded' : (options && options.fresh ? 'is-fresh' : '');
-
-      if (options && options.replace) {
-        messagesEl.innerHTML = '';
-      }
 
       nodes.forEach(function (node, index) {
         if (animateClass) {
