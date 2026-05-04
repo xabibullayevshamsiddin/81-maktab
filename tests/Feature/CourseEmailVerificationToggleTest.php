@@ -66,6 +66,35 @@ class CourseEmailVerificationToggleTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_course_price_and_duration_reject_garbage_values(): void
+    {
+        $admin = $this->adminUser();
+        $teacher = $this->activeTeacher();
+
+        config([
+            'courses.require_email_verification' => true,
+            'mail.enabled' => true,
+            'mail.code_delivery_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($admin)->from(route('teacher.courses.create'))->post(route('teacher.courses.store'), [
+            'teacher_id' => $teacher->id,
+            'title' => 'Kimyo kursi',
+            'price' => 'fsd',
+            'duration' => 'dsfds',
+            'description' => 'Kimyo bo\'yicha tayyorlov kursi.',
+            'start_date' => now()->addWeek()->toDateString(),
+        ]);
+
+        $response
+            ->assertRedirect(route('teacher.courses.create'))
+            ->assertSessionHasErrors(['price', 'duration']);
+
+        $this->assertDatabaseMissing('courses', [
+            'title' => 'Kimyo kursi',
+        ]);
+    }
+
     public function test_teacher_without_teacher_profile_can_request_approval_and_create_one_course(): void
     {
         Mail::fake();

@@ -51,10 +51,10 @@ class TeacherCourseController extends Controller
             'teacher_id' => [$isAdmin ? 'required' : 'nullable', 'integer', 'exists:teachers,id'],
             'title' => ['required', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],
-            'price' => ['required', 'string', 'max:100'],
-            'price_en' => ['nullable', 'string', 'max:100'],
-            'duration' => ['required', 'string', 'max:120'],
-            'duration_en' => ['nullable', 'string', 'max:120'],
+            'price' => $this->coursePriceRules(),
+            'price_en' => $this->coursePriceRules(required: false),
+            'duration' => $this->courseDurationRules(),
+            'duration_en' => $this->courseDurationRules(required: false),
             'description' => ['required', 'string'],
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
@@ -290,10 +290,10 @@ class TeacherCourseController extends Controller
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],
-            'price' => ['required', 'string', 'max:100'],
-            'price_en' => ['nullable', 'string', 'max:100'],
-            'duration' => ['required', 'string', 'max:120'],
-            'duration_en' => ['nullable', 'string', 'max:120'],
+            'price' => $this->coursePriceRules(),
+            'price_en' => $this->coursePriceRules(required: false),
+            'duration' => $this->courseDurationRules(),
+            'duration_en' => $this->courseDurationRules(required: false),
             'description' => ['required', 'string'],
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
@@ -478,6 +478,87 @@ class TeacherCourseController extends Controller
         return ! str_contains($normalizedKey, 'sizning_kalitingiz')
             && ! str_contains($normalizedKey, 'your_key')
             && ! str_contains($normalizedKey, 'your-api-key');
+    }
+
+    private function coursePriceRules(bool $required = true): array
+    {
+        return [
+            $required ? 'required' : 'nullable',
+            'string',
+            'max:100',
+            function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value === null || trim((string) $value) === '') {
+                    return;
+                }
+
+                if (! $this->isMeaningfulCoursePrice((string) $value)) {
+                    $fail("Narxni raqam bilan yozing (masalan: 300 000 so'm) yoki Bepul/Kelishilgan deb kiriting.");
+                }
+            },
+        ];
+    }
+
+    private function courseDurationRules(bool $required = true): array
+    {
+        return [
+            $required ? 'required' : 'nullable',
+            'string',
+            'max:120',
+            function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value === null || trim((string) $value) === '') {
+                    return;
+                }
+
+                if (! $this->isMeaningfulCourseDuration((string) $value)) {
+                    $fail("Davomiylikni aniq yozing (masalan: 2 oy, 12 dars yoki Kelishilgan).");
+                }
+            },
+        ];
+    }
+
+    private function isMeaningfulCoursePrice(string $value): bool
+    {
+        $normalized = $this->normalizeCourseMetaValue($value);
+        if ($normalized === '') {
+            return false;
+        }
+
+        if (preg_match('/\b(bepul|tekin|kelishilgan|shartnoma)\b/u', $normalized) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\d/u', $normalized) !== 1) {
+            return false;
+        }
+
+        $letters = preg_replace('/[\d\s.,\/+\-]+/u', ' ', $normalized) ?? '';
+        $letters = preg_replace('/\b(so\'m|som|sum|uzs|usd|dollar|rubl|rub|oyiga|jami|kurs|dars|oy|ming|mln|million|taxminan)\b/u', ' ', $letters) ?? '';
+
+        return trim($letters) === '';
+    }
+
+    private function isMeaningfulCourseDuration(string $value): bool
+    {
+        $normalized = $this->normalizeCourseMetaValue($value);
+        if ($normalized === '') {
+            return false;
+        }
+
+        if (preg_match('/\b(kelishilgan|aniqlanadi|keyinroq)\b/u', $normalized) === 1) {
+            return true;
+        }
+
+        return preg_match('/\d/u', $normalized) === 1
+            && preg_match('/\b(soat|kun|hafta|oy|yil|dars|modul|semestr|semester)\b/u', $normalized) === 1;
+    }
+
+    private function normalizeCourseMetaValue(string $value): string
+    {
+        $value = mb_strtolower(strip_tags(trim($value)));
+        $value = str_replace(['`', '‘', '’', 'ʼ', 'ʻ', '´'], "'", $value);
+        $value = preg_replace('/[^\p{L}\p{N}\'$.,\/+\-\s]+/u', ' ', $value) ?? $value;
+
+        return trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
     }
 
     private function autoPublishCourseWhenEmailVerificationDisabled(Course $course): ?RedirectResponse

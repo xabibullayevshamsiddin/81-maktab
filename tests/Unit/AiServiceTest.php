@@ -91,6 +91,44 @@ class AiServiceTest extends TestCase
         $this->assertStringContainsString('ichki tartibda', $result);
     }
 
+    public function test_common_school_help_questions_are_answered_locally(): void
+    {
+        $service = new AiService;
+
+        $cases = [
+            ["Parolimni esdan chiqardim, qanday tiklasam bo'ladi?", ['school_help', 'Parolni tiklash', 'forgot-password']],
+            ['Profilimga rasmni qanday yuklayman?', ['school_help', 'Profil rasmini yuklash', 'profile']],
+            ["Ism-familiyam xato yozilibdi, qanday to'g'rilayman?", ['school_help', "Ism-familiyani to'g'rilash"]],
+            ['Saytdagi xatolik bug haqida kimga xabar berishim kerak?', ['school_help', 'Saytdagi xatolik', 'Aloqa']],
+            ['Maktabga telefon yoki planshet olib kelish mumkinmi?', ['school_help', 'Telefon va planshet']],
+            ['Kechikib kelsa nima bo\'ladi? Jazo bormi?', ['school_help', 'Kechikish tartibi']],
+            ['Maktab formasi qoidalari qanaqa?', ['school_help', 'Maktab formasi']],
+            ['Kutubxonadan kitob olish tartibi qanday?', ['school_help', 'Kutubxonadan foydalanish']],
+            ['Dars paytida maktab hududidan tashqariga chiqish mumkinmi?', ['school_help', 'Dars vaqtida maktab hududidan chiqish']],
+            ['Maktabda fan olimpiadalari qachon bo\'ladi?', ['school_help', 'Fan olimpiadalari']],
+            ['Sport musobaqalariga futbol yoki shaxmatga qanday yozilsam bo\'ladi?', ['school_help', 'Sport musobaqalariga yozilish']],
+            ['Boshqa maktabdan ko\'chirib o\'tish perevod tartibi qanday?', ['school_help', "ko'chirib o'tish"]],
+            ['Ota-onalar majlisi qachon bo\'lishini qayerdan bilsam bo\'ladi?', ['school_help', 'Ota-onalar majlisi']],
+            ['Farzandimning ustoziga qanday qilib savol bersam bo\'ladi?', ['school_help', 'Ustozga savol berish']],
+            ['Maktabga qabul qilish pullikmi yoki bepulmi?', ['school_help', 'Maktabga qabul masalasi']],
+            ['Pullik kurslar uchun to\'lovni qanday qilsam bo\'ladi Click Payme?', ['school_help', "Kurs to'lovi"]],
+            ['Kursni tugatgach sertifikat beriladimi?', ['school_help', 'Kurs sertifikati']],
+            ['Imtihondan yiqilsam qayta topshirish uchun qancha vaqt kutishim kerak?', ['school_help', 'qayta topshirish']],
+            ['Mening rolim o\'quvchi bilan o\'zim ham kurs yarata olamanmi?', ['school_help', "O'quvchi kurs yarata oladimi"]],
+        ];
+
+        foreach ($cases as [$question, $expectations]) {
+            $result = $service->generateResponse($question);
+
+            $this->assertTrue($result['success'], $question);
+            $this->assertSame($expectations[0], $result['source'], $question);
+
+            foreach (array_slice($expectations, 1) as $snippet) {
+                $this->assertStringContainsString($snippet, $result['text'], $question);
+            }
+        }
+    }
+
     public function test_clarification_fallback_asks_for_context_instead_of_guessing(): void
     {
         $service = new AiService;
@@ -331,6 +369,54 @@ class AiServiceTest extends TestCase
         $this->assertStringContainsString('Legacy schema bilan ham AI knowledge ishlaydi.', $result['text']);
     }
 
+    public function test_metadata_noise_words_do_not_trigger_knowledge_base_answer(): void
+    {
+        $this->recreateLegacyAiKnowledgeTable();
+
+        DB::table('ai_knowledges')->insert([
+            [
+                'question' => 'Kurs asosda davomiyligi boshlanishi',
+                'question_en' => null,
+                'answer' => 'BU JAVOB TASODIFIY SOZGA CHIQMASLIGI KERAK.',
+                'answer_en' => null,
+                'keywords' => 'asosda, davomiyligi, boshlanishi, narxi',
+                'category' => 'Kurs',
+                'is_active' => true,
+                'sort_order' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'question' => 'Maxsusanchor qoidalari',
+                'question_en' => null,
+                'answer' => 'Maxsus anchor bo\'yicha qoidalar mavjud.',
+                'answer_en' => null,
+                'keywords' => 'maxsusanchor',
+                'category' => 'Maktab',
+                'is_active' => true,
+                'sort_order' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $service = new AiService;
+
+        foreach (['asasda', 'asosda', 'davomiyligi', 'boshlanishi', 'narxi'] as $question) {
+            $result = $service->generateResponse($question);
+
+            $this->assertTrue($result['success']);
+            $this->assertSame('clarification', $result['source']);
+            $this->assertStringNotContainsString('BU JAVOB TASODIFIY SOZGA CHIQMASLIGI KERAK.', $result['text']);
+        }
+
+        $validResult = $service->generateResponse('maxsusanchor');
+
+        $this->assertTrue($validResult['success']);
+        $this->assertSame('knowledge_base', $validResult['source']);
+        $this->assertStringContainsString('Maxsus anchor bo\'yicha qoidalar mavjud.', $validResult['text']);
+    }
+
     public function test_knowledge_snippets_for_prompt_work_with_legacy_schema(): void
     {
         $this->recreateLegacyAiKnowledgeTable();
@@ -381,6 +467,86 @@ class AiServiceTest extends TestCase
 
         $this->assertSame('salom', $context['resolved_message']);
         $this->assertFalse($context['context_applied']);
+    }
+
+    public function test_prepare_conversation_context_does_not_turn_date_into_course_question(): void
+    {
+        $service = new AiService;
+
+        $context = $service->prepareConversationContext('25.04.2026', [
+            ['role' => 'user', 'text' => 'Qaysi kurslar bor?'],
+            ['role' => 'assistant', 'text' => 'Hozirgi faol kurslarimiz mavjud.', 'source' => 'dynamic_data'],
+        ]);
+
+        $this->assertSame('25.04.2026', $context['resolved_message']);
+        $this->assertFalse($context['context_applied']);
+    }
+
+    public function test_date_follow_up_does_not_list_courses_from_previous_context(): void
+    {
+        $this->recreateCourseCatalogTables();
+
+        DB::table('users')->insert([
+            'id' => 1,
+            'name' => 'Course Creator',
+            'email' => 'creator-date@example.com',
+            'password' => bcrypt('password'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('teachers')->insert([
+            'id' => 1,
+            'full_name' => 'Abdullayeva Kamolat Shuxratovna',
+            'slug' => 'abdullayeva-kamolat',
+            'subject' => 'Kimyo',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('courses')->insert([
+            'id' => 1,
+            'teacher_id' => 1,
+            'created_by' => 1,
+            'title' => 'kimyo',
+            'price' => 'fsd',
+            'duration' => 'dsfds',
+            'description' => 'Kimyo kursi.',
+            'start_date' => '2026-04-25',
+            'status' => Course::STATUS_PUBLISHED,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $service = new AiService;
+        $result = $service->generateResponse('25.04.2026', null, [
+            ['role' => 'user', 'text' => 'Qaysi kurslar bor?'],
+            ['role' => 'assistant', 'text' => 'Hozir saytda nashr qilingan kurslar: kimyo', 'source' => 'dynamic_data'],
+        ]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('clarification', $result['source']);
+        $this->assertStringNotContainsString('kimyo', $result['text']);
+        $this->assertStringNotContainsString('Hozir saytda nashr qilingan kurslar', $result['text']);
+
+        $gibberishResult = $service->generateResponse('fsd', null, [
+            ['role' => 'user', 'text' => 'Qaysi kurslar bor?'],
+            ['role' => 'assistant', 'text' => 'Hozir saytda nashr qilingan kurslar: kimyo', 'source' => 'dynamic_data'],
+        ]);
+
+        $this->assertTrue($gibberishResult['success']);
+        $this->assertSame('clarification', $gibberishResult['source']);
+        $this->assertStringNotContainsString('kimyo', $gibberishResult['text']);
+        $this->assertStringNotContainsString('Hozir saytda nashr qilingan kurslar', $gibberishResult['text']);
+
+        $catalogResult = $service->generateResponse('kusrlar');
+
+        $this->assertTrue($catalogResult['success']);
+        $this->assertSame('dynamic_data', $catalogResult['source']);
+        $this->assertStringContainsString('kimyo', $catalogResult['text']);
+        $this->assertStringNotContainsString('Narxi: fsd', $catalogResult['text']);
+        $this->assertStringNotContainsString('Davomiyligi: dsfds', $catalogResult['text']);
     }
 
     public function test_generate_response_understands_assalomu_alaykum_variants(): void

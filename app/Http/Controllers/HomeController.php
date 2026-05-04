@@ -241,6 +241,9 @@ class HomeController extends Controller
         $results = [];
         $q = trim($q);
         $searchTerms = $this->buildSearchTerms($q);
+        if ($searchTerms === []) {
+            return [];
+        }
 
         $posts = Post::query()
             ->where(function ($query) use ($searchTerms): void {
@@ -337,12 +340,34 @@ class HomeController extends Controller
 
     private function buildSearchTerms(string $q): array
     {
-        $q = Str::lower(trim($q));
+        $q = $this->normalizeGlobalSearchText($q);
         if ($q === '') {
             return [];
         }
 
-        $terms = [$q];
+        if ($this->isStandaloneGlobalNumericOrDateQuery($q)) {
+            return [];
+        }
+
+        $tokens = preg_split('/\s+/u', $q) ?: [];
+        $tokens = array_values(array_filter(
+            $tokens,
+            fn (string $token): bool => $this->isSearchableGlobalToken($token)
+        ));
+
+        if ($tokens === []) {
+            return [];
+        }
+
+        $terms = [];
+        $phrase = Str::squish(implode(' ', $tokens));
+        if ($phrase !== '') {
+            $terms[] = $phrase;
+        }
+
+        foreach ($tokens as $token) {
+            $terms[] = $token;
+        }
 
         if (Str::contains($q, 'kusr')) {
             $terms[] = str_replace('kusr', 'kurs', $q);
@@ -352,5 +377,94 @@ class HomeController extends Controller
         }
 
         return array_values(array_unique(array_filter($terms)));
+    }
+
+    private function normalizeGlobalSearchText(string $text): string
+    {
+        $text = Str::lower(trim($text));
+        $text = str_replace(['`', '‘', '’', 'ʼ', 'ʻ', '´'], "'", $text);
+        $text = str_replace(['o‘', 'o’', 'g‘', 'g’'], ["o'", "o'", "g'", "g'"], $text);
+        $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
+
+        return Str::squish($text);
+    }
+
+    private function isStandaloneGlobalNumericOrDateQuery(string $q): bool
+    {
+        if (preg_match('/^[\d\s.,:;+\-*\/()%]+$/u', $q) === 1) {
+            return true;
+        }
+
+        $monthNames = 'yanvar|fevral|mart|aprel|may|iyun|iyul|avgust|sentabr|sentyabr|oktabr|oktyabr|noyabr|dekabr';
+
+        return preg_match('/^\d{1,2}\s+('.$monthNames.')(?:\s+\d{2,4})?$/u', $q) === 1
+            || preg_match('/^('.$monthNames.')\s+\d{1,2}(?:\s+\d{2,4})?$/u', $q) === 1;
+    }
+
+    private function isSearchableGlobalToken(string $token): bool
+    {
+        $token = trim($token);
+        if ($token === '' || mb_strlen($token) < 3) {
+            return in_array($token, ['it', 'ai', 'js'], true);
+        }
+
+        $stopWords = [
+            'men', 'menga', 'meni', 'sen', 'siz', 'biz', 'ular', 'shu', 'bu', 'ana',
+            'kim', 'nima', 'qanday', 'qanaqa', 'qaysi', 'qayerda', 'qayer', 'qachon',
+            'necha', 'qancha', 'haqida', 'kerak', 'iltimos', 'ayt', 'ayting', 'ber',
+            'bering', 'bor', 'yoq', 'yo\'q', 'ham', 'va', 'yoki', 'bilan', 'uchun',
+            'asosda', 'asosida', 'bo\'yicha', 'boyicha',
+            'davomiyligi', 'davomiligi', 'davomligi', 'muddati', 'muddat',
+            'boshlanishi', 'boshlanish', 'boshlanadi', 'boshlaydi', 'boshlash',
+            'tugashi', 'tugaydi', 'tugash', 'narxi', 'sana', 'sanasi', 'vaqti',
+            'foydasiz', 'dali',
+        ];
+        $fuzzyStopWords = [
+            'asosda', 'asosida', 'boyicha',
+            'davomiyligi', 'davomiligi', 'davomligi',
+            'boshlanishi', 'boshlanish', 'boshlanadi',
+            'muddati', 'muddat', 'narxi', 'sanasi', 'vaqti',
+        ];
+
+        if (in_array($token, $stopWords, true) || $this->isApproximateGlobalStopToken($token, $fuzzyStopWords)) {
+            return false;
+        }
+
+        foreach (['narx', 'davom', 'boshlan', 'muddat', 'sana', 'vaqt', 'asos'] as $metadataPrefix) {
+            if (str_starts_with($token, $metadataPrefix)) {
+                return false;
+            }
+        }
+
+        if (preg_match('/^\d+$/u', $token) === 1) {
+            return false;
+        }
+
+        $plain = str_replace("'", '', $token);
+        if (in_array($plain, ['php', 'css', 'html', 'sql'], true)) {
+            return true;
+        }
+
+        return preg_match('/[aeiouo\'ʻ]/u', $token) === 1;
+    }
+
+    private function isApproximateGlobalStopToken(string $token, array $stopWords): bool
+    {
+        if (mb_strlen($token) < 5) {
+            return false;
+        }
+
+        foreach ($stopWords as $stopWord) {
+            if (abs(mb_strlen($token) - mb_strlen($stopWord)) > 1) {
+                continue;
+            }
+
+            $maxErrors = mb_strlen($stopWord) >= 8 ? 2 : 1;
+            if (levenshtein($token, $stopWord) <= $maxErrors) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

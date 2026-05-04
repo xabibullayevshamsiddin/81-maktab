@@ -11,16 +11,7 @@
 
   <main class="profile-main calendar-page">
     <div class="container">
-      <div class="calendar-toolbar prime-reveal">
-        <form method="get" action="{{ route('calendar') }}" class="calendar-year-form">
-          <label for="cal-y">{{ __('public.calendar.year') }}</label>
-          <select id="cal-y" name="y" data-calendar-year-select>
-            @for($y = (int) now()->year + 1; $y >= 2020; $y--)
-              <option value="{{ $y }}" {{ (int) $year === $y ? 'selected' : '' }}>{{ $y }}</option>
-            @endfor
-          </select>
-        </form>
-      </div>
+
 
       @if($events->isEmpty())
         <p class="profile-muted">{{ __('public.calendar.empty', ['year' => $year]) }}</p>
@@ -38,7 +29,7 @@
           </section>
         @endif
 
-        <section class="calendar-list-section prime-reveal">
+        <section class="calendar-list-section prime-reveal">limida
           <h2 class="calendar-list-heading">{{ __('public.calendar.list_title') }}</h2>
           <p class="calendar-list-lead">{{ __('public.calendar.list_lead') }}</p>
 

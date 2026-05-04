@@ -12,22 +12,26 @@
       <tr>
         <td class="min-width">
           <div class="input-style-1 mb-0">
-            <input type="text" name="full_name" value="{{ old('full_name', $teacher?->full_name) }}" required aria-label="F.I.Sh" placeholder="Familiya Ism Sharif">
+            <input type="text" name="full_name" value="{{ old('full_name', $teacher?->full_name) }}" required aria-label="F.I.Sh" placeholder="Familiya Ism Sharif" class="@error('full_name') is-invalid @enderror">
+            @error('full_name') <small class="text-danger">{{ $message }}</small> @enderror
           </div>
         </td>
         <td>
           <div class="input-style-1 mb-0">
-            <input type="text" name="lavozim" value="{{ old('lavozim', $teacher?->lavozim) }}" aria-label="Lavozim" placeholder="Masalan: O'qituvchi">
+            <input type="text" name="lavozim" value="{{ old('lavozim', $teacher?->lavozim) }}" aria-label="Lavozim" placeholder="Masalan: O'qituvchi" class="@error('lavozim') is-invalid @enderror">
+            @error('lavozim') <small class="text-danger">{{ $message }}</small> @enderror
           </div>
         </td>
         <td>
           <div class="input-style-1 mb-0">
-            <input type="number" min="0" max="60" name="experience_years" value="{{ old('experience_years', $teacher?->experience_years ?? 0) }}" required aria-label="Staj, yil">
+            <input type="number" min="0" max="60" name="experience_years" value="{{ old('experience_years', $teacher?->experience_years ?? 0) }}" required aria-label="Staj, yil" class="@error('experience_years') is-invalid @enderror">
+            @error('experience_years') <small class="text-danger">{{ $message }}</small> @enderror
           </div>
         </td>
         <td>
           <div class="input-style-1 mb-0">
-            <input type="text" name="toifa" value="{{ old('toifa', $teacher?->toifa) }}" aria-label="Toifa" placeholder="Masalan: Oliy toifa">
+            <input type="text" name="toifa" value="{{ old('toifa', $teacher?->toifa) }}" aria-label="Toifa" placeholder="Masalan: Oliy toifa" class="@error('toifa') is-invalid @enderror">
+            @error('toifa') <small class="text-danger">{{ $message }}</small> @enderror
           </div>
         </td>
       </tr>
@@ -39,32 +43,37 @@
   <div class="col-md-6">
     <div class="input-style-1">
       <label>Lavozim (EN, ixtiyoriy)</label>
-      <input type="text" name="lavozim_en" value="{{ old('lavozim_en', $teacher?->lavozim_en) }}">
+      <input type="text" name="lavozim_en" value="{{ old('lavozim_en', $teacher?->lavozim_en) }}" class="@error('lavozim_en') is-invalid @enderror">
+      @error('lavozim_en') <small class="text-danger">{{ $message }}</small> @enderror
     </div>
   </div>
   <div class="col-md-6">
     <div class="input-style-1">
       <label>Toifa (EN, ixtiyoriy)</label>
-      <input type="text" name="toifa_en" value="{{ old('toifa_en', $teacher?->toifa_en) }}">
+      <input type="text" name="toifa_en" value="{{ old('toifa_en', $teacher?->toifa_en) }}" class="@error('toifa_en') is-invalid @enderror">
+      @error('toifa_en') <small class="text-danger">{{ $message }}</small> @enderror
     </div>
   </div>
 </div>
 
 <div class="input-style-1">
   <label>Fan yo'nalishi <span class="text-muted" style="font-weight:400;">- ixtiyoriy</span></label>
-  <input type="text" name="subject" value="{{ old('subject', $teacher?->subject) }}" placeholder="Masalan: Matematika" autocomplete="off">
+  <input type="text" name="subject" value="{{ old('subject', $teacher?->subject) }}" placeholder="Masalan: Matematika" autocomplete="off" class="@error('subject') is-invalid @enderror">
+  @error('subject') <small class="text-danger">{{ $message }}</small> @enderror
   <small style="color:#64748b;display:block;margin-top:6px;">Bo'sh qoldirsangiz, saytda fan nomi boshqa maydonlar orqali ko'rsatiladi yoki umuman ko'rsatilmaydi.</small>
 </div>
 
 <div class="input-style-1">
   <label>Fan yo'nalishi (EN, ixtiyoriy)</label>
-  <input type="text" name="subject_en" value="{{ old('subject_en', $teacher?->subject_en) }}">
+  <input type="text" name="subject_en" value="{{ old('subject_en', $teacher?->subject_en) }}" class="@error('subject_en') is-invalid @enderror">
+  @error('subject_en') <small class="text-danger">{{ $message }}</small> @enderror
 </div>
 
 <div class="input-style-1">
   <label>Sinflar <span class="text-muted" style="font-weight:400;">- ixtiyoriy</span></label>
-  <input type="text" name="grades" value="{{ old('grades', $teacher?->grades) }}" placeholder="Masalan: 7-11-sinflar" autocomplete="off">
+  <input type="text" name="grades" value="{{ old('grades', $teacher?->grades) }}" placeholder="Masalan: 7-11-sinflar" autocomplete="off" class="@error('grades') is-invalid @enderror">
   <small style="color:#64748b;display:block;margin-top:6px;">Bo'sh qoldirsangiz, saytda "barcha sinflar" deb ko'rinadi.</small>
+  @error('grades') <small class="text-danger">{{ $message }}</small> @enderror
 </div>
 
 <div class="admin-teacher-achievements-wrap">
@@ -74,17 +83,20 @@
   </p>
   <div class="input-style-1 mb-0">
     <label>Yutuqlar va mukofotlar</label>
-    <textarea name="achievements" rows="4" placeholder="Har bir qatorga bitta yutuq yozing">{{ old('achievements', $teacher?->achievements) }}</textarea>
+    <textarea name="achievements" rows="4" placeholder="Har bir qatorga bitta yutuq yozing" class="@error('achievements') is-invalid @enderror">{{ old('achievements', $teacher?->achievements) }}</textarea>
+    @error('achievements') <small class="text-danger">{{ $message }}</small> @enderror
   </div>
   <div class="input-style-1 mb-0">
     <label>Yutuqlar va mukofotlar (EN, ixtiyoriy)</label>
-    <textarea name="achievements_en" rows="4">{{ old('achievements_en', $teacher?->achievements_en) }}</textarea>
+    <textarea name="achievements_en" rows="4" class="@error('achievements_en') is-invalid @enderror">{{ old('achievements_en', $teacher?->achievements_en) }}</textarea>
+    @error('achievements_en') <small class="text-danger">{{ $message }}</small> @enderror
   </div>
 </div>
 
 <div class="input-style-1">
   <label>Rasm <span class="text-muted" style="font-weight:400;">- ixtiyoriy</span></label>
-  <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp">
+  <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" class="@error('image') is-invalid @enderror">
+  @error('image') <small class="text-danger">{{ $message }}</small> @enderror
   <small style="color:#64748b;display:block;margin-top:6px;">Rasm qo'yilmasa, saytda standart rasm ishlatiladi.</small>
   @if($teacher?->image)
     <div style="margin-top:10px;">

@@ -892,12 +892,7 @@
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
         var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        if (!document.getElementById('ai-typewriter-style')) {
-          var typewriterStyle = document.createElement('style');
-          typewriterStyle.id = 'ai-typewriter-style';
-          typewriterStyle.textContent = '@keyframes aiTypeCursorBlink{0%,49%{opacity:1;}50%,100%{opacity:.15;}}';
-          document.head.appendChild(typewriterStyle);
-        }
+        /* PRIME AI Typewriter v2.0 — all keyframes live in style.css, nothing to inject */
 
         function syncAiDockState() {
           document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
@@ -905,8 +900,9 @@
 
         function showAiComposeStatus(text) {
           if (!statusWrap) return;
-          if (statusText && text) {
-            statusText.textContent = text;
+          if (statusText) {
+            /* PRIME v2: Show animated bounce-dot thinking indicator */
+            statusText.innerHTML = '<span class="ai-thinking-dots" aria-label="' + (text || "O'ylamoqda") + '"><span></span><span></span><span></span></span>';
           }
           statusWrap.style.display = 'flex';
           statusWrap.removeAttribute('hidden');
@@ -935,7 +931,7 @@
             statusWrap.setAttribute('hidden', '');
           }
           if (statusText) {
-            statusText.textContent = "O'ylamoqda...";
+            statusText.innerHTML = ''; /* clear animated dots on reset */
           }
         }
 
@@ -1251,10 +1247,31 @@
           scrollToBottom();
         }
 
+        /**
+         * PRIME AI TYPEWRITER v2.0 — "Holographic Spring" Engine
+         *
+         * Skill 1 — Physics-based per-character spring-pop reveal:
+         *   Each character is wrapped in a .ai-msg-char span with a
+         *   staggered animation-delay. The keyframe (aiCharSpring in CSS)
+         *   shoots the char up from below with blur, overshoots (scale 1.08),
+         *   then settles — simulating a spring/bounce physics feel.
+         *   For long texts (>400 chars) we switch to word-level wave mode
+         *   (aiWordWave) for performance — each word lands as a wave.
+         *
+         * Skill 2 — Holographic gradient cursor:
+         *   A thin vertical bar (.ai-holo-cursor) with a cycling linear-gradient
+         *   (purple → indigo → blue → emerald) that animates background-position
+         *   AND box-shadow color simultaneously — creating a living holographic
+         *   glow effect. Blinks independently via a second animation layer.
+         *   On completion the cursor fades out and a shimmer sweep (.ai-msg-done)
+         *   runs across the finished bubble once.
+         */
         function animateAiMessage(contentEl, text, meta) {
           if (!contentEl) return Promise.resolve();
 
           var fullText = String(text || '');
+
+          /* Reduced motion or empty → instant render */
           if (!fullText.trim() || prefersReducedMotion) {
             contentEl.innerHTML = formatAiMessageHtml(fullText);
             attachAiMeta(contentEl, meta);
@@ -1262,44 +1279,148 @@
             return Promise.resolve();
           }
 
-          var cursor = document.createElement('span');
-          cursor.setAttribute('aria-hidden', 'true');
-          cursor.style.cssText = 'display:inline-block;width:9px;height:1.05em;margin-left:2px;border-radius:999px;background:currentColor;vertical-align:-0.18em;opacity:.85;animation:aiTypeCursorBlink .85s steps(1,end) infinite;';
+          /* Tune speed based on length */
+          var isLong = fullText.length > 400;
+          /* charDelay: ms between revealing each character/word */
+          var charDelay = fullText.length > 1200 ? 14
+                        : fullText.length > 700  ? 18
+                        : fullText.length > 300  ? 22
+                        : 28;
 
-          var index = 0;
-          var baseDelay = fullText.length > 900 ? 5 : (fullText.length > 500 ? 7 : 11);
+          /* --- BUILD HOLOGRAPHIC CURSOR --- */
+          var cursor = document.createElement('span');
+          cursor.className = 'ai-holo-cursor';
+          cursor.setAttribute('aria-hidden', 'true');
+
+          /* Helper: append cursor after current content */
+          function appendCursor() {
+            if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+            contentEl.appendChild(cursor);
+          }
 
           return new Promise(function (resolve) {
-            function step() {
-              index += 1;
-              contentEl.innerHTML = formatAiMessageHtml(fullText.slice(0, index));
-              contentEl.appendChild(cursor);
-              scrollToBottom(true);
 
-              if (index >= fullText.length) {
-                cursor.remove();
-                contentEl.innerHTML = formatAiMessageHtml(fullText);
-                attachAiMeta(contentEl, meta);
-                scrollToBottom();
-                resolve();
-                return;
+            if (isLong) {
+              /* =========================================
+                 WORD-WAVE MODE (long text)
+                 Each word gets .ai-msg-word with staggered
+                 animation-delay for a cascading wave effect.
+                 ========================================= */
+              var words = fullText.split(/(\s+)/);
+              var wordIndex = 0;
+              var accDelay = 0;
+
+              function revealNextWord() {
+                if (wordIndex >= words.length) {
+                  /* Done — remove cursor, shimmer, attach meta */
+                  if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+                  contentEl.innerHTML = formatAiMessageHtml(fullText);
+                  var msgBubble = contentEl.closest('.chat-msg');
+                  if (msgBubble) msgBubble.classList.add('ai-msg-done');
+                  attachAiMeta(contentEl, meta);
+                  scrollToBottom();
+                  resolve();
+                  return;
+                }
+
+                var chunk = words[wordIndex];
+                wordIndex++;
+
+                /* Whitespace chunks: invisible spans, no animation */
+                if (!chunk.trim()) {
+                  /* Append as text node so spaces render correctly */
+                  var space = document.createElement('span');
+                  space.className = 'ai-msg-char--space';
+                  space.textContent = chunk;
+                  contentEl.appendChild(space);
+                  appendCursor();
+                  scrollToBottom(true);
+                  revealNextWord();
+                  return;
+                }
+
+                var wordSpan = document.createElement('span');
+                wordSpan.className = 'ai-msg-word';
+                wordSpan.style.animationDelay = '0ms'; /* immediate — delay is setTimeout-driven */
+                /* Render word with bold/formatting preserved */
+                wordSpan.innerHTML = formatAiMessageHtml(chunk);
+                contentEl.appendChild(wordSpan);
+                appendCursor();
+                scrollToBottom(true);
+
+                /* Pause with punctuation rhythm */
+                var extra = 0;
+                var lastChar = chunk[chunk.length - 1];
+                if (/[.!?]/.test(lastChar))  extra = 90;
+                else if (/[,:;]/.test(lastChar)) extra = 40;
+                else if (chunk === '\n') extra = 60;
+
+                window.setTimeout(revealNextWord, charDelay + extra);
               }
 
-              var currentChar = fullText.charAt(index - 1);
-              var delay = baseDelay;
+              revealNextWord();
 
-              if (currentChar === '\n') {
-                delay += 55;
-              } else if (/[.!?]/.test(currentChar)) {
-                delay += 35;
-              } else if (/[,:;]/.test(currentChar)) {
-                delay += 18;
+            } else {
+              /* =========================================
+                 CHAR-SPRING MODE (short/medium text)
+                 Each character gets .ai-msg-char with a
+                 staggered delay creating a cascading spring
+                 pop from bottom-blur to final position.
+                 ========================================= */
+              var chars = fullText.split('');
+              var charIndex = 0;
+              /* We pre-accumulate delay so each char's CSS animation starts
+                 at the right visual moment (CSS delay, not setTimeout stagger,
+                 so all DOM writes happen in one rAF batch for perf) */
+              var cumulativeDelay = 0;
+
+              function revealNextChar() {
+                if (charIndex >= chars.length) {
+                  /* Done — rebuild with full formatter, add shimmer class */
+                  if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+                  contentEl.innerHTML = formatAiMessageHtml(fullText);
+                  var msgBubble = contentEl.closest('.chat-msg');
+                  if (msgBubble) msgBubble.classList.add('ai-msg-done');
+                  attachAiMeta(contentEl, meta);
+                  scrollToBottom();
+                  resolve();
+                  return;
+                }
+
+                var ch = chars[charIndex];
+                charIndex++;
+
+                if (ch === ' ' || ch === '\u00a0') {
+                  /* Spaces: no animation span, just a text node */
+                  var spaceSpan = document.createElement('span');
+                  spaceSpan.className = 'ai-msg-char--space';
+                  spaceSpan.textContent = ch;
+                  contentEl.appendChild(spaceSpan);
+                } else if (ch === '\n') {
+                  contentEl.appendChild(document.createElement('br'));
+                } else {
+                  var charSpan = document.createElement('span');
+                  charSpan.className = 'ai-msg-char';
+                  /* No CSS delay — setTimeout drives the timing precisely */
+                  charSpan.style.animationDelay = '0ms';
+                  charSpan.textContent = ch;
+                  contentEl.appendChild(charSpan);
+                }
+
+                appendCursor();
+                scrollToBottom(true);
+
+                /* Rhythm: pause after punctuation */
+                var extra = 0;
+                if (ch === '\n')          extra = 70;
+                else if (/[.!?]/.test(ch))  extra = 55;
+                else if (/[,:;]/.test(ch))  extra = 25;
+
+                window.setTimeout(revealNextChar, charDelay + extra);
               }
 
-              window.setTimeout(step, delay);
+              revealNextChar();
             }
-
-            step();
           });
         }
 

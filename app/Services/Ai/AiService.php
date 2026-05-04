@@ -32,6 +32,11 @@ class AiService
         $conversationContext = $this->finalizeConversationContext($userMessage, $conversationContext);
         $message = trim((string) ($conversationContext['resolved_message'] ?? $userMessage));
 
+        // 0.01 Ko'p so'raladigan amaliy savollar DB/statistika qidiruvlarga tushib ketmasin.
+        if ($schoolHelp = $this->matchCommonSchoolHelpQuery($message, $user)) {
+            return ['success' => true, 'text' => $schoolHelp, 'source' => 'school_help'];
+        }
+
         // 0. Smart analytics (intent-based, not keyword-locked)
         if ($analytics = $this->matchAnalyticalData($message)) {
             return ['success' => true, 'text' => $analytics, 'source' => 'analytics_data'];
@@ -209,31 +214,24 @@ class AiService
 
     private function finalizeConversationContext(string $userMessage, array $conversationContext = []): array
     {
-        if (array_key_exists('resolved_message', $conversationContext) && array_key_exists('history', $conversationContext)) {
-            return $conversationContext + [
-                'recent_topic' => $conversationContext['recent_topic'] ?? $this->recentConversationTopic($conversationContext['history'] ?? []),
+        return (isset($conversationContext['resolved_message'], $conversationContext['history']))
+            ? $conversationContext + [
+                'recent_topic' => $conversationContext['recent_topic'] ?? $this->recentConversationTopic($conversationContext['history']),
                 'context_applied' => (bool) ($conversationContext['context_applied'] ?? false),
-                'history_signature' => (string) ($conversationContext['history_signature'] ?? $this->historySignature($conversationContext['history'] ?? [])),
-                'fingerprint' => (string) ($conversationContext['fingerprint'] ?? sha1('[]')),
-            ];
-        }
-
-        return $this->prepareConversationContext($userMessage, $conversationContext);
+                'history_signature' => $conversationContext['history_signature'] ?? $this->historySignature($conversationContext['history']),
+                'fingerprint' => $conversationContext['fingerprint'] ?? sha1('[]'),
+            ]
+            : $this->prepareConversationContext($userMessage, $conversationContext);
     }
 
     private function sanitizeConversationHistory(array $history): array
     {
         return collect($history)
             ->map(function ($item): ?array {
-                if (! is_array($item)) {
-                    return null;
-                }
-
                 $text = trim((string) ($item['text'] ?? ''));
-                if ($text === '') {
+                if (! is_array($item) || $text === '') {
                     return null;
                 }
-
                 return [
                     'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
                     'text' => Str::limit($text, 500, ''),
@@ -250,15 +248,10 @@ class AiService
     {
         $normalizedHistory = collect($history)
             ->map(function ($item): ?array {
-                if (! is_array($item)) {
-                    return null;
-                }
-
                 $text = trim((string) ($item['text'] ?? ''));
-                if ($text === '') {
+                if (! is_array($item) || $text === '') {
                     return null;
                 }
-
                 return [
                     'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
                     'text' => $this->normalizeSearchText($text),
@@ -274,11 +267,7 @@ class AiService
     private function recentConversationTopic(array $history): ?string
     {
         foreach (array_reverse($history) as $item) {
-            $topic = $this->detectConversationTopic(
-                (string) ($item['text'] ?? ''),
-                (string) ($item['source'] ?? '')
-            );
-
+            $topic = $this->detectConversationTopic((string) ($item['text'] ?? ''), (string) ($item['source'] ?? ''));
             if ($topic !== null) {
                 return $topic;
             }
@@ -290,19 +279,11 @@ class AiService
     private function detectConversationTopic(string $text, string $source = ''): ?string
     {
         $q = $this->normalizeCourseIntentText($text);
-
-        if ($q === '') {
-            return null;
-        }
+        if ($q === '') return null;
 
         if ($source !== '') {
-            if (Str::startsWith($source, 'support_wizard') || $source === 'support_contact') {
-                return 'contact';
-            }
-
-            if ($source === 'calendar_data') {
-                return 'calendar';
-            }
+            if (Str::startsWith($source, 'support_wizard') || $source === 'support_contact') return 'contact';
+            if ($source === 'calendar_data') return 'calendar';
         }
 
         return match (true) {
@@ -319,16 +300,16 @@ class AiService
 
     private function shouldUseConversationContext(string $message, string $recentTopic): bool
     {
-        if ($recentTopic === '') {
-            return false;
-        }
-
-        if ($this->detectConversationTopic($message) !== null) {
+        if ($recentTopic === '' || $this->detectConversationTopic($message) !== null) {
             return false;
         }
 
         $q = $this->normalizeSearchText($message);
         if ($q === '') {
+            return false;
+        }
+
+        if ($this->isStandaloneNumericOrDateMessage($message)) {
             return false;
         }
 
@@ -341,9 +322,7 @@ class AiService
             return false;
         }
 
-        if ($this->containsNormalizedPhrase($q, [
-            'o\'sha', 'osha', 'shu', 'u qaysi', 'qaysi biri', 'o\'shani', 'oshani', 'yana',
-        ])) {
+        if ($this->containsNormalizedPhrase($q, ["o'sha", 'osha', 'shu', 'u qaysi', 'qaysi biri', "o'shani", 'oshani', 'yana'])) {
             return true;
         }
 
@@ -351,10 +330,61 @@ class AiService
             return true;
         }
 
+        if (! $this->hasContextualFollowUpIntent($q, $recentTopic)) {
+            return false;
+        }
+
         $tokens = preg_split('/\s+/u', $q) ?: [];
         $meaningfulTokens = $this->meaningfulTokens($q);
 
-        return count($tokens) <= 4 && count($meaningfulTokens) <= 1;
+        return count($tokens) <= 6 && count($meaningfulTokens) <= 3;
+    }
+
+    private function hasContextualFollowUpIntent(string $q, string $recentTopic): bool
+    {
+        if ($this->containsNormalizedPhrase($q, [
+            'qanday', 'qanaqa', 'qayerda', 'qayerdan', 'qachon',
+            'qancha', 'necha', 'nima qilish', 'batafsil', 'tushuntir',
+        ])) {
+            return true;
+        }
+
+        return match ($recentTopic) {
+            'course' => $this->containsNormalizedPhrase($q, [
+                'narx', 'narxi', 'pul', 'tolov', "to'lov", 'bepul',
+                'davomiy', 'davomiyligi', 'muddat', 'muddati',
+                'boshlanish', 'boshlanadi', 'start',
+                'yozilish', 'yozilaman', 'ariza', 'kursga kirish',
+            ]),
+            'exam' => $this->containsNormalizedPhrase($q, [
+                'natija', 'ball', 'baho', 'qachon', 'topshir', 'vaqt', 'savol',
+            ]),
+            'teacher' => $this->containsNormalizedPhrase($q, [
+                'fani', 'staj', 'tajriba', 'lavozim', 'qaysi fan', 'malumot', "ma'lumot",
+            ]),
+            'contact' => $this->containsNormalizedPhrase($q, [
+                'qayerga', 'qanday yubor', 'telefon', 'email', 'murojaat',
+            ]),
+            default => false,
+        };
+    }
+
+    private function isStandaloneNumericOrDateMessage(string $message): bool
+    {
+        $message = trim($message);
+        if ($message === '') {
+            return false;
+        }
+
+        if (preg_match('/^[\d\s.,:;+\-*\/()%]+$/u', $message) === 1) {
+            return true;
+        }
+
+        $monthNames = 'yanvar|fevral|mart|aprel|may|iyun|iyul|avgust|sentabr|sentyabr|oktabr|oktyabr|noyabr|dekabr';
+        $normalized = $this->normalizeSearchText($message);
+
+        return preg_match('/^\d{1,2}\s+('.$monthNames.')(?:\s+\d{2,4})?$/u', $normalized) === 1
+            || preg_match('/^('.$monthNames.')\s+\d{1,2}(?:\s+\d{2,4})?$/u', $normalized) === 1;
     }
 
     private function enrichMessageWithConversationTopic(string $message, string $recentTopic): string
@@ -370,11 +400,7 @@ class AiService
             default => '',
         };
 
-        if ($suffix === '') {
-            return trim($message);
-        }
-
-        return Str::limit(Str::squish(trim($message.' '.$suffix)), 500, '');
+        return ($suffix === '') ? trim($message) : Str::limit(Str::squish(trim($message.' '.$suffix)), 500, '');
     }
 
     /**
@@ -425,14 +451,11 @@ class AiService
                     ."рџ“† To'liq jadval: {$calendarUrl}";
             }
 
-            $lines = [];
-            foreach ($rows as $ev) {
-                $d = $ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date);
-                $lines[] = 'вЂў '.$d->format('d.m.Y').' вЂ” '.$this->formatCalendarEventLine($ev, $maxBody);
-            }
+            $lines = $rows->map(fn($ev) => '• ' . ($ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date))->format('d.m.Y')
+                . ' — ' . $this->formatCalendarEventLine($ev, $maxBody))->all();
 
             return "рџ“… **Shu haftadagi tadbirlar**:\n"
-                .implode("\n\n", $lines)
+                . implode("\n\n", $lines)
                 ."\n\nрџ“† To'liq jadval: {$calendarUrl}";
         }
 
@@ -444,18 +467,13 @@ class AiService
                 ->limit($maxEvents)
                 ->get();
 
-            $dateLabel = $parsedDate->format('d.m.Y');
             if ($rows->isEmpty()) {
-                return "📅 **{$dateLabel}** sanasi bo‘yicha taqvimda tadbir yozuvi topilmadi.\n"
-                    ."📆 To‘liq jadval: {$calendarUrl}";
+                return "📅 **{$parsedDate->format('d.m.Y')}** sanasi bo‘yicha taqvimda tadbir yozuvi topilmadi.\n📆 To‘liq jadval: {$calendarUrl}";
             }
 
-            $lines = [];
-            foreach ($rows as $ev) {
-                $lines[] = $this->formatCalendarEventLine($ev, $maxBody);
-            }
+            $lines = $rows->map(fn($ev) => $this->formatCalendarEventLine($ev, $maxBody))->all();
 
-            return "📅 **{$dateLabel}** kuni taqvim bo‘yicha:\n"
+            return "📅 **{$parsedDate->format('d.m.Y')}** kuni taqvim bo‘yicha:\n"
                 .implode("\n\n", $lines)
                 ."\n\n📆 Batafsil: {$calendarUrl}";
         }
@@ -469,15 +487,10 @@ class AiService
             ->get();
 
         if ($rows->isEmpty()) {
-            return "📆 Hozircha rejalashtirilgan yaqin tadbirlar yo‘q.\n"
-                ."Taqvim: {$calendarUrl}";
+            return "📆 Hozircha rejalashtirilgan yaqin tadbirlar yo‘q.\nTaqvim: {$calendarUrl}";
         }
 
-        $lines = [];
-        foreach ($rows as $ev) {
-            $d = $ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date);
-            $lines[] = '• '.$d->format('d.m.Y').' — '.$this->formatCalendarEventLine($ev, $maxBody);
-        }
+        $lines = $rows->map(fn($ev) => '• ' . ($ev->event_date instanceof Carbon ? $ev->event_date : Carbon::parse($ev->event_date))->format('d.m.Y') . ' — ' . $this->formatCalendarEventLine($ev, $maxBody))->all();
 
         return "📆 **Yaqinlashayotgan tadbirlar** (oxirgi {$maxEvents} ta):\n"
             .implode("\n\n", $lines)
@@ -931,41 +944,26 @@ class AiService
             }
 
             return "{$greeting}! 😊 Men **{$schoolName}** saytining AI yordamchisiman.\n"
-                ."Quyidagi mavzularda yordam bera olaman:\n"
+                ."Sizga quyidagi mavzularda yordam bera olaman:\n"
                 ."- Maktab, kurslar, ustozlar va aloqa bo'limlari\n"
                 ."- Imtihonlar, natijalar va taqvim\n"
                 ."- Saytdan foydalanish: profil, kurs arizasi, login va boshqa jarayonlar\n"
                 ."- Oddiy hisob-kitoblar\n\n"
-                .'Savolingizni yozing.';
+                .'Savolingizni yozing! 😊';
         }
 
         $hasStrictFarewell = $this->hasFarewellIntent($normalized);
         if ($hasStrictFarewell) {
-            return "Xayr! Yana savolingiz bo'lsa, yozavering.";
+            return "Xayr! 👋 Sizga yordam bera olganimdan mamnunman. Yana savollaringiz bo'lsa, doim shu yerdaman! 😊✨";
         }
 
         $hasStrictThanks = $this->hasThanksIntent($normalized);
         if ($hasStrictThanks) {
-            return "Arziydi! Boshqa savolingiz bo'lsa, yozing.";
-        }
-
-        if ($this->containsNormalizedPhrase($normalized, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'sen kimsan', 'siz kimsiz'])) {
-            return "Men 81-IDUM saytining ichki AI yordamchisiman. Asosan maktab va sayt bo'limlari bo'yicha yordam beraman, oddiy hisob-kitoblarni ham chiqarib bera olaman.";
-        }
-
-        // Xayr / Ko'rishguncha
-        if (Str::contains($q, ['xayr', 'ko\'rishguncha', 'sog\'lik', 'hayr', 'bye', 'goodbye', 'chao'])) {
-            return "Xayr! 👋 Sizga yordam bera olganimdan mamnunman. Yana savollaringiz bo'lsa, doim shu yerdaman! 😊✨";
-        }
-
-        // Rahmat
-        if (Str::contains($q, ['rahmat', 'katta rahmat', 'minnatdor', 'bor bo\'ling', 'tashakkur', 'raxmat', 'thanks', 'thank you'])) {
             return "Arziydi! 😊 Yordam bera olganimdan xursandman. Boshqa savollaringiz bo'lsa, yozing! ✅";
         }
 
-        // Kimsan / Qandaysan
-        if (Str::contains($q, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan', 'sen kimsan', 'siz kimsiz'])) {
-            return 'Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, math va fan savollariga — hammaga javob berishga harakat qilaman. Savol bering! 🚀';
+        if ($this->containsNormalizedPhrase($normalized, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan', 'sen kimsan', 'siz kimsiz'])) {
+            return "Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, matematik va boshqa fan savollariga — qo'ldan kelgancha javob berishga harakat qilaman. Savol bering! 🚀";
         }
 
         if (Str::contains($q, ['muallfi', 'mualif', 'kim ishtirok', 'ishtirok etgan', 'saytda kim'])) {
@@ -1016,6 +1014,39 @@ class AiService
         // Maktab tarixi
         if (Str::contains($q, ['tashkil', 'qachon ochilgan', 'yilida ochilgan', 'qachon qurilgan', 'tarixi'])) {
             return "81-IDUM maktabi o'z faoliyatini 1980-yillarda boshlagan va hozirda zamonaviy ta'lim markazlaridan biri hisoblanadi. 🏫";
+        }
+
+        // Maktab formasi
+        if (Str::contains($q, ['forma', 'kiyim', 'odob', 'nima kiyish'])) {
+            return "👗 **Maktab formasi haqida:**\n"
+                ."- O'quvchilar maktabga belgilangan davlat standarti bo'yicha kiyinib kelishlari shart.\n"
+                ."- O'g'il bolalar: Oq ko'ylak va to'q ko'k shim.\n"
+                ."- Qiz bolalar: Oq ko'ylak va to'q ko'k yubka/shim.\n"
+                ."✨ Toza va tartibli kiyinish maktab odob-axloqining bir qismidir.";
+        }
+
+        // 1-sinf qabul
+        if (Str::contains($q, ['1-sinf', 'birinchi sinf', 'qabul', 'hujjat topshirish', 'hujjatlar'])) {
+            return "📝 **1-sinfga qabul bo'yicha ma'lumot:**\n"
+                ."- Qabul jarayoni odatda iyun-avgust oylarida **my.maktab.uz** portali orqali onlayn amalga oshiriladi.\n"
+                ."- Kerakli hujjatlar: tug'ilganlik haqida guvohnoma nusxasi, ota-ona pasport nusxasi va tibbiy ma'lumotnomalar.\n"
+                ."📞 Qo'shimcha savollar uchun: +99890-958-00-67 raqamiga bog'laning.";
+        }
+
+        // Oshxona va ovqatlanish
+        if (Str::contains($q, ['oshxona', 'ovqat', 'bufet', 'tushlik', 'nechada ovqat'])) {
+            return "🍱 **Oshxona ma'lumotlari:**\n"
+                ."- Maktabda 120 o'rinli zamonaviy oshxona mavjud.\n"
+                ."- Tanaffuslar vaqtida issiq ovqat va sifatli mahsulotlar beriladi.\n"
+                ."- Oshxonamiz sanitariya qoidalariga to'liq javob beradi.";
+        }
+
+        // Kutubxona
+        if (Str::contains($q, ['kutubxona', 'kitob', 'darslik', 'nima oqish'])) {
+            return "📚 **Kutubxona:**\n"
+                ."- Maktabda boy kitob fondiga ega kutubxona mavjud.\n"
+                ."- Darsliklar bilan ta'minlash va badiiy adabiyotlarni olish uchun kutubxonaga murojaat qilishingiz mumkin.\n"
+                ."- Ish vaqti: 08:30 - 17:00.";
         }
 
         // Fanlar
@@ -1123,30 +1154,34 @@ class AiService
             "- Aloqa: murojaat yuborish va maktab bilan bog'lanish. ".route('contact'),
         ];
 
-        if ($user) {
-            foreach ($this->roleGuideLines($user) as $line) {
-                $lines[] = $line;
-            }
-        }
-
         $questionGroups = [
-            '- **Maktab**: direktor kim, manzil qayerda, telefon raqami nima, maktab qachon ochilgan',
-            '- **Sayt**: sayt muallifi kim, kimlar ishtirok etgan, saytda nimalar bor',
-            "- **Yangiliklar**: so'nggi yangiliklar qayerda, qaysi post yangi, tadbirlar bormi",
-            "- **Ustozlar**: falon ustoz kim, qaysi fan o'qituvchisi kim, ustozlar ro'yxati",
-            '- **Kurslar**: kursga qanday yozilaman, arizam holati qayerda, kursni kim tasdiqlaydi',
-            "- **Imtihonlar**: imtihon qayerda boshlanadi, natijam qayerda, ballim qancha, qayta topshirsa bo'ladimi",
-            "- **Profil va akkaunt**: ro'yxatdan qanday o'taman, parolni unutdim, emailni qanday o'zgartiraman",
-            "- **Aloqa va support**: rasmiy murojaatni qayerga yuboraman, murojaatimni kim ko'radi, texnik muammo bo'lsa qayerga yozaman",
-            "- **Chat va izohlar**: global chat nima, chat o'chsa nima qilaman, izohni tahrirlasa bo'ladimi",
-            '- **Panel va rollar**: admin panelga kim kira oladi, teacher panelda nima qilish mumkin',
+            "🏫 **Maktab faoliyati:**\n"
+            ."- \"Direktorimiz kim?\"\n"
+            ."- \"Maktab formasi qanaqa bo'lishi kerak?\"\n"
+            ."- \"1-sinfga hujjat topshirish qachon?\"\n"
+            ."- \"Maktab qachon tashkil topgan?\"",
+
+            "🎓 **O'quv jarayoni va natijalar:**\n"
+            ."- \"Imtihon natijamni qanday ko'raman?\"\n"
+            ."- \"Matematikadan qanday kurslar bor?\"\n"
+            ."- \"Falonchi ustoz qaysi fandan dars beradilar?\"\n"
+            ."- \"Keyingi tadbir qachon bo'ladi?\"",
+
+            "💻 **Texnik va Akkaunt:**\n"
+            ."- \"Parolimni unutdim, nima qilay?\"\n"
+            ."- \"Profilimga rasmni qanday qo'yaman?\"\n"
+            ."- \"Global chatda yozish qoidalari qanaqa?\"\n"
+            ."- \"Saytdagi xatolik haqida kimga xabar berish kerak?\"",
+
+            "📞 **Aloqa:**\n"
+            ."- \"Admin bilan qanday bog'lansa bo'ladi?\"\n"
+            ."- \"Maktab manzili va telefon raqamini yozing.\""
         ];
 
-        return "**Sayt imkoniyatlari**\n"
-            .implode("\n", $lines)
-            ."\n\n**AI'ga berish mumkin bo'lgan savollar**\n"
-            .implode("\n", $questionGroups)
-            ."\n\nMasalan: **\"texnik muammo bo'lsa qayerga murojaat qilaman?\"**, **\"kurs arizam qayerda ko'rinadi?\"**, **\"emailimni qanday o'zgartiraman?\"**";
+        return "**🤖 AI yordamchi yo'riqnomasi**\n\n"
+            ."Men sayt bo'limlari va maktab hayoti bo'yicha savollaringizga javob bera olaman. Masalan, mendan quyidagilarni so'rab ko'ring:\n\n"
+            .implode("\n\n", $questionGroups)
+            ."\n\n✨ **Maslahat:** Savolingizni aniq va tushunarli yozsangiz, javob ham shunchalik mukammal bo'ladi!";
     }
 
     private function roleGuideLines(object $user): array
@@ -1233,6 +1268,169 @@ class AiService
         }
 
         return "Savol biroz noaniq ko'rindi. Aniqlashtirib yozing: **kurs**, **imtihon**, **ustoz** yoki **aloqa** haqida so'rayapsizmi?";
+    }
+
+    private function matchCommonSchoolHelpQuery(string $message, ?object $user = null): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+        if ($q === '') {
+            return null;
+        }
+
+        if (Str::contains($q, ['parolim', 'parolni', 'password', 'esdan chiq', 'unutdim', 'tiklasam', 'reset'])) {
+            return "**Parolni tiklash tartibi**\n"
+                ."- Login sahifasidagi **Parolni unutdingizmi?** havolasini oching: ".route('password.forgot.form')."\n"
+                ."- Emailingizni kiriting, tizim tasdiqlash kodini yuboradi.\n"
+                ."- Kodni va yangi parolni kiritib parolni yangilaysiz.\n"
+                ."- Agar emailga kod kelmasa, spam papkani tekshiring yoki **Aloqa** orqali murojaat qiling: ".route('contact');
+        }
+
+        if (Str::contains($q, ['profilimga rasm', 'avatar', 'rasm yukla', 'rasmni yuk', 'profil rasm', 'surat yuk'])) {
+            return "**Profil rasmini yuklash**\n"
+                ."- Profil sahifasiga kiring: ".route('profile.show')."\n"
+                ."- Avatar/rasm maydonidan rasm tanlang va saqlang.\n"
+                ."- JPG, PNG yoki WEBP formatdagi aniq rasm tanlang.\n"
+                ."- Rasm juda katta bo'lsa, hajmini kichraytirib qayta yuklang.";
+        }
+
+        if (Str::contains($q, ['ism familiyam xato', 'ismim xato', 'familiyam xato', 'ism familiya', 'ismni to\'g\'ri', 'ismni togri'])) {
+            return "**Ism-familiyani to'g'rilash**\n"
+                ."- Profil sahifasida ism va familiyani tahrirlash mumkin: ".route('profile.show')."\n"
+                ."- Faqat haqiqiy ism-familiyangizni kiriting va saqlang.\n"
+                ."- Agar tizim o'zgartirishga ruxsat bermasa yoki ma'lumot rasmiy hujjat bilan bog'liq bo'lsa, **Aloqa** orqali adminlarga murojaat qiling: ".route('contact');
+        }
+
+        if (Str::contains($q, ['bug', 'xatolik', 'xato chiq', 'ishlamayap', 'nosozlik', 'texnik muammo'])) {
+            return "**Saytdagi xatolik haqida xabar berish**\n"
+                ."- Xatolik chiqqan sahifa nomini, nima qilganingizni va ekran rasmini yozing.\n"
+                ."- Rasmiy murojaat uchun **Aloqa** sahifasidan foydalaning: ".route('contact')."\n"
+                ."- Xabar avval qabul qilinadi, keyin mas'ul admin yoki texnik jamoaga yuboriladi.";
+        }
+
+        if (Str::contains($q, ['murojaatim holati', 'murojaat holati', 'javob kelgan', 'javobini qayerdan', 'murojaatimga javob'])) {
+            return "**Murojaat holati**\n"
+                ."- Murojaat yuborganda email yoki telefoningizni to'g'ri kiriting.\n"
+                ."- Javob odatda qoldirilgan aloqa ma'lumoti orqali beriladi.\n"
+                ."- Saytda oddiy foydalanuvchi uchun alohida murojaat status sahifasi bo'lmasa, qayta **Aloqa** orqali murojaat raqami yoki mavzusini yozib so'rang: ".route('contact');
+        }
+
+        if (Str::contains($q, ['telefon olib kelish', 'planshet', 'telefon mumkinmi', 'smartfon', 'gadjet'])) {
+            return "**Telefon va planshet masalasi**\n"
+                ."- Aniq tartib maktab ichki nizomi va sinf rahbari ko'rsatmasiga bog'liq.\n"
+                ."- Dars vaqtida telefon darsga xalaqit bermasligi kerak.\n"
+                ."- Zarur holatda ota-ona, sinf rahbari yoki ma'muriyat bilan oldindan kelishib oling.";
+        }
+
+        if (Str::contains($q, ['kechikib kelsa', 'kech qolsam', 'kechikish', 'jazo bormi'])) {
+            return "**Kechikish tartibi**\n"
+                ."- Kechikmaslik kerak; kechiksangiz sinf rahbari yoki navbatchi xodimga sababini tushuntirasiz.\n"
+                ."- Takroriy kechikishlarda ota-ona bilan profilaktik suhbat bo'lishi mumkin.\n"
+                ."- Aniq choralar maktab ichki tartib-qoidalariga ko'ra belgilanadi.";
+        }
+
+        if (Str::contains($q, ['maktab formasi', 'forma qoidalari', 'qishda qanday kiyinish', 'kiyinish kerak'])) {
+            return "**Maktab formasi**\n"
+                ."- Maktabga ozoda, tartibli va darsga mos kiyimda kelish kerak.\n"
+                ."- Qishda issiq, xavfsiz va maktab muhitiga mos kiyim tanlanadi.\n"
+                ."- Rang, model yoki maxsus talablar bo'yicha sinf rahbari yoki ma'muriyat e'lonlariga amal qiling.";
+        }
+
+        if (Str::contains($q, ['kutubxona', 'kitob olish', 'kitobni qancha', 'kitob qaytarish'])) {
+            return "**Kutubxonadan foydalanish**\n"
+                ."- Kitob olish uchun kutubxonachi yoki mas'ul xodimga murojaat qilinadi.\n"
+                ."- Kitobni belgilangan muddatda, toza holatda qaytarish kerak.\n"
+                ."- Aniq muddat va tartib kutubxona qoidasi bo'yicha belgilanadi.";
+        }
+
+        if (Str::contains($q, ['maktab hududidan', 'tashqariga chiqish', 'dars paytida chiqish', 'maktabdan chiqish'])) {
+            return "**Dars vaqtida maktab hududidan chiqish**\n"
+                ."- Dars vaqtida ruxsatsiz maktab hududidan chiqish mumkin emas.\n"
+                ."- Zarur holatda sinf rahbari, navbatchi yoki ma'muriyatdan ruxsat olinadi.\n"
+                ."- Xavfsizlik uchun ota-ona bilan bog'lanish talab qilinishi mumkin.";
+        }
+
+        if (Str::contains($q, ['olimpiada', 'fan olimpiadasi', 'fan olimpiadalari'])) {
+            return "**Fan olimpiadalari**\n"
+                ."- Olimpiada va saralashlar haqida e'lonlar odatda maktab yangiliklari yoki taqvimida beriladi: ".route('calendar')."\n"
+                ."- Qatnashish uchun fan o'qituvchingiz yoki sinf rahbaringizga murojaat qiling.\n"
+                ."- Tayyorlov va saralash tartibi fan yo'nalishiga qarab belgilanadi.";
+        }
+
+        if (Str::contains($q, ['zakovat', 'intellektual o\'yin', 'intellektual oyin'])) {
+            return "**Zakovat va intellektual o'yinlar**\n"
+                ."- Bunday tadbirlar bo'lsa, yangiliklar yoki taqvim orqali e'lon qilinadi: ".route('calendar')."\n"
+                ."- Jamoaga qo'shilish uchun sinf rahbari yoki tadbir mas'uliga murojaat qiling.\n"
+                ."- Agar hozircha e'lon bo'lmasa, taklif sifatida **Aloqa** orqali yozishingiz mumkin: ".route('contact');
+        }
+
+        if (Str::contains($q, ['sport musobaqa', 'futbol', 'shaxmat', 'musobaqaga yozil', 'sportga yozil'])) {
+            return "**Sport musobaqalariga yozilish**\n"
+                ."- Futbol, shaxmat yoki boshqa sport tadbirlari e'lon qilinganda sinf rahbari yoki jismoniy tarbiya o'qituvchisiga murojaat qiling.\n"
+                ."- Vaqt va shartlar taqvim yoki yangiliklarda chiqishi mumkin: ".route('calendar')."\n"
+                ."- Qatnashish uchun sog'liq va xavfsizlik talablariga amal qiling.";
+        }
+
+        if (Str::contains($q, ['navro\'z', 'navroz', 'bitiruv kechasi', 'bayram tadbir', 'tadbirda kimlar qatnashadi'])) {
+            return "**Bayram va maktab tadbirlari**\n"
+                ."- Tadbir sanasi, qatnashuvchilar va shartlar maktab e'loni yoki taqvimida beriladi: ".route('calendar')."\n"
+                ."- Odatda qatnashuvchilar tadbir turi, sinf va mas'ullar rejasiga qarab belgilanadi.\n"
+                ."- Aniq ro'yxat uchun sinf rahbari yoki tadbir mas'uliga murojaat qiling.";
+        }
+
+        if (Str::contains($q, ['boshqa maktabdan', 'ko\'chirib o\'tish', 'kochirish', 'perevod', 'transfer'])) {
+            return "**Boshqa maktabdan ko'chirib o'tish**\n"
+                ."- Qabul va ko'chirish tartibi rasmiy hujjatlar asosida amalga oshiriladi.\n"
+                ."- Ota-ona yoki vasiy maktab ma'muriyatiga murojaat qiladi.\n"
+                ."- Kerakli hujjatlar va bo'sh o'rin masalasi bo'yicha rasmiy javob ma'muriyat tomonidan beriladi.";
+        }
+
+        if (Str::contains($q, ['ota onalar majlisi', 'ota-onalar majlisi', 'majlis qachon', 'majlisni qayerdan'])) {
+            return "**Ota-onalar majlisi**\n"
+                ."- Majlis vaqti odatda sinf rahbari, maktab e'loni yoki taqvim orqali bildiriladi: ".route('calendar')."\n"
+                ."- Eng aniq ma'lumot uchun sinf rahbaringiz bilan bog'laning.\n"
+                ."- Saytdagi yangiliklar bo'limini ham kuzatib boring: ".route('post');
+        }
+
+        if (Str::contains($q, ['farzandimning ustoziga', 'ustoziga savol', 'ustoz bilan bog', 'o\'qituvchiga savol', 'oqituvchiga savol'])) {
+            return "**Ustozga savol berish**\n"
+                ."- Agar saytda bevosita chat mavjud bo'lmasa, sinf rahbari yoki maktab ma'muriyati orqali bog'laning.\n"
+                ."- Ustozlar profili orqali fan va ustoz ma'lumotlarini ko'rishingiz mumkin: ".route('teacher')."\n"
+                ."- Rasmiy savol yoki murojaat uchun **Aloqa** sahifasidan foydalaning: ".route('contact');
+        }
+
+        if (Str::contains($q, ['qabul qilish pullikmi', 'qabul pullikmi', 'maktabga qabul', 'qabul bepulmi'])) {
+            return "**Maktabga qabul masalasi**\n"
+                ."- Davlat maktabiga qabul masalalari rasmiy tartib va hujjatlar asosida ko'rib chiqiladi.\n"
+                ."- To'lov yoki boshqa shartlar haqida aniq javobni faqat maktab ma'muriyati beradi.\n"
+                ."- Qabul bo'yicha rasmiy ma'lumot olish uchun maktabga yoki **Aloqa** sahifasiga murojaat qiling: ".route('contact');
+        }
+
+        if (Str::contains($q, ['click', 'payme', 'to\'lov', 'tolov', 'kurs uchun pul', 'pullik kurs'])) {
+            return "**Kurs to'lovi**\n"
+                ."- Kurs to'lovi usuli kurs egasi yoki admin belgilagan tartibga bog'liq.\n"
+                ."- Agar Click/Payme kabi onlayn to'lov ulangan bo'lmasa, to'lov bo'yicha ko'rsatmani kurs mas'uli beradi.\n"
+                ."- Kursga yozilishdan oldin narx, muddat va to'lov tartibini kurs sahifasidan yoki mas'ul ustozdan aniqlashtiring: ".route('courses');
+        }
+
+        if (Str::contains($q, ['sertifikat', 'kursni tugatgach', 'kurs tugasa', 'certificate'])) {
+            return "**Kurs sertifikati**\n"
+                ."- Sertifikat berilishi har bir kurs shartlariga bog'liq.\n"
+                ."- Agar kurs sahifasida sertifikat haqida yozilmagan bo'lsa, kurs egasi yoki admin bilan aniqlashtiring.\n"
+                ."- Kursni tugatish mezonlari: qatnashish, topshiriqlar va yakuniy natijalarga bog'liq bo'lishi mumkin.";
+        }
+
+        if (Str::contains($q, ['imtihondan yiqilsam', 'qayta topshirish', 'yana topshirish', 'yiqilsam qancha'])) {
+            return "Imtihondan yiqilsangiz, qayta topshirish tartibi imtihon qoidasiga bog'liq. Hozirgi tizimda odatda bitta imtihon uchun bitta urinish saqlanadi; qayta topshirish kerak bo'lsa, o'qituvchi yoki admin bilan kelishish kerak.";
+        }
+
+        if (Str::contains($q, ['o\'quvchi kurs yarata', 'oquvchi kurs yarata', 'o\'zim ham kurs', 'men kurs yarata', 'kurs yarata olamanmi'])) {
+            return "**O'quvchi kurs yarata oladimi?**\n"
+                ."- Oddiy o'quvchi roli bilan kurs yaratib bo'lmaydi.\n"
+                ."- Kurs yaratish teacher yoki admin vakolatiga kiradi.\n"
+                ."- Agar siz kurs ochmoqchi bo'lsangiz, avval rolingiz va ruxsatingiz bo'yicha admin bilan kelishish kerak.";
+        }
+
+        return null;
     }
 
     private function clarificationReplyActions(): array
@@ -1591,20 +1789,18 @@ class AiService
 
     private function hasGreetingIntent(string $text): bool
     {
-        $normalized = $this->normalizeSearchText($text);
-
-        if ($normalized === '') {
+        if ($text === '') {
             return false;
         }
 
-        if ($this->queryHasApproximateToken($normalized, [
+        if ($this->queryHasApproximateToken($text, [
             'salom', 'assalom', 'assalomu', 'asalom', 'asalomu', 'salam', 'hello', 'qalay',
             'hayrli', 'xayrli',
         ])) {
             return true;
         }
 
-        if ($this->containsNormalizedPhrase($normalized, [
+        if ($this->containsNormalizedPhrase($text, [
             'xush kelibsiz',
             'qalay ishlar',
             'hayr li',
@@ -1614,13 +1810,13 @@ class AiService
         }
 
         if (
-            $this->queryHasApproximateToken($normalized, ['assalom', 'assalomu', 'asalom', 'asalomu', 'salom', 'salam'])
-            && $this->queryHasApproximateToken($normalized, ['alaykum', 'aleykum', 'aleykum', 'alekum', 'alaykom', 'alekom'])
+            $this->queryHasApproximateToken($text, ['assalom', 'assalomu', 'asalom', 'asalomu', 'salom', 'salam'])
+            && $this->queryHasApproximateToken($text, ['alaykum', 'aleykum', 'aleykum', 'alekum', 'alaykom', 'alekom'])
         ) {
             return true;
         }
 
-        return $this->matchesApproximatePhraseWindow($normalized, [
+        return $this->matchesApproximatePhraseWindow($text, [
             'assalomu alaykum',
             'assalomu aleykum',
             'assalomu alekum',
@@ -1650,33 +1846,29 @@ class AiService
 
     private function hasFarewellIntent(string $text): bool
     {
-        $normalized = $this->normalizeSearchText($text);
-
-        if ($normalized === '') {
+        if ($text === '') {
             return false;
         }
 
-        return $this->queryHasApproximateToken($normalized, ['xayr', 'hayr', 'bye', 'goodbye', 'chao'])
-            || $this->containsNormalizedPhrase($normalized, ["ko'rishguncha", 'korishguncha', "sog' bo'ling", 'sog boling']);
+        return $this->queryHasApproximateToken($text, ['xayr', 'hayr', 'bye', 'goodbye', 'chao'])
+            || $this->containsNormalizedPhrase($text, ["ko'rishguncha", 'korishguncha', "sog' bo'ling", 'sog boling']);
     }
 
     private function hasThanksIntent(string $text): bool
     {
-        $normalized = $this->normalizeSearchText($text);
-
-        if ($normalized === '') {
+        if ($text === '') {
             return false;
         }
 
-        return $this->queryHasApproximateToken($normalized, ['rahmat', 'raxmat', 'tashakkur', 'thanks'])
-            || $this->containsNormalizedPhrase($normalized, ['katta rahmat', 'minnatdor', "bor bo'ling", 'thank you']);
+        return $this->queryHasApproximateToken($text, ['rahmat', 'raxmat', 'tashakkur', 'thanks'])
+            || $this->containsNormalizedPhrase($text, ['katta rahmat', 'minnatdor', "bor bo'ling", 'thank you']);
     }
 
     private function matchesApproximatePhraseWindow(string $text, array $variants, int $maxWindowSize = 3): bool
     {
-        $tokens = preg_split('/\s+/u', $this->normalizeSearchText($text)) ?: [];
+        $tokens = preg_split('/\s+/u', $text) ?: [];
 
-        if ($tokens === []) {
+        if ($tokens === [] || $text === '') {
             return false;
         }
 
@@ -1768,12 +1960,44 @@ class AiService
             'kim', 'nima', 'qanday', 'qanaqa', 'qaysi', 'qayerda', 'qayer', 'qachon',
             'necha', 'qancha', 'haqida', 'kerak', 'iltimos', 'ayt', 'ayting', 'ber',
             'bering', 'bor', 'yoq', 'yo\'q', 'ham', 'va', 'yoki', 'bilan', 'uchun',
+            'asosda', 'asosida', 'bo\'yicha', 'boyicha',
+            'davomiyligi', 'davomiligi', 'davomligi', 'muddati', 'muddat',
+            'boshlanishi', 'boshlanish', 'boshlanadi', 'boshlaydi', 'boshlash',
+            'tugashi', 'tugaydi', 'tugash', 'narxi', 'sana', 'sanasi', 'vaqti',
             'the', 'a', 'an', 'is', 'are', 'what', 'who', 'where', 'when', 'how',
         ];
+        $fuzzyStopWords = [
+            'asosda', 'asosida', 'boyicha',
+            'davomiyligi', 'davomiligi', 'davomligi',
+            'boshlanishi', 'boshlanish', 'boshlanadi',
+            'muddati', 'muddat', 'narxi', 'sanasi', 'vaqti',
+        ];
 
-        return array_values(array_unique(array_filter($tokens, function ($token) use ($stopWords): bool {
-            return mb_strlen($token) >= 3 && ! in_array($token, $stopWords, true);
+        return array_values(array_unique(array_filter($tokens, function ($token) use ($stopWords, $fuzzyStopWords): bool {
+            return mb_strlen($token) >= 3
+                && ! in_array($token, $stopWords, true)
+                && ! $this->isApproximateStopToken($token, $fuzzyStopWords);
         })));
+    }
+
+    private function isApproximateStopToken(string $token, array $stopWords): bool
+    {
+        if (mb_strlen($token) < 5) {
+            return false;
+        }
+
+        foreach ($stopWords as $stopWord) {
+            if (abs(mb_strlen($token) - mb_strlen($stopWord)) > 1) {
+                continue;
+            }
+
+            $maxErrors = mb_strlen($stopWord) >= 8 ? 2 : 1;
+            if (levenshtein($token, $stopWord) <= $maxErrors) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function textMatchScore(string $query, string $candidate): int
@@ -2065,6 +2289,10 @@ class AiService
             foreach ($words as $word) {
                 if (mb_strlen($word) >= 5) {
                     foreach (['direktor', 'rahbar'] as $base) {
+                        if ($base === 'rahbar' && ! Str::startsWith($word, 'r')) {
+                            continue;
+                        }
+
                         if (levenshtein($word, $base) <= 2) {
                             $hasDirWord = true;
                             break 2;
@@ -2073,21 +2301,21 @@ class AiService
                 }
             }
         }
+        if (!$hasDirWord) return null;
 
-        if (! $hasDirWord) {
-            return null;
+        // DB dan direktor lavozimli shaxslarni topamiz.
+        $directorsFromDb = collect();
+        if (Schema::hasTable('teachers')) {
+            $directorKeywords = ['direktor', 'rahbar', 'boshqaruvchi', 'mudur', 'boshliq'];
+            $directorsFromDb = Teacher::where('is_active', true)
+                ->where(function ($query) use ($directorKeywords) {
+                    foreach ($directorKeywords as $kw) {
+                        $query->orWhere('lavozim', 'like', "%{$kw}%");
+                    }
+                })
+                ->select(['full_name', 'lavozim', 'subject', 'experience_years'])
+                ->get();
         }
-
-        // DB dan direktor lavozimli shaxslarni topamiz
-        $directorKeywords = ['direktor', 'rahbar', 'boshqaruvchi', 'mudur', 'boshliq'];
-        $directorsFromDb = Teacher::where('is_active', true)
-            ->where(function ($query) use ($directorKeywords) {
-                foreach ($directorKeywords as $kw) {
-                    $query->orWhere('lavozim', 'like', "%{$kw}%");
-                }
-            })
-            ->select(['full_name', 'lavozim', 'subject', 'experience_years'])
-            ->get();
 
         // Locale dan direktori nomini olishga urinamiz
         $localeDirector = $this->extractDirectorNameFromLocale();
@@ -2588,8 +2816,8 @@ class AiService
     {
         $title = $this->safeAiText($this->localizedModelText($course, 'title'), 120);
         $teacherName = $this->safeAiText((string) $course->teacher?->full_name, 80);
-        $duration = $this->safeAiText($this->localizedModelText($course, 'duration'), 80);
-        $price = $this->safeAiText($this->localizedModelText($course, 'price'), 80);
+        $duration = $this->cleanCourseDurationForAi($this->localizedModelText($course, 'duration'));
+        $price = $this->cleanCoursePriceForAi($this->localizedModelText($course, 'price'));
         $startDate = $course->start_date
             ? Carbon::parse($course->start_date)->format('d.m.Y')
             : '';
@@ -2603,6 +2831,47 @@ class AiService
 
         return "{$number}. **{$title}**"
             .($details !== [] ? "\n   ".implode(' | ', $details) : '');
+    }
+
+    private function cleanCoursePriceForAi(string $price): string
+    {
+        $price = $this->safeAiText($price, 80);
+        if ($price === '') {
+            return '';
+        }
+
+        $normalized = $this->normalizeSearchText($price);
+        if ($this->containsNormalizedPhrase($normalized, ['bepul', 'tekin', 'kelishilgan', 'shartnoma'])) {
+            return $price;
+        }
+
+        if (preg_match('/\d/u', $normalized) !== 1) {
+            return '';
+        }
+
+        return $price;
+    }
+
+    private function cleanCourseDurationForAi(string $duration): string
+    {
+        $duration = $this->safeAiText($duration, 80);
+        if ($duration === '') {
+            return '';
+        }
+
+        $normalized = $this->normalizeSearchText($duration);
+        if ($this->containsNormalizedPhrase($normalized, [
+            'kelishilgan', 'aniqlanadi', 'keyinroq',
+            'oy', 'kun', 'hafta', 'yil', 'soat', 'dars', 'modul', 'semestr',
+        ])) {
+            return $duration;
+        }
+
+        if (preg_match('/\d/u', $normalized) !== 1) {
+            return '';
+        }
+
+        return $duration;
     }
 
     private function localizedModelText(object $model, string $field): string
@@ -2727,6 +2996,10 @@ class AiService
 
     private function matchPublishedCourseByTitle(string $message): ?string
     {
+        if (! Schema::hasTable('courses')) {
+            return null;
+        }
+
         $q = $this->normalizeSearchText($message);
         if ($q === '' || mb_strlen($q) < 3) {
             return null;
@@ -2891,9 +3164,26 @@ class AiService
 
     private function matchTeacherIdentityQuery(string $q, string $qClean): ?string
     {
+        if (! Schema::hasTable('teachers')) {
+            return null;
+        }
+
+        $teacherColumns = $this->availableColumnsForTable('teachers', [
+            'full_name',
+            'subject',
+            'lavozim',
+            'experience_years',
+            'toifa',
+            'is_active',
+        ]);
+
+        if (! in_array('full_name', $teacherColumns, true)) {
+            return null;
+        }
+
         $teachers = Teacher::query()
-            ->where('is_active', true)
-            ->select(['full_name', 'subject', 'lavozim', 'experience_years', 'toifa'])
+            ->when(in_array('is_active', $teacherColumns, true), fn ($query) => $query->where('is_active', true))
+            ->select(array_values(array_diff($teacherColumns, ['is_active'])))
             ->get();
 
         if ($teachers->isEmpty()) {
@@ -3321,10 +3611,11 @@ class AiService
         // Foydalanuvchi konteksti
         $userContext = '';
         if ($user) {
+            $userName = trim($user->name ?: $user->buildNameFromParts());
             $userContext = "\n\n=== FOYDALANUVCHI ==="
-                ."\nIsm: {$user->first_name} {$user->last_name}"
+                ."\nIsm: {$userName}"
                 ."\nRol: {$user->role_label}"
-                ."\nFoydalanuvchiga ism bilan murojaat qiling.";
+                ."\nJavobni albatta foydalanuvchi ismi ({$userName}) bilan murojaat qilib boshlang.";
         }
 
         return <<<PROMPT
