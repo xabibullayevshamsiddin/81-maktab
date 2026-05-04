@@ -58,9 +58,11 @@ if (! function_exists('app_storage_asset')) {
             return null;
         }
 
-        // APP_URL pastki papkani hisobga olmasa, Storage::url() noto‘g‘ri URL beradi.
-        // app_public_asset bilan bir xil: joriy so‘rovning base URL + /storage/...
-        if (! app()->runningInConsole()) {
+        $publicDiskDriver = (string) config('filesystems.disks.public.driver', 'local');
+
+        // Local public disk uchun joriy so‘rovning base URL + /storage/... yo‘li ishonchli.
+        // Cloud bucket (s3/r2) uchun esa Storage::url() to‘g‘ri public URL qaytaradi.
+        if ($publicDiskDriver === 'local' && ! app()->runningInConsole()) {
             $baseUrl = request()->getBaseUrl();
             if ($baseUrl !== '') {
                 return rtrim($baseUrl, '/').'/storage/'.$path;

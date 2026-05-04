@@ -15,8 +15,11 @@ return [
 
     'default' => env('MAIL_MAILER', 'smtp'),
 
-    'enabled' => filter_var(env('MAIL_DELIVERY_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
-    'code_delivery_enabled' => filter_var(env('MAIL_CODE_DELIVERY_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+    'enabled' => filter_var(env('MAIL_DELIVERY_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+    'code_delivery_enabled' => filter_var(
+        env('MAIL_CODE_DELIVERY_ENABLED', env('MAIL_DELIVERY_ENABLED', false)),
+        FILTER_VALIDATE_BOOLEAN
+    ),
 
     /*
     |--------------------------------------------------------------------------

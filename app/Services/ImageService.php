@@ -62,7 +62,9 @@ class ImageService
 
     public function createThumbnail(string $originalPath, string $directory = 'thumbnails', int $width = 300, int $height = 200): ?string
     {
-        if (! Storage::disk('public')->exists($originalPath)) {
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($originalPath)) {
             return null;
         }
 
@@ -73,43 +75,47 @@ class ImageService
 
         $filename = 'thumb_'.pathinfo($originalPath, PATHINFO_FILENAME).'.'.$extension;
         $thumbnailPath = trim($directory, '/').'/'.$filename;
-        $absolutePath = Storage::disk('public')->path($originalPath);
+        $temporaryPath = $this->storeTemporaryDiskCopy($originalPath, $extension);
 
-        [$source, $sourceWidth, $sourceHeight, $mime] = $this->createImageResource($absolutePath);
-        $source = $this->normalizeOrientation($absolutePath, $mime, $source, $sourceWidth, $sourceHeight);
+        try {
+            [$source, $sourceWidth, $sourceHeight, $mime] = $this->createImageResource($temporaryPath);
+            $source = $this->normalizeOrientation($temporaryPath, $mime, $source, $sourceWidth, $sourceHeight);
 
-        $canvas = imagecreatetruecolor($width, $height);
-        if (! $canvas) {
+            $canvas = imagecreatetruecolor($width, $height);
+            if (! $canvas) {
+                imagedestroy($source);
+
+                throw new \RuntimeException('Thumbnail uchun canvas yaratilmadi.');
+            }
+
+            $this->prepareCanvas($canvas);
+
+            $sourceRatio = $sourceWidth / max(1, $sourceHeight);
+            $targetRatio = $width / max(1, $height);
+
+            if ($sourceRatio > $targetRatio) {
+                $cropHeight = $sourceHeight;
+                $cropWidth = (int) round($sourceHeight * $targetRatio);
+                $srcX = (int) floor(($sourceWidth - $cropWidth) / 2);
+                $srcY = 0;
+            } else {
+                $cropWidth = $sourceWidth;
+                $cropHeight = (int) round($sourceWidth / $targetRatio);
+                $srcX = 0;
+                $srcY = (int) floor(($sourceHeight - $cropHeight) / 2);
+            }
+
+            imagecopyresampled($canvas, $source, 0, 0, $srcX, $srcY, $width, $height, $cropWidth, $cropHeight);
+
+            $binary = $this->encodeImageBinary($canvas, $extension, 80);
+
+            imagedestroy($canvas);
             imagedestroy($source);
-
-            throw new \RuntimeException('Thumbnail uchun canvas yaratilmadi.');
+        } finally {
+            @unlink($temporaryPath);
         }
 
-        $this->prepareCanvas($canvas);
-
-        $sourceRatio = $sourceWidth / max(1, $sourceHeight);
-        $targetRatio = $width / max(1, $height);
-
-        if ($sourceRatio > $targetRatio) {
-            $cropHeight = $sourceHeight;
-            $cropWidth = (int) round($sourceHeight * $targetRatio);
-            $srcX = (int) floor(($sourceWidth - $cropWidth) / 2);
-            $srcY = 0;
-        } else {
-            $cropWidth = $sourceWidth;
-            $cropHeight = (int) round($sourceWidth / $targetRatio);
-            $srcX = 0;
-            $srcY = (int) floor(($sourceHeight - $cropHeight) / 2);
-        }
-
-        imagecopyresampled($canvas, $source, 0, 0, $srcX, $srcY, $width, $height, $cropWidth, $cropHeight);
-
-        $binary = $this->encodeImageBinary($canvas, $extension, 80);
-
-        imagedestroy($canvas);
-        imagedestroy($source);
-
-        Storage::disk('public')->put($thumbnailPath, $binary);
+        $disk->put($thumbnailPath, $binary);
 
         return $thumbnailPath;
     }
@@ -189,6 +195,32 @@ class ImageService
         $mime = strtolower((string) ($dimensions['mime'] ?? ''));
 
         return [$image, (int) $dimensions[0], (int) $dimensions[1], $mime];
+    }
+
+    private function storeTemporaryDiskCopy(string $path, string $extension): string
+    {
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'img_');
+
+        if ($temporaryPath === false) {
+            throw new \RuntimeException('Vaqtinchalik fayl yaratilmadi.');
+        }
+
+        $targetPath = $temporaryPath.'.'.$extension;
+
+        if (! @rename($temporaryPath, $targetPath)) {
+            @unlink($temporaryPath);
+            $targetPath = $temporaryPath;
+        }
+
+        $contents = Storage::disk('public')->get($path);
+
+        if (@file_put_contents($targetPath, $contents) === false) {
+            @unlink($targetPath);
+
+            throw new \RuntimeException('Vaqtinchalik rasm nusxasi yozilmadi.');
+        }
+
+        return $targetPath;
     }
 
     private function normalizeOrientation(string $path, string $mime, $image, int &$width, int &$height)
