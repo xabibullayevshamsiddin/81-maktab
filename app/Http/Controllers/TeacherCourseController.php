@@ -504,15 +504,6 @@ class TeacherCourseController extends Controller
             $required ? 'required' : 'nullable',
             'string',
             'max:120',
-            function (string $attribute, mixed $value, \Closure $fail): void {
-                if ($value === null || trim((string) $value) === '') {
-                    return;
-                }
-
-                if (! $this->isMeaningfulCourseDuration((string) $value)) {
-                    $fail("Davomiylikni aniq yozing (masalan: 2 oy, 12 dars yoki Kelishilgan).");
-                }
-            },
         ];
     }
 
@@ -535,21 +526,6 @@ class TeacherCourseController extends Controller
         $letters = preg_replace('/\b(so\'m|som|sum|uzs|usd|dollar|rubl|rub|oyiga|jami|kurs|dars|oy|ming|mln|million|taxminan)\b/u', ' ', $letters) ?? '';
 
         return trim($letters) === '';
-    }
-
-    private function isMeaningfulCourseDuration(string $value): bool
-    {
-        $normalized = $this->normalizeCourseMetaValue($value);
-        if ($normalized === '') {
-            return false;
-        }
-
-        if (preg_match('/\b(kelishilgan|aniqlanadi|keyinroq)\b/u', $normalized) === 1) {
-            return true;
-        }
-
-        return preg_match('/\d/u', $normalized) === 1
-            && preg_match('/\b(soat|kun|hafta|oy|yil|dars|modul|semestr|semester)\b/u', $normalized) === 1;
     }
 
     private function normalizeCourseMetaValue(string $value): string

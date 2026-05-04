@@ -66,7 +66,7 @@ class CourseEmailVerificationToggleTest extends TestCase
         Mail::assertNothingSent();
     }
 
-    public function test_course_price_and_duration_reject_garbage_values(): void
+    public function test_course_price_rejects_garbage_value_even_when_duration_is_free_text(): void
     {
         $admin = $this->adminUser();
         $teacher = $this->activeTeacher();
@@ -88,10 +88,46 @@ class CourseEmailVerificationToggleTest extends TestCase
 
         $response
             ->assertRedirect(route('teacher.courses.create'))
-            ->assertSessionHasErrors(['price', 'duration']);
+            ->assertSessionHasErrors(['price'])
+            ->assertSessionDoesntHaveErrors(['duration']);
 
         $this->assertDatabaseMissing('courses', [
             'title' => 'Kimyo kursi',
+        ]);
+    }
+
+    public function test_course_duration_accepts_free_text_values(): void
+    {
+        Mail::fake();
+
+        $admin = $this->adminUser();
+        $teacher = $this->activeTeacher();
+
+        config([
+            'courses.require_email_verification' => true,
+            'mail.enabled' => true,
+            'mail.code_delivery_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('teacher.courses.store'), [
+            'teacher_id' => $teacher->id,
+            'title' => 'Ingliz tili kursi',
+            'price' => "500 000 so'm",
+            'price_en' => '40 USD',
+            'duration' => 'Har hafta, guruhga qarab kelishiladi',
+            'duration_en' => 'Flexible schedule, depends on the group',
+            'description' => 'Til kursi tavsifi.',
+            'description_en' => 'Course description.',
+            'start_date' => now()->addWeek()->toDateString(),
+        ]);
+
+        $response->assertRedirect(route('courses'));
+
+        $this->assertDatabaseHas('courses', [
+            'title' => 'Ingliz tili kursi',
+            'duration' => 'Har hafta, guruhga qarab kelishiladi',
+            'duration_en' => 'Flexible schedule, depends on the group',
+            'status' => Course::STATUS_PUBLISHED,
         ]);
     }
 
