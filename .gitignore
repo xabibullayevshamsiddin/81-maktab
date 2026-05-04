@@ -24,3 +24,4 @@ yarn-error.log
 scratch_*.php
 replace.php
 /resources/views/playground
+/.composer-temp
