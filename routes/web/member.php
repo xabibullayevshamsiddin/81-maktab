@@ -32,8 +32,15 @@ Route::middleware('auth')->group(function () {
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('profile/natijalar', [ProfileController::class, 'resultsIndex'])->name('profile.results.index');
+    Route::get('profile/results', [ProfileController::class, 'resultsIndex']);
     Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
     Route::get('profile/results/export', [ProfileController::class, 'exportResults']);
+    Route::get('profile/natijalar/{result}/export', [ProfileController::class, 'exportSingleResult'])
+        ->whereNumber('result')
+        ->name('profile.results.single.export');
+    Route::get('profile/results/{result}/export', [ProfileController::class, 'exportSingleResult'])
+        ->whereNumber('result');
     Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
     Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');
     Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->name('profile.email.resend');

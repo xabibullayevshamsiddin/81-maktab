@@ -8,9 +8,7 @@ use App\Models\CourseEnrollment;
 use App\Models\Exam;
 use App\Models\OneTimeCode;
 use App\Models\Result;
-use App\Models\PostLike;
 use App\Models\TeacherComment;
-use App\Models\TeacherLike;
 use App\Models\User;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
@@ -21,6 +19,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
@@ -49,20 +48,6 @@ class ProfileController extends Controller
 
         $teacherComments = TeacherComment::query()
             ->where('user_id', $user->id)
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $likedPosts = PostLike::query()
-            ->where('user_id', $user->id)
-            ->with(['post:id,title,slug'])
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $teacherLikes = TeacherLike::query()
-            ->where('user_id', $user->id)
-            ->with(['teacher:id,full_name,slug'])
             ->latest()
             ->limit(40)
             ->get();
@@ -117,13 +102,7 @@ class ProfileController extends Controller
                 ->get();
         }
 
-        $examResults = Result::query()
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['submitted', 'expired'])
-            ->with('exam:id,title,total_points,passing_points')
-            ->latest('submitted_at')
-            ->limit(50)
-            ->get();
+        $examResultsCount = $this->userResultsBaseQuery($user)->count();
 
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
         $passwordChangeUnlocked = $this->hasConfirmedPasswordChange($request, (int) $user->id);
@@ -132,17 +111,35 @@ class ProfileController extends Controller
             'user',
             'postComments',
             'teacherComments',
-            'likedPosts',
-            'teacherLikes',
             'createdCourses',
             'createdExams',
             'courseEnrollments',
             'canViewCourseEnrollments',
             'pendingTeacherEnrollments',
-            'examResults',
+            'examResultsCount',
             'pendingEmail',
             'passwordChangeUnlocked'
         ));
+    }
+
+    public function resultsIndex(Request $request)
+    {
+        $user = $request->user();
+
+        $resultSummary = $this->userResultsBaseQuery($user)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN passed = true THEN 1 ELSE 0 END) as passed_count')
+            ->selectRaw('SUM(CASE WHEN passed = false THEN 1 ELSE 0 END) as failed_count')
+            ->selectRaw('AVG(points_earned) as average_points')
+            ->selectRaw('MAX(points_earned) as best_points')
+            ->first();
+
+        $results = $this->userResultsBaseQuery($user)
+            ->with('exam:id,title,total_points,passing_points')
+            ->latest('submitted_at')
+            ->paginate(12);
+
+        return view('profile.results.index', compact('results', 'resultSummary'));
     }
 
     public function update(Request $request, ImageService $imageService)
@@ -156,6 +153,7 @@ class ProfileController extends Controller
             'last_name' => User::nameValidationRules(),
             'phone' => uz_phone_rules(false),
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ], [
             'phone.regex' => uz_phone_validation_message(),
                         'first_name.required' => 'Ism kiritilishi shart.',
@@ -190,11 +188,13 @@ class ProfileController extends Controller
                     'avatar' => 'Profil rasmini tayyorlab bo‘lmadi. Boshqa rasm bilan qayta urinib ko‘ring.',
                 ]);
             }
+        } elseif ($request->boolean('remove_avatar')) {
+            $payload['avatar'] = null;
         }
 
         $user->update($payload);
 
-        if (isset($payload['avatar']) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
+        if (array_key_exists('avatar', $payload) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
             $imageService->deleteImage($previousAvatar);
         }
 
@@ -741,15 +741,31 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $results = Result::query()
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['submitted', 'expired'])
+        $results = $this->userResultsBaseQuery($user)
             ->with('exam:id,title,total_points,passing_points')
             ->latest('submitted_at')
             ->get();
 
         $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
+        return $this->streamResultsCsv($results, $filename);
+    }
+
+    public function exportSingleResult(Request $request, Result $result)
+    {
+        $user = $request->user();
+
+        $result = $this->userResultsBaseQuery($user)
+            ->with('exam:id,title,total_points,passing_points')
+            ->findOrFail($result->id);
+
+        $filename = 'natija_' . Str::slug((string) ($result->exam->title ?? 'imtihon')) . '_' . $result->id . '_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        return $this->streamResultsCsv(collect([$result]), $filename);
+    }
+
+    private function streamResultsCsv($results, string $filename): StreamedResponse
+    {
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -781,6 +797,13 @@ class ProfileController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function userResultsBaseQuery(User $user)
+    {
+        return Result::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['submitted', 'expired']);
     }
 
     private function hasConfirmedPasswordChange(Request $request, int $userId): bool

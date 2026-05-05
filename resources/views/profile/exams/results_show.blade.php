@@ -5,8 +5,9 @@
 
 @php
     $isTeacherViewer = auth()->user()->canManageExams() && $exam->ownsExam(auth()->user());
-    $backLink = $isTeacherViewer ? route('profile.exams.results', ['exam_id' => $exam->id]) : route('profile.show') . '#exam-results-section';
-    $backLabel = $isTeacherViewer ? "Imtihonlar ro'yxati" : "Profilga qaytish";
+    $isOwnerViewer = (int) auth()->id() === (int) $result->user_id;
+    $backLink = $isTeacherViewer ? route('profile.exams.results', ['exam_id' => $exam->id]) : route('profile.results.index');
+    $backLabel = $isTeacherViewer ? "Imtihonlar ro'yxati" : 'Natijalar sahifasi';
 @endphp
 
 <div class="container exam-public-container">
@@ -24,6 +25,14 @@
         </h1>
         <p class="text-muted">Imtihon topshirish jarayoni va batafsil tahlili. Sinf: <strong>{{ $result->user_grade ?? $result->user->grade ?? '—' }}</strong></p>
     </div>
+
+    @if($isOwnerViewer)
+        <div class="profile-results-actions" style="margin-bottom: 18px;">
+            <a href="{{ route('profile.results.single.export', $result) }}" class="btn btn-sm btn-outline">
+                <i class="fa-solid fa-file-csv"></i> Faqat shu natijani Excel (CSV)
+            </a>
+        </div>
+    @endif
 
     <!-- Bento Stats Grid -->
     <div class="bento-grid">

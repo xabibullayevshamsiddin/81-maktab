@@ -271,6 +271,20 @@
           </div>
         </div>
 
+        <!-- Animated Activity Chart -->
+        <div class="card-style mb-30 dashboard-card-item" style="animation-delay: 0.45s">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold">Haftalik Faollik (Kirishlar)</h5>
+            <div class="text-muted small">Oxirgi 7 kun</div>
+          </div>
+          <div class="prime-chart-container" 
+               data-chart-type="area" 
+               data-chart-color="#6366f1"
+               data-chart-categories='["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yakb"]'
+               data-chart-series='[{"name": "Kirishlar", "data": [31, 40, 28, 51, 42, 109, 100]}]'>
+          </div>
+        </div>
+
         <!-- Recent Activity Tabs or Mixed List -->
         <div class="row">
           @if($canManageContent)

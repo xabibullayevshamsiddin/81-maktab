@@ -275,8 +275,57 @@ class AiServiceTest extends TestCase
         $actions = $service->suggestActions('natijam va kursga yozilish', $student);
         $routes = $this->extractRoutes($actions);
 
-        $this->assertContains('profile.show', $routes);
+        $this->assertContains('profile.results.index', $routes);
         $this->assertContains('courses', $routes);
+    }
+
+    public function test_generate_response_returns_real_user_exam_results_instead_of_profile_instruction(): void
+    {
+        $this->recreateExamResultTables();
+
+        DB::table('users')->insert([
+            'id' => 1,
+            'name' => 'Ali Valiyev',
+            'email' => 'ali-results@example.com',
+            'password' => bcrypt('password'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('exams')->insert([
+            'id' => 1,
+            'title' => 'Algebra testi',
+            'total_points' => 50,
+            'passing_points' => 30,
+            'deleted_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('results')->insert([
+            'id' => 1,
+            'exam_id' => 1,
+            'user_id' => 1,
+            'score' => 18,
+            'points_earned' => 45,
+            'points_max' => 50,
+            'passed' => true,
+            'total_questions' => 20,
+            'submitted_at' => now(),
+            'status' => 'submitted',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $service = new AiService;
+        $result = $service->generateResponse("Mening natijalarimni ko'rsat", (object) ['id' => 1]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('dynamic_data', $result['source']);
+        $this->assertStringContainsString('Algebra testi', $result['text']);
+        $this->assertStringContainsString("45 / 50 ball", $result['text']);
+        $this->assertStringContainsString("O'tdi", $result['text']);
+        $this->assertStringNotContainsString("Profil", $result['text']);
     }
 
     public function test_teacher_actions_include_exam_creation(): void
@@ -651,6 +700,44 @@ class AiServiceTest extends TestCase
             $table->text('description');
             $table->date('start_date')->nullable();
             $table->string('status', 40)->index();
+            $table->timestamps();
+        });
+    }
+
+    private function recreateExamResultTables(): void
+    {
+        Schema::dropIfExists('results');
+        Schema::dropIfExists('exams');
+        Schema::dropIfExists('users');
+
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name')->nullable();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->timestamps();
+        });
+
+        Schema::create('exams', function (Blueprint $table): void {
+            $table->id();
+            $table->string('title');
+            $table->unsignedInteger('total_points')->nullable();
+            $table->unsignedInteger('passing_points')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+        });
+
+        Schema::create('results', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('exam_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedInteger('score')->default(0);
+            $table->unsignedInteger('points_earned')->nullable();
+            $table->unsignedInteger('points_max')->nullable();
+            $table->boolean('passed')->nullable();
+            $table->unsignedInteger('total_questions')->default(0);
+            $table->timestamp('submitted_at')->nullable();
+            $table->string('status', 20)->default('submitted');
             $table->timestamps();
         });
     }

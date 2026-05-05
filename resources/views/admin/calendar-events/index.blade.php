@@ -24,16 +24,7 @@
     <div class="row">
       <div class="col-lg-12">
         <div class="card-style mb-30 calendar-page" style="padding: 24px 20px 28px;">
-          <div class="calendar-toolbar" style="margin-bottom: 20px;">
-            <form method="get" action="{{ route('calendar-events.index') }}" class="calendar-year-form">
-              <label for="admin-cal-y">Yil (ko‘rinish)</label>
-              <select id="admin-cal-y" name="y" onchange="this.form.submit()">
-                @for($yy = (int) now()->year + 1; $yy >= 2020; $yy--)
-                  <option value="{{ $yy }}" {{ (int) $year === $yy ? 'selected' : '' }}>{{ $yy }}</option>
-                @endfor
-              </select>
-            </form>
-          </div>
+          
 
           @if($hasGridEvents)
             <div class="calendar-visual-head" style="margin-bottom: 14px;">

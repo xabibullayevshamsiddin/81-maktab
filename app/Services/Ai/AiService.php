@@ -141,7 +141,7 @@ class AiService
                 $actions[] = $this->makeLinkAction('Natijalar', route('profile.exams.results'), 'profile.exams.results');
             }
         } elseif ($user && Str::contains($q, ['natija', 'imtihon', 'ball'])) {
-            $actions[] = $this->makeLinkAction('Natijalarim', route('profile.show').'#exam-results-section', 'profile.show');
+            $actions[] = $this->makeLinkAction('Natijalarim', route('profile.results.index'), 'profile.results.index');
         }
 
         if (Str::contains($q, ['kurs', 'yozil', 'ariza', 'enroll'])) {
@@ -1206,7 +1206,7 @@ class AiService
         }
 
         return [
-            "- Siz **o'quvchi** sifatida profilingizda natijalar, kurs arizalari va email/parol sozlamalarini ko'rasiz: ".route('profile.show'),
+            "- Siz **o'quvchi** sifatida natijalar sahifasi, kurs arizalari va profil sozlamalaridan foydalanasiz: ".route('profile.results.index'),
             "- Faol imtihonlarni boshlash uchun imtihon bo'limidan, kursga yozilish uchun esa kurslar sahifasidan foydalanasiz.",
         ];
     }
@@ -2162,11 +2162,94 @@ class AiService
 
     private function hasAiKnowledgeTable(): bool
     {
-        if (self::$aiKnowledgeTableExists === null) {
-            self::$aiKnowledgeTableExists = Schema::hasTable('ai_knowledges');
+        return self::$aiKnowledgeTableExists = Schema::hasTable('ai_knowledges');
+    }
+
+    private function safeTeacherCount(): int
+    {
+        if (! Schema::hasTable('teachers')) {
+            return 0;
         }
 
-        return self::$aiKnowledgeTableExists;
+        $query = Teacher::query();
+
+        if (Schema::hasColumn('teachers', 'is_active')) {
+            $query->where('is_active', true);
+        }
+
+        return (int) $query->count();
+    }
+
+    private function safeUserCount(): int
+    {
+        if (! Schema::hasTable('users')) {
+            return 0;
+        }
+
+        return (int) User::query()->count();
+    }
+
+    private function safeStudentCount(): int
+    {
+        if (! Schema::hasTable('users')) {
+            return 0;
+        }
+
+        if (Schema::hasTable('roles') && Schema::hasColumn('users', 'role_id')) {
+            return (int) User::query()
+                ->whereHas('roleRelation', fn ($query) => $query->where('name', User::ROLE_USER))
+                ->count();
+        }
+
+        return (int) User::query()->count();
+    }
+
+    private function safePublishedCourseCount(): int
+    {
+        if (! Schema::hasTable('courses')) {
+            return 0;
+        }
+
+        $query = Course::query();
+
+        if (Schema::hasColumn('courses', 'status')) {
+            $query->where('status', Course::STATUS_PUBLISHED);
+        }
+
+        return (int) $query->count();
+    }
+
+    private function safePostCount(): int
+    {
+        if (! Schema::hasTable('posts')) {
+            return 0;
+        }
+
+        return (int) Post::query()->count();
+    }
+
+    private function safeUpcomingEventCount(): int
+    {
+        if (! Schema::hasTable('calendar_events')) {
+            return 0;
+        }
+
+        $query = CalendarEvent::query();
+
+        if (Schema::hasColumn('calendar_events', 'event_date')) {
+            $query->where('event_date', '>=', now());
+        }
+
+        return (int) $query->count();
+    }
+
+    private function safeResultCount(): int
+    {
+        if (! Schema::hasTable('results')) {
+            return 0;
+        }
+
+        return (int) Result::query()->count();
     }
 
     /**
@@ -2226,9 +2309,9 @@ class AiService
 
         // 1. School Statistics
         if ($this->isMatch($q, $qClean, ['qancha', 'necha kishi', 'nechta', 'soni', 'statistika'])) {
-            $teachers = Teacher::count();
-            $users = \App\Models\User::count();
-            $results = Result::count();
+            $teachers = $this->safeTeacherCount();
+            $users = $this->safeUserCount();
+            $results = $this->safeResultCount();
 
             return "Bizning maktabimiz haqida qisqacha ma'lumotlar:\n"
                 ."• Ustozlarimiz soni: **{$teachers} ta** 👨‍🏫\n"
@@ -2369,11 +2452,11 @@ class AiService
         $schoolAddress = SiteSetting::get('school_address', (string) __('public.about.quick_facts.0.value'));
         $directorName = $this->extractDirectorNameFromLocale();
 
-        $teachers = Teacher::where('is_active', true)->count();
-        $students = User::query()->whereHas('roleRelation', fn ($q) => $q->where('name', User::ROLE_USER))->count();
-        $courses = Course::where('status', Course::STATUS_PUBLISHED)->count();
-        $posts = Post::count();
-        $events = CalendarEvent::where('event_date', '>=', now())->count();
+        $teachers = $this->safeTeacherCount();
+        $students = $this->safeStudentCount();
+        $courses = $this->safePublishedCourseCount();
+        $posts = $this->safePostCount();
+        $events = $this->safeUpcomingEventCount();
 
         $directorLine = $directorName !== null
             ? "• 🎓 Direktor: **{$directorName}**"
@@ -2671,29 +2754,7 @@ class AiService
         }
 
         if ($user && Str::contains($q, ['oxirgi', 'natijam', 'o\'tdim', 'otdim', 'yiqildim', 'o\'tgan', 'o\'tmagan', 'pass', 'fail'])) {
-            $lastResult = Result::query()
-                ->where('user_id', $user->id)
-                ->with('exam')
-                ->latest('submitted_at')
-                ->latest('id')
-                ->first();
-
-            if (! $lastResult) {
-                return "Sizda hozircha saqlangan imtihon natijasi yo'q.";
-            }
-
-            $status = $lastResult->passed === true
-                ? "O'tgan"
-                : ($lastResult->passed === false ? 'Yiqilgan' : 'Tekshiruvda');
-
-            $points = $lastResult->points_max
-                ? ($lastResult->points_earned.' / '.$lastResult->points_max.' ball')
-                : (($lastResult->score ?? 0).' ta to\'g\'ri javob');
-
-            return "Oxirgi natijangiz: **{$lastResult->exam?->title}**.\n"
-                ."- Holat: **{$status}**\n"
-                ."- Ko'rsatkich: **{$points}**\n"
-                ."- Batafsilini profil natijalari bo'limida ko'rasiz.";
+            return $this->formatUserExamResultsReply($user, true);
         }
 
         if (Str::contains($q, ['qayta topshir', 'yana topshir'])) {
@@ -2701,6 +2762,98 @@ class AiService
         }
 
         return null;
+    }
+
+    private function formatUserExamResultsReply(object $user, bool $latestOnly = false): string
+    {
+        $userId = (int) data_get($user, 'id', 0);
+        if ($userId <= 0) {
+            return "Natijalarni ko'rsatish uchun tizimga qayta kiring.";
+        }
+
+        $resultsQuery = Result::query()
+            ->where('user_id', $userId)
+            ->whereIn('status', ['submitted', 'expired']);
+
+        $recentResults = (clone $resultsQuery)
+            ->with('exam:id,title,total_points,passing_points')
+            ->latest('submitted_at')
+            ->latest('id')
+            ->limit($latestOnly ? 1 : 3)
+            ->get();
+
+        if ($recentResults->isEmpty()) {
+            return "Sizda hozircha saqlangan imtihon natijasi yo'q.";
+        }
+
+        if ($latestOnly) {
+            /** @var Result $lastResult */
+            $lastResult = $recentResults->first();
+
+            return "Sizning oxirgi imtihon natijangiz:\n"
+                ."- Imtihon: **".($lastResult->exam?->title ?? "Noma'lum imtihon")."**\n"
+                ."- Holat: **".$this->examResultStatusLabel($lastResult)."**\n"
+                ."- Ball: **".$this->examResultPointsLabel($lastResult)."**\n"
+                ."- To'g'ri javoblar: **".((int) ($lastResult->score ?? 0)).' / '.((int) ($lastResult->total_questions ?? 0))."**\n"
+                ."- Sana: **".$this->examResultSubmittedLabel($lastResult)."**";
+        }
+
+        $summary = (clone $resultsQuery)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN passed = true THEN 1 ELSE 0 END) as passed_count')
+            ->selectRaw('SUM(CASE WHEN passed = false THEN 1 ELSE 0 END) as failed_count')
+            ->selectRaw('AVG(points_earned) as average_points')
+            ->first();
+
+        $total = (int) ($summary->total ?? 0);
+        $passed = (int) ($summary->passed_count ?? 0);
+        $failed = (int) ($summary->failed_count ?? 0);
+        $average = $summary->average_points !== null ? round((float) $summary->average_points, 1) : null;
+
+        $lines = $recentResults->map(function (Result $result): string {
+            return '• **'.($result->exam?->title ?? "Noma'lum imtihon").'** — '
+                .$this->examResultPointsLabel($result).', '
+                .$this->examResultStatusLabel($result)
+                .' ('.$this->examResultSubmittedLabel($result).')';
+        })->implode("\n");
+
+        $reply = "Sizning imtihon natijalaringiz:\n"
+            ."- Jami: **{$total} ta**\n"
+            ."- O'tgan: **{$passed} ta**\n"
+            ."- Yiqilgan: **{$failed} ta**\n";
+
+        if ($average !== null) {
+            $reply .= "- O'rtacha ball: **{$average}**\n";
+        }
+
+        $reply .= "\nSo'nggi natijalar:\n{$lines}";
+
+        if ($total > $recentResults->count()) {
+            $reply .= "\n\nYana **".($total - $recentResults->count())." ta** eski natijangiz ham bor.";
+        }
+
+        return $reply;
+    }
+
+    private function examResultStatusLabel(Result $result): string
+    {
+        return $result->passed === true
+            ? "O'tdi ✅"
+            : ($result->passed === false ? 'Yiqildi ❌' : 'Tekshiruvda ⏳');
+    }
+
+    private function examResultPointsLabel(Result $result): string
+    {
+        if ($result->points_earned !== null && $result->points_max !== null) {
+            return $result->points_earned.' / '.$result->points_max.' ball';
+        }
+
+        return ((int) ($result->score ?? 0)).' / '.((int) ($result->total_questions ?? 0))." ta to'g'ri javob";
+    }
+
+    private function examResultSubmittedLabel(Result $result): string
+    {
+        return $result->submitted_at?->format('d.m.Y H:i') ?? '-';
     }
 
     private function matchCourseCatalogQuery(string $message): ?string
@@ -3089,20 +3242,8 @@ class AiService
             if (! $user) {
                 return "Sizning natijalaringizni ko'rish uchun avval tizimga kiring. 😊";
             }
-            $lastResult = Result::where('user_id', $user->id)->with('exam')->latest()->first();
-            if ($lastResult) {
-                $passed = $lastResult->passed;
-                $status = $passed === true ? "o'tdingiz ✅" : ($passed === false ? 'yeta olmadingiz ❌' : 'natija tekshirilmoqda ⏳');
-                $points = $lastResult->points_earned !== null
-                    ? " ({$lastResult->points_earned}/{$lastResult->points_max} ball)"
-                    : '';
 
-                return "Sizning oxirgi imtihoningiz: **{$lastResult->exam->title}**{$points}.\n"
-                    ."Natijangiz: **{$lastResult->score}%** — {$status}.\n"
-                    ."Batafsil ma'lumotni 'Profil' bo'limida ko'rishingiz mumkin. 🎓";
-            }
-
-            return "Siz hali imtihon topshirmagansiz. Imtihon bo'limiga o'tib sinab ko'ring! 📝";
+            return $this->formatUserExamResultsReply($user);
         }
 
         // 2. User Profile

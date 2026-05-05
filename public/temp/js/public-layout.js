@@ -203,6 +203,92 @@
     } catch (e) {}
   };
 
+  /** Prime Pro Max: Page Transition */
+  function initPageTransitions() {
+    const loader = document.getElementById('prime-page-loader');
+    
+    // Page load fade in
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (loader) loader.classList.add('fade-out');
+        document.body.classList.add('page-ready');
+      }, 300);
+    });
+
+    // Page leave fade out on link click
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return;
+      
+      const href = link.getAttribute('href');
+      const target = link.getAttribute('target');
+      
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !href.startsWith('tel:') && !href.startsWith('mailto:') && target !== '_blank' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        document.body.classList.remove('page-ready');
+        if (loader) loader.classList.remove('fade-out');
+        
+        setTimeout(() => {
+          window.location.href = href;
+        }, 400);
+      }
+    });
+  }
+
+  /** Prime Pro Max: Cinematic Theme Toggle */
+  function initCinematicThemeToggle() {
+    const toggle = document.querySelector('.theme-toggle') || document.querySelector('[data-theme-toggle]');
+    if (!toggle) return;
+
+    toggle.addEventListener('click', (e) => {
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      const nextTheme = isDark ? 'light' : 'dark';
+      
+      // Cinematic Reveal
+      const canvas = document.getElementById('theme-transition-canvas');
+      if (!canvas) {
+        root.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('site-theme', nextTheme);
+        return;
+      }
+
+      const rect = toggle.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      document.body.classList.add('theme-transition-active');
+      
+      let radius = 0;
+      const maxRadius = Math.sqrt(Math.pow(window.innerWidth, 2) + Math.pow(window.innerHeight, 2));
+      
+      function animate() {
+        radius += maxRadius / 20;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = nextTheme === 'dark' ? '#07111f' : '#edf2fb';
+        ctx.fill();
+        
+        if (radius < maxRadius) {
+          requestAnimationFrame(animate);
+        } else {
+          root.setAttribute('data-theme', nextTheme);
+          localStorage.setItem('site-theme', nextTheme);
+          document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: nextTheme } }));
+          setTimeout(() => {
+            document.body.classList.remove('theme-transition-active');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }, 100);
+        }
+      }
+      animate();
+    });
+  }
+
+  /** Prime Pro Max: Animated Charts (ApexCharts) */
   function playPrimeConfetti(x, y, isGold = false) {
     const colors = isGold 
         ? ['#f59e0b', '#fbbf24', '#fcd34d', '#ffffff'] 
@@ -3476,6 +3562,98 @@
 
   }
 
+  /** Prime Pro Max: Animated Charts (ApexCharts) */
+  function initPrimeCharts() {
+    const chartContainers = document.querySelectorAll('.prime-chart-container');
+    if (!chartContainers.length || typeof ApexCharts === 'undefined') return;
+
+    chartContainers.forEach(container => {
+      const type = container.getAttribute('data-chart-type') || 'area';
+      const data = JSON.parse(container.getAttribute('data-chart-series') || '[]');
+      const categories = JSON.parse(container.getAttribute('data-chart-categories') || '[]');
+      const color = container.getAttribute('data-chart-color') || '#4f46e5';
+
+      const options = {
+        series: data,
+        chart: {
+          height: 350,
+          type: type,
+          toolbar: { show: false },
+          zoom: { enabled: false },
+          background: 'transparent',
+          foreColor: 'var(--muted)',
+          animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 800,
+            animateGradually: { enabled: true, delay: 150 },
+            dynamicAnimation: { enabled: true, speed: 350 }
+          }
+        },
+        dataLabels: { enabled: false },
+        stroke: {
+          curve: 'smooth',
+          width: 3,
+          colors: [color]
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.45,
+            opacityTo: 0.05,
+            stops: [20, 100, 100],
+            colorStops: [
+              { offset: 0, color: color, opacity: 0.4 },
+              { offset: 100, color: color, opacity: 0 }
+            ]
+          }
+        },
+        markers: {
+          size: 5,
+          colors: [color],
+          strokeColors: '#fff',
+          strokeWidth: 2,
+          hover: { size: 7 }
+        },
+        xaxis: {
+          categories: categories,
+          axisBorder: { show: false },
+          axisTicks: { show: false }
+        },
+        yaxis: {
+          labels: {
+            formatter: (val) => val.toFixed(0)
+          }
+        },
+        grid: {
+          borderColor: 'var(--border-soft)',
+          strokeDashArray: 4,
+          padding: { left: 20, right: 20 }
+        },
+        theme: {
+          mode: root.getAttribute('data-theme') || 'light'
+        },
+        tooltip: {
+          theme: root.getAttribute('data-theme') || 'light',
+          x: { show: true },
+          marker: { show: true }
+        }
+      };
+
+      const chart = new ApexCharts(container, options);
+      chart.render();
+      
+      // Update chart theme on toggle
+      document.addEventListener('themeChanged', () => {
+        chart.updateOptions({
+          theme: { mode: root.getAttribute('data-theme') },
+          tooltip: { theme: root.getAttribute('data-theme') }
+        });
+      });
+    });
+  }
+
   function runInitializers() {
     moveGlobalModals();
     initChatUserPreviewChrome();
@@ -3501,6 +3679,11 @@
     initPrimeAudioControl();
     initGlobalSearchModal();
     initSeniorInteractions();
+    
+    // Prime Pro Max Initializers
+    initPageTransitions();
+    initCinematicThemeToggle();
+    initPrimeCharts();
 
     // Pointer interaction to unlock AudioContext
     const unlockAudio = () => {

@@ -19,8 +19,6 @@
 
   $postCommentCount = $postComments->count();
   $teacherCommentCount = $teacherComments->count();
-  $likedPostCount = $likedPosts->count();
-  $likedTeacherCount = $teacherLikes->count();
   $activityPreviewLimit = 8;
   $activityStep = 8;
   $courseEnrollmentCount = $courseEnrollments->count();
@@ -35,11 +33,6 @@
       'icon' => 'fa-regular fa-comments',
       'value' => $postCommentCount + $teacherCommentCount,
       'label' => __('profile.stats.comments'),
-    ],
-    [
-      'icon' => 'fa-regular fa-heart',
-      'value' => $likedPostCount + $likedTeacherCount,
-      'label' => __('profile.stats.likes'),
     ],
     [
       'icon' => 'fa-solid fa-book-open',
@@ -87,6 +80,7 @@
     'preparingAvatar' => __('profile.js.preparing_avatar'),
     'avatarReady' => __('profile.js.avatar_ready'),
     'avatarFallback' => __('profile.js.avatar_fallback'),
+    'avatarRemoved' => 'Rasm olib tashlanadi. Saqlasangiz bosh harf ko‘rinadi.',
     'saveError' => __('profile.js.save_error'),
     'saved' => __('profile.js.saved'),
     'serverError' => __('profile.js.server_error'),
@@ -158,9 +152,21 @@
             data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}">{{ $profileInitial }}</div>
 
           <div class="profile-overview-copy">
-            <span class="profile-kicker">{{ __('profile.overview_kicker') }}</span>
-            <h2>{{ $user->name }}</h2>
-            <p class="profile-overview-intro">{{ __('profile.overview_text') }}</p>
+            <div class="profile-overview-headline">
+              <span class="profile-kicker">
+                <i class="fa-solid fa-id-card"></i>
+                {{ __('profile.overview_kicker') }}
+              </span>
+              <span class="profile-overview-pulse">
+                <i class="fa-solid fa-sparkles"></i>
+                Profil markazi
+              </span>
+            </div>
+            <h2 class="profile-overview-name">{{ $user->name }}</h2>
+            <p class="profile-overview-intro">
+              Ism, telefon va email shu joydan boshqariladi. Pastdagi bloklarda esa imtihon, kurs va izohlar bo'yicha
+              barcha faolligingiz jamlangan.
+            </p>
 
             <div class="profile-overview-tags">
               <span
@@ -210,10 +216,22 @@
             </div>
 
             <div class="profile-guide-box">
-              <i class="fa-solid fa-circle-info"></i>
-              <div>
-                <strong>{{ __('profile.main_card.note_title') }}</strong>
-                <p>{{ __('profile.main_card.note_text') }}</p>
+              <div class="profile-guide-icon">
+                <i class="fa-solid fa-bell"></i>
+              </div>
+              <div class="profile-guide-copy">
+                <span class="profile-guide-kicker">{{ __('profile.main_card.note_title') }}</span>
+                <strong>Profil ma'lumotlarini shu joydan boshqaring</strong>
+                <ul class="profile-guide-points">
+                  <li>
+                    <i class="fa-solid fa-user-pen"></i>
+                    <span>Ism va telefon shu formadan saqlanadi.</span>
+                  </li>
+                  <li>
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                    <span>Email pastdagi alohida blokda tasdiqlash kodi orqali almashtiriladi.</span>
+                  </li>
+                </ul>
               </div>
             </div>
 
@@ -227,7 +245,15 @@
                   <div class="profile-field">
                     <label for="profile-avatar">{{ __('profile.main_card.avatar_label') }}</label>
                     <span class="profile-field-hint">{{ __('profile.main_card.avatar_hint') }}</span>
+                    <input type="hidden" name="remove_avatar" value="0" data-profile-avatar-remove-flag />
                     <input type="file" id="profile-avatar" name="avatar" accept="image/jpeg,image/png,image/webp" />
+                    @if($profileAvatarUrl)
+                      <div class="profile-actions-row profile-avatar-actions">
+                        <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
+                          Rasmni olib tashlash
+                        </button>
+                      </div>
+                    @endif
                     <span class="profile-avatar-meta"
                       data-profile-avatar-meta>{{ __('profile.main_card.avatar_meta') }}</span>
                     @error('avatar')
@@ -342,115 +368,21 @@
           <section class="profile-activity-block reveal">
             <div class="profile-block-head">
               <div class="profile-block-copy">
-                <h3><i class="fa-solid fa-lightbulb"></i> Taklif va ovoz berish</h3>
-                <p>Yangi funksiya bo'yicha taklif qoldiring va boshqa foydalanuvchilarning takliflariga ovoz bering.</p>
+                <h3><i class="fa-solid fa-chart-column"></i> Mening natijalarim</h3>
+                <p>Topshirgan imtihonlaringiz endi alohida sahifada jamlanadi, profil esa ixcham qoladi.</p>
               </div>
-              <span class="profile-section-count">Feature</span>
+              <span class="profile-section-count">{{ $examResultsCount }} ta</span>
             </div>
 
             <div class="profile-actions-row">
-              <a href="{{ route('feature-requests.index') }}" class="btn btn-sm">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> Takliflar sahifasi
-              </a>
+              <a href="{{ route('profile.results.index') }}" class="btn btn-sm">Natijalar sahifasi</a>
+              @if($examResultsCount > 0)
+                <a href="{{ route('profile.results.export') }}" class="btn btn-outline btn-sm">
+                  <i class="fa-solid fa-file-csv"></i> Barchasini Excel (CSV)
+                </a>
+              @endif
             </div>
           </section>
-
-          @if(($examResults ?? collect())->isNotEmpty())
-            @php
-              $erTotal = $examResults->count();
-              $erPassed = $examResults->where('passed', true)->count();
-              $erFailed = $erTotal - $erPassed;
-              $erAvgScore = $examResults->avg('points_earned');
-              $erMaxScore = $examResults->max('points_earned');
-              $erPassRate = $erTotal > 0 ? round($erPassed / $erTotal * 100) : 0;
-            @endphp
-            <section class="profile-activity-block reveal" id="exam-results-section">
-              <div class="profile-block-head">
-                <div class="profile-block-copy">
-                  <h3><i class="fa-solid fa-chart-column"></i> Mening natijalarim</h3>
-                  <p>Topshirgan imtihonlaringiz natijalari va statistikasi.</p>
-                </div>
-                <span class="profile-section-count">{{ $erTotal }} ta</span>
-              </div>
-
-              <div class="profile-exam-stats">
-                <div class="profile-exam-stat-card profile-exam-stat--primary">
-                  <span class="profile-exam-stat-num">{{ $erTotal }}</span>
-                  <span class="profile-exam-stat-label">Jami imtihon</span>
-                </div>
-                <div class="profile-exam-stat-card profile-exam-stat--success">
-                  <span class="profile-exam-stat-num">{{ $erPassed }}</span>
-                  <span class="profile-exam-stat-label">O'tdi</span>
-                </div>
-                <div class="profile-exam-stat-card profile-exam-stat--danger">
-                  <span class="profile-exam-stat-num">{{ $erFailed }}</span>
-                  <span class="profile-exam-stat-label">Yiqildi</span>
-                </div>
-                <div class="profile-exam-stat-card profile-exam-stat--info">
-                  <span class="profile-exam-stat-num">{{ $erPassRate }}%</span>
-                  <span class="profile-exam-stat-label">O'tish darajasi</span>
-                </div>
-              </div>
-
-              <div class="profile-results-actions">
-                <button type="button" class="btn btn-sm btn-outline" onclick="window.print()">
-                  <i class="fa-solid fa-print"></i> Chop etish
-                </button>
-                <a href="{{ route('profile.results.export') }}" class="btn btn-sm btn-outline">
-                  <i class="fa-solid fa-file-csv"></i> Excel (CSV)
-                </a>
-              </div>
-
-              <div class="profile-exam-results-list" id="exam-results-table">
-                @foreach($examResults as $er)
-                  <div class="profile-exam-result-card {{ $er->passed ? 'is-pass' : 'is-fail' }}">
-                    <div class="profile-exam-result-top">
-                      <div class="profile-exam-result-info">
-                        <h4 class="profile-exam-result-title">{{ $er->exam->title ?? '-' }}</h4>
-                        <span class="profile-exam-result-date">
-                          {{ $er->submitted_at?->format('d.m.Y H:i') ?? '-' }}
-                        </span>
-                      </div>
-                      <div class="profile-exam-result-badge {{ $er->passed ? 'badge-pass' : 'badge-fail' }}">
-                        @if($er->passed)
-                          <i class="fa-solid fa-circle-check"></i> O'tdi
-                        @else
-                          <i class="fa-solid fa-circle-xmark"></i> Yiqildi
-                        @endif
-                      </div>
-                    </div>
-                    <div class="profile-exam-result-bottom">
-                      <div class="profile-exam-result-metric">
-                        <span
-                          class="profile-exam-result-metric-val">{{ $er->points_earned ?? 0 }}<small>/{{ $er->points_max ?? 0 }}</small></span>
-                        <span class="profile-exam-result-metric-label">Ball</span>
-                      </div>
-                      <div class="profile-exam-result-metric">
-                        <span
-                          class="profile-exam-result-metric-val">{{ $er->score }}<small>/{{ $er->total_questions }}</small></span>
-                        <span class="profile-exam-result-metric-label">To'g'ri</span>
-                      </div>
-                      <div class="profile-exam-result-metric">
-                        @php $pct = $er->points_max > 0 ? round($er->points_earned / $er->points_max * 100) : 0; @endphp
-                        <span class="profile-exam-result-metric-val">{{ $pct }}%</span>
-                        <span class="profile-exam-result-metric-label">Foiz</span>
-                      </div>
-                      <div class="profile-exam-result-metric">
-                        <span class="profile-exam-result-metric-val"
-                          style="font-size:12px;">{{ $er->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan' }}</span>
-                        <span class="profile-exam-result-metric-label">Holat</span>
-                      </div>
-                    </div>
-                    <div class="profile-actions-row" style="margin-top:12px; border-top: 1px solid var(--border); padding-top: 12px;">
-                      <a href="{{ route('profile.exams.results.show', $er) }}" class="btn btn-outline btn-sm w-100" style="justify-content:center;">
-                        <i class="fa-solid fa-chart-pie me-1"></i> Batafsil grafika va xatolarni ko'rish
-                      </a>
-                    </div>
-                  </div>
-                @endforeach
-              </div>
-            </section>
-          @endif
 
           @if($user->isTeacher())
             <section class="profile-activity-block reveal" id="course-open-request">
@@ -575,7 +507,7 @@
               <span class="profile-section-count">{{ $postCommentCount }}</span>
             </div>
 
-            <ul class="profile-activity-list" data-activity-list data-preview-limit="{{ $activityPreviewLimit }}">
+            <ul class="profile-activity-list profile-activity-list-compact profile-activity-list--trimmed" data-activity-list data-preview-limit="{{ $activityPreviewLimit }}">
               @forelse($postComments as $c)
                 <li class="profile-activity-item">
                   @if($c->parent_id)
@@ -610,7 +542,7 @@
               <span class="profile-section-count">{{ $teacherCommentCount }}</span>
             </div>
 
-            <ul class="profile-activity-list" data-activity-list data-preview-limit="{{ $activityPreviewLimit }}">
+            <ul class="profile-activity-list profile-activity-list-compact profile-activity-list--trimmed" data-activity-list data-preview-limit="{{ $activityPreviewLimit }}">
               @forelse($teacherComments as $c)
                 <li class="profile-activity-item">
                   @if($c->parent_id)
@@ -626,74 +558,6 @@
               @endforelse
             </ul>
             @if($teacherCommentCount > $activityPreviewLimit)
-              <div class="profile-actions-row profile-actions-row--activity">
-                <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
-                  Yana ko'rsatish
-                </button>
-              </div>
-            @endif
-          </section>
-
-          <section class="profile-activity-block reveal">
-            <div class="profile-block-head">
-              <div class="profile-block-copy">
-                <h3><i class="fa-regular fa-heart"></i> {{ __('profile.blocks.liked_posts.title') }}</h3>
-                <p>{{ __('profile.blocks.liked_posts.text') }}</p>
-              </div>
-              <span class="profile-section-count">{{ $likedPostCount }}</span>
-            </div>
-
-            <ul class="profile-activity-list profile-activity-list-compact" data-activity-list
-              data-preview-limit="{{ $activityPreviewLimit }}">
-              @forelse($likedPosts as $like)
-                <li class="profile-activity-item">
-                  @if($like->post)
-                    <a class="profile-activity-link"
-                      href="{{ route('post.show', $like->post->slug) }}">{{ localized_model_value($like->post, 'title') }}</a>
-                  @else
-                    <span class="profile-muted">{{ __('profile.blocks.liked_posts.deleted') }}</span>
-                  @endif
-                  <span class="profile-activity-date">{{ $like->created_at?->diffForHumans() }}</span>
-                </li>
-              @empty
-                <li class="profile-empty">{{ __('profile.blocks.liked_posts.empty') }}</li>
-              @endforelse
-            </ul>
-            @if($likedPostCount > $activityPreviewLimit)
-              <div class="profile-actions-row profile-actions-row--activity">
-                <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
-                  Yana ko'rsatish
-                </button>
-              </div>
-            @endif
-          </section>
-
-          <section class="profile-activity-block reveal">
-            <div class="profile-block-head">
-              <div class="profile-block-copy">
-                <h3><i class="fa-solid fa-chalkboard-user"></i> {{ __('profile.blocks.liked_teachers.title') }}</h3>
-                <p>{{ __('profile.blocks.liked_teachers.text') }}</p>
-              </div>
-              <span class="profile-section-count">{{ $likedTeacherCount }}</span>
-            </div>
-
-            <ul class="profile-activity-list profile-activity-list-compact" data-activity-list
-              data-preview-limit="{{ $activityPreviewLimit }}">
-              @forelse($teacherLikes as $tl)
-                <li class="profile-activity-item">
-                  @if($tl->teacher)
-                    <a class="profile-activity-link"
-                      href="{{ route('teacher.show', $tl->teacher->slug) }}">{{ $tl->teacher->full_name }}</a>
-                  @else
-                    <span class="profile-muted">{{ __('profile.blocks.liked_teachers.deleted') }}</span>
-                  @endif
-                  <span class="profile-activity-date">{{ $tl->created_at?->diffForHumans() }}</span>
-                </li>
-              @empty
-                <li class="profile-empty">{{ __('profile.blocks.liked_teachers.empty') }}</li>
-              @endforelse
-            </ul>
-            @if($likedTeacherCount > $activityPreviewLimit)
               <div class="profile-actions-row profile-actions-row--activity">
                 <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
                   Yana ko'rsatish
@@ -773,9 +637,9 @@
                     @if($course->status === \App\Models\Course::STATUS_DRAFT && $course->rejection_reason)
                       <div class="profile-rejection-block mt-10">
                         <span class="profile-tag profile-tag--rejected mb-5"
-                          style="display: inline-block;">{{ __('Rad etilgan') }}</span>
+                          style="display: inline-block;">Rad etilgan</span>
                         <p class="profile-enroll-note" style="color: #b91c1c; border-left-color: #b91c1c;">
-                          <strong>{{ __('Sabab') }}:</strong> {{ $course->rejection_reason }}
+                          <strong>Sabab:</strong> {{ $course->rejection_reason }}
                         </p>
                       </div>
                     @endif

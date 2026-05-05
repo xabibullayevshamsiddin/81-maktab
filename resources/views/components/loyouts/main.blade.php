@@ -39,6 +39,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     @stack('page_styles')
     <script>
       if ('serviceWorker' in navigator) {
@@ -51,7 +52,7 @@
     </script>
   </head>
 
-      <body
+    <body
         @class([
           'site-boot-loading' => ! request()->routeIs('exam.session'),
           'page-home' => request()->routeIs('home'),
