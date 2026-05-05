@@ -3681,8 +3681,6 @@
     initSeniorInteractions();
     
     // Prime Pro Max Initializers
-    initPageTransitions();
-    initCinematicThemeToggle();
     initPrimeCharts();
 
     // Pointer interaction to unlock AudioContext

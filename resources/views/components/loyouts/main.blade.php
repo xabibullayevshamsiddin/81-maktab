@@ -28,9 +28,10 @@
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ filemtime(public_path('temp/css/site-boot-loader.css')) }}" />
     @endunless
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ filemtime(public_path('temp/css/mobile-public.css')) }}" />
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ filemtime(public_path('temp/css/mobile-public.css')) }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ filemtime(public_path('temp/css/site-refresh.css')) }}" />
     @if(turnstile_enabled())
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     @endif
@@ -63,30 +64,17 @@
         data-site-error="{{ session('error') }}"
         data-site-toast-type="{{ session('toast_type') }}"
         data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
-        data-user-notifications-url="{{ auth()->check() ? route('notifications.pending') : '' }}"
-        data-phone-pattern="{{ uz_phone_input_pattern() }}"
-        data-phone-title="{{ uz_phone_input_title() }}"
-      >
+	        data-user-notifications-url="{{ auth()->check() ? route('notifications.pending') : '' }}"
+	        data-user-notification-summary-url="{{ auth()->check() ? route('notifications.summary') : '' }}"
+	        data-phone-pattern="{{ uz_phone_input_pattern() }}"
+	        data-phone-title="{{ uz_phone_input_title() }}"
+	      >
     @unless(request()->routeIs('exam.session'))
     <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
       <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
-      <div class="site-boot-loader__content">
-        <div class="site-boot-loader__orbit" aria-hidden="true">
-          <div class="site-boot-loader__ring"></div>
-          <div class="site-boot-loader__ring-inner"></div>
-          <div class="site-boot-loader__glow"></div>
-          <div class="site-boot-loader__brand">
-            <span class="site-boot-loader__num">81</span>
-            <span class="site-boot-loader__name">IDUM</span>
-          </div>
-        </div>
-        <p class="site-boot-loader__hint">{{ __('public.layout.boot_loading') }}</p>
-        <div class="site-boot-loader__bar" aria-hidden="true">
-          <span class="site-boot-loader__bar-fill"></span>
-        </div>
-      </div>
     </div>
     @endunless
+
 		    @php
 		      $authUser = auth()->user();
 		      $teacherCourseCandidate = $authUser && $authUser->isTeacher();
@@ -198,14 +186,18 @@
                         <i class="fa-solid fa-graduation-cap"></i>
                         {{ __('public.layout.menu.exams') }}
                       </a>
-                      <a class="nav-dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
-                        <i class="fa-solid fa-user"></i>
-                        {{ __('public.layout.menu.profile') }}
-                      </a>
-                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
-                        <i class="fa-solid fa-lightbulb"></i>
-                        {{ __('public.layout.feature_requests') }}
-                      </a>
+	                      <a class="nav-dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
+	                        <i class="fa-solid fa-user"></i>
+	                        {{ __('public.layout.menu.profile') }}
+	                      </a>
+                        <a class="nav-dropdown-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
+                          <i class="fa-regular fa-bell"></i>
+                          Bildirishnomalar
+                        </a>
+	                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
+	                        <i class="fa-solid fa-lightbulb"></i>
+	                        {{ __('public.layout.feature_requests') }}
+	                      </a>
                       @if($canCreateCourse)
                         <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
                           <i class="fa-solid fa-book-open"></i>
@@ -265,21 +257,25 @@
                 <span class="locale-switcher-slider"></span>
               </div>
 
-              @guest
-                <div class="mobile-nav-actions">
-                  <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
-                  <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
-                </div>
-              @else
+	              @guest
+	                <div class="mobile-nav-actions">
+                    <a href="{{ route('search') }}" class="btn btn-outline">{{ __('public.common.search') }}</a>
+	                  <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+	                  <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+	                </div>
+	              @else
                 <div class="mobile-nav-user">
                   <span class="mobile-nav-user-name">{{ $authUser->first_name ?: $authUser->name }}</span>
                   <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
                 </div>
 
-	                <div class="mobile-nav-actions mobile-nav-actions--auth">
-	                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
-	                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
-                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
+		                <div class="mobile-nav-actions mobile-nav-actions--auth">
+                      <a href="{{ route('notifications.index') }}" class="btn btn-outline mobile-nav-bell-link">
+                        <i class="fa-regular fa-bell"></i> Bildirishnomalar
+                      </a>
+		                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+		                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+	                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
@@ -299,8 +295,8 @@
 	            </div>
           </nav>
 
-          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
-            <div class="locale-switcher" aria-label="Language switcher">
+	          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
+	            <div class="locale-switcher" aria-label="Language switcher">
               @foreach($supportedLocales as $localeKey => $localeLabel)
                 <a
                   href="{{ route('locale.switch', $localeKey) }}"
@@ -312,13 +308,27 @@
                 </a>
               @endforeach
               <span class="locale-switcher-slider"></span>
-            </div>
-            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}" style="text-decoration: none; color: inherit;">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
-              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
-              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+	            </div>
+              <div class="header-tool-cluster">
+  	            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
+  	              <i class="fa-solid fa-magnifying-glass"></i>
+  	            </button>
+                @auth
+                  <a
+                    href="{{ route('notifications.index') }}"
+                    class="theme-toggle header-notification-link"
+                    data-notification-link
+                    aria-label="Bildirishnomalar"
+                    title="Bildirishnomalar"
+                  >
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="header-notification-count" data-notification-count hidden>0</span>
+                  </a>
+                @endauth
+              </div>
+	            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
+	              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+	              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
             </button>
 
             @auth
@@ -621,9 +631,10 @@
       @endunless
     @endauth
 
-    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
-    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
-    <script>
+	    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
+	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
+      <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ filemtime(public_path('temp/js/site-refresh.js')) }}"></script>
+	    <script>
       (function() {
         /**
          * PRIME ANIMATION ENGINE v3.0 (Pro Max Ultra)

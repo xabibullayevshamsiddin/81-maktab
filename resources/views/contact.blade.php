@@ -83,20 +83,20 @@
 
               <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
                 @csrf
-                <textarea
-                  id="shikoyat"
-                  name="note"
-                  placeholder="Murojaat mavzusi (masalan: Texnik muammo, Parolni tiklash, Taklif)"
-                  rows="2"
-                  required
-                >{{ old('note') }}</textarea>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows="5"
-                  placeholder="Xabaringiz matnini bu yerga yozing..."
-                  required
-                >{{ old('message') }}</textarea>
+	                <textarea
+	                  id="shikoyat"
+	                  name="note"
+	                  placeholder="Murojaat mavzusi (masalan: Texnik muammo, Parolni tiklash, Taklif)"
+	                  rows="2"
+	                  required
+	                >{{ old('note', request()->query('note')) }}</textarea>
+	                <textarea
+	                  id="message"
+	                  name="message"
+	                  rows="5"
+	                  placeholder="Xabaringiz matnini bu yerga yozing..."
+	                  required
+	                >{{ old('message', request()->query('message')) }}</textarea>
                 <x-turnstile-field />
                 <button class="btn btn-prime" type="submit">Yuborish</button>
                 <p id="form-message" class="form-message" aria-live="polite"></p>

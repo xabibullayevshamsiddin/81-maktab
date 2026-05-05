@@ -5,9 +5,20 @@
   overflow: hidden;
 }
 
+.site-boot-loading .site-shell {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.site-shell {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .site-boot-loader {
   --boot-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --boot-duration: 0.65s;
+  --boot-duration: 1.5s;
   position: fixed;
   inset: 0;
   z-index: 2147483000;
@@ -33,20 +44,14 @@
 .site-boot-loader__backdrop {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(20, 184, 166, 0.14), transparent 55%),
-    radial-gradient(ellipse 90% 70% at 100% 60%, rgba(21, 101, 192, 0.12), transparent 50%),
-    radial-gradient(ellipse 80% 60% at 0% 80%, rgba(13, 63, 120, 0.1), transparent 45%),
-    linear-gradient(165deg, #f0f6ff 0%, #ffffff 42%, #f4fbfb 100%);
+  background: var(--bg);
 }
 
 :root[data-theme='dark'] .site-boot-loader__backdrop {
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(45, 212, 191, 0.12), transparent 55%),
-    radial-gradient(ellipse 90% 70% at 100% 60%, rgba(77, 148, 255, 0.1), transparent 50%),
-    radial-gradient(ellipse 80% 60% at 0% 80%, rgba(13, 63, 120, 0.35), transparent 45%),
-    linear-gradient(165deg, #0b1220 0%, #0f172a 45%, #0c1828 100%);
+  background: var(--bg);
 }
+
+
 
 .site-boot-loader__content {
   position: relative;

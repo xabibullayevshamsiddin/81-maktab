@@ -5,9 +5,9 @@
   var loader = document.getElementById('site-boot-loader');
   if (!loader) return;
 
-  /* Minimal ko‘rinish: animatsiya aniq sezilishi uchun (~0,85 s) */
-  var minMs = 850;
-  var removeDelayMs = 720;
+  /* Cinematic transition durations */
+  var minMs = 1200;      /* Stay black for 1.2s */
+  var removeDelayMs = 1500; /* Fade out takes longer */
   var start = Date.now();
 
   function hide() {
@@ -31,3 +31,5 @@
     window.addEventListener('load', hide, { once: true });
   }
 })();
+
+

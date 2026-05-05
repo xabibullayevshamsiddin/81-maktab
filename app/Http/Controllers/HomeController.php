@@ -227,7 +227,8 @@ class HomeController extends Controller
             return view('search-results', ['q' => $q, 'results' => []]);
         }
 
-        $results = $this->collectGlobalSearchResults($q);
+        $cacheKey = 'public_global_search:'.app()->getLocale().':'.sha1($q);
+        $results = Cache::remember($cacheKey, now()->addMinutes(2), fn () => $this->collectGlobalSearchResults($q));
 
         if ($request->expectsJson()) {
             return response()->json(['results' => $results]);

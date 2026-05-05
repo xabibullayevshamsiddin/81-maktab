@@ -16,14 +16,10 @@
   );
   $profileAvatarUrl = $user->avatar_url;
   $profileGradeLabel = $user->displayGrade(__('public.common.not_entered'));
+  $profilePanel = $panel ?? 'settings';
 
-  $postCommentCount = $postComments->count();
-  $teacherCommentCount = $teacherComments->count();
   $activityPreviewLimit = 8;
   $activityStep = 8;
-  $courseEnrollmentCount = $courseEnrollments->count();
-  $createdCourseCount = $createdCourses->count();
-  $pendingTeacherEnrollmentCount = ($pendingTeacherEnrollments ?? collect())->count();
   $hasCreatedCourseForEnrollments = (bool) ($canViewCourseEnrollments ?? false);
   $canViewCourseEnrollments = $user->isAdmin() || $hasCreatedCourseForEnrollments;
 
@@ -146,7 +142,7 @@
 
   <main class="profile-main" data-profile-i18n='@json($profileI18n)'>
     <div class="container">
-      <section class="profile-overview-panel">
+	      <section class="profile-overview-panel">
         <div class="profile-overview-main">
           <div class="profile-avatar" data-profile-avatar-box data-profile-avatar-initial="{{ $profileInitial }}"
             data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}">{{ $profileInitial }}</div>
@@ -183,7 +179,7 @@
           </div>
         </div>
 
-        <div class="profile-stats-grid">
+	        <div class="profile-stats-grid">
           @foreach($profileStats as $stat)
             <div class="profile-stat-card stagger-item">
               <span class="profile-stat-icon"><i class="{{ $stat['icon'] }}"></i></span>
@@ -191,12 +187,32 @@
               <span>{{ $stat['label'] }}</span>
             </div>
           @endforeach
-        </div>
-      </section>
+	        </div>
+	      </section>
 
-      <div class="profile-layout profile-layout--stack-mobile">
-        <div class="profile-column profile-column-settings profile-column-settings--mobile-last">
-          <div class="signin-card profile-card {{ $profileCardStaffClass }}">
+        <nav class="profile-panel-tabs" aria-label="Profil bo'limlari">
+          <a href="{{ route('profile.show', ['panel' => 'settings']) }}" class="profile-panel-tab {{ $profilePanel === 'settings' ? 'is-active' : '' }}">
+            <i class="fa-solid fa-user-gear"></i>
+            Sozlamalar
+          </a>
+          <a href="{{ route('profile.show', ['panel' => 'security']) }}" class="profile-panel-tab {{ $profilePanel === 'security' ? 'is-active' : '' }}">
+            <i class="fa-solid fa-shield-halved"></i>
+            Xavfsizlik
+          </a>
+          <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="profile-panel-tab {{ $profilePanel === 'activity' ? 'is-active' : '' }}">
+            <i class="fa-solid fa-wave-square"></i>
+            Faollik
+          </a>
+          <a href="{{ route('profile.results.index') }}" class="profile-panel-tab profile-panel-tab--link">
+            <i class="fa-solid fa-chart-column"></i>
+            Natijalar
+          </a>
+        </nav>
+
+	      <div class="profile-layout profile-layout--stack-mobile">
+	        <div class="profile-column profile-column-settings profile-column-settings--mobile-last">
+            @if($profilePanel === 'settings')
+	          <div class="signin-card profile-card {{ $profileCardStaffClass }}">
             <div class="profile-card-head">
               <span class="profile-card-kicker">{{ __('profile.steps.primary') }}</span>
               <h2>{{ __('profile.main_card.title') }}</h2>
@@ -305,17 +321,35 @@
                 </button>
                 <span class="profile-helper-inline">{{ __('profile.main_card.save_hint') }}</span>
               </div>
-            </form>
-          </div>
+	            </form>
+	          </div>
+            @endif
 
-          @include('profile.partials.email-card')
-          @include('profile.partials.password-card')
-          @include('profile.partials.app-settings-card')
-        </div>
+            @if($profilePanel === 'security')
+	            @include('profile.partials.email-card')
+	            @include('profile.partials.password-card')
+	            @include('profile.partials.app-settings-card')
+            @endif
 
-        <div class="profile-column profile-column-activity profile-column-activity--mobile-first">
-          @if(auth()->user()->canManageExams())
-            <section class="profile-activity-block reveal">
+            @if($profilePanel === 'activity')
+              <section class="signin-card profile-card profile-panel-aside-note">
+                <div class="profile-card-head">
+                  <span class="profile-card-kicker">Tezkor yo'l</span>
+                  <h2>Faollik markazi</h2>
+                  <p class="signin-subtitle">Izohlar, kurslar va imtihonlar shu panelga yig'ildi. Natijalar esa alohida sahifada turadi.</p>
+                </div>
+                <div class="profile-actions-row">
+                  <a href="{{ route('profile.results.index') }}" class="btn btn-sm">Natijalar sahifasi</a>
+                  <a href="{{ route('notifications.index') }}" class="btn btn-outline btn-sm">Bildirishnomalar</a>
+                </div>
+              </section>
+            @endif
+	        </div>
+
+	        <div class="profile-column profile-column-activity profile-column-activity--mobile-first">
+            @if($profilePanel === 'activity')
+	          @if(auth()->user()->canManageExams())
+	            <section class="profile-activity-block reveal">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-pen-nib"></i> Mening imtihonlarim</h3>
@@ -611,8 +645,8 @@
             </ul>
           </section>
 
-          @if($createdCourses->isNotEmpty())
-            <section class="profile-activity-block reveal" id="profile-created-courses">
+	          @if($createdCourses->isNotEmpty())
+	            <section class="profile-activity-block reveal" id="profile-created-courses">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-book-open"></i> {{ __('profile.blocks.created_courses.title') }}</h3>
@@ -662,11 +696,27 @@
                   </li>
                 @endforeach
               </ul>
-            </section>
-          @endif
+	            </section>
+	          @endif
+            @endif
 
-        </div>
-      </div>
+            @if($profilePanel !== 'activity')
+              <section class="profile-activity-block reveal profile-panel-aside-note">
+                <div class="profile-block-head">
+                  <div class="profile-block-copy">
+                    <h3><i class="fa-solid fa-layer-group"></i> Bo'limlar ajratildi</h3>
+                    <p>Profil endi engilroq ishlaydi: sozlamalar va xavfsizlik shu panelda, izohlar va kurslar esa alohida “Faollik” ichida ochiladi.</p>
+                  </div>
+                </div>
+                <div class="profile-actions-row">
+                  <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="btn btn-sm">Faollikni ochish</a>
+                  <a href="{{ route('profile.results.index') }}" class="btn btn-outline btn-sm">Natijalar</a>
+                </div>
+              </section>
+            @endif
+
+	        </div>
+	      </div>
     </div>
   </main>
 

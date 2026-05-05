@@ -66,8 +66,8 @@
         </button>
       </form>
 
-      @if ($showReplyForm && auth()->check() && $canReplyMore)
-        <button
+	      @if ($showReplyForm && auth()->check() && $canReplyMore)
+	        <button
           type="button"
           class="comment-reply js-comment-reply-toggle"
           aria-label="Javob"
@@ -95,10 +95,18 @@
               />
             <button class="btn btn-sm" type="submit">Javob yuborish</button>
           </form>
-        </div>
-      @endif
+	        </div>
+	      @endif
 
-      @if ($canManageComment)
+        <a
+          href="{{ route('contact', ['note' => 'Izoh bo\'yicha murojaat', 'message' => 'Ustoz izohi ID: '.$comment->id.' | Ustoz: '.($teacher?->slug ?? $teacher?->id).' | Muammo: ']) }}"
+          class="comment-reply"
+        >
+          <i class="fa-regular fa-flag"></i>
+          Shikoyat
+        </a>
+
+	      @if ($canManageComment)
         <details class="comment-action-box">
           <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
           <form

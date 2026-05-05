@@ -24,9 +24,9 @@
     </div>
   </section>
 
-  <main class="course-details-page">
-    <section class="container course-details-page-shell">
-      <article class="course-details-page-card reveal">
+	  <main class="course-details-page">
+	    <section class="container course-details-page-shell">
+	      <article class="course-details-page-card reveal">
         <div class="course-details-page-media">
           <img
             src="{{ $course->coverImageUrl() }}"
@@ -45,23 +45,49 @@
             </div>
           </div>
 
-          <div class="course-details-grid">
-            <div class="course-details-main">
-              <ul class="course-details-meta">
-                <li><i class="fa-solid fa-user"></i> <span>{{ __('public.courses.author') }}: {{ $teacherName }}</span></li>
-                <li><i class="fa-solid fa-book-open"></i> <span>{{ __('public.courses.subject') }}: {{ $teacherSubject ?: __('public.common.not_entered') }}</span></li>
-                <li><i class="fa-regular fa-clock"></i> <span>{{ __('public.courses.duration') }}: {{ $courseDuration }}</span></li>
-                <li><i class="fa-solid fa-money-bill-wave"></i> <span>{{ __('public.courses.price') }}: {{ $coursePrice }}</span></li>
-                <li><i class="fa-regular fa-calendar-check"></i> <span>{{ __('public.courses.start_date') }}: {{ $course->start_date?->format('Y-m-d') ?: '-' }}</span></li>
-              </ul>
+	          <div class="course-details-grid">
+	            <div class="course-details-main">
+                <div class="course-details-hero-strip">
+                  <div class="course-details-kpi">
+                    <span>Kurs davomiyligi</span>
+                    <strong>{{ $courseDuration }}</strong>
+                  </div>
+                  <div class="course-details-kpi">
+                    <span>To'lov</span>
+                    <strong>{{ $coursePrice }}</strong>
+                  </div>
+                  <div class="course-details-kpi">
+                    <span>Boshlanish</span>
+                    <strong>{{ $course->start_date?->format('Y-m-d') ?: '-' }}</strong>
+                  </div>
+                </div>
 
-              <div class="course-details-copy">
-                <h3>{{ __('public.courses.learn') }}</h3>
-                <p>{!! nl2br(e($courseDescription)) !!}</p>
-              </div>
-            </div>
+	              <ul class="course-details-meta">
+	                <li><i class="fa-solid fa-user"></i> <span>{{ __('public.courses.author') }}: {{ $teacherName }}</span></li>
+	                <li><i class="fa-solid fa-book-open"></i> <span>{{ __('public.courses.subject') }}: {{ $teacherSubject ?: __('public.common.not_entered') }}</span></li>
+	                <li><i class="fa-regular fa-clock"></i> <span>{{ __('public.courses.duration') }}: {{ $courseDuration }}</span></li>
+	                <li><i class="fa-solid fa-money-bill-wave"></i> <span>{{ __('public.courses.price') }}: {{ $coursePrice }}</span></li>
+	                <li><i class="fa-regular fa-calendar-check"></i> <span>{{ __('public.courses.start_date') }}: {{ $course->start_date?->format('Y-m-d') ?: '-' }}</span></li>
+	              </ul>
 
-            <aside class="course-teacher-card">
+	              <div class="course-details-copy">
+	                <h3>{{ __('public.courses.learn') }}</h3>
+	                <p>{!! nl2br(e($courseDescription)) !!}</p>
+	              </div>
+
+                <div class="course-details-story-grid">
+                  <article class="course-story-card">
+                    <h3><i class="fa-solid fa-bullseye"></i> Bu kurs kim uchun?</h3>
+                    <p>{{ $teacherGrades ?: "Boshlang'ichdan yuqori sinflargacha moslashtirilgan o'quv oqimi." }}</p>
+                  </article>
+                  <article class="course-story-card">
+                    <h3><i class="fa-solid fa-flag-checkered"></i> Kutilyotgan natija</h3>
+                    <p>{{ $teacherBio ?: "Kurs yakunida mavzu bo'yicha tushuncha, mashq va amaliy tayyorgarlik kuchayadi." }}</p>
+                  </article>
+                </div>
+	            </div>
+
+	            <aside class="course-teacher-card">
               <div class="course-teacher-card-head">
                 <img src="{{ $teacherImage }}" alt="{{ $teacherName }}" loading="lazy" decoding="async">
                 <div>
@@ -91,15 +117,18 @@
                 @endif
               </div>
 
-              @if($teacher)
-                <a href="{{ route('teacher.show', $teacher) }}" class="btn btn-sm course-teacher-link">
-                  <i class="fa-solid fa-user-graduate"></i> {{ __('public.courses.teacher_profile') }}
+	              @if($teacher)
+	                <a href="{{ route('teacher.show', $teacher) }}" class="btn btn-sm course-teacher-link">
+	                  <i class="fa-solid fa-user-graduate"></i> {{ __('public.courses.teacher_profile') }}
+	                </a>
+	              @endif
+                <a href="{{ route('courses') }}" class="btn btn-outline btn-sm course-teacher-link">
+                  <i class="fa-solid fa-grid-2"></i> Boshqa kurslarni ko'rish
                 </a>
-              @endif
-            </aside>
-          </div>
-        </div>
-      </article>
+	            </aside>
+	          </div>
+	        </div>
+	      </article>
     </section>
   </main>
 </x-loyouts.main>

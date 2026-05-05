@@ -38,62 +38,100 @@ class ProfileController extends Controller
     public function show(Request $request)
     {
         $user = $request->user()->load('roleRelation');
+        $panel = strtolower((string) $request->query('panel', 'settings'));
 
-        $postComments = Comment::query()
+        if (! in_array($panel, ['settings', 'security', 'activity'], true)) {
+            $panel = 'settings';
+        }
+
+        $postCommentCount = Comment::query()
             ->where('user_id', $user->id)
-            ->with(['post:id,title,slug'])
-            ->latest()
-            ->limit(40)
-            ->get();
+            ->count();
 
-        $teacherComments = TeacherComment::query()
+        $teacherCommentCount = TeacherComment::query()
             ->where('user_id', $user->id)
-            ->latest()
-            ->limit(40)
-            ->get();
+            ->count();
 
-        $createdCourses = Course::query()
+        $createdCourseCount = Course::query()
             ->where('created_by', $user->id)
-            ->with([
-                'teacher:id,full_name,subject,subject_en,image,is_active',
-                'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
-                'creator.roleRelation:id,name,label,level',
-            ])
-            ->latest()
-            ->limit(20)
-            ->get();
+            ->count();
 
-        $courseEnrollments = CourseEnrollment::query()
+        $courseEnrollmentCount = CourseEnrollment::query()
             ->where('user_id', $user->id)
-            ->with([
-                'course.teacher:id,full_name,subject,subject_en,image,is_active',
-                'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
-                'course.creator.roleRelation:id,name,label,level',
-            ])
-            ->latest()
-            ->limit(40)
-            ->get();
+            ->count();
 
         $canViewCourseEnrollments = Course::query()->where('created_by', $user->id)->exists();
-
-        $pendingTeacherEnrollments = collect();
-        if ($canViewCourseEnrollments) {
-            $pendingTeacherEnrollments = CourseEnrollment::query()
-                ->whereHas('course', fn ($q) => $q->where('created_by', $user->id))
+        $pendingTeacherEnrollmentCount = $canViewCourseEnrollments
+            ? CourseEnrollment::query()
+                ->whereHas('course', fn ($query) => $query->where('created_by', $user->id))
                 ->where('status', CourseEnrollment::STATUS_PENDING)
+                ->count()
+            : 0;
+
+        $createdExamsCount = $user->canManageExams()
+            ? Exam::query()->where('created_by', $user->id)->count()
+            : 0;
+
+        $postComments = collect();
+        $teacherComments = collect();
+        $createdCourses = collect();
+        $courseEnrollments = collect();
+        $pendingTeacherEnrollments = collect();
+        $createdExams = collect();
+
+        if ($panel === 'activity') {
+            $postComments = Comment::query()
+                ->where('user_id', $user->id)
+                ->with(['post:id,title,slug'])
+                ->latest()
+                ->limit(40)
+                ->get();
+
+            $teacherComments = TeacherComment::query()
+                ->where('user_id', $user->id)
+                ->latest()
+                ->limit(40)
+                ->get();
+
+            $createdCourses = Course::query()
+                ->where('created_by', $user->id)
+                ->with([
+                    'teacher:id,full_name,subject,subject_en,image,is_active',
+                    'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                    'creator.roleRelation:id,name,label,level',
+                ])
+                ->latest()
+                ->limit(20)
+                ->get();
+
+            $courseEnrollments = CourseEnrollment::query()
+                ->where('user_id', $user->id)
                 ->with([
                     'course.teacher:id,full_name,subject,subject_en,image,is_active',
                     'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
                     'course.creator.roleRelation:id,name,label,level',
-                    'user',
                 ])
                 ->latest()
-                ->limit(8)
+                ->limit(40)
                 ->get();
+
+            if ($canViewCourseEnrollments) {
+                $pendingTeacherEnrollments = CourseEnrollment::query()
+                    ->whereHas('course', fn ($query) => $query->where('created_by', $user->id))
+                    ->where('status', CourseEnrollment::STATUS_PENDING)
+                    ->with([
+                        'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                        'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                        'course.creator.roleRelation:id,name,label,level',
+                        'user',
+                    ])
+                    ->latest()
+                    ->limit(8)
+                    ->get();
+            }
         }
 
-        $createdExams = collect();
-        if ($user->canManageExams()) {
+        if ($panel === 'activity' && $user->canManageExams()) {
             $createdExams = Exam::query()
                 ->where('created_by', $user->id)
                 ->withCount('questions')
@@ -116,9 +154,16 @@ class ProfileController extends Controller
             'courseEnrollments',
             'canViewCourseEnrollments',
             'pendingTeacherEnrollments',
+            'postCommentCount',
+            'teacherCommentCount',
+            'createdCourseCount',
+            'courseEnrollmentCount',
+            'pendingTeacherEnrollmentCount',
+            'createdExamsCount',
             'examResultsCount',
             'pendingEmail',
-            'passwordChangeUnlocked'
+            'passwordChangeUnlocked',
+            'panel'
         ));
     }
 
@@ -199,7 +244,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'settings'])
             ->with('success', 'Profil maʼlumotlari yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -249,7 +294,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Joriy parol tasdiqlandi. Endi yangi parolni kiriting.')
             ->with('toast_type', 'success');
     }
@@ -266,7 +311,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->withErrors([
                     'current_password' => 'Avval joriy parolni tasdiqlang.',
                 ]);
@@ -299,7 +344,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Parol muvaffaqiyatli yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -381,7 +426,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', "Tasdiqlash kodi {$newEmail} manziliga yuborildi.")
             ->with('toast_type', 'success');
     }
@@ -399,7 +444,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Avval yangi email kiriting va kod oling.')
                 ->with('toast_type', 'error');
         }
@@ -443,7 +488,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Tasdiqlash sessiyasi yaroqsiz. Qaytadan urinib ko‘ring.')
                 ->with('toast_type', 'error');
         }
@@ -459,7 +504,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Bu email allaqachon boshqa hisobda ishlatilgan.')
                 ->with('toast_type', 'error');
         }
@@ -478,7 +523,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Email manzili yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -492,7 +537,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Avval yangi email kiriting.')
                 ->with('toast_type', 'error');
         }
@@ -535,7 +580,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Kodni qayta yuborish mumkin emas. Emailni qayta kiriting.')
                 ->with('toast_type', 'error');
         }
@@ -583,7 +628,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Email almashtirish bekor qilindi.')
             ->with('toast_type', 'warning');
     }

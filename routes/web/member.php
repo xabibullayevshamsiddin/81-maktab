@@ -14,6 +14,15 @@ Route::middleware('auth')->group(function () {
     Route::get('notifications/pending', [UserNotificationController::class, 'pending'])
         ->middleware('active')
         ->name('notifications.pending');
+    Route::get('notifications', [UserNotificationController::class, 'index'])
+        ->middleware('active')
+        ->name('notifications.index');
+    Route::get('notifications/summary', [UserNotificationController::class, 'summary'])
+        ->middleware('active')
+        ->name('notifications.summary');
+    Route::post('notifications/read-all', [UserNotificationController::class, 'markAllRead'])
+        ->middleware('active')
+        ->name('notifications.read-all');
 
     Route::get('chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
     Route::get('chat/user/{user}/preview', [ChatController::class, 'userPreview'])

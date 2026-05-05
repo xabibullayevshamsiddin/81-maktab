@@ -9,14 +9,14 @@
     </div>
   </section>
 
-  <main>
+  <main class="courses-page">
     <section class="container courses-filter-section prime-reveal" id="courses-list">
       <div class="section-head">
         <h2 class="js-split-text">{{ __('public.courses.section_title') }}</h2>
         <p>{{ __('public.courses.section_text') }}</p>
       </div>
 
-      <form method="GET" action="{{ route('courses') }}" class="exam-filter-panel" style="margin-bottom:18px;" id="course-filter-form">
+      <form method="GET" action="{{ route('courses') }}" class="exam-filter-panel filter-shell" id="course-filter-form" data-auto-submit-filter data-filter-kind="courses" data-sticky-filter>
         <div class="exam-filter-row">
           <div class="exam-filter-field">
             <label class="exam-filter-label" for="course-filter-q">{{ __('public.posts.search_placeholder') }}</label>
@@ -32,31 +32,16 @@
             </select>
           </div>
         </div>
+        <div class="filter-toolbar">
+          <div class="filter-active-tags" data-active-filter-tags></div>
+          @if(($q ?? '') !== '' || ($selectedSubject ?? '') !== '')
+            <a href="{{ route('courses') }}" class="filter-reset-link">
+              <i class="fa-solid fa-rotate-left"></i>
+              Filtrlarni tozalash
+            </a>
+          @endif
+        </div>
       </form>
-      <script>
-        (function () {
-          var form = document.getElementById('course-filter-form');
-          var qInput = document.getElementById('course-filter-q');
-          var subjSelect = document.getElementById('course-filter-subject');
-          if (!form) return;
-
-          if (subjSelect) {
-            subjSelect.addEventListener('change', function () {
-              form.submit();
-            });
-          }
-
-          var debounceTimer;
-          if (qInput) {
-            qInput.addEventListener('input', function () {
-              clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(function () {
-                form.submit();
-              }, 500);
-            });
-          }
-        })();
-      </script>
 
       @php
         $courseTotal = $courses->total();
@@ -69,6 +54,18 @@
           {{ __('public.courses.section_title') }}: {{ $courseTotal }}
         @endif
       </p>
+      <div class="courses-page-summary prime-stagger">
+        <article class="filter-meta-card">
+          <span class="filter-meta-label">Ko'rsatilmoqda</span>
+          <strong>{{ $courseShown }}</strong>
+          <p>Hozir ekranda turgan kurslar</p>
+        </article>
+        <article class="filter-meta-card">
+          <span class="filter-meta-label">Jami katalog</span>
+          <strong>{{ $courseTotal }}</strong>
+          <p>Nashr qilingan kurslar soni</p>
+        </article>
+      </div>
 
       <div class="courses-grid prime-stagger" id="courses-grid">
         @forelse($courses as $course)
@@ -89,9 +86,14 @@
               />
             </div>
             <div class="course-body">
-              <h3>{{ $courseTitle }}</h3>
-              <p>{{ \Illuminate\Support\Str::limit(strip_tags($courseDescription), 220) }}</p>
-              <ul class="course-meta">
+              <div class="course-card-head">
+                <div>
+                  <span class="course-card-label">{{ __('public.courses.badge') }}</span>
+                  <h3>{{ $courseTitle }}</h3>
+                </div>
+              </div>
+              <p class="course-card-summary">{{ \Illuminate\Support\Str::limit(strip_tags($courseDescription), 220) }}</p>
+              <ul class="course-meta course-meta--grid">
                 <li><i class="fa-solid fa-user"></i> {{ $course->instructorName() }}</li>
                 <li><i class="fa-regular fa-clock"></i> {{ $courseDuration }}</li>
                 <li><i class="fa-solid fa-money-bill"></i> {{ $coursePrice }}</li>
@@ -130,78 +132,87 @@
                       $editCourseUrl = $useAdminCourseRoutes ? route('admin.courses.edit', $course) : route('teacher.courses.edit', $course);
                       $destroyCourseUrl = $useAdminCourseRoutes ? route('admin.courses.destroy', $course) : route('teacher.courses.destroy', $course);
                     @endphp
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                    <div class="course-card-manage-row">
                       <a href="{{ $editCourseUrl }}" class="btn btn-sm btn-prime">{{ __('public.courses.edit_course') }}</a>
-                      <form action="{{ $destroyCourseUrl }}" method="POST" data-confirm="{{ __('public.courses.confirm_delete') }}" data-confirm-title="{{ __('public.courses.delete_title') }}" data-confirm-variant="danger" data-confirm-ok="{{ __('public.courses.delete_action') }}" style="display:inline;">
+                      <form action="{{ $destroyCourseUrl }}" method="POST" data-confirm="{{ __('public.courses.confirm_delete') }}" data-confirm-title="{{ __('public.courses.delete_title') }}" data-confirm-variant="danger" data-confirm-ok="{{ __('public.courses.delete_action') }}">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.delete_course') }}</button>
                       </form>
                     </div>
                   @endif
-                  @if($isParentUser)
-                    <p class="course-enroll-hint" style="font-size:13px;margin:0;">
-                      {{ __('public.courses.parent_cannot_enroll') }}
-                    </p>
-                  @elseif($isOwnCourse)
-                    <p class="course-enroll-hint" style="font-size:13px;margin:0;">{{ __('public.courses.own_course_notice') }}</p>
-                    @if($en)
-                      <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" style="margin-top:10px;" data-confirm="{{ __('public.courses.confirm_remove_enrollment') }}" data-confirm-title="{{ __('public.courses.remove_enrollment_title') }}" data-confirm-variant="primary" data-confirm-ok="{{ __('public.courses.yes') }}">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.remove_enrollment') }}</button>
-                      </form>
-                    @endif
-                  @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_APPROVED)
-                    <span class="course-enrolled-pill"><i class="fa-solid fa-check"></i> {{ __('public.courses.approved') }}</span>
-                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="{{ __('public.courses.confirm_cancel_enrollment') }}" data-confirm-title="{{ __('public.courses.cancel_enrollment_title') }}" data-confirm-variant="primary" data-confirm-ok="{{ __('public.courses.yes') }}">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
-                    </form>
-                  @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_PENDING)
-                    <span class="course-enrolled-pill" style="background:rgba(245,158,11,.2);color:#b45309;"><i class="fa-regular fa-clock"></i> {{ __('public.courses.pending') }}</span>
-                    <p class="course-enroll-hint" style="font-size:13px;margin:8px 0;">{{ __('public.courses.pending_hint') }}</p>
-                    <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="{{ __('public.courses.confirm_cancel_request') }}" data-confirm-title="{{ __('public.courses.cancel_request_title') }}" data-confirm-variant="primary" data-confirm-ok="{{ __('public.courses.yes') }}">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
-                    </form>
-                  @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_REJECTED)
-                    <span class="course-enrolled-pill" style="background:rgba(185,28,28,.12);color:#b91c1c;"><i class="fa-solid fa-xmark"></i> {{ __('public.courses.rejected') }}</span>
-                    <p class="course-enroll-hint" style="font-size:13px;">{{ __('public.courses.rejected_text') }}</p>
-                    <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
-                      @csrf
-                      <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
-                      <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level', $en->subject_level) }}" placeholder="{{ __('public.courses.subject_level_placeholder') }}" required />
-                      <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
-                      <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="{{ __('public.courses.note_placeholder') }}">{{ old('note') }}</textarea>
-                      @foreach (['subject_level','note'] as $f)
-                        @error($f)
-                          <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
-                        @enderror
-                      @endforeach
-                      <button type="submit" class="btn btn-prime course-enroll-submit">
-                        <i class="fa-solid fa-paper-plane"></i> {{ __('public.courses.resubmit') }}
-                      </button>
-                    </form>
-                  @else
-                    <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
-                      @csrf
-                      <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
-                      <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level') }}" placeholder="{{ __('public.courses.subject_level_placeholder') }}" required />
-                      <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
-                      <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="{{ __('public.courses.note_contact_placeholder') }}">{{ old('note') }}</textarea>
-                      @foreach (['subject_level','note'] as $f)
-                        @error($f)
-                          <span class="form-message" style="color:#b91c1c;font-size:13px;">{{ $message }}</span>
-                        @enderror
-                      @endforeach
-                      <button type="submit" class="btn btn-prime course-enroll-submit">
-                        <i class="fa-solid fa-pen-to-square"></i> {{ __('public.courses.submit') }}
-                      </button>
-                    </form>
-                  @endif
+                  <details class="course-enroll-panel">
+                    <summary class="course-enroll-summary">
+                      <span>
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Ariza va holat
+                      </span>
+                      <i class="fa-solid fa-chevron-down"></i>
+                    </summary>
+                    <div class="course-enroll-body">
+                      @if($isParentUser)
+                        <p class="course-enroll-hint">{{ __('public.courses.parent_cannot_enroll') }}</p>
+                      @elseif($isOwnCourse)
+                        <p class="course-enroll-hint">{{ __('public.courses.own_course_notice') }}</p>
+                        @if($en)
+                          <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="{{ __('public.courses.confirm_remove_enrollment') }}" data-confirm-title="{{ __('public.courses.remove_enrollment_title') }}" data-confirm-variant="primary" data-confirm-ok="{{ __('public.courses.yes') }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.remove_enrollment') }}</button>
+                          </form>
+                        @endif
+                      @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_APPROVED)
+                        <span class="course-enrolled-pill"><i class="fa-solid fa-check"></i> {{ __('public.courses.approved') }}</span>
+                        <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="{{ __('public.courses.confirm_cancel_enrollment') }}" data-confirm-title="{{ __('public.courses.cancel_enrollment_title') }}" data-confirm-variant="primary" data-confirm-ok="{{ __('public.courses.yes') }}">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
+                        </form>
+                      @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_PENDING)
+                        <span class="course-enrolled-pill course-enrolled-pill--pending"><i class="fa-regular fa-clock"></i> {{ __('public.courses.pending') }}</span>
+                        <p class="course-enroll-hint">{{ __('public.courses.pending_hint') }}</p>
+                        <form action="{{ route('courses.enroll.cancel', $course) }}" method="POST" class="course-enroll-form" data-confirm="{{ __('public.courses.confirm_cancel_request') }}" data-confirm-title="{{ __('public.courses.cancel_request_title') }}" data-confirm-variant="primary" data-confirm-ok="{{ __('public.courses.yes') }}">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn btn-outline btn-sm">{{ __('public.courses.cancel') }}</button>
+                        </form>
+                      @elseif($en && $en->status === \App\Models\CourseEnrollment::STATUS_REJECTED)
+                        <span class="course-enrolled-pill course-enrolled-pill--rejected"><i class="fa-solid fa-xmark"></i> {{ __('public.courses.rejected') }}</span>
+                        <p class="course-enroll-hint">{{ __('public.courses.rejected_text') }}</p>
+                        <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
+                          @csrf
+                          <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
+                          <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level', $en->subject_level) }}" placeholder="{{ __('public.courses.subject_level_placeholder') }}" required />
+                          <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
+                          <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="{{ __('public.courses.note_placeholder') }}">{{ old('note') }}</textarea>
+                          @foreach (['subject_level','note'] as $f)
+                            @error($f)
+                              <span class="form-message course-form-message">{{ $message }}</span>
+                            @enderror
+                          @endforeach
+                          <button type="submit" class="btn btn-prime course-enroll-submit">
+                            <i class="fa-solid fa-paper-plane"></i> {{ __('public.courses.resubmit') }}
+                          </button>
+                        </form>
+                      @else
+                        <form action="{{ route('courses.enroll', $course) }}" method="POST" class="course-enroll-form">
+                          @csrf
+                          <label class="course-enroll-label" for="enroll-level-{{ $course->id }}">{{ __('public.courses.subject_level') }} *</label>
+                          <input type="text" id="enroll-level-{{ $course->id }}" name="subject_level" class="course-enroll-note" maxlength="120" value="{{ old('subject_level') }}" placeholder="{{ __('public.courses.subject_level_placeholder') }}" required />
+                          <label class="course-enroll-label" for="enroll-note-{{ $course->id }}">{{ __('public.courses.note') }}</label>
+                          <textarea id="enroll-note-{{ $course->id }}" name="note" class="course-enroll-note" rows="2" maxlength="500" placeholder="{{ __('public.courses.note_contact_placeholder') }}">{{ old('note') }}</textarea>
+                          @foreach (['subject_level','note'] as $f)
+                            @error($f)
+                              <span class="form-message course-form-message">{{ $message }}</span>
+                            @enderror
+                          @endforeach
+                          <button type="submit" class="btn btn-prime course-enroll-submit">
+                            <i class="fa-solid fa-pen-to-square"></i> {{ __('public.courses.submit') }}
+                          </button>
+                        </form>
+                      @endif
+                    </div>
+                  </details>
                 @else
                   <p class="course-enroll-guest">
                     <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
