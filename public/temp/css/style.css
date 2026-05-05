@@ -370,13 +370,13 @@ a {
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 20px);
-  max-width: 1340px;
-  z-index: 20;
+  max-width: 1180px;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 10px 16px;
+  gap: 16px;
+  padding: 10px 14px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(12px);
@@ -417,7 +417,7 @@ a {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 16px;
+  gap: 12px;
 }
 
 #site-nav ul li {
@@ -428,8 +428,8 @@ a {
 .nav-link {
   color: #e2e8f0;
   font-weight: 500;
-  font-size: 15px;
-  padding: 6px 10px;
+  font-size: 14.5px;
+  padding: 5px 8px;
   border-bottom: none;
   transition: all 0.4s cubic-bezier(0.25, 1, 0.3, 1);
   white-space: nowrap;
@@ -497,7 +497,7 @@ a {
 .login {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 
 .lang {
@@ -512,9 +512,10 @@ a {
   justify-content: center;
   border: none;
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 8px 16px;
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
   background: linear-gradient(135deg, var(--primary-2), var(--primary));
   color: #fff;
   cursor: pointer;
