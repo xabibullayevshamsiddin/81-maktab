@@ -46,7 +46,7 @@
             </button>
           </form>
           <p style="margin:16px 0 0;font-size:12px;color:var(--muted);line-height:1.5;">
-            Boshlasangiz, taymer ishga tushadi. Sahifani yangilash tartibni o'zgartirmaydi.
+            Boshlasangiz, taymer ishga tushadi. Fullscreen, fokus nazorati va screen-capture himoyasi yoqiladi. Sahifani yangilash tartibni o'zgartirmaydi.
           </p>
         @endif
 

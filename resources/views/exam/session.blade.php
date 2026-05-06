@@ -5,11 +5,17 @@
   })->count();
   $progressPct = $totalQ > 0 ? min(100, (int) round($answeredCount / $totalQ * 100)) : 0;
   $examTitle = $result->exam->title ?? 'Imtihon';
+  $watermarkLabel = trim((auth()->user()->name ?? 'Foydalanuvchi') . ' • #' . $result->id . ' • ' . $examTitle);
+  $violationLimit = 5;
+  $initialViolationCount = (int) ($result->rule_violation_count ?? 0);
+  $remainingViolationCount = max(0, $violationLimit - $initialViolationCount);
+  $violationFillPct = $violationLimit > 0 ? min(100, (int) round($initialViolationCount / $violationLimit * 100)) : 0;
 @endphp
 
 <x-loyouts.main title="{{ $examTitle }} - savol">
   <main class="news exam-page exam-session-wrap">
     <div class="exam-page-inner exam-anti-copy" id="exam-anti-root">
+      <div class="exam-watermark-layer" id="exam-watermark-layer" aria-hidden="true" data-watermark="{{ $watermarkLabel }}"></div>
       <header class="exam-session-header">
         <div class="exam-session-header-row">
           <div class="exam-session-title-block">
@@ -39,10 +45,30 @@
               <div class="exam-progress-fill" id="exam-progress-fill" style="width: {{ $progressPct }}%;"></div>
             </div>
           </div>
-          <p class="exam-secure-note">
-            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span>Skrinshot, chop etish va nusxalash taqiqlanadi. 5 ta qoida buzarlik bo‘lsa imtihon 0 ball bilan yakunlanadi.</span>
-          </p>
+          <div class="exam-secure-stack">
+            <p class="exam-secure-note">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span>Skrinshot, chop etish va nusxalash taqiqlanadi. {{ $violationLimit }} ta qoida buzarlik bo'lsa imtihon 0 ball bilan yakunlanadi.</span>
+            </p>
+            <div class="exam-violation-panel {{ $remainingViolationCount === 1 ? 'is-danger' : '' }}" id="exam-violation-panel">
+              <div class="exam-violation-head">
+                <span>Qoida buzarlik limiti</span>
+                <strong><span id="exam-violation-count">{{ $initialViolationCount }}</span> / {{ $violationLimit }}</strong>
+              </div>
+              <div class="exam-violation-track">
+                <div class="exam-violation-fill" id="exam-violation-fill" style="width: {{ $violationFillPct }}%;"></div>
+              </div>
+              <p class="exam-violation-note" id="exam-violation-note">
+                @if($remainingViolationCount > 1)
+                  Yana {{ $remainingViolationCount }} ta qoidabuzarlik qilinsa imtihon yiqiladi.
+                @elseif($remainingViolationCount === 1)
+                  Oxirgi ogohlantirish: yana 1 ta qoidabuzarlik bo'lsa imtihon avtomatik yopiladi.
+                @else
+                  Qoida buzarlik limiti tugagan.
+                @endif
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -51,6 +77,31 @@
       </form>
 
       <div class="exam-step-stack">
+        <!-- Question Navigation Grid -->
+        <div class="exam-nav-grid-container">
+          <div class="exam-nav-grid-header">
+            <span class="exam-nav-grid-title"><i class="fa-solid fa-list-ol"></i> Savollar ro'yxati</span>
+            <span class="exam-nav-grid-hint">O'tish uchun savol raqamini bosing</span>
+          </div>
+          <div class="exam-nav-grid" id="exam-nav-grid">
+            @foreach($orderedQuestions as $index => $question)
+              @php
+                $isAnswered = $answerMap->has($question->id) && ($answerMap->get($question->id)->option_id !== null || filled($answerMap->get($question->id)->text_answer));
+              @endphp
+              <button 
+                type="button" 
+                class="exam-grid-item {{ $isAnswered ? 'is-answered' : '' }} {{ $index === 0 ? 'is-active' : '' }}" 
+                onclick="showStep({{ $index }})"
+                data-grid-step="{{ $index }}"
+                data-grid-question-id="{{ $question->id }}"
+                title="Savol {{ $index + 1 }}"
+              >
+                {{ $index + 1 }}
+              </button>
+            @endforeach
+          </div>
+        </div>
+
         @foreach($orderedQuestions as $index => $question)
           <article
             class="exam-q-card exam-step {{ $index === 0 ? 'exam-step--active' : '' }}"
@@ -123,6 +174,18 @@
     </div>
   </main>
 
+  <div id="exam-focus-guard" class="exam-focus-guard" hidden role="dialog" aria-modal="true" aria-labelledby="exam-focus-guard-title">
+    <div class="exam-focus-guard-backdrop"></div>
+    <div class="exam-focus-guard-box">
+      <span class="exam-focus-guard-badge">Himoyalangan rejim</span>
+      <h3 id="exam-focus-guard-title">Imtihon nazorat ostida</h3>
+      <p id="exam-focus-guard-text">Davom etish uchun fullscreen va fokusni qayta tiklang.</p>
+      <button type="button" class="exam-btn-primary" id="exam-focus-guard-resume" style="width:100%;justify-content:center;">
+        Himoyalangan rejimni yoqish
+      </button>
+    </div>
+  </div>
+
   <div id="exam-rule-modal" class="exam-rule-modal" hidden role="dialog" aria-modal="true" aria-labelledby="exam-rule-modal-title">
     <div class="exam-rule-modal-backdrop" tabindex="-1"></div>
     <div class="exam-rule-modal-box">
@@ -162,15 +225,134 @@
       var defaultModalText = modalTextEl ? modalTextEl.innerHTML : '';
       var defaultModalOkText = modalOkBtn ? modalOkBtn.textContent : '';
       var root = document.getElementById('exam-anti-root');
+      var watermarkLayer = document.getElementById('exam-watermark-layer');
+      var focusGuard = document.getElementById('exam-focus-guard');
+      var focusGuardTitleEl = document.getElementById('exam-focus-guard-title');
+      var focusGuardTextEl = document.getElementById('exam-focus-guard-text');
+      var focusGuardResumeBtn = document.getElementById('exam-focus-guard-resume');
+      var violationPanelEl = document.getElementById('exam-violation-panel');
+      var violationCountEl = document.getElementById('exam-violation-count');
+      var violationFillEl = document.getElementById('exam-violation-fill');
+      var violationNoteEl = document.getElementById('exam-violation-note');
       var lastContextWarnAt = 0;
+      var lastViolationReportAt = 0;
       var disqualifiedNav = false;
       var modalLockActive = false;
+      var transientIgnoreUntil = 0;
+      var currentViolationCount = {{ $initialViolationCount }};
+      var fullscreenSupported = !!(
+        document.documentElement.requestFullscreen
+        || document.documentElement.webkitRequestFullscreen
+        || document.documentElement.msRequestFullscreen
+      );
 
       var violationUrl = @json(route('exam.violation', $result));
       var csrfToken = @json(csrf_token());
-      var violationLimit = 5;
+      var violationLimit = {{ $violationLimit }};
 
       document.body.classList.add('exam-session-print-lock');
+
+      function syncBodyLock() {
+        var shouldLock = (modal && !modal.hidden)
+          || (focusGuard && !focusGuard.hidden)
+          || (typeof finishConfirmModal !== 'undefined' && finishConfirmModal && !finishConfirmModal.hidden);
+        document.body.style.overflow = shouldLock ? 'hidden' : '';
+      }
+
+      function buildWatermark() {
+        if (!watermarkLayer) return;
+
+        var label = watermarkLayer.getAttribute('data-watermark') || 'Protected exam';
+        watermarkLayer.innerHTML = '';
+
+        for (var i = 0; i < 18; i += 1) {
+          var tile = document.createElement('span');
+          tile.className = 'exam-watermark-tile';
+          tile.textContent = label + ' • ' + String(i + 1).padStart(2, '0');
+          watermarkLayer.appendChild(tile);
+        }
+      }
+
+      function setTransientIgnore(ms) {
+        transientIgnoreUntil = Date.now() + (ms || 0);
+      }
+
+      function isTransientIgnoreActive() {
+        return Date.now() < transientIgnoreUntil;
+      }
+
+      function getFullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+      }
+
+      function isFullscreenActive() {
+        return !!getFullscreenElement();
+      }
+
+      function requestProtectedFullscreen() {
+        var target = document.documentElement;
+        var fn = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen;
+
+        if (!fn) {
+          return Promise.resolve(false);
+        }
+
+        try {
+          var result = fn.call(target);
+
+          if (result && typeof result.then === 'function') {
+            return result.then(function () { return true; }).catch(function () { return false; });
+          }
+
+          return Promise.resolve(true);
+        } catch (err) {
+          return Promise.resolve(false);
+        }
+      }
+
+      function showFocusGuard(title, text, buttonText) {
+        if (!focusGuard) return;
+        if (focusGuardTitleEl) focusGuardTitleEl.textContent = title || 'Imtihon nazorat ostida';
+        if (focusGuardTextEl) focusGuardTextEl.textContent = text || 'Davom etish uchun fullscreen va fokusni qayta tiklang.';
+        if (focusGuardResumeBtn) {
+          focusGuardResumeBtn.textContent = buttonText || (fullscreenSupported ? 'Himoyalangan rejimni qayta yoqish' : 'Davom etish');
+        }
+        focusGuard.hidden = false;
+        if (root) root.classList.add('is-obscured');
+        syncBodyLock();
+      }
+
+      function hideFocusGuard() {
+        if (!focusGuard) return;
+        focusGuard.hidden = true;
+        if (root) root.classList.remove('is-obscured');
+        syncBodyLock();
+      }
+
+      function updateViolationUi(count) {
+        currentViolationCount = Math.max(0, Math.min(violationLimit, Number(count || 0)));
+
+        var remaining = Math.max(0, violationLimit - currentViolationCount);
+        var fillPct = violationLimit > 0 ? Math.min(100, Math.round((currentViolationCount / violationLimit) * 100)) : 0;
+
+        if (violationCountEl) violationCountEl.textContent = String(currentViolationCount);
+        if (violationFillEl) violationFillEl.style.width = fillPct + '%';
+
+        if (violationPanelEl) {
+          violationPanelEl.classList.toggle('is-danger', remaining <= 1);
+          violationPanelEl.classList.toggle('is-warning', remaining === 2);
+        }
+
+        if (violationNoteEl) {
+          if (remaining > 1) {
+            violationNoteEl.textContent = 'Yana ' + remaining + ' ta qoidabuzarlik qilinsa imtihon yiqiladi.';
+          } else if (remaining === 1) {
+            violationNoteEl.textContent = 'Oxirgi ogohlantirish: yana 1 ta qoidabuzarlik bo\'lsa imtihon avtomatik yopiladi.';
+          } else {
+            violationNoteEl.textContent = 'Qoida buzarlik limiti tugadi.';
+          }
+        }
+      }
 
       // Natija sahifasidan "Orqaga" (BFCache) — eski imtihon ko‘rinmasin; server holatini qayta olamiz
       window.addEventListener('pageshow', function (ev) {
@@ -179,8 +361,11 @@
         }
       });
 
-      function reportRuleViolation() {
+      function reportRuleViolation(reason) {
         if (disqualifiedNav) return;
+        var now = Date.now();
+        if (now - lastViolationReportAt < 1400) return;
+        lastViolationReportAt = now;
         fetch(violationUrl, {
           method: 'POST',
           headers: {
@@ -188,7 +373,9 @@
             'Accept': 'application/json',
             'X-CSRF-TOKEN': csrfToken,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            reason: reason || 'generic',
+          }),
         })
           .then(function (r) { return r.json().catch(function () { return {}; }); })
           .then(function (data) {
@@ -200,17 +387,9 @@
 
             var count = Number(data.count || 0);
             if (!Number.isFinite(count) || count <= 0) return;
+            updateViolationUi(count);
 
             var remaining = Math.max(0, violationLimit - count);
-            var message = remaining > 0
-              ? ('Ogohlantirish: qoida buzarlik qayd etildi (' + count + '/' + violationLimit + '). Yana ' + remaining + ' ta imkon qoldi.')
-              : ('Ogohlantirish: limit tugadi (' + violationLimit + '/' + violationLimit + '). Imtihon yakunlanadi.');
-
-            if (typeof window.showToast === 'function') {
-              window.showToast(message, remaining > 0 ? 'warning' : 'error');
-            } else {
-              window.alert(message);
-            }
 
             if (remaining === 1) {
               showLockedLastChanceModal();
@@ -239,73 +418,77 @@
         }
       }
 
-      function warnAndReport(e) {
+      function warnAndReport(e, reason) {
         if (e) {
           e.preventDefault();
           e.stopPropagation();
         }
         playViolationSound();
-        showRuleModal();
-        reportRuleViolation();
+        reportRuleViolation(reason);
       }
 
       function showRuleModal() {
         if (!modal) return;
         modal.hidden = false;
-        document.body.style.overflow = 'hidden';
+        syncBodyLock();
       }
 
       function hideRuleModal() {
         if (!modal || modalLockActive) return;
         modal.hidden = true;
-        document.body.style.overflow = '';
         if (modalTitleEl) modalTitleEl.textContent = defaultModalTitle;
         if (modalTextEl) modalTextEl.innerHTML = defaultModalText;
         if (modalOkBtn) modalOkBtn.textContent = defaultModalOkText;
+        syncBodyLock();
       }
 
       function showLockedLastChanceModal() {
-        if (!modal) return;
-
-        modalLockActive = true;
-        if (modalTitleEl) modalTitleEl.textContent = 'Oxirgi ogohlantirish';
-        if (modalTextEl) {
-          modalTextEl.innerHTML = 'Sizda <strong>faqat 1 ta</strong> qoida buzarlik imkoniyati qoldi. Yana buzilsa imtihon avtomatik yopiladi.';
-        }
-        if (modalOkBtn) {
-          modalOkBtn.disabled = true;
-          modalOkBtn.textContent = 'Kutish... 5s';
-        }
-
-        showRuleModal();
-
-        var remainingSec = 5;
-        var lockTimer = setInterval(function () {
-          remainingSec -= 1;
-          if (modalOkBtn) {
-            modalOkBtn.textContent = remainingSec > 0 ? ('Kutish... ' + remainingSec + 's') : 'Tushunarli';
-          }
-
-          if (remainingSec <= 0) {
-            clearInterval(lockTimer);
-            modalLockActive = false;
-            if (modalOkBtn) {
-              modalOkBtn.disabled = false;
-            }
-            hideRuleModal();
-          }
-        }, 1000);
+        showFocusGuard(
+          'Oxirgi ogohlantirish',
+          'Sizda faqat 1 ta qoidabuzarlik imkoniyati qoldi. Yana buzilsa imtihon avtomatik yopiladi.',
+          fullscreenSupported ? 'Davom etish uchun himoyani qayta yoqish' : 'Tushunarli'
+        );
       }
 
       function showScreenshotWarn(e) {
-        warnAndReport(e);
+        showFocusGuard(
+          'Skrinshot urinishlari taqiqlangan',
+          'Screen capture urinishidan keyin kontent vaqtincha yopildi. Davom etish uchun himoyalangan rejimni qayta yoqing.',
+          fullscreenSupported ? 'Qayta kirish' : 'Davom etish'
+        );
+        warnAndReport(e, 'screen-capture');
       }
 
-      function maybeContextWarn() {
+      function maybeContextWarn(reason) {
         var now = Date.now();
-        if (now - lastContextWarnAt < 600) return;
+        if (now - lastContextWarnAt < 1000) return;
         lastContextWarnAt = now;
-        warnAndReport(null);
+        warnAndReport(null, reason || 'context-loss');
+      }
+
+      function requestResumeProtectedMode(title, text, reason) {
+        if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
+        showFocusGuard(title, text, fullscreenSupported ? 'Himoyalangan rejimni qayta yoqish' : 'Davom etish');
+        maybeContextWarn(reason);
+      }
+
+      async function resumeProtectedMode() {
+        setTransientIgnore(1500);
+
+        if (fullscreenSupported && !isFullscreenActive()) {
+          var fullOk = await requestProtectedFullscreen();
+
+          if (!fullOk && !isFullscreenActive()) {
+            showFocusGuard(
+              'Fullscreen talab qilinadi',
+              'Brauzer fullscreen rejimni yoqishga ruxsat bermadi. Tugmani yana bosing yoki fullscreen ruxsatini tekshiring.',
+              'Qayta urinish'
+            );
+            return;
+          }
+        }
+
+        hideFocusGuard();
       }
 
       document.getElementById('exam-rule-modal-ok')?.addEventListener('click', hideRuleModal);
@@ -326,12 +509,57 @@
       });
 
       document.addEventListener('visibilitychange', function () {
-        if (document.hidden) maybeContextWarn();
+        if (document.hidden) {
+          requestResumeProtectedMode(
+            'Imtihon vaqtincha yashirildi',
+            'Sahifadan chiqish, screen capture yoki boshqa ilovaga o‘tish qoidabuzarlik sifatida qayd etildi.',
+            'visibility-hidden'
+          );
+        }
       });
 
       window.addEventListener('beforeprint', function () {
-        warnAndReport(null);
+        requestResumeProtectedMode(
+          'Chop etish taqiqlangan',
+          'Imtihon sahifasini chop etish mumkin emas. Bu urinish qoidabuzarlik sifatida qayd etildi.',
+          'print-attempt'
+        );
       });
+
+      window.addEventListener('blur', function () {
+        if (document.hidden || isTransientIgnoreActive()) return;
+        requestResumeProtectedMode(
+          'Fokus yo‘qoldi',
+          'Boshqa oynaga o‘tish, screenshot yoki screen recorder ochish qoidabuzarlik sifatida qayd etildi.',
+          'window-blur'
+        );
+      });
+
+      window.addEventListener('pagehide', function () {
+        if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
+        maybeContextWarn('pagehide');
+      });
+
+      function handleFullscreenChange() {
+        if (isTransientIgnoreActive()) return;
+
+        if (fullscreenSupported && !isFullscreenActive() && !document.hidden) {
+          requestResumeProtectedMode(
+            'Fullscreen rejimdan chiqildi',
+            'Imtihon fullscreen himoya bilan ishlaydi. Davom etish uchun himoyalangan rejimni qayta yoqing.',
+            'fullscreen-exit'
+          );
+          return;
+        }
+
+        if (isFullscreenActive() && focusGuard && !focusGuard.hidden && document.visibilityState === 'visible') {
+          hideFocusGuard();
+        }
+      }
+
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('msfullscreenchange', handleFullscreenChange);
 
       document.addEventListener('keydown', function (e) {
         var key = e.key || '';
@@ -370,12 +598,20 @@
 
         if (ctrl && kl === 'p') {
           e.preventDefault();
-          warnAndReport(null);
+          requestResumeProtectedMode(
+            'Chop etish taqiqlangan',
+            'Ctrl+P orqali chop etish urinishlari qoidabuzarlik sifatida qayd etiladi.',
+            'print-shortcut'
+          );
           return;
         }
         if (ctrl && e.shiftKey && kl === 's') {
           e.preventDefault();
-          warnAndReport(null);
+          requestResumeProtectedMode(
+            'Saqlash urinishlari taqiqlangan',
+            'Bu imtihon himoyalangan rejimda ishlaydi. Saqlash yoki export qilish urinishlari qoidabuzarlik sifatida qayd etiladi.',
+            'save-shortcut'
+          );
           return;
         }
         if (ctrl && ['c', 'x', 'u', 's'].indexOf(kl) !== -1) {
@@ -385,6 +621,20 @@
         if (ctrl && e.shiftKey && ['i', 'j', 'c', 'p'].indexOf(kl) !== -1) {
           e.preventDefault();
           return;
+        }
+      }, true);
+
+      document.addEventListener('keyup', function (e) {
+        var key = e.key || '';
+
+        if (
+          key === 'PrintScreen'
+          || key === 'Print'
+          || key === 'F13'
+          || key === 'Snapshot'
+          || e.keyCode === 44
+        ) {
+          showScreenshotWarn(e);
         }
       }, true);
 
@@ -409,6 +659,21 @@
         }
         e.preventDefault();
       }, true);
+
+      focusGuardResumeBtn?.addEventListener('click', function () {
+        resumeProtectedMode();
+      });
+
+      buildWatermark();
+      updateViolationUi(currentViolationCount);
+
+      if (fullscreenSupported) {
+        showFocusGuard(
+          'Imtihonni himoyalangan rejimda boshlang',
+          'Fullscreen, fokus nazorati va screen-capture kuzatuvi yoqiladi. Davom etish uchun himoyalangan rejimni ishga tushiring.',
+          'Himoyalangan rejimni yoqish'
+        );
+      }
     })();
 
     const expiresAt = new Date(@json(optional($result->expires_at)->toIso8601String())).getTime();
@@ -426,16 +691,43 @@
     function showStep(idx) {
       if (idx < 0 || idx >= steps.length) return;
       currentIdx = idx;
+      
       steps.forEach(function (el, i) {
         var on = i === idx;
         el.classList.toggle('exam-step--active', on);
         el.hidden = !on;
       });
+
+      var isFirst = idx === 0;
+      var isLast = idx === steps.length - 1;
+
       if (stepCurrentEl) stepCurrentEl.textContent = String(idx + 1);
-      if (btnPrev) btnPrev.disabled = idx === 0;
-      var last = idx === steps.length - 1;
-      if (btnNext) btnNext.hidden = last;
-      if (btnFinish) btnFinish.hidden = !last;
+      
+      if (btnPrev) {
+        btnPrev.disabled = isFirst;
+        btnPrev.style.opacity = isFirst ? '0.5' : '1';
+        btnPrev.style.cursor = isFirst ? 'not-allowed' : 'pointer';
+      }
+
+      if (btnNext) {
+        // Instead of hiding, we can disable it on the last step or keep it hidden if Finish is shown.
+        // User asked to disable it, so let's keep it visible but disabled on the last step.
+        btnNext.disabled = isLast;
+        btnNext.style.opacity = isLast ? '0.5' : '1';
+        btnNext.style.cursor = isLast ? 'not-allowed' : 'pointer';
+        // If we want to show Finish button alongside or instead:
+        btnNext.hidden = isLast; 
+      }
+
+      if (btnFinish) {
+        btnFinish.hidden = !isLast;
+      }
+
+      // Add active state to navigation grid if it exists
+      var gridItems = document.querySelectorAll('.exam-grid-item');
+      gridItems.forEach(function(item, i) {
+        item.classList.toggle('is-active', i === idx);
+      });
     }
 
     async function flushPendingTextAnswers() {
@@ -579,16 +871,36 @@
     }
 
     function updateProgress() {
-      const checked = document.querySelectorAll('.exam-option input[type=radio]:checked').length;
-      const textAnswered = Array.prototype.slice.call(document.querySelectorAll('.exam-text-answer-field'))
-        .filter(function (field) { return field.value.trim() !== ''; }).length;
-      const answered = checked + textAnswered;
+      const checkedInputs = document.querySelectorAll('.exam-option input[type=radio]:checked');
+      const answeredQuestionIds = new Set();
+      
+      checkedInputs.forEach(function(input) {
+        // name is "q_{questionId}"
+        const qId = input.name.replace('q_', '');
+        answeredQuestionIds.add(qId);
+      });
+
+      const textFields = document.querySelectorAll('.exam-text-answer-field');
+      textFields.forEach(function(field) {
+        if (field.value.trim() !== '') {
+          answeredQuestionIds.add(field.dataset.textQuestionId);
+        }
+      });
+
+      const answered = answeredQuestionIds.size;
       const fill = document.getElementById('exam-progress-fill');
       const num = document.getElementById('exam-answered-num');
       if (num) num.textContent = answered;
       if (fill && totalQuestions > 0) {
         fill.style.width = Math.min(100, Math.round(answered / totalQuestions * 100)) + '%';
       }
+
+      // Update Grid Items
+      const gridItems = document.querySelectorAll('.exam-grid-item');
+      gridItems.forEach(function(item) {
+        const qId = item.dataset.gridQuestionId;
+        item.classList.toggle('is-answered', answeredQuestionIds.has(qId));
+      });
     }
 
     async function saveAnswer(questionId, optionId) {

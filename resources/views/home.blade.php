@@ -61,8 +61,6 @@
           <a href="#about" class="site-section-nav-link is-active">Maktab haqida</a>
           <a href="#news" class="site-section-nav-link">Yangiliklar</a>
           <a href="#teachers" class="site-section-nav-link">Ustozlar</a>
-          <a href="{{ route('courses') }}" class="site-section-nav-link">Kurslar</a>
-          <a href="{{ route('contact') }}" class="site-section-nav-link">Aloqa</a>
         </nav>
       </div>
     </div>

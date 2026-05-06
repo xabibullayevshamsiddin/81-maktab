@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -297,6 +298,7 @@ class ExamController extends Controller
     public function reportViolation(Request $request, Result $result): JsonResponse
     {
         $this->authorizeResult($request, $result);
+        $reason = Str::limit((string) $request->input('reason', 'generic'), 80, '');
 
         if ($result->status !== 'started') {
             return response()->json([
@@ -314,7 +316,7 @@ class ExamController extends Controller
             ]);
         }
 
-        return DB::transaction(function () use ($result): JsonResponse {
+        return DB::transaction(function () use ($result, $reason): JsonResponse {
             $row = Result::query()->whereKey($result->id)->lockForUpdate()->firstOrFail();
 
             if ($row->status !== 'started') {
@@ -338,6 +340,14 @@ class ExamController extends Controller
 
             $count = (int) $row->rule_violation_count;
 
+            Log::notice('exam.rule_violation_reported', [
+                'exam_id' => (int) $row->exam_id,
+                'result_id' => (int) $row->id,
+                'user_id' => (int) $row->user_id,
+                'violation_count' => $count,
+                'reason' => $reason,
+            ]);
+
             if ($count >= self::RULE_VIOLATION_DISQUALIFY_THRESHOLD) {
                 $this->finalizeResult($row, false);
 
@@ -346,6 +356,7 @@ class ExamController extends Controller
                     'result_id' => (int) $row->id,
                     'user_id' => (int) $row->user_id,
                     'violation_count' => $count,
+                    'reason' => $reason,
                 ]);
 
                 return response()->json([

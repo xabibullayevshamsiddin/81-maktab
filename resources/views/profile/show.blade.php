@@ -190,24 +190,30 @@
 	        </div>
 	      </section>
 
-        <nav class="profile-panel-tabs" aria-label="Profil bo'limlari">
-          <a href="{{ route('profile.show', ['panel' => 'settings']) }}" class="profile-panel-tab {{ $profilePanel === 'settings' ? 'is-active' : '' }}">
-            <i class="fa-solid fa-user-gear"></i>
-            Sozlamalar
-          </a>
-          <a href="{{ route('profile.show', ['panel' => 'security']) }}" class="profile-panel-tab {{ $profilePanel === 'security' ? 'is-active' : '' }}">
-            <i class="fa-solid fa-shield-halved"></i>
-            Xavfsizlik
-          </a>
-          <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="profile-panel-tab {{ $profilePanel === 'activity' ? 'is-active' : '' }}">
-            <i class="fa-solid fa-wave-square"></i>
-            Faollik
-          </a>
-          <a href="{{ route('profile.results.index') }}" class="profile-panel-tab profile-panel-tab--link">
-            <i class="fa-solid fa-chart-column"></i>
-            Natijalar
-          </a>
-        </nav>
+        <section class="profile-panel-switcher">
+          <div class="profile-panel-switcher-head">
+            <span class="profile-panel-switcher-kicker">Profil bo'limlari</span>
+            <p>Kerakli blokni tanlang.</p>
+          </div>
+          <nav class="profile-panel-tabs" aria-label="Profil bo'limlari">
+            <a href="{{ route('profile.show', ['panel' => 'settings']) }}" class="profile-panel-tab {{ $profilePanel === 'settings' ? 'is-active' : '' }}">
+              <i class="fa-solid fa-user-gear"></i>
+              <span>Sozlamalar</span>
+            </a>
+            <a href="{{ route('profile.show', ['panel' => 'security']) }}" class="profile-panel-tab {{ $profilePanel === 'security' ? 'is-active' : '' }}">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Xavfsizlik</span>
+            </a>
+            <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="profile-panel-tab {{ $profilePanel === 'activity' ? 'is-active' : '' }}">
+              <i class="fa-solid fa-wave-square"></i>
+              <span>Faollik</span>
+            </a>
+            <a href="{{ route('profile.results.index') }}" class="profile-panel-tab profile-panel-tab--link">
+              <i class="fa-solid fa-chart-column"></i>
+              <span>Natijalar</span>
+            </a>
+          </nav>
+        </section>
 
 	      <div class="profile-layout profile-layout--stack-mobile">
 	        <div class="profile-column profile-column-settings profile-column-settings--mobile-last">
@@ -701,6 +707,59 @@
             @endif
 
             @if($profilePanel !== 'activity')
+              <section class="profile-panel-preview-grid reveal" aria-label="Qo'shimcha bo'limlar">
+                <article class="profile-panel-preview-card">
+                  <div class="profile-panel-preview-top">
+                    <span class="profile-panel-preview-icon">
+                      <i class="fa-solid fa-wave-square"></i>
+                    </span>
+                    <div class="profile-panel-preview-copy">
+                      <h3>Faollik</h3>
+                      <p>Izohlar, kurslar va yozilishlar shu bo'limda jamlangan.</p>
+                    </div>
+                  </div>
+                  <div class="profile-panel-preview-stats">
+                    <div class="profile-panel-preview-stat">
+                      <strong>{{ $postCommentCount + $teacherCommentCount }}</strong>
+                      <span>Izohlar</span>
+                    </div>
+                    <div class="profile-panel-preview-stat">
+                      <strong>{{ $createdCourseCount + $courseEnrollmentCount }}</strong>
+                      <span>Kurslar</span>
+                    </div>
+                  </div>
+                  <div class="profile-panel-preview-actions">
+                    <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="btn btn-sm">Faollikni ochish</a>
+                  </div>
+                </article>
+
+                <article class="profile-panel-preview-card">
+                  <div class="profile-panel-preview-top">
+                    <span class="profile-panel-preview-icon profile-panel-preview-icon--results">
+                      <i class="fa-solid fa-chart-column"></i>
+                    </span>
+                    <div class="profile-panel-preview-copy">
+                      <h3>Natijalar</h3>
+                      <p>Topshirgan imtihonlaringiz va eksportlar alohida sahifada turadi.</p>
+                    </div>
+                  </div>
+                  <div class="profile-panel-preview-stats">
+                    <div class="profile-panel-preview-stat">
+                      <strong>{{ $examResultsCount }}</strong>
+                      <span>Natijalar</span>
+                    </div>
+                    <div class="profile-panel-preview-stat">
+                      <strong>{{ $createdExamsCount }}</strong>
+                      <span>Imtihonlar</span>
+                    </div>
+                  </div>
+                  <div class="profile-panel-preview-actions">
+                    <a href="{{ route('profile.results.index') }}" class="btn btn-outline btn-sm">Natijalar</a>
+                  </div>
+                </article>
+              </section>
+            @endif
+            @if(false && $profilePanel !== 'activity')
               <section class="profile-activity-block reveal profile-panel-aside-note">
                 <div class="profile-block-head">
                   <div class="profile-block-copy">

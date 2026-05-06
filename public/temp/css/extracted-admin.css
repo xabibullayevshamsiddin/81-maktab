@@ -704,3 +704,91 @@ body::after {
   70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+
+/* Keep collapse distance aligned with the custom sidebar width */
+.sidebar-nav-wrapper.active {
+  transform: translateX(-290px);
+}
+
+/* ======== Responsive Fixes (Admin Mobile/Tablet) ======== */
+@media only screen and (min-width: 768px) and (max-width: 1199px), (max-width: 767px) {
+  .main-wrapper {
+    margin-left: 0;
+  }
+
+  .sidebar-nav-wrapper {
+    transform: translateX(-290px);
+  }
+
+  .sidebar-nav-wrapper.active {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .header .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .main-wrapper .container-fluid {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .header {
+    padding: 12px 0 !important;
+    margin-bottom: 18px;
+  }
+
+  #menu-toggle {
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .profile-box {
+    padding: 4px 8px;
+    border-radius: 14px;
+  }
+
+  .profile-info .info h6,
+  .profile-info .info p {
+    display: none;
+  }
+
+  .card-style,
+  .card,
+  .icon-card {
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .icon-card {
+    gap: 14px !important;
+  }
+
+  .icon-card .icon {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+    font-size: 24px !important;
+  }
+
+  .icon-card .content h3 {
+    font-size: 24px;
+  }
+
+  #admin-toast-container {
+    top: 14px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .admin-toast {
+    min-width: 0;
+    max-width: 100%;
+    padding: 14px 16px;
+  }
+}

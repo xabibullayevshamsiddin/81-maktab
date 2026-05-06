@@ -564,12 +564,16 @@ class SiteAiController extends Controller
                 $rest = trim((string) ($parts[1] ?? ''));
 
                 if ($rest !== '') {
-                    return "MUHIM: {$first}\n\n{$rest}";
+                    $clean = "MUHIM: {$first}\n\n{$rest}";
                 }
             }
         }
 
-        return $clean;
+        // Convert URLs to Markdown links for safe frontend parsing
+        $urlRegex = '/(https?:\/\/[^\s<]+)/i';
+        $clean = preg_replace($urlRegex, '[$1]($1)', $clean);
+
+        return (string) $clean;
     }
 
     private function getUserDailyLimit($user): int

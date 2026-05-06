@@ -39,6 +39,33 @@
             O‘tish uchun minimal ball: {{ $result->exam->passing_points ?? '—' }}
           </span>
         </p>
+
+        <!-- Motivational Quote Section -->
+        <div class="exam-result-motivation {{ $result->passed ? 'is-pass' : 'is-fail' }}">
+          @php
+            $passQuotes = [
+              "Ajoyib natija! Bilim olishdan aslo to'xtamang.",
+              "Muvaffaqiyat kaliti — tinimsiz mehnatda. Davom eting!",
+              "Siz o'z maqsadingizga yana bir qadam yaqinlashdingiz. Tabriklaymiz!",
+              "Bilim — eng katta boylik. Siz uni ko'paytirishda davom etyapsiz.",
+              "Zafarlar sizni tark etmasin! Bu hali boshlanishi."
+            ];
+            $failQuotes = [
+              "Yiqilish — bu mag'lubiyat emas, balki yanada kuchliroq bo'lib qaytish uchun imkoniyatdir.",
+              "Xatolar — eng yaxshi ustozlardir. Ulardan xulosa chiqaring va yana harakat qiling.",
+              "Hech qachon taslim bo'lmang! Muvaffaqiyatga olib boradigan yo'l to'siqlardan iborat.",
+              "Bugungi urinish keyingi safar g'alaba bo'ladi. Sabr va mehnatda davom eting.",
+              "Har bir muvaffaqiyatsizlik — muvaffaqiyatga bir qadam yaqinroqdir."
+            ];
+            $quote = $result->passed ? $passQuotes[array_rand($passQuotes)] : $failQuotes[array_rand($failQuotes)];
+          @endphp
+          <div class="motivation-icon">
+            <i class="fa-solid {{ $result->passed ? 'fa-rocket' : 'fa-seedling' }}"></i>
+          </div>
+          <div class="motivation-text">
+            "{{ $quote }}"
+          </div>
+        </div>
       @endif
 
       <div class="exam-result-score">

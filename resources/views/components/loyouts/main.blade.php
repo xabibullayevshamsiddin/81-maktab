@@ -1042,6 +1042,7 @@
         function formatAiMessageHtml(text) {
           var safe = escapeAiHtml(text).replace(/\r\n?/g, '\n');
           safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong style="color:inherit;font-weight:700;">$1</strong>');
+          safe = safe.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" class="ai-response-link" target="_blank" rel="noopener noreferrer">$1</a>');
 
           var lines = safe.split('\n');
           var html = '';
@@ -1381,10 +1382,6 @@
                  ========================================= */
               var chars = fullText.split('');
               var charIndex = 0;
-              /* We pre-accumulate delay so each char's CSS animation starts
-                 at the right visual moment (CSS delay, not setTimeout stagger,
-                 so all DOM writes happen in one rAF batch for perf) */
-              var cumulativeDelay = 0;
 
               function revealNextChar() {
                 if (charIndex >= chars.length) {
@@ -1403,7 +1400,6 @@
                 charIndex++;
 
                 if (ch === ' ' || ch === '\u00a0') {
-                  /* Spaces: no animation span, just a text node */
                   var spaceSpan = document.createElement('span');
                   spaceSpan.className = 'ai-msg-char--space';
                   spaceSpan.textContent = ch;
@@ -1413,7 +1409,6 @@
                 } else {
                   var charSpan = document.createElement('span');
                   charSpan.className = 'ai-msg-char';
-                  /* No CSS delay — setTimeout drives the timing precisely */
                   charSpan.style.animationDelay = '0ms';
                   charSpan.textContent = ch;
                   contentEl.appendChild(charSpan);
@@ -1422,7 +1417,6 @@
                 appendCursor();
                 scrollToBottom(true);
 
-                /* Rhythm: pause after punctuation */
                 var extra = 0;
                 if (ch === '\n')          extra = 70;
                 else if (/[.!?]/.test(ch))  extra = 55;
