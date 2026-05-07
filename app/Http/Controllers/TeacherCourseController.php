@@ -58,7 +58,7 @@ class TeacherCourseController extends Controller
             'description' => ['required', 'string'],
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $teacherId = null;
@@ -297,7 +297,7 @@ class TeacherCourseController extends Controller
             'description' => ['required', 'string'],
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
 
         if ($isAdmin) {

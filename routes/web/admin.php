@@ -19,11 +19,11 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TeacherCourseController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:super_admin,admin,editor,moderator'])->group(function () {
+Route::middleware(['auth', 'active', 'role:super_admin,admin,editor,moderator'])->group(function () {
     Route::get('dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 });
 
-Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
+Route::middleware(['auth', 'active', 'role:super_admin,admin'])->group(function () {
     Route::get('user', [AdminController::class, 'user'])->name('user');
     Route::put('user/{user}', [AdminController::class, 'updateUser'])->name('user.update');
     Route::delete('user/{user}', [AdminController::class, 'destroyUser'])->name('user.destroy');
@@ -33,7 +33,7 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::post('user/{user}/course-open/reject', [AdminController::class, 'rejectCourseOpenRequest'])->name('user.course-open.reject');
 });
 
-Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moderator'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'active', 'role:super_admin,admin,editor,moderator'])->group(function () {
     Route::middleware('role:super_admin,admin,editor')->group(function () {
         Route::resource('posts', PostController::class);
         Route::resource('categories', CategoryController::class)->except('show');

@@ -74,7 +74,7 @@ class PostController extends Controller
             'short_content_en' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'content_en' => ['nullable', 'string'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'video_url' => ['nullable', 'string', 'max:500'],
             'video_file' => array_merge(
                 ['nullable', 'file'],
@@ -134,7 +134,7 @@ class PostController extends Controller
             'short_content_en' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'content_en' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp',],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'video_url' => ['nullable', 'string', 'max:500'],
             'video_file' => array_merge(
                 ['nullable', 'file'],

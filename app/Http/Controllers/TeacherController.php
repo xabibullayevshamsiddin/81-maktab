@@ -60,7 +60,7 @@ class TeacherController extends Controller
             'grades' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:10000'],
             'achievements_en' => ['nullable', 'string', 'max:10000'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -110,7 +110,7 @@ class TeacherController extends Controller
             'grades' => ['nullable', 'string', 'max:255'],
             'achievements' => ['nullable', 'string', 'max:10000'],
             'achievements_en' => ['nullable', 'string', 'max:10000'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 

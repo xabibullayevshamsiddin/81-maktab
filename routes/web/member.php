@@ -24,14 +24,19 @@ Route::middleware('auth')->group(function () {
         ->middleware('active')
         ->name('notifications.read-all');
 
-    Route::get('chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
+    Route::get('chat/messages', [ChatController::class, 'messages'])
+        ->middleware('active')
+        ->name('chat.messages');
     Route::get('chat/user/{user}/preview', [ChatController::class, 'userPreview'])
+        ->middleware('active')
         ->middleware('throttle:60,1')
         ->name('chat.user.preview');
     Route::post('chat/user/{user}/deactivate', [ChatController::class, 'superAdminDeactivateUser'])
+        ->middleware('active')
         ->middleware('throttle:30,1')
         ->name('chat.user.deactivate');
     Route::post('chat/user/{user}/activate', [ChatController::class, 'superAdminActivateUser'])
+        ->middleware('active')
         ->middleware('throttle:30,1')
         ->name('chat.user.activate');
     Route::post('chat/send', [ChatController::class, 'send'])->middleware(['throttle:chat-send', 'active'])->name('chat.send');
@@ -50,29 +55,30 @@ Route::middleware('auth')->group(function () {
         ->name('profile.results.single.export');
     Route::get('profile/results/{result}/export', [ProfileController::class, 'exportSingleResult'])
         ->whereNumber('result');
-    Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
-    Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');
-    Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->name('profile.email.resend');
-    Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->name('profile.email.cancel');
-    Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->name('profile.password.confirm');
-    Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->middleware('active')->name('profile.email.request');
+    Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->middleware('active')->name('profile.email.verify');
+    Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->middleware('active')->name('profile.email.resend');
+    Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->middleware('active')->name('profile.email.cancel');
+    Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->middleware('active')->name('profile.password.confirm');
+    Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->middleware('active')->name('profile.password.update');
 
-    Route::post('feature-requests', [FeatureRequestController::class, 'store'])->name('feature-requests.store');
-    Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->name('feature-requests.vote');
+    Route::post('feature-requests', [FeatureRequestController::class, 'store'])->middleware('active')->name('feature-requests.store');
+    Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->middleware('active')->name('feature-requests.vote');
     Route::post('feature-requests/{featureRequest}/replies', [FeatureRequestController::class, 'storeReply'])
-        ->middleware('role:super_admin,admin,moderator')
+        ->middleware(['active', 'role:super_admin,admin,moderator'])
         ->name('feature-requests.replies.store');
     Route::delete('feature-request-replies/{reply}', [FeatureRequestController::class, 'destroyReply'])
+        ->middleware('active')
         ->name('feature-requests.replies.destroy');
-    Route::delete('feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])->name('feature-requests.destroy');
+    Route::delete('feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])->middleware('active')->name('feature-requests.destroy');
 
     Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])
         ->whereNumber('result')
         ->name('profile.exams.results.show');
-    Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->name('profile.exams.results.export');
-    Route::get('profile/exams/result/export', [TeacherExamController::class, 'exportResults']);
+    Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->middleware('active')->name('profile.exams.results.export');
+    Route::get('profile/exams/result/export', [TeacherExamController::class, 'exportResults'])->middleware('active');
 
-    Route::middleware(['role:super_admin,admin,editor,moderator,teacher'])->group(function () {
+    Route::middleware(['active', 'role:super_admin,admin,editor,moderator,teacher'])->group(function () {
         Route::get('profile/exams', [TeacherExamController::class, 'index'])->name('profile.exams.index');
         Route::get('profile/exams/create', [TeacherExamController::class, 'create'])->name('profile.exams.create');
         Route::post('profile/exams', [TeacherExamController::class, 'store'])->name('profile.exams.store');
@@ -94,19 +100,19 @@ Route::middleware('auth')->group(function () {
             ->name('profile.exams.grade');
     });
 
-    Route::get('profile/kurs-arizalari', [TeacherEnrollmentController::class, 'index'])->name('teacher.enrollments.index');
-    Route::post('profile/kurs-arizalari/{enrollment}/tasdiqlash', [TeacherEnrollmentController::class, 'approve'])->name('teacher.enrollments.approve');
-    Route::post('profile/kurs-arizalari/{enrollment}/rad-etish', [TeacherEnrollmentController::class, 'reject'])->name('teacher.enrollments.reject');
-    Route::delete('profile/kurs-arizalari/{enrollment}', [TeacherEnrollmentController::class, 'destroy'])->name('teacher.enrollments.destroy');
+    Route::get('profile/kurs-arizalari', [TeacherEnrollmentController::class, 'index'])->middleware('active')->name('teacher.enrollments.index');
+    Route::post('profile/kurs-arizalari/{enrollment}/tasdiqlash', [TeacherEnrollmentController::class, 'approve'])->middleware('active')->name('teacher.enrollments.approve');
+    Route::post('profile/kurs-arizalari/{enrollment}/rad-etish', [TeacherEnrollmentController::class, 'reject'])->middleware('active')->name('teacher.enrollments.reject');
+    Route::delete('profile/kurs-arizalari/{enrollment}', [TeacherEnrollmentController::class, 'destroy'])->middleware('active')->name('teacher.enrollments.destroy');
 
-    Route::get('exams', [ExamController::class, 'index'])->name('exam.index');
-    Route::get('exams/{exam}', [ExamController::class, 'startPage'])->name('exam.start.page');
-    Route::post('exams/{exam}/start', [ExamController::class, 'start'])->name('exam.start');
-    Route::get('exam-session/{result}', [ExamController::class, 'session'])->name('exam.session');
-    Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->name('exam.answer');
+    Route::get('exams', [ExamController::class, 'index'])->middleware('active')->name('exam.index');
+    Route::get('exams/{exam}', [ExamController::class, 'startPage'])->middleware('active')->name('exam.start.page');
+    Route::post('exams/{exam}/start', [ExamController::class, 'start'])->middleware('active')->name('exam.start');
+    Route::get('exam-session/{result}', [ExamController::class, 'session'])->middleware('active')->name('exam.session');
+    Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->middleware('active')->name('exam.answer');
     Route::post('exam-session/{result}/violation', [ExamController::class, 'reportViolation'])
-        ->middleware('throttle:90,1')
+        ->middleware(['active', 'throttle:90,1'])
         ->name('exam.violation');
-    Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->name('exam.submit');
+    Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->middleware('active')->name('exam.submit');
     Route::get('exam-results/{result}', [ResultController::class, 'show'])->name('exam.result.show');
 });

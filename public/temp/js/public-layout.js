@@ -1436,6 +1436,29 @@
     });
   }
 
+  function initCourseEnrollPanels() {
+    const panels = Array.from(document.querySelectorAll('details.course-enroll-panel'));
+    if (!panels.length) return;
+
+    panels.forEach((panel) => {
+      const summary = panel.querySelector(':scope > summary.course-enroll-summary');
+      if (!summary) return;
+
+      summary.addEventListener('click', (event) => {
+        event.preventDefault();
+        const shouldOpen = !panel.open;
+
+        panels.forEach((otherPanel) => {
+          if (otherPanel !== panel) {
+            otherPanel.open = false;
+          }
+        });
+
+        panel.open = shouldOpen;
+      });
+    });
+  }
+
   function getCommentConfig(form) {
     const scope = form?.closest('[data-comment-config]') || document.querySelector('[data-comment-config]');
     return parseJson(scope?.dataset.commentConfig, null);
@@ -3669,6 +3692,7 @@
     initImageLightbox();
     initToastAndTheme();
     initHeaderDropdowns();
+    initCourseEnrollPanels();
     initInteractiveActions();
     initProMaxAnimations();
     initThemeBurstEffect();

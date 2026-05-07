@@ -206,7 +206,7 @@ class AdminQuestionController extends Controller
         $rules = [
             'question_type' => ['required', Rule::in([Question::TYPE_MCQ, Question::TYPE_TEXT])],
             'body' => ['required', 'string', 'max:12000'],
-            'question_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'question_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'remove_question_image' => ['nullable', 'boolean'],
             'points' => ['required', 'integer', 'min:1', 'max:1000'],
         ];
