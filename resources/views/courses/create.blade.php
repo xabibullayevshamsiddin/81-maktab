@@ -194,7 +194,7 @@
           <textarea name="description" rows="5" class="comment-input" placeholder="Kurs tavsifi" required>{{ old('description') }}</textarea>
           <textarea name="description_en" rows="5" class="comment-input" placeholder="Course description (EN, optional)">{{ old('description_en') }}</textarea>
 
-          <label for="course-image" class="comment-label">Kurs rasmi (ixtiyoriy, JPG/PNG/WebP, max 4 MB)</label>
+          <label for="course-image" class="comment-label">Kurs rasmi (ixtiyoriy, JPG/PNG/WebP, max 5 MB)</label>
           <input type="file" id="course-image" name="image" class="comment-input" accept="image/jpeg,image/png,image/webp">
           @error('image')
             <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>

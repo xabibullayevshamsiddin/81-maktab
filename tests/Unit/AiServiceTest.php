@@ -97,7 +97,9 @@ class AiServiceTest extends TestCase
 
         $cases = [
             ["Parolimni esdan chiqardim, qanday tiklasam bo'ladi?", ['school_help', 'Parolni tiklash', 'forgot-password']],
+            ['How can I reset my password?', ['school_help', 'Parolni tiklash', 'forgot-password']],
             ['Profilimga rasmni qanday yuklayman?', ['school_help', 'Profil rasmini yuklash', 'profile']],
+            ['How do I upload a profile picture?', ['school_help', 'Profil rasmini yuklash', 'profile']],
             ["Ism-familiyam xato yozilibdi, qanday to'g'rilayman?", ['school_help', "Ism-familiyani to'g'rilash"]],
             ['Saytdagi xatolik bug haqida kimga xabar berishim kerak?', ['school_help', 'Saytdagi xatolik', 'Aloqa']],
             ['Maktabga telefon yoki planshet olib kelish mumkinmi?', ['school_help', 'Telefon va planshet']],
@@ -150,6 +152,23 @@ class AiServiceTest extends TestCase
         $this->assertFalse($service->shouldStartSupportWizard('Qaysi kusrlar bor?'));
     }
 
+    public function test_translation_requests_return_disabled_notice(): void
+    {
+        $service = new AiService;
+
+        foreach ([
+            'translate to English: salom',
+            'inglizchaga tarjima qil: assalomu alaykum',
+            'Переведи на узбекский: доброе утро',
+        ] as $question) {
+            $result = $service->generateResponse($question);
+
+            $this->assertTrue($result['success'], $question);
+            $this->assertSame('translation_disabled', $result['source'], $question);
+            $this->assertStringContainsString("Tarjima funksiyasi hozircha AI ichida o'chirilgan.", $result['text'], $question);
+        }
+    }
+
     public function test_generate_response_lists_published_courses_when_course_word_has_typo(): void
     {
         $this->recreateCourseCatalogTables();
@@ -189,7 +208,7 @@ class AiServiceTest extends TestCase
                 'id' => 1,
                 'teacher_id' => 1,
                 'created_by' => 1,
-                'title' => 'Matematika intensiv',
+                'title' => 'Matematika start',
                 'price' => "450 000 so'm",
                 'duration' => '3 oy',
                 'description' => 'Algebra va geometriya tayyorlov kursi.',
@@ -224,18 +243,61 @@ class AiServiceTest extends TestCase
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'id' => 4,
+                'teacher_id' => 1,
+                'created_by' => 1,
+                'title' => 'Matematika intensiv',
+                'price' => "550 000 so'm",
+                'duration' => '4 oy',
+                'description' => 'Chuqurlashtirilgan matematika kursi.',
+                'start_date' => now()->addDays(10)->toDateString(),
+                'status' => Course::STATUS_PUBLISHED,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 5,
+                'teacher_id' => 1,
+                'created_by' => 1,
+                'title' => 'Fizika master',
+                'price' => "650 000 so'm",
+                'duration' => '5 oy',
+                'description' => 'Fizika bo\'yicha master kurs.',
+                'start_date' => now()->addDays(12)->toDateString(),
+                'status' => Course::STATUS_PUBLISHED,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 6,
+                'teacher_id' => 1,
+                'created_by' => 1,
+                'title' => 'Ingliz tili speaking',
+                'price' => "700 000 so'm",
+                'duration' => '2 oy',
+                'description' => 'Speaking va listening kursi.',
+                'start_date' => now()->addDays(15)->toDateString(),
+                'status' => Course::STATUS_PUBLISHED,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         $service = new AiService;
 
-        foreach (['kusrlar', 'qaysi kusrlar bor', 'mavjud kurslarni sanab ber'] as $question) {
+        foreach (['kusrlar', 'qaysi kusrlar bor', 'mavjud kurslarni sanab ber', 'What courses are available?', 'Какие курсы есть?'] as $question) {
             $result = $service->generateResponse($question);
 
             $this->assertTrue($result['success']);
             $this->assertSame('dynamic_data', $result['source']);
+            $this->assertStringContainsString("oxirgi 3 ta kurs", $result['text']);
+            $this->assertStringContainsString('Ingliz tili speaking', $result['text']);
+            $this->assertStringContainsString('Fizika master', $result['text']);
             $this->assertStringContainsString('Matematika intensiv', $result['text']);
             $this->assertStringContainsString('Aziz Ustoz', $result['text']);
-            $this->assertStringContainsString("450 000 so'm", $result['text']);
+            $this->assertStringContainsString("550 000 so'm", $result['text']);
+            $this->assertStringNotContainsString('Matematika start', $result['text']);
             $this->assertStringNotContainsString('Yashirin draft kurs', $result['text']);
             $this->assertStringNotContainsString('Nofaol ustoz kursi', $result['text']);
         }
@@ -303,18 +365,62 @@ class AiServiceTest extends TestCase
         ]);
 
         DB::table('results')->insert([
-            'id' => 1,
-            'exam_id' => 1,
-            'user_id' => 1,
-            'score' => 18,
-            'points_earned' => 45,
-            'points_max' => 50,
-            'passed' => true,
-            'total_questions' => 20,
-            'submitted_at' => now(),
-            'status' => 'submitted',
-            'created_at' => now(),
-            'updated_at' => now(),
+            [
+                'id' => 1,
+                'exam_id' => 1,
+                'user_id' => 1,
+                'score' => 18,
+                'points_earned' => 45,
+                'points_max' => 50,
+                'passed' => true,
+                'total_questions' => 20,
+                'submitted_at' => now(),
+                'status' => 'submitted',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'exam_id' => 1,
+                'user_id' => 1,
+                'score' => 8,
+                'points_earned' => 20,
+                'points_max' => 50,
+                'passed' => false,
+                'total_questions' => 20,
+                'submitted_at' => now()->subDays(1),
+                'status' => 'expired',
+                'created_at' => now()->subDays(1),
+                'updated_at' => now()->subDays(1),
+            ],
+            [
+                'id' => 3,
+                'exam_id' => 1,
+                'user_id' => 1,
+                'score' => 14,
+                'points_earned' => 35,
+                'points_max' => 50,
+                'passed' => true,
+                'total_questions' => 20,
+                'submitted_at' => now()->subDays(2),
+                'status' => 'submitted',
+                'created_at' => now()->subDays(2),
+                'updated_at' => now()->subDays(2),
+            ],
+            [
+                'id' => 4,
+                'exam_id' => 1,
+                'user_id' => 1,
+                'score' => 0,
+                'points_earned' => null,
+                'points_max' => null,
+                'passed' => null,
+                'total_questions' => 20,
+                'submitted_at' => null,
+                'status' => 'in_progress',
+                'created_at' => now()->subHours(2),
+                'updated_at' => now()->subHours(2),
+            ],
         ]);
 
         $service = new AiService;
@@ -325,6 +431,10 @@ class AiServiceTest extends TestCase
         $this->assertStringContainsString('Algebra testi', $result['text']);
         $this->assertStringContainsString("45 / 50 ball", $result['text']);
         $this->assertStringContainsString("O'tdi", $result['text']);
+        $this->assertStringContainsString("Topshirish foizi: **75%**", $result['text']);
+        $this->assertStringContainsString("O'tish foizi: **66.7%**", $result['text']);
+        $this->assertStringContainsString("O'rtacha natija foizi: **66.7%**", $result['text']);
+        $this->assertStringContainsString("Eng yuqori natija: **90%**", $result['text']);
         $this->assertStringNotContainsString("Profil", $result['text']);
     }
 
@@ -602,7 +712,7 @@ class AiServiceTest extends TestCase
     {
         $service = new AiService;
 
-        foreach (['asalomu alekum', 'assalomualaykum', 'salom aleykum'] as $variant) {
+        foreach (['asalomu alekum', 'assalomualaykum', 'salom aleykum', 'Салом', 'Привет'] as $variant) {
             $result = $service->generateResponse($variant);
 
             $this->assertTrue($result['success']);

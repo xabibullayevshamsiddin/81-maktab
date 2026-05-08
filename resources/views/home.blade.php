@@ -13,12 +13,12 @@
 	        <div class="home-content">
 	          <h1 class="hero-title" id="animated-hero">
 	            <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
-	            <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
-	          </h1>
-	          <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
+            <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
+          </h1>
+          <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
             <div class="home-primary-actions prime-reveal" style="transition-delay: 1s;">
-              <a href="{{ route('courses') }}" class="btn">Kurslarni ko'rish</a>
-              <a href="#news" class="btn btn-outline btn-outline-light">So'nggi yangiliklar</a>
+              <a href="{{ route('courses') }}" class="btn">{{ __('public.home.hero_courses_action') }}</a>
+              <a href="#news" class="btn btn-outline btn-outline-light">{{ __('public.home.hero_news_action') }}</a>
             </div>
 	        </div>
 	        <div class="home-btn">
@@ -57,10 +57,10 @@
 
     <div class="site-section-nav-wrap">
       <div class="container">
-        <nav class="site-section-nav" data-section-nav aria-label="Bosh sahifa bo'limlari">
-          <a href="#about" class="site-section-nav-link is-active">Maktab haqida</a>
-          <a href="#news" class="site-section-nav-link">Yangiliklar</a>
-          <a href="#teachers" class="site-section-nav-link">Ustozlar</a>
+        <nav class="site-section-nav" data-section-nav aria-label="{{ __('public.home.section_nav_aria') }}">
+          <a href="#about" class="site-section-nav-link is-active">{{ __('public.home.section_nav_about') }}</a>
+          <a href="#news" class="site-section-nav-link">{{ __('public.home.section_nav_news') }}</a>
+          <a href="#teachers" class="site-section-nav-link">{{ __('public.home.section_nav_teachers') }}</a>
         </nav>
       </div>
     </div>

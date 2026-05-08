@@ -3,15 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>419 - Sessiya muddati tugagan | {{ config('app.name') }}</title>
+    <title>429 - Juda ko'p so'rovlar | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --secondary: #10b981;
-            --secondary-glow: rgba(16, 185, 129, 0.4);
+            --info: #06b6d4;
+            --info-glow: rgba(6, 182, 212, 0.4);
             --bg-dark: #0f172a;
         }
 
@@ -28,42 +28,43 @@
             overflow: hidden;
         }
 
-        .expired-container {
+        .rate-limit-card {
             text-align: center;
             padding: 50px;
             background: rgba(255, 255, 255, 0.02);
             backdrop-filter: blur(25px);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.2);
             border-radius: 40px;
             max-width: 600px;
             width: 90%;
-            animation: fadeIn 0.6s ease-out;
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .error-code {
             font-size: 100px;
             font-weight: 800;
             margin-bottom: 10px;
-            color: var(--secondary);
-            text-shadow: 0 0 20px var(--secondary-glow);
+            color: var(--info);
+            text-shadow: 0 0 20px var(--info-glow);
         }
 
-        .clock-icon {
+        .traffic-icon {
             font-size: 70px;
-            color: var(--secondary);
+            color: var(--info);
             margin-bottom: 25px;
-            animation: tick 2s infinite steps(2);
+            animation: pulseTraffic 1.5s infinite;
         }
 
-        @keyframes tick {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(15deg); }
-            100% { transform: rotate(0deg); }
+        @keyframes pulseTraffic {
+            0% { opacity: 0.5; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.5; transform: scale(0.9); }
         }
 
         h1 { font-size: 28px; margin-bottom: 15px; }
@@ -71,34 +72,35 @@
 
         .btn-bomba {
             padding: 16px 35px;
-            background: var(--secondary);
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--info);
             color: #fff;
             text-decoration: none;
             border-radius: 18px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 20px var(--secondary-glow);
         }
 
         .btn-bomba:hover {
+            background: var(--info);
+            box-shadow: 0 10px 25px var(--info-glow);
             transform: translateY(-3px);
-            box-shadow: 0 15px 30px var(--secondary-glow);
-            filter: brightness(1.1);
+            color: #000;
         }
     </style>
 </head>
 <body>
-    <div class="expired-container">
-        <div class="clock-icon">
-            <i class="fa-regular fa-hourglass-half"></i>
+    <div class="rate-limit-card">
+        <div class="traffic-icon">
+            <i class="fa-solid fa-traffic-light"></i>
         </div>
-        <div class="error-code">419</div>
-        <h1>Sessiya muddati tugadi</h1>
-        <p>Xavfsizlik nuqtai nazaridan sessiyangiz muddati tugagan bo'lishi mumkin. Iltimos, sahifani yangilab, ma'lumotlarni qayta yuboring.</p>
+        <div class="error-code">429</div>
+        <h1>Juda ko'p so'rovlar</h1>
+        <p>Siz tizimga juda qisqa vaqt ichida ko'plab so'rovlar yubordingiz. Iltimos, biroz kutib turing va yana bir bor urinib ko'ring.</p>
         
         <a href="javascript:location.reload()" class="btn-bomba">
-            <i class="fa-solid fa-arrows-rotate"></i>
-            Sahifani yangilash
+            <i class="fa-solid fa-hourglass-start"></i>
+            Birozdan so'ng urinish
         </a>
     </div>
 </body>

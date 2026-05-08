@@ -203,6 +203,7 @@ if (! function_exists('supported_locales')) {
         return [
             'uz' => 'UZ',
             'en' => 'EN',
+            'ru' => 'RU',
         ];
     }
 }

@@ -136,33 +136,6 @@ class SiteAiController extends Controller
             return $this->respondWithInteraction($user, $userMessage, $payload);
         }
 
-        $userLimit = $this->getUserDailyLimit($user);
-        if ($userLimit !== -1 && ! $this->consumeDailyQuestionQuota((int) $user->id, $userLimit)) {
-            Log::warning('ai.generate.daily_limit_reached', [
-                'user_id' => (int) $user->id,
-                'limit' => $userLimit,
-            ]);
-
-            $payload = [
-                'success' => true,
-                'text' => "Sizning kunlik limitingiz tugadi. Kuniga faqat {$userLimit} ta savol yubora olasiz. Ertaga yana yozib ko'ring.",
-                'source' => 'daily_limit',
-                'actions' => [
-                    [
-                        'type' => 'link',
-                        'label' => 'Profil',
-                        'url' => route('profile.show'),
-                        'route' => 'profile.show',
-                    ],
-                ],
-                'feedback_enabled' => false,
-                'clarification_requested' => false,
-                'support_converted' => false,
-            ];
-
-            return $this->respondWithInteraction($user, $userMessage, $payload);
-        }
-
         $result = $this->aiService->generateResponse($userMessage, $user, $conversationContext);
 
         if (! ($result['success'] ?? false)) {
@@ -576,30 +549,4 @@ class SiteAiController extends Controller
         return (string) $clean;
     }
 
-    private function getUserDailyLimit($user): int
-    {
-        if ($user->isAdmin() || $user->isSuperAdmin()) {
-            return -1;
-        }
-        if ($user->isTeacher() || $user->isEditor() || $user->isModerator()) {
-            return 10;
-        }
-
-        return 7;
-    }
-
-    private function consumeDailyQuestionQuota(int $userId, int $limit): bool
-    {
-        $todayKey = now()->format('Ymd');
-        $counterKey = "ai:user:{$userId}:daily:{$todayKey}";
-        $count = Cache::increment($counterKey);
-
-        if ($count === 1) {
-            $expiresInSeconds = max(60, now()->diffInSeconds(now()->copy()->endOfDay()));
-            Cache::put($counterKey, 1, now()->addSeconds($expiresInSeconds));
-            $count = 1;
-        }
-
-        return $count <= $limit;
-    }
 }

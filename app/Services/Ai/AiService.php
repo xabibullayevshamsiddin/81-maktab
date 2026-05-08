@@ -14,6 +14,7 @@ use App\Models\SiteSetting;
 use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -21,6 +22,8 @@ use Illuminate\Support\Str;
 class AiService
 {
     private const GEMINI_CALLS_PER_MINUTE_SOFT_LIMIT = 14;
+    private const COURSE_PREVIEW_LIMIT = 3;
+    private const RESULT_PREVIEW_LIMIT = 3;
 
     private static ?bool $aiKnowledgeTableExists = null;
 
@@ -31,6 +34,11 @@ class AiService
     {
         $conversationContext = $this->finalizeConversationContext($userMessage, $conversationContext);
         $message = trim((string) ($conversationContext['resolved_message'] ?? $userMessage));
+
+        // 0.001 Tarjima funksiyasi vaqtincha o'chirilgan.
+        if ($translationNotice = $this->matchTranslationDisabledNotice($message)) {
+            return ['success' => true, 'text' => $translationNotice, 'source' => 'translation_disabled'];
+        }
 
         // 0.01 Ko'p so'raladigan amaliy savollar DB/statistika qidiruvlarga tushib ketmasin.
         if ($schoolHelp = $this->matchCommonSchoolHelpQuery($message, $user)) {
@@ -188,6 +196,49 @@ class AiService
     public function normalizeQuestionForAnalytics(string $message): string
     {
         return Str::limit($this->normalizeCourseIntentText($message), 255, '');
+    }
+
+
+    private function matchTranslationDisabledNotice(string $message): ?string
+    {
+        $normalized = $this->normalizeSearchText($message);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (
+            Str::contains($normalized, ["ko'chirish", 'kochirish'])
+            && ! Str::contains($normalized, ['tarjima', 'translate', 'perevedi', 'perevesti'])
+        ) {
+            return null;
+        }
+
+        $hasTranslationIntent = $this->containsNormalizedPhrase($normalized, [
+            'tarjima',
+            'translate',
+            'translate to',
+            'translate into',
+            'tarjima qil',
+            'tarjima qilib ber',
+            'tiliga tarjima',
+            'ga tarjima',
+            'perevedi',
+            'perevesti',
+            'perevod',
+        ]) || $this->queryHasApproximateToken($normalized, [
+            'tarjima',
+            'translate',
+            'perevedi',
+            'perevesti',
+            'perevod',
+        ]);
+
+        if (! $hasTranslationIntent) {
+            return null;
+        }
+
+        return "Tarjima funksiyasi hozircha AI ichida o'chirilgan.\n\nKeyinroq bu bo'lim alohida qayta qo'shiladi. Hozir esa maktab, kurslar, ustozlar, imtihonlar va profil bo'yicha savollar bera olasiz.";
     }
 
     public function prepareConversationContext(string $userMessage, array $history = []): array
@@ -408,7 +459,7 @@ class AiService
      */
     private function matchCalendarAndEvents(string $message): ?string
     {
-        $q = mb_strtolower(trim($message));
+        $q = $this->normalizeSearchText($message);
 
         $hasCalendarWords = Str::contains($q, [
             'taqvim', 'tadbir', 'kalendar', 'kalendr', 'sanada', 'voqea', 'voqe', 'jadval', 'calendar',
@@ -516,7 +567,7 @@ class AiService
 
     private function parseCalendarDateFromMessage(string $message): ?Carbon
     {
-        $q = mb_strtolower($message);
+        $q = $this->normalizeSearchText($message);
         $tz = (string) config('app.timezone', 'UTC');
 
         if (preg_match('/\bbugun\b/u', $q)) {
@@ -564,7 +615,7 @@ class AiService
 
     private function monthNameToNumber(string $name): ?int
     {
-        $base = mb_strtolower(preg_replace('/(da|dan|dagi)$/u', '', mb_strtolower(trim($name))) ?? '');
+        $base = $this->normalizeSearchText(preg_replace('/(da|dan|dagi)$/u', '', trim($name)) ?? '');
         $map = [
             'yanvar' => 1, 'fevral' => 2, 'mart' => 3, 'aprel' => 4, 'april' => 4,
             'may' => 5, 'iyun' => 6, 'iyul' => 7, 'avgust' => 8,
@@ -1277,7 +1328,7 @@ class AiService
             return null;
         }
 
-        if (Str::contains($q, ['parolim', 'parolni', 'password', 'esdan chiq', 'unutdim', 'tiklasam', 'reset'])) {
+        if (Str::contains($q, ['parolim', 'parolni', 'parol', 'password', 'esdan chiq', 'unutdim', 'tiklasam', 'tiklash', 'reset'])) {
             return "**Parolni tiklash tartibi**\n"
                 ."- Login sahifasidagi **Parolni unutdingizmi?** havolasini oching: ".route('password.forgot.form')."\n"
                 ."- Emailingizni kiriting, tizim tasdiqlash kodini yuboradi.\n"
@@ -1285,7 +1336,7 @@ class AiService
                 ."- Agar emailga kod kelmasa, spam papkani tekshiring yoki **Aloqa** orqali murojaat qiling: ".route('contact');
         }
 
-        if (Str::contains($q, ['profilimga rasm', 'avatar', 'rasm yukla', 'rasmni yuk', 'profil rasm', 'surat yuk'])) {
+        if (Str::contains($q, ['profilimga rasm', 'avatar', 'rasm yukla', 'rasmni yuk', 'profil rasm', 'profilga rasm', 'surat yuk', 'yukla rasm'])) {
             return "**Profil rasmini yuklash**\n"
                 ."- Profil sahifasiga kiring: ".route('profile.show')."\n"
                 ."- Avatar/rasm maydonidan rasm tanlang va saqlang.\n"
@@ -1736,7 +1787,9 @@ class AiService
         $text = mb_strtolower(trim($text));
         $text = str_replace(['`', '‘', '’', 'ʼ', 'ʻ', '´'], "'", $text);
         $text = str_replace(['o‘', 'o’', 'g‘', 'g’'], ["o'", "o'", "g'", "g'"], $text);
+        $text = $this->transliterateUnicodeCyrillicToLatin($text);
         $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
+        $text = $this->normalizeIntentVocabulary(Str::squish($text));
 
         return Str::squish($text);
     }
@@ -1785,6 +1838,237 @@ class AiService
         }
 
         return $token;
+    }
+
+    private function transliterateCyrillicToLatin(string $text): string
+    {
+        return strtr($text, [
+            'а' => 'a',
+            'б' => 'b',
+            'в' => 'v',
+            'г' => 'g',
+            'д' => 'd',
+            'е' => 'e',
+            'ё' => 'yo',
+            'ж' => 'j',
+            'з' => 'z',
+            'и' => 'i',
+            'й' => 'y',
+            'к' => 'k',
+            'л' => 'l',
+            'м' => 'm',
+            'н' => 'n',
+            'о' => 'o',
+            'п' => 'p',
+            'р' => 'r',
+            'с' => 's',
+            'т' => 't',
+            'у' => 'u',
+            'ф' => 'f',
+            'х' => 'x',
+            'ц' => 's',
+            'ч' => 'ch',
+            'ш' => 'sh',
+            'щ' => 'sh',
+            'ъ' => '',
+            'ы' => 'i',
+            'ь' => '',
+            'э' => 'e',
+            'ю' => 'yu',
+            'я' => 'ya',
+            'ў' => "o'",
+            'қ' => 'q',
+            'ғ' => "g'",
+            'ҳ' => 'h',
+        ]);
+    }
+
+    private function transliterateUnicodeCyrillicToLatin(string $text): string
+    {
+        return strtr($text, [
+            "\u{0430}" => 'a',
+            "\u{0431}" => 'b',
+            "\u{0432}" => 'v',
+            "\u{0433}" => 'g',
+            "\u{0434}" => 'd',
+            "\u{0435}" => 'e',
+            "\u{0451}" => 'yo',
+            "\u{0436}" => 'j',
+            "\u{0437}" => 'z',
+            "\u{0438}" => 'i',
+            "\u{0439}" => 'y',
+            "\u{043A}" => 'k',
+            "\u{043B}" => 'l',
+            "\u{043C}" => 'm',
+            "\u{043D}" => 'n',
+            "\u{043E}" => 'o',
+            "\u{043F}" => 'p',
+            "\u{0440}" => 'r',
+            "\u{0441}" => 's',
+            "\u{0442}" => 't',
+            "\u{0443}" => 'u',
+            "\u{0444}" => 'f',
+            "\u{0445}" => 'x',
+            "\u{0446}" => 's',
+            "\u{0447}" => 'ch',
+            "\u{0448}" => 'sh',
+            "\u{0449}" => 'sh',
+            "\u{044A}" => '',
+            "\u{044B}" => 'i',
+            "\u{044C}" => '',
+            "\u{044D}" => 'e',
+            "\u{044E}" => 'yu',
+            "\u{044F}" => 'ya',
+            "\u{045E}" => "o'",
+            "\u{049B}" => 'q',
+            "\u{0493}" => "g'",
+            "\u{04B3}" => 'h',
+        ]);
+    }
+
+    private function normalizeIntentVocabulary(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        $phraseMap = [
+            'how many' => 'qancha',
+            'how much' => 'qancha',
+            'who is' => 'kim',
+            'what is' => 'nima',
+            'what are' => 'nima',
+            'where is' => 'qayerda',
+            'when is' => 'qachon',
+            'how do i' => 'qanday',
+            'show me' => 'korsat',
+            'list of' => 'royxat',
+            'available courses' => 'mavjud kurslar',
+            'what courses' => 'qaysi kurslar',
+            'which courses' => 'qaysi kurslar',
+            'course list' => 'kurslar royxati',
+            'my exam results' => 'mening imtihon natijalarim',
+            'my results' => 'mening natijalarim',
+            'kakie kursy' => 'qaysi kurslar',
+            'kakoy kurs' => 'qaysi kurs',
+            'spisok kursov' => 'kurslar royxati',
+            'dostupnye kursy' => 'mavjud kurslar',
+            'moi rezultaty' => 'mening natijalarim',
+            'rezultaty ekzamenov' => 'imtihon natijalari',
+            'kto eto' => 'kim',
+            'chto eto' => 'nima',
+            'gde eto' => 'qayerda',
+            'kogda eto' => 'qachon',
+            'kak eto' => 'qanday',
+            'skolko eto' => 'qancha',
+        ];
+
+        foreach ($phraseMap as $needle => $replacement) {
+            $text = preg_replace('/\b'.preg_quote($needle, '/').'\b/u', $replacement, $text) ?? $text;
+        }
+
+        $tokenMap = [
+            'hi' => 'salom',
+            'hello' => 'salom',
+            'hey' => 'salom',
+            'privet' => 'salom',
+            'bye' => 'xayr',
+            'goodbye' => 'xayr',
+            'poka' => 'xayr',
+            'thanks' => 'rahmat',
+            'thank' => 'rahmat',
+            'spasibo' => 'rahmat',
+            'who' => 'kim',
+            'what' => 'nima',
+            'when' => 'qachon',
+            'where' => 'qayerda',
+            'why' => 'nega',
+            'which' => 'qaysi',
+            'how' => 'qanday',
+            'many' => 'qancha',
+            'much' => 'qancha',
+            'show' => 'korsat',
+            'list' => 'royxat',
+            'available' => 'mavjud',
+            'latest' => 'oxirgi',
+            'all' => 'hammasi',
+            'school' => 'maktab',
+            'site' => 'sayt',
+            'website' => 'sayt',
+            'web' => 'veb',
+            'teacher' => 'ustoz',
+            'teachers' => 'ustozlar',
+            'student' => "o'quvchi",
+            'students' => "o'quvchilar",
+            'course' => 'kurs',
+            'courses' => 'kurslar',
+            'class' => 'dars',
+            'classes' => 'darslar',
+            'lesson' => 'dars',
+            'lessons' => 'darslar',
+            'exam' => 'imtihon',
+            'exams' => 'imtihonlar',
+            'result' => 'natija',
+            'results' => 'natijalar',
+            'news' => 'yangiliklar',
+            'event' => 'tadbir',
+            'events' => 'tadbirlar',
+            'calendar' => 'taqvim',
+            'contact' => 'aloqa',
+            'support' => 'yordam',
+            'help' => 'yordam',
+            'director' => 'direktor',
+            'principal' => 'direktor',
+            'headmaster' => 'direktor',
+            'profile' => 'profil',
+            'account' => 'akkaunt',
+            'phone' => 'telefon',
+            'number' => 'raqam',
+            'address' => 'manzil',
+            'password' => 'parol',
+            'reset' => 'tiklash',
+            'upload' => 'yukla',
+            'picture' => 'rasm',
+            'photo' => 'rasm',
+            'image' => 'rasm',
+            'issue' => 'muammo',
+            'error' => 'xato',
+            'problem' => 'muammo',
+            'my' => 'mening',
+            'please' => 'iltimos',
+            'kto' => 'kim',
+            'chto' => 'nima',
+            'gde' => 'qayerda',
+            'kogda' => 'qachon',
+            'kak' => 'qanday',
+            'pochemu' => 'nega',
+            'skolko' => 'qancha',
+            'pokazhi' => 'korsat',
+            'pokazhite' => 'korsat',
+            'spisok' => 'royxat',
+            'perevod' => "ko'chirish",
+            'kursy' => 'kurslar',
+            'urok' => 'dars',
+            'uroki' => 'darslar',
+            'uchitel' => 'ustoz',
+            'uchitelya' => 'ustozlar',
+            'uchenik' => "o'quvchi",
+            'ucheniki' => "o'quvchilar",
+            'shkola' => 'maktab',
+            'novosti' => 'yangiliklar',
+            'sobytiya' => 'tadbirlar',
+            'kontakty' => 'aloqa',
+            'rezultat' => 'natija',
+            'rezultaty' => 'natijalar',
+            'ekzamen' => 'imtihon',
+            'ekzameny' => 'imtihonlar',
+            'est' => 'bor',
+        ];
+
+        $tokens = preg_split('/\s+/u', $text) ?: [];
+        $tokens = array_map(static fn (string $token): string => $tokenMap[$token] ?? $token, $tokens);
+
+        return Str::squish(implode(' ', array_filter($tokens, static fn (string $token): bool => $token !== '')));
     }
 
     private function hasGreetingIntent(string $text): bool
@@ -2272,7 +2556,7 @@ class AiService
             'ga', 'ni', 'da', 'lar',
         ];
 
-        $text = mb_strtolower(trim($text));
+        $text = $this->normalizeSearchText($text);
 
         foreach ($noise as $n) {
             $text = str_replace($n, ' ', $text);
@@ -2349,7 +2633,7 @@ class AiService
      */
     private function matchDirectorQuery(string $message): ?string
     {
-        $q = mb_strtolower(trim($message));
+        $q = $this->normalizeSearchText($message);
 
         // Direktor so'zining barcha mumkin bo'lgan yozilishlari (imlo xatolari bilan)
         $directorPatterns = [
@@ -2771,16 +3055,19 @@ class AiService
             return "Natijalarni ko'rsatish uchun tizimga qayta kiring.";
         }
 
-        $resultsQuery = Result::query()
+        $allResults = Result::query()
             ->where('user_id', $userId)
-            ->whereIn('status', ['submitted', 'expired']);
-
-        $recentResults = (clone $resultsQuery)
             ->with('exam:id,title,total_points,passing_points')
             ->latest('submitted_at')
             ->latest('id')
-            ->limit($latestOnly ? 1 : 3)
             ->get();
+
+        $finishedStatuses = ['submitted', 'expired'];
+        $finishedResults = $allResults
+            ->filter(fn (Result $result): bool => in_array((string) $result->status, $finishedStatuses, true))
+            ->values();
+
+        $recentResults = $finishedResults->take($latestOnly ? 1 : self::RESULT_PREVIEW_LIMIT);
 
         if ($recentResults->isEmpty()) {
             return "Sizda hozircha saqlangan imtihon natijasi yo'q.";
@@ -2794,36 +3081,47 @@ class AiService
                 ."- Imtihon: **".($lastResult->exam?->title ?? "Noma'lum imtihon")."**\n"
                 ."- Holat: **".$this->examResultStatusLabel($lastResult)."**\n"
                 ."- Ball: **".$this->examResultPointsLabel($lastResult)."**\n"
+                ."- Natija foizi: **".$this->examResultPercentLabel($lastResult)."**\n"
                 ."- To'g'ri javoblar: **".((int) ($lastResult->score ?? 0)).' / '.((int) ($lastResult->total_questions ?? 0))."**\n"
                 ."- Sana: **".$this->examResultSubmittedLabel($lastResult)."**";
         }
 
-        $summary = (clone $resultsQuery)
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN passed = true THEN 1 ELSE 0 END) as passed_count')
-            ->selectRaw('SUM(CASE WHEN passed = false THEN 1 ELSE 0 END) as failed_count')
-            ->selectRaw('AVG(points_earned) as average_points')
-            ->first();
-
-        $total = (int) ($summary->total ?? 0);
-        $passed = (int) ($summary->passed_count ?? 0);
-        $failed = (int) ($summary->failed_count ?? 0);
-        $average = $summary->average_points !== null ? round((float) $summary->average_points, 1) : null;
+        $totalAttempts = $allResults->count();
+        $total = $finishedResults->count();
+        $passed = $finishedResults->where('passed', true)->count();
+        $failed = $finishedResults->where('passed', false)->count();
+        $submittedRate = $totalAttempts > 0 ? ($total / $totalAttempts) * 100 : null;
+        $passRate = $total > 0 ? ($passed / $total) * 100 : null;
+        $averagePercent = $this->averageExamResultPercent($finishedResults->all());
+        $bestPercent = $this->bestExamResultPercent($finishedResults->all());
 
         $lines = $recentResults->map(function (Result $result): string {
             return '• **'.($result->exam?->title ?? "Noma'lum imtihon").'** — '
                 .$this->examResultPointsLabel($result).', '
+                .$this->examResultPercentLabel($result).', '
                 .$this->examResultStatusLabel($result)
                 .' ('.$this->examResultSubmittedLabel($result).')';
         })->implode("\n");
 
         $reply = "Sizning imtihon natijalaringiz:\n"
-            ."- Jami: **{$total} ta**\n"
-            ."- O'tgan: **{$passed} ta**\n"
-            ."- Yiqilgan: **{$failed} ta**\n";
+            ."- Topshirilgan imtihonlar: **{$total} ta**\n"
+            ."- O'tgan imtihonlar: **{$passed} ta**\n"
+            ."- Yiqilgan imtihonlar: **{$failed} ta**\n";
 
-        if ($average !== null) {
-            $reply .= "- O'rtacha ball: **{$average}**\n";
+        if ($submittedRate !== null) {
+            $reply .= "- Topshirish foizi: **".$this->formatPercentValue($submittedRate)."%**\n";
+        }
+
+        if ($passRate !== null) {
+            $reply .= "- O'tish foizi: **".$this->formatPercentValue($passRate)."%**\n";
+        }
+
+        if ($averagePercent !== null) {
+            $reply .= "- O'rtacha natija foizi: **".$this->formatPercentValue($averagePercent)."%**\n";
+        }
+
+        if ($bestPercent !== null) {
+            $reply .= "- Eng yuqori natija: **".$this->formatPercentValue($bestPercent)."%**\n";
         }
 
         $reply .= "\nSo'nggi natijalar:\n{$lines}";
@@ -2854,6 +3152,77 @@ class AiService
     private function examResultSubmittedLabel(Result $result): string
     {
         return $result->submitted_at?->format('d.m.Y H:i') ?? '-';
+    }
+
+    private function examResultPercentLabel(Result $result): string
+    {
+        $percent = $this->examResultPercent($result);
+
+        return $percent !== null
+            ? $this->formatPercentValue($percent).'%'
+            : "Foiz hisoblanmadi";
+    }
+
+    private function examResultPercent(Result $result): ?float
+    {
+        $earned = $result->points_earned;
+        $max = $result->points_max;
+
+        if ($earned !== null && $max !== null && (float) $max > 0) {
+            return ((float) $earned / (float) $max) * 100;
+        }
+
+        $score = $result->score;
+        $questions = $result->total_questions;
+
+        if ($score !== null && $questions !== null && (int) $questions > 0) {
+            return ((float) $score / (float) $questions) * 100;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<int, Result>  $results
+     */
+    private function averageExamResultPercent(array $results): ?float
+    {
+        $percents = collect($results)
+            ->map(fn (Result $result): ?float => $this->examResultPercent($result))
+            ->filter(fn (?float $percent): bool => $percent !== null)
+            ->values();
+
+        if ($percents->isEmpty()) {
+            return null;
+        }
+
+        return $percents->avg();
+    }
+
+    /**
+     * @param  array<int, Result>  $results
+     */
+    private function bestExamResultPercent(array $results): ?float
+    {
+        $percents = collect($results)
+            ->map(fn (Result $result): ?float => $this->examResultPercent($result))
+            ->filter(fn (?float $percent): bool => $percent !== null)
+            ->values();
+
+        if ($percents->isEmpty()) {
+            return null;
+        }
+
+        return $percents->max();
+    }
+
+    private function formatPercentValue(float $percent): string
+    {
+        $formatted = number_format($percent, 1, '.', '');
+
+        return str_contains($formatted, '.')
+            ? rtrim(rtrim($formatted, '0'), '.')
+            : $formatted;
     }
 
     private function matchCourseCatalogQuery(string $message): ?string
@@ -2897,7 +3266,7 @@ class AiService
             })
             ->where('status', Course::STATUS_PUBLISHED)
             ->latest('id')
-            ->take(8)
+            ->take(self::COURSE_PREVIEW_LIMIT)
             ->get();
 
         if ($courses->isEmpty()) {
@@ -2909,7 +3278,7 @@ class AiService
             ->map(fn (Course $course, int $index): string => $this->formatCourseCatalogLine($course, $index + 1))
             ->implode("\n");
 
-        return "**Hozir saytda nashr qilingan kurslar:**\n"
+        return "**Hozir saytda nashr qilingan oxirgi ".self::COURSE_PREVIEW_LIMIT." ta kurs:**\n"
             ."{$lines}\n\n"
             ."To'liq ma'lumot va yozilish uchun **Kurslar** sahifasiga o'ting: ".route('courses');
     }
@@ -2923,7 +3292,13 @@ class AiService
         if (Str::contains($q, [
             'kurs och',
             'kurs yarat',
+            'open course',
+            'create course',
+            'course creation',
+            'создать курс',
+            'открыть курс',
             'ochish ruxsat',
+            'разрешение на курс',
             'tasdiqlash kodi',
             'publish code',
             'kursni tasdiq',
@@ -2954,15 +3329,32 @@ class AiService
             'korsat',
             'ko\'rsat',
             'list',
+            'course list',
+            'courses list',
+            'what courses',
+            'which courses',
+            'available courses',
+            'courses are available',
+            'show courses',
+            'all courses',
+            'какие курсы',
+            'какой курс',
+            'доступные курсы',
+            'курсы есть',
+            'есть курсы',
+            'список курсов',
+            'покажи курсы',
+            'все курсы',
             'hammasi',
         ])
-            || in_array($q, ['kurs', 'kurslar'], true);
+            || in_array($q, ['kurs', 'kurslar', 'course', 'courses', 'курс', 'курсы'], true);
     }
 
     private function hasCourseWord(string $q): bool
     {
         return preg_match('/\bkurs[\p{L}\']*\b/u', $q) === 1
-            || preg_match('/\bcourses?\b/u', $q) === 1;
+            || preg_match('/\bcourses?\b/u', $q) === 1
+            || preg_match('/\bкурс[\p{L}\']*\b/u', $q) === 1;
     }
 
     private function formatCourseCatalogLine(Course $course, int $number): string
@@ -3086,7 +3478,7 @@ class AiService
                 ->where('status', Course::STATUS_PUBLISHED)
                 ->with(['teacher:id,full_name', 'creator:id,name,first_name,last_name'])
                 ->latest('id')
-                ->take(5)
+                ->take(self::COURSE_PREVIEW_LIMIT)
                 ->get();
 
             if ($courses->isEmpty()) {
@@ -3097,7 +3489,7 @@ class AiService
                 return 'вЂў '.$course->title.($course->teacher ? ' вЂ” '.$course->teacher->full_name : '');
             })->implode("\n");
 
-            return "Hozir mavjud kurslardan ba'zilari:\n{$lines}\n\nTo'liq ro'yxat kurslar sahifasida bor.";
+            return "Hozir mavjud oxirgi ".self::COURSE_PREVIEW_LIMIT." ta kurs:\n{$lines}\n\nTo'liq ro'yxat kurslar sahifasida bor.";
         }
 
         if (Str::contains($q, ['qaysi ustoz kurs', 'ustoz kurs och', 'kim kurs ochgan'])) {
@@ -3105,7 +3497,7 @@ class AiService
                 ->where('status', Course::STATUS_PUBLISHED)
                 ->with(['teacher:id,full_name', 'creator:id,name,first_name,last_name'])
                 ->latest('id')
-                ->take(8)
+                ->take(self::COURSE_PREVIEW_LIMIT)
                 ->get()
                 ->filter(fn (Course $course) => $course->teacher !== null);
 
@@ -3115,7 +3507,7 @@ class AiService
 
             $lines = $courses->map(fn (Course $course) => 'вЂў '.$course->teacher->full_name.' вЂ” '.$course->title)->implode("\n");
 
-            return "Kurs ochgan ustozlardan ba'zilari:\n{$lines}";
+            return "Oxirgi ".self::COURSE_PREVIEW_LIMIT." ta ustoz-kurs juftligi:\n{$lines}";
         }
 
         if ($user && Str::contains($q, ['arizam', 'holati', 'statusim', 'yozilganmanmi'])) {
@@ -3258,11 +3650,11 @@ class AiService
 
         // 3. Courses — kengaytirilgan sinonimlar
         if ($this->isMatch($q, $qClean, ['kurs', 'dars', "o'quv", 'fanlar', 'kusrlar', 'kurslar', 'o\'rganish', 'dastur', 'program'])) {
-            $courses = Course::where('status', 'published')->latest()->take(5)->get();
+            $courses = Course::where('status', 'published')->latest()->take(self::COURSE_PREVIEW_LIMIT)->get();
             if ($courses->isNotEmpty()) {
                 $list = $courses->map(fn ($c) => "• {$c->title}")->implode("\n");
 
-                return "Hozirgi faol kurslarimiz:\n{$list}\n\nBatafsil: 'Kurslar' bo'limidan ko'rishingiz mumkin. ✅";
+                return "Hozirgi faol oxirgi ".self::COURSE_PREVIEW_LIMIT." ta kursimiz:\n{$list}\n\nBatafsil: 'Kurslar' bo'limidan ko'rishingiz mumkin. ✅";
             }
 
             return "Hozircha nashr etilgan kurslar yo'q. Tez orada yangi kurslar qo'shiladi! 😊";
@@ -3498,7 +3890,7 @@ class AiService
 
     private function normalizeForTeacherLookup(string $text): string
     {
-        $text = mb_strtolower(trim($text));
+        $text = $this->normalizeSearchText($text);
         // Maxsus belgilarni olib tashla, lekin harflarni saqla
         $text = preg_replace('/[^\p{L}\s]+/u', ' ', $text) ?? $text;
 
@@ -3763,11 +4155,12 @@ class AiService
 Sen {$schoolName} maktabi veb-saytining ichki AI yordamchisisiz.
 
 === ASOSIY QO'LLANMA ===
-1. FAQAT O'ZBEK TILIDA javob ber.
-1a. Agar keyingi ko'rsatmalarda zid joy bo'lsa, ushbu bandlarni ustun qo'y: sen GLOBAL AI emassan.
-1b. Asosiy vazifang - maktab, sayt bo'limlari, kurslar, ustozlar, imtihonlar, taqvim, aloqa, profil va admin jarayonlari bo'yicha yordam berish.
-1c. Juda sodda hisob-kitoblar (masalan 2+2 yoki 12/3) bo'lsa qisqa javob berishing mumkin.
-1d. Maktabdan tashqari keng va global mavzularda uzun javob bermagin; foydalanuvchiga bu saytning ichki yordamchisi ekaningni ayt.
+1. Javobni foydalanuvchi yozgan tilda ber: o'zbekcha, ruscha yoki inglizcha. Til noaniq bo'lsa, o'zbekcha javob ber.
+1a. Tarjima so'rovlarida faqat so'ralgan tarjimani qaytar; target tilni ustun qo'y.
+1b. Agar keyingi ko'rsatmalarda zid joy bo'lsa, ushbu bandlarni ustun qo'y: sen GLOBAL AI emassan.
+1c. Asosiy vazifang - maktab, sayt bo'limlari, kurslar, ustozlar, imtihonlar, taqvim, aloqa, profil va admin jarayonlari bo'yicha yordam berish.
+1d. Juda sodda hisob-kitoblar (masalan 2+2 yoki 12/3) bo'lsa qisqa javob berishing mumkin.
+1e. Maktabdan tashqari keng va global mavzularda uzun javob bermagin; foydalanuvchiga bu saytning ichki yordamchisi ekaningni ayt.
 2. Har qanday savolga javob berishga harakat qil — maktab haqida ham, umumiy bilim (matematika, fizika, biologiya, tarix, geografiya, ingliz tili va boshqa fanlar) haqida ham.
 3. Javoblar qisqa, aniq va foydali bo'lsin. Emojilar qo'sh. ✨
 4. Agar maktabga oid ma'lumot so'ralsa, avvalo quyidagi ma'lumotlardan foydalan.

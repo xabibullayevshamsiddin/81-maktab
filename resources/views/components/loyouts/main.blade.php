@@ -119,7 +119,7 @@
 	            @endswitch
 	          </span>
 	          <p class="global-announcement-text">{{ $announcementText }}</p>
-	          <button type="button" class="global-announcement-close" aria-label="Yopish" onclick="let el = this.closest('.global-announcement'); el.classList.add('closing'); setTimeout(() => el.remove(), 450);">
+	          <button type="button" class="global-announcement-close" aria-label="{{ __('public.layout.close') }}" onclick="let el = this.closest('.global-announcement'); el.classList.add('closing'); setTimeout(() => el.remove(), 450);">
 	            <i class="fa-solid fa-xmark"></i>
 	          </button>
 	        </div>
@@ -192,7 +192,7 @@
 	                      </a>
                         <a class="nav-dropdown-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
                           <i class="fa-regular fa-bell"></i>
-                          Bildirishnomalar
+                          {{ __('public.layout.notifications') }}
                         </a>
 	                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
 	                        <i class="fa-solid fa-lightbulb"></i>
@@ -242,20 +242,32 @@
             </ul>
 
             <div class="mobile-nav-extras">
-              <div class="locale-switcher" aria-label="Language switcher">
-                @foreach($supportedLocales as $localeKey => $localeLabel)
-                  <a
-                    href="{{ route('locale.switch', $localeKey) }}"
-                    class="locale-switcher-link {{ $currentLocale === $localeKey ? 'active' : '' }}"
-                    data-locale-switch
-                    hreflang="{{ $localeKey }}"
-                    lang="{{ $localeKey }}"
-                  >
-                    {{ $localeLabel }}
-                  </a>
-                @endforeach
-                <span class="locale-switcher-slider"></span>
-              </div>
+              <li class="nav-dropdown nav-dropdown--bomba-locale">
+                <details class="nav-dropdown-details js-header-dropdown">
+                  <summary class="nav-link nav-dropdown-toggle">
+                    <i class="fa-solid fa-language"></i>
+                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </summary>
+                  <div class="nav-dropdown-menu">
+                    <div class="nav-dropdown-inner">
+                      @foreach($supportedLocales as $localeKey => $localeLabel)
+                        <a
+                          href="{{ route('locale.switch', $localeKey) }}"
+                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                          data-locale-switch
+                        >
+                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          <span class="locale-name">{{ $localeLabel }}</span>
+                          @if($currentLocale === $localeKey)
+                            <i class="fa-solid fa-check-circle active-indicator"></i>
+                          @endif
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                </details>
+              </li>
 
 	              @guest
 	                <div class="mobile-nav-actions">
@@ -271,7 +283,7 @@
 
 		                <div class="mobile-nav-actions mobile-nav-actions--auth">
                       <a href="{{ route('notifications.index') }}" class="btn btn-outline mobile-nav-bell-link">
-                        <i class="fa-regular fa-bell"></i> Bildirishnomalar
+                        <i class="fa-regular fa-bell"></i> {{ __('public.layout.notifications') }}
                       </a>
 		                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
 		                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
@@ -296,18 +308,31 @@
           </nav>
 
 	          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
-	            <div class="locale-switcher" aria-label="Language switcher">
-              @foreach($supportedLocales as $localeKey => $localeLabel)
-                <a
-                  href="{{ route('locale.switch', $localeKey) }}"
-                  class="locale-switcher-link {{ $currentLocale === $localeKey ? 'active' : '' }}" data-locale-switch
-                  hreflang="{{ $localeKey }}"
-                  lang="{{ $localeKey }}"
-                >
-                  {{ $localeLabel }}
-                </a>
-              @endforeach
-              <span class="locale-switcher-slider"></span>
+	            <div class="nav-dropdown nav-dropdown--bomba-locale desktop-only">
+                <details class="nav-dropdown-details js-header-dropdown">
+                  <summary class="nav-link nav-dropdown-toggle">
+                    <i class="fa-solid fa-language"></i>
+                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </summary>
+                  <div class="nav-dropdown-menu">
+                    <div class="nav-dropdown-inner">
+                      @foreach($supportedLocales as $localeKey => $localeLabel)
+                        <a
+                          href="{{ route('locale.switch', $localeKey) }}"
+                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                          data-locale-switch
+                        >
+                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          <span class="locale-name">{{ $localeLabel }}</span>
+                          @if($currentLocale === $localeKey)
+                            <i class="fa-solid fa-check-circle active-indicator"></i>
+                          @endif
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                </details>
 	            </div>
               <div class="header-tool-cluster">
   	            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
@@ -318,8 +343,8 @@
                     href="{{ route('notifications.index') }}"
                     class="theme-toggle header-notification-link"
                     data-notification-link
-                    aria-label="Bildirishnomalar"
-                    title="Bildirishnomalar"
+                    aria-label="{{ __('public.layout.notifications') }}"
+                    title="{{ __('public.layout.notifications') }}"
                   >
                     <i class="fa-regular fa-bell"></i>
                     <span class="header-notification-count" data-notification-count hidden>0</span>
@@ -349,7 +374,7 @@
 
 	    @unless($isExamSessionRoute)
     <div id="image-lightbox" class="image-lightbox" aria-hidden="true">
-      <button type="button" class="image-lightbox-close" aria-label="Rasmni yopish">
+      <button type="button" class="image-lightbox-close" aria-label="{{ __('public.layout.image_close') }}">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <div class="image-lightbox-stage">
@@ -448,7 +473,7 @@
       @unless($isExamSessionRoute)
       @php
         $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
-        $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: 'Global chat vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.';
+        $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: __('public.layout.chat_disabled_default');
       @endphp
       <div id="chat-widget" class="chat-widget"
         data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
@@ -462,7 +487,7 @@
         data-chat-enabled="{{ $globalChatEnabled ? '1' : '0' }}"
         data-chat-disabled-message="{{ e($globalChatDisabledMsg) }}"
       >
-        <button type="button" class="chat-bubble" id="chat-bubble" aria-label="Chat">
+        <button type="button" class="chat-bubble" id="chat-bubble" aria-label="{{ __('public.layout.chat') }}">
           <i class="fa-solid fa-comments"></i>
           <span class="chat-bubble-badge" id="chat-badge" hidden>0</span>
         </button>
@@ -471,18 +496,18 @@
           <div class="chat-panel-header">
             <div class="chat-panel-title">
               <i class="fa-solid fa-comments"></i>
-              <span>Global chat</span>
+              <span>{{ __('public.layout.global_chat') }}</span>
             </div>
             <div class="chat-panel-actions">
               @if($authUser && $authUser->isAdmin())
-                <button type="button" class="chat-panel-btn" id="chat-clear-btn" aria-label="Chatni tozalash" title="Barcha xabarlarni o'chirish" hidden>
+                <button type="button" class="chat-panel-btn" id="chat-clear-btn" aria-label="{{ __('public.layout.chat_clear') }}" title="{{ __('public.layout.chat_delete_all') }}" hidden>
                   <i class="fa-solid fa-trash"></i>
                 </button>
               @endif
-              <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="Kengaytirish" title="To'liq ekran">
+              <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="{{ __('public.layout.expand') }}" title="{{ __('public.layout.full_screen') }}">
                 <i class="fa-solid fa-expand"></i>
               </button>
-              <button type="button" class="chat-panel-btn" id="chat-close-btn" aria-label="Yopish">
+              <button type="button" class="chat-panel-btn" id="chat-close-btn" aria-label="{{ __('public.layout.close') }}">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -495,17 +520,17 @@
           <div class="chat-panel-intro">
             <div class="chat-panel-kicker">
               <span class="chat-panel-live-dot chat-panel-live-dot--channel" aria-hidden="true"></span>
-              <span>Umumiy chat</span>
+              <span>{{ __('public.layout.general_chat') }}</span>
             </div>
-            <p class="chat-panel-subtitle">Savol bering, tezkor fikr yozing yoki sticker bilan javob qoldiring.</p>
+            <p class="chat-panel-subtitle">{{ __('public.layout.chat_intro') }}</p>
           </div>
           <details class="chat-rules">
-            <summary>Chat qoidalari</summary>
+            <summary>{{ __('public.layout.chat_rules') }}</summary>
             <ul>
-              <li>Hurmat bilan yozing, haqorat va trolling qilmang.</li>
-              <li>Spam, reklama va takroriy xabarlarni yubormang.</li>
-              <li>Telefon, manzil va boshqa shaxsiy ma’lumotlarni ochiq joylamang.</li>
-              <li>Muammo bo‘lsa admin/moderator xabarni o‘chirishi yoki foydalanuvchini cheklashi mumkin.</li>
+              <li>{{ __('public.layout.chat_rule_1') }}</li>
+              <li>{{ __('public.layout.chat_rule_2') }}</li>
+              <li>{{ __('public.layout.chat_rule_3') }}</li>
+              <li>{{ __('public.layout.chat_rule_4') }}</li>
             </ul>
           </details>
           <div class="chat-feed-stack">
@@ -515,7 +540,7 @@
             <span class="chat-compose-status-icon" aria-hidden="true">
               <i class="fa-solid fa-pen-nib"></i>
             </span>
-            <span class="chat-compose-status-text" id="chat-compose-status-text">Yozilyapti</span>
+            <span class="chat-compose-status-text" id="chat-compose-status-text">{{ __('public.layout.typing') }}</span>
             <span class="chat-compose-status-dots" aria-hidden="true">
               <span></span>
               <span></span>
@@ -531,7 +556,7 @@
               data-size="invisible"
             ></div>
             @endif
-            <div class="chat-sticker-row" aria-label="Tezkor stikerlar">
+            <div class="chat-sticker-row" aria-label="{{ __('public.layout.stickers_label') }}">
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="😄" title="Smile">😄</button>
@@ -539,8 +564,8 @@
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
             </div>
-            <input type="text" id="chat-input" class="chat-input" placeholder="Xabar yozing..." maxlength="1000" autocomplete="off" />
-            <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="Yuborish">
+            <input type="text" id="chat-input" class="chat-input" placeholder="{{ __('public.layout.write_message') }}" maxlength="1000" autocomplete="off" />
+            <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="{{ __('public.layout.send') }}">
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </form>
@@ -561,7 +586,7 @@
       id="scroll-top"
       class="scroll-top"
       type="button"
-      aria-label="Yuqoriga"
+      aria-label="{{ __('public.layout.to_top') }}"
     >
       <i class="fa-solid fa-chevron-up"></i>
     </button>
@@ -573,14 +598,14 @@
 
     <div id="global-search-modal" class="global-search-modal" hidden>
       <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
-        <label id="global-search-label" for="global-search-input" class="global-search-label">Butun sayt bo'yicha qidiruv</label>
+        <label id="global-search-label" for="global-search-input" class="global-search-label">{{ __('public.layout.global_search_label') }}</label>
         <div class="global-search-input-wrap">
           <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
           <input
             id="global-search-input"
             type="search"
             autocomplete="off"
-            placeholder="Post, ustoz, kurs, imtihon..."
+            placeholder="{{ __('public.layout.global_search_placeholder') }}"
             maxlength="120"
           >
         </div>
@@ -592,11 +617,11 @@
       @unless($isExamSessionRoute)
       <dialog id="chat-user-preview-dialog" class="chat-user-preview-dialog" aria-labelledby="chat-user-preview-name">
         <div class="chat-user-preview-shell">
-          <button type="button" class="chat-user-preview-close" id="chat-user-preview-close" aria-label="Yopish">
+          <button type="button" class="chat-user-preview-close" id="chat-user-preview-close" aria-label="{{ __('public.layout.close') }}">
             <i class="fa-solid fa-xmark"></i>
           </button>
           <div class="chat-user-preview-body">
-            <p class="chat-user-preview-loading" id="chat-user-preview-loading">Yuklanmoqda…</p>
+            <p class="chat-user-preview-loading" id="chat-user-preview-loading">{{ __('public.layout.loading') }}</p>
             <div class="chat-user-preview-content" id="chat-user-preview-content" hidden>
               <div class="chat-user-preview-avatar" id="chat-user-preview-avatar"></div>
               <h3 class="chat-user-preview-name" id="chat-user-preview-name"></h3>
@@ -799,7 +824,7 @@
     @unless(request()->routeIs('exam.session'))
     @php
       $aiChatEnabled = \App\Models\SiteSetting::get('ai_chat_enabled', '1') === '1';
-      $aiChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('ai_chat_disabled_message', '')) ?: 'AI yordamchi vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.';
+      $aiChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('ai_chat_disabled_message', '')) ?: __('public.layout.ai_disabled_default');
     @endphp
     <div
       id="ai-widget"
@@ -811,7 +836,7 @@
       data-ai-enabled="{{ $aiChatEnabled ? '1' : '0' }}"
       data-ai-disabled-message="{{ e($aiChatDisabledMsg) }}"
     >
-      <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="AI Yordamchi" title="AI Yordamchi">
+      <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="{{ __('public.layout.ai_assistant') }}" title="{{ __('public.layout.ai_assistant') }}">
         <i class="fa-solid fa-magic-wand-sparkles" aria-hidden="true"></i>
       </button>
 
@@ -819,10 +844,10 @@
         <div class="chat-panel-header">
           <div class="chat-panel-title">
             <i class="fa-solid fa-robot"></i>
-            <span>81-AI Yordamchi</span>
+            <span>{{ __('public.layout.ai_assistant_brand') }}</span>
           </div>
           <div class="chat-panel-actions">
-            <button type="button" class="chat-panel-btn" id="ai-close-btn" aria-label="Yopish">
+            <button type="button" class="chat-panel-btn" id="ai-close-btn" aria-label="{{ __('public.layout.close') }}">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -835,39 +860,39 @@
         <div class="chat-panel-intro">
           <div class="chat-panel-kicker">
             <span class="chat-panel-live-dot chat-panel-live-dot--ai" aria-hidden="true"></span>
-            <span>AI yordamchi</span>
+            <span>{{ __('public.layout.ai_assistant') }}</span>
           </div>
-          <p class="chat-panel-subtitle">Assalomu alaykum! Men 81-IDUM saytining AI yordamchisiman. Maktabimiz, ta'lim, va boshqa fanlar bo'yicha yozing — sizga bajonidil yordam beraman! ✨</p>
+          <p class="chat-panel-subtitle">{{ __('public.layout.ai_greeting') }}</p>
         </div>
 
         <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
           <div class="chat-msg is-ai reveal">
-            <div class="chat-msg-content">Salom! Men 81-maktabning AI yordamchisiman. Sizga qanday yordam bera olaman? 😊</div>
+            <div class="chat-msg-content">{{ __('public.layout.ai_first_message') }}</div>
           </div>
         </div>
         <div class="chat-compose-status ai-status" id="ai-compose-status" hidden>
           <span class="chat-compose-status-icon ai-typing-indicator">
              <i class="fa-solid fa-circle-notch fa-spin"></i>
           </span>
-          <span class="chat-compose-status-text">O'ylamoqda...</span>
+          <span class="chat-compose-status-text">{{ __('public.layout.thinking') }}</span>
         </div>
 
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
-          <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Kurslar 📚</button>
-          <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Natijalarim 📝</button>
-          <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">Aloqa 📞</button>
+          <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
+          <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
+          <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
 
         <form class="chat-input-wrap" id="ai-chat-form">
           <textarea
             class="chat-textarea"
             id="ai-textarea"
-            placeholder="savolingizni kiriting..."
+            placeholder="{{ __('public.layout.question_input') }}"
             rows="1"
             maxlength="5000"
             style="resize:none; padding:10px; border-radius:12px; font-family:inherit"
           ></textarea>
-          <button type="submit" class="chat-send-btn" id="ai-send-btn" aria-label="Yuborish">
+          <button type="submit" class="chat-send-btn" id="ai-send-btn" aria-label="{{ __('public.layout.send') }}">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </form>
@@ -876,11 +901,27 @@
     </div>
     @endunless
     @unless(request()->routeIs('exam.session'))
+    @php
+      $aiText = [
+        'feedback_question' => __('public.layout.ai_feedback_question'),
+        'feedback_useful' => __('public.layout.ai_feedback_useful'),
+        'feedback_not_useful' => __('public.layout.ai_feedback_not_useful'),
+        'feedback_preset_unclear' => __('public.layout.ai_feedback_preset_unclear'),
+        'feedback_preset_wrong_direction' => __('public.layout.ai_feedback_preset_wrong_direction'),
+        'feedback_preset_not_enough_info' => __('public.layout.ai_feedback_preset_not_enough_info'),
+        'feedback_reason_placeholder' => __('public.layout.ai_feedback_reason_placeholder'),
+        'feedback_send' => __('public.layout.send'),
+        'feedback_send_without_reason' => __('public.layout.ai_feedback_send_without_reason'),
+        'thinking' => __('public.layout.thinking'),
+        'ai_disabled_default' => __('public.layout.ai_disabled_default'),
+      ];
+    @endphp
     <script>
       (function() {
         console.log('AI Script Initialized');
         var widget = document.getElementById('ai-widget');
         if (!widget) { console.log('AI Widget not found'); return; }
+        var aiText = @json($aiText);
 
         var bubble = document.getElementById('ai-bubble');
         var panel = document.getElementById('ai-panel');
@@ -914,7 +955,7 @@
           if (!statusWrap) return;
           if (statusText) {
             /* PRIME v2: Show animated bounce-dot thinking indicator */
-            statusText.innerHTML = '<span class="ai-thinking-dots" aria-label="' + (text || "O'ylamoqda") + '"><span></span><span></span><span></span></span>';
+            statusText.innerHTML = '<span class="ai-thinking-dots" aria-label="' + (text || aiText.thinking) + '"><span></span><span></span><span></span></span>';
           }
           statusWrap.style.display = 'flex';
           statusWrap.removeAttribute('hidden');
@@ -967,7 +1008,7 @@
             aiPanelMain.hidden = true;
             aiDisabledPanel.hidden = false;
             if (aiDisabledText) {
-              aiDisabledText.textContent = widget.getAttribute('data-ai-disabled-message') || 'AI yordamchi vaqtincha o‘chirilgan.';
+              aiDisabledText.textContent = widget.getAttribute('data-ai-disabled-message') || aiText.ai_disabled_default;
             }
             if (window.playPrimeSuccess) window.playPrimeSuccess();
             return;
@@ -1147,7 +1188,7 @@
           var presetsWrap = document.createElement('div');
           presetsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
 
-          ['Noaniq javob', 'Noto\'g\'ri yo\'naltirdi', 'Ma\'lumot yetarli emas'].forEach(function (preset) {
+          [aiText.feedback_preset_unclear, aiText.feedback_preset_wrong_direction, aiText.feedback_preset_not_enough_info].forEach(function (preset) {
             var presetBtn = document.createElement('button');
             presetBtn.type = 'button';
             presetBtn.textContent = preset;
@@ -1164,7 +1205,7 @@
           var textarea = document.createElement('textarea');
           textarea.rows = 2;
           textarea.maxLength = 500;
-          textarea.placeholder = 'Qisqacha yozing...';
+          textarea.placeholder = aiText.feedback_reason_placeholder;
           textarea.style.cssText = 'width:100%;resize:none;padding:8px 10px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:var(--bg);color:var(--text);font:inherit;';
           holder.appendChild(textarea);
 
@@ -1173,7 +1214,7 @@
 
           var sendBtn = document.createElement('button');
           sendBtn.type = 'button';
-          sendBtn.textContent = 'Yuborish';
+          sendBtn.textContent = aiText.feedback_send;
           sendBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;';
           sendBtn.addEventListener('click', function () {
             submitAiFeedback(interactionId, false, holder, textarea.value);
@@ -1182,7 +1223,7 @@
 
           var skipBtn = document.createElement('button');
           skipBtn.type = 'button';
-          skipBtn.textContent = 'Sababsiz yuborish';
+          skipBtn.textContent = aiText.feedback_send_without_reason;
           skipBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.10);color:var(--text);font-size:12px;cursor:pointer;';
           skipBtn.addEventListener('click', function () {
             submitAiFeedback(interactionId, false, holder, '');
@@ -1230,7 +1271,7 @@
             feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
 
             var label = document.createElement('small');
-            label.textContent = 'Bu javob foydali bo\'ldimi?';
+            label.textContent = aiText.feedback_question;
             label.style.cssText = 'color:var(--text);opacity:.82;';
             feedbackWrap.appendChild(label);
 
@@ -1238,7 +1279,7 @@
 
             var yesBtn = document.createElement('button');
             yesBtn.type = 'button';
-            yesBtn.textContent = 'Foydali';
+            yesBtn.textContent = aiText.feedback_useful;
             yesBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(16,185,129,.55);background:rgba(16,185,129,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
             yesBtn.addEventListener('click', function () {
               submitAiFeedback(meta.interactionId, true, feedbackWrap);
@@ -1247,7 +1288,7 @@
 
             var noBtn = document.createElement('button');
             noBtn.type = 'button';
-            noBtn.textContent = 'Foydasiz';
+            noBtn.textContent = aiText.feedback_not_useful;
             noBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
             noBtn.addEventListener('click', function () {
               renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
@@ -1473,7 +1514,7 @@
               b.style.cursor = 'not-allowed';
             });
           }
-          showAiComposeStatus("O'ylamoqda...");
+          showAiComposeStatus(aiText.thinking);
           scrollToBottom();
 
           fetch(aiUrl, {

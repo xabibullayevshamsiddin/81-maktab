@@ -50,4 +50,8 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
     ],
 
+    'google_translate' => [
+        'key' => env('GOOGLE_TRANSLATE_API_KEY'),
+    ],
+
 ];

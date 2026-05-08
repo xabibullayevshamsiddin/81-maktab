@@ -60,6 +60,14 @@ class User extends Authenticatable
             self::ROLE_TEACHER => 'Teacher',
             self::ROLE_USER => 'User',
         ],
+        'ru' => [
+            self::ROLE_SUPER_ADMIN => 'Супер админ',
+            self::ROLE_ADMIN => 'Админ',
+            self::ROLE_EDITOR => 'Редактор',
+            self::ROLE_MODERATOR => 'Модератор',
+            self::ROLE_TEACHER => 'Учитель',
+            self::ROLE_USER => 'Пользователь',
+        ],
     ];
 
     public const ROLE_HIERARCHY = [

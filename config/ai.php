@@ -48,4 +48,16 @@ return [
     */
     'response_cache_ttl_minutes' => (int) env('AI_RESPONSE_CACHE_TTL_MINUTES', 5),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Translation
+    |--------------------------------------------------------------------------
+    |
+    | AI tarjima so'rovlarini Google Cloud Translation orqali bajaradi.
+    | GOOGLE_TRANSLATE_API_KEY bo'sh bo'lsa, Gemini fallback ishlaydi.
+    |
+    */
+    'translation_cache_ttl_minutes' => (int) env('AI_TRANSLATION_CACHE_TTL_MINUTES', 1440),
+    'translation_timeout_seconds' => (int) env('AI_TRANSLATION_TIMEOUT_SECONDS', 8),
+
 ];
