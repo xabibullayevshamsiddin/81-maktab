@@ -1372,3 +1372,257 @@ body {
   color: #fff !important;
   box-shadow: 0 5px 15px rgba(20, 184, 166, 0.3) !important;
 }
+
+/* Final tablet layout layer: this lives at the end so older Bomba overrides cannot re-break iPad. */
+@media (min-width: 768px) and (max-width: 1180px) {
+  .page-header .container {
+    max-width: none !important;
+    padding-inline: 12px !important;
+  }
+
+  .header-main {
+    width: calc(100vw - 28px) !important;
+    max-width: none !important;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 9px 12px !important;
+  }
+
+  .logo img {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .menu-toggle {
+    display: none !important;
+  }
+
+  #site-nav {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #site-nav ul {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 2px 2px !important;
+    scrollbar-width: none;
+  }
+
+  #site-nav ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  #site-nav ul li {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  #site-nav .nav-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 34px !important;
+    padding: 6px 7px !important;
+    font-size: 12.5px !important;
+    line-height: 1 !important;
+    color: #e2e8f0 !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-theme-toggle-wrap,
+  .mobile-ai-toggle-wrap,
+  .mobile-nav-extras {
+    display: none !important;
+  }
+
+  .login.desktop-header-tools {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    gap: 6px !important;
+  }
+
+  .desktop-only {
+    display: block !important;
+  }
+
+  .desktop-header-tools .theme-toggle {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+
+  .desktop-header-tools .btn,
+  .desktop-header-tools .btn-outline {
+    min-height: 34px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+  }
+
+  .header-user-name {
+    display: none !important;
+  }
+
+  .card-home {
+    min-height: 100svh !important;
+    height: auto !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 24px !important;
+    padding-top: 112px !important;
+    padding-right: 88px !important;
+    padding-bottom: 96px !important;
+    text-align: left !important;
+  }
+
+  .home-content {
+    width: min(100%, 54ch) !important;
+    max-width: 54ch !important;
+  }
+
+  .hero-title {
+    display: grid !important;
+    gap: 4px !important;
+    margin-bottom: 14px !important;
+    text-align: left !important;
+  }
+
+  .hero-title .js-split-text {
+    width: auto !important;
+    display: block !important;
+  }
+
+  .hero-title span {
+    font-size: 28px !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-title strong {
+    font-size: clamp(42px, 5.4vw, 58px) !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+
+  .home-content p {
+    max-width: 52ch !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: left !important;
+    font-size: 17px !important;
+    line-height: 1.62 !important;
+  }
+
+  .home-primary-actions {
+    justify-content: flex-start !important;
+    align-items: center !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+
+  .home-btn {
+    position: absolute !important;
+    right: 20px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    gap: 10px !important;
+    border-radius: 18px !important;
+  }
+
+  .home-btn a {
+    width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px !important;
+  }
+
+  .footer-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 28px 24px !important;
+    padding: 42px 24px 30px !important;
+  }
+
+  .footer-brand {
+    grid-column: auto !important;
+  }
+
+  .footer-column,
+  .footer-brand {
+    min-width: 0 !important;
+  }
+
+  .footer-desc {
+    max-width: none !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 860px) {
+  .header-main {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  #site-nav .nav-link {
+    font-size: 12px !important;
+    padding-inline: 6px !important;
+  }
+
+  .desktop-header-tools .btn,
+  .desktop-header-tools .btn-outline {
+    padding-inline: 8px !important;
+  }
+
+  .card-home {
+    padding-right: 78px !important;
+  }
+
+  .home-content {
+    width: min(100%, 48ch) !important;
+    max-width: 48ch !important;
+  }
+
+  .hero-title span {
+    font-size: 24px !important;
+  }
+
+  .hero-title strong {
+    font-size: clamp(36px, 5vw, 46px) !important;
+  }
+
+  .home-content p {
+    max-width: 46ch !important;
+    font-size: 15.5px !important;
+  }
+}
