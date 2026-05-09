@@ -79,6 +79,7 @@
             margin-bottom: 20px;
             background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             position: relative;
             display: inline-block;
@@ -94,6 +95,7 @@
             opacity: 0.5;
             background: linear-gradient(135deg, var(--primary) 0%, #ec4899 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 

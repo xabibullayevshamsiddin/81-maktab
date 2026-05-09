@@ -4122,7 +4122,7 @@ class AiService
 
         // Maktab statistikasi
         $teacherCount = Teacher::where('is_active', true)->count();
-        $studentCount = \App\Models\User::whereHas('roleRelation', fn ($q) => $q->where('name', \App\Models\User::ROLE_USER))->count();
+        $studentCount = User::whereHas('roleRelation', fn ($q) => $q->where('name', User::ROLE_USER))->count();
         $courseCount = Course::where('status', Course::STATUS_PUBLISHED)->count();
 
         // O'qituvchilar ro'yxati (top 8)

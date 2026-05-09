@@ -2716,6 +2716,7 @@ button.chat-msg-avatar-btn:focus-visible {
   background: linear-gradient(90deg, #fbbf24, #fb923c, #f9a8d4, #fbbf24);
   background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: sa-shine 3s linear infinite, sa-name-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -2975,6 +2976,7 @@ button.chat-msg-avatar-btn:focus-visible {
   background: linear-gradient(90deg, #93c5fd, #c4b5fd, #fbcfe8, #93c5fd);
   background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: sa-shine 3s linear infinite, sa-name-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -3114,6 +3116,7 @@ button.chat-msg-avatar-btn:focus-visible {
   background: linear-gradient(135deg, #f59e0b, #ea580c);
   -webkit-background-clip: text;
   background-clip: text;
+  background-clip: text;
   color: transparent;
   font-weight: 800;
 }
@@ -3136,6 +3139,7 @@ button.chat-msg-avatar-btn:focus-visible {
 :root[data-theme='dark'] .chat-msg.is-super-admin .chat-msg-name {
   background: linear-gradient(135deg, #fbbf24, #fb923c);
   -webkit-background-clip: text;
+  background-clip: text;
   background-clip: text;
   color: transparent;
 }
@@ -4560,6 +4564,7 @@ section.teachers.reveal::before {
   display: block;
   background: linear-gradient(90deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -4674,6 +4679,7 @@ section.teachers.reveal::before {
   margin-bottom: 8px;
   background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -4769,6 +4775,7 @@ section.teachers.reveal::before {
   display: block;
   background: linear-gradient(90deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -4992,6 +4999,7 @@ section.teachers.reveal::before {
   display: block;
   background: linear-gradient(90deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -5198,6 +5206,7 @@ section.teachers.reveal::before {
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 5;
+  line-clamp: 5;
   line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -5643,6 +5652,7 @@ body.modal-open {
   line-height: 1;
   background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 8px;
@@ -5815,6 +5825,7 @@ body.modal-open {
   line-height: 1.05;
   background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
 }
@@ -6837,6 +6848,7 @@ body.modal-open {
   display: block;
   background: linear-gradient(90deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -8278,6 +8290,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   display: block;
   background: linear-gradient(90deg, #fff 0%, #93c5fd 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -11958,6 +11971,7 @@ body {
   background: linear-gradient(135deg, var(--primary-2), var(--primary));
   -webkit-background-clip: text;
   background-clip: text;
+  background-clip: text;
   color: transparent;
 }
 
@@ -14274,9 +14288,6 @@ body:has(#chat-widget) .prime-audio-toggle {
   background: rgba(125, 180, 255, 0.15);
 }
 
-opacity: 0;
-pointer-events: none;
-}
 
 .prime-audio-toggle:not(.is-muted)::after {
   animation-delay: 1s;
@@ -14394,6 +14405,7 @@ pointer-events: none;
   color: var(--muted);
   display: -webkit-box;
   -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -14647,17 +14659,20 @@ pointer-events: none;
   letter-spacing: -0.01em;
   background: linear-gradient(90deg, var(--text), var(--muted));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .exam-result-motivation.is-pass .motivation-text {
   background: linear-gradient(90deg, var(--text), #059669);
   -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .exam-result-motivation.is-fail .motivation-text {
   background: linear-gradient(90deg, var(--text), #e11d48);
   -webkit-background-clip: text;
+  background-clip: text;
 }
 
 @media (max-width: 576px) {
@@ -14710,6 +14725,7 @@ pointer-events: none;
   font-size: 16px;
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -14960,12 +14976,14 @@ pointer-events: none;
   line-height: 1.1;
   background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 :root[data-theme='light'] .bomba-welcome__title {
   background: linear-gradient(135deg, var(--primary), #1e3a8a);
   -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .bomba-welcome__text {
