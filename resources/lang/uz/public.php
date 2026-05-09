@@ -102,6 +102,8 @@ return [
         'not_entered' => 'Kiritilmagan',
         'video' => 'Video',
         'years_experience' => ':count yil tajriba',
+        'welcome_title' => 'Xush kelibsiz, :name! 🎉',
+        'welcome_subtitle' => '81-IDUM platformasiga xush kelibsiz. Eng yaxshi ta\'lim tajribasini siz bilan birga quramiz!',
     ],
     'home' => [
         'hero_top' => 'Har doim',

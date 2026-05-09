@@ -104,6 +104,8 @@ return array_replace_recursive($fallback, [
         'not_entered' => 'Не указано',
         'video' => 'Видео',
         'years_experience' => ':count лет опыта',
+        'welcome_title' => 'Добро пожаловать, :name! 🎉',
+        'welcome_subtitle' => 'Добро пожаловать на платформу 81-IDUM. Мы создаем лучший образовательный опыт вместе с вами!',
     ],
     'home' => [
         'hero_top' => 'Всегда',

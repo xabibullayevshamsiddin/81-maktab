@@ -73,6 +73,42 @@
     <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
       <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
     </div>
+
+    <!-- BOMBA WELCOME OVERLAY -->
+    <div id="bomba-welcome" class="bomba-welcome" style="display: none;">
+      <div class="bomba-welcome__inner">
+        <div class="bomba-welcome__icon">🚀</div>
+        <h2 class="bomba-welcome__title">{{ __('public.common.welcome_title', ['name' => auth()->check() ? auth()->user()->first_name : '']) }}</h2>
+        <p class="bomba-welcome__text">{{ __('public.common.welcome_subtitle') }}</p>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        if (!localStorage.getItem('bomba_welcome_shown')) {
+          window.addEventListener('load', function() {
+            var welcome = document.getElementById('bomba-welcome');
+            if (welcome) {
+              // Wait for boot loader to fade out slightly
+              setTimeout(function() {
+                welcome.style.display = 'flex';
+                setTimeout(function() {
+                  welcome.classList.add('is-active');
+                  // Auto hide after 4 seconds
+                  setTimeout(function() {
+                    welcome.classList.remove('is-active');
+                    setTimeout(function() {
+                      welcome.style.display = 'none';
+                    }, 800);
+                  }, 4000);
+                }, 100);
+              }, 1200);
+              localStorage.setItem('bomba_welcome_shown', 'true');
+            }
+          });
+        }
+      })();
+    </script>
     @endunless
 
 		    @php
