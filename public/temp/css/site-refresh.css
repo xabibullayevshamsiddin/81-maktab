@@ -876,11 +876,30 @@ body {
   .hero-title {
     font-size: clamp(42px, 6.2vw, 62px);
     margin-bottom: 18px;
+    display: grid;
+    gap: 6px;
   }
 
   .home-content p {
     max-width: 100%;
     font-size: clamp(17px, 2vw, 20px);
+  }
+
+  .hero-title .js-split-text {
+    width: auto !important;
+    display: block;
+    max-width: 100%;
+  }
+
+  .hero-title span {
+    font-size: clamp(27px, 3.7vw, 34px);
+    white-space: nowrap;
+  }
+
+  .hero-title strong {
+    font-size: clamp(38px, 5.4vw, 58px);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
   }
 
   .home-btn {
@@ -900,6 +919,11 @@ body {
   .site-section-nav {
     top: calc(var(--fixed-header-clearance, 104px) + 4px);
     justify-content: center;
+  }
+
+  .site-section-nav-link,
+  .home-primary-actions .btn {
+    white-space: nowrap;
   }
 
   .news-hero-content,
@@ -940,13 +964,15 @@ body {
 
 @media (min-width: 768px) and (max-width: 900px) {
   .home-primary-actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: flex-start;
   }
 
   .site-section-nav {
     flex-wrap: nowrap;
     overflow-x: auto;
+    justify-content: flex-start;
   }
 }
 
