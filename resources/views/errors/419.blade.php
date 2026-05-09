@@ -6,7 +6,6 @@
     <title>419 - Sessiya muddati tugagan | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
@@ -90,14 +89,22 @@
 <body>
     <div class="expired-container">
         <div class="clock-icon">
-            <i class="fa-regular fa-hourglass-half"></i>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 22h14"></path>
+                <path d="M5 2h14"></path>
+                <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path>
+                <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
+            </svg>
         </div>
         <div class="error-code">419</div>
         <h1>Sessiya muddati tugadi</h1>
         <p>Xavfsizlik nuqtai nazaridan sessiyangiz muddati tugagan bo'lishi mumkin. Iltimos, sahifani yangilab, ma'lumotlarni qayta yuboring.</p>
         
         <a href="javascript:location.reload()" class="btn-bomba">
-            <i class="fa-solid fa-arrows-rotate"></i>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
             Sahifani yangilash
         </a>
     </div>

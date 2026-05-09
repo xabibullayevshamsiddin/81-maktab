@@ -6,7 +6,6 @@
     <title>403 - Kirish taqiqlangan | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
@@ -123,14 +122,21 @@
     <div class="error-container">
         <div class="scan-line"></div>
         <div class="lock-icon">
-            <i class="fa-solid fa-user-shield"></i>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="M12 8v4"></path>
+                <path d="M12 16h.01"></path>
+            </svg>
         </div>
         <div class="error-code">403</div>
         <h1>Kirish taqiqlangan</h1>
         <p>Sizda ushbu sahifani ko'rish uchun yetarli huquqlar mavjud emas. Iltimos, tizim administratoriga murojaat qiling yoki o'z hisobingizga kiring.</p>
         
         <a href="{{ url('/') }}" class="btn-bomba">
-            <i class="fa-solid fa-shield-halved"></i>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
             Xavfsiz joyga qaytish
         </a>
     </div>

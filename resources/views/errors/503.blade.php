@@ -6,7 +6,6 @@
     <title>503 - Texnik xizmat ko'rsatish | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
@@ -108,7 +107,9 @@
 <body>
     <div class="maintenance-card">
         <div class="worker-icon">
-            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
         </div>
         <div class="error-code">503</div>
         <h1>Sayt yangilanmoqda</h1>
@@ -119,7 +120,10 @@
         </div>
         
         <a href="javascript:location.reload()" class="btn-bomba">
-            <i class="fa-solid fa-arrows-rotate"></i>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
             Yana bir bor tekshirish
         </a>
     </div>

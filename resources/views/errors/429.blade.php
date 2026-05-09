@@ -6,7 +6,6 @@
     <title>429 - Juda ko'p so'rovlar | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
@@ -92,14 +91,20 @@
 <body>
     <div class="rate-limit-card">
         <div class="traffic-icon">
-            <i class="fa-solid fa-traffic-light"></i>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
         </div>
         <div class="error-code">429</div>
         <h1>Juda ko'p so'rovlar</h1>
         <p>Siz tizimga juda qisqa vaqt ichida ko'plab so'rovlar yubordingiz. Iltimos, biroz kutib turing va yana bir bor urinib ko'ring.</p>
         
         <a href="javascript:location.reload()" class="btn-bomba">
-            <i class="fa-solid fa-hourglass-start"></i>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
             Birozdan so'ng urinish
         </a>
     </div>
