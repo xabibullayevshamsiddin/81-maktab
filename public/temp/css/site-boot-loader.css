@@ -239,3 +239,19 @@
         font-size: 32px;
     }
 }
+@media (max-width: 480px) {
+    .site-boot-loader__visual {
+        width: 140px !important;
+        height: 140px !important;
+    }
+    .site-boot-loader__ring-inner {
+        inset: 22px !important;
+    }
+    .site-boot-loader__num {
+        font-size: 32px !important;
+    }
+    .site-boot-loader__name {
+        font-size: 9px !important;
+        letter-spacing: 0.3em !important;
+    }
+}

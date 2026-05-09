@@ -100,7 +100,7 @@ class AuthController extends Controller
 
     public function register()
     {
-        return view('login.regiter');
+        return view('login.register');
     }
 
     public function registerStore(RegisterRequest $request)

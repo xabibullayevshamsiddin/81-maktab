@@ -15431,3 +15431,130 @@ body:has(#chat-widget) .prime-audio-toggle {
   max-width: 1150px !important; /* Slightly larger but still compact */
   padding: 10px 20px !important;
 }
+
+/* ==========================================================================
+   BOMBA RESPONSIVE ENGINE — PRO MAX ULTRA
+   Unified responsive logic for all Bomba components
+   ========================================================================== */
+
+/* 1. Header Responsive */
+@media (max-width: 991px) {
+  .header-main {
+    width: calc(100% - 30px) !important;
+    padding: 8px 12px !important;
+  }
+  .logo img {
+    height: 38px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-main {
+    top: 10px !important;
+    width: calc(100% - 16px) !important;
+    border-radius: 14px !important;
+  }
+  .header-user-name {
+    display: none !important; /* Hide name on tiny screens to save space */
+  }
+}
+
+/* 2. Hero & About Sections */
+@media (max-width: 991px) {
+  .about-modern, .news-container {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    text-align: center !important;
+  }
+  .hero-title .js-split-text {
+    width: 100% !important;
+  }
+  .hero-text-fade {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .home-primary-actions {
+    justify-content: center !important;
+  }
+  .card-home {
+    flex-direction: column !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding-top: 60px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .about-modern, .news-container {
+    grid-template-columns: 1fr !important;
+  }
+  .about-card, .news-card {
+    padding: 20px !important;
+  }
+  .section-head {
+    text-align: center !important;
+  }
+}
+
+/* 3. Section Navigation (Horizontal Scroll on Mobile) */
+@media (max-width: 768px) {
+  .site-section-nav {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+    padding: 10px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important; /* Hide scrollbar Firefox */
+  }
+  .site-section-nav::-webkit-scrollbar {
+    display: none !important; /* Hide scrollbar Chrome/Safari */
+  }
+  .site-section-nav-link {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* 4. Footer Column Adjustments */
+@media (max-width: 991px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 30px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-container {
+    grid-template-columns: 1fr !important;
+    text-align: center !important;
+  }
+  .footer-logo, .footer-socials {
+    justify-content: center !important;
+  }
+  .footer-contact-list li {
+    justify-content: center !important;
+  }
+  .footer-title::after {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
+/* 5. Buttons scale on small screens */
+@media (max-width: 480px) {
+  .btn {
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    width: 100% !important; /* Full width buttons on tiny screens */
+  }
+  .home-primary-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+}

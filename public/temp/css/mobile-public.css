@@ -133,6 +133,12 @@
   }
 
   .home-btn {
+    position: static;
+    right: auto;
+    top: auto;
+    transform: none;
+    flex-direction: row;
+    flex-wrap: wrap;
     grid-auto-flow: column;
     justify-content: flex-start;
     margin-top: 8px;
