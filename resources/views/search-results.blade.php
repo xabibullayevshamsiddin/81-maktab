@@ -1,4 +1,6 @@
 <x-loyouts.main title="Qidiruv natijalari">
+  <div class="bomba-mesh"></div>
+
   <section class="news-hero search-page-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">

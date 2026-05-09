@@ -633,6 +633,7 @@
     <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
 
     <div id="global-search-modal" class="global-search-modal" hidden>
+      <div class="bomba-mesh"></div>
       <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
         <label id="global-search-label" for="global-search-input" class="global-search-label">{{ __('public.layout.global_search_label') }}</label>
         <div class="global-search-input-wrap">

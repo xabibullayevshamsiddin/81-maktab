@@ -1,4 +1,6 @@
 <x-loyouts.main title="Bildirishnomalar">
+  <div class="bomba-mesh"></div>
+
   <section class="news-hero notifications-hero">
     <div class="container">
       <div class="news-hero-content prime-reveal">

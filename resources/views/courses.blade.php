@@ -1,4 +1,6 @@
 <x-loyouts.main title="{{ __('public.courses.page_title') }}">
+  <div class="bomba-mesh"></div>
+
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">
