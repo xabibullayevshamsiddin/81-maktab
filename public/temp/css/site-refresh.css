@@ -855,23 +855,88 @@ body {
     width: calc(100% - 24px) !important;
     max-width: none !important;
     padding: 10px 16px !important;
+    gap: 12px;
+  }
+
+  .menu-toggle {
+    display: none !important;
+  }
+
+  .login.desktop-header-tools {
+    display: inline-flex !important;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .desktop-header-tools .btn,
+  .desktop-header-tools .btn-outline {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .header-user-name {
+    display: none;
+  }
+
+  #site-nav {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #site-nav ul {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  #site-nav ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  #site-nav .nav-link {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .mobile-theme-toggle-wrap,
+  .mobile-ai-toggle-wrap,
+  .mobile-nav-extras {
+    display: none !important;
   }
 
   .card-home {
+    position: relative;
     min-height: 100svh;
     height: auto;
     padding-top: clamp(108px, 13vw, 136px);
     padding-bottom: clamp(88px, 12vw, 120px);
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
     align-content: center;
     gap: 24px;
+    padding-right: 96px;
   }
 
   .home-content {
     width: 100%;
-    max-width: min(100%, 58ch);
+    max-width: min(100%, 56ch);
     align-self: center;
   }
 
@@ -905,11 +970,11 @@ body {
   }
 
   .home-btn {
-    position: static;
-    right: auto;
-    top: auto;
-    transform: none;
-    align-self: end;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    align-self: auto;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -962,38 +1027,49 @@ body {
   .teacher-img img {
     height: clamp(320px, 42vw, 420px);
   }
+
+  .footer-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 28px 22px !important;
+  }
+
+  .footer-brand {
+    grid-column: auto !important;
+  }
+
+  .footer-column {
+    min-width: 0;
+  }
+
+  .footer-desc {
+    max-width: none;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 900px) {
-  .card-home {
-    padding-top: 104px;
-    padding-bottom: 96px;
-    grid-template-columns: 1fr;
-    align-items: end;
-    gap: 18px;
-  }
-
-  .home-content {
-    max-width: min(100%, 52ch);
-  }
-
-  .home-btn {
-    justify-self: start;
-    align-self: start;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
   .home-primary-actions {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-start;
   }
 
-  .site-section-nav {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: flex-start;
+  .header-main {
+    gap: 10px;
+  }
+
+  .desktop-header-tools .btn,
+  .desktop-header-tools .btn-outline {
+    padding-inline: 12px;
+  }
+
+  .card-home {
+    padding-top: 104px;
+    padding-bottom: 96px;
+    padding-right: 84px;
+  }
+
+  .home-content {
+    max-width: min(100%, 50ch);
   }
 }
 
