@@ -1048,9 +1048,11 @@
       true
     );
 
-    siteNav.querySelectorAll('.nav-link').forEach((link) => {
-      link.addEventListener('click', closeMenu, true);
-    });
+    siteNav
+      .querySelectorAll('a.nav-link, button.nav-link, .nav-dropdown-menu a, .nav-dropdown-form button')
+      .forEach((link) => {
+        link.addEventListener('click', closeMenu, true);
+      });
 
     document.addEventListener('click', (event) => {
       if (!siteNav.classList.contains('open')) return;
