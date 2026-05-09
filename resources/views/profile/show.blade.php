@@ -239,7 +239,7 @@
 
             <div class="profile-guide-box">
               <div class="profile-guide-icon">
-                <i class="fa-solid fa-bell"></i>
+                <i class="fa-solid fa-circle-info"></i>
               </div>
               <div class="profile-guide-copy">
                 <span class="profile-guide-kicker">{{ __('profile.main_card.note_title') }}</span>
@@ -346,7 +346,6 @@
                 </div>
                 <div class="profile-actions-row">
                   <a href="{{ route('profile.results.index') }}" class="btn btn-sm">Natijalar sahifasi</a>
-                  <a href="{{ route('notifications.index') }}" class="btn btn-outline btn-sm">Bildirishnomalar</a>
                 </div>
               </section>
             @endif

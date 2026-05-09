@@ -60,15 +60,13 @@
           'page-inner' => ! request()->routeIs('home')
         ])
         data-theme="light"
-        data-site-success="{{ session('success') }}"
-        data-site-error="{{ session('error') }}"
-        data-site-toast-type="{{ session('toast_type') }}"
-        data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
-	        data-user-notifications-url="{{ auth()->check() ? route('notifications.pending') : '' }}"
-	        data-user-notification-summary-url="{{ auth()->check() ? route('notifications.summary') : '' }}"
-	        data-phone-pattern="{{ uz_phone_input_pattern() }}"
-	        data-phone-title="{{ uz_phone_input_title() }}"
-	      >
+	        data-site-success="{{ session('success') }}"
+	        data-site-error="{{ session('error') }}"
+	        data-site-toast-type="{{ session('toast_type') }}"
+	        data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
+		        data-phone-pattern="{{ uz_phone_input_pattern() }}"
+		        data-phone-title="{{ uz_phone_input_title() }}"
+		      >
     @unless(request()->routeIs('exam.session'))
     <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
       <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
@@ -247,13 +245,9 @@
 	                        <i class="fa-solid fa-user"></i>
 	                        {{ __('public.layout.menu.profile') }}
 	                      </a>
-                        <a class="nav-dropdown-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
-                          <i class="fa-regular fa-bell"></i>
-                          {{ __('public.layout.notifications') }}
-                        </a>
-	                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
-	                        <i class="fa-solid fa-lightbulb"></i>
-	                        {{ __('public.layout.feature_requests') }}
+		                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
+		                        <i class="fa-solid fa-lightbulb"></i>
+		                        {{ __('public.layout.feature_requests') }}
 	                      </a>
                       @if($canCreateCourse)
                         <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
@@ -338,13 +332,10 @@
                   <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
                 </div>
 
-		                <div class="mobile-nav-actions mobile-nav-actions--auth">
-                      <a href="{{ route('notifications.index') }}" class="btn btn-outline mobile-nav-bell-link">
-                        <i class="fa-regular fa-bell"></i> {{ __('public.layout.notifications') }}
-                      </a>
-		                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
-		                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
-	                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
+			                <div class="mobile-nav-actions mobile-nav-actions--auth">
+			                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+			                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+		                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
@@ -391,23 +382,11 @@
                   </div>
                 </details>
 	            </div>
-              <div class="header-tool-cluster">
-  	            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
-  	              <i class="fa-solid fa-magnifying-glass"></i>
-  	            </button>
-                @auth
-                  <a
-                    href="{{ route('notifications.index') }}"
-                    class="theme-toggle header-notification-link"
-                    data-notification-link
-                    aria-label="{{ __('public.layout.notifications') }}"
-                    title="{{ __('public.layout.notifications') }}"
-                  >
-                    <i class="fa-regular fa-bell"></i>
-                    <span class="header-notification-count" data-notification-count hidden>0</span>
-                  </a>
-                @endauth
-              </div>
+	              <div class="header-tool-cluster">
+	  	            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
+	  	              <i class="fa-solid fa-magnifying-glass"></i>
+	  	            </button>
+	              </div>
 	            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
 	              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
 	              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>

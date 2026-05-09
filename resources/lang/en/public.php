@@ -247,11 +247,16 @@ return [
             ],
         ],
         'site_credits_title' => 'Website credits',
-        'site_credits_intro' => 'This website was developed by Grade 10-E students.',
+        'site_credits_intro' => 'The following students contributed to the development and improvement of this website:',
         'site_credits_members' => [
             ['name' => 'Shamsiddin Khabibullayev', 'date' => '2025–2026 academic year · 11 April 2026'],
             ['name' => 'E\'zoza Abdukodirova', 'date' => '2025–2026 academic year · 11 April 2026'],
             ['name' => 'Xadicha Mirzakosimova', 'date' => '2025–2026 academic year · 11 April 2026'],
+        ],
+        'site_credits_contributors_title' => 'Additional contributors',
+        'site_credits_contributors' => [
+            ['name' => 'Jakhongir Jumaev', 'meta' => 'External support and consultation'],
+            ['name' => 'Muhammadali Sodiqov', 'meta' => 'External support and consultation'],
         ],
         'facility_domestic' => [
             'title' => 'Household conditions',

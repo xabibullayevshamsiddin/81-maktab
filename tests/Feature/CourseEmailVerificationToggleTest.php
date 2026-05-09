@@ -6,7 +6,6 @@ use App\Models\Course;
 use App\Models\Role;
 use App\Models\Teacher;
 use App\Models\User;
-use App\Models\UserNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -203,12 +202,10 @@ class CourseEmailVerificationToggleTest extends TestCase
         Mail::assertNothingSent();
     }
 
-    public function test_admin_approval_creates_private_course_open_notification(): void
+    public function test_admin_approval_updates_teacher_course_open_flags(): void
     {
         $admin = $this->adminUser();
         $teacherUser = $this->teacherUser();
-        $otherTeacher = $this->teacherUser('other-teacher@example.com', 'Other Teacher');
-
         $teacherUser->update([
             'course_open_request_pending' => true,
             'course_open_requested_at' => now(),
@@ -226,40 +223,9 @@ class CourseEmailVerificationToggleTest extends TestCase
             'course_open_request_pending' => false,
             'course_open_approved' => true,
         ]);
-        $this->assertDatabaseHas('user_notifications', [
-            'user_id' => $teacherUser->id,
-            'type' => UserNotification::TYPE_SUCCESS,
-            'title' => 'Kurs ochish ruxsati berildi',
-            'read_at' => null,
-        ]);
-
-        $this->actingAs($otherTeacher)
-            ->getJson(route('notifications.pending'))
-            ->assertOk()
-            ->assertJsonCount(0, 'notifications');
-
-        $notificationResponse = $this->actingAs($teacherUser)
-            ->getJson(route('notifications.pending'));
-
-        $notificationResponse
-            ->assertOk()
-            ->assertJsonCount(1, 'notifications')
-            ->assertJsonPath('notifications.0.type', 'success')
-            ->assertJsonPath('notifications.0.title', 'Kurs ochish ruxsati berildi');
-
-        $notification = UserNotification::query()
-            ->where('user_id', $teacherUser->id)
-            ->firstOrFail();
-
-        $this->assertNotNull($notification->read_at);
-
-        $this->actingAs($teacherUser)
-            ->getJson(route('notifications.pending'))
-            ->assertOk()
-            ->assertJsonCount(0, 'notifications');
     }
 
-    public function test_admin_rejection_creates_private_course_open_notification(): void
+    public function test_admin_rejection_updates_teacher_course_open_flags(): void
     {
         $admin = $this->adminUser();
         $teacherUser = $this->teacherUser();
@@ -281,19 +247,6 @@ class CourseEmailVerificationToggleTest extends TestCase
             'course_open_request_pending' => false,
             'course_open_approved' => false,
         ]);
-        $this->assertDatabaseHas('user_notifications', [
-            'user_id' => $teacherUser->id,
-            'type' => UserNotification::TYPE_WARNING,
-            'title' => "Kurs ochish so'rovi rad etildi",
-            'read_at' => null,
-        ]);
-
-        $this->actingAs($teacherUser)
-            ->getJson(route('notifications.pending'))
-            ->assertOk()
-            ->assertJsonCount(1, 'notifications')
-            ->assertJsonPath('notifications.0.type', 'warning')
-            ->assertJsonPath('notifications.0.title', "Kurs ochish so'rovi rad etildi");
     }
 
     private function adminUser(): User

@@ -533,24 +533,52 @@ a {
 }
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 10px 24px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   background: linear-gradient(135deg, var(--primary-2), var(--primary));
   color: #fff;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(13, 63, 120, 0.15);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
 }
 
 .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(21, 101, 192, 0.35);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(21, 101, 192, 0.3);
+  color: #fff;
+}
+
+.btn:active {
+  transform: translateY(-1px) scale(0.98);
 }
 
 .btn-outline {
@@ -656,26 +684,7 @@ a {
   color: #e3ecfa;
 }
 
-.home-btn {
-  display: grid;
-  gap: 12px;
-}
-
-.home-btn a {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  transition: transform 0.2s ease;
-}
-
-.home-btn a:hover {
-  transform: translateX(-3px);
-}
+/* .home-btn moved to Bomba design section at the bottom */
 
 section {
   padding: 84px 0;
@@ -728,34 +737,78 @@ section {
   gap: 18px;
 }
 
-.about-card,
+.about-card {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(15px);
+  padding: 30px;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+.about-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 20px 45px rgba(13, 63, 120, 0.1);
+  border-color: var(--accent);
+}
+
+:root[data-theme='dark'] .about-card {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='dark'] .about-card:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--accent);
+}
+
 .about-highlight {
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 20px;
+  border-radius: 24px;
+  padding: 30px;
+  background: linear-gradient(145deg, #0d3f78, #1565c0);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 15px 35px rgba(13, 63, 120, 0.25);
+}
+
+.about-highlight::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.about-highlight:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(13, 63, 120, 0.35);
+}
+
+.about-highlight:hover::after {
+  opacity: 1;
 }
 
 .about-card h3,
 .about-highlight h3 {
-  margin-bottom: 10px;
-  color: var(--primary);
-}
-
-.about-card p,
-.about-highlight p {
-  margin-bottom: 16px;
-  color: var(--muted);
-}
-
-.about-highlight {
-  background: linear-gradient(145deg, #0d3f78, #1565c0);
-  border-color: transparent;
+  font-family: 'Outfit', sans-serif;
+  margin-bottom: 12px;
+  font-weight: 800;
+  font-size: 22px;
 }
 
 .about-highlight h3,
 .about-highlight p {
-  color: #ecf4ff;
+  color: #fff;
+  position: relative;
+  z-index: 2;
 }
 
 .badge {
@@ -794,19 +847,32 @@ section {
 }
 
 .news-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .news-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(13, 63, 120, 0.16);
+  transform: translateY(-12px);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 30px 60px rgba(13, 63, 120, 0.15);
+  border-color: var(--accent);
+}
+
+:root[data-theme='dark'] .news-card {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='dark'] .news-card:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--accent);
 }
 
 .news-card img {
@@ -1091,63 +1157,7 @@ section {
   font-weight: 600;
 }
 
-.footer {
-  background: #071b32;
-  color: #d2e1f5;
-}
-
-.footer-container {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  padding-top: 44px;
-  padding-bottom: 30px;
-}
-
-.img2 {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  margin-bottom: 12px;
-}
-
-.footer h3,
-.footer h4 {
-  color: #fff;
-  margin-bottom: 10px;
-}
-
-.footer ul {
-  list-style: none;
-}
-
-.footer ul li {
-  margin-bottom: 8px;
-}
-
-.footer ul li a:hover {
-  color: #fff;
-}
-
-.footer-cop p,
-.footer-com p,
-.footer-cop a {
-  font-size: 14px;
-  color: #c3d7f0;
-}
-
-.footer-cop p a:hover,
-.footer-cop a:hover {
-  color: #fff;
-  text-decoration: underline;
-}
-
-.footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  text-align: center;
-  padding: 14px;
-  font-size: 13px;
-}
+/* Obsolete footer styles removed */
 
 /* ===== Global Chat Widget + AI + ovoz (o‘ng past — vertikal «dock») ===== */
 :root {
@@ -5278,6 +5288,66 @@ section.teachers.reveal::before {
   line-height: 1.2;
 }
 
+.home-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+:root[data-theme='dark'] .home-btn {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.home-btn a {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 20px;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.home-btn a:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: scale(1.1) translateX(-5px);
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+  border-color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .home-btn {
+    position: relative;
+    right: auto;
+    top: auto;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 30px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 .course-enroll-form {
   display: flex;
   flex-direction: column;
@@ -6682,19 +6752,7 @@ body.modal-open {
 }
 
 /* Footer */
-.footer {
-  margin-top: 0;
-  background: #071b32;
-  color: #d2e1f5;
-}
-
-.footer-container {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  padding-top: 44px;
-  padding-bottom: 30px;
-}
+/* Redundant footer block removed */
 
 .img2 {
   width: 72px;
@@ -15094,4 +15152,282 @@ body:has(#chat-widget) .prime-audio-toggle {
 :root[data-theme='dark'] .search-empty-state {
   background: rgba(30, 41, 59, 0.2);
   border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   BOMBA PRO MAX ULTRA � FINAL FOOTER DESIGN
+   ========================================================================== */
+.footer {
+  position: relative;
+  background: rgba(7, 27, 50, 0.88);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  color: #d2e1f5;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+:root[data-theme='dark'] .footer {
+  background: rgba(5, 12, 24, 0.92);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.4), transparent);
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  gap: 40px;
+  padding: 80px 20px 40px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  text-decoration: none;
+}
+
+.footer-logo img {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.footer-logo span {
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.footer-desc {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: #94a3b8;
+  margin-bottom: 24px;
+  max-width: 320px;
+}
+
+.footer-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 24px;
+  position: relative;
+  display: inline-block;
+}
+
+.footer-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 25px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 12px;
+}
+
+.footer-links a {
+  color: #94a3b8;
+  font-size: 14.5px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.footer-links a:hover {
+  color: #fff;
+  transform: translateX(8px);
+}
+
+.footer-socials {
+  display: flex;
+  gap: 12px;
+}
+
+.social-link {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 18px;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.social-link:hover {
+  background: var(--accent);
+  transform: translateY(-5px) rotate(8deg);
+  box-shadow: 0 10px 25px rgba(20, 184, 166, 0.4);
+  border-color: var(--accent);
+}
+
+.footer-contact-list {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-contact-list li {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.footer-contact-list i {
+  color: var(--accent);
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.footer-bottom p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+@media (max-width: 991px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    padding: 60px 20px 30px;
+    gap: 35px;
+  }
+}
+
+/* ==========================================================================
+   BOMBA PRO MAX ULTRA � FINAL FOOTER DESIGN (OVERRIDE)
+   ========================================================================== */
+.footer {
+  background: rgba(7, 27, 50, 0.88) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 0 !important;
+}
+
+.footer-container {
+  display: grid !important;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr !important;
+  gap: 40px !important;
+  padding: 80px 20px 40px !important;
+}
+
+.footer-logo span {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+}
+
+.footer-links a:hover {
+  color: var(--accent) !important;
+  transform: translateX(10px) !important;
+}
+
+.social-link:hover {
+  background: var(--accent) !important;
+  box-shadow: 0 10px 30px rgba(20, 184, 166, 0.5) !important;
+}
+
+/* ==========================================================================
+   BOMBA FOOTER - SPACE OPTIMIZATION
+   ========================================================================== */
+.footer-container {
+  padding: 40px 20px 30px !important; /* Reduced from 80px */
+  gap: 30px !important; /* Reduced from 40px */
+}
+
+.footer-logo img {
+  width: 44px !important; /* Slightly smaller */
+  height: 44px !important;
+}
+
+.footer-title {
+  margin-bottom: 16px !important; /* Reduced from 24px */
+}
+
+.footer-links li {
+  margin-bottom: 8px !important; /* Reduced from 12px */
+}
+
+.footer-desc {
+  margin-bottom: 16px !important;
+  font-size: 13.5px !important;
+}
+.home-btn {
+  padding: 12px !important;
+  gap: 12px !important;
+}
+.home-btn a {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 18px !important;
+}
+
+/* ==========================================================================
+   BOMBA HEADER - WIDTH OPTIMIZATION
+   ========================================================================== */
+.header-main {
+  width: calc(100% - 60px) !important; /* More side margin */
+  max-width: 1100px !important; /* Narrower width */
+  padding: 8px 18px !important; /* More horizontal padding inside */
+}
+
+@media (max-width: 768px) {
+  .header-main {
+    width: calc(100% - 20px) !important;
+  }
+}
+
+/* ==========================================================================
+   BOMBA HEADER - WIDTH OPTIMIZATION (UPDATED)
+   ========================================================================== */
+.header-main {
+  width: calc(100% - 40px) !important; /* Balanced side margin */
+  max-width: 1150px !important; /* Slightly larger but still compact */
+  padding: 10px 20px !important;
 }

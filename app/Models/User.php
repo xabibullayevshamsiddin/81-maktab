@@ -229,11 +229,6 @@ class User extends Authenticatable
         return $this->hasMany(Course::class, 'created_by');
     }
 
-    public function userNotifications(): HasMany
-    {
-        return $this->hasMany(UserNotification::class);
-    }
-
     public function courseEnrollments(): HasMany
     {
         return $this->hasMany(CourseEnrollment::class);

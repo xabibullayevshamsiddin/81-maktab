@@ -1209,9 +1209,6 @@
     const errorMsg = body?.dataset.siteError || '';
     const toastType = body?.dataset.siteToastType || '';
     const firstError = body?.dataset.siteFirstError || '';
-    const userNotificationsUrl = body?.dataset.userNotificationsUrl || '';
-    let userNotificationsInFlight = false;
-
     function escapeHtml(value) {
       const div = document.createElement('div');
       div.textContent = String(value ?? '');
@@ -1292,58 +1289,6 @@
       setTimeout(dismissToast, toastTimerMs);
     }
 
-    function notificationMessage(notification) {
-      var title = String(notification?.title || '').trim();
-      var bodyText = String(notification?.body || '').trim();
-
-      if (title && bodyText) return title + ': ' + bodyText;
-      return title || bodyText;
-    }
-
-    async function pollUserNotifications() {
-      if (!userNotificationsUrl || userNotificationsInFlight || document.hidden) return;
-
-      userNotificationsInFlight = true;
-
-      try {
-        const response = await fetch(userNotificationsUrl, {
-          headers: {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          credentials: 'same-origin',
-        });
-
-        if (!response.ok) return;
-
-        const payload = await response.json();
-        const notifications = Array.isArray(payload.notifications) ? payload.notifications : [];
-
-        notifications.forEach((notification, index) => {
-          const message = notificationMessage(notification);
-          if (!message) return;
-
-          setTimeout(() => {
-            showToast(message, notification.type || 'success', { link: notification.link || '' });
-          }, index * 450);
-        });
-      } catch (error) {
-        // Silent fail: polling should never break page interactions.
-      } finally {
-        userNotificationsInFlight = false;
-      }
-    }
-
-    function initUserNotificationPolling() {
-      if (!userNotificationsUrl || !window.fetch) return;
-
-      pollUserNotifications();
-      setInterval(pollUserNotifications, 15000);
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) pollUserNotifications();
-      });
-    }
-
     async function copyTextToClipboard(text) {
       if (navigator.clipboard?.writeText && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
@@ -1415,7 +1360,6 @@
 
     window.showToast = showToast;
     window.copyTextToClipboard = copyTextToClipboard;
-    initUserNotificationPolling();
   }
 
   function initHeaderDropdowns() {

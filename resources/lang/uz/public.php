@@ -249,11 +249,16 @@ return [
             ],
         ],
         'site_credits_title' => 'Veb-sayt mualliflari',
-        'site_credits_intro' => 'Ushbu sayt 10-«E» sinf o\'quvchilari tomonidan ishlab chiqilgan.',
+        'site_credits_intro' => 'Ushbu saytni ishlab chiqish va takomillashtirishda quyidagi o\'quvchilar ishtirok etgan:',
         'site_credits_members' => [
             ['name' => 'Xabibullayev Shamsiddin', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
             ['name' => 'Abduqodirova E\'zoza', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
             ['name' => 'Mirzaqosimova Xadicha', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
+        ],
+        'site_credits_contributors_title' => 'Qo\'shimcha hissa qo\'shganlar',
+        'site_credits_contributors' => [
+            ['name' => 'Jaxongir Jumaev', 'meta' => 'Maslahat va tashqi ko\'mak'],
+            ['name' => 'Sodiqov Muhammadali', 'meta' => 'Maslahat va tashqi ko\'mak'],
         ],
         'facility_domestic' => [
             'title' => 'Maishiy sharoitlar',
