@@ -133,10 +133,12 @@ class PublicPostController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'html' => view('posts.partials.list', $viewData)->render(),
-            ]);
+            ])->withHeaders($this->publicCounterHeaders());
         }
 
-        return view('post', $viewData);
+        return response()
+            ->view('post', $viewData)
+            ->withHeaders($this->publicCounterHeaders());
     }
 
     public function show(Post $post)
@@ -180,7 +182,21 @@ class PublicPostController extends Controller
             OpenGraph::addImage(app_storage_asset($post->image));
         }
 
-        return view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds', 'relatedPosts'));
+        return response()
+            ->view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds', 'relatedPosts'))
+            ->withHeaders($this->publicCounterHeaders());
+    }
+
+    public function stats(Post $post)
+    {
+        $post->loadCount(['comments', 'likes']);
+
+        return response()->json([
+            'ok' => true,
+            'views' => (int) $post->views,
+            'likes_count' => (int) $post->likes_count,
+            'comments_count' => (int) $post->comments_count,
+        ])->withHeaders($this->publicCounterHeaders());
     }
 
     private function relatedPostsFor(Post $post, int $limit = 3): Collection
@@ -589,5 +605,20 @@ class PublicPostController extends Controller
         return back()
             ->with('error', $message)
             ->with('toast_type', 'warning');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function publicCounterHeaders(): array
+    {
+        return [
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0, s-maxage=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'CDN-Cache-Control' => 'no-store',
+            'Cloudflare-CDN-Cache-Control' => 'no-store',
+            'Vary' => 'Cookie, Authorization, Accept, X-Requested-With',
+        ];
     }
 }

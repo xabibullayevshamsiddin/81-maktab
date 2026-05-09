@@ -39,7 +39,7 @@ body {
 .header-notification-link {
   position: relative;
   text-decoration: none;
-  color: inherit;
+  color: var(--primary, #0d3f78) !important; /* Ensure brand color in light mode */
 }
 
 .header-notification-link.has-unread {
@@ -115,12 +115,17 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 14px;
-  border: 1px solid var(--site-stroke);
+  padding: 12px; /* Slightly reduced padding */
+  border: 1px solid rgba(255, 255, 255, 0.4); /* Stronger white border for light mode over video */
   border-radius: 22px;
+  background: rgba(255, 255, 255, 0.45); /* More transparent for better glass effect */
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(20px);
+}
+
+:root[data-theme='dark'] .site-section-nav {
   background: var(--site-panel);
-  box-shadow: var(--site-shadow-md);
-  backdrop-filter: blur(18px);
+  border-color: var(--site-stroke);
 }
 
 .site-section-nav-link {

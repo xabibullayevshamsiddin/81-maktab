@@ -47,6 +47,8 @@ Route::get('post/{post:slug}', [PublicPostController::class, 'show'])
             ->with('error', "Yangilik topilmadi yoki o'chirilgan.")
             ->with('toast_type', 'warning');
     });
+Route::get('post/{post:slug}/stats', [PublicPostController::class, 'stats'])
+    ->name('post.stats');
 Route::post('post/{post:slug}/comments', [PublicPostController::class, 'storeComment'])
     ->middleware(['throttle:comments', 'active'])
     ->name('post.comments.store');
@@ -77,6 +79,7 @@ Route::post('teacher/comments/{comment}/like', [TeacherCommentController::class,
     ->name('teacher.comments.like');
 Route::get('teacher', [PublicTeacherController::class, 'index'])->name('teacher');
 Route::get('teacher/{teacher:slug}', [PublicTeacherController::class, 'show'])->name('teacher.show');
+Route::get('teacher/{teacher:slug}/stats', [PublicTeacherController::class, 'stats'])->name('teacher.stats');
 Route::post('teacher/{teacher:slug}/like', [PublicTeacherController::class, 'toggleLike'])
     ->middleware(['active'])
     ->name('teacher.like');

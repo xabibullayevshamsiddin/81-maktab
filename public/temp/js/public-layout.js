@@ -1464,6 +1464,77 @@
     return parseJson(scope?.dataset.commentConfig, null);
   }
 
+  async function fetchLiveStats(url) {
+    if (!url) return null;
+
+    const finalUrl = new URL(url, window.location.origin);
+    finalUrl.searchParams.set('_', String(Date.now()));
+
+    const response = await fetch(finalUrl.toString(), {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+
+    return payload && payload.ok ? payload : null;
+  }
+
+  function initPublicLiveStats() {
+    const postScope = document.querySelector('[data-post-stats-url]');
+    if (postScope) {
+      fetchLiveStats(postScope.dataset.postStatsUrl)
+        .then((data) => {
+          if (!data) return;
+
+          const viewsEl = postScope.querySelector('.js-post-views-count');
+          const commentsEl = postScope.querySelector('.js-post-comments-count');
+          const likeCountEl = postScope.querySelector('.js-like-form .like-count');
+
+          if (viewsEl && data.views != null) {
+            viewsEl.textContent = String(data.views);
+          }
+
+          if (commentsEl && data.comments_count != null) {
+            commentsEl.textContent = String(data.comments_count);
+          }
+
+          if (likeCountEl && data.likes_count != null) {
+            likeCountEl.textContent = String(data.likes_count);
+          }
+        })
+        .catch(() => {});
+    }
+
+    const teacherScope = document.querySelector('[data-teacher-stats-url]');
+    if (teacherScope) {
+      fetchLiveStats(teacherScope.dataset.teacherStatsUrl)
+        .then((data) => {
+          if (!data) return;
+
+          const teacherLikeBtnCountEl = teacherScope.querySelector('.js-like-form .like-count');
+          const teacherLikesStatEl = document.querySelector('.js-teacher-likes-stat');
+
+          if (teacherLikeBtnCountEl && data.likes_count != null) {
+            teacherLikeBtnCountEl.textContent = String(data.likes_count);
+          }
+
+          if (teacherLikesStatEl && data.likes_count != null) {
+            teacherLikesStatEl.textContent = String(data.likes_count);
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
   function initInteractiveActions() {
     document.addEventListener('submit', async (event) => {
       const form = event.target.closest('form.js-like-form');
@@ -3691,10 +3762,11 @@
     initPhoneInputs();
     initImageLightbox();
     initToastAndTheme();
-    initHeaderDropdowns();
-    initCourseEnrollPanels();
-    initInteractiveActions();
-    initProMaxAnimations();
+	    initHeaderDropdowns();
+	    initCourseEnrollPanels();
+	    initPublicLiveStats();
+	    initInteractiveActions();
+	    initProMaxAnimations();
     initThemeBurstEffect();
     initLocalePageReveal();
     initGlobalChat();

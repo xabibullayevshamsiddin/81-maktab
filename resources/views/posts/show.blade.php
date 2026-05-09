@@ -46,6 +46,7 @@
       class="container news reveal glass-section"
       id="post-detail"
       data-comment-config='@json($postCommentConfig)'
+      data-post-stats-url="{{ route('post.stats', $post) }}"
     >
       @if (session('success'))
         <p style="margin: 0 0 12px; color: #0f766e; font-weight: 700;">
@@ -114,8 +115,8 @@
 
         <div class="icon-links" style="padding-top: 8px;">
           <div class="icon-link">
-            <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
-            <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span></span>
+            <span class="meta"><i class="fa-regular fa-eye"></i> <span class="js-post-views-count">{{ $post->views }}</span></span>
+            <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count js-post-comments-count">{{ $post->comments_count }}</span></span>
 
             @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
             <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">

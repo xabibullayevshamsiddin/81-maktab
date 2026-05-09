@@ -21,7 +21,7 @@
   </section>
 
   <main>
-    <section class="container teachers-detail" id="teachers-detail">
+    <section class="container teachers-detail" id="teachers-detail" data-teacher-stats-url="{{ route('teacher.stats', $teacher) }}">
       <div class="detail-grid">
         <div class="detail-content reveal">
           <span class="eyebrow">{{ __('public.teachers.detail_badge') }}</span>
@@ -137,7 +137,7 @@
         </div>
         <div class="stat-card">
           <span class="stat-icon"><i class="fa-solid fa-heart"></i></span>
-          <span class="stat-num">1.2k</span>
+          <span class="stat-num js-teacher-likes-stat">{{ $teacher->likes_count ?? 0 }}</span>
           <span class="stat-label">{{ __('public.teachers.likes') }}</span>
         </div>
       </div>

@@ -90,7 +90,9 @@ class PublicTeacherController extends Controller
 
         $teacherStats = $this->teacherPageStats();
 
-        return view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'));
+        return response()
+            ->view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'))
+            ->withHeaders($this->publicCounterHeaders());
     }
 
     /**
@@ -182,14 +184,33 @@ class PublicTeacherController extends Controller
             }
         }
 
-        return view('teacherShow', compact(
+        return response()->view('teacherShow', compact(
             'teacher',
             'comments',
             'liked',
             'likedCommentIds',
             'relatedTeachers',
             'likedTeacherIds'
-        ));
+        ))->withHeaders($this->publicCounterHeaders());
+    }
+
+    public function stats(Teacher $teacher)
+    {
+        abort_unless($teacher->is_active, 404);
+
+        $teacher->loadCount('likes');
+
+        $commentsCount = TeacherComment::query()
+            ->where('teacher_id', $teacher->id)
+            ->where('is_approved', true)
+            ->whereNull('parent_id')
+            ->count();
+
+        return response()->json([
+            'ok' => true,
+            'likes_count' => (int) $teacher->likes_count,
+            'comments_count' => $commentsCount,
+        ])->withHeaders($this->publicCounterHeaders());
     }
 
     private function relatedTeachersFor(Teacher $teacher, int $limit = 3): Collection
@@ -309,5 +330,20 @@ class PublicTeacherController extends Controller
         }
 
         return $ids;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function publicCounterHeaders(): array
+    {
+        return [
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0, s-maxage=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'CDN-Cache-Control' => 'no-store',
+            'Cloudflare-CDN-Cache-Control' => 'no-store',
+            'Vary' => 'Cookie, Authorization, Accept, X-Requested-With',
+        ];
     }
 }

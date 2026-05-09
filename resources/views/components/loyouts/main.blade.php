@@ -72,6 +72,27 @@
     @unless(request()->routeIs('exam.session'))
     <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
       <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
+      <div class="site-boot-loader__content">
+        <div class="site-boot-loader__visual">
+          <div class="site-boot-loader__orbit">
+            <div class="site-boot-loader__ring site-boot-loader__ring--1"></div>
+            <div class="site-boot-loader__ring site-boot-loader__ring--2"></div>
+            <div class="site-boot-loader__ring site-boot-loader__ring--3"></div>
+            <div class="site-boot-loader__ring-inner">
+              <div class="site-boot-loader__brand">
+                <span class="site-boot-loader__num">81</span>
+                <span class="site-boot-loader__name">IDUM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="site-boot-loader__info">
+          <p class="site-boot-loader__hint">Tizim tayyorlanmoqda...</p>
+          <div class="site-boot-loader__bar">
+            <div class="site-boot-loader__bar-fill"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- BOMBA WELCOME OVERLAY -->

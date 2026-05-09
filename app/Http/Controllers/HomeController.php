@@ -21,29 +21,27 @@ class HomeController extends Controller
 
     public function home()
     {
-        $posts = Cache::remember(cache_key_home_posts(), now()->addMinutes(5), function () {
-            return Post::query()
-                ->select([
-                    'id',
-                    'category_id',
-                    'title',
-                    'title_en',
-                    'short_content',
-                    'short_content_en',
-                    'image',
-                    'slug',
-                    'views',
-                    'post_kind',
-                    'video_path',
-                    'video_url',
-                    'created_at',
-                ])
-                ->with(['category:id,name,name_en'])
-                ->withCount(['comments'])
-                ->latest()
-                ->take(3)
-                ->get();
-        });
+        $posts = Post::query()
+            ->select([
+                'id',
+                'category_id',
+                'title',
+                'title_en',
+                'short_content',
+                'short_content_en',
+                'image',
+                'slug',
+                'views',
+                'post_kind',
+                'video_path',
+                'video_url',
+                'created_at',
+            ])
+            ->with(['category:id,name,name_en'])
+            ->withCount(['comments'])
+            ->latest()
+            ->take(3)
+            ->get();
 
         $featuredTeacherId = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
             return Teacher::query()
@@ -107,12 +105,14 @@ class HomeController extends Controller
         SEOMeta::setDescription('81-IDUM maktab sayti — yangiliklar, o\'qituvchilar, kurslar va imtihonlar.');
         OpenGraph::setUrl(route('home'));
 
-        return view('home', compact('posts', 'featuredTeacher', 'postKindLabels'));
+        return response()
+            ->view('home', compact('posts', 'featuredTeacher', 'postKindLabels'))
+            ->withHeaders($this->publicCounterHeaders());
     }
 
     public function about()
     {
-        return view('about');
+        return response()->view('about')->withHeaders($this->publicCounterHeaders());
     }
 
     public function courses()
@@ -152,12 +152,12 @@ class HomeController extends Controller
 
     public function privacyPolicy()
     {
-        return view('privacy-policy');
+        return response()->view('privacy-policy')->withHeaders($this->publicCounterHeaders());
     }
 
     public function terms()
     {
-        return view('terms');
+        return response()->view('terms')->withHeaders($this->publicCounterHeaders());
     }
 
     public function storeContact(Request $request)
@@ -467,5 +467,20 @@ class HomeController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function publicCounterHeaders(): array
+    {
+        return [
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0, s-maxage=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'CDN-Cache-Control' => 'no-store',
+            'Cloudflare-CDN-Cache-Control' => 'no-store',
+            'Vary' => 'Cookie, Authorization, Accept, X-Requested-With',
+        ];
     }
 }
