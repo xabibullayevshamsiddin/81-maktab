@@ -860,17 +860,19 @@ body {
   .card-home {
     min-height: 100svh;
     height: auto;
-    padding-top: clamp(118px, 15vw, 148px);
-    padding-bottom: 52px;
+    padding-top: clamp(108px, 13vw, 136px);
+    padding-bottom: clamp(88px, 12vw, 120px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    align-items: center;
+    align-content: center;
     gap: 24px;
   }
 
   .home-content {
     width: 100%;
     max-width: min(100%, 58ch);
+    align-self: center;
   }
 
   .hero-title {
@@ -907,7 +909,7 @@ body {
     right: auto;
     top: auto;
     transform: none;
-    align-self: center;
+    align-self: end;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -963,6 +965,25 @@ body {
 }
 
 @media (min-width: 768px) and (max-width: 900px) {
+  .card-home {
+    padding-top: 104px;
+    padding-bottom: 96px;
+    grid-template-columns: 1fr;
+    align-items: end;
+    gap: 18px;
+  }
+
+  .home-content {
+    max-width: min(100%, 52ch);
+  }
+
+  .home-btn {
+    justify-self: start;
+    align-self: start;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
   .home-primary-actions {
     flex-direction: row;
     flex-wrap: wrap;
