@@ -1,4 +1,4 @@
-const CACHE_NAME = '81-maktab-cache-v1';
+const CACHE_NAME = '81-maktab-cache-v2';
 const urlsToCache = [
   '/offline.html',
   '/temp/css/style.css',
