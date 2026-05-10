@@ -279,17 +279,32 @@
 /* Layout */
 .profile-layout {
   display: flex !important;
-  gap: 40px !important;
+  gap: 32px !important;
   align-items: flex-start !important;
 }
 
 .profile-column-settings {
-  flex: 0 0 420px !important;
-  width: 420px !important;
+  flex: 0 0 400px !important;
+  width: 400px !important;
 }
 
 .profile-column-activity {
   flex: 1 1 0% !important;
+  min-width: 0;
+}
+
+/* Activity Panel Specific Balance */
+.profile-main[data-active-panel='activity'] .profile-layout {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  max-width: 900px !important;
+  margin: 0 auto !important;
+}
+
+.profile-main[data-active-panel='activity'] .profile-column-settings {
+  width: 100% !important;
+  flex: none !important;
+  margin-bottom: 20px !important;
 }
 
 /* Glass Cards */
@@ -608,21 +623,7 @@
   margin-bottom: 26px;
 }
 
-.profile-panel-preview-card {
-  display: grid;
-  gap: 16px;
-  padding: 22px;
-  border-radius: 24px;
-  border: 1px solid var(--profile-glass-border);
-  background: rgba(255, 255, 255, 0.48);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
-}
 
-:root[data-theme='dark'] .profile-panel-preview-card {
-  background: rgba(15, 23, 42, 0.68);
-  border-color: rgba(125, 180, 255, 0.14);
-  box-shadow: 0 14px 28px rgba(2, 6, 23, 0.22);
-}
 
 .profile-panel-preview-top {
   display: grid;
@@ -778,9 +779,6 @@
     grid-template-columns: 1fr;
   }
 
-  .profile-panel-preview-card {
-    padding: 18px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -790,4 +788,275 @@
   .profile-facts {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* ==========================================================================
+   BOMBA PROFILE - LAYOUT REFINEMENT
+   ========================================================================== */
+
+/* 1. Statistics Grid - More Premium Bento */
+.profile-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 20px !important;
+  margin-bottom: 40px !important;
+}
+
+@media (max-width: 991px) {
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* 2. Activity Mode - Centered Balanced Layout */
+.profile-main[data-active-panel='activity'] .profile-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  max-width: 860px !important;
+  margin: 0 auto !important;
+  gap: 30px !important;
+}
+
+.profile-main[data-active-panel='activity'] .profile-column-settings {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: none !important;
+}
+
+.profile-main[data-active-panel='activity'] .profile-column-activity {
+  width: 100% !important;
+  flex: none !important;
+}
+
+/* 3. Improved Activity Blocks */
+.profile-activity-block {
+  background: var(--profile-card-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  border-radius: 28px !important;
+  padding: 32px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04) !important;
+}
+
+:root[data-theme='dark'] .profile-activity-block {
+  background: rgba(15, 23, 42, 0.4) !important;
+}
+
+.profile-block-head h3 {
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: var(--profile-prime) !important;
+}
+
+/* 4. Sticky Profile Info in Settings Mode */
+@media (min-width: 1025px) {
+  .profile-main[data-active-panel='settings'] .profile-column-settings,
+  .profile-main[data-active-panel='security'] .profile-column-settings {
+    position: sticky !important;
+    top: 100px !important;
+  }
+}
+
+/* 5. Results Bento Grid Fix */
+.bento-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 16px !important;
+}
+.profile-activity-list li {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 18px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 12px !important;
+  transition: all 0.3s ease !important;
+}
+
+:root[data-theme='dark'] .profile-activity-list li {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.profile-activity-list li:hover {
+  transform: scale(1.01) translateX(5px) !important;
+  background: #fff !important;
+  border-color: var(--profile-prime) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05) !important;
+}
+
+:root[data-theme='dark'] .profile-activity-list li:hover {
+  background: rgba(30, 41, 59, 0.8) !important;
+}
+
+/* ==========================================================================
+   ACTIVITY PANEL - 2 COLUMN GRID DESIGN
+   ========================================================================== */
+.profile-main[data-active-panel='activity'] .profile-column-activity {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 24px !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+}
+
+/* Individual blocks in activity grid */
+.profile-main[data-active-panel='activity'] .profile-activity-block {
+  margin-bottom: 0 !important; /* Gap handles spacing now */
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.profile-main[data-active-panel='activity'] .profile-block-head {
+  flex-grow: 1 !important;
+}
+
+/* Responsive Activity Grid */
+@media (max-width: 991px) {
+  .profile-main[data-active-panel='activity'] .profile-column-activity {
+    grid-template-columns: 1fr !important;
+    max-width: 700px !important;
+  }
+}
+
+/* Reset layout container for activity mode to be full width */
+.profile-main[data-active-panel='activity'] .profile-layout {
+  display: block !important;
+  max-width: 100% !important;
+}
+
+.profile-main[data-active-panel='activity'] .profile-column-settings {
+  display: none !important; /* Hide settings sidebar in activity mode as per previous logic */
+}
+.profile-main[data-active-panel='activity'] .profile-activity-block {
+  border-radius: 32px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03) !important;
+  padding: 36px !important;
+}
+
+:root[data-theme='dark'] .profile-main[data-active-panel='activity'] .profile-activity-block {
+  background: rgba(30, 41, 59, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.profile-main[data-active-panel='activity'] .profile-activity-block:hover {
+  transform: translateY(-8px) !important;
+  background: #fff !important;
+  border-color: var(--profile-prime) !important;
+  box-shadow: 0 30px 60px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* ==========================================================================
+   SECURITY PANEL - 2 COLUMN GRID FOR CARDS
+   ========================================================================== */
+.profile-main[data-active-panel='security'] .profile-column-settings {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 24px !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  flex: none !important;
+}
+
+.profile-main[data-active-panel='security'] .profile-layout {
+  display: block !important;
+}
+
+.profile-main[data-active-panel='security'] .profile-column-activity {
+  display: none !important; /* Nothing in activity col for security */
+}
+
+/* Security cards spanning */
+#profile-password-card {
+  grid-column: span 1 !important;
+}
+
+#profile-email-card {
+  grid-column: span 1 !important;
+}
+
+@media (max-width: 991px) {
+  .profile-main[data-active-panel='security'] .profile-column-settings {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ==========================================================================
+   SETTINGS PANEL - BALANCED 2-COLUMN LAYOUT
+   ========================================================================== */
+.profile-main[data-active-panel='settings'] .profile-layout {
+  display: grid !important;
+  grid-template-columns: 400px 1fr !important;
+  gap: 40px !important;
+}
+
+@media (max-width: 1100px) {
+  .profile-main[data-active-panel='settings'] .profile-layout {
+    grid-template-columns: 350px 1fr !important;
+    gap: 24px !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .profile-main[data-active-panel='settings'] .profile-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .profile-column-settings {
+    order: 2 !important;
+  }
+  .profile-column-activity {
+    order: 1 !important;
+  }
+}
+
+/* Input Fields - Bomba Style */
+.profile-field input, .profile-field select {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 18px !important;
+  padding: 16px 22px !important;
+  font-weight: 600 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+}
+
+:root[data-theme='dark'] .profile-field input,
+:root[data-theme='dark'] .profile-field select {
+  background: rgba(30, 41, 59, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+.profile-field input:focus {
+  border-color: var(--profile-prime) !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+  background: #fff !important;
+}
+.profile-facts {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+
+.profile-fact-card {
+  background: var(--profile-card-bg) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.profile-fact-card:hover {
+  transform: scale(1.02) !important;
+  background: #fff !important;
+  border-color: var(--profile-prime) !important;
 }

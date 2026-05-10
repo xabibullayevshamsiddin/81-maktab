@@ -140,7 +140,7 @@
     </div>
   </section>
 
-  <main class="profile-main" data-profile-i18n='@json($profileI18n)'>
+  <main class="profile-main" data-profile-i18n='@json($profileI18n)' data-active-panel="{{ $profilePanel }}">
     <div class="container">
 	      <section class="profile-overview-panel">
         <div class="profile-overview-main">
@@ -218,117 +218,37 @@
 	      <div class="profile-layout profile-layout--stack-mobile">
 	        <div class="profile-column profile-column-settings profile-column-settings--mobile-last">
             @if($profilePanel === 'settings')
-	          <div class="signin-card profile-card {{ $profileCardStaffClass }}">
-            <div class="profile-card-head">
-              <span class="profile-card-kicker">{{ __('profile.steps.primary') }}</span>
-              <h2>{{ __('profile.main_card.title') }}</h2>
-              <p class="signin-subtitle">{{ __('profile.main_card.subtitle') }}</p>
-            </div>
-
-            <div class="profile-facts">
-              @foreach($profileFacts as $fact)
-                <div class="profile-fact-card stagger-item">
-                  <span class="profile-fact-icon"><i class="{{ $fact['icon'] }}"></i></span>
-                  <span class="profile-fact-label">{{ $fact['label'] }}</span>
-                  <strong class="profile-fact-value" @if($fact['track_email'] ?? false) data-profile-user-email
-                  @endif>{{ $fact['value'] }}</strong>
-                  <span class="profile-fact-hint">{{ $fact['hint'] }}</span>
+              <!-- Facts Column (Left) -->
+              <div class="signin-card profile-card {{ $profileCardStaffClass }}">
+                <div class="profile-card-head">
+                  <span class="profile-card-kicker">{{ __('profile.steps.primary') }}</span>
+                  <h2>Ma'lumotlar</h2>
+                  <p class="signin-subtitle">Sizning asosiy profil ma'lumotlaringiz.</p>
                 </div>
-              @endforeach
-            </div>
 
-            <div class="profile-guide-box">
-              <div class="profile-guide-icon">
-                <i class="fa-solid fa-circle-info"></i>
-              </div>
-              <div class="profile-guide-copy">
-                <span class="profile-guide-kicker">{{ __('profile.main_card.note_title') }}</span>
-                <strong>Profil ma'lumotlarini shu joydan boshqaring</strong>
-                <ul class="profile-guide-points">
-                  <li>
-                    <i class="fa-solid fa-user-pen"></i>
-                    <span>Ism va telefon shu formadan saqlanadi.</span>
-                  </li>
-                  <li>
-                    <i class="fa-solid fa-envelope-circle-check"></i>
-                    <span>Email pastdagi alohida blokda tasdiqlash kodi orqali almashtiriladi.</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+                <div class="profile-facts">
+                  @foreach($profileFacts as $fact)
+                    <div class="profile-fact-card stagger-item">
+                      <span class="profile-fact-icon"><i class="{{ $fact['icon'] }}"></i></span>
+                      <span class="profile-fact-label">{{ $fact['label'] }}</span>
+                      <strong class="profile-fact-value" @if($fact['track_email'] ?? false) data-profile-user-email
+                      @endif>{{ $fact['value'] }}</strong>
+                      <span class="profile-fact-hint">{{ $fact['hint'] }}</span>
+                    </div>
+                  @endforeach
+                </div>
 
-            <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data"
-              class="signin-form comment-form profile-form-stack">
-              @csrf
-              @method('PUT')
-
-              <div class="profile-avatar-upload">
-                <div class="profile-avatar-upload-copy">
-                  <div class="profile-field">
-                    <label for="profile-avatar">{{ __('profile.main_card.avatar_label') }}</label>
-                    <span class="profile-field-hint">{{ __('profile.main_card.avatar_hint') }}</span>
-                    <input type="hidden" name="remove_avatar" value="0" data-profile-avatar-remove-flag />
-                    <input type="file" id="profile-avatar" name="avatar" accept="image/jpeg,image/png,image/webp" />
-                    @if($profileAvatarUrl)
-                      <div class="profile-actions-row profile-avatar-actions">
-                        <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
-                          Rasmni olib tashlash
-                        </button>
-                      </div>
-                    @endif
-                    <span class="profile-avatar-meta"
-                      data-profile-avatar-meta>{{ __('profile.main_card.avatar_meta') }}</span>
-                    @error('avatar')
-                      <p class="form-message profile-form-error">{{ $message }}</p>
-                    @enderror
+                <div class="profile-guide-box">
+                  <div class="profile-guide-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                  </div>
+                  <div class="profile-guide-copy">
+                    <span class="profile-guide-kicker">{{ __('profile.main_card.note_title') }}</span>
+                    <strong>Yordam</strong>
+                    <p style="font-size: 13px; color: var(--profile-text-muted); line-height: 1.5;">Ism va telefonni o'ng tarafdagi forma orqali o'zgartirishingiz mumkin.</p>
                   </div>
                 </div>
               </div>
-
-              <div class="profile-form-grid">
-                <div class="profile-field">
-                  <label for="profile-first-name">Ism</label>
-                  <span class="profile-field-hint">Faqat harflar, probel va defis</span>
-                  <input type="text" id="profile-first-name" name="first_name"
-                    value="{{ old('first_name', $user->first_name) }}" required maxlength="120"
-                    autocomplete="given-name" />
-                  @error('first_name')
-                    <p class="form-message profile-form-error">{{ $message }}</p>
-                  @enderror
-                </div>
-                <div class="profile-field">
-                  <label for="profile-last-name">Familiya</label>
-                  <span class="profile-field-hint">Faqat harflar, probel va defis</span>
-                  <input type="text" id="profile-last-name" name="last_name"
-                    value="{{ old('last_name', $user->last_name) }}" required maxlength="120"
-                    autocomplete="family-name" />
-                  @error('last_name')
-                    <p class="form-message profile-form-error">{{ $message }}</p>
-                  @enderror
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="profile-field">
-                  <label for="profile-phone">{{ __('profile.main_card.phone_label') }}</label>
-                  <span class="profile-field-hint">{{ __('profile.main_card.phone_hint') }}</span>
-                  <input style="margin-top:25px;" type="text" id="profile-phone" name="phone"
-                    value="{{ old('phone', $user->phone) }}" maxlength="40" placeholder="+998..." autocomplete="tel" />
-                  @error('phone')
-                    <p class="form-message profile-form-error">{{ $message }}</p>
-                  @enderror
-                </div>
-              </div>
-
-              <div class="profile-form-actions">
-                <button class="btn" type="submit">
-                  <i class="fa-solid fa-floppy-disk"></i>
-                  {{ __('profile.main_card.save') }}
-                </button>
-                <span class="profile-helper-inline">{{ __('profile.main_card.save_hint') }}</span>
-              </div>
-	            </form>
-	          </div>
             @endif
 
             @if($profilePanel === 'security')
@@ -336,22 +256,91 @@
 	            @include('profile.partials.password-card')
 	            @include('profile.partials.app-settings-card')
             @endif
-
-            @if($profilePanel === 'activity')
-              <section class="signin-card profile-card profile-panel-aside-note">
-                <div class="profile-card-head">
-                  <span class="profile-card-kicker">Tezkor yo'l</span>
-                  <h2>Faollik markazi</h2>
-                  <p class="signin-subtitle">Izohlar, kurslar va imtihonlar shu panelga yig'ildi. Natijalar esa alohida sahifada turadi.</p>
-                </div>
-                <div class="profile-actions-row">
-                  <a href="{{ route('profile.results.index') }}" class="btn btn-sm">Natijalar sahifasi</a>
-                </div>
-              </section>
-            @endif
 	        </div>
 
 	        <div class="profile-column profile-column-activity profile-column-activity--mobile-first">
+            @if($profilePanel === 'settings')
+              <!-- Update Form Column (Right) -->
+              <div class="signin-card profile-card">
+                <div class="profile-card-head">
+                  <span class="profile-card-kicker">Tahrirlash</span>
+                  <h2>{{ __('profile.main_card.title') }}</h2>
+                  <p class="signin-subtitle">{{ __('profile.main_card.subtitle') }}</p>
+                </div>
+
+                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data"
+                  class="signin-form comment-form profile-form-stack">
+                  @csrf
+                  @method('PUT')
+
+                  <div class="profile-avatar-upload">
+                    <div class="profile-avatar-upload-copy">
+                      <div class="profile-field">
+                        <label for="profile-avatar">{{ __('profile.main_card.avatar_label') }}</label>
+                        <span class="profile-field-hint">{{ __('profile.main_card.avatar_hint') }}</span>
+                        <input type="hidden" name="remove_avatar" value="0" data-profile-avatar-remove-flag />
+                        <input type="file" id="profile-avatar" name="avatar" accept="image/jpeg,image/png,image/webp" />
+                        @if($profileAvatarUrl)
+                          <div class="profile-actions-row profile-avatar-actions">
+                            <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
+                              Rasmni olib tashlash
+                            </button>
+                          </div>
+                        @endif
+                        <span class="profile-avatar-meta"
+                          data-profile-avatar-meta>{{ __('profile.main_card.avatar_meta') }}</span>
+                        @error('avatar')
+                          <p class="form-message profile-form-error">{{ $message }}</p>
+                        @enderror
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="profile-form-grid">
+                    <div class="profile-field">
+                      <label for="profile-first-name">Ism</label>
+                      <span class="profile-field-hint">Faqat harflar, probel va defis</span>
+                      <input type="text" id="profile-first-name" name="first_name"
+                        value="{{ old('first_name', $user->first_name) }}" required maxlength="120"
+                        autocomplete="given-name" />
+                      @error('first_name')
+                        <p class="form-message profile-form-error">{{ $message }}</p>
+                      @enderror
+                    </div>
+                    <div class="profile-field">
+                      <label for="profile-last-name">Familiya</label>
+                      <span class="profile-field-hint">Faqat harflar, probel va defis</span>
+                      <input type="text" id="profile-last-name" name="last_name"
+                        value="{{ old('last_name', $user->last_name) }}" required maxlength="120"
+                        autocomplete="family-name" />
+                      @error('last_name')
+                        <p class="form-message profile-form-error">{{ $message }}</p>
+                      @enderror
+                    </div>
+                  </div>
+
+                  <div class="profile-form-grid">
+                    <div class="profile-field">
+                      <label for="profile-phone">{{ __('profile.main_card.phone_label') }}</label>
+                      <span class="profile-field-hint">{{ __('profile.main_card.phone_hint') }}</span>
+                      <input style="margin-top:25px;" type="text" id="profile-phone" name="phone"
+                        value="{{ old('phone', $user->phone) }}" maxlength="40" placeholder="+998..." autocomplete="tel" />
+                      @error('phone')
+                        <p class="form-message profile-form-error">{{ $message }}</p>
+                      @enderror
+                    </div>
+                  </div>
+
+                  <div class="profile-form-actions">
+                    <button class="btn" type="submit">
+                      <i class="fa-solid fa-floppy-disk"></i>
+                      {{ __('profile.main_card.save') }}
+                    </button>
+                    <span class="profile-helper-inline">{{ __('profile.main_card.save_hint') }}</span>
+                  </div>
+                </form>
+              </div>
+            @endif
             @if($profilePanel === 'activity')
 	          @if(auth()->user()->canManageExams())
 	            <section class="profile-activity-block reveal">
@@ -705,59 +694,8 @@
 	          @endif
             @endif
 
-            @if($profilePanel !== 'activity')
-              <section class="profile-panel-preview-grid reveal" aria-label="Qo'shimcha bo'limlar">
-                <article class="profile-panel-preview-card">
-                  <div class="profile-panel-preview-top">
-                    <span class="profile-panel-preview-icon">
-                      <i class="fa-solid fa-wave-square"></i>
-                    </span>
-                    <div class="profile-panel-preview-copy">
-                      <h3>Faollik</h3>
-                      <p>Izohlar, kurslar va yozilishlar shu bo'limda jamlangan.</p>
-                    </div>
-                  </div>
-                  <div class="profile-panel-preview-stats">
-                    <div class="profile-panel-preview-stat">
-                      <strong>{{ $postCommentCount + $teacherCommentCount }}</strong>
-                      <span>Izohlar</span>
-                    </div>
-                    <div class="profile-panel-preview-stat">
-                      <strong>{{ $createdCourseCount + $courseEnrollmentCount }}</strong>
-                      <span>Kurslar</span>
-                    </div>
-                  </div>
-                  <div class="profile-panel-preview-actions">
-                    <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="btn btn-sm">Faollikni ochish</a>
-                  </div>
-                </article>
-
-                <article class="profile-panel-preview-card">
-                  <div class="profile-panel-preview-top">
-                    <span class="profile-panel-preview-icon profile-panel-preview-icon--results">
-                      <i class="fa-solid fa-chart-column"></i>
-                    </span>
-                    <div class="profile-panel-preview-copy">
-                      <h3>Natijalar</h3>
-                      <p>Topshirgan imtihonlaringiz va eksportlar alohida sahifada turadi.</p>
-                    </div>
-                  </div>
-                  <div class="profile-panel-preview-stats">
-                    <div class="profile-panel-preview-stat">
-                      <strong>{{ $examResultsCount }}</strong>
-                      <span>Natijalar</span>
-                    </div>
-                    <div class="profile-panel-preview-stat">
-                      <strong>{{ $createdExamsCount }}</strong>
-                      <span>Imtihonlar</span>
-                    </div>
-                  </div>
-                  <div class="profile-panel-preview-actions">
-                    <a href="{{ route('profile.results.index') }}" class="btn btn-outline btn-sm">Natijalar</a>
-                  </div>
-                </article>
-              </section>
-            @endif
+           
+          
             @if(false && $profilePanel !== 'activity')
               <section class="profile-activity-block reveal profile-panel-aside-note">
                 <div class="profile-block-head">
