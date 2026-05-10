@@ -88,9 +88,9 @@
               @php
                 $isAnswered = $answerMap->has($question->id) && ($answerMap->get($question->id)->option_id !== null || filled($answerMap->get($question->id)->text_answer));
               @endphp
-              <button 
-                type="button" 
-                class="exam-grid-item {{ $isAnswered ? 'is-answered' : '' }} {{ $index === 0 ? 'is-active' : '' }}" 
+              <button
+                type="button"
+                class="exam-grid-item {{ $isAnswered ? 'is-answered' : '' }} {{ $index === 0 ? 'is-active' : '' }}"
                 onclick="showStep({{ $index }})"
                 data-grid-step="{{ $index }}"
                 data-grid-question-id="{{ $question->id }}"
@@ -691,7 +691,7 @@
     function showStep(idx) {
       if (idx < 0 || idx >= steps.length) return;
       currentIdx = idx;
-      
+
       steps.forEach(function (el, i) {
         var on = i === idx;
         el.classList.toggle('exam-step--active', on);
@@ -702,7 +702,7 @@
       var isLast = idx === steps.length - 1;
 
       if (stepCurrentEl) stepCurrentEl.textContent = String(idx + 1);
-      
+
       if (btnPrev) {
         btnPrev.disabled = isFirst;
         btnPrev.style.opacity = isFirst ? '0.5' : '1';
@@ -716,7 +716,7 @@
         btnNext.style.opacity = isLast ? '0.5' : '1';
         btnNext.style.cursor = isLast ? 'not-allowed' : 'pointer';
         // If we want to show Finish button alongside or instead:
-        btnNext.hidden = isLast; 
+        btnNext.hidden = isLast;
       }
 
       if (btnFinish) {
@@ -873,7 +873,7 @@
     function updateProgress() {
       const checkedInputs = document.querySelectorAll('.exam-option input[type=radio]:checked');
       const answeredQuestionIds = new Set();
-      
+
       checkedInputs.forEach(function(input) {
         // name is "q_{questionId}"
         const qId = input.name.replace('q_', '');

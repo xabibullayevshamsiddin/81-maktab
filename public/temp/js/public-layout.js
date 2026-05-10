@@ -184,18 +184,18 @@
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
+
       osc.type = isDark ? 'sine' : 'triangle';
       const startFreq = isDark ? 300 : 500;
       const endFreq = isDark ? 200 : 700;
-      
+
       osc.frequency.setValueAtTime(startFreq, now);
       osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.15);
-      
+
       gain.gain.setValueAtTime(0, now);
       gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      
+
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
@@ -206,7 +206,7 @@
   /** Prime Pro Max: Page Transition */
   function initPageTransitions() {
     const loader = document.getElementById('prime-page-loader');
-    
+
     // Page load fade in
     window.addEventListener('load', () => {
       setTimeout(() => {
@@ -219,15 +219,15 @@
     document.addEventListener('click', (e) => {
       const link = e.target.closest('a');
       if (!link) return;
-      
+
       const href = link.getAttribute('href');
       const target = link.getAttribute('target');
-      
+
       if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !href.startsWith('tel:') && !href.startsWith('mailto:') && target !== '_blank' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         document.body.classList.remove('page-ready');
         if (loader) loader.classList.remove('fade-out');
-        
+
         setTimeout(() => {
           window.location.href = href;
         }, 400);
@@ -243,7 +243,7 @@
     toggle.addEventListener('click', (e) => {
       const isDark = root.getAttribute('data-theme') === 'dark';
       const nextTheme = isDark ? 'light' : 'dark';
-      
+
       // Cinematic Reveal
       const canvas = document.getElementById('theme-transition-canvas');
       if (!canvas) {
@@ -255,23 +255,23 @@
       const rect = toggle.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
-      
+
       const ctx = canvas.getContext('2d');
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      
+
       document.body.classList.add('theme-transition-active');
-      
+
       let radius = 0;
       const maxRadius = Math.sqrt(Math.pow(window.innerWidth, 2) + Math.pow(window.innerHeight, 2));
-      
+
       function animate() {
         radius += maxRadius / 20;
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fillStyle = nextTheme === 'dark' ? '#07111f' : '#edf2fb';
         ctx.fill();
-        
+
         if (radius < maxRadius) {
           requestAnimationFrame(animate);
         } else {
@@ -290,8 +290,8 @@
 
   /** Prime Pro Max: Animated Charts (ApexCharts) */
   function playPrimeConfetti(x, y, isGold = false) {
-    const colors = isGold 
-        ? ['#f59e0b', '#fbbf24', '#fcd34d', '#ffffff'] 
+    const colors = isGold
+        ? ['#f59e0b', '#fbbf24', '#fcd34d', '#ffffff']
         : ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#dc2626'];
     const count = isGold ? 48 : 32;
     for (let i = 0; i < count; i++) {
@@ -303,15 +303,15 @@
       p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
       p.style.left = x + 'px';
       p.style.top = y + 'px';
-      
+
       const angle = Math.random() * Math.PI * 2;
       const dist = isGold ? Math.random() * 200 + 80 : Math.random() * 120 + 50;
       const tx = Math.cos(angle) * dist;
       const ty = Math.sin(angle) * dist;
-      
+
       p.style.setProperty('--tx', tx + 'px');
       p.style.setProperty('--ty', ty + 'px');
-      
+
       document.body.appendChild(p);
       setTimeout(() => p.remove(), isGold ? 1200 : 800);
     }
@@ -1382,29 +1382,6 @@
     });
   }
 
-  function initCourseEnrollPanels() {
-    const panels = Array.from(document.querySelectorAll('details.course-enroll-panel'));
-    if (!panels.length) return;
-
-    panels.forEach((panel) => {
-      const summary = panel.querySelector(':scope > summary.course-enroll-summary');
-      if (!summary) return;
-
-      summary.addEventListener('click', (event) => {
-        event.preventDefault();
-        const shouldOpen = !panel.open;
-
-        panels.forEach((otherPanel) => {
-          if (otherPanel !== panel) {
-            otherPanel.open = false;
-          }
-        });
-
-        panel.open = shouldOpen;
-      });
-    });
-  }
-
   function getCommentConfig(form) {
     const scope = form?.closest('[data-comment-config]') || document.querySelector('[data-comment-config]');
     return parseJson(scope?.dataset.commentConfig, null);
@@ -1527,6 +1504,49 @@
         window.showToast?.(data.message || (data.liked ? "Like qo'shildi." : 'Like olib tashlandi.'), data.toast_type || 'success');
       } catch (error) {
         window.showToast?.('Like qilishda xatolik', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    });
+
+    document.addEventListener('submit', async (event) => {
+      const form = event.target.closest('form.js-bookmark-form');
+      if (!form) return;
+
+      event.preventDefault();
+      const btn = form.querySelector('button.bookmark-btn');
+      if (btn) btn.disabled = true;
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json',
+          },
+          body: new FormData(form),
+        });
+
+        const data = await response.json();
+        if (!data || !data.ok) {
+          window.showToast?.(data?.message || 'Xatolik', data?.toast_type || 'error');
+          return;
+        }
+
+        if (btn) {
+          const icon = btn.querySelector('i');
+          const saved = !!data.bookmarked;
+          btn.classList.toggle('is-saved', saved);
+          btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+          if (icon) {
+            icon.classList.toggle('fa-solid', saved);
+            icon.classList.toggle('fa-regular', !saved);
+          }
+        }
+
+        window.showToast?.(data.message || (data.bookmarked ? 'Saqlandi.' : "Olib tashlandi."), data.toast_type || 'success');
+      } catch (error) {
+        window.showToast?.('Saqlashda xatolik', 'error');
       } finally {
         if (btn) btn.disabled = false;
       }
@@ -1798,6 +1818,13 @@
           return;
         }
 
+        if (comment.is_approved === false) {
+          form.reset();
+          const details = form.closest('details');
+          if (details) details.open = false;
+          return;
+        }
+
         const currentUserId = cfg.currentUserId ?? null;
         const roleKey = String(comment.role_key || 'guest');
         let canManageThis = false;
@@ -1976,7 +2003,7 @@
       scrollBar.className = 'scroll-progress-bar';
       document.body.appendChild(scrollBar);
     }
-    
+
     window.addEventListener('scroll', () => {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -1996,18 +2023,18 @@
               let start = 0;
               const end = parseInt(rawVal.replace(/[, ]/g, ''), 10);
               if(isNaN(end)) return;
-              
+
               const duration = 2000;
               let startTime = null;
               const suffix = entry.target.dataset.suffix || '';
-              
+
               const step = (timestamp) => {
                 if (!startTime) startTime = timestamp;
                 const progress = Math.min((timestamp - startTime) / duration, 1);
                 const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                 const current = Math.floor(easeProgress * end);
                 entry.target.innerText = current.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + suffix;
-                
+
                 if (progress < 1) {
                   window.requestAnimationFrame(step);
                 } else {
@@ -2019,7 +2046,7 @@
           }
         });
       }, { threshold: 0.5 });
-      
+
       numElements.forEach(el => observer.observe(el));
     }
 
@@ -2032,7 +2059,7 @@
         child.style.setProperty('--stagger-index', idx);
         child.classList.add('stagger-item');
       });
-      
+
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if(entry.isIntersecting) {
@@ -2374,6 +2401,7 @@
     var chatDisabledText = document.getElementById('chat-disabled-panel-text');
     var chatEnabled = widget.getAttribute('data-chat-enabled') !== '0';
 
+    var chatStatusUrl = widget.getAttribute('data-chat-status-url');
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
@@ -2406,6 +2434,56 @@
       } catch (e) {
         /* localStorage bo'lmasa ham chat ishlayveradi */
       }
+    }
+
+    function setChatEnabledState(enabled, message) {
+      chatEnabled = !!enabled;
+      widget.setAttribute('data-chat-enabled', chatEnabled ? '1' : '0');
+
+      if (message && chatDisabledText) {
+        chatDisabledText.textContent = message;
+      }
+
+      if (chatDisabledPanel && chatPanelMain) {
+        chatPanelMain.hidden = !chatEnabled;
+        chatDisabledPanel.hidden = chatEnabled;
+      }
+
+      if (fullBtn) {
+        fullBtn.style.display = chatEnabled ? '' : 'none';
+      }
+    }
+
+    function refreshChatAvailability() {
+      if (!chatStatusUrl) {
+        return loadMessages().then(function () {
+          return chatEnabled;
+        });
+      }
+
+      return fetch(chatStatusUrl, {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) return null;
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data) return chatEnabled;
+
+          if (data.chat_disabled) {
+            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
+            stopPolling();
+            return false;
+          }
+
+          setChatEnabledState(true);
+          return true;
+        })
+        .catch(function () {
+          return chatEnabled;
+        });
     }
 
     function syncChatBadge() {
@@ -2519,6 +2597,28 @@
       markChatAsRead(lastId);
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
+        setChatEnabledState(false, widget.getAttribute('data-chat-disabled-message') || 'Global chat vaqtincha oвЂchirilgan.');
+
+        if (!widget.getAttribute('data-chat-disabled-message')) {
+          setChatEnabledState(false, 'Global chat vaqtincha ochirilgan.');
+        }
+
+        refreshChatAvailability().then(function () {
+          if (!chatEnabled) return;
+          return loadMessages().then(function () {
+            startPolling();
+            markChatAsRead(lastId);
+            scrollDown();
+            if (input) input.focus();
+            syncComposeState();
+          });
+        }).finally(function () {
+          setTimeout(function () {
+            panel.classList.remove('is-opening');
+          }, 520);
+        });
+
+        return;
         if (fullBtn) fullBtn.style.display = 'none';
         chatPanelMain.hidden = true;
         chatDisabledPanel.hidden = false;
@@ -2531,14 +2631,12 @@
         return;
       }
 
-      if (chatDisabledPanel) chatDisabledPanel.hidden = true;
-      if (chatPanelMain) chatPanelMain.hidden = false;
-      if (fullBtn) fullBtn.style.display = '';
+      setChatEnabledState(true);
 
       loadMessages().finally(function () {
         markChatAsRead(lastId);
         scrollDown();
-        input.focus();
+        if (input) input.focus();
         syncComposeState();
         setTimeout(function () {
           panel.classList.remove('is-opening');
@@ -2726,19 +2824,11 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.chat_disabled) {
-            chatEnabled = false;
-            widget.setAttribute('data-chat-enabled', '0');
+            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
-            if (data.disabled_message && chatDisabledText) {
-              chatDisabledText.textContent = data.disabled_message;
-            }
-            if (isOpen && chatDisabledPanel && chatPanelMain) {
-              chatPanelMain.hidden = true;
-              chatDisabledPanel.hidden = false;
-              if (fullBtn) fullBtn.style.display = 'none';
-            }
             return [];
           }
+          setChatEnabledState(true);
           var msgs = data.messages || [];
           canClearAll = !!data.can_clear_all;
           syncChatAdminActions();
@@ -2774,19 +2864,11 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.chat_disabled) {
-            chatEnabled = false;
-            widget.setAttribute('data-chat-enabled', '0');
+            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
-            if (data.disabled_message && chatDisabledText) {
-              chatDisabledText.textContent = data.disabled_message;
-            }
-            if (isOpen && chatDisabledPanel && chatPanelMain) {
-              chatPanelMain.hidden = true;
-              chatDisabledPanel.hidden = false;
-              if (fullBtn) fullBtn.style.display = 'none';
-            }
             return [];
           }
+          setChatEnabledState(true);
           var msgs = data.messages || [];
           canClearAll = !!data.can_clear_all;
           syncChatAdminActions();
@@ -3072,14 +3154,14 @@
         setTimeout(function () {
           btn.classList.remove('is-fired');
         }, 420);
-        
+
         // Append sticker instead of sending immediately
         input.value += sticker;
         input.focus();
-        
+
         // Trigger UI updates
         syncComposeState();
-        
+
         // Dispatch input event for other potential listeners
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
@@ -3355,7 +3437,7 @@
       toggle.classList.toggle('is-muted', primeAudioMuted);
       toggle.innerHTML = '<i class="fa-solid ' + (primeAudioMuted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
       toggle.title = primeAudioMuted ? 'Ovozlarni yoqish' : 'Ovozlarni o‘chirish';
-      
+
       if (!primeAudioMuted) {
         playPrimeSuccess();
       }
@@ -3683,7 +3765,7 @@
 
       const chart = new ApexCharts(container, options);
       chart.render();
-      
+
       // Update chart theme on toggle
       document.addEventListener('themeChanged', () => {
         chart.updateOptions({
@@ -3709,7 +3791,6 @@
     initImageLightbox();
     initToastAndTheme();
 	    initHeaderDropdowns();
-	    initCourseEnrollPanels();
 	    initPublicLiveStats();
 	    initInteractiveActions();
 	    initProMaxAnimations();
@@ -3721,7 +3802,7 @@
     initPrimeAudioControl();
     initGlobalSearchModal();
     initSeniorInteractions();
-    
+
     // Prime Pro Max Initializers
     initPrimeCharts();
 
@@ -3732,7 +3813,7 @@
         // Industry standard: play a microscopic silent tone to force unlock the audio engine
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        gain.gain.value = 0.0001; 
+        gain.gain.value = 0.0001;
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(0);

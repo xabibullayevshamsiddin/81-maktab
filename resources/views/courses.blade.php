@@ -70,6 +70,7 @@
       </div>
 
       <div class="courses-grid prime-stagger" id="courses-grid">
+        @php $bookmarkedCourseIds = $bookmarkedCourseIds ?? collect(); @endphp
         @forelse($courses as $course)
           @php
             $courseTitle = localized_model_value($course, 'title');
@@ -119,6 +120,11 @@
                   >
                     <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
                   </button>
+                  @include('posts.partials.bookmark-button', [
+                    'toggleUrl' => auth()->check() ? route('course.bookmark.toggle', $course) : null,
+                    'isSaved' => $bookmarkedCourseIds->contains($course->id),
+                    'ariaLabel' => __('public.bookmark.aria_course'),
+                  ])
                 </div>
                 @auth
                   @php

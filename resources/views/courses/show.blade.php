@@ -45,6 +45,27 @@
             </div>
           </div>
 
+          @php $bookmarkedCourseIds = $bookmarkedCourseIds ?? collect(); @endphp
+          <div class="course-details-toolbar icon-links" style="margin: 12px 0 0; padding-left: 0; padding-right: 0;">
+            <div class="icon-link" style="flex:1;">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline share-btn js-share-trigger"
+                data-share-url="{{ route('courses.show', $course) }}"
+                data-share-title="{{ $courseTitle }}"
+                data-share-text="{{ __('public.courses.share_text') }}"
+                data-share-success="{{ __('public.courses.share_success') }}"
+              >
+                <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
+              </button>
+              @include('posts.partials.bookmark-button', [
+                'toggleUrl' => auth()->check() ? route('course.bookmark.toggle', $course) : null,
+                'isSaved' => $bookmarkedCourseIds->contains($course->id),
+                'ariaLabel' => __('public.bookmark.aria_course'),
+              ])
+            </div>
+          </div>
+
 	          <div class="course-details-grid">
 	            <div class="course-details-main">
                 <div class="course-details-hero-strip">

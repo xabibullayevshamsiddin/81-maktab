@@ -659,51 +659,8 @@ body::after {
   to { opacity: 0; transform: translateX(100px) scale(0.8); }
 }
 
-/* ======== Header Notifications Pro Max ======== */
-.header-notifications {
-  position: relative;
-  margin-right: 15px;
-}
 
-.notification-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--admin-card-bg);
-  border: 1px solid var(--admin-glass-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--admin-text-main);
-  font-size: 20px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
 
-.notification-btn:hover {
-  background: #fff;
-  transform: translateY(-2px);
-  box-shadow: var(--admin-glass-shadow);
-  color: var(--admin-prime);
-}
-
-.notification-dot {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 10px;
-  height: 10px;
-  background: #ef4444;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
 
 /* Keep collapse distance aligned with the custom sidebar width */
 .sidebar-nav-wrapper.active {

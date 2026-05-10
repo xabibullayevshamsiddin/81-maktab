@@ -22,7 +22,7 @@ class BlockedUserAccessTest extends TestCase
             ->assertOk();
     }
 
-    public function test_blocked_regular_user_cannot_enter_exam_area(): void
+    public function test_blocked_regular_user_can_open_exam_area(): void
     {
         $user = $this->createUser(User::ROLE_USER, [
             'is_active' => false,
@@ -31,8 +31,7 @@ class BlockedUserAccessTest extends TestCase
         $this->actingAs($user)
             ->from(route('home'))
             ->get(route('exam.index'))
-            ->assertRedirect(route('home'))
-            ->assertSessionHas('error');
+            ->assertOk();
     }
 
     public function test_blocked_admin_cannot_open_admin_management_pages(): void

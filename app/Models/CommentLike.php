@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CommentLike extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'comment_id',
+        'user_id',
+    ];
 
     public function comment(): BelongsTo
     {

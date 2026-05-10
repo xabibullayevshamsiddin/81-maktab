@@ -56,15 +56,22 @@
               </ul>
             </div>
           @endif
-          @auth
-            <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form">
-              @csrf
-              <button class="like-btn {{ ($liked ?? false) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
-                <i class="{{ ($liked ?? false) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
-                <span class="like-count">{{ $teacher->likes_count ?? 0 }}</span>
-              </button>
-            </form>
-          @endauth
+          <div class="teacher-detail-like-bookmark" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;">
+            @auth
+              <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form">
+                @csrf
+                <button class="like-btn {{ ($liked ?? false) ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
+                  <i class="{{ ($liked ?? false) ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+                  <span class="like-count">{{ $teacher->likes_count ?? 0 }}</span>
+                </button>
+              </form>
+            @endauth
+            @include('posts.partials.bookmark-button', [
+              'toggleUrl' => auth()->check() ? route('teacher.bookmark.toggle', $teacher) : null,
+              'isSaved' => ($bookmarkedTeacherIds ?? collect())->contains($teacher->id),
+              'ariaLabel' => __('public.bookmark.aria_teacher'),
+            ])
+          </div>
           <div class="teacher-detail-actions">
             <a href="{{ route('teacher') }}" class="btn">{{ __('public.teachers.back_to_teachers') }}</a>
             <button
@@ -195,7 +202,11 @@
         <h2 id="related-teachers-heading" class="js-split-text related-section-title">
           {{ __('public.teachers.related_title') }}
         </h2>
-        @include('teacher.partials.related-grid', ['relatedTeachers' => $relatedTeachers, 'likedTeacherIds' => $likedTeacherIds ?? collect()])
+        @include('teacher.partials.related-grid', [
+          'relatedTeachers' => $relatedTeachers,
+          'likedTeacherIds' => $likedTeacherIds ?? collect(),
+          'bookmarkedTeacherIds' => $bookmarkedTeacherIds ?? collect(),
+        ])
       </section>
     @endif
   </main>

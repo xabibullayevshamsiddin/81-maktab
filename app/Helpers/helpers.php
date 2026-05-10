@@ -520,9 +520,9 @@ if (! function_exists('school_grade_options')) {
             ->flatMap(static fn ($options) => array_keys($options))
             ->values()
             ->all();
-            
+
         $options[] = 'TEACHER';
-        
+
         return $options;
     }
 }

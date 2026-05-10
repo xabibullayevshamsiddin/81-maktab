@@ -214,6 +214,11 @@ class User extends Authenticatable
         return $this->hasMany(PostLike::class);
     }
 
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(Bookmark::class);
+    }
+
     public function teacherLikes(): HasMany
     {
         return $this->hasMany(TeacherLike::class);

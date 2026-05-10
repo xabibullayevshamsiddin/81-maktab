@@ -260,14 +260,7 @@
             </div>
             <div class="col-lg-7 col-md-7 col-6">
               <div class="header-right">
-                <!-- notification start -->
-                <div class="header-notifications">
-                  <div class="notification-btn">
-                    <i class="mdi mdi-bell-outline"></i>
-                    <span class="notification-dot"></span>
-                  </div>
-                </div>
-                <!-- notification end -->
+
 
                 <!-- profile start -->
                 <div class="profile-box ml-15">

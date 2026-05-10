@@ -512,6 +512,7 @@
         $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: __('public.layout.chat_disabled_default');
       @endphp
       <div id="chat-widget" class="chat-widget"
+        data-chat-status-url="{{ route('chat.status') }}"
         data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
         data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
         data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
@@ -705,12 +706,12 @@
          * - Staggered grid/list entry
          * - Universal intersection reveals
          */
-        
+
         const primeEngine = {
           initProgressBar() {
             const bar = document.getElementById('prime-scroll-bar');
             if (!bar) return;
-            
+
             const updateBar = () => {
               const h = document.documentElement;
               const st = h.scrollTop || document.body.scrollTop;
@@ -718,7 +719,7 @@
               const scrollPercent = (st / (sh - h.clientHeight)) * 100;
               bar.style.width = scrollPercent + "%";
             };
-            
+
             window.addEventListener('scroll', updateBar, { passive: true });
             updateBar();
           },
@@ -781,10 +782,10 @@
           stagger(target) {
             if (target.dataset.animated === 'true') return;
             target.dataset.animated = 'true';
-            
+
             const children = target.children;
             const delayStep = 100;
-            
+
             Array.from(children).forEach((child, i) => {
               setTimeout(() => {
                 child.style.opacity = '1';
@@ -867,6 +868,7 @@
       id="ai-widget"
       class="ai-widget"
       data-ai-url="{{ route('ai.chat') }}"
+      data-ai-status-url="{{ route('ai.chat.status') }}"
       data-ai-feedback-url="{{ route('ai.chat.feedback') }}"
       data-csrf="{{ csrf_token() }}"
       data-ai-mock-delim="{{ config('ai.mock_delimiter') }}"
@@ -971,6 +973,7 @@
         var statusText = statusWrap ? statusWrap.querySelector('.chat-compose-status-text') : null;
 
         var aiUrl = widget.getAttribute('data-ai-url');
+        var aiStatusUrl = widget.getAttribute('data-ai-status-url');
         var aiFeedbackUrl = widget.getAttribute('data-ai-feedback-url');
         var csrfToken = widget.getAttribute('data-csrf');
         var aiMockDelim = widget.getAttribute('data-ai-mock-delim') || '';
@@ -983,6 +986,45 @@
         var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         /* PRIME AI Typewriter v2.0 — all keyframes live in style.css, nothing to inject */
+
+        function setAiEnabledState(enabled, message) {
+          aiEnabled = !!enabled;
+          widget.setAttribute('data-ai-enabled', aiEnabled ? '1' : '0');
+
+          if (message && aiDisabledText) {
+            aiDisabledText.textContent = message;
+          }
+
+          if (aiDisabledPanel && aiPanelMain) {
+            aiPanelMain.hidden = !aiEnabled;
+            aiDisabledPanel.hidden = aiEnabled;
+          }
+        }
+
+        function refreshAiAvailability() {
+          if (!aiStatusUrl) {
+            return Promise.resolve(aiEnabled);
+          }
+
+          return fetch(aiStatusUrl, {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            credentials: 'same-origin',
+          })
+            .then(function (res) {
+              if (!res.ok) return null;
+              return res.json();
+            })
+            .then(function (data) {
+              if (!data) return aiEnabled;
+
+              setAiEnabledState(!!data.enabled, data.disabled_message || data.error || widget.getAttribute('data-ai-disabled-message'));
+
+              return aiEnabled;
+            })
+            .catch(function () {
+              return aiEnabled;
+            });
+        }
 
         function syncAiDockState() {
           document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
@@ -1042,16 +1084,18 @@
           widget.classList.add('is-open');
           syncAiDockState();
           if (!aiEnabled && aiDisabledPanel && aiPanelMain) {
-            aiPanelMain.hidden = true;
-            aiDisabledPanel.hidden = false;
-            if (aiDisabledText) {
-              aiDisabledText.textContent = widget.getAttribute('data-ai-disabled-message') || aiText.ai_disabled_default;
-            }
+            setAiEnabledState(false, widget.getAttribute('data-ai-disabled-message') || aiText.ai_disabled_default);
+            refreshAiAvailability().then(function (enabled) {
+              if (!enabled) return;
+              if (!isSending) {
+                resetAiComposeState();
+                input.focus();
+              }
+            });
             if (window.playPrimeSuccess) window.playPrimeSuccess();
             return;
           }
-          if (aiDisabledPanel) aiDisabledPanel.hidden = true;
-          if (aiPanelMain) aiPanelMain.hidden = false;
+          setAiEnabledState(true);
           if (!isSending) {
             resetAiComposeState();
           }
@@ -1568,9 +1612,8 @@
             var data = payload.data;
 
             if (data && data.disabled) {
-              aiEnabled = false;
-              widget.setAttribute('data-ai-enabled', '0');
               data.error = data.error || "AI vaqtincha o'chirilgan.";
+              setAiEnabledState(false, data.error);
               showAiComposeStatus('Yozmoqda...');
               return addMessage(data.error || "AI vaqtincha o'chirilgan.", true).then(function () {
                 resetAiComposeState();
@@ -1599,9 +1642,8 @@
                 if (window.playPrimeResultPass) window.playPrimeResultPass();
               });
             } else if (data && data.disabled) {
-              aiEnabled = false;
-              widget.setAttribute('data-ai-enabled', '0');
               data.error = data.error || "AI vaqtincha o'chirilgan.";
+              setAiEnabledState(false, data.error);
               addMessage(data.error || 'AI vaqtincha o‘chirilgan.', true);
             } else {
               var backendError = (data && (data.error || data.message))

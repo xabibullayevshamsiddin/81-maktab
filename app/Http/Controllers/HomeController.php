@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ValidatesTurnstile;
+use App\Models\Bookmark;
 use App\Models\ContactMessage;
+use App\Models\Course;
+use App\Models\Exam;
 use App\Models\Post;
+use App\Models\PostLike;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use Artesaos\SEOTools\Facades\OpenGraph;
@@ -12,8 +16,6 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use App\Models\Course;
-use App\Models\Exam;
 
 class HomeController extends Controller
 {
@@ -38,7 +40,7 @@ class HomeController extends Controller
                 'created_at',
             ])
             ->with(['category:id,name,name_en'])
-            ->withCount(['comments'])
+            ->withCount(['comments', 'likes'])
             ->latest()
             ->take(3)
             ->get();
@@ -101,12 +103,25 @@ class HomeController extends Controller
 
         $postKindLabels = config('post_kinds', []);
 
+        $bookmarkedPostIds = Bookmark::bookmarkedPostIdsForUser(auth()->user(), $posts->pluck('id'));
+
+        $likedPostIds = collect();
+        if (auth()->check() && auth()->user()->isActive()) {
+            $ids = $posts->pluck('id')->filter();
+            if ($ids->isNotEmpty()) {
+                $likedPostIds = PostLike::query()
+                    ->where('user_id', auth()->id())
+                    ->whereIn('post_id', $ids)
+                    ->pluck('post_id');
+            }
+        }
+
         SEOMeta::setTitle('Bosh sahifa');
         SEOMeta::setDescription('81-IDUM maktab sayti — yangiliklar, o\'qituvchilar, kurslar va imtihonlar.');
         OpenGraph::setUrl(route('home'));
 
         return response()
-            ->view('home', compact('posts', 'featuredTeacher', 'postKindLabels'))
+            ->view('home', compact('posts', 'featuredTeacher', 'postKindLabels', 'bookmarkedPostIds', 'likedPostIds'))
             ->withHeaders($this->publicCounterHeaders());
     }
 
@@ -258,7 +273,7 @@ class HomeController extends Controller
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($posts as $post) {
             $results[] = [
                 'type' => 'post',
@@ -281,7 +296,7 @@ class HomeController extends Controller
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($teachers as $teacher) {
             $results[] = [
                 'type' => 'teacher',
@@ -304,7 +319,7 @@ class HomeController extends Controller
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($courses as $course) {
             $results[] = [
                 'type' => 'course',
@@ -314,7 +329,7 @@ class HomeController extends Controller
                 'image' => $course->image ? app_storage_asset($course->image) : null,
             ];
         }
-        
+
         $exams = Exam::query()
             ->where('is_active', true)
             ->where(function ($query) use ($searchTerms): void {
@@ -325,12 +340,12 @@ class HomeController extends Controller
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($exams as $exam) {
             $results[] = [
                 'type' => 'exam',
                 'title' => $exam->title,
-                'description' => strip_tags((string)$exam->description),
+                'description' => strip_tags((string) $exam->description),
                 'url' => route('exam.start.page', $exam->id),
                 'image' => null,
             ];

@@ -19,6 +19,7 @@ class TeacherCommentController extends Controller
     private const COMMENT_BODY_MAX = 100;
 
     private const REPLY_BODY_MAX = 50;
+
     private const REPLY_LIMIT_PER_COMMENT = 4;
 
     public function store(Request $request, Teacher $teacher)
@@ -45,29 +46,32 @@ class TeacherCommentController extends Controller
             if ($parentComment->replies()->count() >= self::REPLY_LIMIT_PER_COMMENT) {
                 return $this->denyInteraction(
                     $request,
-                    "Bitta izohga ko'pi bilan ".self::REPLY_LIMIT_PER_COMMENT." ta javob yozish mumkin.",
+                    "Bitta izohga ko'pi bilan ".self::REPLY_LIMIT_PER_COMMENT.' ta javob yozish mumkin.',
                     422
                 );
             }
         }
 
-        $comment = new TeacherComment();
+        $comment = new TeacherComment;
         $comment->teacher_id = $teacher->id;
         $comment->body = $validated['body'];
         $comment->author_name = $request->user()?->name ?? ($validated['author_name'] ?? null);
         $comment->user_id = $request->user()?->id;
-        $comment->is_approved = true;
+
+        $user = $request->user();
+        $comment->is_approved = (bool) ($user && ($user->canManageInbox() || (int) $user->id === (int) $teacher->user_id));
         $comment->parent_id = $parentComment?->id;
         $comment->save();
 
         if ($request->wantsJson()) {
             $comment->refresh();
             $comment->load('user.roleRelation');
+            $approved = $comment->is_approved;
 
             return response()->json([
                 'ok' => true,
-                'message' => "Izoh qo'shildi.",
-                'toast_type' => 'success',
+                'message' => $approved ? "Izoh qo'shildi." : 'Izoh yuborildi. Moderatsiyadan keyin chiqadi.',
+                'toast_type' => $approved ? 'success' : 'warning',
                 'comment' => [
                     'id' => $comment->id,
                     'author_name' => $comment->author_name ?? 'Mehmon',
@@ -80,13 +84,14 @@ class TeacherCommentController extends Controller
                     'avatar_url' => $comment->user?->avatar_url,
                     'avatar_initial' => Str::upper(Str::substr(trim((string) ($comment->author_name ?: 'M')), 0, 1)),
                     'likes_count' => 0,
+                    'is_approved' => $approved,
                 ],
             ]);
         }
 
         return back()
-            ->with('success', "Izoh qo'shildi.")
-            ->with('toast_type', 'success');
+            ->with('success', $comment->is_approved ? "Izoh qo'shildi." : 'Izoh yuborildi. Moderatsiyadan keyin chiqadi.')
+            ->with('toast_type', $comment->is_approved ? 'success' : 'warning');
     }
 
     public function update(Request $request, TeacherComment $comment)
@@ -234,8 +239,8 @@ class TeacherCommentController extends Controller
 
         return $request->validate($rules, [
             'body.max' => $isReply
-                ? "Javob matni ".self::REPLY_BODY_MAX." belgidan oshmasin."
-                : "Izoh matni ".self::COMMENT_BODY_MAX." belgidan oshmasin.",
+                ? 'Javob matni '.self::REPLY_BODY_MAX.' belgidan oshmasin.'
+                : 'Izoh matni '.self::COMMENT_BODY_MAX.' belgidan oshmasin.',
         ]);
     }
 
@@ -252,7 +257,7 @@ class TeacherCommentController extends Controller
         if (! $request->user()?->isActive()) {
             return $this->denyInteraction(
                 $request,
-                "Siz block qilingansiz. Izoh yozish mumkin emas.",
+                'Siz block qilingansiz. Izoh yozish mumkin emas.',
                 403
             );
         }

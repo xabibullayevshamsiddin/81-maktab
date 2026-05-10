@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\TeacherCommentLike;
@@ -78,6 +79,7 @@ class PublicTeacherController extends Controller
             ->values();
 
         $likedTeacherIds = collect();
+        $bookmarkedTeacherIds = collect();
         if (auth()->check()) {
             $ids = $teachers->getCollection()->pluck('id');
             if ($ids->isNotEmpty()) {
@@ -85,13 +87,14 @@ class PublicTeacherController extends Controller
                     ->where('user_id', auth()->id())
                     ->whereIn('teacher_id', $ids)
                     ->pluck('teacher_id');
+                $bookmarkedTeacherIds = Bookmark::bookmarkedIdsForUser(auth()->user(), Teacher::class, $ids);
             }
         }
 
         $teacherStats = $this->teacherPageStats();
 
         return response()
-            ->view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'))
+            ->view('teacher', compact('teachers', 'likedTeacherIds', 'bookmarkedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'))
             ->withHeaders($this->publicCounterHeaders());
     }
 
@@ -174,6 +177,7 @@ class PublicTeacherController extends Controller
         $relatedTeachers = $this->relatedTeachersFor($teacher, 3);
 
         $likedTeacherIds = collect();
+        $bookmarkedTeacherIds = collect();
         if (auth()->check()) {
             $teacherIds = collect([$teacher->id])->merge($relatedTeachers->pluck('id'));
             if ($teacherIds->isNotEmpty()) {
@@ -181,6 +185,7 @@ class PublicTeacherController extends Controller
                     ->where('user_id', auth()->id())
                     ->whereIn('teacher_id', $teacherIds)
                     ->pluck('teacher_id');
+                $bookmarkedTeacherIds = Bookmark::bookmarkedIdsForUser(auth()->user(), Teacher::class, $teacherIds);
             }
         }
 
@@ -190,7 +195,8 @@ class PublicTeacherController extends Controller
             'liked',
             'likedCommentIds',
             'relatedTeachers',
-            'likedTeacherIds'
+            'likedTeacherIds',
+            'bookmarkedTeacherIds'
         ))->withHeaders($this->publicCounterHeaders());
     }
 

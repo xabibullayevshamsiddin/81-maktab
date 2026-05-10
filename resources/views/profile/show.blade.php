@@ -212,6 +212,10 @@
               <i class="fa-solid fa-chart-column"></i>
               <span>Natijalar</span>
             </a>
+            <a href="{{ route('profile.bookmarks.index') }}" class="profile-panel-tab profile-panel-tab--link">
+              <i class="fa-solid fa-bookmark"></i>
+              <span>{{ __('profile.bookmarks.nav') }}</span>
+            </a>
           </nav>
         </section>
 
@@ -694,8 +698,8 @@
 	          @endif
             @endif
 
-           
-          
+
+
             @if(false && $profilePanel !== 'activity')
               <section class="profile-activity-block reveal profile-panel-aside-note">
                 <div class="profile-block-head">

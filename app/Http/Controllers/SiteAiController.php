@@ -166,6 +166,20 @@ class SiteAiController extends Controller
         return $this->respondWithInteraction($user, $userMessage, $payload);
     }
 
+    public function status(): JsonResponse
+    {
+        $enabled = SiteSetting::get('ai_chat_enabled', '1') === '1';
+
+        return response()->json([
+            'enabled' => $enabled,
+            'disabled' => ! $enabled,
+            'disabled_message' => SiteSetting::get(
+                'ai_chat_disabled_message',
+                "AI yordamchi vaqtincha o'chirilgan. Keyinroq urinib ko'ring."
+            ),
+        ]);
+    }
+
     public function feedback(StoreAiFeedbackRequest $request): JsonResponse
     {
         $validated = $request->validated();

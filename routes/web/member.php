@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\FeatureRequestController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\TeacherExamController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
+    Route::get('chat/status', [ChatController::class, 'status'])
+        ->name('chat.status');
     Route::get('chat/messages', [ChatController::class, 'messages'])
         ->middleware('active')
         ->name('chat.messages');
@@ -31,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('profile/bookmarks', [BookmarkController::class, 'index'])->name('profile.bookmarks.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('profile/natijalar', [ProfileController::class, 'resultsIndex'])->name('profile.results.index');
     Route::get('profile/results', [ProfileController::class, 'resultsIndex']);
@@ -91,14 +95,14 @@ Route::middleware('auth')->group(function () {
     Route::post('profile/kurs-arizalari/{enrollment}/rad-etish', [TeacherEnrollmentController::class, 'reject'])->middleware('active')->name('teacher.enrollments.reject');
     Route::delete('profile/kurs-arizalari/{enrollment}', [TeacherEnrollmentController::class, 'destroy'])->middleware('active')->name('teacher.enrollments.destroy');
 
-    Route::get('exams', [ExamController::class, 'index'])->middleware('active')->name('exam.index');
-    Route::get('exams/{exam}', [ExamController::class, 'startPage'])->middleware('active')->name('exam.start.page');
-    Route::post('exams/{exam}/start', [ExamController::class, 'start'])->middleware('active')->name('exam.start');
-    Route::get('exam-session/{result}', [ExamController::class, 'session'])->middleware('active')->name('exam.session');
-    Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->middleware('active')->name('exam.answer');
+    Route::get('exams', [ExamController::class, 'index'])->name('exam.index');
+    Route::get('exams/{exam}', [ExamController::class, 'startPage'])->name('exam.start.page');
+    Route::post('exams/{exam}/start', [ExamController::class, 'start'])->name('exam.start');
+    Route::get('exam-session/{result}', [ExamController::class, 'session'])->name('exam.session');
+    Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->name('exam.answer');
     Route::post('exam-session/{result}/violation', [ExamController::class, 'reportViolation'])
-        ->middleware(['active', 'throttle:90,1'])
+        ->middleware(['throttle:90,1'])
         ->name('exam.violation');
-    Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->middleware('active')->name('exam.submit');
+    Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->name('exam.submit');
     Route::get('exam-results/{result}', [ResultController::class, 'show'])->name('exam.result.show');
 });

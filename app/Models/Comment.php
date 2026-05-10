@@ -12,7 +12,14 @@ class Comment extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'post_id',
+        'user_id',
+        'author_name',
+        'body',
+        'is_approved',
+        'parent_id',
+    ];
 
     protected $casts = [
         'is_approved' => 'boolean',

@@ -118,7 +118,10 @@
             <span class="meta"><i class="fa-regular fa-eye"></i> <span class="js-post-views-count">{{ $post->views }}</span></span>
             <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count js-post-comments-count">{{ $post->comments_count }}</span></span>
 
-            @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
+            @php
+              $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id);
+              $bookmarkedPostIds = $bookmarkedPostIds ?? collect();
+            @endphp
             <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
               @csrf
               <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
@@ -126,6 +129,11 @@
                 <span class="like-count">{{ $post->likes_count }}</span>
               </button>
             </form>
+            @include('posts.partials.bookmark-button', [
+              'toggleUrl' => route('post.bookmark.toggle', $post),
+              'isSaved' => ($bookmarkedPostIds ?? collect())->contains($post->id),
+              'ariaLabel' => __('public.bookmark.aria_post'),
+            ])
           </div>
           <div class="icon-link-actions">
             <button
@@ -219,7 +227,7 @@
           <h2 id="related-posts-heading" class="js-split-text related-section-title">
             {{ __('public.posts.related_title') }}
           </h2>
-          @include('posts.partials.related-grid', ['relatedPosts' => $relatedPosts, 'likedPostIds' => $likedPostIds])
+          @include('posts.partials.related-grid', ['relatedPosts' => $relatedPosts, 'likedPostIds' => $likedPostIds, 'bookmarkedPostIds' => $bookmarkedPostIds ?? collect()])
           <p class="related-section-more">
             <a href="{{ route('post') }}" class="btn btn-outline btn-sm">{{ __('public.posts.related_all') }}</a>
           </p>

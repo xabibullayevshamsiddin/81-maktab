@@ -558,12 +558,10 @@ a {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent);
   transition: 0.5s;
 }
 
@@ -925,7 +923,8 @@ section {
 
 .icon-link {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
   align-items: center;
   color: var(--muted);
   font-size: 14px;
@@ -1011,6 +1010,104 @@ section {
 
 .like-btn.liked:focus-visible {
   outline-color: rgba(225, 29, 72, 0.55);
+}
+
+.js-bookmark-form {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+.bookmark-btn {
+  position: relative;
+  border: 1px solid rgba(13, 63, 120, 0.14);
+  background: rgba(255, 255, 255, 0.85);
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 8px 12px;
+  min-height: 38px;
+  border-radius: 999px;
+  box-shadow: 0 1px 0 rgba(13, 63, 120, 0.06), 0 1px 3px rgba(15, 23, 42, 0.06);
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease;
+}
+
+.bookmark-btn i {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.bookmark-btn__text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.bookmark-btn:hover {
+  color: #1d4ed8;
+  border-color: rgba(29, 78, 216, 0.35);
+  background: rgba(239, 246, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.12);
+  transform: translateY(-1px);
+}
+
+.bookmark-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.bookmark-btn:focus {
+  outline: none;
+}
+
+.bookmark-btn:focus-visible {
+  outline: 2px solid rgba(13, 63, 120, 0.45);
+  outline-offset: 2px;
+}
+
+.bookmark-btn.is-saved {
+  color: #1e40af;
+  border-color: rgba(29, 78, 216, 0.42);
+  background: linear-gradient(145deg, rgba(219, 234, 254, 0.65), rgba(239, 246, 255, 0.92));
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.14);
+}
+
+.bookmark-btn.is-saved:hover {
+  color: #1e3a8a;
+  border-color: rgba(30, 58, 138, 0.5);
+}
+
+.bookmark-btn.is-saved:focus-visible {
+  outline-color: rgba(37, 99, 235, 0.55);
+}
+
+a.bookmark-btn--guest {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.bookmark-btn--guest:hover {
+  color: #1d4ed8;
+}
+
+@media (max-width: 420px) {
+  .bookmark-btn__text {
+    display: none;
+  }
+
+  .bookmark-btn {
+    padding: 8px 11px;
+  }
 }
 
 .teachers {
@@ -9109,6 +9206,41 @@ body {
   word-break: break-word;
 }
 
+.toast-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.toast-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--text, #0f172a);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.toast-action:hover {
+  background: rgba(15, 23, 42, 0.16);
+  transform: translateY(-1px);
+}
+
+:root[data-theme='dark'] .toast-action {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+:root[data-theme='dark'] .toast-action:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* ---------- Close button ---------- */
 .toast-close {
   position: absolute;
@@ -9731,6 +9863,41 @@ body {
 :root[data-theme='dark'] .comment-like.liked:hover {
   color: #fecdd3 !important;
   border-color: rgba(254, 205, 211, 0.5) !important;
+}
+
+:root[data-theme='dark'] .bookmark-btn:not(.is-saved):not(.bookmark-btn--guest) {
+  color: #94a3b8 !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme='dark'] .bookmark-btn:hover:not(.is-saved):not(.bookmark-btn--guest) {
+  color: #93c5fd !important;
+  border-color: rgba(147, 197, 253, 0.4) !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+}
+
+:root[data-theme='dark'] .bookmark-btn.is-saved {
+  color: #bfdbfe !important;
+  border-color: rgba(147, 197, 253, 0.45) !important;
+  background: linear-gradient(145deg, rgba(30, 58, 138, 0.5), rgba(30, 64, 175, 0.32)) !important;
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.18);
+}
+
+:root[data-theme='dark'] .bookmark-btn.is-saved:hover {
+  color: #dbeafe !important;
+  border-color: rgba(191, 219, 254, 0.5) !important;
+}
+
+:root[data-theme='dark'] a.bookmark-btn--guest {
+  color: #94a3b8 !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+:root[data-theme='dark'] a.bookmark-btn--guest:hover {
+  color: #93c5fd !important;
 }
 
 :root[data-theme='dark'] .comment-action-box summary {
@@ -11558,10 +11725,42 @@ body {
   letter-spacing: 0.04em;
   color: #0f172a;
   line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.exam-timer-digits.is-warning {
+  color: #b45309;
+}
+
+.exam-timer-digits.is-critical {
+  color: #dc2626;
+  animation: examTimerPulse 1s ease-in-out infinite;
+}
+
+@keyframes examTimerPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
 }
 
 :root[data-theme='dark'] .exam-timer-digits {
   color: #f8fafc;
+}
+
+:root[data-theme='dark'] .exam-timer-digits.is-warning {
+  color: #fbbf24;
+}
+
+:root[data-theme='dark'] .exam-timer-digits.is-critical {
+  color: #fca5a5;
 }
 
 .exam-timer-label {
@@ -14807,8 +15006,17 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 @keyframes bombaDropdownIn {
-  from { opacity: 0; transform: translateY(15px) scale(0.92); filter: blur(4px); }
-  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.92);
+    filter: blur(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
 .nav-dropdown--bomba-locale .nav-dropdown-inner {
@@ -14875,8 +15083,15 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 @keyframes bombaCheckPop {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .nav-dropdown--bomba-locale .nav-dropdown-item:hover {
@@ -14958,7 +15173,7 @@ body:has(#chat-widget) .prime-audio-toggle {
   padding: 60px 80px;
   border-radius: 60px;
   text-align: center;
-  box-shadow: 
+  box-shadow:
     0 30px 60px rgba(0, 0, 0, 0.12),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   opacity: 0;
@@ -14989,19 +15204,22 @@ body:has(#chat-widget) .prime-audio-toggle {
   left: -100%;
   width: 300%;
   height: 300%;
-  background: linear-gradient(
-    45deg,
-    transparent 45%,
-    rgba(255, 255, 255, 0.08) 50%,
-    transparent 55%
-  );
+  background: linear-gradient(45deg,
+      transparent 45%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 55%);
   animation: bombaWelcomeShimmer 8s infinite linear;
   pointer-events: none;
 }
 
 @keyframes bombaWelcomeShimmer {
-  from { transform: translate(0, 0); }
-  to { transform: translate(30%, 30%); }
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(30%, 30%);
+  }
 }
 
 :root[data-theme='dark'] .bomba-welcome__inner {
@@ -15022,8 +15240,15 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 @keyframes bombaWelcomeFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(5deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
 }
 
 .bomba-welcome__title {
@@ -15068,7 +15293,7 @@ body:has(#chat-widget) .prime-audio-toggle {
   height: 100%;
   z-index: -1;
   pointer-events: none;
-  background: 
+  background:
     radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.07) 0%, transparent 45%),
     radial-gradient(circle at 85% 75%, rgba(45, 212, 191, 0.07) 0%, transparent 45%),
     radial-gradient(circle at 50% 50%, transparent 0%, var(--bg) 100%);
@@ -15076,12 +15301,17 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 @keyframes bombaMeshMove {
-  0% { transform: scale(1) translate(0, 0) rotate(0deg); }
-  100% { transform: scale(1.1) translate(1%, 2%) rotate(2deg); }
+  0% {
+    transform: scale(1) translate(0, 0) rotate(0deg);
+  }
+
+  100% {
+    transform: scale(1.1) translate(1%, 2%) rotate(2deg);
+  }
 }
 
 :root[data-theme='dark'] .bomba-mesh {
-  background: 
+  background:
     radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 45%),
     radial-gradient(circle at 85% 75%, rgba(14, 165, 233, 0.1) 0%, transparent 45%),
     radial-gradient(circle at 50% 50%, rgba(13, 27, 45, 0.3) 0%, var(--bg) 100%);
@@ -15091,7 +15321,8 @@ body:has(#chat-widget) .prime-audio-toggle {
    BOMBA NOTIFICATIONS & SEARCH CARDS
    ================================================== */
 
-.notification-card, .search-result-item {
+.notification-card,
+.search-result-item {
   background: rgba(255, 255, 255, 0.6) !important;
   backdrop-filter: blur(12px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -15100,26 +15331,28 @@ body:has(#chat-widget) .prime-audio-toggle {
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
 }
 
-:root[data-theme='dark'] .notification-card, 
+:root[data-theme='dark'] .notification-card,
 :root[data-theme='dark'] .search-result-item {
   background: rgba(30, 41, 59, 0.4) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.notification-card:hover, .search-result-item:hover {
+.notification-card:hover,
+.search-result-item:hover {
   transform: translateY(-5px) scale(1.01);
   background: rgba(255, 255, 255, 0.9) !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06) !important;
   border-color: var(--primary) !important;
 }
 
-:root[data-theme='dark'] .notification-card:hover, 
+:root[data-theme='dark'] .notification-card:hover,
 :root[data-theme='dark'] .search-result-item:hover {
   background: rgba(30, 41, 59, 0.7) !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
 }
 
-.search-result-media img, .search-result-fallback {
+.search-result-media img,
+.search-result-fallback {
   border-radius: 18px !important;
 }
 
@@ -15134,13 +15367,29 @@ body:has(#chat-widget) .prime-audio-toggle {
   flex-shrink: 0 !important;
 }
 
-.notification-card-icon--success { background: rgba(34, 197, 94, 0.1) !important; color: #22c55e !important; }
-.notification-card-icon--error { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
-.notification-card-icon--warning { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
-.notification-card-icon--info { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+.notification-card-icon--success {
+  background: rgba(34, 197, 94, 0.1) !important;
+  color: #22c55e !important;
+}
+
+.notification-card-icon--error {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+}
+
+.notification-card-icon--warning {
+  background: rgba(245, 158, 11, 0.1) !important;
+  color: #f59e0b !important;
+}
+
+.notification-card-icon--info {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+}
 
 /* Empty States */
-.notification-empty, .search-empty-state {
+.notification-empty,
+.search-empty-state {
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(8px);
   border: 2px dashed rgba(0, 0, 0, 0.08);
@@ -15148,7 +15397,7 @@ body:has(#chat-widget) .prime-audio-toggle {
   padding: 60px 20px;
 }
 
-:root[data-theme='dark'] .notification-empty, 
+:root[data-theme='dark'] .notification-empty,
 :root[data-theme='dark'] .search-empty-state {
   background: rgba(30, 41, 59, 0.2);
   border-color: rgba(255, 255, 255, 0.05);
@@ -15377,31 +15626,38 @@ body:has(#chat-widget) .prime-audio-toggle {
    BOMBA FOOTER - SPACE OPTIMIZATION
    ========================================================================== */
 .footer-container {
-  padding: 40px 20px 30px !important; /* Reduced from 80px */
-  gap: 30px !important; /* Reduced from 40px */
+  padding: 40px 20px 30px !important;
+  /* Reduced from 80px */
+  gap: 30px !important;
+  /* Reduced from 40px */
 }
 
 .footer-logo img {
-  width: 44px !important; /* Slightly smaller */
+  width: 44px !important;
+  /* Slightly smaller */
   height: 44px !important;
 }
 
 .footer-title {
-  margin-bottom: 16px !important; /* Reduced from 24px */
+  margin-bottom: 16px !important;
+  /* Reduced from 24px */
 }
 
 .footer-links li {
-  margin-bottom: 8px !important; /* Reduced from 12px */
+  margin-bottom: 8px !important;
+  /* Reduced from 12px */
 }
 
 .footer-desc {
   margin-bottom: 16px !important;
   font-size: 13.5px !important;
 }
+
 .home-btn {
   padding: 12px !important;
   gap: 12px !important;
 }
+
 .home-btn a {
   width: 38px !important;
   height: 38px !important;
@@ -15412,9 +15668,12 @@ body:has(#chat-widget) .prime-audio-toggle {
    BOMBA HEADER - WIDTH OPTIMIZATION
    ========================================================================== */
 .header-main {
-  width: calc(100% - 60px) !important; /* More side margin */
-  max-width: 1100px !important; /* Narrower width */
-  padding: 8px 18px !important; /* More horizontal padding inside */
+  width: calc(100% - 60px) !important;
+  /* More side margin */
+  max-width: 1100px !important;
+  /* Narrower width */
+  padding: 8px 18px !important;
+  /* More horizontal padding inside */
 }
 
 @media (max-width: 768px) {
@@ -15427,13 +15686,15 @@ body:has(#chat-widget) .prime-audio-toggle {
    BOMBA HEADER - WIDTH OPTIMIZATION (UPDATED)
    ========================================================================== */
 .header-main {
-  width: calc(100% - 40px) !important; /* Balanced side margin */
-  max-width: 1150px !important; /* Slightly larger but still compact */
+  width: calc(100% - 40px) !important;
+  /* Balanced side margin */
+  max-width: 1150px !important;
+  /* Slightly larger but still compact */
   padding: 10px 20px !important;
 }
 
 /* ==========================================================================
-   BOMBA RESPONSIVE ENGINE — PRO MAX ULTRA
+   BOMBA RESPONSIVE ENGINE ï¿½ PRO MAX ULTRA
    Unified responsive logic for all Bomba components
    ========================================================================== */
 
@@ -15443,6 +15704,7 @@ body:has(#chat-widget) .prime-audio-toggle {
     width: calc(100% - 30px) !important;
     padding: 8px 12px !important;
   }
+
   .logo img {
     height: 38px !important;
   }
@@ -15454,14 +15716,18 @@ body:has(#chat-widget) .prime-audio-toggle {
     width: calc(100% - 16px) !important;
     border-radius: 14px !important;
   }
+
   .header-user-name {
-    display: none !important; /* Hide name on tiny screens to save space */
+    display: none !important;
+    /* Hide name on tiny screens to save space */
   }
 }
 
 /* 2. Hero & About Sections */
 @media (max-width: 991px) {
-  .about-modern, .news-container {
+
+  .about-modern,
+  .news-container {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 15px !important;
   }
@@ -15471,17 +15737,21 @@ body:has(#chat-widget) .prime-audio-toggle {
   .hero-title {
     text-align: center !important;
   }
+
   .hero-title .js-split-text {
     width: 100% !important;
   }
+
   .hero-text-fade {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
+
   .home-primary-actions {
     justify-content: center !important;
   }
+
   .card-home {
     flex-direction: column !important;
     justify-content: center !important;
@@ -15491,12 +15761,17 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 @media (max-width: 640px) {
-  .about-modern, .news-container {
+
+  .about-modern,
+  .news-container {
     grid-template-columns: 1fr !important;
   }
-  .about-card, .news-card {
+
+  .about-card,
+  .news-card {
     padding: 20px !important;
   }
+
   .section-head {
     text-align: center !important;
   }
@@ -15510,11 +15785,15 @@ body:has(#chat-widget) .prime-audio-toggle {
     justify-content: flex-start !important;
     padding: 10px !important;
     -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important; /* Hide scrollbar Firefox */
+    scrollbar-width: none !important;
+    /* Hide scrollbar Firefox */
   }
+
   .site-section-nav::-webkit-scrollbar {
-    display: none !important; /* Hide scrollbar Chrome/Safari */
+    display: none !important;
+    /* Hide scrollbar Chrome/Safari */
   }
+
   .site-section-nav-link {
     white-space: nowrap !important;
     flex-shrink: 0 !important;
@@ -15534,12 +15813,16 @@ body:has(#chat-widget) .prime-audio-toggle {
     grid-template-columns: 1fr !important;
     text-align: center !important;
   }
-  .footer-logo, .footer-socials {
+
+  .footer-logo,
+  .footer-socials {
     justify-content: center !important;
   }
+
   .footer-contact-list li {
     justify-content: center !important;
   }
+
   .footer-title::after {
     left: 50% !important;
     transform: translateX(-50%) !important;
@@ -15551,8 +15834,59 @@ body:has(#chat-widget) .prime-audio-toggle {
   .btn {
     padding: 10px 20px !important;
     font-size: 13px !important;
-    width: 100% !important; /* Full width buttons on tiny screens */
+    width: 100% !important;
+    /* Full width buttons on tiny screens */
   }
+
+  .home-primary-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+}
+
+white-space: nowrap !important;
+flex-shrink: 0 !important;
+}
+}
+
+/* 4. Footer Column Adjustments */
+@media (max-width: 991px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 30px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-container {
+    grid-template-columns: 1fr !important;
+    text-align: center !important;
+  }
+
+  .footer-logo,
+  .footer-socials {
+    justify-content: center !important;
+  }
+
+  .footer-contact-list li {
+    justify-content: center !important;
+  }
+
+  .footer-title::after {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
+/* 5. Buttons scale on small screens */
+@media (max-width: 480px) {
+  .btn {
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    width: 100% !important;
+    /* Full width buttons on tiny screens */
+  }
+
   .home-primary-actions {
     flex-direction: column !important;
     width: 100% !important;

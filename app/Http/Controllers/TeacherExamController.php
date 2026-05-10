@@ -194,7 +194,7 @@ class TeacherExamController extends Controller
                     'sort_order' => $this->nextSortOrder($exam),
                     'points' => (int) $validated['points'],
                     'question_type' => $validated['question_type'],
-                    'model_answer' => $isTextType ? $validated['model_answer'] : null,
+                    'model_answer' => $isTextType ? sanitize_exam_rich_text($validated['model_answer'] ?? '') : null,
                 ]);
 
                 if (! $isTextType) {
@@ -273,7 +273,7 @@ class TeacherExamController extends Controller
                     'image_path' => $nextImagePath,
                     'points' => (int) $validated['points'],
                     'question_type' => $validated['question_type'],
-                    'model_answer' => $isTextType ? $validated['model_answer'] : null,
+                    'model_answer' => $isTextType ? sanitize_exam_rich_text($validated['model_answer'] ?? '') : null,
                 ]);
 
                 if ($isTextType) {
@@ -471,7 +471,7 @@ class TeacherExamController extends Controller
         }
 
         if (! (($user->canManageExams() && $exam->ownsExam($user)) || ((int) $result->user_id === (int) $user->id))) {
-            throw new ExamAccessDeniedException();
+            throw new ExamAccessDeniedException;
         }
 
         return view('profile.exams.results_show', compact('exam', 'result'));

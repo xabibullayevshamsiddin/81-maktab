@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 class Teacher extends Model
@@ -57,6 +58,13 @@ class Teacher extends Model
         static::deleting(function (Teacher $teacher): void {
             PublicStorage::delete($teacher->image);
         });
+
+        static::deleted(function (Teacher $teacher): void {
+            Bookmark::query()
+                ->where('bookmarkable_type', self::class)
+                ->where('bookmarkable_id', $teacher->id)
+                ->delete();
+        });
     }
 
     public function courses(): HasMany
@@ -72,6 +80,11 @@ class Teacher extends Model
     public function likes(): HasMany
     {
         return $this->hasMany(TeacherLike::class);
+    }
+
+    public function bookmarks(): MorphMany
+    {
+        return $this->morphMany(Bookmark::class, 'bookmarkable');
     }
 
     public function achievementItems(?int $limit = null, ?string $locale = null): array

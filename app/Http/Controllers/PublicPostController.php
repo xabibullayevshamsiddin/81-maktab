@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\SanitizesUserInput;
 use App\Http\Controllers\Concerns\ValidatesTurnstile;
+use App\Models\Bookmark;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\CommentLike;
 use App\Models\Post;
 use App\Models\PostLike;
+use Artesaos\SEOTools\Facades\OpenGraph;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Artesaos\SEOTools\Facades\OpenGraph;
-use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -25,6 +26,7 @@ class PublicPostController extends Controller
     private const COMMENT_BODY_MAX = 100;
 
     private const REPLY_BODY_MAX = 50;
+
     private const REPLY_LIMIT_PER_COMMENT = 4;
 
     public function index(Request $request)
@@ -119,6 +121,7 @@ class PublicPostController extends Controller
         $posts = $postsQuery->paginate(9)->appends($request->query());
 
         $likedPostIds = $this->likedPostIdsForUser($posts->pluck('id'));
+        $bookmarkedPostIds = Bookmark::bookmarkedPostIdsForUser($request->user(), $posts->pluck('id'));
 
         $viewData = [
             'posts' => $posts,
@@ -127,6 +130,7 @@ class PublicPostController extends Controller
             'categoryId' => $categoryId,
             'filter' => $filter,
             'likedPostIds' => $likedPostIds,
+            'bookmarkedPostIds' => $bookmarkedPostIds,
             'postKindLabels' => config('post_kinds', []),
         ];
 
@@ -151,6 +155,10 @@ class PublicPostController extends Controller
 
         $relatedPosts = $this->relatedPostsFor($post, 3);
         $likedPostIds = $this->likedPostIdsForUser(
+            collect([$post->id])->merge($relatedPosts->pluck('id'))
+        );
+        $bookmarkedPostIds = Bookmark::bookmarkedPostIdsForUser(
+            request()->user(),
             collect([$post->id])->merge($relatedPosts->pluck('id'))
         );
 
@@ -183,7 +191,7 @@ class PublicPostController extends Controller
         }
 
         return response()
-            ->view('posts.show', compact('post', 'likedPostIds', 'comments', 'likedCommentIds', 'relatedPosts'))
+            ->view('posts.show', compact('post', 'likedPostIds', 'bookmarkedPostIds', 'comments', 'likedCommentIds', 'relatedPosts'))
             ->withHeaders($this->publicCounterHeaders());
     }
 
@@ -249,31 +257,32 @@ class PublicPostController extends Controller
             if ($parentComment->replies()->count() >= self::REPLY_LIMIT_PER_COMMENT) {
                 return $this->denyInteraction(
                     $request,
-                    "Bitta izohga ko'pi bilan ".self::REPLY_LIMIT_PER_COMMENT." ta javob yozish mumkin.",
+                    "Bitta izohga ko'pi bilan ".self::REPLY_LIMIT_PER_COMMENT.' ta javob yozish mumkin.',
                     422
                 );
             }
         }
 
-        $comment = new Comment();
+        $comment = new Comment;
         $comment->post_id = $post->id;
         $comment->body = $validated['body'];
         $comment->author_name = $request->user()?->name ?? ($validated['author_name'] ?? null);
         $comment->user_id = $request->user()?->id;
 
-        // Show comments immediately.
-        $comment->is_approved = true;
+        $user = $request->user();
+        $comment->is_approved = (bool) ($user && $user->canManageInbox());
         $comment->parent_id = $parentComment?->id;
         $comment->save();
 
         if ($request->wantsJson()) {
             $comment->refresh();
             $comment->load('user.roleRelation');
+            $approved = $comment->is_approved;
 
             return response()->json([
                 'ok' => true,
-                'message' => "Izoh qo'shildi.",
-                'toast_type' => 'success',
+                'message' => $approved ? "Izoh qo'shildi." : 'Izoh yuborildi. Moderatsiyadan keyin chiqadi.',
+                'toast_type' => $approved ? 'success' : 'warning',
                 'comment' => [
                     'id' => $comment->id,
                     'author_name' => $comment->author_name ?? 'Mehmon',
@@ -286,13 +295,14 @@ class PublicPostController extends Controller
                     'avatar_url' => $comment->user?->avatar_url,
                     'avatar_initial' => Str::upper(Str::substr(trim((string) ($comment->author_name ?: 'M')), 0, 1)),
                     'likes_count' => 0,
+                    'is_approved' => $approved,
                 ],
             ]);
         }
 
         return back()
-            ->with('success', "Izoh qo'shildi.")
-            ->with('toast_type', 'success');
+            ->with('success', $comment->is_approved ? "Izoh qo'shildi." : 'Izoh yuborildi. Moderatsiyadan keyin chiqadi.')
+            ->with('toast_type', $comment->is_approved ? 'success' : 'warning');
     }
 
     public function updateComment(Request $request, Post $post, Comment $comment)
@@ -500,8 +510,8 @@ class PublicPostController extends Controller
 
         return $request->validate($rules, [
             'body.max' => $isReply
-                ? "Javob matni ".self::REPLY_BODY_MAX." belgidan oshmasin."
-                : "Izoh matni ".self::COMMENT_BODY_MAX." belgidan oshmasin.",
+                ? 'Javob matni '.self::REPLY_BODY_MAX.' belgidan oshmasin.'
+                : 'Izoh matni '.self::COMMENT_BODY_MAX.' belgidan oshmasin.',
         ]);
     }
 
@@ -522,7 +532,7 @@ class PublicPostController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'ok' => true,
-                    'message' => "Like olib tashlandi.",
+                    'message' => 'Like olib tashlandi.',
                     'liked' => false,
                     'likes_count' => $likesCount,
                     'toast_type' => 'warning',
@@ -530,7 +540,7 @@ class PublicPostController extends Controller
             }
 
             return back()
-                ->with('success', "Like olib tashlandi.")
+                ->with('success', 'Like olib tashlandi.')
                 ->with('toast_type', 'warning');
         }
 
@@ -584,7 +594,7 @@ class PublicPostController extends Controller
         if (! $request->user()?->isActive()) {
             return $this->denyInteraction(
                 $request,
-                "Siz block qilingansiz. Like bosish va izoh yozish mumkin emas.",
+                'Siz block qilingansiz. Like bosish va izoh yozish mumkin emas.',
                 403
             );
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use Illuminate\Http\Request;
@@ -48,7 +49,13 @@ class PublicCourseController extends Controller
             ->sort()
             ->values();
 
-        return view('courses', compact('courses', 'enrolledCourseIds', 'enrollmentByCourseId', 'q', 'selectedSubject', 'allSubjects'));
+        $bookmarkedCourseIds = Bookmark::bookmarkedIdsForUser(
+            auth()->user(),
+            Course::class,
+            $courses->getCollection()->pluck('id')
+        );
+
+        return view('courses', compact('courses', 'enrolledCourseIds', 'enrollmentByCourseId', 'bookmarkedCourseIds', 'q', 'selectedSubject', 'allSubjects'));
     }
 
     private function getCoursesQuery(string $q = '', string $selectedSubject = '')
@@ -147,6 +154,12 @@ class PublicCourseController extends Controller
             404
         );
 
-        return view('courses.show', compact('course'));
+        $bookmarkedCourseIds = Bookmark::bookmarkedIdsForUser(
+            auth()->user(),
+            Course::class,
+            collect([$course->id])
+        );
+
+        return view('courses.show', compact('course', 'bookmarkedCourseIds'));
     }
 }

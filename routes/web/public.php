@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CourseEnrollmentController;
 use App\Http\Controllers\FeatureRequestController;
@@ -35,6 +36,9 @@ Route::post('courses/{course}/enroll', [CourseEnrollmentController::class, 'stor
 Route::delete('courses/{course}/enroll', [CourseEnrollmentController::class, 'destroy'])
     ->middleware(['auth', 'active'])
     ->name('courses.enroll.cancel');
+Route::post('courses/{course}/bookmark', [BookmarkController::class, 'toggleCourse'])
+    ->middleware(['auth', 'active', 'throttle:60,1'])
+    ->name('course.bookmark.toggle');
 
 Route::get('taqvim', [CalendarController::class, 'index'])->name('calendar');
 
@@ -64,6 +68,9 @@ Route::post('post/{post:slug}/comments/{comment}/like', [PublicPostController::c
 Route::post('post/{post:slug}/like', [PublicPostController::class, 'toggleLike'])
     ->middleware(['active'])
     ->name('post.like');
+Route::post('post/{post:slug}/bookmark', [BookmarkController::class, 'togglePost'])
+    ->middleware(['auth', 'active', 'throttle:60,1'])
+    ->name('post.bookmark.toggle');
 
 Route::post('teacher/{teacher:slug}/comments', [TeacherCommentController::class, 'store'])
     ->middleware(['throttle:comments', 'active'])
@@ -83,6 +90,9 @@ Route::get('teacher/{teacher:slug}/stats', [PublicTeacherController::class, 'sta
 Route::post('teacher/{teacher:slug}/like', [PublicTeacherController::class, 'toggleLike'])
     ->middleware(['active'])
     ->name('teacher.like');
+Route::post('teacher/{teacher:slug}/bookmark', [BookmarkController::class, 'toggleTeacher'])
+    ->middleware(['auth', 'active', 'throttle:60,1'])
+    ->name('teacher.bookmark.toggle');
 
 Route::get('contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('feature-requests', [FeatureRequestController::class, 'index'])->name('feature-requests.index');

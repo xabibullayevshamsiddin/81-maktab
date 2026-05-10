@@ -18,6 +18,20 @@ class ChatController extends Controller
 
     private const MAX_MESSAGES = 50;
 
+    public function status(): JsonResponse
+    {
+        $enabled = SiteSetting::get('global_chat_enabled', '1') === '1';
+
+        return response()->json([
+            'enabled' => $enabled,
+            'chat_disabled' => ! $enabled,
+            'disabled_message' => SiteSetting::get(
+                'global_chat_disabled_message',
+                "Global chat vaqtincha o'chirilgan. Keyinroq urinib ko'ring."
+            ),
+        ]);
+    }
+
     public function messages(Request $request): JsonResponse
     {
         if (SiteSetting::get('global_chat_enabled', '1') !== '1') {

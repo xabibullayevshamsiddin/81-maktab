@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TeacherCommentLike extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'teacher_comment_id',
+        'user_id',
+    ];
 
     public function teacherComment(): BelongsTo
     {

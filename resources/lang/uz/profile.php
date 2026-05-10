@@ -172,4 +172,12 @@ return [
         'saved' => 'Saqlandi.',
         'server_error' => 'Server bilan bog\'lanishda xatolik yuz berdi.',
     ],
+    'bookmarks' => [
+        'page_title' => '81-IDUM | Saqlanganlar',
+        'nav' => 'Saqlangan',
+        'title' => 'Saqlanganlar',
+        'intro' => 'Yangiliklar, ustozlar va kurslar — barchasini «Saqlash» bilan bir joyda ko‘rasiz (o‘qituvchilar ham).',
+        'back' => 'Profilga qaytish',
+        'empty' => 'Hozircha hech narsa saqlanmagan. Yangiliklar, ustozlar yoki kurslar sahifasidagi «Saqlash» tugmasidan foydalaning.',
+    ],
 ];

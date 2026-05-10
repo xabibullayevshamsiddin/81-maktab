@@ -79,10 +79,10 @@ class AdminQuestionController extends Controller
                     'sort_order' => $this->nextSortOrder($exam),
                     'points' => (int) $validated['points'],
                     'question_type' => $validated['question_type'],
-                    'model_answer' => $isTextType ? $validated['model_answer'] : null,
+                    'model_answer' => $isTextType ? sanitize_exam_rich_text($validated['model_answer'] ?? '') : null,
                 ]);
 
-                if (!$isTextType) {
+                if (! $isTextType) {
                     foreach (['A', 'B', 'C', 'D'] as $label) {
                         Option::query()->create([
                             'question_id' => $question->id,
@@ -147,7 +147,7 @@ class AdminQuestionController extends Controller
                     'image_path' => $nextImagePath,
                     'points' => (int) $validated['points'],
                     'question_type' => $validated['question_type'],
-                    'model_answer' => $isTextType ? $validated['model_answer'] : null,
+                    'model_answer' => $isTextType ? sanitize_exam_rich_text($validated['model_answer'] ?? '') : null,
                 ]);
 
                 if ($isTextType) {
@@ -241,7 +241,7 @@ class AdminQuestionController extends Controller
         if ($sum + $questionPoints > $total) {
             $over = $sum + $questionPoints - $total;
             throw ValidationException::withMessages([
-                'points' => "Savollar ballari yig‘indisi imtihon umumiy balidan ({$total}) {$over} ball oshib ketdi. Shu savol bilan yig‘indi: ".($sum + $questionPoints).".",
+                'points' => "Savollar ballari yig‘indisi imtihon umumiy balidan ({$total}) {$over} ball oshib ketdi. Shu savol bilan yig‘indi: ".($sum + $questionPoints).'.',
             ]);
         }
     }

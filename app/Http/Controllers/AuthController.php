@@ -59,7 +59,7 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi, 
+        // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi,
         // lekin faqat `active` middleware ruxsat bergan joylargagina yoza olishadi.
 
         if (! $this->loginEmailOtpEnabled()) {
@@ -129,7 +129,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             return redirect()->route('home')
-            ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli.')
+                ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli.')
                 ->with('toast_type', 'success');
         }
 
@@ -333,6 +333,7 @@ class AuthController extends Controller
                 'email' => $email,
                 'user_id' => $user->id,
             ]);
+
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
         }
 
@@ -439,6 +440,7 @@ class AuthController extends Controller
             $this->logOtpSendFailure('OTP login resend failed', $e, [
                 'email' => $email,
             ]);
+
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
         }
 
@@ -569,6 +571,7 @@ class AuthController extends Controller
             $this->logOtpSendFailure('OTP register resend failed', $e, [
                 'email' => $email,
             ]);
+
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
         }
 
@@ -841,5 +844,4 @@ class AuthController extends Controller
     {
         return strtolower(trim($email));
     }
-
 }

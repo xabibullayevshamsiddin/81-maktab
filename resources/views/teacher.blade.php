@@ -112,7 +112,10 @@
                 <p class="teacher-achievements-preview"><i class="fa-solid fa-trophy"></i> {{ $teacherAchievementPreview }}</p>
               @endif
               <div class="teacher-actions">
-                @php $likedTeacherIds = $likedTeacherIds ?? collect(); @endphp
+                @php
+                  $likedTeacherIds = $likedTeacherIds ?? collect();
+                  $bookmarkedTeacherIds = $bookmarkedTeacherIds ?? collect();
+                @endphp
                 @auth
                   <form action="{{ route('teacher.like', $teacher) }}" method="POST" class="js-like-form">
                     @csrf
@@ -122,6 +125,11 @@
                     </button>
                   </form>
                 @endauth
+                @include('posts.partials.bookmark-button', [
+                  'toggleUrl' => auth()->check() ? route('teacher.bookmark.toggle', $teacher) : null,
+                  'isSaved' => $bookmarkedTeacherIds->contains($teacher->id),
+                  'ariaLabel' => __('public.bookmark.aria_teacher'),
+                ])
                 <button
                   type="button"
                   class="btn btn-sm btn-outline share-btn js-share-trigger"

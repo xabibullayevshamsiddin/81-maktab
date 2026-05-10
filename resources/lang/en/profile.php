@@ -172,4 +172,12 @@ return [
         'saved' => 'Saved.',
         'server_error' => 'A connection error occurred while talking to the server.',
     ],
+    'bookmarks' => [
+        'page_title' => '81-IDUM | Saved',
+        'nav' => 'Saved',
+        'title' => 'Saved items',
+        'intro' => 'News, teachers, and courses — all in one place (teachers can save too).',
+        'back' => 'Back to profile',
+        'empty' => 'Nothing saved yet. Use Save on news, teachers, or courses pages.',
+    ],
 ];
