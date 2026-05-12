@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
     <title>@yield('title', 'Admin Panel')</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,6 +205,13 @@
               </a>
             </li>
 
+            <li class="nav-item {{ request()->routeIs('admin.school-classes.*') ? 'active' : '' }}">
+              <a href="{{ route('admin.school-classes.index') }}">
+                <span class="icon"><i class="mdi mdi-school-outline"></i></span>
+                <span class="text">Sinflar boshqaruvi</span>
+              </a>
+            </li>
+
             @if($sidebarUser->isSuperAdmin())
               <li class="nav-item {{ request()->routeIs('ai-knowledges.*') ? 'active' : '' }}">
                 <a href="{{ route('ai-knowledges.index') }}">
@@ -250,12 +257,7 @@
                     <i class="lni lni-chevron-left me-2"></i> Menu
                   </button>
                 </div>
-                <div class="header-search d-none d-md-flex">
-                  <form action="#">
-                    <input type="text" placeholder="Search..." />
-                    <button><i class="lni lni-search-alt"></i></button>
-                  </form>
-                </div>
+               
               </div>
             </div>
             <div class="col-lg-7 col-md-7 col-6">

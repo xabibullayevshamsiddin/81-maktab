@@ -140,10 +140,12 @@
 		      );
 		      $teacherNeedsCourseOpenRequest = $teacherCourseCandidate && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
 		      $teacherCourseOpenPending = $teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
-		      $canCreateCourse = $canOpenCourseForm;
-		      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
-		      $currentLocale = current_locale();
-		      $supportedLocales = supported_locales();
+	      $canCreateCourse = $canOpenCourseForm;
+	      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
+	      $currentLocale = current_locale();
+	      $supportedLocales = supported_locales();
+	      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
+	      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
 	      $isExamSessionRoute = request()->routeIs('exam.session');
 	      $accountMenuActive = $authUser && (
 	        request()->routeIs('exam.*')
@@ -1680,6 +1682,113 @@
     </script>
     @endunless
     @endauth
+    @if($gradeSelectionLocked)
+      <section
+        class="grade-lock-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="grade-lock-title"
+        aria-describedby="grade-lock-description"
+        data-grade-lock
+      >
+        <div class="grade-lock-modal__veil" aria-hidden="true"></div>
+        <div class="grade-lock-modal__aurora grade-lock-modal__aurora--one" aria-hidden="true"></div>
+        <div class="grade-lock-modal__aurora grade-lock-modal__aurora--two" aria-hidden="true"></div>
+
+        <div class="grade-lock-modal__panel">
+          <div class="grade-lock-modal__crest" aria-hidden="true">
+            <span></span>
+          </div>
+
+          <div class="grade-lock-modal__copy">
+            <p class="grade-lock-modal__eyebrow">Profil yangilanishi majburiy</p>
+            <h2 id="grade-lock-title">Sinfingizni tanlang</h2>
+            <p id="grade-lock-description">
+              {{ $authUser->grade_selection_reason ?: "Saytdan foydalanishni davom ettirish uchun joriy sinfingizni tanlash kerak." }}
+            </p>
+          </div>
+
+          @if ($errors->any())
+            <div class="grade-lock-modal__error" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ $errors->first() }}</span>
+            </div>
+          @endif
+
+          <form action="{{ route('profile.grade-selection.update') }}" method="POST" class="grade-lock-modal__form" data-grade-lock-form>
+            @csrf
+            @method('PUT')
+
+            <label for="locked-grade-select">Yangi sinf</label>
+            <div class="grade-lock-modal__select-shell">
+              <select id="locked-grade-select" name="grade" required autofocus>
+                <option value="">Sinfni tanlang</option>
+                @foreach ($gradeSelectionGroups as $groupLabel => $options)
+                  <optgroup label="{{ $groupLabel }}">
+                    @foreach ($options as $value => $label)
+                      <option value="{{ $value }}" @selected(old('grade') === $value)>{{ $label }}</option>
+                    @endforeach
+                  </optgroup>
+                @endforeach
+              </select>
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </div>
+
+            <div class="grade-lock-modal__actions">
+              <button type="submit" class="grade-lock-modal__submit">
+                <span>Sinfni saqlash</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </form>
+
+          <div class="grade-lock-modal__note">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Bu oynani sinf tanlamasdan yopib bo'lmaydi.</span>
+          </div>
+        </div>
+      </section>
+    @endif
     @stack('page_scripts')
+    @if($gradeSelectionLocked)
+      <script>
+        (function () {
+          var lock = document.querySelector('[data-grade-lock]');
+          var select = document.getElementById('locked-grade-select');
+          var form = document.querySelector('[data-grade-lock-form]');
+
+          if (!lock || !select || !form) return;
+
+          document.documentElement.classList.add('grade-lock-active');
+          document.body.classList.add('grade-lock-active');
+
+          window.setTimeout(function () {
+            select.focus({ preventScroll: true });
+          }, 120);
+
+          document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              event.stopPropagation();
+              select.focus({ preventScroll: true });
+            }
+          }, true);
+
+          lock.addEventListener('click', function (event) {
+            if (event.target === lock || event.target.classList.contains('grade-lock-modal__veil')) {
+              event.preventDefault();
+              select.focus({ preventScroll: true });
+            }
+          });
+
+          form.addEventListener('submit', function () {
+            var button = form.querySelector('button[type="submit"]');
+            if (button) {
+              button.classList.add('is-loading');
+            }
+          });
+        })();
+      </script>
+    @endif
   </body>
 </html>

@@ -125,11 +125,7 @@
                     </button>
                   </form>
                 @endauth
-                @include('posts.partials.bookmark-button', [
-                  'toggleUrl' => auth()->check() ? route('teacher.bookmark.toggle', $teacher) : null,
-                  'isSaved' => $bookmarkedTeacherIds->contains($teacher->id),
-                  'ariaLabel' => __('public.bookmark.aria_teacher'),
-                ])
+              
                 <button
                   type="button"
                   class="btn btn-sm btn-outline share-btn js-share-trigger"

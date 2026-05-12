@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\AdminCourseEnrollmentController;
 use App\Http\Controllers\AdminExamController;
 use App\Http\Controllers\AdminQuestionController;
+use App\Http\Controllers\AdminSchoolClassController;
 use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -31,6 +32,10 @@ Route::middleware(['auth', 'active', 'role:super_admin,admin'])->group(function 
     Route::post('user/{user}/password-reset', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
     Route::post('user/{user}/course-open/approve', [AdminController::class, 'approveCourseOpenRequest'])->name('user.course-open.approve');
     Route::post('user/{user}/course-open/reject', [AdminController::class, 'rejectCourseOpenRequest'])->name('user.course-open.reject');
+    Route::get('admin/school-classes', [AdminSchoolClassController::class, 'index'])->name('admin.school-classes.index');
+    Route::post('admin/school-classes', [AdminSchoolClassController::class, 'store'])->name('admin.school-classes.store');
+    Route::delete('admin/school-classes/{schoolClass}', [AdminSchoolClassController::class, 'destroy'])->name('admin.school-classes.destroy');
+    Route::post('admin/school-classes/promote', [AdminSchoolClassController::class, 'promote'])->name('admin.school-classes.promote');
 });
 
 Route::prefix('admin')->middleware(['auth', 'active', 'role:super_admin,admin,editor,moderator'])->group(function () {

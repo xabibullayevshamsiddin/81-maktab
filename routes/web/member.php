@@ -4,6 +4,7 @@ use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\FeatureRequestController;
+use App\Http\Controllers\GradeSelectionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\TeacherEnrollmentController;
@@ -34,6 +35,8 @@ Route::middleware('auth')->group(function () {
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('profile/sinfni-tanlash', [GradeSelectionController::class, 'show'])->name('profile.grade-selection.show');
+    Route::put('profile/sinfni-tanlash', [GradeSelectionController::class, 'update'])->name('profile.grade-selection.update');
     Route::get('profile/bookmarks', [BookmarkController::class, 'index'])->name('profile.bookmarks.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('profile/natijalar', [ProfileController::class, 'resultsIndex'])->name('profile.results.index');

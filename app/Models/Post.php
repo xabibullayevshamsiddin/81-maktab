@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Schema;
 
 class Post extends Model
 {
@@ -62,10 +63,12 @@ class Post extends Model
                 $post->video_path,
             ]);
 
-            Bookmark::query()
-                ->where('bookmarkable_type', self::class)
-                ->where('bookmarkable_id', $post->id)
-                ->delete();
+            if (Schema::hasTable('bookmarks')) {
+                Bookmark::query()
+                    ->where('bookmarkable_type', self::class)
+                    ->where('bookmarkable_id', $post->id)
+                    ->delete();
+            }
         });
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class Teacher extends Model
@@ -60,10 +61,12 @@ class Teacher extends Model
         });
 
         static::deleted(function (Teacher $teacher): void {
-            Bookmark::query()
-                ->where('bookmarkable_type', self::class)
-                ->where('bookmarkable_id', $teacher->id)
-                ->delete();
+            if (Schema::hasTable('bookmarks')) {
+                Bookmark::query()
+                    ->where('bookmarkable_type', self::class)
+                    ->where('bookmarkable_id', $teacher->id)
+                    ->delete();
+            }
         });
     }
 

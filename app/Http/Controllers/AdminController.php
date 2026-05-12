@@ -88,7 +88,7 @@ class AdminController extends Controller
         $selectedStatus = (string) $request->query('status', '');
         $selectedRoleId = (int) $request->query('role_id', 0);
 
-        if (! in_array($selectedGrade, school_grade_options(), true)) {
+        if (! in_array($selectedGrade, school_student_grade_options(), true)) {
             $selectedGrade = '';
         }
 
@@ -162,7 +162,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'role_id' => ['sometimes', 'required', 'integer', 'exists:roles,id'],
             'is_active' => ['sometimes', 'required', 'boolean'],
-            'grade' => ['sometimes', 'nullable', 'string', 'max:10', \Illuminate\Validation\Rule::in(school_grade_options())],
+            'grade' => ['sometimes', 'nullable', 'string', 'max:10', \Illuminate\Validation\Rule::in(school_student_grade_options())],
         ], [
             'grade.in' => school_grade_validation_message(),
         ]);

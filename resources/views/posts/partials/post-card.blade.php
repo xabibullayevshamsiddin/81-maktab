@@ -53,11 +53,7 @@
         </button>
       </form>
 
-      @include('posts.partials.bookmark-button', [
-        'toggleUrl' => route('post.bookmark.toggle', $post),
-        'isSaved' => $bookmarkedPostIds->contains($post->id),
-        'ariaLabel' => __('public.bookmark.aria_post'),
-      ])
+      
     </div>
     <div class="icon-link-actions">
       <button

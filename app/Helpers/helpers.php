@@ -466,10 +466,16 @@ if (! function_exists('uz_phone_format')) {
 
 if (! function_exists('school_grade_map')) {
     /**
-     * Maktabdagi barcha rasmiy sinflar ro'yxati (Rasm asosida lotincha harflarda).
+     * Maktabdagi barcha faol rasmiy sinflar ro'yxati.
      */
     function school_grade_map(): array
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('school_classes')) {
+            return \Illuminate\Support\Facades\Cache::remember('school_classes.active_map.v1', now()->addMinutes(10), function (): array {
+                return \App\Models\SchoolClass::activeMap();
+            });
+        }
+
         return [
             1 => ['A', 'B', 'D', 'E', 'G', 'K', 'V', 'Z'],
             2 => ['A', 'B', 'D', 'E', 'G', 'K', 'V'],
@@ -483,6 +489,14 @@ if (! function_exists('school_grade_map')) {
             10 => ['A', 'D', 'E', 'V', 'B'],
             11 => ['D', 'G', 'V', 'B'],
         ];
+    }
+}
+
+if (! function_exists('forget_school_grade_cache')) {
+    function forget_school_grade_cache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('school_classes.active_map.v1');
+        \Illuminate\Support\Facades\Cache::forget('school_classes.active_names.v1');
     }
 }
 
@@ -513,13 +527,20 @@ if (! function_exists('school_grade_grouped_options')) {
     }
 }
 
-if (! function_exists('school_grade_options')) {
-    function school_grade_options(): array
+if (! function_exists('school_student_grade_options')) {
+    function school_student_grade_options(): array
     {
-        $options = collect(school_grade_grouped_options())
+        return collect(school_grade_grouped_options())
             ->flatMap(static fn ($options) => array_keys($options))
             ->values()
             ->all();
+    }
+}
+
+if (! function_exists('school_grade_options')) {
+    function school_grade_options(): array
+    {
+        $options = school_student_grade_options();
 
         $options[] = 'TEACHER';
 
