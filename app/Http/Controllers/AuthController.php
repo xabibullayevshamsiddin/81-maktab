@@ -137,6 +137,12 @@ class AuthController extends Controller
         }
 
         if (! $this->registerEmailOtpEnabled()) {
+            if (! $this->directRegisterFallbackEnabled()) {
+                return back()
+                    ->withErrors(['email' => "Ro'yxatdan o'tish tasdiqlashsiz ochiq emas. Telegram yoki email tasdiqlashni sozlang."])
+                    ->onlyInput('email');
+            }
+
             $user = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
@@ -943,6 +949,15 @@ class AuthController extends Controller
     private function registerEmailOtpEnabled(): bool
     {
         return self::REGISTER_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
+    }
+
+    private function directRegisterFallbackEnabled(): bool
+    {
+        if (app()->isLocal()) {
+            return true;
+        }
+
+        return filter_var(env('REGISTER_DIRECT_FALLBACK_ENABLED', false), FILTER_VALIDATE_BOOL);
     }
 
     private function telegramRegistrationEnabled(): bool
