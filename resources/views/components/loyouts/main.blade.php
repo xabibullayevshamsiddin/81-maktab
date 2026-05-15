@@ -1701,10 +1701,10 @@
           </div>
 
           <div class="grade-lock-modal__copy">
-            <p class="grade-lock-modal__eyebrow">Profil yangilanishi majburiy</p>
-            <h2 id="grade-lock-title">Sinfingizni tanlang</h2>
+            <p class="grade-lock-modal__eyebrow">{{ __('public.grade_lock.eyebrow') }}</p>
+            <h2 id="grade-lock-title">{{ __('public.grade_lock.title') }}</h2>
             <p id="grade-lock-description">
-              {{ $authUser->grade_selection_reason ?: "Saytdan foydalanishni davom ettirish uchun joriy sinfingizni tanlash kerak." }}
+              {{ $authUser->grade_selection_reason ?: __('public.grade_lock.description_default') }}
             </p>
           </div>
 
@@ -1719,7 +1719,7 @@
             @csrf
             @method('PUT')
 
-            <label for="locked-grade-select">Yangi sinf</label>
+            <label for="locked-grade-select">{{ __('public.grade_lock.label_new_grade') }}</label>
             <div class="grade-lock-modal__select-shell">
               <select id="locked-grade-select" name="grade" required autofocus>
                 <option value="">Sinfni tanlang</option>

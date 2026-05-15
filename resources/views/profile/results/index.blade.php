@@ -1,4 +1,4 @@
-<x-loyouts.main title="Mening natijalarim">
+<x-loyouts.main :title="__('public.profile_results.my_page_title')">
 @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ filemtime(public_path('temp/css/profile-results.css')) }}">
 @endpush
@@ -16,22 +16,22 @@
 <div class="container exam-public-container">
     <div class="results-header">
         <div class="results-breadcrumb">
-            <a href="{{ route('profile.show') }}">Profil</a>
+            <a href="{{ route('profile.show') }}">{{ __('public.profile_results.breadcrumb_profile') }}</a>
             <i class="fa-solid fa-chevron-right" style="font-size: 10px; opacity: 0.5; align-self: center;"></i>
-            <span>Mening natijalarim</span>
+            <span>{{ __('public.profile_results.my_page_title') }}</span>
         </div>
         <div class="results-header-actions">
             <div>
-                <h1 class="results-title">Mening natijalarim</h1>
-                <p class="text-muted">Topshirgan imtihonlaringiz, ballaringiz va batafsil tahlillar shu yerda alohida jamlangan.</p>
+                <h1 class="results-title">{{ __('public.profile_results.my_page_title') }}</h1>
+                <p class="text-muted">{{ __('public.profile_results.intro') }}</p>
             </div>
 
             <div class="profile-results-actions">
                 <button type="button" class="btn btn-sm btn-outline" onclick="window.print()">
-                    <i class="fa-solid fa-print"></i> Chop etish
+                    <i class="fa-solid fa-print"></i> {{ __('public.profile_results.print') }}
                 </button>
                 <a href="{{ route('profile.results.export') }}" class="btn btn-sm btn-outline">
-                    <i class="fa-solid fa-file-csv"></i> Barchasini Excel (CSV)
+                    <i class="fa-solid fa-file-csv"></i> {{ __('public.profile_results.export_all') }}
                 </a>
             </div>
         </div>
@@ -40,37 +40,37 @@
     <div class="bento-grid">
         <div class="bento-card">
             <i class="fa-solid fa-list-check"></i>
-            <span class="bento-label">Jami natijalar</span>
+            <span class="bento-label">{{ __('public.profile_results.total_label') }}</span>
             <span class="bento-value">{{ $summaryTotal }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-circle-check"></i>
-            <span class="bento-label">O'tganlar</span>
+            <span class="bento-label">{{ __('public.profile_results.passed_count') }}</span>
             <span class="bento-value">{{ $summaryPassed }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-circle-xmark"></i>
-            <span class="bento-label">Yiqilganlar</span>
+            <span class="bento-label">{{ __('public.profile_results.failed_count') }}</span>
             <span class="bento-value">{{ $summaryFailed }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-hourglass-half"></i>
-            <span class="bento-label">Tekshiruvda</span>
+            <span class="bento-label">{{ __('public.profile_results.pending_count') }}</span>
             <span class="bento-value">{{ $summaryPending }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-chart-line"></i>
-            <span class="bento-label">O'tish darajasi</span>
+            <span class="bento-label">{{ __('public.profile_results.pass_rate') }}</span>
             <span class="bento-value">{{ $summaryPassRate }}%</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-chart-simple"></i>
-            <span class="bento-label">O'rtacha ball</span>
+            <span class="bento-label">{{ __('public.profile_results.average_score') }}</span>
             <span class="bento-value">{{ $summaryAverage !== null ? $summaryAverage : '-' }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-trophy"></i>
-            <span class="bento-label">Eng yaxshi ball</span>
+            <span class="bento-label">{{ __('public.profile_results.best_score') }}</span>
             <span class="bento-value">{{ $summaryBest !== null ? $summaryBest : '-' }}</span>
         </div>
     </div>
@@ -81,9 +81,9 @@
                 @php
                     $resultPercent = $result->points_max > 0 ? round($result->points_earned / $result->points_max * 100) : 0;
                     $resultStatusLabel = match ($result->status) {
-                        'expired' => 'Vaqt tugagan',
-                        'submitted' => 'Topshirilgan',
-                        default => 'Tekshiruvda',
+                        'expired' => __('public.profile_results.status_expired'),
+                        'submitted' => __('public.profile_results.status_submitted'),
+                        default => __('public.profile_results.status_pending'),
                     };
                     $resultStateClass = $result->passed === true ? 'is-pass' : ($result->passed === false ? 'is-fail' : '');
                     $resultBadgeClass = $result->passed === true ? 'badge-pass' : ($result->passed === false ? 'badge-fail' : '');
@@ -98,11 +98,11 @@
 
                         <div class="profile-exam-result-badge {{ $resultBadgeClass }}">
                             @if($result->passed === true)
-                                <i class="fa-solid fa-circle-check"></i> O'tdi
+                                <i class="fa-solid fa-circle-check"></i> {{ __('public.profile_results.status_passed') }}
                             @elseif($result->passed === false)
-                                <i class="fa-solid fa-circle-xmark"></i> Yiqildi
+                                <i class="fa-solid fa-circle-xmark"></i> {{ __('public.profile_results.status_failed') }}
                             @else
-                                <i class="fa-solid fa-hourglass-half"></i> Tekshiruvda
+                                <i class="fa-solid fa-hourglass-half"></i> {{ __('public.profile_results.status_pending') }}
                             @endif
                         </div>
                     </div>
@@ -110,28 +110,28 @@
                     <div class="profile-exam-result-bottom">
                         <div class="profile-exam-result-metric">
                             <span class="profile-exam-result-metric-val">{{ $result->points_earned ?? 0 }}<small>/{{ $result->points_max ?? 0 }}</small></span>
-                            <span class="profile-exam-result-metric-label">Ball</span>
+                            <span class="profile-exam-result-metric-label">{{ __('public.profile_results.points_metric') }}</span>
                         </div>
                         <div class="profile-exam-result-metric">
                             <span class="profile-exam-result-metric-val">{{ $result->score }}<small>/{{ $result->total_questions }}</small></span>
-                            <span class="profile-exam-result-metric-label">To'g'ri</span>
+                            <span class="profile-exam-result-metric-label">{{ __('public.profile_results.correct_metric') }}</span>
                         </div>
                         <div class="profile-exam-result-metric">
                             <span class="profile-exam-result-metric-val">{{ $resultPercent }}%</span>
-                            <span class="profile-exam-result-metric-label">Foiz</span>
+                            <span class="profile-exam-result-metric-label">{{ __('public.profile_results.percent_metric') }}</span>
                         </div>
                         <div class="profile-exam-result-metric">
                             <span class="profile-exam-result-metric-val" style="font-size:12px;">{{ $resultStatusLabel }}</span>
-                            <span class="profile-exam-result-metric-label">Holat</span>
+                            <span class="profile-exam-result-metric-label">{{ __('public.profile_results.status_metric') }}</span>
                         </div>
                     </div>
 
                     <div class="profile-actions-row results-card-actions">
                         <a href="{{ route('profile.results.single.export', $result) }}" class="btn btn-sm btn-outline">
-                            <i class="fa-solid fa-file-csv"></i> Faqat shu natija
+                            <i class="fa-solid fa-file-csv"></i> {{ __('public.profile_results.export_single') }}
                         </a>
                         <a href="{{ route('profile.exams.results.show', $result) }}" class="btn btn-outline btn-sm w-100" style="justify-content:center;">
-                            <i class="fa-solid fa-chart-pie me-1"></i> Batafsil grafika va xatolarni ko'rish
+                            <i class="fa-solid fa-chart-pie me-1"></i> {{ __('public.profile_results.details_chart') }}
                         </a>
                     </div>
                 </div>
@@ -145,9 +145,9 @@
         <div class="results-table-card">
             <div class="results-empty-state">
                 <i class="fa-solid fa-folder-open"></i>
-                <h3>Hali natija yo'q</h3>
-                <p>Imtihon topshirganingizdan keyin barcha natijalar shu sahifada ko'rinadi.</p>
-                <a href="{{ route('exam.index') }}" class="btn btn-sm">Imtihonlarga o'tish</a>
+                <h3>{{ __('public.profile_results.empty_title') }}</h3>
+                <p>{{ __('public.profile_results.empty_text') }}</p>
+                <a href="{{ route('exam.index') }}" class="btn btn-sm">{{ __('public.profile_results.empty_action') }}</a>
             </div>
         </div>
     @endif

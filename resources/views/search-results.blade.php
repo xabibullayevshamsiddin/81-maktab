@@ -1,12 +1,12 @@
-<x-loyouts.main title="Qidiruv natijalari">
+<x-loyouts.main :title="__('public.search.page_title')">
   <div class="bomba-mesh"></div>
 
   <section class="news-hero search-page-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">
-        <span class="badge">Qidiruv</span>
-        <h1 class="js-split-text">Saytdan izlash</h1>
-        <p>Barcha bo'limlar bo'yicha ma'lumotlarni qidiring: yangiliklar, ustozlar, kurslar va imtihonlar.</p>
+        <span class="badge">{{ __('public.search.badge') }}</span>
+        <h1 class="js-split-text">{{ __('public.search.hero_title') }}</h1>
+        <p>{{ __('public.search.hero_text') }}</p>
       </div>
     </div>
   </section>
@@ -16,12 +16,12 @@
       <form method="GET" action="{{ route('search') }}" class="exam-filter-panel filter-shell search-results-form">
         <div class="exam-filter-row">
           <div class="exam-filter-field search-results-field">
-            <label class="exam-filter-label" for="global-search-q">Qidiruv so'zi</label>
+            <label class="exam-filter-label" for="global-search-q">{{ __('public.search.query_label') }}</label>
             <div class="search-results-input-row">
-              <input type="search" id="global-search-q" name="q" class="exam-filter-input" placeholder="Nimani qidiryapsiz?..." value="{{ $q }}" required>
+              <input type="search" id="global-search-q" name="q" class="exam-filter-input" placeholder="{{ __('public.search.placeholder') }}" value="{{ $q }}" required>
               <button type="submit" class="btn btn-prime search-results-submit">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                Izlash
+                {{ __('public.search.submit') }}
               </button>
             </div>
           </div>
@@ -31,12 +31,12 @@
       @if(empty($q))
         <div class="notification-empty search-empty-state">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <p>Qidirish uchun yuqoridagi maydonga biror so'z yozing.</p>
+          <p>{{ __('public.search.empty_query') }}</p>
         </div>
       @else
         <div class="section-head search-results-head">
-          <h2>"{{ $q }}" bo'yicha natijalar</h2>
-          <p>{{ count($results) }} ta mos natija topildi.</p>
+          <h2>{{ __('public.search.results_title', ['query' => $q]) }}</h2>
+          <p>{{ __('public.search.results_count', ['count' => count($results)]) }}</p>
         </div>
 
         @if(count($results) > 0)
@@ -63,12 +63,7 @@
 
                 <span class="search-result-main">
                   <span class="search-result-type search-result-type--{{ $res['type'] }}">
-                    @if($res['type'] === 'post') Yangilik
-                    @elseif($res['type'] === 'teacher') Ustoz
-                    @elseif($res['type'] === 'course') Kurs
-                    @elseif($res['type'] === 'exam') Imtihon
-                    @else Natija
-                    @endif
+                    {{ data_get(trans('public.search.types'), $res['type'], __('public.search.types.default')) }}
                   </span>
                   <strong class="search-result-title">{{ $res['title'] }}</strong>
                   <span class="search-result-desc">{{ \Illuminate\Support\Str::limit($res['description'], 140) }}</span>
@@ -83,7 +78,7 @@
         @else
           <div class="notification-empty search-empty-state">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <p>Kechirasiz, izlaganingiz bo'yicha hech narsa topilmadi.</p>
+            <p>{{ __('public.search.no_results') }}</p>
           </div>
         @endif
       @endif

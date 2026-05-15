@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>500 - Ichki server xatoligi | {{ config('app.name') }}</title>
+    <title>{{ __('public.errors.500_page_title') }} | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -113,15 +113,15 @@
             </svg>
         </div>
         <div class="error-code">500</div>
-        <h1>Server biroz charchadi</h1>
-        <p>Tizimda kutilmagan xatolik yuz berdi. Bizning muhandislarimiz allaqachon buni tuzatish ustida ishlashmoqda. Iltimos, birozdan so'ng qayta urinib ko'ring.</p>
+        <h1>{{ __('public.errors.500_title') }}</h1>
+        <p>{{ __('public.errors.500_text') }}</p>
         
         <a href="{{ url('/') }}" class="btn-bomba">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M23 4v6h-6"></path>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
             </svg>
-            Qayta yuklash
+            {{ __('public.errors.500_reload') }}
         </a>
     </div>
 </body>

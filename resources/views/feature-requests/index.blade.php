@@ -1,4 +1,4 @@
-<x-loyouts.main title="Taklif va ovoz berish">
+<x-loyouts.main :title="__('public.feature_requests.page_title')">
   @push('page_styles')
     <style>
       .feature-list {
@@ -193,9 +193,9 @@
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">
-        <span class="badge">Feature Voting</span>
-        <h1 class="js-split-text">Qaysi funksiya kerak?</h1>
-        <p>Yangi taklif yozing va foydalanuvchilar qaysi funksiyani ko'proq xohlashini ovozlar orqali ko'ring.</p>
+        <span class="badge">{{ __('public.feature_requests.badge') }}</span>
+        <h1 class="js-split-text">{{ __('public.feature_requests.hero_title') }}</h1>
+        <p>{{ __('public.feature_requests.hero_text') }}</p>
       </div>
     </div>
   </section>
@@ -207,36 +207,36 @@
           @csrf
           <div class="exam-filter-row">
             <div class="exam-filter-field" style="flex:1;">
-              <label class="exam-filter-label" for="feature-title">Taklif nomi</label>
-              <input id="feature-title" type="text" name="title" class="exam-filter-input" maxlength="180" required value="{{ old('title') }}" placeholder="Masalan: Telegram bot orqali bildirishnoma">
+              <label class="exam-filter-label" for="feature-title">{{ __('public.feature_requests.title_label') }}</label>
+              <input id="feature-title" type="text" name="title" class="exam-filter-input" maxlength="180" required value="{{ old('title') }}" placeholder="{{ __('public.feature_requests.title_placeholder') }}">
             </div>
           </div>
           <div class="exam-filter-row" style="margin-top:10px;">
             <div class="exam-filter-field" style="flex:1;">
-              <label class="exam-filter-label" for="feature-description">Qisqacha izoh (ixtiyoriy)</label>
-              <textarea id="feature-description" name="description" class="exam-filter-input" rows="3" maxlength="3000" placeholder="Nima uchun kerakligini qisqacha yozing...">{{ old('description') }}</textarea>
+              <label class="exam-filter-label" for="feature-description">{{ __('public.feature_requests.description_label') }}</label>
+              <textarea id="feature-description" name="description" class="exam-filter-input" rows="3" maxlength="3000" placeholder="{{ __('public.feature_requests.description_placeholder') }}">{{ old('description') }}</textarea>
             </div>
           </div>
           <div style="margin-top: 14px;">
             <button type="submit" class="btn btn-prime">
-              <i class="fa-solid fa-plus"></i> Taklif qo'shish
+              <i class="fa-solid fa-plus"></i> {{ __('public.feature_requests.submit') }}
             </button>
           </div>
         </form>
       @else
         <div class="empty-state" style="margin-bottom: 24px;">
-          <p>Taklif qo'shish va ovoz berish uchun avval tizimga kiring.</p>
-          <a href="{{ route('login') }}" class="btn btn-prime" style="margin-top: 10px;">Tizimga kirish</a>
+          <p>{{ __('public.feature_requests.login_required') }}</p>
+          <a href="{{ route('login') }}" class="btn btn-prime" style="margin-top: 10px;">{{ __('public.feature_requests.login') }}</a>
         </div>
       @endauth
 
       <div class="section-head" style="text-align:left; margin-bottom: 20px;">
-        <h2>Eng ko'p ovoz olgan takliflar</h2>
+        <h2>{{ __('public.feature_requests.list_title') }}</h2>
       </div>
 
       @if($featureRequests->count() === 0)
         <div class="empty-state">
-          <p>Hozircha takliflar yo'q. Birinchi taklifni siz yozing.</p>
+          <p>{{ __('public.feature_requests.empty') }}</p>
         </div>
       @else
         <div class="feature-list">
@@ -244,15 +244,15 @@
             @php
               $authorName = trim((string) ($requestItem->user->first_name ?? '').' '.(string) ($requestItem->user->last_name ?? ''));
               if ($authorName === '') {
-                  $authorName = $requestItem->user->name ?? 'Foydalanuvchi';
+                  $authorName = $requestItem->user->name ?? __('public.feature_requests.default_user');
               }
               $hasVoted = in_array($requestItem->id, $votedRequestIds, true);
               $statusLabel = match ($requestItem->status) {
-                \App\Models\FeatureRequest::STATUS_PLANNED => "Rejada",
-                \App\Models\FeatureRequest::STATUS_IN_PROGRESS => "Jarayonda",
-                \App\Models\FeatureRequest::STATUS_DONE => "Bajarildi",
-                \App\Models\FeatureRequest::STATUS_REJECTED => "Rad etildi",
-                default => "Ko'rib chiqilmoqda",
+                \App\Models\FeatureRequest::STATUS_PLANNED => __('public.feature_requests.status_planned'),
+                \App\Models\FeatureRequest::STATUS_IN_PROGRESS => __('public.feature_requests.status_progress'),
+                \App\Models\FeatureRequest::STATUS_DONE => __('public.feature_requests.status_done'),
+                \App\Models\FeatureRequest::STATUS_REJECTED => __('public.feature_requests.status_rejected'),
+                default => __('public.feature_requests.status_review'),
               };
               $statusStyle = match ($requestItem->status) {
                 \App\Models\FeatureRequest::STATUS_PLANNED => 'background:rgba(59,130,246,.12);color:#1d4ed8;',
@@ -271,18 +271,18 @@
                 <div>
                   <h3 class="feature-item-title">{{ $requestItem->title }}</h3>
                   <p class="feature-item-meta">
-                    Muallif: {{ $authorName }} · {{ $requestItem->created_at?->format('d.m.Y H:i') }}
+                    {{ __('public.feature_requests.author', ['name' => $authorName]) }} · {{ $requestItem->created_at?->format('d.m.Y H:i') }}
                   </p>
                 </div>
                 <span class="badge" style="background: rgba(245, 158, 11, 0.12); color:#b45309;">
-                  <i class="fa-solid fa-arrow-up"></i> {{ (int) $requestItem->votes_count }} ovoz
+                  <i class="fa-solid fa-arrow-up"></i> {{ __('public.feature_requests.votes', ['count' => (int) $requestItem->votes_count]) }}
                 </span>
               </div>
               <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
                 <span class="badge" style="{{ $statusStyle }}">{{ $statusLabel }}</span>
                 @if($requestItem->announced_at)
                   <span class="badge" style="background:rgba(15,23,42,.08); color:#334155;">
-                    E'lon: {{ $requestItem->announced_at->format('d.m.Y H:i') }}
+                    {{ __('public.feature_requests.announced', ['date' => $requestItem->announced_at->format('d.m.Y H:i')]) }}
                   </span>
                 @endif
               </div>
@@ -292,7 +292,7 @@
               @endif
               @if($requestItem->admin_note)
                 <p style="margin:10px 0 0; color:#334155; background:rgba(15,23,42,.04); border-radius:10px; padding:10px;">
-                  <strong>Admin izohi:</strong> {{ $requestItem->admin_note }}
+                  <strong>{{ __('public.feature_requests.admin_note') }}</strong> {{ $requestItem->admin_note }}
                 </p>
               @endif
 
@@ -303,9 +303,9 @@
                       @csrf
                       <button type="submit" class="btn {{ $hasVoted ? 'btn-outline' : 'btn-prime' }}">
                         @if($hasVoted)
-                          <i class="fa-solid fa-check"></i> Ovoz berildi (bekor qilish)
+                          <i class="fa-solid fa-check"></i> {{ __('public.feature_requests.vote_remove') }}
                         @else
-                          <i class="fa-solid fa-thumbs-up"></i> Ovozimni berish
+                          <i class="fa-solid fa-thumbs-up"></i> {{ __('public.feature_requests.vote_add') }}
                         @endif
                       </button>
                     </form>
@@ -315,9 +315,9 @@
                     <form method="POST" action="{{ route('feature-requests.replies.store', $requestItem) }}">
                       @csrf
                       <div class="feature-inline-form">
-                        <input type="text" name="message" class="exam-filter-input" maxlength="3000" placeholder="Moderator/Admin javobi..." style="flex:1; min-width:220px;">
+                        <input type="text" name="message" class="exam-filter-input" maxlength="3000" placeholder="{{ __('public.feature_requests.reply_placeholder') }}" style="flex:1; min-width:220px;">
                         <button type="submit" class="btn btn-outline">
-                          <i class="fa-solid fa-reply"></i> Javob yozish
+                          <i class="fa-solid fa-reply"></i> {{ __('public.feature_requests.reply_submit') }}
                         </button>
                       </div>
                     </form>
@@ -325,30 +325,30 @@
 
                   @if($canDelete)
                     <form method="POST" action="{{ route('feature-requests.destroy', $requestItem) }}"
-                      data-confirm="Taklifni o'chirishni tasdiqlaysizmi?"
-                      data-confirm-title="Taklifni o'chirish"
+                      data-confirm="{{ __('public.feature_requests.delete_confirm') }}"
+                      data-confirm-title="{{ __('public.feature_requests.delete_title') }}"
                       data-confirm-variant="danger"
-                      data-confirm-ok="O'chirish">
+                      data-confirm-ok="{{ __('public.feature_requests.delete_ok') }}">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="btn btn-outline feature-delete-btn">
-                        <i class="fa-solid fa-trash"></i> Taklifni o'chirish
+                        <i class="fa-solid fa-trash"></i> {{ __('public.feature_requests.delete') }}
                       </button>
                     </form>
-                    <span class="feature-actions-tip">Taklif muallifi yoki admin o'chira oladi.</span>
+                    <span class="feature-actions-tip">{{ __('public.feature_requests.delete_tip') }}</span>
                   @endif
                 </div>
               @endauth
 
               @if(($requestItem->replies ?? collect())->isNotEmpty())
                 <div class="feature-replies-wrap">
-                  <div class="feature-replies-title">Javoblar</div>
+                  <div class="feature-replies-title">{{ __('public.feature_requests.replies') }}</div>
                   <div class="feature-replies-list">
                   @foreach($requestItem->replies as $reply)
                     @php
                       $replyAuthor = trim((string) ($reply->user->first_name ?? '').' '.(string) ($reply->user->last_name ?? ''));
                       if ($replyAuthor === '') {
-                        $replyAuthor = $reply->user->name ?? 'Xodim';
+                        $replyAuthor = $reply->user->name ?? __('public.feature_requests.default_staff');
                       }
                       $isSuperAdminReply = (bool) ($reply->user?->isSuperAdmin());
                       $isAdminReply = $isSuperAdminReply || (bool) ($reply->user?->isAdmin());
@@ -382,10 +382,10 @@
                         @if($canDeleteReply)
                           <div class="feature-reply-footer">
                             <form method="POST" action="{{ route('feature-requests.replies.destroy', $reply) }}"
-                              data-confirm="Javobni o'chirishni tasdiqlaysizmi?"
-                              data-confirm-title="Javobni o'chirish"
+                              data-confirm="{{ __('public.feature_requests.reply_delete_confirm') }}"
+                              data-confirm-title="{{ __('public.feature_requests.reply_delete_title') }}"
                               data-confirm-variant="danger"
-                              data-confirm-ok="O'chirish">
+                              data-confirm-ok="{{ __('public.feature_requests.delete_ok') }}">
                               @csrf
                               @method('DELETE')
                               <button type="submit" class="btn btn-outline btn-sm feature-reply-delete-btn">

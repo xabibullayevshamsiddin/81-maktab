@@ -1,4 +1,4 @@
-<x-loyouts.main title="Imtihon Natijasi">
+<x-loyouts.main :title="__('public.profile_results.detail_page_title')">
 @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ filemtime(public_path('temp/css/profile-results.css')) }}">
 @endpush
@@ -7,7 +7,7 @@
     $isTeacherViewer = auth()->user()->canManageExams() && $exam->ownsExam(auth()->user());
     $isOwnerViewer = (int) auth()->id() === (int) $result->user_id;
     $backLink = $isTeacherViewer ? route('profile.exams.results', ['exam_id' => $exam->id]) : route('profile.results.index');
-    $backLabel = $isTeacherViewer ? "Imtihonlar ro'yxati" : 'Natijalar sahifasi';
+    $backLabel = $isTeacherViewer ? __('public.profile_results.back_exams') : __('public.profile_results.back_results');
 @endphp
 
 <div class="container exam-public-container">
@@ -15,21 +15,21 @@
         <div class="results-breadcrumb">
             <a href="{{ $backLink }}">{{ $backLabel }}</a>
             <i class="fa-solid fa-chevron-right" style="font-size: 10px; opacity: 0.5; align-self: center;"></i>
-            <span>Natija tafsilotlari</span>
+            <span>{{ __('public.profile_results.detail_breadcrumb') }}</span>
         </div>
         <h1 class="results-title">
             {{ $result->user->name }} — {{ $exam->title }}
             @if($exam?->trashed())
-                <span class="badge bg-danger ms-2" style="font-size: 12px; vertical-align: middle;">O'chirilgan imtihon</span>
+                <span class="badge bg-danger ms-2" style="font-size: 12px; vertical-align: middle;">{{ __('public.profile_results.deleted_exam') }}</span>
             @endif
         </h1>
-        <p class="text-muted">Imtihon topshirish jarayoni va batafsil tahlili. Sinf: <strong>{{ $result->user_grade ?? $result->user->grade ?? '—' }}</strong></p>
+        <p class="text-muted">{!! __('public.profile_results.detail_intro', ['grade' => $result->user_grade ?? $result->user->grade ?? '—']) !!}</p>
     </div>
 
     @if($isOwnerViewer)
         <div class="profile-results-actions" style="margin-bottom: 18px;">
             <a href="{{ route('profile.results.single.export', $result) }}" class="btn btn-sm btn-outline">
-                <i class="fa-solid fa-file-csv"></i> Faqat shu natijani Excel (CSV)
+                <i class="fa-solid fa-file-csv"></i> {{ __('public.profile_results.export_single_detail') }}
             </a>
         </div>
     @endif
@@ -38,13 +38,13 @@
     <div class="bento-grid">
         <div class="bento-card">
             <i class="fa-solid fa-calendar-check"></i>
-            <span class="bento-label">Boshlangan vaqt</span>
+            <span class="bento-label">{{ __('public.profile_results.started_at') }}</span>
             <span class="bento-value">{{ $result->started_at?->format('d.m.Y H:i') }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-clock-rotate-left"></i>
-            <span class="bento-label">Tugallangan vaqt</span>
-            <span class="bento-value">{{ $result->submitted_at?->format('d.m.Y H:i') ?? 'Tugallanmagan' }}</span>
+            <span class="bento-label">{{ __('public.profile_results.finished_at') }}</span>
+            <span class="bento-value">{{ $result->submitted_at?->format('d.m.Y H:i') ?? __('public.profile_results.not_finished') }}</span>
         </div>
         <div class="bento-card">
             <i class="fa-solid fa-graduation-cap"></i>
@@ -103,7 +103,7 @@
                 </div>
             </div>
             <div class="text-md-start text-center">
-                <h3 class="fw-bold mb-2" style="color: var(--text);">Imtihon statistikasi</h3>
+                <h3 class="fw-bold mb-2" style="color: var(--text);">{{ __('public.profile_results.stats_title') }}</h3>
                 <p class="text-muted mb-3">Sizning umumiy natijangiz va o'zlashtirish ko'rsatkichi.</p>
                 <div class="d-flex flex-column gap-2">
                     <div class="d-flex align-items-center gap-2">
@@ -161,7 +161,7 @@
     @endpush
 
     <div class="mb-4 d-flex justify-content-between align-items-center">
-        <h4 class="mb-0 fw-bold" style="color: var(--primary);">Batafsil javoblar</h4>
+        <h4 class="mb-0 fw-bold" style="color: var(--primary);">{{ __('public.profile_results.answers_title') }}</h4>
         <a href="{{ $backLink }}" class="btn btn-outline-secondary btn-sm">
             <i class="fa-solid fa-arrow-left me-1"></i> Ortga qaytish
         </a>

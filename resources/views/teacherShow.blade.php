@@ -131,23 +131,7 @@
         <p>{{ __('public.teachers.comments_text') }}</p>
       </div>
 
-      <div class="comments-stats reveal">
-        <div class="stat-card">
-          <span class="stat-icon"><i class="fa-solid fa-comments"></i></span>
-          <span class="stat-num">{{ $comments->count() }}</span>
-          <span class="stat-label">{{ __('public.teachers.comments_count') }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon"><i class="fa-solid fa-star"></i></span>
-          <span class="stat-num">4.9</span>
-          <span class="stat-label">{{ __('public.teachers.rating') }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon"><i class="fa-solid fa-heart"></i></span>
-          <span class="stat-num js-teacher-likes-stat">{{ $teacher->likes_count ?? 0 }}</span>
-          <span class="stat-label">{{ __('public.teachers.likes') }}</span>
-        </div>
-      </div>
+
 
       <div class="comments-wrapper">
         <div class="comments-list">

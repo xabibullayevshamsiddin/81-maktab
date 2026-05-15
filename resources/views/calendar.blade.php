@@ -29,7 +29,7 @@
           </section>
         @endif
 
-        <section class="calendar-list-section prime-reveal">limida
+        <section class="calendar-list-section prime-reveal">
           <h2 class="calendar-list-heading">{{ __('public.calendar.list_title') }}</h2>
           <p class="calendar-list-lead">{{ __('public.calendar.list_lead') }}</p>
 

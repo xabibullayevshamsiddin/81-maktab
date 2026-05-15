@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>503 - Texnik xizmat ko'rsatish | {{ config('app.name') }}</title>
+    <title>{{ __('public.errors.503_page_title') }} | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -112,8 +112,8 @@
             </svg>
         </div>
         <div class="error-code">503</div>
-        <h1>Sayt yangilanmoqda</h1>
-        <p>Biz hozirda saytni yanada yaxshiroq qilish uchun texnik ishlar olib bormoqdamiz. Tez orada qaytamiz va yanada ko'proq imkoniyatlarni taqdim etamiz.</p>
+        <h1>{{ __('public.errors.503_title') }}</h1>
+        <p>{{ __('public.errors.503_text') }}</p>
         
         <div class="progress-bar">
             <div class="progress-fill"></div>
@@ -124,7 +124,7 @@
                 <path d="M23 4v6h-6"></path>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
             </svg>
-            Yana bir bor tekshirish
+            {{ __('public.errors.503_retry') }}
         </a>
     </div>
 </body>

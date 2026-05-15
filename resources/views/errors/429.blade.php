@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>429 - Juda ko'p so'rovlar | {{ config('app.name') }}</title>
+    <title>{{ __('public.errors.429_page_title') }} | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -97,15 +97,15 @@
             </svg>
         </div>
         <div class="error-code">429</div>
-        <h1>Juda ko'p so'rovlar</h1>
-        <p>Siz tizimga juda qisqa vaqt ichida ko'plab so'rovlar yubordingiz. Iltimos, biroz kutib turing va yana bir bor urinib ko'ring.</p>
+        <h1>{{ __('public.errors.429_title') }}</h1>
+        <p>{{ __('public.errors.429_text') }}</p>
         
         <a href="javascript:location.reload()" class="btn-bomba">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            Birozdan so'ng urinish
+            {{ __('public.errors.429_retry') }}
         </a>
     </div>
 </body>

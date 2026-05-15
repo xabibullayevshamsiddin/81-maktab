@@ -5,7 +5,9 @@
     if (!container) return;
 
     if (!tags.length) {
-      container.innerHTML = '<span class="filter-empty-copy">Filtr tanlanmagan.</span>';
+      const filterPanel = document.getElementById('exam-filter-panel');
+      const emptyLabel = filterPanel?.dataset.i18nFilterEmpty || 'No filter selected.';
+      container.innerHTML = '<span class="filter-empty-copy">' + emptyLabel + '</span>';
       return;
     }
 
@@ -87,6 +89,13 @@
     const zeroEl = document.getElementById('exam-filter-zero');
     const tagsWrap = document.getElementById('exam-filter-tags');
     const resetBtn = document.getElementById('exam-filter-reset');
+    const panel = document.getElementById('exam-filter-panel');
+    const i18n = {
+      countTotal: panel?.dataset.i18nCountTotal || 'Total: :total',
+      countShowing: panel?.dataset.i18nCountShowing || 'Showing: :shown / :total',
+      tagSearch: panel?.dataset.i18nTagSearch || 'Search: :query',
+      filterEmpty: panel?.dataset.i18nFilterEmpty || 'No filter selected.',
+    };
 
     if (!grid || !qEl || !gradeEl || !stateEl || !sortEl) return;
 
@@ -144,7 +153,10 @@
       const tags = [];
 
       if (qEl.value.trim()) {
-        tags.push({ key: 'q', label: 'Qidiruv: ' + qEl.value.trim() });
+        tags.push({
+          key: 'q',
+          label: i18n.tagSearch.replace(':query', qEl.value.trim()),
+        });
       }
 
       if (gradeEl.value) {
@@ -178,8 +190,10 @@
 
       if (countEl) {
         countEl.textContent = matched.length === total
-          ? 'Jami: ' + total + ' ta imtihon'
-          : "Ko'rsatilmoqda: " + matched.length + ' / ' + total;
+          ? i18n.countTotal.replace(':total', String(total))
+          : i18n.countShowing
+              .replace(':shown', String(matched.length))
+              .replace(':total', String(total));
       }
 
       if (zeroEl) {

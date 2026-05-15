@@ -214,7 +214,13 @@
               </div>
             </div>
             <button class="btn" type="submit">{{ __('auth_pages.register.submit') }}</button>
-            <p class="register-submit-note">{{ __('auth_pages.register.submit_note') }}</p>
+            <p class="register-submit-note">
+              @if (!empty($telegramVerificationEnabled))
+                Formani yuborganingizdan keyin Telegram bot orqali telefon raqamingizni tasdiqlaysiz.
+              @else
+                {{ __('auth_pages.register.submit_note') }}
+              @endif
+            </p>
             <p
               id="register-message"
               class="form-message register-global-message"

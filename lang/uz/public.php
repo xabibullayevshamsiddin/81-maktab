@@ -195,7 +195,7 @@ return [
         'comments_text' => 'Ustoz haqida fikr qoldiring.',
         'comments_count' => ':count ta izoh',
         'related_title' => "O'xshash ustozlar",
-        'back_to_teachers' => "Ustozlar ro'yxatiga qaytish",
+        'back_to_teachers' => "Orqaga qaytish",
     ],
     'courses' => [
         'page_title' => 'Kurslar',

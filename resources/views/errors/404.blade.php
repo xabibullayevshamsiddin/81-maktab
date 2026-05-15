@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>404 - Sahifa topilmadi | {{ config('app.name') }}</title>
+    <title>{{ __('public.errors.404_page_title') }} | {{ config('app.name') }}</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
@@ -180,15 +180,15 @@
             </svg>
         </div>
         <div class="error-code">404</div>
-        <h1>Voy! Sahifa koinotda yo'qoldi</h1>
-        <p>Siz izlayotgan sahifa manzili o'zgargan yoki u butunlay o'chirib tashlangan bo'lishi mumkin. Xavotir olmang, biz sizga yo'lni ko'rsatamiz.</p>
+        <h1>{{ __('public.errors.404_title') }}</h1>
+        <p>{{ __('public.errors.404_text') }}</p>
         
         <a href="{{ url('/') }}" class="btn-bomba">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
-            Bosh sahifaga qaytish
+            {{ __('public.errors.404_home') }}
         </a>
     </div>
 

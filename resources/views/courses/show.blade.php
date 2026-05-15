@@ -70,15 +70,15 @@
 	            <div class="course-details-main">
                 <div class="course-details-hero-strip">
                   <div class="course-details-kpi">
-                    <span>Kurs davomiyligi</span>
+                    <span>{{ __('public.courses_show.duration_kpi') }}</span>
                     <strong>{{ $courseDuration }}</strong>
                   </div>
                   <div class="course-details-kpi">
-                    <span>To'lov</span>
+                    <span>{{ __('public.courses_show.payment') }}</span>
                     <strong>{{ $coursePrice }}</strong>
                   </div>
                   <div class="course-details-kpi">
-                    <span>Boshlanish</span>
+                    <span>{{ __('public.courses_show.start_kpi') }}</span>
                     <strong>{{ $course->start_date?->format('Y-m-d') ?: '-' }}</strong>
                   </div>
                 </div>
@@ -98,12 +98,12 @@
 
                 <div class="course-details-story-grid">
                   <article class="course-story-card">
-                    <h3><i class="fa-solid fa-bullseye"></i> Bu kurs kim uchun?</h3>
-                    <p>{{ $teacherGrades ?: "Boshlang'ichdan yuqori sinflargacha moslashtirilgan o'quv oqimi." }}</p>
+                    <h3><i class="fa-solid fa-bullseye"></i> {{ __('public.courses_show.audience_title') }}</h3>
+                    <p>{{ $teacherGrades ?: __('public.courses_show.audience_default') }}</p>
                   </article>
                   <article class="course-story-card">
-                    <h3><i class="fa-solid fa-flag-checkered"></i> Kutilyotgan natija</h3>
-                    <p>{{ $teacherBio ?: "Kurs yakunida mavzu bo'yicha tushuncha, mashq va amaliy tayyorgarlik kuchayadi." }}</p>
+                    <h3><i class="fa-solid fa-flag-checkered"></i> {{ __('public.courses_show.outcome_title') }}</h3>
+                    <p>{{ $teacherBio ?: __('public.courses_show.outcome_default') }}</p>
                   </article>
                 </div>
 	            </div>
@@ -126,7 +126,7 @@
               <p class="course-teacher-bio">{{ $teacherBio }}</p>
 
               <div class="course-teacher-achievements">
-                <h4><i class="fa-solid fa-trophy"></i> Yutuqlar va tajriba</h4>
+                <h4><i class="fa-solid fa-trophy"></i> {{ __('public.courses_show.achievements_title') }}</h4>
                 @if(!empty($teacherAchievements))
                   <ul>
                     @foreach($teacherAchievements as $achievement)
@@ -144,7 +144,7 @@
 	                </a>
 	              @endif
                 <a href="{{ route('courses') }}" class="btn btn-outline btn-sm course-teacher-link">
-                  <i class="fa-solid fa-grid-2"></i> Boshqa kurslarni ko'rish
+                  <i class="fa-solid fa-grid-2"></i> {{ __('public.courses_show.other_courses') }}
                 </a>
 	            </aside>
 	          </div>

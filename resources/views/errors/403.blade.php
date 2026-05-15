@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>403 - Kirish taqiqlangan | {{ config('app.name') }}</title>
+    <title>{{ __('public.errors.403_page_title') }} | {{ config('app.name') }}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -129,15 +129,15 @@
             </svg>
         </div>
         <div class="error-code">403</div>
-        <h1>Kirish taqiqlangan</h1>
-        <p>Sizda ushbu sahifani ko'rish uchun yetarli huquqlar mavjud emas. Iltimos, tizim administratoriga murojaat qiling yoki o'z hisobingizga kiring.</p>
+        <h1>{{ __('public.errors.403_title') }}</h1>
+        <p>{{ __('public.errors.403_text') }}</p>
         
         <a href="{{ url('/') }}" class="btn-bomba">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
-            Xavfsiz joyga qaytish
+            {{ __('public.errors.403_home') }}
         </a>
     </div>
 </body>

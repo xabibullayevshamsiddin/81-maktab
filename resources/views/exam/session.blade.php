@@ -4,7 +4,8 @@
     return $answer && ($answer->option_id !== null || filled($answer->text_answer));
   })->count();
   $progressPct = $totalQ > 0 ? min(100, (int) round($answeredCount / $totalQ * 100)) : 0;
-  $examTitle = $result->exam->title ?? 'Imtihon';
+  $examTitle = $result->exam->title ?? __('public.exam.default_title');
+  $sessionI18n = trans('public.exam.session');
   $watermarkLabel = trim((auth()->user()->name ?? 'Foydalanuvchi') . ' • #' . $result->id . ' • ' . $examTitle);
   $violationLimit = 5;
   $initialViolationCount = (int) ($result->rule_violation_count ?? 0);
@@ -12,7 +13,7 @@
   $violationFillPct = $violationLimit > 0 ? min(100, (int) round($initialViolationCount / $violationLimit * 100)) : 0;
 @endphp
 
-<x-loyouts.main title="{{ $examTitle }} - savol">
+<x-loyouts.main :title="$examTitle . __('public.exam.session.title_suffix')">
   <main class="news exam-page exam-session-wrap">
     <div class="exam-page-inner exam-anti-copy" id="exam-anti-root">
       <div class="exam-watermark-layer" id="exam-watermark-layer" aria-hidden="true" data-watermark="{{ $watermarkLabel }}"></div>
@@ -21,7 +22,7 @@
           <div class="exam-session-title-block">
             <p class="exam-session-exam-name">{{ $examTitle }}</p>
             <p class="exam-session-step-line" id="exam-step-line">
-              Savol <span id="exam-step-current">1</span> / {{ $totalQ }}
+              {!! __('public.exam.session.question_step', ['current' => '<span id="exam-step-current">1</span>', 'total' => $totalQ]) !!}
             </p>
           </div>
           <div class="exam-timer exam-timer--compact">
@@ -29,7 +30,7 @@
               <i class="fa-solid fa-hourglass-half"></i>
             </div>
             <div>
-              <div class="exam-timer-label">Qolgan vaqt</div>
+              <div class="exam-timer-label">{{ __('public.exam.session.time_left') }}</div>
               <div class="exam-timer-digits" id="timer" role="timer" aria-live="polite">--:--</div>
             </div>
           </div>
@@ -38,7 +39,7 @@
         <div class="exam-session-header-row exam-session-header-row--2">
           <div class="exam-progress-block exam-progress-block--full">
             <div class="exam-progress-label">
-              <span>Javob berilgan</span>
+              <span>{{ __('public.exam.session.answered') }}</span>
               <span><strong id="exam-answered-num">{{ $answeredCount }}</strong> / {{ $totalQ }}</span>
             </div>
             <div class="exam-progress-track">
@@ -48,11 +49,11 @@
           <div class="exam-secure-stack">
             <p class="exam-secure-note">
               <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-              <span>Skrinshot, chop etish va nusxalash taqiqlanadi. {{ $violationLimit }} ta qoida buzarlik bo'lsa imtihon 0 ball bilan yakunlanadi.</span>
+              <span>{{ __('public.exam.session.secure_note', ['limit' => $violationLimit]) }}</span>
             </p>
             <div class="exam-violation-panel {{ $remainingViolationCount === 1 ? 'is-danger' : '' }}" id="exam-violation-panel">
               <div class="exam-violation-head">
-                <span>Qoida buzarlik limiti</span>
+                <span>{{ __('public.exam.session.violation_limit') }}</span>
                 <strong><span id="exam-violation-count">{{ $initialViolationCount }}</span> / {{ $violationLimit }}</strong>
               </div>
               <div class="exam-violation-track">
@@ -60,11 +61,11 @@
               </div>
               <p class="exam-violation-note" id="exam-violation-note">
                 @if($remainingViolationCount > 1)
-                  Yana {{ $remainingViolationCount }} ta qoidabuzarlik qilinsa imtihon yiqiladi.
+                  {{ __('public.exam.session.violation_remaining', ['count' => $remainingViolationCount]) }}
                 @elseif($remainingViolationCount === 1)
-                  Oxirgi ogohlantirish: yana 1 ta qoidabuzarlik bo'lsa imtihon avtomatik yopiladi.
+                  {{ __('public.exam.session.violation_last_warning') }}
                 @else
-                  Qoida buzarlik limiti tugagan.
+                  {{ __('public.exam.session.violation_exhausted') }}
                 @endif
               </p>
             </div>
@@ -80,8 +81,8 @@
         <!-- Question Navigation Grid -->
         <div class="exam-nav-grid-container">
           <div class="exam-nav-grid-header">
-            <span class="exam-nav-grid-title"><i class="fa-solid fa-list-ol"></i> Savollar ro'yxati</span>
-            <span class="exam-nav-grid-hint">O'tish uchun savol raqamini bosing</span>
+            <span class="exam-nav-grid-title"><i class="fa-solid fa-list-ol"></i> {{ __('public.exam.session.nav_title') }}</span>
+            <span class="exam-nav-grid-hint">{{ __('public.exam.session.nav_hint') }}</span>
           </div>
           <div class="exam-nav-grid" id="exam-nav-grid">
             @foreach($orderedQuestions as $index => $question)
@@ -94,7 +95,7 @@
                 onclick="showStep({{ $index }})"
                 data-grid-step="{{ $index }}"
                 data-grid-question-id="{{ $question->id }}"
-                title="Savol {{ $index + 1 }}"
+                title="{{ __('public.exam.session.question_title', ['num' => $index + 1]) }}"
               >
                 {{ $index + 1 }}
               </button>
@@ -116,7 +117,7 @@
 
             @if($question->image_url)
               <div class="exam-question-media">
-                <img src="{{ $question->image_url }}" alt="Savol rasmi" loading="lazy">
+                <img src="{{ $question->image_url }}" alt="{{ __('public.exam.session.question_image_alt') }}" loading="lazy">
               </div>
             @endif
 
@@ -125,16 +126,16 @@
                 $textAnswer = optional($answerMap->get($question->id))->text_answer ?? '';
               @endphp
               <div class="exam-text-answer-block">
-                <label class="exam-text-answer-label" for="exam_text_{{ $question->id }}">Javobingiz</label>
+                <label class="exam-text-answer-label" for="exam_text_{{ $question->id }}">{{ __('public.exam.session.your_answer') }}</label>
                 <textarea
                   id="exam_text_{{ $question->id }}"
                   class="exam-text-answer-field"
                   data-text-question-id="{{ $question->id }}"
-                  placeholder="Javobingizni shu yerga yozing..."
+                  placeholder="{{ __('public.exam.session.answer_placeholder') }}"
                   rows="7"
                 >{{ $textAnswer }}</textarea>
                 <p class="exam-answer-save-state" data-text-save-state="{{ $question->id }}">
-                  Javobingiz yozilishi bilan avtomatik saqlanadi.
+                  {{ __('public.exam.session.autosave_hint') }}
                 </p>
               </div>
             @else
@@ -160,15 +161,15 @@
         @endforeach
       </div>
 
-      <nav class="exam-step-nav" aria-label="Savollar boyicha">
+      <nav class="exam-step-nav" aria-label="{{ __('public.exam.session.nav_aria') }}">
         <button type="button" class="exam-btn-secondary" id="exam-btn-prev" disabled>
-          <i class="fa-solid fa-arrow-left"></i> Oldingi
+          <i class="fa-solid fa-arrow-left"></i> {{ __('public.exam.session.prev') }}
         </button>
         <button type="button" class="exam-btn-primary" id="exam-btn-next">
-          Keyingi savol <i class="fa-solid fa-arrow-right"></i>
+          {{ __('public.exam.session.next') }} <i class="fa-solid fa-arrow-right"></i>
         </button>
         <button type="button" class="exam-btn-primary exam-btn-submit-final" id="exam-btn-finish" hidden>
-          Yakunlash va yuborish <i class="fa-solid fa-paper-plane"></i>
+          {{ __('public.exam.session.finish_submit') }} <i class="fa-solid fa-paper-plane"></i>
         </button>
       </nav>
     </div>
@@ -177,11 +178,11 @@
   <div id="exam-focus-guard" class="exam-focus-guard" hidden role="dialog" aria-modal="true" aria-labelledby="exam-focus-guard-title">
     <div class="exam-focus-guard-backdrop"></div>
     <div class="exam-focus-guard-box">
-      <span class="exam-focus-guard-badge">Himoyalangan rejim</span>
-      <h3 id="exam-focus-guard-title">Imtihon nazorat ostida</h3>
-      <p id="exam-focus-guard-text">Davom etish uchun fullscreen va fokusni qayta tiklang.</p>
+      <span class="exam-focus-guard-badge">{{ __('public.exam.session.protected_mode') }}</span>
+      <h3 id="exam-focus-guard-title">{{ __('public.exam.session.focus_title') }}</h3>
+      <p id="exam-focus-guard-text">{{ __('public.exam.session.focus_text') }}</p>
       <button type="button" class="exam-btn-primary" id="exam-focus-guard-resume" style="width:100%;justify-content:center;">
-        Himoyalangan rejimni yoqish
+        {{ __('public.exam.session.focus_resume') }}
       </button>
     </div>
   </div>
@@ -189,12 +190,9 @@
   <div id="exam-rule-modal" class="exam-rule-modal" hidden role="dialog" aria-modal="true" aria-labelledby="exam-rule-modal-title">
     <div class="exam-rule-modal-backdrop" tabindex="-1"></div>
     <div class="exam-rule-modal-box">
-      <h3 id="exam-rule-modal-title">Qoidalarga rioya qiling</h3>
-      <p>
-        Skrinshot (PrtSc, Snipping Tool, telefon ekran surati), belgilab nusxa olish va chop etish taqiqlanadi.
-        <strong>5 ta</strong> buzilish serverda qayd etilsa, imtihon <strong>0 ball, yiqildi</strong> deb yopiladi.
-      </p>
-      <button type="button" class="exam-btn-primary" id="exam-rule-modal-ok" style="width:100%;justify-content:center;margin-top:8px;">Tushunarli</button>
+      <h3 id="exam-rule-modal-title">{{ __('public.exam.session.rules_title') }}</h3>
+      <p>{!! __('public.exam.session.rules_text') !!}</p>
+      <button type="button" class="exam-btn-primary" id="exam-rule-modal-ok" style="width:100%;justify-content:center;margin-top:8px;">{{ __('public.exam.session.rules_ok') }}</button>
     </div>
   </div>
 
@@ -204,12 +202,12 @@
       <div class="exam-finish-confirm-icon" aria-hidden="true">
         <i class="fa-solid fa-circle-question"></i>
       </div>
-      <h3 id="exam-finish-confirm-title">Imtihonni yakunlaysizmi?</h3>
-      <p>Javoblaringiz yuboriladi. Keyin ularni o'zgartirish yoki imtihonga qaytish mumkin emas.</p>
+      <h3 id="exam-finish-confirm-title">{{ __('public.exam.session.finish_confirm_title') }}</h3>
+      <p>{{ __('public.exam.session.finish_confirm_text') }}</p>
       <div class="exam-rule-modal-actions">
-        <button type="button" class="exam-btn-secondary" id="exam-finish-confirm-cancel">Bekor qilish</button>
+        <button type="button" class="exam-btn-secondary" id="exam-finish-confirm-cancel">{{ __('public.exam.session.cancel') }}</button>
         <button type="button" class="exam-btn-primary" id="exam-finish-confirm-submit">
-          Ha, yuborish <i class="fa-solid fa-paper-plane"></i>
+          {{ __('public.exam.session.confirm_submit') }} <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
     </div>
@@ -217,6 +215,7 @@
 
   <script>
     (function () {
+      var examSessionI18n = @json($sessionI18n);
       var modal = document.getElementById('exam-rule-modal');
       var modalTitleEl = document.getElementById('exam-rule-modal-title');
       var modalTextEl = modal ? modal.querySelector('p') : null;
@@ -312,10 +311,10 @@
 
       function showFocusGuard(title, text, buttonText) {
         if (!focusGuard) return;
-        if (focusGuardTitleEl) focusGuardTitleEl.textContent = title || 'Imtihon nazorat ostida';
-        if (focusGuardTextEl) focusGuardTextEl.textContent = text || 'Davom etish uchun fullscreen va fokusni qayta tiklang.';
+        if (focusGuardTitleEl) focusGuardTitleEl.textContent = title || examSessionI18n.focus_title;
+        if (focusGuardTextEl) focusGuardTextEl.textContent = text || examSessionI18n.focus_text;
         if (focusGuardResumeBtn) {
-          focusGuardResumeBtn.textContent = buttonText || (fullscreenSupported ? 'Himoyalangan rejimni qayta yoqish' : 'Davom etish');
+          focusGuardResumeBtn.textContent = buttonText || (fullscreenSupported ? examSessionI18n.focus_resume_retry : examSessionI18n.continue_btn);
         }
         focusGuard.hidden = false;
         if (root) root.classList.add('is-obscured');
@@ -345,11 +344,11 @@
 
         if (violationNoteEl) {
           if (remaining > 1) {
-            violationNoteEl.textContent = 'Yana ' + remaining + ' ta qoidabuzarlik qilinsa imtihon yiqiladi.';
+            violationNoteEl.textContent = examSessionI18n.violation_remaining.replace(':count', String(remaining));
           } else if (remaining === 1) {
-            violationNoteEl.textContent = 'Oxirgi ogohlantirish: yana 1 ta qoidabuzarlik bo\'lsa imtihon avtomatik yopiladi.';
+            violationNoteEl.textContent = examSessionI18n.violation_last_warning;
           } else {
-            violationNoteEl.textContent = 'Qoida buzarlik limiti tugadi.';
+            violationNoteEl.textContent = examSessionI18n.violation_exhausted;
           }
         }
       }
@@ -444,17 +443,17 @@
 
       function showLockedLastChanceModal() {
         showFocusGuard(
-          'Oxirgi ogohlantirish',
-          'Sizda faqat 1 ta qoidabuzarlik imkoniyati qoldi. Yana buzilsa imtihon avtomatik yopiladi.',
-          fullscreenSupported ? 'Davom etish uchun himoyani qayta yoqish' : 'Tushunarli'
+          examSessionI18n.last_chance_title,
+          examSessionI18n.last_chance_text,
+          fullscreenSupported ? examSessionI18n.focus_resume_retry : examSessionI18n.understood
         );
       }
 
       function showScreenshotWarn(e) {
         showFocusGuard(
-          'Skrinshot urinishlari taqiqlangan',
-          'Screen capture urinishidan keyin kontent vaqtincha yopildi. Davom etish uchun himoyalangan rejimni qayta yoqing.',
-          fullscreenSupported ? 'Qayta kirish' : 'Davom etish'
+          examSessionI18n.screenshot_title,
+          examSessionI18n.screenshot_text,
+          fullscreenSupported ? examSessionI18n.reenter : examSessionI18n.continue_btn
         );
         warnAndReport(e, 'screen-capture');
       }
@@ -468,7 +467,7 @@
 
       function requestResumeProtectedMode(title, text, reason) {
         if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
-        showFocusGuard(title, text, fullscreenSupported ? 'Himoyalangan rejimni qayta yoqish' : 'Davom etish');
+        showFocusGuard(title, text, fullscreenSupported ? examSessionI18n.focus_resume_retry : examSessionI18n.continue_btn);
         maybeContextWarn(reason);
       }
 
@@ -480,9 +479,9 @@
 
           if (!fullOk && !isFullscreenActive()) {
             showFocusGuard(
-              'Fullscreen talab qilinadi',
-              'Brauzer fullscreen rejimni yoqishga ruxsat bermadi. Tugmani yana bosing yoki fullscreen ruxsatini tekshiring.',
-              'Qayta urinish'
+              examSessionI18n.fullscreen_required_title,
+              examSessionI18n.fullscreen_required_text,
+              examSessionI18n.retry_fullscreen
             );
             return;
           }
@@ -511,8 +510,8 @@
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) {
           requestResumeProtectedMode(
-            'Imtihon vaqtincha yashirildi',
-            'Sahifadan chiqish, screen capture yoki boshqa ilovaga o‘tish qoidabuzarlik sifatida qayd etildi.',
+            examSessionI18n.hidden_title,
+            examSessionI18n.hidden_text,
             'visibility-hidden'
           );
         }
@@ -520,8 +519,8 @@
 
       window.addEventListener('beforeprint', function () {
         requestResumeProtectedMode(
-          'Chop etish taqiqlangan',
-          'Imtihon sahifasini chop etish mumkin emas. Bu urinish qoidabuzarlik sifatida qayd etildi.',
+          examSessionI18n.print_title,
+          examSessionI18n.print_text,
           'print-attempt'
         );
       });
@@ -529,8 +528,8 @@
       window.addEventListener('blur', function () {
         if (document.hidden || isTransientIgnoreActive()) return;
         requestResumeProtectedMode(
-          'Fokus yo‘qoldi',
-          'Boshqa oynaga o‘tish, screenshot yoki screen recorder ochish qoidabuzarlik sifatida qayd etildi.',
+          examSessionI18n.blur_title,
+          examSessionI18n.blur_text,
           'window-blur'
         );
       });
@@ -545,8 +544,8 @@
 
         if (fullscreenSupported && !isFullscreenActive() && !document.hidden) {
           requestResumeProtectedMode(
-            'Fullscreen rejimdan chiqildi',
-            'Imtihon fullscreen himoya bilan ishlaydi. Davom etish uchun himoyalangan rejimni qayta yoqing.',
+            examSessionI18n.exit_fullscreen_title,
+            examSessionI18n.exit_fullscreen_text,
             'fullscreen-exit'
           );
           return;
@@ -599,8 +598,8 @@
         if (ctrl && kl === 'p') {
           e.preventDefault();
           requestResumeProtectedMode(
-            'Chop etish taqiqlangan',
-            'Ctrl+P orqali chop etish urinishlari qoidabuzarlik sifatida qayd etiladi.',
+            examSessionI18n.print_title,
+            examSessionI18n.print_text,
             'print-shortcut'
           );
           return;
@@ -608,8 +607,8 @@
         if (ctrl && e.shiftKey && kl === 's') {
           e.preventDefault();
           requestResumeProtectedMode(
-            'Saqlash urinishlari taqiqlangan',
-            'Bu imtihon himoyalangan rejimda ishlaydi. Saqlash yoki export qilish urinishlari qoidabuzarlik sifatida qayd etiladi.',
+            examSessionI18n.save_forbidden_title,
+            examSessionI18n.save_forbidden_text,
             'save-shortcut'
           );
           return;
@@ -669,13 +668,14 @@
 
       if (fullscreenSupported) {
         showFocusGuard(
-          'Imtihonni himoyalangan rejimda boshlang',
-          'Fullscreen, fokus nazorati va screen-capture kuzatuvi yoqiladi. Davom etish uchun himoyalangan rejimni ishga tushiring.',
-          'Himoyalangan rejimni yoqish'
+          examSessionI18n.start_protected_title,
+          examSessionI18n.start_protected_text,
+          examSessionI18n.focus_resume
         );
       }
     })();
 
+    const examSessionI18n = @json($sessionI18n);
     const expiresAt = new Date(@json(optional($result->expires_at)->toIso8601String())).getTime();
     const timerEl = document.getElementById('timer');
     const totalQuestions = {{ (int) $totalQ }};
@@ -779,7 +779,7 @@
         loader.className = 'prime-exam-loader';
         loader.innerHTML =
           '<div class="prime-grading-container">' +
-          '<div class="prime-grading-title">Natijalaringiz tahlil qilinmoqda...</div>' +
+          '<div class="prime-grading-title">' + examSessionI18n.grading_title + '</div>' +
           '<div class="prime-grading-bar-wrap"><div class="prime-grading-bar"></div></div>' +
           '</div>';
         document.body.appendChild(loader);
@@ -925,7 +925,7 @@
           if (data.message) alert(data.message);
         }
       } catch (e) {
-        alert("Javobni saqlashda xato bo'ldi.");
+        alert(examSessionI18n.save_error);
       }
     }
 
@@ -978,7 +978,7 @@
         updateProgress();
       } catch (error) {
         field.dataset.dirty = '1';
-        setTextSaveState(questionId, error.message || "Javobni saqlashda xato bo'ldi.", 'is-error');
+        setTextSaveState(questionId, error.message || examSessionI18n.save_error, 'is-error');
       }
     }
 

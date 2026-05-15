@@ -155,13 +155,12 @@
               </span>
               <span class="profile-overview-pulse">
                 <i class="fa-solid fa-sparkles"></i>
-                Profil markazi
+                {{ __('public.profile_hub.center') }}
               </span>
             </div>
             <h2 class="profile-overview-name">{{ $user->name }}</h2>
             <p class="profile-overview-intro">
-              Ism, telefon va email shu joydan boshqariladi. Pastdagi bloklarda esa imtihon, kurs va izohlar bo'yicha
-              barcha faolligingiz jamlangan.
+              {{ __('public.profile_hub.intro') }}
             </p>
 
             <div class="profile-overview-tags">
@@ -192,25 +191,25 @@
 
         <section class="profile-panel-switcher">
           <div class="profile-panel-switcher-head">
-            <span class="profile-panel-switcher-kicker">Profil bo'limlari</span>
-            <p>Kerakli blokni tanlang.</p>
+            <span class="profile-panel-switcher-kicker">{{ __('public.profile_hub.sections_kicker') }}</span>
+            <p>{{ __('public.profile_hub.sections_hint') }}</p>
           </div>
-          <nav class="profile-panel-tabs" aria-label="Profil bo'limlari">
+          <nav class="profile-panel-tabs" aria-label="{{ __('public.profile_hub.sections_aria') }}">
             <a href="{{ route('profile.show', ['panel' => 'settings']) }}" class="profile-panel-tab {{ $profilePanel === 'settings' ? 'is-active' : '' }}">
               <i class="fa-solid fa-user-gear"></i>
-              <span>Sozlamalar</span>
+              <span>{{ __('public.profile_hub.tab_settings') }}</span>
             </a>
             <a href="{{ route('profile.show', ['panel' => 'security']) }}" class="profile-panel-tab {{ $profilePanel === 'security' ? 'is-active' : '' }}">
               <i class="fa-solid fa-shield-halved"></i>
-              <span>Xavfsizlik</span>
+              <span>{{ __('public.profile_hub.tab_security') }}</span>
             </a>
             <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="profile-panel-tab {{ $profilePanel === 'activity' ? 'is-active' : '' }}">
               <i class="fa-solid fa-wave-square"></i>
-              <span>Faollik</span>
+              <span>{{ __('public.profile_hub.tab_activity') }}</span>
             </a>
             <a href="{{ route('profile.results.index') }}" class="profile-panel-tab profile-panel-tab--link">
               <i class="fa-solid fa-chart-column"></i>
-              <span>Natijalar</span>
+              <span>{{ __('public.profile_hub.tab_results') }}</span>
             </a>
             <a href="{{ route('profile.bookmarks.index') }}" class="profile-panel-tab profile-panel-tab--link">
               <i class="fa-solid fa-bookmark"></i>
@@ -226,8 +225,8 @@
               <div class="signin-card profile-card {{ $profileCardStaffClass }}">
                 <div class="profile-card-head">
                   <span class="profile-card-kicker">{{ __('profile.steps.primary') }}</span>
-                  <h2>Ma'lumotlar</h2>
-                  <p class="signin-subtitle">Sizning asosiy profil ma'lumotlaringiz.</p>
+                  <h2>{{ __('public.profile_hub.facts_title') }}</h2>
+                  <p class="signin-subtitle">{{ __('public.profile_hub.facts_subtitle') }}</p>
                 </div>
 
                 <div class="profile-facts">
@@ -248,8 +247,8 @@
                   </div>
                   <div class="profile-guide-copy">
                     <span class="profile-guide-kicker">{{ __('profile.main_card.note_title') }}</span>
-                    <strong>Yordam</strong>
-                    <p style="font-size: 13px; color: var(--profile-text-muted); line-height: 1.5;">Ism va telefonni o'ng tarafdagi forma orqali o'zgartirishingiz mumkin.</p>
+                    <strong>{{ __('public.profile_hub.help') }}</strong>
+                    <p style="font-size: 13px; color: var(--profile-text-muted); line-height: 1.5;">{{ __('public.profile_hub.help_text') }}</p>
                   </div>
                 </div>
               </div>
@@ -350,7 +349,7 @@
 	            <section class="profile-activity-block reveal">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
-                  <h3><i class="fa-solid fa-pen-nib"></i> Mening imtihonlarim</h3>
+                  <h3><i class="fa-solid fa-pen-nib"></i> {{ __('public.profile_hub.my_exams_title') }}</h3>
                   <p>Siz yaratgan imtihonlar va o'quvchilar natijalarini boshqaring.</p>
                 </div>
                 <span class="profile-section-count">{{ $createdExams->count() }}</span>
@@ -373,7 +372,7 @@
                   @endforeach
                 </ul>
               @else
-                <p class="profile-empty">Hali hech qanday imtihon yaratmadingiz.</p>
+                <p class="profile-empty">{{ __('public.profile_hub.my_exams_empty') }}</p>
               @endif
 
               <div class="profile-actions-row">
@@ -400,14 +399,14 @@
           <section class="profile-activity-block reveal">
             <div class="profile-block-head">
               <div class="profile-block-copy">
-                <h3><i class="fa-solid fa-chart-column"></i> Mening natijalarim</h3>
+                <h3><i class="fa-solid fa-chart-column"></i> {{ __('public.profile_hub.my_results_title') }}</h3>
                 <p>Topshirgan imtihonlaringiz endi alohida sahifada jamlanadi, profil esa ixcham qoladi.</p>
               </div>
               <span class="profile-section-count">{{ $examResultsCount }} ta</span>
             </div>
 
             <div class="profile-actions-row">
-              <a href="{{ route('profile.results.index') }}" class="btn btn-sm">Natijalar sahifasi</a>
+              <a href="{{ route('profile.results.index') }}" class="btn btn-sm">{{ __('public.profile_results.page_title') }}</a>
               @if($examResultsCount > 0)
                 <a href="{{ route('profile.results.export') }}" class="btn btn-outline btn-sm">
                   <i class="fa-solid fa-file-csv"></i> Barchasini Excel (CSV)
@@ -420,25 +419,24 @@
             <section class="profile-activity-block reveal" id="course-open-request">
               <div class="profile-block-head">
                 <div class="profile-block-copy">
-                  <h3><i class="fa-solid fa-book-open"></i> Kurs ochish ruxsati</h3>
-                  <p>Teacher akkaunti faqat <strong>bitta</strong> kurs yaratishi mumkin. Ustoz kartasiga bog'lash shart emas;
-                    kurs ochishdan oldin faqat admin ruxsati kerak.</p>
+                  <h3><i class="fa-solid fa-book-open"></i> {{ __('profile.course_open.title') }}</h3>
+                  <p>{!! __('profile.course_open.intro') !!}</p>
                 </div>
               </div>
               @if($user->hasReachedCourseOpenLimit())
-                <p class="profile-empty" style="margin:0;">Siz ruxsat asosida kurs yaratgansiz (bitta chegara).</p>
+                <p class="profile-empty" style="margin:0;">{{ __('profile.course_open.limit_reached') }}</p>
               @elseif($user->hasCourseOpenApproval())
-                <p style="margin:0 0 12px;">Admin ruxsat berdi — endi forma orqali kurs ochishingiz mumkin.</p>
-                <a href="{{ route('teacher.courses.create') }}" class="btn btn-sm">Kurs ochish sahifasiga o'tish</a>
+                <p style="margin:0 0 12px;">{{ __('profile.course_open.approved') }}</p>
+                <a href="{{ route('teacher.courses.create') }}" class="btn btn-sm">{{ __('profile.course_open.goto_create') }}</a>
               @elseif($user->hasPendingCourseOpenRequest())
-                <p class="profile-empty" style="margin:0;">So'rovingiz adminga yuborilgan. Admin javobini kuting.</p>
+                <p class="profile-empty" style="margin:0;">{{ __('profile.course_open.pending') }}</p>
                 @if($user->course_open_request_reason)
-                  <p class="profile-request-note">Yuborgan sababingiz: {{ $user->course_open_request_reason }}</p>
+                  <p class="profile-request-note">{{ __('profile.course_open.reason_sent', ['reason' => $user->course_open_request_reason]) }}</p>
                 @endif
               @else
                 <form action="{{ route('teacher.courses.request') }}" method="POST" class="profile-reason-form">
                   @csrf
-                  <label for="course_open_reason">Nima uchun kurs ochmoqchisiz?</label>
+                  <label for="course_open_reason">{{ __('profile.course_open.reason_label') }}</label>
                   <textarea
                     id="course_open_reason"
                     name="reason"
@@ -447,11 +445,11 @@
                     maxlength="1000"
                     required
                     class="profile-reason-input @error('reason') is-invalid @enderror"
-                    placeholder="Masalan: 7-sinf o'quvchilari uchun matematika bo'yicha qo'shimcha tayyorlov kursi ochmoqchiman.">{{ old('reason') }}</textarea>
+                    placeholder="{{ __('profile.course_open.reason_placeholder') }}">{{ old('reason') }}</textarea>
                   @error('reason')
                     <span class="profile-field-error">{{ $message }}</span>
                   @enderror
-                  <button type="submit" class="btn btn-sm">Kurs ochish uchun admin ruxsatini so'rash</button>
+                  <button type="submit" class="btn btn-sm">{{ __('profile.course_open.request_button') }}</button>
                 </form>
               @endif
             </section>
@@ -520,7 +518,7 @@
                             <a href="{{ route('teacher.courses.create') }}"
                               class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
                           @elseif($user->isTeacher() && !$user->hasReachedCourseOpenLimit())
-                            <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline btn-sm">Kurs — ruxsat</a>
+                            <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline btn-sm">{{ __('profile.course_open.shortcut') }}</a>
                           @endif
                           @if(auth()->user()->isAdmin())
                             <a href="{{ route('admin.courses.index') }}"
@@ -705,12 +703,12 @@
                 <div class="profile-block-head">
                   <div class="profile-block-copy">
                     <h3><i class="fa-solid fa-layer-group"></i> Bo'limlar ajratildi</h3>
-                    <p>Profil endi engilroq ishlaydi: sozlamalar va xavfsizlik shu panelda, izohlar va kurslar esa alohida “Faollik” ichida ochiladi.</p>
+                    <p>{{ __('public.profile_hub.panel_hint') }}</p>
                   </div>
                 </div>
                 <div class="profile-actions-row">
                   <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="btn btn-sm">Faollikni ochish</a>
-                  <a href="{{ route('profile.results.index') }}" class="btn btn-outline btn-sm">Natijalar</a>
+                  <a href="{{ route('profile.results.index') }}" class="btn btn-outline btn-sm">{{ __('public.profile_hub.tab_results') }}</a>
                 </div>
               </section>
             @endif

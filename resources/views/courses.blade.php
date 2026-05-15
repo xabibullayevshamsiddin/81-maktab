@@ -39,7 +39,7 @@
           @if(($q ?? '') !== '' || ($selectedSubject ?? '') !== '')
             <a href="{{ route('courses') }}" class="filter-reset-link">
               <i class="fa-solid fa-rotate-left"></i>
-              Filtrlarni tozalash
+              {{ __('public.common.clear_filters') }}
             </a>
           @endif
         </div>
@@ -58,14 +58,14 @@
       </p>
       <div class="courses-page-summary prime-stagger">
         <article class="filter-meta-card">
-          <span class="filter-meta-label">Ko'rsatilmoqda</span>
+          <span class="filter-meta-label">{{ __('public.courses.shown_label') }}</span>
           <strong>{{ $courseShown }}</strong>
-          <p>Hozir ekranda turgan kurslar</p>
+          <p>{{ __('public.courses.shown_hint') }}</p>
         </article>
         <article class="filter-meta-card">
-          <span class="filter-meta-label">Jami katalog</span>
+          <span class="filter-meta-label">{{ __('public.courses.catalog_label') }}</span>
           <strong>{{ $courseTotal }}</strong>
-          <p>Nashr qilingan kurslar soni</p>
+          <p>{{ __('public.courses.catalog_hint') }}</p>
         </article>
       </div>
 
