@@ -14,9 +14,6 @@ Route::post('register', [AuthController::class, 'registerStore'])->middleware('t
 Route::get('register/verify-code', [AuthController::class, 'showRegisterVerify'])->name('register.verify.form');
 Route::post('register/verify-code', [AuthController::class, 'verifyRegisterCode'])->middleware('throttle:15,1')->name('register.verify');
 Route::post('register/verify-code/resend', [AuthController::class, 'resendRegisterCode'])->middleware('throttle:6,1')->name('register.verify.resend');
-Route::get('register/verify-telegram', [AuthController::class, 'showTelegramRegisterVerify'])->name('register.telegram.form');
-Route::get('register/verify-telegram/status', [AuthController::class, 'telegramRegisterStatus'])->middleware('throttle:30,1')->name('register.telegram.status');
-Route::post('register/verify-telegram/complete', [AuthController::class, 'completeTelegramRegister'])->middleware('throttle:10,1')->name('register.telegram.complete');
 
 Route::get('forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.forgot.form');
 Route::post('forgot-password', [AuthController::class, 'sendPasswordResetCode'])->middleware('throttle:6,1')->name('password.forgot.send');

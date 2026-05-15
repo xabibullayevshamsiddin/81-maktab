@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\OneTimeCode;
-use App\Models\TelegramRegistrationVerification;
 use App\Models\User;
-use App\Services\Telegram\TelegramBotService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -19,10 +16,6 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    private const TELEGRAM_REGISTER_SESSION_KEY = 'telegram_register_token';
-
-    private const TELEGRAM_REGISTER_EXPIRES_MINUTES = 20;
-
     private const OTP_VERIFY_MAX_ATTEMPTS = 5;
 
     private const OTP_VERIFY_DECAY_SECONDS = 600;
@@ -40,11 +33,6 @@ class AuthController extends Controller
      * Kirish OTP ni qayta yoqish uchun true qiling.
      */
     private const LOGIN_EMAIL_OTP_ENABLED = true;
-
-    public function __construct(
-        private readonly TelegramBotService $telegramBot,
-    ) {
-    }
 
     public function login()
     {
@@ -112,9 +100,7 @@ class AuthController extends Controller
 
     public function register()
     {
-        return view('login.register', [
-            'telegramVerificationEnabled' => $this->telegramRegistrationEnabled(),
-        ]);
+        return view('login.register');
     }
 
     public function registerStore(RegisterRequest $request)
@@ -125,24 +111,7 @@ class AuthController extends Controller
         $fullName = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         $isParent = ! empty($validated['is_parent']);
 
-        if ($this->telegramRegistrationEnabled()) {
-            $verification = $this->createTelegramRegisterVerification($validated, $fullName, $isParent);
-
-            $request->session()->forget('otp_register_email');
-            $request->session()->put(self::TELEGRAM_REGISTER_SESSION_KEY, $verification->token);
-
-            return redirect()->route('register.telegram.form')
-                ->with('success', "Telegram botga o'tib {$verification->phone} raqamini tasdiqlang.")
-                ->with('toast_type', 'success');
-        }
-
         if (! $this->registerEmailOtpEnabled()) {
-            if (! $this->directRegisterFallbackEnabled()) {
-                return back()
-                    ->withErrors(['email' => "Ro'yxatdan o'tish tasdiqlashsiz ochiq emas. Telegram yoki email tasdiqlashni sozlang."])
-                    ->onlyInput('email');
-            }
-
             $user = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
@@ -611,151 +580,6 @@ class AuthController extends Controller
             ->with('toast_type', 'warning');
     }
 
-    public function showTelegramRegisterVerify(Request $request)
-    {
-        if (! $this->telegramRegistrationEnabled()) {
-            return redirect()->route('register');
-        }
-
-        $verification = $this->telegramRegisterVerificationFromSession($request);
-        if (! $verification) {
-            return redirect()->route('register')
-                ->with('error', "Telegram tasdiqlash sessiyasi topilmadi. Ro'yxatdan o'tishni qayta boshlang.")
-                ->with('toast_type', 'warning');
-        }
-
-        if ($verification->isExpired()) {
-            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
-
-            return redirect()->route('register')
-                ->with('error', "Telegram tasdiqlash muddati tugadi. Formani qayta yuboring.")
-                ->with('toast_type', 'warning');
-        }
-
-        return view('login.verify-telegram', [
-            'verification' => $verification,
-            'botUsername' => $this->telegramBot->botUsername(),
-            'deepLinkUrl' => $this->telegramBot->deepLinkUrl($verification),
-            'desktopDeepLinkUrl' => 'tg://resolve?domain='.$this->telegramBot->botUsername().'&start=verify_'.$verification->token,
-        ]);
-    }
-
-    public function telegramRegisterStatus(Request $request): JsonResponse
-    {
-        if (! $this->telegramRegistrationEnabled()) {
-            return response()->json([
-                'state' => 'missing',
-            ], 404);
-        }
-
-        $verification = $this->telegramRegisterVerificationFromSession($request);
-        if (! $verification) {
-            return response()->json([
-                'state' => 'missing',
-            ], 404);
-        }
-
-        if ($verification->isExpired()) {
-            return response()->json([
-                'state' => 'expired',
-            ]);
-        }
-
-        if ($verification->isVerified()) {
-            return response()->json([
-                'state' => 'verified',
-            ]);
-        }
-
-        if ($verification->started_at) {
-            return response()->json([
-                'state' => 'started',
-            ]);
-        }
-
-        return response()->json([
-            'state' => 'pending',
-        ]);
-    }
-
-    public function completeTelegramRegister(Request $request)
-    {
-        if (! $this->telegramRegistrationEnabled()) {
-            return redirect()->route('register');
-        }
-
-        $verification = $this->telegramRegisterVerificationFromSession($request);
-        if (! $verification) {
-            return redirect()->route('register')
-                ->with('error', "Telegram tasdiqlash sessiyasi topilmadi. Qayta urinib ko'ring.")
-                ->with('toast_type', 'warning');
-        }
-
-        if ($verification->isExpired()) {
-            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
-
-            return redirect()->route('register')
-                ->with('error', "Telegram tasdiqlash muddati tugadi. Formani qayta yuboring.")
-                ->with('toast_type', 'warning');
-        }
-
-        if (! $verification->isVerified()) {
-            return back()
-                ->with('error', "Avval Telegram ichida telefon raqamingizni tasdiqlang.")
-                ->with('toast_type', 'warning');
-        }
-
-        $payload = $verification->payload ?? [];
-        $payloadIsParent = ! empty($payload['is_parent']);
-
-        if (empty($payload['email']) || empty($payload['password']) || (empty($payload['name']) && empty($payload['first_name'])) || empty($payload['phone']) || (! $payloadIsParent && empty($payload['grade']))) {
-            return redirect()->route('register')
-                ->with('error', "Ro'yxatdan o'tish ma'lumotlari topilmadi. Formani qayta to'ldiring.")
-                ->with('toast_type', 'warning');
-        }
-
-        if (User::query()->where('email', $payload['email'])->exists()) {
-            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
-
-            return redirect()->route('login')
-                ->with('success', 'Bu email bilan hisob allaqachon mavjud. Tizimga kiring.')
-                ->with('toast_type', 'warning');
-        }
-
-        $payloadFirst = (string) ($payload['first_name'] ?? '');
-        $payloadLast = (string) ($payload['last_name'] ?? '');
-        if (User::isFullNameTaken($payloadFirst, $payloadLast)) {
-            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
-
-            return redirect()->route('register')
-                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro\'yxatdan o\'tishni boshidan qayta boshlang.'])
-                ->with('toast_type', 'warning');
-        }
-
-        $user = User::create([
-            'first_name' => $payload['first_name'] ?? '',
-            'last_name' => $payload['last_name'] ?? '',
-            'name' => $payload['name'] ?? trim(($payload['first_name'] ?? '').' '.($payload['last_name'] ?? '')),
-            'email' => $payload['email'],
-            'phone' => $payload['phone'],
-            'grade' => $payloadIsParent ? null : ($payload['grade'] ?? null),
-            'is_parent' => $payloadIsParent,
-            'password' => $payload['password'],
-        ]);
-
-        $verification->forceFill([
-            'completed_at' => now(),
-        ])->save();
-
-        $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
-        Auth::login($user, true);
-        $request->session()->regenerate();
-
-        return redirect()->route('home')
-            ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi.')
-            ->with('toast_type', 'success');
-    }
-
     public function logout(Request $request)
     {
         Auth::logout();
@@ -951,20 +775,6 @@ class AuthController extends Controller
         return self::REGISTER_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
     }
 
-    private function directRegisterFallbackEnabled(): bool
-    {
-        if (app()->isLocal()) {
-            return true;
-        }
-
-        return filter_var(env('REGISTER_DIRECT_FALLBACK_ENABLED', false), FILTER_VALIDATE_BOOL);
-    }
-
-    private function telegramRegistrationEnabled(): bool
-    {
-        return $this->telegramBot->isConfigured();
-    }
-
     private function mailDeliveryEnabled(): bool
     {
         return (bool) config('mail.enabled', true)
@@ -1030,45 +840,6 @@ class AuthController extends Controller
             && ! str_contains($normalizedKey, 'your-api-key');
     }
 
-    private function createTelegramRegisterVerification(array $validated, string $fullName, bool $isParent): TelegramRegistrationVerification
-    {
-        $email = $this->normalizeEmail((string) $validated['email']);
-
-        TelegramRegistrationVerification::query()
-            ->where('email', $email)
-            ->whereNull('completed_at')
-            ->delete();
-
-        return TelegramRegistrationVerification::query()->create([
-            'token' => Str::random(48),
-            'email' => $email,
-            'phone' => (string) $validated['phone'],
-            'payload' => [
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'name' => $fullName,
-                'email' => $email,
-                'phone' => $validated['phone'],
-                'grade' => $isParent ? null : $validated['grade'],
-                'is_parent' => $isParent,
-                'password' => Hash::make($validated['password']),
-            ],
-            'expires_at' => now()->addMinutes(self::TELEGRAM_REGISTER_EXPIRES_MINUTES),
-        ]);
-    }
-
-    private function telegramRegisterVerificationFromSession(Request $request): ?TelegramRegistrationVerification
-    {
-        $token = (string) $request->session()->get(self::TELEGRAM_REGISTER_SESSION_KEY, '');
-        if ($token === '') {
-            return null;
-        }
-
-        return TelegramRegistrationVerification::query()
-            ->where('token', $token)
-            ->whereNull('completed_at')
-            ->first();
-    }
 
     private function normalizeEmail(string $email): string
     {
