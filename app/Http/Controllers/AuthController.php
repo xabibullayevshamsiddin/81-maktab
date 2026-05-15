@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\OneTimeCode;
+use App\Models\TelegramRegistrationVerification;
 use App\Models\User;
+use App\Services\Telegram\TelegramBotService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,6 +19,10 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    private const TELEGRAM_REGISTER_SESSION_KEY = 'telegram_register_token';
+
+    private const TELEGRAM_REGISTER_EXPIRES_MINUTES = 20;
+
     private const OTP_VERIFY_MAX_ATTEMPTS = 5;
 
     private const OTP_VERIFY_DECAY_SECONDS = 600;
@@ -23,18 +30,21 @@ class AuthController extends Controller
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
     /**
-     * Vaqtincha: false bo‘lsa ro‘yxatdan o‘tish email kodisiz, darhol hisob ochiladi.
+     * Vaqtincha: false bo'lsa ro'yxatdan o'tish email kodisiz, darhol hisob ochiladi.
      * Email OTP ni qayta yoqish uchun true qiling.
      */
-    private const REGISTER_EMAIL_OTP_ENABLED = false;
+    private const REGISTER_EMAIL_OTP_ENABLED = true;
 
     /**
-     * Vaqtincha: false bo‘lsa kirish email kodisiz — faqat email + parol.
+     * Vaqtincha: false bo'lsa kirish email kodisiz - faqat email + parol.
      * Kirish OTP ni qayta yoqish uchun true qiling.
      */
-    private const LOGIN_EMAIL_OTP_ENABLED = false;
+    private const LOGIN_EMAIL_OTP_ENABLED = true;
 
-    private const SOCIALITE_FACTORY = 'Laravel\\Socialite\\Contracts\\Factory';
+    public function __construct(
+        private readonly TelegramBotService $telegramBot,
+    ) {
+    }
 
     public function login()
     {
@@ -61,10 +71,10 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi, 
+        // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi,
         // lekin faqat `active` middleware ruxsat bergan joylargagina yoza olishadi.
 
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             Auth::login($user, true);
             $request->session()->regenerate();
 
@@ -84,9 +94,8 @@ class AuthController extends Controller
                 'user_id' => $user->id,
             ]);
         } catch (\Throwable $e) {
-            Log::error('OTP login send failed', [
+            $this->logOtpSendFailure('OTP login send failed', $e, [
                 'email' => $user->email,
-                'error' => $e->getMessage(),
             ]);
 
             return back()
@@ -101,108 +110,11 @@ class AuthController extends Controller
             ->with('toast_type', 'success');
     }
 
-    public function redirectToGoogle()
-    {
-        if (! $this->hasSocialite()) {
-            return redirect()
-                ->route('login')
-                ->with('error', 'Google login paketi o‘rnatilmagan (laravel/socialite).')
-                ->with('toast_type', 'error');
-        }
-
-        if (! config('services.google.client_id') || ! config('services.google.client_secret') || ! config('services.google.redirect')) {
-            return redirect()
-                ->route('login')
-                ->with('error', 'Google login hali sozlanmagan (GOOGLE_CLIENT_ID/SECRET/REDIRECT).')
-                ->with('toast_type', 'error');
-        }
-
-        return $this->socialiteDriver('google')
-            ->redirect();
-    }
-
-    public function handleGoogleCallback(Request $request)
-    {
-        try {
-            if (! $this->hasSocialite()) {
-                return redirect()
-                    ->route('login')
-                    ->with('error', 'Google login paketi o‘rnatilmagan (laravel/socialite).')
-                    ->with('toast_type', 'error');
-            }
-
-            $googleUser = $this->socialiteDriver('google')->user();
-        } catch (\Throwable $e) {
-            Log::warning('Google OAuth callback failed', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return redirect()
-                ->route('login')
-                ->with('error', 'Google orqali kirishda xatolik yuz berdi. Qayta urinib ko‘ring.')
-                ->with('toast_type', 'error');
-        }
-
-        $email = $this->normalizeEmail((string) ($googleUser->getEmail() ?? ''));
-        if ($email === '') {
-            return redirect()
-                ->route('login')
-                ->with('error', 'Google profilingizda email topilmadi.')
-                ->with('toast_type', 'error');
-        }
-
-        $googleId = (string) ($googleUser->getId() ?? '');
-        if ($googleId === '') {
-            return redirect()
-                ->route('login')
-                ->with('error', 'Google hisob maʼlumoti olinmadi.')
-                ->with('toast_type', 'error');
-        }
-
-        $user = User::query()->where('google_id', $googleId)->first();
-        if (! $user) {
-            $user = User::query()->where('email', $email)->first();
-        }
-
-        if (! $user) {
-            [$firstName, $lastName] = $this->splitFullName((string) ($googleUser->getName() ?? ''));
-            $fullName = trim($firstName.' '.$lastName);
-
-            $user = User::create([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'name' => $fullName !== '' ? $fullName : 'Google User',
-                'email' => $email,
-                'password' => Hash::make(Str::random(40)),
-                'google_id' => $googleId,
-                'email_verified_at' => now(),
-            ]);
-        } else {
-            $updatePayload = [];
-            if ((string) ($user->google_id ?? '') === '') {
-                $updatePayload['google_id'] = $googleId;
-            }
-            if (! $user->email_verified_at) {
-                $updatePayload['email_verified_at'] = now();
-            }
-
-            if ($updatePayload !== []) {
-                $user->update($updatePayload);
-            }
-        }
-
-        Auth::login($user, true);
-        $request->session()->regenerate();
-
-        return redirect()
-            ->intended(route('home'))
-            ->with('success', 'Google orqali muvaffaqiyatli kirdingiz.')
-            ->with('toast_type', 'success');
-    }
-
     public function register()
     {
-        return view('login.regiter');
+        return view('login.register', [
+            'telegramVerificationEnabled' => $this->telegramRegistrationEnabled(),
+        ]);
     }
 
     public function registerStore(RegisterRequest $request)
@@ -213,7 +125,24 @@ class AuthController extends Controller
         $fullName = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         $isParent = ! empty($validated['is_parent']);
 
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if ($this->telegramRegistrationEnabled()) {
+            $verification = $this->createTelegramRegisterVerification($validated, $fullName, $isParent);
+
+            $request->session()->forget('otp_register_email');
+            $request->session()->put(self::TELEGRAM_REGISTER_SESSION_KEY, $verification->token);
+
+            return redirect()->route('register.telegram.form')
+                ->with('success', "Telegram botga o'tib {$verification->phone} raqamini tasdiqlang.")
+                ->with('toast_type', 'success');
+        }
+
+        if (! $this->registerEmailOtpEnabled()) {
+            if (! $this->directRegisterFallbackEnabled()) {
+                return back()
+                    ->withErrors(['email' => "Ro'yxatdan o'tish tasdiqlashsiz ochiq emas. Telegram yoki email tasdiqlashni sozlang."])
+                    ->onlyInput('email');
+            }
+
             $user = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
@@ -231,7 +160,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             return redirect()->route('home')
-                ->with('success', 'Ro‘yxatdan o‘tish muvaffaqiyatli.')
+                ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli.')
                 ->with('toast_type', 'success');
         }
 
@@ -253,9 +182,8 @@ class AuthController extends Controller
                 'password' => Hash::make($validated['password']),
             ]);
         } catch (\Throwable $e) {
-            Log::error('OTP register send failed', [
+            $this->logOtpSendFailure('OTP register send failed', $e, [
                 'email' => $validated['email'],
-                'error' => $e->getMessage(),
             ]);
 
             return back()
@@ -266,7 +194,7 @@ class AuthController extends Controller
         $request->session()->put('otp_register_email', $validated['email']);
 
         return redirect()->route('register.verify.form')
-            ->with('success', 'Ro‘yxatdan o‘tish kodi emailingizga yuborildi.')
+            ->with('success', 'Ro\'yxatdan o\'tish kodi emailingizga yuborildi.')
             ->with('toast_type', 'success');
     }
 
@@ -285,6 +213,12 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
+        if (! $this->mailDeliveryEnabled()) {
+            return back()
+                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
+                ->onlyInput('email');
+        }
+
         if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return back()
                 ->withErrors([
@@ -296,10 +230,9 @@ class AuthController extends Controller
         try {
             $this->issuePasswordResetOtp($user);
         } catch (\Throwable $e) {
-            Log::error('OTP password reset send failed', [
+            $this->logOtpSendFailure('OTP password reset send failed', $e, [
                 'email' => $email,
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
             ]);
 
             return back()
@@ -412,6 +345,12 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Bu email bilan hisob topilmadi.']);
         }
 
+        if (! $this->mailDeliveryEnabled()) {
+            return back()->withErrors([
+                'code' => $this->mailDeliveryDisabledMessage(),
+            ]);
+        }
+
         if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return back()->withErrors([
                 'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
@@ -421,10 +360,9 @@ class AuthController extends Controller
         try {
             $this->issuePasswordResetOtp($user);
         } catch (\Throwable $e) {
-            Log::error('OTP password reset resend failed', [
+            $this->logOtpSendFailure('OTP password reset resend failed', $e, [
                 'email' => $email,
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
             ]);
 
             return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
@@ -438,7 +376,7 @@ class AuthController extends Controller
 
     public function showLoginVerify(Request $request)
     {
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             return redirect()->route('login');
         }
 
@@ -455,7 +393,7 @@ class AuthController extends Controller
 
     public function verifyLoginCode(Request $request)
     {
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             return redirect()->route('login');
         }
 
@@ -505,7 +443,7 @@ class AuthController extends Controller
 
     public function resendLoginCode(Request $request)
     {
-        if (! self::LOGIN_EMAIL_OTP_ENABLED) {
+        if (! $this->loginEmailOtpEnabled()) {
             return redirect()->route('login');
         }
 
@@ -530,12 +468,11 @@ class AuthController extends Controller
         try {
             $this->issueAndSendOtp($email, OneTimeCode::PURPOSE_LOGIN, $meta);
         } catch (\Throwable $e) {
-            Log::error('OTP login resend failed', [
+            $this->logOtpSendFailure('OTP login resend failed', $e, [
                 'email' => $email,
-                'error' => $e->getMessage(),
             ]);
 
-            return back()->withErrors(['code' => 'Kodni qayta yuborib bo‘lmadi.']);
+            return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
         }
 
         return back()
@@ -545,7 +482,7 @@ class AuthController extends Controller
 
     public function showRegisterVerify(Request $request)
     {
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             return redirect()->route('register');
         }
 
@@ -562,7 +499,7 @@ class AuthController extends Controller
 
     public function verifyRegisterCode(Request $request)
     {
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             return redirect()->route('register');
         }
 
@@ -609,7 +546,7 @@ class AuthController extends Controller
         $metaLast = (string) ($meta['last_name'] ?? '');
         if (User::isFullNameTaken($metaFirst, $metaLast)) {
             return redirect()->route('register')
-                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro‘yxatdan o‘tishni boshidan qayta boshlang.'])
+                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro\'yxatdan o\'tishni boshidan qayta boshlang.'])
                 ->with('toast_type', 'warning');
         }
 
@@ -631,13 +568,13 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('home')
-            ->with('success', 'Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi.')
+            ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi.')
             ->with('toast_type', 'success');
     }
 
     public function resendRegisterCode(Request $request)
     {
-        if (! self::REGISTER_EMAIL_OTP_ENABLED) {
+        if (! $this->registerEmailOtpEnabled()) {
             return redirect()->route('register');
         }
 
@@ -662,17 +599,161 @@ class AuthController extends Controller
         try {
             $this->issueAndSendOtp($email, OneTimeCode::PURPOSE_REGISTER, $meta);
         } catch (\Throwable $e) {
-            Log::error('OTP register resend failed', [
+            $this->logOtpSendFailure('OTP register resend failed', $e, [
                 'email' => $email,
-                'error' => $e->getMessage(),
             ]);
 
-            return back()->withErrors(['code' => 'Kodni qayta yuborib bo‘lmadi.']);
+            return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
         }
 
         return back()
             ->with('success', 'Yangi kod yuborildi.')
             ->with('toast_type', 'warning');
+    }
+
+    public function showTelegramRegisterVerify(Request $request)
+    {
+        if (! $this->telegramRegistrationEnabled()) {
+            return redirect()->route('register');
+        }
+
+        $verification = $this->telegramRegisterVerificationFromSession($request);
+        if (! $verification) {
+            return redirect()->route('register')
+                ->with('error', "Telegram tasdiqlash sessiyasi topilmadi. Ro'yxatdan o'tishni qayta boshlang.")
+                ->with('toast_type', 'warning');
+        }
+
+        if ($verification->isExpired()) {
+            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
+
+            return redirect()->route('register')
+                ->with('error', "Telegram tasdiqlash muddati tugadi. Formani qayta yuboring.")
+                ->with('toast_type', 'warning');
+        }
+
+        return view('login.verify-telegram', [
+            'verification' => $verification,
+            'botUsername' => $this->telegramBot->botUsername(),
+            'deepLinkUrl' => $this->telegramBot->deepLinkUrl($verification),
+            'desktopDeepLinkUrl' => 'tg://resolve?domain='.$this->telegramBot->botUsername().'&start=verify_'.$verification->token,
+        ]);
+    }
+
+    public function telegramRegisterStatus(Request $request): JsonResponse
+    {
+        if (! $this->telegramRegistrationEnabled()) {
+            return response()->json([
+                'state' => 'missing',
+            ], 404);
+        }
+
+        $verification = $this->telegramRegisterVerificationFromSession($request);
+        if (! $verification) {
+            return response()->json([
+                'state' => 'missing',
+            ], 404);
+        }
+
+        if ($verification->isExpired()) {
+            return response()->json([
+                'state' => 'expired',
+            ]);
+        }
+
+        if ($verification->isVerified()) {
+            return response()->json([
+                'state' => 'verified',
+            ]);
+        }
+
+        if ($verification->started_at) {
+            return response()->json([
+                'state' => 'started',
+            ]);
+        }
+
+        return response()->json([
+            'state' => 'pending',
+        ]);
+    }
+
+    public function completeTelegramRegister(Request $request)
+    {
+        if (! $this->telegramRegistrationEnabled()) {
+            return redirect()->route('register');
+        }
+
+        $verification = $this->telegramRegisterVerificationFromSession($request);
+        if (! $verification) {
+            return redirect()->route('register')
+                ->with('error', "Telegram tasdiqlash sessiyasi topilmadi. Qayta urinib ko'ring.")
+                ->with('toast_type', 'warning');
+        }
+
+        if ($verification->isExpired()) {
+            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
+
+            return redirect()->route('register')
+                ->with('error', "Telegram tasdiqlash muddati tugadi. Formani qayta yuboring.")
+                ->with('toast_type', 'warning');
+        }
+
+        if (! $verification->isVerified()) {
+            return back()
+                ->with('error', "Avval Telegram ichida telefon raqamingizni tasdiqlang.")
+                ->with('toast_type', 'warning');
+        }
+
+        $payload = $verification->payload ?? [];
+        $payloadIsParent = ! empty($payload['is_parent']);
+
+        if (empty($payload['email']) || empty($payload['password']) || (empty($payload['name']) && empty($payload['first_name'])) || empty($payload['phone']) || (! $payloadIsParent && empty($payload['grade']))) {
+            return redirect()->route('register')
+                ->with('error', "Ro'yxatdan o'tish ma'lumotlari topilmadi. Formani qayta to'ldiring.")
+                ->with('toast_type', 'warning');
+        }
+
+        if (User::query()->where('email', $payload['email'])->exists()) {
+            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
+
+            return redirect()->route('login')
+                ->with('success', 'Bu email bilan hisob allaqachon mavjud. Tizimga kiring.')
+                ->with('toast_type', 'warning');
+        }
+
+        $payloadFirst = (string) ($payload['first_name'] ?? '');
+        $payloadLast = (string) ($payload['last_name'] ?? '');
+        if (User::isFullNameTaken($payloadFirst, $payloadLast)) {
+            $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
+
+            return redirect()->route('register')
+                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro\'yxatdan o\'tishni boshidan qayta boshlang.'])
+                ->with('toast_type', 'warning');
+        }
+
+        $user = User::create([
+            'first_name' => $payload['first_name'] ?? '',
+            'last_name' => $payload['last_name'] ?? '',
+            'name' => $payload['name'] ?? trim(($payload['first_name'] ?? '').' '.($payload['last_name'] ?? '')),
+            'email' => $payload['email'],
+            'phone' => $payload['phone'],
+            'grade' => $payloadIsParent ? null : ($payload['grade'] ?? null),
+            'is_parent' => $payloadIsParent,
+            'password' => $payload['password'],
+        ]);
+
+        $verification->forceFill([
+            'completed_at' => now(),
+        ])->save();
+
+        $request->session()->forget(self::TELEGRAM_REGISTER_SESSION_KEY);
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        return redirect()->route('home')
+            ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi.')
+            ->with('toast_type', 'success');
     }
 
     public function logout(Request $request)
@@ -697,6 +778,13 @@ class AuthController extends Controller
                 ->with('toast_type', 'error');
         }
 
+        if (! $this->mailDeliveryEnabled()) {
+            return redirect()
+                ->route('user')
+                ->with('error', $this->mailDeliveryDisabledMessage())
+                ->with('toast_type', 'warning');
+        }
+
         if (! $this->canSendOtpNow((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return redirect()
                 ->route('user')
@@ -709,11 +797,10 @@ class AuthController extends Controller
                 'issued_by_admin_id' => (int) $admin->id,
             ]);
         } catch (\Throwable $e) {
-            Log::error('Admin password reset send failed', [
+            $this->logOtpSendFailure('Admin password reset send failed', $e, [
                 'email' => $user->email,
                 'target_user_id' => $user->id,
                 'admin_user_id' => $admin->id,
-                'error' => $e->getMessage(),
             ]);
 
             return redirect()
@@ -730,6 +817,10 @@ class AuthController extends Controller
 
     private function issueAndSendOtp(string $email, string $purpose, array $meta = []): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            throw new \RuntimeException('Mail delivery is disabled.');
+        }
+
         $code = (string) random_int(100000, 999999);
 
         OneTimeCode::query()
@@ -850,38 +941,137 @@ class AuthController extends Controller
         ], $extraMeta));
     }
 
-    private function normalizeEmail(string $email): string
+    private function loginEmailOtpEnabled(): bool
     {
-        return strtolower(trim($email));
+        return self::LOGIN_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
     }
 
-    private function splitFullName(string $name): array
+    private function registerEmailOtpEnabled(): bool
     {
-        $clean = trim(preg_replace('/\s+/', ' ', $name));
-        if ($clean === '') {
-            return ['Google', 'User'];
+        return self::REGISTER_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
+    }
+
+    private function directRegisterFallbackEnabled(): bool
+    {
+        if (app()->isLocal()) {
+            return true;
         }
 
-        $parts = explode(' ', $clean, 2);
-        $first = trim($parts[0] ?? '');
-        $last = trim($parts[1] ?? '');
+        return filter_var(env('REGISTER_DIRECT_FALLBACK_ENABLED', false), FILTER_VALIDATE_BOOL);
+    }
+
+    private function telegramRegistrationEnabled(): bool
+    {
+        return $this->telegramBot->isConfigured();
+    }
+
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true)
+            && (bool) config('mail.code_delivery_enabled', false)
+            && $this->mailConfigurationReady();
+    }
+
+    private function mailDeliveryDisabledMessage(): string
+    {
+        return 'Email yuborish vaqtincha ishlamayapti. Keyinroq qayta urinib ko\'ring.';
+    }
+
+    private function logOtpSendFailure(string $message, \Throwable $e, array $context = []): void
+    {
+        Log::error($message, array_merge($context, [
+            'error' => $e->getMessage(),
+            'exception' => $e::class,
+            'mail' => $this->mailDebugContext(),
+        ]));
+    }
+
+    private function mailDebugContext(): array
+    {
+        $defaultMailer = (string) config('mail.default', 'smtp');
+        $mailerConfig = (array) config("mail.mailers.{$defaultMailer}", []);
 
         return [
-            $first !== '' ? $first : 'Google',
-            $last !== '' ? $last : 'User',
+            'default' => $defaultMailer,
+            'host' => $mailerConfig['host'] ?? null,
+            'port' => $mailerConfig['port'] ?? null,
+            'encryption' => $mailerConfig['encryption'] ?? null,
+            'timeout' => $mailerConfig['timeout'] ?? null,
+            'local_domain' => $mailerConfig['local_domain'] ?? null,
+            'from_address' => config('mail.from.address'),
+            'from_name' => config('mail.from.name'),
+            'resend_api_key_configured' => $this->hasConfiguredResendApiKey(),
+            'username_configured' => filled($mailerConfig['username'] ?? null),
+            'password_configured' => filled($mailerConfig['password'] ?? null),
         ];
     }
 
-    private function hasSocialite(): bool
+    private function mailConfigurationReady(): bool
     {
-        return interface_exists(self::SOCIALITE_FACTORY) && app()->bound(self::SOCIALITE_FACTORY);
+        return match ((string) config('mail.default', 'smtp')) {
+            'resend' => $this->hasConfiguredResendApiKey(),
+            'smtp' => filled(config('mail.mailers.smtp.host')),
+            default => true,
+        };
     }
 
-    private function socialiteDriver(string $driver)
+    private function hasConfiguredResendApiKey(): bool
     {
-        /** @var mixed $factory */
-        $factory = app(self::SOCIALITE_FACTORY);
+        $apiKey = trim((string) (config('resend.api_key') ?? config('services.resend.key') ?? ''));
 
-        return $factory->driver($driver);
+        if ($apiKey === '' || ! str_starts_with($apiKey, 're_')) {
+            return false;
+        }
+
+        $normalizedKey = strtolower($apiKey);
+
+        return ! str_contains($normalizedKey, 'sizning_kalitingiz')
+            && ! str_contains($normalizedKey, 'your_key')
+            && ! str_contains($normalizedKey, 'your-api-key');
+    }
+
+    private function createTelegramRegisterVerification(array $validated, string $fullName, bool $isParent): TelegramRegistrationVerification
+    {
+        $email = $this->normalizeEmail((string) $validated['email']);
+
+        TelegramRegistrationVerification::query()
+            ->where('email', $email)
+            ->whereNull('completed_at')
+            ->delete();
+
+        return TelegramRegistrationVerification::query()->create([
+            'token' => Str::random(48),
+            'email' => $email,
+            'phone' => (string) $validated['phone'],
+            'payload' => [
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'name' => $fullName,
+                'email' => $email,
+                'phone' => $validated['phone'],
+                'grade' => $isParent ? null : $validated['grade'],
+                'is_parent' => $isParent,
+                'password' => Hash::make($validated['password']),
+            ],
+            'expires_at' => now()->addMinutes(self::TELEGRAM_REGISTER_EXPIRES_MINUTES),
+        ]);
+    }
+
+    private function telegramRegisterVerificationFromSession(Request $request): ?TelegramRegistrationVerification
+    {
+        $token = (string) $request->session()->get(self::TELEGRAM_REGISTER_SESSION_KEY, '');
+        if ($token === '') {
+            return null;
+        }
+
+        return TelegramRegistrationVerification::query()
+            ->where('token', $token)
+            ->whereNull('completed_at')
+            ->first();
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        return strtolower(trim($email));
     }
 }

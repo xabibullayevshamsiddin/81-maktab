@@ -28,7 +28,7 @@
     $canReplyMore = $replyCount < 4;
   @endphp
   @if(auth()->check() && $comment->user_id)
-    <button type="button" class="comment-avatar comment-avatar--btn {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}" data-user-preview-id="{{ $comment->user_id }}" title="Profil" aria-label="Foydalanuvchi profili">
+    <button type="button" class="comment-avatar comment-avatar--btn {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}" data-user-preview-id="{{ $comment->user_id }}" title="{{ __('public.comments.profile_title') }}" aria-label="{{ __('public.comments.profile_aria') }}">
       @if($avatarUrl)
         <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="" loading="lazy" decoding="async">
       @else
@@ -66,8 +66,8 @@
         </button>
       </form>
 
-      @if ($showReplyForm && auth()->check() && $canReplyMore)
-        <button
+	      @if ($showReplyForm && auth()->check() && $canReplyMore)
+	        <button
           type="button"
           class="comment-reply js-comment-reply-toggle"
           aria-label="Javob"
@@ -95,10 +95,18 @@
               />
             <button class="btn btn-sm" type="submit">Javob yuborish</button>
           </form>
-        </div>
-      @endif
+	        </div>
+	      @endif
 
-      @if ($canManageComment)
+        <a
+          href="{{ route('contact', ['note' => 'Izoh bo\'yicha murojaat', 'message' => 'Ustoz izohi ID: '.$comment->id.' | Ustoz: '.($teacher?->slug ?? $teacher?->id).' | Muammo: ']) }}"
+          class="comment-reply"
+        >
+          <i class="fa-regular fa-flag"></i>
+          Shikoyat
+        </a>
+
+	      @if ($canManageComment)
         <details class="comment-action-box">
           <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
           <form
@@ -126,7 +134,7 @@
           action="{{ route('teacher.comments.destroy', $comment) }}"
           method="POST"
           data-comment-id="{{ $comment->id }}"
-          data-confirm="Izohni o'chirmoqchimisiz?" data-confirm-title="Izohni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish"
+          data-confirm="{{ __('public.comments.delete_confirm') }}" data-confirm-title="{{ __('public.comments.delete_title') }}" data-confirm-variant="danger" data-confirm-ok="{{ __('public.comments.delete_ok') }}"
         >
           @csrf
           @method('DELETE')
@@ -140,7 +148,7 @@
 
   @if ($comment->replies->isNotEmpty())
     <details class="comment-replies-toggle">
-      <summary>Javoblarni o'qish ({{ $replyCount }})</summary>
+      <summary>{{ __('public.comments.read_replies', ['count' => $replyCount]) }}</summary>
       <div class="comment-list comment-replies">
         @foreach($comment->replies as $reply)
           @include('teacher.partials.comment-item', ['comment' => $reply, 'teacher' => $teacher, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])

@@ -58,9 +58,11 @@ if (! function_exists('app_storage_asset')) {
             return null;
         }
 
-        // APP_URL pastki papkani hisobga olmasa, Storage::url() noto‘g‘ri URL beradi.
-        // app_public_asset bilan bir xil: joriy so‘rovning base URL + /storage/...
-        if (! app()->runningInConsole()) {
+        $publicDiskDriver = (string) config('filesystems.disks.public.driver', 'local');
+
+        // Local public disk uchun joriy so‘rovning base URL + /storage/... yo‘li ishonchli.
+        // Cloud bucket (s3/r2) uchun esa Storage::url() to‘g‘ri public URL qaytaradi.
+        if ($publicDiskDriver === 'local' && ! app()->runningInConsole()) {
             $baseUrl = request()->getBaseUrl();
             if ($baseUrl !== '') {
                 return rtrim($baseUrl, '/').'/storage/'.$path;
@@ -201,6 +203,7 @@ if (! function_exists('supported_locales')) {
         return [
             'uz' => 'UZ',
             'en' => 'EN',
+            'ru' => 'RU',
         ];
     }
 }
@@ -463,10 +466,16 @@ if (! function_exists('uz_phone_format')) {
 
 if (! function_exists('school_grade_map')) {
     /**
-     * Maktabdagi barcha rasmiy sinflar ro'yxati (Rasm asosida lotincha harflarda).
+     * Maktabdagi barcha faol rasmiy sinflar ro'yxati.
      */
     function school_grade_map(): array
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('school_classes')) {
+            return \Illuminate\Support\Facades\Cache::remember('school_classes.active_map.v1', now()->addMinutes(10), function (): array {
+                return \App\Models\SchoolClass::activeMap();
+            });
+        }
+
         return [
             1 => ['A', 'B', 'D', 'E', 'G', 'K', 'V', 'Z'],
             2 => ['A', 'B', 'D', 'E', 'G', 'K', 'V'],
@@ -480,6 +489,14 @@ if (! function_exists('school_grade_map')) {
             10 => ['A', 'D', 'E', 'V', 'B'],
             11 => ['D', 'G', 'V', 'B'],
         ];
+    }
+}
+
+if (! function_exists('forget_school_grade_cache')) {
+    function forget_school_grade_cache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('school_classes.active_map.v1');
+        \Illuminate\Support\Facades\Cache::forget('school_classes.active_names.v1');
     }
 }
 
@@ -510,13 +527,24 @@ if (! function_exists('school_grade_grouped_options')) {
     }
 }
 
-if (! function_exists('school_grade_options')) {
-    function school_grade_options(): array
+if (! function_exists('school_student_grade_options')) {
+    function school_student_grade_options(): array
     {
         return collect(school_grade_grouped_options())
             ->flatMap(static fn ($options) => array_keys($options))
             ->values()
             ->all();
+    }
+}
+
+if (! function_exists('school_grade_options')) {
+    function school_grade_options(): array
+    {
+        $options = school_student_grade_options();
+
+        $options[] = 'TEACHER';
+
+        return $options;
     }
 }
 

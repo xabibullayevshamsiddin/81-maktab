@@ -1,5 +1,6 @@
 @php
   $likedTeacherIds = $likedTeacherIds ?? collect();
+  $bookmarkedTeacherIds = $bookmarkedTeacherIds ?? collect();
 @endphp
 
 <div class="teachers-grid related-teachers-grid">
@@ -47,6 +48,11 @@
             </button>
           </form>
         @endauth
+        @include('posts.partials.bookmark-button', [
+          'toggleUrl' => auth()->check() ? route('teacher.bookmark.toggle', $rt) : null,
+          'isSaved' => $bookmarkedTeacherIds->contains($rt->id),
+          'ariaLabel' => __('public.bookmark.aria_teacher'),
+        ])
         <button
           type="button"
           class="btn btn-sm btn-outline share-btn js-share-trigger"

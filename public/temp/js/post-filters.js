@@ -8,9 +8,14 @@
   const items = form.querySelectorAll('[data-filter-value]');
   const searchInput = form.querySelector('input[name="q"]');
   const categorySelect = form.querySelector('select[name="category_id"]');
-  const resetLink = form.querySelector('.js-post-filter-reset');
+  const clearBtn = form.querySelector('.search-clear-btn');
   let debounceTimer = null;
   let activeController = null;
+
+  function toggleClearBtn() {
+    if (!clearBtn || !searchInput) return;
+    clearBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
+  }
 
   function closeDropdowns() {
     document.querySelectorAll('[data-post-filter-dropdown]').forEach((currentDropdown) => {
@@ -49,7 +54,8 @@
     }
 
     activeController = new AbortController();
-    results.style.opacity = '0.55';
+    results.classList.add('is-loading');
+    results.style.pointerEvents = 'none';
 
     try {
       const response = await fetch(url, {
@@ -65,17 +71,28 @@
       }
 
       const data = await response.json();
-      results.innerHTML = data.html || '';
-      if (typeof window.initPrimeAnimations === 'function') {
-        window.initPrimeAnimations();
-      }
+      
+      // Smooth fade transition
+      results.style.opacity = '0';
+      setTimeout(() => {
+        results.innerHTML = data.html || '';
+        if (typeof window.initPrimeAnimations === 'function') {
+          window.initPrimeAnimations();
+        }
+        results.style.opacity = '1';
+        results.classList.remove('is-loading');
+        results.style.pointerEvents = 'auto';
+      }, 50);
+
       history.replaceState({}, '', url);
     } catch (error) {
       if (error.name !== 'AbortError') {
         window.location.href = url;
       }
+      results.classList.remove('is-loading');
+      results.style.pointerEvents = 'auto';
     } finally {
-      results.style.opacity = '1';
+      // Done
     }
   }
 
@@ -103,7 +120,10 @@
     });
   });
 
-  searchInput?.addEventListener('input', scheduleApply);
+  searchInput?.addEventListener('input', () => {
+    toggleClearBtn();
+    scheduleApply();
+  });
   categorySelect?.addEventListener('change', applyFilters);
 
   form.addEventListener('submit', (event) => {
@@ -111,11 +131,10 @@
     applyFilters();
   });
 
-  resetLink?.addEventListener('click', (event) => {
+  clearBtn?.addEventListener('click', (event) => {
     event.preventDefault();
     if (searchInput) searchInput.value = '';
-    if (categorySelect) categorySelect.value = 'all';
-    if (hiddenInput) hiddenInput.value = 'all';
+    toggleClearBtn();
     applyFilters();
   });
 

@@ -177,11 +177,121 @@
     } catch (e) {}
   }
 
+  window.playPrimeThemeToggleSound = function(isDark) {
+    if (primeAudioMuted) return;
+    try {
+      const ctx = getPrimeAudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
+      osc.type = isDark ? 'sine' : 'triangle';
+      const startFreq = isDark ? 300 : 500;
+      const endFreq = isDark ? 200 : 700;
 
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.15);
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch (e) {}
+  };
+
+  /** Prime Pro Max: Page Transition */
+  function initPageTransitions() {
+    const loader = document.getElementById('prime-page-loader');
+
+    // Page load fade in
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (loader) loader.classList.add('fade-out');
+        document.body.classList.add('page-ready');
+      }, 300);
+    });
+
+    // Page leave fade out on link click
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return;
+
+      const href = link.getAttribute('href');
+      const target = link.getAttribute('target');
+
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !href.startsWith('tel:') && !href.startsWith('mailto:') && target !== '_blank' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        document.body.classList.remove('page-ready');
+        if (loader) loader.classList.remove('fade-out');
+
+        setTimeout(() => {
+          window.location.href = href;
+        }, 400);
+      }
+    });
+  }
+
+  /** Prime Pro Max: Cinematic Theme Toggle */
+  function initCinematicThemeToggle() {
+    const toggle = document.querySelector('.theme-toggle') || document.querySelector('[data-theme-toggle]');
+    if (!toggle) return;
+
+    toggle.addEventListener('click', (e) => {
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      const nextTheme = isDark ? 'light' : 'dark';
+
+      // Cinematic Reveal
+      const canvas = document.getElementById('theme-transition-canvas');
+      if (!canvas) {
+        root.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('site-theme', nextTheme);
+        return;
+      }
+
+      const rect = toggle.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      document.body.classList.add('theme-transition-active');
+
+      let radius = 0;
+      const maxRadius = Math.sqrt(Math.pow(window.innerWidth, 2) + Math.pow(window.innerHeight, 2));
+
+      function animate() {
+        radius += maxRadius / 20;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = nextTheme === 'dark' ? '#07111f' : '#edf2fb';
+        ctx.fill();
+
+        if (radius < maxRadius) {
+          requestAnimationFrame(animate);
+        } else {
+          root.setAttribute('data-theme', nextTheme);
+          localStorage.setItem('site-theme', nextTheme);
+          document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: nextTheme } }));
+          setTimeout(() => {
+            document.body.classList.remove('theme-transition-active');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }, 100);
+        }
+      }
+      animate();
+    });
+  }
+
+  /** Prime Pro Max: Animated Charts (ApexCharts) */
   function playPrimeConfetti(x, y, isGold = false) {
-    const colors = isGold 
-        ? ['#f59e0b', '#fbbf24', '#fcd34d', '#ffffff'] 
+    const colors = isGold
+        ? ['#f59e0b', '#fbbf24', '#fcd34d', '#ffffff']
         : ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#dc2626'];
     const count = isGold ? 48 : 32;
     for (let i = 0; i < count; i++) {
@@ -193,15 +303,15 @@
       p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
       p.style.left = x + 'px';
       p.style.top = y + 'px';
-      
+
       const angle = Math.random() * Math.PI * 2;
       const dist = isGold ? Math.random() * 200 + 80 : Math.random() * 120 + 50;
       const tx = Math.cos(angle) * dist;
       const ty = Math.sin(angle) * dist;
-      
+
       p.style.setProperty('--tx', tx + 'px');
       p.style.setProperty('--ty', ty + 'px');
-      
+
       document.body.appendChild(p);
       setTimeout(() => p.remove(), isGold ? 1200 : 800);
     }
@@ -497,14 +607,40 @@
           }
           if (previewDetailsEl) {
             var rows = [];
-            if (d.grade) {
-              rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
-            }
-            if (d.is_parent) {
-              rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
-            }
-            if (d.member_year) {
-              rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+            var adminProfile = d.admin_profile || null;
+            if (adminProfile) {
+              rows.push('<li><span>ID</span> #' + escChatHtml(String(adminProfile.id || '0')) + '</li>');
+              if (adminProfile.name) {
+                rows.push('<li><span>Login nomi</span> ' + escChatHtml(adminProfile.name) + '</li>');
+              }
+              if (adminProfile.first_name) {
+                rows.push('<li><span>Ism</span> ' + escChatHtml(adminProfile.first_name) + '</li>');
+              }
+              if (adminProfile.last_name) {
+                rows.push('<li><span>Familiya</span> ' + escChatHtml(adminProfile.last_name) + '</li>');
+              }
+              rows.push('<li><span>Rol kaliti</span> ' + escChatHtml(adminProfile.role_key || '—') + '</li>');
+              rows.push('<li><span>Akkaunt holati</span> ' + escChatHtml(adminProfile.status || '—') + '</li>');
+              rows.push('<li><span>Hisob turi</span> ' + (adminProfile.is_parent ? 'Ota-ona' : 'Foydalanuvchi') + '</li>');
+              if (adminProfile.grade) {
+                rows.push('<li><span>Sinf</span> ' + escChatHtml(adminProfile.grade) + '</li>');
+              }
+              if (adminProfile.registered_at) {
+                rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(adminProfile.registered_at) + '</li>');
+              }
+              rows.push('<li><span>Email tasdiqlangan</span> ' + escChatHtml(adminProfile.email_verified_at || 'Yo‘q') + '</li>');
+              rows.push('<li><span>Kurs ochish ruxsati</span> ' + (adminProfile.course_open_approved ? 'Bor' : 'Yo‘q') + '</li>');
+              rows.push('<li><span>So‘rov holati</span> ' + (adminProfile.course_open_request_pending ? 'Kutilmoqda' : 'Yo‘q') + '</li>');
+            } else {
+              if (d.grade) {
+                rows.push('<li><span>Sinf</span> ' + escChatHtml(d.grade) + '</li>');
+              }
+              if (d.is_parent) {
+                rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
+              }
+              if (d.member_year) {
+                rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
+              }
             }
             previewDetailsEl.innerHTML = rows.length ? rows.join('') : '<li class="chat-user-preview-details-empty">Qo‘shimcha maydonlar kiritilmagan.</li>';
           }
@@ -516,9 +652,17 @@
           }
           if (previewContactEl && d.contact) {
             previewContactEl.hidden = false;
-            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa (faqat Super Admin)</p>'
-              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + escChatHtml(d.contact.email || '—') + '</span></div>'
-              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + escChatHtml(d.contact.phone || '—') + '</span></div>';
+            var emailText = escChatHtml(d.contact.email || '—');
+            var phoneText = escChatHtml(d.contact.phone || '—');
+            var emailLink = d.contact.email
+              ? '<a href="mailto:' + escAttr(String(d.contact.email)) + '">' + emailText + '</a>'
+              : '<span>—</span>';
+            var phoneLink = d.contact.phone
+              ? '<a href="tel:' + escAttr(String(d.contact.phone)) + '">' + phoneText + '</a>'
+              : '<span>—</span>';
+            previewContactEl.innerHTML = '<p class="chat-user-preview-contact-kicker">Aloqa ma‘lumotlari (Super Admin)</p>'
+              + '<div class="chat-user-preview-contact-row"><span>Email</span><span>' + emailLink + '</span></div>'
+              + '<div class="chat-user-preview-contact-row"><span>Telefon</span><span>' + phoneLink + '</span></div>';
           } else if (previewContactEl) {
             previewContactEl.hidden = true;
             previewContactEl.innerHTML = '';
@@ -530,7 +674,7 @@
             var cfgSelf = userPreviewConfigEl();
             var selfId = cfgSelf && cfgSelf.getAttribute('data-current-user-id');
             var admParts = [];
-            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (Administrator)</p>');
+            admParts.push('<p class="chat-user-preview-admin-kicker">Boshqaruv (' + (d.viewer_is_super_admin ? 'Super Admin' : 'Administrator') + ')</p>');
             admParts.push(
               '<p class="chat-user-preview-admin-status">Akkaunt holati: <strong>'
               + (sa.is_active ? 'Faol' : 'Bloklangan') + '</strong></p>'
@@ -548,10 +692,10 @@
               );
             }
             if (!sa.can_deactivate && !sa.can_activate) {
-              if (d.is_super_admin) {
-                admParts.push('<p class="chat-user-preview-muted">Boshqa Super Admin akkauntini bloklash mumkin emas.</p>');
-              } else if (selfId && String(userId) === String(selfId)) {
+              if (sa.is_self || (selfId && String(userId) === String(selfId))) {
                 admParts.push('<p class="chat-user-preview-muted">Bu o‘z profilingiz.</p>');
+              } else {
+                admParts.push('<p class="chat-user-preview-muted">Bu akkaunt uchun boshqaruv amali mavjud emas.</p>');
               }
             }
             previewAdminEl2.innerHTML = admParts.join('');
@@ -904,9 +1048,11 @@
       true
     );
 
-    siteNav.querySelectorAll('.nav-link').forEach((link) => {
-      link.addEventListener('click', closeMenu, true);
-    });
+    siteNav
+      .querySelectorAll('a.nav-link, button.nav-link, .nav-dropdown-menu a, .nav-dropdown-form button')
+      .forEach((link) => {
+        link.addEventListener('click', closeMenu, true);
+      });
 
     document.addEventListener('click', (event) => {
       if (!siteNav.classList.contains('open')) return;
@@ -1065,8 +1211,24 @@
     const errorMsg = body?.dataset.siteError || '';
     const toastType = body?.dataset.siteToastType || '';
     const firstError = body?.dataset.siteFirstError || '';
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = String(value ?? '');
+      return div.innerHTML;
+    }
 
-    function showToast(message, type = 'success') {
+    function normalizeToastLink(link) {
+      if (!link) return '';
+
+      try {
+        const url = new URL(String(link), window.location.origin);
+        return url.origin === window.location.origin ? url.href : '';
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function showToast(message, type = 'success', options = {}) {
       if (!message) return;
 
       var iconMap = {
@@ -1081,14 +1243,20 @@
       };
 
       var toast = document.createElement('div');
+      var toastLink = normalizeToastLink(options.link || options.url || '');
       toast.className = 'toast toast-' + type;
       toast.style.setProperty('--toast-duration', toastTimerMs + 'ms');
+      if (toastLink) {
+        toast.style.cursor = 'pointer';
+        toast.setAttribute('role', 'button');
+        toast.setAttribute('tabindex', '0');
+      }
       toast.innerHTML =
         '<div class="toast-body">' +
           '<div class="toast-icon"><i class="' + (iconMap[type] || iconMap.success) + '"></i></div>' +
           '<div class="toast-content">' +
-            '<p class="toast-title">' + (titleMap[type] || titleMap.success) + '</p>' +
-            '<p class="toast-msg">' + message + '</p>' +
+            '<p class="toast-title">' + escapeHtml(titleMap[type] || titleMap.success) + '</p>' +
+            '<p class="toast-msg">' + escapeHtml(message) + '</p>' +
           '</div>' +
         '</div>' +
         '<button type="button" class="toast-close" aria-label="Yopish"><i class="fa-solid fa-xmark"></i></button>' +
@@ -1106,7 +1274,19 @@
         e.stopPropagation();
         dismissToast();
       });
-      toast.addEventListener('click', dismissToast);
+      toast.addEventListener('click', function () {
+        if (toastLink) {
+          window.location.href = toastLink;
+          return;
+        }
+
+        dismissToast();
+      });
+      toast.addEventListener('keydown', function (event) {
+        if (!toastLink || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        window.location.href = toastLink;
+      });
 
       setTimeout(dismissToast, toastTimerMs);
     }
@@ -1165,6 +1345,15 @@
           applyTheme(nextTheme);
         });
       });
+
+      // Tizim rejimi o'zgarganda sayt rejimini ham avtomatik moslashtirish (agar o'zi tanlamagan bo'lsa)
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+          if (!localStorage.getItem(storageKey)) {
+            applyTheme(e.matches ? 'dark' : 'light');
+          }
+        });
+      }
     }
 
     if (successMsg) showToast(successMsg, resolveFlashToastType('success'));
@@ -1196,6 +1385,77 @@
   function getCommentConfig(form) {
     const scope = form?.closest('[data-comment-config]') || document.querySelector('[data-comment-config]');
     return parseJson(scope?.dataset.commentConfig, null);
+  }
+
+  async function fetchLiveStats(url) {
+    if (!url) return null;
+
+    const finalUrl = new URL(url, window.location.origin);
+    finalUrl.searchParams.set('_', String(Date.now()));
+
+    const response = await fetch(finalUrl.toString(), {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+
+    return payload && payload.ok ? payload : null;
+  }
+
+  function initPublicLiveStats() {
+    const postScope = document.querySelector('[data-post-stats-url]');
+    if (postScope) {
+      fetchLiveStats(postScope.dataset.postStatsUrl)
+        .then((data) => {
+          if (!data) return;
+
+          const viewsEl = postScope.querySelector('.js-post-views-count');
+          const commentsEl = postScope.querySelector('.js-post-comments-count');
+          const likeCountEl = postScope.querySelector('.js-like-form .like-count');
+
+          if (viewsEl && data.views != null) {
+            viewsEl.textContent = String(data.views);
+          }
+
+          if (commentsEl && data.comments_count != null) {
+            commentsEl.textContent = String(data.comments_count);
+          }
+
+          if (likeCountEl && data.likes_count != null) {
+            likeCountEl.textContent = String(data.likes_count);
+          }
+        })
+        .catch(() => {});
+    }
+
+    const teacherScope = document.querySelector('[data-teacher-stats-url]');
+    if (teacherScope) {
+      fetchLiveStats(teacherScope.dataset.teacherStatsUrl)
+        .then((data) => {
+          if (!data) return;
+
+          const teacherLikeBtnCountEl = teacherScope.querySelector('.js-like-form .like-count');
+          const teacherLikesStatEl = document.querySelector('.js-teacher-likes-stat');
+
+          if (teacherLikeBtnCountEl && data.likes_count != null) {
+            teacherLikeBtnCountEl.textContent = String(data.likes_count);
+          }
+
+          if (teacherLikesStatEl && data.likes_count != null) {
+            teacherLikesStatEl.textContent = String(data.likes_count);
+          }
+        })
+        .catch(() => {});
+    }
   }
 
   function initInteractiveActions() {
@@ -1244,6 +1504,49 @@
         window.showToast?.(data.message || (data.liked ? "Like qo'shildi." : 'Like olib tashlandi.'), data.toast_type || 'success');
       } catch (error) {
         window.showToast?.('Like qilishda xatolik', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    });
+
+    document.addEventListener('submit', async (event) => {
+      const form = event.target.closest('form.js-bookmark-form');
+      if (!form) return;
+
+      event.preventDefault();
+      const btn = form.querySelector('button.bookmark-btn');
+      if (btn) btn.disabled = true;
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json',
+          },
+          body: new FormData(form),
+        });
+
+        const data = await response.json();
+        if (!data || !data.ok) {
+          window.showToast?.(data?.message || 'Xatolik', data?.toast_type || 'error');
+          return;
+        }
+
+        if (btn) {
+          const icon = btn.querySelector('i');
+          const saved = !!data.bookmarked;
+          btn.classList.toggle('is-saved', saved);
+          btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+          if (icon) {
+            icon.classList.toggle('fa-solid', saved);
+            icon.classList.toggle('fa-regular', !saved);
+          }
+        }
+
+        window.showToast?.(data.message || (data.bookmarked ? 'Saqlandi.' : "Olib tashlandi."), data.toast_type || 'success');
+      } catch (error) {
+        window.showToast?.('Saqlashda xatolik', 'error');
       } finally {
         if (btn) btn.disabled = false;
       }
@@ -1515,6 +1818,13 @@
           return;
         }
 
+        if (comment.is_approved === false) {
+          form.reset();
+          const details = form.closest('details');
+          if (details) details.open = false;
+          return;
+        }
+
         const currentUserId = cfg.currentUserId ?? null;
         const roleKey = String(comment.role_key || 'guest');
         let canManageThis = false;
@@ -1693,7 +2003,7 @@
       scrollBar.className = 'scroll-progress-bar';
       document.body.appendChild(scrollBar);
     }
-    
+
     window.addEventListener('scroll', () => {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -1713,18 +2023,18 @@
               let start = 0;
               const end = parseInt(rawVal.replace(/[, ]/g, ''), 10);
               if(isNaN(end)) return;
-              
+
               const duration = 2000;
               let startTime = null;
               const suffix = entry.target.dataset.suffix || '';
-              
+
               const step = (timestamp) => {
                 if (!startTime) startTime = timestamp;
                 const progress = Math.min((timestamp - startTime) / duration, 1);
                 const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                 const current = Math.floor(easeProgress * end);
                 entry.target.innerText = current.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + suffix;
-                
+
                 if (progress < 1) {
                   window.requestAnimationFrame(step);
                 } else {
@@ -1736,7 +2046,7 @@
           }
         });
       }, { threshold: 0.5 });
-      
+
       numElements.forEach(el => observer.observe(el));
     }
 
@@ -1749,7 +2059,7 @@
         child.style.setProperty('--stagger-index', idx);
         child.classList.add('stagger-item');
       });
-      
+
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if(entry.isIntersecting) {
@@ -2076,6 +2386,7 @@
     var panel = document.getElementById('chat-panel');
     var closeBtn = document.getElementById('chat-close-btn');
     var fullBtn = document.getElementById('chat-fullscreen-btn');
+    var clearBtn = document.getElementById('chat-clear-btn');
     var messagesEl = document.getElementById('chat-messages');
     var form = document.getElementById('chat-form');
     var input = document.getElementById('chat-input');
@@ -2090,15 +2401,146 @@
     var chatDisabledText = document.getElementById('chat-disabled-panel-text');
     var chatEnabled = widget.getAttribute('data-chat-enabled') !== '0';
 
+    var chatStatusUrl = widget.getAttribute('data-chat-status-url');
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
     var sendUrl = widget.getAttribute('data-chat-send-url');
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
+    var clearUrl = widget.getAttribute('data-chat-clear-url');
     var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
+    var currentUserId = String(widget.getAttribute('data-user-id') || '');
     var lastId = 0;
+    var unreadCount = 0;
     var isOpen = false;
     var isSending = false;
     var pollTimer = null;
+    var canClearAll = false;
+    var lastReadStorageKey = 'prime-chat-last-read:' + currentUserId;
+    var lastReadId = getStoredChatLastReadId();
+
+    function getStoredChatLastReadId() {
+      try {
+        return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0);
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    function setStoredChatLastReadId(value) {
+      var normalized = Math.max(0, parseInt(value, 10) || 0);
+      lastReadId = normalized;
+      try {
+        window.localStorage.setItem(lastReadStorageKey, String(normalized));
+      } catch (e) {
+        /* localStorage bo'lmasa ham chat ishlayveradi */
+      }
+    }
+
+    function setChatEnabledState(enabled, message) {
+      chatEnabled = !!enabled;
+      widget.setAttribute('data-chat-enabled', chatEnabled ? '1' : '0');
+
+      if (message && chatDisabledText) {
+        chatDisabledText.textContent = message;
+      }
+
+      if (chatDisabledPanel && chatPanelMain) {
+        chatPanelMain.hidden = !chatEnabled;
+        chatDisabledPanel.hidden = chatEnabled;
+      }
+
+      if (fullBtn) {
+        fullBtn.style.display = chatEnabled ? '' : 'none';
+      }
+    }
+
+    function refreshChatAvailability() {
+      if (!chatStatusUrl) {
+        return loadMessages().then(function () {
+          return chatEnabled;
+        });
+      }
+
+      return fetch(chatStatusUrl, {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) return null;
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data) return chatEnabled;
+
+          if (data.chat_disabled) {
+            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
+            stopPolling();
+            return false;
+          }
+
+          setChatEnabledState(true);
+          return true;
+        })
+        .catch(function () {
+          return chatEnabled;
+        });
+    }
+
+    function syncChatBadge() {
+      if (!badge) return;
+
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.hidden = false;
+        return;
+      }
+
+      badge.textContent = '0';
+      badge.hidden = true;
+    }
+
+    function countUnreadMessages(msgs, thresholdId) {
+      var minId = Math.max(0, parseInt(thresholdId, 10) || 0);
+      return msgs.reduce(function (count, msg) {
+        if (!msg || msg.is_mine) return count;
+        return (parseInt(msg.id, 10) || 0) > minId ? count + 1 : count;
+      }, 0);
+    }
+
+    function markChatAsRead(uptoId) {
+      var normalized = Math.max(lastId, Math.max(0, parseInt(uptoId, 10) || 0));
+      if (normalized > lastReadId) {
+        setStoredChatLastReadId(normalized);
+      }
+      unreadCount = 0;
+      syncChatBadge();
+    }
+
+    function syncChatAdminActions() {
+      if (!clearBtn) return;
+      clearBtn.hidden = !canClearAll;
+      clearBtn.disabled = !canClearAll;
+    }
+
+    function resetChatComposeState() {
+      isSending = false;
+      if (input) {
+        input.disabled = false;
+        input.removeAttribute('aria-busy');
+      }
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.removeAttribute('aria-busy');
+      }
+      stickerButtons.forEach(function (btn) {
+        btn.disabled = false;
+      });
+      syncComposeState();
+    }
+
+    function syncDockState() {
+      document.body.classList.toggle('chat-panel-open', isOpen);
+    }
 
     function positionPanel() {
       var rect = widget.getBoundingClientRect();
@@ -2150,9 +2592,33 @@
       panel.classList.add('is-opening');
       widget.classList.add('is-open');
       isOpen = true;
-      if (badge) badge.hidden = true;
+      resetChatComposeState();
+      syncDockState();
+      markChatAsRead(lastId);
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
+        setChatEnabledState(false, widget.getAttribute('data-chat-disabled-message') || 'Global chat vaqtincha oвЂchirilgan.');
+
+        if (!widget.getAttribute('data-chat-disabled-message')) {
+          setChatEnabledState(false, 'Global chat vaqtincha ochirilgan.');
+        }
+
+        refreshChatAvailability().then(function () {
+          if (!chatEnabled) return;
+          return loadMessages().then(function () {
+            startPolling();
+            markChatAsRead(lastId);
+            scrollDown();
+            if (input) input.focus();
+            syncComposeState();
+          });
+        }).finally(function () {
+          setTimeout(function () {
+            panel.classList.remove('is-opening');
+          }, 520);
+        });
+
+        return;
         if (fullBtn) fullBtn.style.display = 'none';
         chatPanelMain.hidden = true;
         chatDisabledPanel.hidden = false;
@@ -2165,18 +2631,17 @@
         return;
       }
 
-      if (chatDisabledPanel) chatDisabledPanel.hidden = true;
-      if (chatPanelMain) chatPanelMain.hidden = false;
-      if (fullBtn) fullBtn.style.display = '';
+      setChatEnabledState(true);
 
-      loadMessages();
-      scrollDown();
-      input.focus();
-      startPolling();
-      syncComposeState();
-      setTimeout(function () {
-        panel.classList.remove('is-opening');
-      }, 520);
+      loadMessages().finally(function () {
+        markChatAsRead(lastId);
+        scrollDown();
+        if (input) input.focus();
+        syncComposeState();
+        setTimeout(function () {
+          panel.classList.remove('is-opening');
+        }, 520);
+      });
     }
 
     function closePanel() {
@@ -2185,7 +2650,8 @@
       widget.classList.remove('is-open');
       widget.classList.add('is-bubble-return');
       isOpen = false;
-      stopPolling();
+      resetChatComposeState();
+      syncDockState();
       setComposeState('idle');
       setTimeout(function () {
         widget.classList.remove('is-bubble-return');
@@ -2274,15 +2740,31 @@
     function appendMessages(msgs, options) {
       if (!msgs.length) return [];
 
+      if (options && options.replace) {
+        messagesEl.innerHTML = '';
+      }
+
+      // Parallel poll responses can contain the same message; render each id only once.
+      var existingIds = new Set(
+        Array.prototype.map.call(messagesEl.querySelectorAll('[data-msg-id]'), function (node) {
+          return String(node.getAttribute('data-msg-id') || '');
+        })
+      );
+      msgs = msgs.filter(function (msg) {
+        var id = String(msg && msg.id ? msg.id : '');
+        if (!id || existingIds.has(id)) {
+          return false;
+        }
+        existingIds.add(id);
+        return true;
+      });
+      if (!msgs.length) return [];
+
       var temp = document.createElement('div');
       temp.innerHTML = msgs.map(renderMsg).join('');
 
       var nodes = Array.prototype.slice.call(temp.children);
       var animateClass = options && options.seeded ? 'is-seeded' : (options && options.fresh ? 'is-fresh' : '');
-
-      if (options && options.replace) {
-        messagesEl.innerHTML = '';
-      }
 
       nodes.forEach(function (node, index) {
         if (animateClass) {
@@ -2334,6 +2816,7 @@
     }
 
     function loadMessages() {
+      var isInitialSeed = lastId === 0;
       return fetch(messagesUrl + '?after=' + lastId, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
         credentials: 'same-origin',
@@ -2341,20 +2824,14 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.chat_disabled) {
-            chatEnabled = false;
-            widget.setAttribute('data-chat-enabled', '0');
+            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
-            if (data.disabled_message && chatDisabledText) {
-              chatDisabledText.textContent = data.disabled_message;
-            }
-            if (isOpen && chatDisabledPanel && chatPanelMain) {
-              chatPanelMain.hidden = true;
-              chatDisabledPanel.hidden = false;
-              if (fullBtn) fullBtn.style.display = 'none';
-            }
             return [];
           }
+          setChatEnabledState(true);
           var msgs = data.messages || [];
+          canClearAll = !!data.can_clear_all;
+          syncChatAdminActions();
           if (!msgs.length) return [];
 
           appendMessages(msgs, {
@@ -2364,14 +2841,21 @@
           });
 
           lastId = data.last_id || lastId;
-          scrollDown();
+
+          if (isOpen) {
+            markChatAsRead(lastId);
+            scrollDown();
+          } else if (isInitialSeed) {
+            unreadCount = countUnreadMessages(msgs, lastReadId);
+            syncChatBadge();
+          }
+
           return msgs;
         })
         .catch(function () { return []; });
     }
 
     function pollNew(options) {
-      if (!isOpen) return Promise.resolve([]);
       options = options || {};
       return fetch(messagesUrl + '?after=' + lastId, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
@@ -2380,24 +2864,26 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.chat_disabled) {
-            chatEnabled = false;
-            widget.setAttribute('data-chat-enabled', '0');
+            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
-            if (data.disabled_message && chatDisabledText) {
-              chatDisabledText.textContent = data.disabled_message;
-            }
-            if (isOpen && chatDisabledPanel && chatPanelMain) {
-              chatPanelMain.hidden = true;
-              chatDisabledPanel.hidden = false;
-              if (fullBtn) fullBtn.style.display = 'none';
-            }
             return [];
           }
+          setChatEnabledState(true);
           var msgs = data.messages || [];
+          canClearAll = !!data.can_clear_all;
+          syncChatAdminActions();
           if (!msgs.length) return [];
-          appendMessages(msgs, { fresh: true, burst: !!options.burst });
+          appendMessages(msgs, { fresh: isOpen, burst: isOpen && !!options.burst });
           lastId = data.last_id || lastId;
-          scrollDown();
+
+          if (isOpen) {
+            markChatAsRead(lastId);
+            scrollDown();
+          } else {
+            unreadCount += countUnreadMessages(msgs, lastReadId);
+            syncChatBadge();
+          }
+
           return msgs;
         })
         .catch(function () { return []; });
@@ -2603,6 +3089,45 @@
 
     closeBtn.addEventListener('click', closePanel);
     if (fullBtn) fullBtn.addEventListener('click', toggleFullscreen);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (!canClearAll || !clearUrl) return;
+
+        function doClearAll() {
+          fetch(clearUrl, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+            credentials: 'same-origin',
+          }).then(function (r) {
+            if (!r.ok) {
+              throw new Error("Chatni tozalab bo'lmadi.");
+            }
+            messagesEl.innerHTML = '';
+            lastId = 0;
+            if (window.showToast) {
+              window.showToast("Global chat tozalandi.", 'success');
+            }
+          }).catch(function (err) {
+            if (window.showToast) {
+              window.showToast(err && err.message ? err.message : "Chatni tozalab bo'lmadi.", 'error');
+            }
+          });
+        }
+
+        var cp = window.primeConfirm && window.primeConfirm({
+          message: "Global chatdagi barcha xabarlar o'chirilsinmi?",
+          title: 'Global chatni tozalash',
+          variant: 'danger',
+          okText: "Tozalash",
+        });
+
+        if (cp && typeof cp.then === 'function') {
+          cp.then(function (ok) { if (ok) doClearAll(); });
+        } else if (window.confirm("Global chatdagi barcha xabarlar o'chirilsinmi?")) {
+          doClearAll();
+        }
+      });
+    }
 
     window.addEventListener('resize', function () {
       if (!isOpen) return;
@@ -2613,9 +3138,11 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!chatEnabled) return;
+      if (sendBtn && sendBtn.disabled && !isSending) {
+        resetChatComposeState();
+      }
       var text = input.value.trim();
       if (!text || isSending) return;
-      playPrimeChatTick(); // "chiqchiq" — eski click ovozi
       sendMessage(text, { restoreText: true });
     });
 
@@ -2627,24 +3154,27 @@
         setTimeout(function () {
           btn.classList.remove('is-fired');
         }, 420);
-        
+
         // Append sticker instead of sending immediately
         input.value += sticker;
         input.focus();
-        
-        // Trigger UI updates & sound
+
+        // Trigger UI updates
         syncComposeState();
-        if (typeof playPrimeChatTick === 'function') playPrimeChatTick();
-        
+
         // Dispatch input event for other potential listeners
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
     });
 
     input.addEventListener('focus', syncComposeState);
+    input.addEventListener('focus', function () {
+      if (!isSending && ((sendBtn && sendBtn.disabled) || input.disabled)) {
+        resetChatComposeState();
+      }
+    });
     input.addEventListener('input', function() {
       syncComposeState();
-      playPrimeChatTick();
     });
     input.addEventListener('blur', function () {
       setTimeout(syncComposeState, 80);
@@ -2720,13 +3250,20 @@
       if (isOpen) closePanel();
     };
 
+    syncChatAdminActions();
+    syncChatBadge();
+
+    if (chatEnabled) {
+      loadMessages();
+      startPolling();
+    }
+
     window.primeCloseGlobalChatPanel = function () {
       if (isOpen) closePanel();
     };
   }
 
 
-  /** Yangilik / ustoz izohlari: global chatdagi bilan bir xil yozish «tik» ovozi */
   function initCommentTypingSound() {
     document.addEventListener(
       'input',
@@ -2734,10 +3271,151 @@
         const t = e.target;
         if (!t || !t.classList || !t.classList.contains('comment-input')) return;
         if (t.id === 'chat-input') return;
-        playPrimeChatTick();
       },
       true
     );
+  }
+
+  function initExamQuestionForms() {
+    function bindExamQuestionForm(scope) {
+      const toolbar = scope.querySelector('[data-exam-toolbar]');
+      if (!toolbar || scope.dataset.examRichBound === 'true') return;
+
+      scope.dataset.examRichBound = 'true';
+
+      const labels = ['A', 'B', 'C', 'D'];
+      const optionBox = scope.querySelector('#option-box');
+      const questionTypeSelect = scope.querySelector('[data-question-type-select]');
+      const mcqFields = scope.querySelector('[data-question-mcq-fields]');
+      const textFields = scope.querySelector('[data-question-text-fields]');
+      const shuffleButton = scope.querySelector('#shuffle-options');
+      const richInputs = Array.from(scope.querySelectorAll('.js-exam-rich-input'));
+      const savedSelections = new WeakMap();
+      let activeInput = richInputs[0] || null;
+
+      function rememberSelection(input) {
+        if (!input) return;
+
+        savedSelections.set(input, {
+          start: input.selectionStart ?? input.value.length,
+          end: input.selectionEnd ?? input.value.length,
+        });
+      }
+
+      function syncActiveInput(input) {
+        activeInput = input;
+        rememberSelection(input);
+      }
+
+      function focusFirstEnabledInput() {
+        const enabledInput = richInputs.find((input) => !input.disabled);
+        if (enabledInput) {
+          activeInput = enabledInput;
+        }
+      }
+
+      richInputs.forEach((input) => {
+        ['focus', 'click', 'keyup', 'mouseup', 'select', 'input'].forEach((eventName) => {
+          input.addEventListener(eventName, () => {
+            syncActiveInput(input);
+          });
+        });
+      });
+
+      function insertIntoActive(before, after = '') {
+        if (!activeInput || activeInput.disabled) return;
+
+        const savedSelection = savedSelections.get(activeInput);
+        const start = savedSelection?.start ?? activeInput.selectionStart ?? activeInput.value.length;
+        const end = savedSelection?.end ?? activeInput.selectionEnd ?? activeInput.value.length;
+        const selected = activeInput.value.slice(start, end);
+        const replacement = before + selected + after;
+
+        activeInput.focus();
+
+        if (typeof activeInput.setSelectionRange === 'function') {
+          activeInput.setSelectionRange(start, end);
+        }
+
+        if (typeof activeInput.setRangeText === 'function') {
+          activeInput.setRangeText(replacement, start, end, 'end');
+        } else {
+          activeInput.value = activeInput.value.slice(0, start) + replacement + activeInput.value.slice(end);
+          const cursor = start + replacement.length;
+          if (typeof activeInput.setSelectionRange === 'function') {
+            activeInput.setSelectionRange(cursor, cursor);
+          }
+        }
+
+        rememberSelection(activeInput);
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      scope.querySelectorAll('.js-exam-wrap, .js-exam-insert').forEach((button) => {
+        button.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+        });
+      });
+
+      scope.querySelectorAll('.js-exam-wrap').forEach((button) => {
+        button.addEventListener('click', () => {
+          insertIntoActive(button.dataset.before || '', button.dataset.after || '');
+        });
+      });
+
+      scope.querySelectorAll('.js-exam-insert').forEach((button) => {
+        button.addEventListener('click', () => {
+          insertIntoActive(button.dataset.insert || '');
+        });
+      });
+
+      function toggleQuestionMode() {
+        if (!questionTypeSelect || !mcqFields || !textFields) return;
+
+        const isText = questionTypeSelect.value === 'text';
+        mcqFields.style.display = isText ? 'none' : '';
+        textFields.style.display = isText ? '' : 'none';
+        if (shuffleButton) {
+          shuffleButton.style.display = isText ? 'none' : 'inline-flex';
+        }
+
+        mcqFields.querySelectorAll('textarea, select, input').forEach((field) => {
+          field.disabled = isText;
+        });
+        textFields.querySelectorAll('textarea, select, input').forEach((field) => {
+          field.disabled = !isText;
+        });
+
+        focusFirstEnabledInput();
+      }
+
+      if (questionTypeSelect) {
+        questionTypeSelect.addEventListener('change', toggleQuestionMode);
+        toggleQuestionMode();
+      } else {
+        focusFirstEnabledInput();
+      }
+
+      scope.querySelector('#shuffle-options')?.addEventListener('click', () => {
+        if (!optionBox) return;
+
+        const values = labels.map((label) => optionBox.querySelector(`[name="options[${label}]"]`)?.value || '');
+        for (let i = values.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [values[i], values[j]] = [values[j], values[i]];
+        }
+
+        labels.forEach((label, index) => {
+          const field = optionBox.querySelector(`[name="options[${label}]"]`);
+          if (field) {
+            field.value = values[index];
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        });
+      });
+    }
+
+    document.querySelectorAll('form').forEach(bindExamQuestionForm);
   }
 
   function initPrimeAudioControl() {
@@ -2759,7 +3437,7 @@
       toggle.classList.toggle('is-muted', primeAudioMuted);
       toggle.innerHTML = '<i class="fa-solid ' + (primeAudioMuted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
       toggle.title = primeAudioMuted ? 'Ovozlarni yoqish' : 'Ovozlarni o‘chirish';
-      
+
       if (!primeAudioMuted) {
         playPrimeSuccess();
       }
@@ -3006,6 +3684,98 @@
 
   }
 
+  /** Prime Pro Max: Animated Charts (ApexCharts) */
+  function initPrimeCharts() {
+    const chartContainers = document.querySelectorAll('.prime-chart-container');
+    if (!chartContainers.length || typeof ApexCharts === 'undefined') return;
+
+    chartContainers.forEach(container => {
+      const type = container.getAttribute('data-chart-type') || 'area';
+      const data = JSON.parse(container.getAttribute('data-chart-series') || '[]');
+      const categories = JSON.parse(container.getAttribute('data-chart-categories') || '[]');
+      const color = container.getAttribute('data-chart-color') || '#4f46e5';
+
+      const options = {
+        series: data,
+        chart: {
+          height: 350,
+          type: type,
+          toolbar: { show: false },
+          zoom: { enabled: false },
+          background: 'transparent',
+          foreColor: 'var(--muted)',
+          animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 800,
+            animateGradually: { enabled: true, delay: 150 },
+            dynamicAnimation: { enabled: true, speed: 350 }
+          }
+        },
+        dataLabels: { enabled: false },
+        stroke: {
+          curve: 'smooth',
+          width: 3,
+          colors: [color]
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.45,
+            opacityTo: 0.05,
+            stops: [20, 100, 100],
+            colorStops: [
+              { offset: 0, color: color, opacity: 0.4 },
+              { offset: 100, color: color, opacity: 0 }
+            ]
+          }
+        },
+        markers: {
+          size: 5,
+          colors: [color],
+          strokeColors: '#fff',
+          strokeWidth: 2,
+          hover: { size: 7 }
+        },
+        xaxis: {
+          categories: categories,
+          axisBorder: { show: false },
+          axisTicks: { show: false }
+        },
+        yaxis: {
+          labels: {
+            formatter: (val) => val.toFixed(0)
+          }
+        },
+        grid: {
+          borderColor: 'var(--border-soft)',
+          strokeDashArray: 4,
+          padding: { left: 20, right: 20 }
+        },
+        theme: {
+          mode: root.getAttribute('data-theme') || 'light'
+        },
+        tooltip: {
+          theme: root.getAttribute('data-theme') || 'light',
+          x: { show: true },
+          marker: { show: true }
+        }
+      };
+
+      const chart = new ApexCharts(container, options);
+      chart.render();
+
+      // Update chart theme on toggle
+      document.addEventListener('themeChanged', () => {
+        chart.updateOptions({
+          theme: { mode: root.getAttribute('data-theme') },
+          tooltip: { theme: root.getAttribute('data-theme') }
+        });
+      });
+    });
+  }
+
   function runInitializers() {
     moveGlobalModals();
     initChatUserPreviewChrome();
@@ -3020,16 +3790,21 @@
     initPhoneInputs();
     initImageLightbox();
     initToastAndTheme();
-    initHeaderDropdowns();
-    initInteractiveActions();
-    initProMaxAnimations();
+	    initHeaderDropdowns();
+	    initPublicLiveStats();
+	    initInteractiveActions();
+	    initProMaxAnimations();
     initThemeBurstEffect();
     initLocalePageReveal();
     initGlobalChat();
     initCommentTypingSound();
+    initExamQuestionForms();
     initPrimeAudioControl();
     initGlobalSearchModal();
     initSeniorInteractions();
+
+    // Prime Pro Max Initializers
+    initPrimeCharts();
 
     // Pointer interaction to unlock AudioContext
     const unlockAudio = () => {
@@ -3038,7 +3813,7 @@
         // Industry standard: play a microscopic silent tone to force unlock the audio engine
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        gain.gain.value = 0.0001; 
+        gain.gain.value = 0.0001;
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(0);

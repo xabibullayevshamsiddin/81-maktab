@@ -5,6 +5,10 @@
   $postCategory = localized_model_value($post->category, 'name');
 @endphp
 <x-loyouts.main title="81-IDUM | {{ $postTitle }}">
+  @push('page_styles')
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/post-embed.css') }}?v={{ filemtime(public_path('temp/css/post-embed.css')) }}" />
+  @endpush
+
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">
@@ -42,6 +46,7 @@
       class="container news reveal glass-section"
       id="post-detail"
       data-comment-config='@json($postCommentConfig)'
+      data-post-stats-url="{{ route('post.stats', $post) }}"
     >
       @if (session('success'))
         <p style="margin: 0 0 12px; color: #0f766e; font-weight: 700;">
@@ -50,7 +55,7 @@
       @endif
 
       @php
-        $ytEmbed = $post->video_url ? \App\Support\YoutubeEmbed::parse($post->video_url) : null;
+        $videoData = \App\Support\VideoEmbed::parse($post->video_url);
         $videoExt = filled($post->video_path) ? strtolower(pathinfo($post->video_path, PATHINFO_EXTENSION)) : '';
       @endphp
       <article class="news-card post-detail-card">
@@ -64,15 +69,17 @@
                 />
                 {{ __('public.posts.browser_no_video') }}
               </video>
-            @elseif($ytEmbed)
-              <div class="post-video-embed post-video-embed--detail-hero">
+            @elseif($videoData)
+              <div class="post-video-embed post-video-embed--{{ $videoData['type'] }}">
                 <div class="post-video-embed-inner">
                   <iframe
-                    src="{{ $ytEmbed[0] }}"
+                    src="{{ $videoData['src'] }}"
                     title="Video: {{ $postTitle }}"
                     loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    style="border:none; border-radius:12px;"
                   ></iframe>
                 </div>
               </div>
@@ -89,6 +96,7 @@
               alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
               data-zoom-src="{{ app_storage_asset($post->image) }}"
+              onerror="this.src='{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}'; this.onerror=null; this.removeAttribute('data-zoom-src');"
               loading="lazy"
               decoding="async"
               role="button"
@@ -107,10 +115,13 @@
 
         <div class="icon-links" style="padding-top: 8px;">
           <div class="icon-link">
-            <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
-            <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span></span>
+            <span class="meta"><i class="fa-regular fa-eye"></i> <span class="js-post-views-count">{{ $post->views }}</span></span>
+            <span class="meta"><i class="fa-regular fa-comment"></i> <span class="comment-count js-post-comments-count">{{ $post->comments_count }}</span></span>
 
-            @php $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id); @endphp
+            @php
+              $postLikedByMe = isset($likedPostIds) && $likedPostIds->contains($post->id);
+              $bookmarkedPostIds = $bookmarkedPostIds ?? collect();
+            @endphp
             <form action="{{ route('post.like', $post) }}" method="POST" class="js-like-form">
               @csrf
               <button class="like-btn {{ $postLikedByMe ? 'liked' : '' }}" type="submit" aria-label="{{ __('public.posts.like_aria') }}">
@@ -118,6 +129,11 @@
                 <span class="like-count">{{ $post->likes_count }}</span>
               </button>
             </form>
+            @include('posts.partials.bookmark-button', [
+              'toggleUrl' => route('post.bookmark.toggle', $post),
+              'isSaved' => ($bookmarkedPostIds ?? collect())->contains($post->id),
+              'ariaLabel' => __('public.bookmark.aria_post'),
+            ])
           </div>
           <div class="icon-link-actions">
             <button
@@ -150,6 +166,7 @@
             <form action="{{ route('posts.destroy', $post->id) }}" method="POST" data-confirm="Postni o'chirmoqchimisiz?" data-confirm-title="Postni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
               @csrf
               @method('DELETE')
+              <input type="hidden" name="return_to" value="public">
               <button type="submit" class="btn btn-sm post-admin-btn post-admin-btn-delete">O'chirish</button>
             </form>
           </div>
@@ -210,7 +227,7 @@
           <h2 id="related-posts-heading" class="js-split-text related-section-title">
             {{ __('public.posts.related_title') }}
           </h2>
-          @include('posts.partials.related-grid', ['relatedPosts' => $relatedPosts, 'likedPostIds' => $likedPostIds])
+          @include('posts.partials.related-grid', ['relatedPosts' => $relatedPosts, 'likedPostIds' => $likedPostIds, 'bookmarkedPostIds' => $bookmarkedPostIds ?? collect()])
           <p class="related-section-more">
             <a href="{{ route('post') }}" class="btn btn-outline btn-sm">{{ __('public.posts.related_all') }}</a>
           </p>

@@ -60,6 +60,14 @@ class User extends Authenticatable
             self::ROLE_TEACHER => 'Teacher',
             self::ROLE_USER => 'User',
         ],
+        'ru' => [
+            self::ROLE_SUPER_ADMIN => 'Супер админ',
+            self::ROLE_ADMIN => 'Админ',
+            self::ROLE_EDITOR => 'Редактор',
+            self::ROLE_MODERATOR => 'Модератор',
+            self::ROLE_TEACHER => 'Учитель',
+            self::ROLE_USER => 'Пользователь',
+        ],
     ];
 
     public const ROLE_HIERARCHY = [
@@ -78,6 +86,8 @@ class User extends Authenticatable
         'email',
         'phone',
         'grade',
+        'grade_needs_selection',
+        'grade_selection_reason',
         'avatar',
         'google_id',
         'password',
@@ -87,6 +97,7 @@ class User extends Authenticatable
         'course_open_approved',
         'course_open_request_pending',
         'course_open_requested_at',
+        'course_open_request_reason',
         'course_open_approved_at',
     ];
 
@@ -135,6 +146,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'is_parent' => 'boolean',
+        'grade_needs_selection' => 'boolean',
         'course_open_approved' => 'boolean',
         'course_open_request_pending' => 'boolean',
         'course_open_requested_at' => 'datetime',
@@ -205,6 +217,11 @@ class User extends Authenticatable
         return $this->hasMany(PostLike::class);
     }
 
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(Bookmark::class);
+    }
+
     public function teacherLikes(): HasMany
     {
         return $this->hasMany(TeacherLike::class);
@@ -223,6 +240,11 @@ class User extends Authenticatable
     public function courseEnrollments(): HasMany
     {
         return $this->hasMany(CourseEnrollment::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
     }
 
     public function roleLevel(): int
@@ -355,17 +377,6 @@ class User extends Authenticatable
             self::ROLE_ADMIN,
             self::ROLE_TEACHER,
         ]);
-    }
-
-    public function hasLinkedActiveTeacherProfile(): bool
-    {
-        if (array_key_exists('active_teacher_profile_count', $this->attributes)) {
-            return (int) $this->attributes['active_teacher_profile_count'] > 0;
-        }
-
-        return $this->teacherProfile()
-            ->where('is_active', true)
-            ->exists();
     }
 
     public function hasCreatedCourse(): bool
@@ -518,6 +529,21 @@ class User extends Authenticatable
     public function getGradeLabelAttribute(): string
     {
         return $this->displayGrade();
+    }
+
+    public function needsGradeSelection(): bool
+    {
+        if ($this->is_parent || $this->hasUniversalGrade()) {
+            return false;
+        }
+
+        $grade = normalize_school_grade((string) ($this->grade ?? ''));
+
+        if ((bool) ($this->grade_needs_selection ?? false)) {
+            return true;
+        }
+
+        return $grade !== null && ! in_array($grade, school_student_grade_options(), true);
     }
 
     public function avatarUrl(): ?string

@@ -47,7 +47,7 @@
               <tr>
                 <td><p>{{ $course->id }}</p></td>
                 <td><p><strong>{{ $course->title }}</strong></p></td>
-                <td><p>{{ $course->teacher?->full_name ?: '-' }}</p></td>
+                <td><p>{{ $course->instructorName() }}</p></td>
                 <td><p>{{ $course->start_date?->format('Y-m-d') }}</p></td>
                 <td>
                   @if($canManage)

@@ -35,42 +35,26 @@
                 background: rgba(59, 130, 246, 0.3);
             }
 
-            .signin-social-btn {
-                width: 100%;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
+            .signin-alert {
+                display: flex;
+                align-items: flex-start;
                 gap: 10px;
-                border: 1px solid #dbe2ea;
+                margin: 0 0 16px;
+                padding: 12px 14px;
                 border-radius: 12px;
-                padding: 11px 14px;
-                text-decoration: none;
-                font-weight: 700;
-                color: #111827;
-                background: #fff;
-                transition: all 0.2s ease;
+                border: 1px solid rgba(220, 38, 38, 0.18);
+                background: rgba(254, 242, 242, 0.95);
+                color: #991b1b;
+                font-size: 14px;
+                line-height: 1.5;
             }
 
-            .signin-social-btn:hover {
-                border-color: #c1cedd;
-                background: #f8fafc;
-                color: #111827;
+            :root[data-theme='dark'] .signin-alert {
+                border-color: rgba(248, 113, 113, 0.35);
+                background: rgba(127, 29, 29, 0.28);
+                color: #fecaca;
             }
 
-            .signin-social-btn .fa-google {
-                color: #ea4335;
-            }
-
-            :root[data-theme='dark'] .signin-social-btn {
-                background: rgba(255, 255, 255, 0.06);
-                border-color: rgba(255, 255, 255, 0.18);
-                color: #e5e7eb;
-            }
-
-            :root[data-theme='dark'] .signin-social-btn:hover {
-                background: rgba(255, 255, 255, 0.1);
-                border-color: rgba(255, 255, 255, 0.3);
-            }
         </style>
     @endpush
 
@@ -89,6 +73,13 @@
                 </div>
                 <h2>{{ __('auth_pages.login.card_title') }}</h2>
                 <p class="signin-subtitle">{{ __('auth_pages.login.subtitle') }}</p>
+
+                @if (session('error'))
+                    <div class="signin-alert" role="alert">
+                        <i class="fa-solid fa-circle-exclamation" style="margin-top:2px;"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
 
                 <form action="{{ route('authenticate') }}" method="POST" class="signin-form" id="signin-form-server">
                     @csrf
@@ -113,15 +104,6 @@
                     <button class="btn" type="submit">{{ __('auth_pages.login.submit') }}</button>
                     <p id="signin-message" class="form-message" aria-live="polite"></p>
                 </form>
-
-                <a href="{{ route('auth.google.redirect') }}" class="signin-social-btn">
-                    <i class="fa-brands fa-google"></i>
-                    Google orqali kirish
-                </a>
-
-                <div class="signin-divider">
-                    <span>{{ __('auth_pages.common.or') }}</span>
-                </div>
 
                 <p class="signin-register">
                     {{ __('auth_pages.login.register_text') }} <a href="{{ route('register') }}">{{ __('auth_pages.login.register_link') }}</a>

@@ -17,7 +17,15 @@
       ->all();
 
     $initialTeacherId = (string) old('teacher_id', $selectedTeacher?->id ?? '');
-    $initialTeacher = collect($teacherPreviewData)->firstWhere('id', $initialTeacherId);
+    $initialTeacher = collect($teacherPreviewData)->firstWhere('id', $initialTeacherId) ?? [
+      'name' => $course->instructorName(),
+      'subject' => $course->instructorSubject(),
+      'experience_label' => $course->instructorExperienceLabel(),
+      'grades' => $course->instructorGradesLabel(),
+      'bio' => $course->instructorBio(220),
+      'image' => $course->instructorImageUrl(),
+      'achievements' => $course->instructorAchievements(),
+    ];
   @endphp
 
   <section class="news-hero" id="home">
@@ -48,55 +56,57 @@
             <span class="course-create-eyebrow">Eslatma</span>
             <h2>Kurs kartasi</h2>
             <p>
-              Saqlagach, kurs nomi, narx va tavsif saytda yangilanadi. Ustoz profilidagi bio va yutuqlar alohida
-              <strong>Profil</strong> orqali tahrirlanadi.
+              Saqlagach, kurs nomi, narx va tavsif saytda yangilanadi. Kurs muallifi akkauntingiz orqali aniqlanadi,
+              public ustoz kartasiga bog'lash majburiy emas.
             </p>
           </article>
 
           <aside
             class="course-create-teacher-card"
-            data-course-teacher-preview
-            data-course-preview='@json($teacherPreviewData)'
-            data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-            data-course-initial-teacher-id="{{ $initialTeacherId }}"
+            @if($selectedTeacher)
+              data-course-teacher-preview
+              data-course-preview='@json($teacherPreviewData)'
+              data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              data-course-initial-teacher-id="{{ $initialTeacherId }}"
+            @endif
           >
             <div class="course-create-teacher-media">
               <img
                 src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
-                alt="Ustoz rasmi"
-                data-preview-image
+                alt="{{ $initialTeacher['name'] ?? 'Kurs muallifi' }}"
+                @if($selectedTeacher) data-preview-image @endif
               >
               <div>
                 <span class="course-create-eyebrow">Kurs muallifi</span>
-                <h3 data-preview-name>{{ $initialTeacher['name'] ?? '—' }}</h3>
-                <p data-preview-subject>{{ $initialTeacher['subject'] ?? '—' }}</p>
+                <h3 @if($selectedTeacher) data-preview-name @endif>{{ $initialTeacher['name'] ?? 'Kurs muallifi' }}</h3>
+                <p @if($selectedTeacher) data-preview-subject @endif>{{ $initialTeacher['subject'] ?? "O'qituvchi" }}</p>
               </div>
             </div>
 
             <div class="course-create-teacher-stats">
               <div class="course-create-teacher-stat">
-                <strong data-preview-experience>{{ $initialTeacher['experience_label'] ?? '-' }}</strong>
+                <strong @if($selectedTeacher) data-preview-experience @endif>{{ $initialTeacher['experience_label'] ?? '-' }}</strong>
                 <span>Tajriba</span>
               </div>
               <div class="course-create-teacher-stat">
-                <strong data-preview-grades>{{ $initialTeacher['grades'] ?? '-' }}</strong>
+                <strong @if($selectedTeacher) data-preview-grades @endif>{{ $initialTeacher['grades'] ?? '-' }}</strong>
                 <span>Sinflar</span>
               </div>
             </div>
 
-            <p class="course-create-teacher-bio" data-preview-bio>
+            <p class="course-create-teacher-bio" @if($selectedTeacher) data-preview-bio @endif>
               {{ $initialTeacher['bio'] ?? '' }}
             </p>
 
             <div class="course-create-achievements">
               <h3><i class="fa-solid fa-trophy"></i> Yutuqlar</h3>
-              <ul data-preview-achievements>
+              <ul @if($selectedTeacher) data-preview-achievements @endif>
                 @if(!empty($initialTeacher['achievements']))
                   @foreach($initialTeacher['achievements'] as $achievement)
                     <li><i class="fa-solid fa-award"></i> {{ $achievement }}</li>
                   @endforeach
                 @else
-                  <li class="course-create-placeholder">—</li>
+                  <li class="course-create-placeholder">Kurs akkaunt muallifi nomidan ko'rsatiladi.</li>
                 @endif
               </ul>
             </div>
@@ -107,14 +117,9 @@
           @csrf
           @method('PUT')
 
-          <input type="hidden" name="teacher_id" value="{{ $course->teacher_id }}">
-
           <p class="comment-hint" style="margin:0 0 16px;padding:12px 14px;background:rgba(13,63,120,0.06);border-radius:12px;border:1px solid var(--border, #d7e3f4);">
             <i class="fa-solid fa-user-check"></i>
-            Kurs <strong>sizning ustoz profilingizga</strong> biriktirilgan — ustozni bu yerda o'zgartira olmaysiz.
-            @if(!empty($selectedTeacher))
-              <span class="profile-muted" style="display:block;margin-top:8px;font-size:13px;">{{ $selectedTeacher->full_name }}{{ filled($selectedTeacher->subject) ? ' — '.$selectedTeacher->subject : '' }}</span>
-            @endif
+            Kurs <strong>sizning akkauntingiz nomidan</strong> boshqariladi. Public ustoz kartasiga bog'lash shart emas.
           </p>
 
           <input type="text" name="title" class="comment-input" placeholder="Kurs nomi" value="{{ old('title', $course->title) }}" required>
@@ -138,7 +143,7 @@
 
           <label for="course-image-edit" class="comment-label">Kurs rasmi (ixtiyoriy, yangi yuklasangiz almashtiriladi)</label>
           @if($course->image)
-            <p class="comment-hint" style="margin-top:0;">Joriy rasm: <a href="{{ $course->coverImageUrl() }}" target="_blank" rel="noopener">ko‘rish</a></p>
+            <p class="comment-hint" style="margin-top:0;">Joriy rasm: <a href="{{ $course->coverImageUrl() }}" target="_blank" rel="noopener">ko'rish</a></p>
           @endif
           <input type="file" id="course-image-edit" name="image" class="comment-input" accept="image/jpeg,image/png,image/webp">
           @error('image')

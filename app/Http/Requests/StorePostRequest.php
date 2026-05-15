@@ -18,7 +18,7 @@ class StorePostRequest extends FormRequest
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'short_content' => ['required', 'string'],
             'content' => ['required', 'string'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 
@@ -34,6 +34,7 @@ class StorePostRequest extends FormRequest
             'image.required' => 'Rasm yuklanishi shart.',
             'image.image' => 'Fayl rasm bo\'lishi kerak.',
             'image.mimes' => 'Rasm jpg, jpeg, png yoki webp formatda bo\'lishi kerak.',
+            'image.max' => 'Rasm hajmi 5 MB dan oshmasligi kerak.',
         ];
     }
 }

@@ -10,7 +10,12 @@ class PostLike extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'post_id',
+        'user_id',
+        'ip_address',
+        'user_agent',
+    ];
 
     public function post(): BelongsTo
     {
@@ -22,4 +27,3 @@ class PostLike extends Model
         return $this->belongsTo(User::class);
     }
 }
-

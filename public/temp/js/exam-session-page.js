@@ -5,6 +5,7 @@
   const sessionConfig = JSON.parse(sessionRoot.dataset.examSession || '{}');
   const examRuleModal = document.getElementById('exam-rule-modal');
   const finishConfirmModal = document.getElementById('exam-finish-confirm-modal');
+  let isNavigatingAway = false;
 
   function syncExamModalState() {
     const hasOpenModal =
@@ -18,10 +19,9 @@
   (function initAntiCheat() {
     const root = document.getElementById('exam-anti-root');
     let lastContextWarnAt = 0;
-    let disqualifiedNav = false;
 
     function reportRuleViolation() {
-      if (disqualifiedNav || !sessionConfig.violationUrl || !sessionConfig.csrfToken) return;
+      if (isNavigatingAway || !sessionConfig.violationUrl || !sessionConfig.csrfToken) return;
 
       fetch(sessionConfig.violationUrl, {
         method: 'POST',
@@ -35,7 +35,7 @@
         .then((response) => response.json().catch(() => ({})))
         .then((data) => {
           if (data.redirect) {
-            disqualifiedNav = true;
+            isNavigatingAway = true;
             window.location.href = data.redirect;
           }
         })
@@ -68,7 +68,7 @@
 
     function maybeContextWarn() {
       const now = Date.now();
-      if (now - lastContextWarnAt < 600) return;
+      if (now - lastContextWarnAt < 80) return;  // Reduced: 600 → 80ms
       lastContextWarnAt = now;
       warnAndReport(null);
     }
@@ -77,13 +77,63 @@
     document.getElementById('exam-rule-modal-ok')?.addEventListener('click', hideRuleModal);
     examRuleModal?.querySelector('.exam-rule-modal-backdrop')?.addEventListener('click', hideRuleModal);
 
+    // ---------------------------------------------------------
+    // SCREENSHOT SHIELD — Focus-loss blackout
+    // ---------------------------------------------------------
+    // Win+Shift+S, Snipping Tool, Alt+PrtScr — barchasi
+    // oynadan fokusni oladi. Biz DAN OLDIN qora qopqoq
+    // yopamiz → screenshot faqat qora ekranni ko'rsatadi.
+    const shield = document.createElement('div');
+    shield.id = 'exam-screenshot-shield';
+    shield.setAttribute('aria-hidden', 'true');
+    shield.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'z-index:2147483647',   // max z-index
+      'background:#050d1a',
+      'display:none',
+      'align-items:center',
+      'justify-content:center',
+      'flex-direction:column',
+      'gap:18px',
+      'color:#e6eefb',
+      'font-family:Inter,sans-serif',
+      'pointer-events:none',
+      'user-select:none',
+    ].join(';');
+    shield.innerHTML = [
+      '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#7db4ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">',
+        '<rect x="3" y="11" width="18" height="11" rx="2"/>',
+        '<path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      '</svg>',
+      '<p style="font-size:17px;font-weight:600;margin:0;">Ekran himoyasi yoqilgan</p>',
+      '<p style="font-size:13px;color:#9cb1cb;margin:0;">Imtihon tarkibini ko\u02bbchirish taqiqlanadi</p>',
+    ].join('');
+    document.body.appendChild(shield);
+
+    function showShield() {
+      shield.style.display = 'flex';
+    }
+
+    function hideShield() {
+      shield.style.display = 'none';
+    }
+
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) maybeContextWarn();
+      if (document.hidden) {
+        showShield();
+        maybeContextWarn();
+      } else {
+        hideShield();
+      }
     });
 
     window.addEventListener('blur', () => {
+      showShield();
       if (!document.hidden) maybeContextWarn();
     });
+
+    window.addEventListener('focus', hideShield);
 
     window.addEventListener('beforeprint', () => {
       warnAndReport(null);
@@ -147,6 +197,34 @@
         root.addEventListener(eventName, (event) => event.preventDefault(), true);
       });
     }
+
+    // ---------------------------------------------------------
+    // PRIME BACK-BUTTON LOCK — History Flood Method
+    // ---------------------------------------------------------
+    // Bitta pushState yetarli emas — browser virtual entry'dan
+    // real history'ga o'tib ketadi. Yechim: 50 ta soxta entry
+    // qo'shib history stack'ni to'ldirish.
+    // Har bir "orqaga" tugmasi bosimi bitta entry'ni kamaytiradi,
+    // popstate handler esa darhol uni qaytaradi →
+    // student hech qachon taqvimdan chiqib keta olmaydi.
+    const LOCK_DEPTH = 50;
+    for (let i = 0; i < LOCK_DEPTH; i++) {
+      history.pushState(null, null, window.location.href);
+    }
+    window.addEventListener('popstate', () => {
+      // Har safar bosganda stack'ni to'ldirish davom ettiriladi
+      for (let i = 0; i < LOCK_DEPTH; i++) {
+        history.pushState(null, null, window.location.href);
+      }
+      maybeContextWarn();
+    });
+
+    // Also prevent accidental tab close/refresh
+    window.addEventListener('beforeunload', (e) => {
+      if (isNavigatingAway) return; // Allow if already disqualified/redirecting
+      e.preventDefault();
+      e.returnValue = ''; // Standard way to show "Are you sure you want to leave?"
+    });
 
     document.addEventListener('paste', (event) => event.preventDefault(), true);
   })();
@@ -297,6 +375,7 @@
 
     // 2. AJAX Submission
     try {
+      isNavigatingAway = true; // Unlock navigation before fetch/redirect
       const response = await fetch(submitForm.action, {
         method: 'POST',
         headers: {

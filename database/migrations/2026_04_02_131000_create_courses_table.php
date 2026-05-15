@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('teacher_id')->constrained('teachers')->cascadeOnDelete();
+            $table->foreignId('teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->string('title');
             $table->string('price', 100);
@@ -30,4 +30,3 @@ return new class extends Migration
         Schema::dropIfExists('courses');
     }
 };
-

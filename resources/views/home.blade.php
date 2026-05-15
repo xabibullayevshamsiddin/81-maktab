@@ -8,16 +8,20 @@
     </video>
     <div class="overlay"></div>
 
-    <div class="container">
-      <div class="card-home">
-        <div class="home-content">
-          <h1 class="hero-title" id="animated-hero">
-            <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
+	    <div class="container">
+	      <div class="card-home">
+	        <div class="home-content">
+	          <h1 class="hero-title" id="animated-hero">
+	            <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
             <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
           </h1>
           <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
-        </div>
-        <div class="home-btn">
+            <div class="home-primary-actions prime-reveal" style="transition-delay: 1s;">
+              <a href="{{ route('courses') }}" class="btn">{{ __('public.home.hero_courses_action') }}</a>
+              <a href="#news" class="btn btn-outline btn-outline-light">{{ __('public.home.hero_news_action') }}</a>
+            </div>
+	        </div>
+	        <div class="home-btn">
           <a
             href="https://www.instagram.com/81_idum/"
             target="_blank"
@@ -48,10 +52,20 @@
           </a>
         </div>
       </div>
-    </div>
-  </section>
+	    </div>
+	  </section>
 
-  <main>
+    <div class="site-section-nav-wrap">
+      <div class="container">
+        <nav class="site-section-nav" data-section-nav aria-label="{{ __('public.home.section_nav_aria') }}">
+          <a href="#about" class="site-section-nav-link is-active">{{ __('public.home.section_nav_about') }}</a>
+          <a href="#news" class="site-section-nav-link">{{ __('public.home.section_nav_news') }}</a>
+          <a href="#teachers" class="site-section-nav-link">{{ __('public.home.section_nav_teachers') }}</a>
+        </nav>
+      </div>
+    </div>
+	
+	  <main>
     <section class="container prime-reveal glass-section home-about-section" id="about">
       <div class="section-head">
         <h2 class="js-split-text">{{ __('public.home.welcome_title') }}</h2>
@@ -86,64 +100,18 @@
       </div>
 
       <div class="news-container prime-stagger">
+        @php
+          $likedPostIds = $likedPostIds ?? collect();
+          $bookmarkedPostIds = $bookmarkedPostIds ?? collect();
+        @endphp
         @forelse($posts as $post)
-          @php
-            $postTitle = localized_model_value($post, 'title');
-            $postShort = localized_model_value($post, 'short_content');
-            $postCategory = localized_model_value($post->category, 'name');
-            $kindLabel = localized_post_kind_label($post->post_kind ?? 'general');
-          @endphp
-          <article class="news-card prime-glow-hover">
-            <img
-              src="{{ app_storage_asset($post->image) }}"
-              alt="{{ $postTitle }}"
-              class="js-image-zoom-trigger zoomable-image"
-              data-zoom-src="{{ app_storage_asset($post->image) }}"
-              loading="lazy"
-              decoding="async"
-              role="button"
-              tabindex="0"
-            />
-
-            @if($post->category || $post->hasVideo() || $kindLabel)
-              <div class="home-card-badges">
-                @if($post->category)
-                  <span class="badge badge-soft-primary">
-                    {{ $postCategory }}
-                  </span>
-                @endif
-                @if($kindLabel)
-                  <span class="badge badge-soft-secondary">{{ $kindLabel }}</span>
-                @endif
-                @if($post->hasVideo())
-                  <span class="badge badge-soft-danger">{{ __('public.common.video') }}</span>
-                @endif
-              </div>
-            @endif
-
-            <h3>{{ $postTitle }}</h3>
-            <p>{{ $postShort }}</p>
-
-            <div class="icon-links">
-              <div class="icon-link">
-                <span class="meta"><i class="fa-regular fa-eye"></i> {{ $post->views }}</span>
-                <span class="meta"><i class="fa-regular fa-comment"></i> {{ $post->comments_count }}</span>
-              </div>
-              <div class="icon-link-actions">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline share-btn js-share-trigger"
-                  data-share-url="{{ route('post.show', $post) }}"
-                  data-share-title="{{ $postTitle }}"
-                  data-share-text="{{ __('public.home.news_share_text') }}"
-                  data-share-success="{{ __('public.home.news_share_success') }}"
-                >
-                  <i class="fa-solid fa-share-nodes"></i> {{ __('public.common.share') }}
-                </button>
-                  <a href="{{ route('post.show', $post) }}" class="btn btn-sm btn-prime">{{ __('public.common.details') }}</a>
-              </div>
-            </div>
-          </article>
+          @include('posts.partials.post-card', [
+            'post' => $post,
+            'likedPostIds' => $likedPostIds,
+            'bookmarkedPostIds' => $bookmarkedPostIds,
+            'shareText' => __('public.home.news_share_text'),
+            'shareSuccess' => __('public.home.news_share_success'),
+          ])
         @empty
           <p>{{ __('public.home.news_empty') }}</p>
         @endforelse
@@ -207,4 +175,3 @@
   </main>
 
 </x-loyouts.main>
-

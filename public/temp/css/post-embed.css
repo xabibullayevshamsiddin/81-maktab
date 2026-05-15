@@ -1,0 +1,100 @@
+/* Post embeds: compact, readable, and theme-aware external video frames. */
+
+/* Common Embed Container */
+.post-video-embed {
+  margin: 30px auto;
+  max-width: 100%;
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  background: var(--admin-card-bg, rgba(255, 255, 255, 0.7));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  padding: 15px;
+}
+
+:root[data-theme='dark'] .post-video-embed {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* YouTube Style (16:9) */
+.post-video-embed--youtube {
+  max-width: 900px;
+}
+
+.post-video-embed--youtube .post-video-embed-inner {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+}
+
+.post-video-embed--youtube .post-video-embed-inner iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Instagram Style (Portrait/9:16) */
+.post-video-embed--instagram {
+  max-width: 450px; /* Standard IG Reel width on desktop */
+}
+
+.post-video-embed--instagram .post-video-embed-inner {
+  width: 100%;
+  height: 70vh; /* Viewport-aware height */
+  max-height: 750px;
+  min-height: 500px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  position: relative;
+}
+
+.post-video-embed--instagram .post-video-embed-inner iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  display: block;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .post-video-embed {
+    padding: 10px;
+    margin: 20px auto;
+  }
+  
+  .post-video-embed--instagram .post-video-embed-inner {
+    height: 65vh;
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .post-video-embed--instagram .post-video-embed-inner {
+    height: 60vh;
+  }
+}
+
+/* Native Video Style */
+.post-detail-video-native {
+  width: 100%;
+  max-width: 900px;
+  display: block;
+  margin: 20px auto;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  background: #000;
+}
+
+:root[data-theme='dark'] .post-detail-video-native {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}

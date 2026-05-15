@@ -11,7 +11,14 @@ class TeacherComment extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'teacher_id',
+        'user_id',
+        'parent_id',
+        'author_name',
+        'body',
+        'is_approved',
+    ];
 
     protected $casts = [
         'is_approved' => 'boolean',

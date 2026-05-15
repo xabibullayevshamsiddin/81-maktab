@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,12 +30,28 @@ class Exam extends Model
         'available_from' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Exam $exam): void {
+            PublicStorage::deleteMany(
+                $exam->questions()
+                    ->whereNotNull('image_path')
+                    ->pluck('image_path')
+                    ->all()
+            );
+        });
+    }
+
     /**
      * Reja sanasi/vaqti berilgan bo‘lsa, faqat shu vaqtdan keyin boshlash mumkin (ilova vaqti — odatda Asia/Tashkent).
      * null = vaqt cheklovi yo‘q.
      */
-    public function isOpenForStarting(): bool
+    public function isOpenForStarting(?User $user = null): bool
     {
+        if ($user?->isAdmin()) {
+            return true;
+        }
+
         if ($this->available_from === null) {
             return true;
         }
@@ -72,17 +89,46 @@ class Exam extends Model
     {
         $grades = $this->allowedGradeItems();
 
-        return $grades !== [] ? implode(', ', $grades) : $fallback;
+        if ($grades !== []) {
+            $totalOptionsCount = count(school_grade_options());
+            $gradesCount = count($grades);
+
+            if ($gradesCount === $totalOptionsCount) {
+                return 'Barcha sinflar va o\'qituvchilar';
+            }
+
+            $studentGradesCount = $totalOptionsCount - 1;
+            if ($gradesCount === $studentGradesCount && !in_array('TEACHER', $grades, true)) {
+                return 'Barcha sinflar (o\'quvchilar)';
+            }
+
+            $mapped = array_map(function($g) {
+                return $g === 'TEACHER' ? "O'qituvchilar" : $g;
+            }, $grades);
+            return implode(', ', $mapped);
+        }
+
+        return $fallback;
     }
 
     public function allowsUser(?User $user): bool
     {
-        if (! $this->hasGradeRestrictions()) {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
             return true;
         }
 
-        if (! $user) {
-            return false;
+        // Teachers need the explicit TEACHER flag, even when student grades are unrestricted.
+        if ($user->isTeacher()) {
+            return in_array('TEACHER', $this->allowedGradeItems(), true);
+        }
+
+        // For students:
+        if (! $this->hasGradeRestrictions()) {
+            return true;
         }
 
         if (method_exists($user, 'hasUniversalGrade') && $user->hasUniversalGrade()) {

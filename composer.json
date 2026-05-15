@@ -10,11 +10,12 @@
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image": "^3.11",
         "laravel/framework": "^10.10",
-        "laravel/socialite": "^5.16",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "league/flysystem-aws-s3-v3": "^3.32",
         "resend/resend-laravel": "^1.3",
-        "spatie/laravel-backup": "^8.8"
+        "spatie/laravel-backup": "^8.8",
+        "symfony/filesystem": "^7.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

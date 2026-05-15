@@ -11,16 +11,7 @@
 
   <main class="profile-main calendar-page">
     <div class="container">
-      <div class="calendar-toolbar prime-reveal">
-        <form method="get" action="{{ route('calendar') }}" class="calendar-year-form">
-          <label for="cal-y">{{ __('public.calendar.year') }}</label>
-          <select id="cal-y" name="y" data-calendar-year-select>
-            @for($y = (int) now()->year + 1; $y >= 2020; $y--)
-              <option value="{{ $y }}" {{ (int) $year === $y ? 'selected' : '' }}>{{ $y }}</option>
-            @endfor
-          </select>
-        </form>
-      </div>
+
 
       @if($events->isEmpty())
         <p class="profile-muted">{{ __('public.calendar.empty', ['year' => $year]) }}</p>

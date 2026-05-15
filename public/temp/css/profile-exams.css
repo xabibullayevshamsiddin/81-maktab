@@ -1,6 +1,7 @@
 /* Modern Glassmorphic Container */
 .exam-public-container {
-    padding-top: 150px; /* Prevent header overlap */
+    padding-top: 150px;
+    /* Prevent header overlap */
     padding-bottom: 60px;
     min-height: 80vh;
 }
@@ -13,8 +14,13 @@
     color: #4b6282;
 }
 
-.mb-10 { margin-bottom: 10px; }
-.mb-24 { margin-bottom: 24px; }
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.mb-24 {
+    margin-bottom: 24px;
+}
 
 .exam-form-section {
     margin-bottom: 28px;
@@ -243,6 +249,7 @@
     border-collapse: separate;
     border-spacing: 0 8px;
 }
+
 .exam-public-table th {
     background: transparent;
     font-weight: 600;
@@ -254,6 +261,7 @@
     border-bottom: 2px solid rgba(13, 63, 120, 0.1);
     text-align: left;
 }
+
 .exam-public-table td {
     background: #ffffff;
     padding: 15px 20px;
@@ -261,16 +269,31 @@
     font-size: 15px;
     vertical-align: middle;
 }
-.exam-public-table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-left: 1px solid rgba(13,63,120,0.05); }
-.exam-public-table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-right: 1px solid rgba(13,63,120,0.05); }
-.exam-public-table td { border-top: 1px solid rgba(13,63,120,0.05); border-bottom: 1px solid rgba(13,63,120,0.05); box-shadow: 0 2px 5px rgba(0,0,0,0.01); }
+
+.exam-public-table td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-left: 1px solid rgba(13, 63, 120, 0.05);
+}
+
+.exam-public-table td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-right: 1px solid rgba(13, 63, 120, 0.05);
+}
+
+.exam-public-table td {
+    border-top: 1px solid rgba(13, 63, 120, 0.05);
+    border-bottom: 1px solid rgba(13, 63, 120, 0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.01);
+}
 
 /* Stylish Inputs */
-.exam-public-container input[type="text"], 
-.exam-public-container input[type="number"], 
-.exam-public-container input[type="date"], 
-.exam-public-container input[type="file"], 
-.exam-public-container select, 
+.exam-public-container input[type="text"],
+.exam-public-container input[type="number"],
+.exam-public-container input[type="date"],
+.exam-public-container input[type="file"],
+.exam-public-container select,
 .exam-public-container textarea {
     width: 100%;
     padding: 14px 20px;
@@ -283,11 +306,12 @@
     transition: all 0.3s ease;
     font-family: inherit;
 }
-.exam-public-container input[type="text"]:focus, 
-.exam-public-container input[type="number"]:focus, 
-.exam-public-container input[type="date"]:focus, 
-.exam-public-container input[type="file"]:focus, 
-.exam-public-container select:focus, 
+
+.exam-public-container input[type="text"]:focus,
+.exam-public-container input[type="number"]:focus,
+.exam-public-container input[type="date"]:focus,
+.exam-public-container input[type="file"]:focus,
+.exam-public-container select:focus,
 .exam-public-container textarea:focus {
     background: #fff;
     border-color: #0d3f78;
@@ -304,10 +328,12 @@
     margin-top: 15px;
     transition: all 0.3s ease;
 }
+
 .question-item:hover {
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
     transform: translateY(-2px);
 }
+
 .question-point-badge {
     background: #0d3f78;
     color: #fff;
@@ -335,18 +361,22 @@
     transition: all 0.3s;
     border: none;
 }
-.btn-primary { 
-    background: linear-gradient(135deg, #0d3f78 0%, #1a62b3 100%); 
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d3f78 0%, #1a62b3 100%);
     color: #fff !important;
 }
+
 .btn-warning {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: #fff !important;
 }
+
 .btn-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: #fff !important;
 }
+
 .btn-info {
     background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     color: #fff !important;
@@ -362,6 +392,7 @@
     background: rgba(13, 63, 120, 0.04);
     border-radius: 12px;
 }
+
 .exam-builder-toolbar button {
     background: #fff;
     color: #0d3f78;
@@ -372,13 +403,18 @@
     font-weight: 600;
     transition: all 0.2s;
 }
+
 .exam-builder-toolbar button:hover {
     background: #0d3f78;
     color: #fff;
 }
 
 /* Status / Badges */
-.badge { padding: 8px 16px; border-radius: 10px; font-weight: 600; }
+.badge {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+}
 
 [data-theme='dark'] .question-point-badge {
     background: #1e3a8a;
@@ -396,7 +432,15 @@
 }
 
 /* Global Typography */
-h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #0d3f78;
+    font-weight: 700;
+}
 
 /* Dark Mode Overrides for Exams Module */
 [data-theme='dark'] .exam-public-card {
@@ -416,11 +460,11 @@ h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }
     border-color: rgba(255, 255, 255, 0.05);
 }
 
-[data-theme='dark'] h1, 
-[data-theme='dark'] h2, 
-[data-theme='dark'] h3, 
-[data-theme='dark'] h4, 
-[data-theme='dark'] h5, 
+[data-theme='dark'] h1,
+[data-theme='dark'] h2,
+[data-theme='dark'] h3,
+[data-theme='dark'] h4,
+[data-theme='dark'] h5,
 [data-theme='dark'] h6 {
     color: #ffffff;
 }
@@ -429,19 +473,19 @@ h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }
     color: #93c5fd;
 }
 
-[data-theme='dark'] .exam-public-container input[type="text"], 
-[data-theme='dark'] .exam-public-container input[type="number"], 
-[data-theme='dark'] .exam-public-container input[type="date"], 
-[data-theme='dark'] .exam-public-container input[type="file"], 
-[data-theme='dark'] .exam-public-container select, 
+[data-theme='dark'] .exam-public-container input[type="text"],
+[data-theme='dark'] .exam-public-container input[type="number"],
+[data-theme='dark'] .exam-public-container input[type="date"],
+[data-theme='dark'] .exam-public-container input[type="file"],
+[data-theme='dark'] .exam-public-container select,
 [data-theme='dark'] .exam-public-container textarea {
     background: rgba(255, 255, 255, 0.05);
     color: #ffffff;
     border-color: transparent;
 }
 
-[data-theme='dark'] .exam-public-container input:focus, 
-[data-theme='dark'] .exam-public-container select:focus, 
+[data-theme='dark'] .exam-public-container input:focus,
+[data-theme='dark'] .exam-public-container select:focus,
 [data-theme='dark'] .exam-public-container textarea:focus {
     background: rgba(255, 255, 255, 0.1);
     border-color: #3b82f6;
@@ -592,5 +636,3 @@ h1, h2, h3, h4, h5, h6 { color: #0d3f78; font-weight: 700; }
     border-color: #2563eb !important;
     color: #fff !important;
 }
-
-
