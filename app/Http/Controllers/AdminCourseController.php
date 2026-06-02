@@ -29,12 +29,13 @@ class AdminCourseController extends Controller
         }
 
         if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->where('title', 'like', '%'.$q.'%')
-                    ->orWhere('description', 'like', '%'.$q.'%')
-                    ->orWhere('duration', 'like', '%'.$q.'%')
-                    ->orWhereHas('teacher', function ($t) use ($q): void {
-                        $t->where('full_name', 'like', '%'.$q.'%');
+            $safeLike = safe_like_query($q);
+            $query->where(function ($w) use ($safeLike): void {
+                $w->where('title', 'like', $safeLike)
+                    ->orWhere('description', 'like', $safeLike)
+                    ->orWhere('duration', 'like', $safeLike)
+                    ->orWhereHas('teacher', function ($t) use ($safeLike): void {
+                        $t->where('full_name', 'like', $safeLike);
                     });
             });
         }
@@ -57,10 +58,11 @@ class AdminCourseController extends Controller
             ->latest();
 
         if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->where('title', 'like', '%'.$q.'%')
-                    ->orWhereHas('teacher', function ($t) use ($q): void {
-                        $t->where('full_name', 'like', '%'.$q.'%');
+            $safeLike = safe_like_query($q);
+            $query->where(function ($w) use ($safeLike): void {
+                $w->where('title', 'like', $safeLike)
+                    ->orWhereHas('teacher', function ($t) use ($safeLike): void {
+                        $t->where('full_name', 'like', $safeLike);
                     });
             });
         }

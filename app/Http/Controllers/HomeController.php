@@ -229,11 +229,15 @@ class HomeController extends Controller
     {
         $results = [];
 
+        $safeLike = safe_like_query($q);
+
         $posts = Post::query()
-            ->where('title', 'like', "%{$q}%")
-            ->orWhere('title_en', 'like', "%{$q}%")
-            ->orWhere('short_content', 'like', "%{$q}%")
-            ->orWhere('content', 'like', "%{$q}%")
+            ->with('category:id,name,name_en')
+            ->select(['id', 'category_id', 'title', 'title_en', 'short_content', 'short_content_en', 'content', 'content_en', 'image', 'slug'])
+            ->where('title', 'like', $safeLike)
+            ->orWhere('title_en', 'like', $safeLike)
+            ->orWhere('short_content', 'like', $safeLike)
+            ->orWhere('content', 'like', $safeLike)
             ->latest()
             ->take(10)
             ->get();
@@ -250,10 +254,10 @@ class HomeController extends Controller
 
         $teachers = Teacher::query()
             ->where('is_active', true)
-            ->where(function ($query) use ($q) {
-                $query->where('full_name', 'like', "%{$q}%")
-                    ->orWhere('subject', 'like', "%{$q}%")
-                    ->orWhere('lavozim', 'like', "%{$q}%");
+            ->where(function ($query) use ($safeLike) {
+                $query->where('full_name', 'like', $safeLike)
+                    ->orWhere('subject', 'like', $safeLike)
+                    ->orWhere('lavozim', 'like', $safeLike);
             })
             ->latest()
             ->take(10)
@@ -270,6 +274,8 @@ class HomeController extends Controller
         }
 
         $courses = Course::query()
+            ->with('teacher:id,full_name,slug,image')
+            ->select(['id', 'teacher_id', 'title', 'title_en', 'description', 'description_en', 'cover_image'])
             ->where('status', 'active')
             ->where(function ($query) use ($q) {
                 $query->where('title', 'like', "%{$q}%")

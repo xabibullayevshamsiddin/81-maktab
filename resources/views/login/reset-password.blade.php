@@ -50,7 +50,8 @@
             name="password"
             placeholder="{{ __('auth_pages.reset.password_placeholder') }}"
             required
-            minlength="8"
+            minlength="12"
+            title="Kamida 12 belgi: katta-kichik harf, raqam va maxsus belgi"
             autocomplete="new-password"
           />
             <button type="button" class="pw-toggle" aria-label="{{ __('auth_pages.common.show_password') }}" data-target="reset-password">
@@ -66,7 +67,7 @@
             name="password_confirmation"
             placeholder="{{ __('auth_pages.reset.password_confirm_placeholder') }}"
             required
-            minlength="8"
+            minlength="12"
             autocomplete="new-password"
           />
             <button type="button" class="pw-toggle" aria-label="{{ __('auth_pages.common.show_password') }}" data-target="reset-password-confirmation">

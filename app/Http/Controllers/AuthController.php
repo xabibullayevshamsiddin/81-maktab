@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -333,16 +334,24 @@ class AuthController extends Controller
             'password' => [
                 'required',
                 'string',
-                'min:8',
                 'confirmed',
+                Password::min(12)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
             ],
         ], [
             'email.required' => 'Emailni kiriting.',
             'code.required' => 'Tasdiqlash kodini kiriting.',
             'code.digits' => 'Kod 6 xonali bo\'lishi kerak.',
             'password.required' => 'Yangi parolni kiriting.',
-            'password.min' => 'Yangi parol kamida 8 belgidan iborat bo\'lishi kerak.',
+            'password.min' => 'Yangi parol kamida 12 belgidan iborat bo\'lishi kerak.',
             'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
+            'password.mixed_case' => 'Parol katta va kichik harflarni o\'z ichiga olishi kerak.',
+            'password.numbers' => 'Parol kamida bitta raqam o\'z ichiga olishi kerak.',
+            'password.symbols' => 'Parol kamida bitta maxsus belgi o\'z ichiga olishi kerak.',
+            'password.uncompromised' => 'Bu parol xavfsiz emas. Boshqa parol tanlang.',
         ]);
 
         $email = $this->normalizeEmail($validated['email']);

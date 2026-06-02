@@ -205,7 +205,8 @@
                   placeholder="{{ __('auth_pages.register.password_placeholder') }}"
                   required
                   autocomplete="new-password"
-                  minlength="8"
+                  minlength="12"
+                  title="Kamida 12 belgi: katta-kichik harf, raqam va maxsus belgi"
                 />
                 <button
                   type="button"
@@ -230,7 +231,7 @@
                   placeholder="{{ __('auth_pages.register.password_confirm_placeholder') }}"
                   required
                   autocomplete="new-password"
-                  minlength="8"
+                  minlength="12"
                 />
                 <button
                   type="button"

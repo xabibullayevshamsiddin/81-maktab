@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FileUploadValidator;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Post;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PostController extends Controller
+{
+    public function __construct(
+        private FileUploadValidator $fileValidator
+    ) {}
 {
     /**
      * Display a listing of the resource.
@@ -74,12 +79,9 @@ class PostController extends Controller
             'short_content_en' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'content_en' => ['nullable', 'string'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'image' => $this->fileValidator->imageRules(required: true),
             'video_url' => ['nullable', 'string', 'max:500'],
-            'video_file' => array_merge(
-                ['nullable', 'file'],
-                $this->videoUploadRules()
-            ),
+            'video_file' => $this->fileValidator->videoRules(required: false),
         ]);
 
         $validated['image'] = $request->file('image')->store('posts', 'public');
@@ -89,6 +91,8 @@ class PostController extends Controller
 
         $validated['video_path'] = null;
         if ($request->hasFile('video_file')) {
+            // Additional security validation for video
+            $this->fileValidator->validateVideo($request->file('video_file'));
             $validated['video_path'] = $request->file('video_file')->store('posts/videos', 'public');
         }
 
@@ -134,12 +138,9 @@ class PostController extends Controller
             'short_content_en' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'content_en' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp',],
+            'image' => $this->fileValidator->imageRules(required: false),
             'video_url' => ['nullable', 'string', 'max:500'],
-            'video_file' => array_merge(
-                ['nullable', 'file'],
-                $this->videoUploadRules()
-            ),
+            'video_file' => $this->fileValidator->videoRules(required: false),
         ]);
 
         if ($request->hasFile('image')) {
@@ -165,6 +166,9 @@ class PostController extends Controller
         }
 
         if ($request->hasFile('video_file')) {
+            // Additional security validation for video
+            $this->fileValidator->validateVideo($request->file('video_file'));
+            
             if (! empty($post->video_path)) {
                 Storage::disk('public')->delete($post->video_path);
             }

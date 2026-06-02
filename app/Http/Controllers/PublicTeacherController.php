@@ -43,12 +43,13 @@ class PublicTeacherController extends Controller
             ->where('image', '!=', '');
 
         if ($q !== '') {
-            $query->where(function ($sub) use ($q): void {
-                $sub->where('full_name', 'like', "%{$q}%")
-                    ->orWhere('subject', 'like', "%{$q}%")
-                    ->orWhere('subject_en', 'like', "%{$q}%")
-                    ->orWhere('lavozim', 'like', "%{$q}%")
-                    ->orWhere('lavozim_en', 'like', "%{$q}%");
+            $safeLike = safe_like_query($q);
+            $query->where(function ($sub) use ($safeLike): void {
+                $sub->where('full_name', 'like', $safeLike)
+                    ->orWhere('subject', 'like', $safeLike)
+                    ->orWhere('subject_en', 'like', $safeLike)
+                    ->orWhere('lavozim', 'like', $safeLike)
+                    ->orWhere('lavozim_en', 'like', $safeLike);
             });
         }
 

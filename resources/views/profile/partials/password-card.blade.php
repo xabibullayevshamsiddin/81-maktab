@@ -81,7 +81,8 @@
               id="profile-new-password"
               name="password"
               required
-              minlength="8"
+              minlength="12"
+              title="Kamida 12 belgi: katta-kichik harf, raqam va maxsus belgi"
               autocomplete="new-password"
               placeholder="{{ __('profile.password_card.new_placeholder') }}"
             />
@@ -108,7 +109,7 @@
               id="profile-new-password-confirmation"
               name="password_confirmation"
               required
-              minlength="8"
+              minlength="12"
               autocomplete="new-password"
               placeholder="{{ __('profile.password_card.confirm_placeholder') }}"
             />

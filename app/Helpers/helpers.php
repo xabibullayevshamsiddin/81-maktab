@@ -602,3 +602,40 @@ if (! function_exists('turnstile_enabled')) {
         return (bool) config('services.turnstile.enabled') && turnstile_site_key() !== null;
     }
 }
+
+if (! function_exists('escape_like_wildcards')) {
+    /**
+     * Escape LIKE wildcard characters (%, _) to prevent LIKE injection attacks.
+     * Use this function when building LIKE queries with user input.
+     *
+     * @param  string|null  $value  The user input to escape
+     * @return string The escaped value safe for LIKE queries
+     */
+    function escape_like_wildcards(?string $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        // Escape backslash first, then % and _
+        $value = str_replace('\\', '\\\\', $value);
+        $value = str_replace('%', '\\%', $value);
+        $value = str_replace('_', '\\_', $value);
+
+        return $value;
+    }
+}
+
+if (! function_exists('safe_like_query')) {
+    /**
+     * Build a safe LIKE query pattern with escaped user input.
+     * Wraps the value with % wildcards for partial matching.
+     *
+     * @param  string|null  $value  The user input
+     * @return string The safe LIKE pattern: %escaped_value%
+     */
+    function safe_like_query(?string $value): string
+    {
+        return '%' . escape_like_wildcards($value) . '%';
+    }
+}
