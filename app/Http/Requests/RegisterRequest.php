@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Validator;
 
 class RegisterRequest extends FormRequest
@@ -23,7 +24,16 @@ class RegisterRequest extends FormRequest
             'phone' => uz_phone_rules(),
             'is_parent' => ['nullable', 'in:1'],
             'grade' => ['required_unless:is_parent,1', 'nullable', 'string', Rule::in(school_grade_options())],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                Password::min(12)
+                    ->mixedCase()      // Requires uppercase & lowercase
+                    ->numbers()        // Requires numbers
+                    ->symbols()        // Requires special characters
+                    ->uncompromised(), // Check against leaked passwords database
+            ],
         ];
     }
 
@@ -70,8 +80,12 @@ class RegisterRequest extends FormRequest
             'grade.required' => 'Sinfni tanlash shart.',
             'grade.in' => school_grade_validation_message(),
             'password.required' => 'Parol kiritilishi shart.',
-            'password.min' => 'Parol kamida 8 belgidan iborat bo\'lishi kerak.',
+            'password.min' => 'Parol kamida 12 belgidan iborat bo\'lishi kerak.',
             'password.confirmed' => 'Parol tasdiqlanmadi.',
+            'password.mixed_case' => 'Parol katta va kichik harflarni o\'z ichiga olishi kerak.',
+            'password.numbers' => 'Parol kamida bitta raqam o\'z ichiga olishi kerak.',
+            'password.symbols' => 'Parol kamida bitta maxsus belgi (!@#$%) o\'z ichiga olishi kerak.',
+            'password.uncompromised' => 'Bu parol xavfsiz emas. Boshqa parol tanlang.',
         ];
     }
 }

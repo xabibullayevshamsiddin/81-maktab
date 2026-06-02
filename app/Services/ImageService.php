@@ -8,8 +8,15 @@ use Illuminate\Support\Str;
 
 class ImageService
 {
+    public function __construct(
+        private FileUploadValidator $fileValidator
+    ) {}
+
     public function uploadAndOptimize(UploadedFile $file, string $directory = 'uploads', int $maxWidth = 1200, int $maxHeight = 800): string
     {
+        // Validate file security before processing
+        $this->fileValidator->validateImage($file);
+
         $extension = strtolower((string) $file->getClientOriginalExtension());
         if (! in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
             $extension = 'jpg';
@@ -128,6 +135,9 @@ class ImageService
 
     public function storeSquareWebp(UploadedFile $file, string $directory = 'uploads', int $size = 320, int $quality = 82): string
     {
+        // Validate file security before processing
+        $this->fileValidator->validateImage($file);
+
         [$source, $width, $height, $mime] = $this->createImageResource($file->getRealPath());
         $source = $this->normalizeOrientation($file->getRealPath(), $mime, $source, $width, $height);
 

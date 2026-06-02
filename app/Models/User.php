@@ -2,76 +2,34 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasNameValidation;
+use App\Models\Concerns\HasPermissions;
+use App\Models\Concerns\HasRoles;
+use App\Models\Concerns\HasUserRelationships;
+use App\Models\Concerns\ManagesCourses;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    
+    // Custom traits for better organization
+    use HasRoles;
+    use HasPermissions;
+    use HasNameValidation;
+    use ManagesCourses;
+    use HasUserRelationships;
 
     protected static ?bool $legacyRoleColumnExists = null;
 
-    public const ROLE_SUPER_ADMIN = Role::NAME_SUPER_ADMIN;
-
-    public const ROLE_ADMIN = Role::NAME_ADMIN;
-
-    public const ROLE_EDITOR = Role::NAME_EDITOR;
-
-    public const ROLE_MODERATOR = Role::NAME_MODERATOR;
-
-    public const ROLE_TEACHER = Role::NAME_TEACHER;
-
-    public const ROLE_USER = Role::NAME_USER;
-
     public const UNIVERSAL_GRADE_LABEL = 'Barcha sinflar';
-
-    public const ROLES = [
-        self::ROLE_SUPER_ADMIN => 'Super Admin',
-        self::ROLE_ADMIN => 'Admin',
-        self::ROLE_EDITOR => 'Editor',
-        self::ROLE_MODERATOR => 'Moderator',
-        self::ROLE_TEACHER => 'O\'qituvchi',
-        self::ROLE_USER => 'Foydalanuvchi',
-    ];
-
-    public const ROLE_LABELS = [
-        'uz' => [
-            self::ROLE_SUPER_ADMIN => 'Super Admin',
-            self::ROLE_ADMIN => 'Admin',
-            self::ROLE_EDITOR => 'Editor',
-            self::ROLE_MODERATOR => 'Moderator',
-            self::ROLE_TEACHER => 'O\'qituvchi',
-            self::ROLE_USER => 'Foydalanuvchi',
-        ],
-        'en' => [
-            self::ROLE_SUPER_ADMIN => 'Super Admin',
-            self::ROLE_ADMIN => 'Admin',
-            self::ROLE_EDITOR => 'Editor',
-            self::ROLE_MODERATOR => 'Moderator',
-            self::ROLE_TEACHER => 'Teacher',
-            self::ROLE_USER => 'User',
-        ],
-    ];
-
-    public const ROLE_HIERARCHY = [
-        self::ROLE_SUPER_ADMIN => 5,
-        self::ROLE_ADMIN => 4,
-        self::ROLE_EDITOR => 3,
-        self::ROLE_MODERATOR => 2,
-        self::ROLE_TEACHER => 2,
-        self::ROLE_USER => 1,
-    ];
-
-    protected $fillable = [
         'name',
         'first_name',
         'last_name',

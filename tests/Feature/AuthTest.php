@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -10,19 +11,26 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+    }
+
     public function test_user_can_register(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'phone' => '+998901234567',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'grade' => '9-A',
+            'password' => 'StrongPass123!@#',
+            'password_confirmation' => 'StrongPass123!@#',
         ]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
-            'name' => 'Test User',
         ]);
 
         $this->assertAuthenticated();
@@ -30,16 +38,15 @@ class AuthTest extends TestCase
 
     public function test_user_can_login(): void
     {
-        $user = User::create([
-            'name' => 'Test User',
+        $user = User::factory()->create([
             'email' => 'test@example.com',
-            'phone' => '+998901234567',
-            'password' => bcrypt('password123'),
+            'password' => bcrypt('StrongPass123!@#'),
+            'is_active' => true,
         ]);
 
-        $response = $this->post('/authenticate', [
+        $response = $this->post('/login', [
             'email' => 'test@example.com',
-            'password' => 'password123',
+            'password' => 'StrongPass123!@#',
         ]);
 
         $this->assertAuthenticatedAs($user);
@@ -47,16 +54,14 @@ class AuthTest extends TestCase
 
     public function test_user_cannot_login_with_wrong_credentials(): void
     {
-        User::create([
-            'name' => 'Test User',
+        User::factory()->create([
             'email' => 'test@example.com',
-            'phone' => '+998901234567',
-            'password' => bcrypt('password123'),
+            'password' => bcrypt('StrongPass123!@#'),
         ]);
 
-        $response = $this->post('/authenticate', [
+        $response = $this->post('/login', [
             'email' => 'test@example.com',
-            'password' => 'wrongpassword',
+            'password' => 'WrongPassword123!',
         ]);
 
         $this->assertGuest();
@@ -64,12 +69,7 @@ class AuthTest extends TestCase
 
     public function test_user_can_logout(): void
     {
-        $user = User::create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'phone' => '+998901234567',
-            'password' => bcrypt('password123'),
-        ]);
+        $user = User::factory()->create();
 
         $this->actingAs($user);
 
@@ -81,11 +81,13 @@ class AuthTest extends TestCase
     public function test_registration_requires_valid_email(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'invalid-email',
             'phone' => '+998901234567',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'grade' => '9-A',
+            'password' => 'StrongPass123!@#',
+            'password_confirmation' => 'StrongPass123!@#',
         ]);
 
         $response->assertSessionHasErrors('email');
@@ -94,13 +96,46 @@ class AuthTest extends TestCase
     public function test_registration_requires_password_confirmation(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'phone' => '+998901234567',
-            'password' => 'password123',
-            'password_confirmation' => 'different',
+            'grade' => '9-A',
+            'password' => 'StrongPass123!@#',
+            'password_confirmation' => 'DifferentPass123!@#',
         ]);
 
         $response->assertSessionHasErrors('password');
+    }
+
+    public function test_weak_password_is_rejected(): void
+    {
+        $response = $this->post('/register', [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@example.com',
+            'phone' => '+998901234567',
+            'grade' => '9-A',
+            'password' => 'weak123',
+            'password_confirmation' => 'weak123',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+    }
+
+    public function test_inactive_user_cannot_login(): void
+    {
+        User::factory()->create([
+            'email' => 'blocked@example.com',
+            'password' => bcrypt('StrongPass123!@#'),
+            'is_active' => false,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => 'blocked@example.com',
+            'password' => 'StrongPass123!@#',
+        ]);
+
+        $this->assertGuest();
     }
 }

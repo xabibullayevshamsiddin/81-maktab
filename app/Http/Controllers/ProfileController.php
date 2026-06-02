@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
@@ -263,13 +264,21 @@ class ProfileController extends Controller
             'password' => [
                 'required',
                 'string',
-                'min:8',
                 'confirmed',
+                Password::min(12)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
             ],
         ], [
             'password.required' => 'Yangi parolni kiriting.',
-            'password.min' => 'Yangi parol kamida 8 belgidan iborat bo\'lishi kerak.',
+            'password.min' => 'Yangi parol kamida 12 belgidan iborat bo\'lishi kerak.',
             'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
+            'password.mixed_case' => 'Parol katta va kichik harflarni o\'z ichiga olishi kerak.',
+            'password.numbers' => 'Parol kamida bitta raqam o\'z ichiga olishi kerak.',
+            'password.symbols' => 'Parol kamida bitta maxsus belgi o\'z ichiga olishi kerak.',
+            'password.uncompromised' => 'Bu parol xavfsiz emas. Boshqa parol tanlang.',
         ]);
 
         $user->forceFill([

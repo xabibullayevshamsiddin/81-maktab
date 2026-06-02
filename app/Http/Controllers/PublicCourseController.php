@@ -78,13 +78,14 @@ class PublicCourseController extends Controller
             });
 
         if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->where('title', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%")
-                    ->orWhereHas('teacher', function ($t) use ($q): void {
-                        $t->where('full_name', 'like', "%{$q}%")
-                            ->orWhere('subject', 'like', "%{$q}%")
-                            ->orWhere('subject_en', 'like', "%{$q}%");
+            $safeLike = safe_like_query($q);
+            $query->where(function ($w) use ($safeLike): void {
+                $w->where('title', 'like', $safeLike)
+                    ->orWhere('description', 'like', $safeLike)
+                    ->orWhereHas('teacher', function ($t) use ($safeLike): void {
+                        $t->where('full_name', 'like', $safeLike)
+                            ->orWhere('subject', 'like', $safeLike)
+                            ->orWhere('subject_en', 'like', $safeLike);
                     });
             });
         }

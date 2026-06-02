@@ -24,17 +24,18 @@ class AdminCourseEnrollmentController extends Controller
 
         $q = trim((string) $request->query('q', ''));
         if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->whereHas('user', function ($u) use ($q): void {
-                    $u->where('name', 'like', '%'.$q.'%')
-                        ->orWhere('email', 'like', '%'.$q.'%')
-                        ->orWhere('phone', 'like', '%'.$q.'%');
-                })->orWhereHas('course', function ($c) use ($q): void {
-                    $c->where('title', 'like', '%'.$q.'%');
+            $safeLike = safe_like_query($q);
+            $query->where(function ($w) use ($safeLike): void {
+                $w->whereHas('user', function ($u) use ($safeLike): void {
+                    $u->where('name', 'like', $safeLike)
+                        ->orWhere('email', 'like', $safeLike)
+                        ->orWhere('phone', 'like', $safeLike);
+                })->orWhereHas('course', function ($c) use ($safeLike): void {
+                    $c->where('title', 'like', $safeLike);
                 })
-                    ->orWhere('contact_phone', 'like', '%'.$q.'%')
-                    ->orWhere('grade', 'like', '%'.$q.'%')
-                    ->orWhere('subject_level', 'like', '%'.$q.'%');
+                    ->orWhere('contact_phone', 'like', $safeLike)
+                    ->orWhere('grade', 'like', $safeLike)
+                    ->orWhere('subject_level', 'like', $safeLike);
             });
         }
 
