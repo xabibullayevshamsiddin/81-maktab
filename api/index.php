@@ -1,13 +1,25 @@
 <?php
 
-// Set the working directory to the project root
-chdir(__DIR__ . '/..');
+/**
+ * Vercel Serverless Function Entry Point
+ * 
+ * This file serves as the entry point for all requests
+ * when deployed to Vercel's serverless infrastructure.
+ */
 
-// Load the Laravel application
-require_once __DIR__ . '/../vendor/autoload.php';
+// Point to the project root
+$projectRoot = __DIR__ . '/..';
 
-$app = require_once __DIR__ . '/../bootstrap/app.php';
+// Set working directory
+chdir($projectRoot);
 
+// Autoload
+require_once $projectRoot . '/vendor/autoload.php';
+
+// Bootstrap Laravel
+$app = require_once $projectRoot . '/bootstrap/app.php';
+
+// Handle the request
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
 $response = $kernel->handle(
