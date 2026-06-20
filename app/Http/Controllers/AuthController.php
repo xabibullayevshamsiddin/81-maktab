@@ -26,13 +26,13 @@ class AuthController extends Controller
      * Vaqtincha: false bo'lsa ro'yxatdan o'tish email kodisiz, darhol hisob ochiladi.
      * Email OTP ni qayta yoqish uchun true qiling.
      */
-    private const REGISTER_EMAIL_OTP_ENABLED = true;
+    private const REGISTER_EMAIL_OTP_ENABLED = false;
 
     /**
      * Vaqtincha: false bo'lsa kirish email kodisiz - faqat email + parol.
      * Kirish OTP ni qayta yoqish uchun true qiling.
      */
-    private const LOGIN_EMAIL_OTP_ENABLED = true;
+    private const LOGIN_EMAIL_OTP_ENABLED = false;
 
     public function login()
     {
@@ -586,7 +586,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')
+        return redirect()->route('login')
             ->with('error', 'Siz tizimdan chiqdingiz.')
             ->with('toast_type', 'error');
     }

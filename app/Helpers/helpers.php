@@ -15,6 +15,28 @@ if (! function_exists('gmail_compose_url')) {
     }
 }
 
+if (! function_exists('app_public_base_url')) {
+    function app_public_base_url(): string
+    {
+        if (app()->runningInConsole()) {
+            return '';
+        }
+
+        $baseUrl = request()->getBaseUrl();
+
+        if (str_ends_with($baseUrl, '/index.php')) {
+            $baseUrl = substr($baseUrl, 0, -strlen('/index.php'));
+        }
+
+        if ($baseUrl === '') {
+            $appPath = parse_url((string) config('app.url'), PHP_URL_PATH) ?: '';
+            $baseUrl = rtrim($appPath, '/');
+        }
+
+        return rtrim($baseUrl, '/');
+    }
+}
+
 if (! function_exists('app_public_asset')) {
     function app_public_asset(string $path): string
     {
@@ -24,9 +46,9 @@ if (! function_exists('app_public_asset')) {
             return $path;
         }
 
-        $baseUrl = request()->getBaseUrl();
+        $baseUrl = app_public_base_url();
 
-        return ($baseUrl !== '' ? rtrim($baseUrl, '/') : '').$path;
+        return ($baseUrl !== '' ? $baseUrl : '').$path;
     }
 }
 
@@ -63,9 +85,9 @@ if (! function_exists('app_storage_asset')) {
         // Local public disk uchun joriy so‘rovning base URL + /storage/... yo‘li ishonchli.
         // Cloud bucket (s3/r2) uchun esa Storage::url() to‘g‘ri public URL qaytaradi.
         if ($publicDiskDriver === 'local' && ! app()->runningInConsole()) {
-            $baseUrl = request()->getBaseUrl();
+            $baseUrl = app_public_base_url();
             if ($baseUrl !== '') {
-                return rtrim($baseUrl, '/').'/storage/'.$path;
+                return $baseUrl.'/storage/'.$path;
             }
         }
 

@@ -7,6 +7,7 @@ use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Carbon\Carbon;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->forceLocalPublicRootUrl();
         $this->applyRuntimeMailConfiguration();
 
         Paginator::useBootstrapFive();
@@ -34,6 +36,19 @@ class AppServiceProvider extends ServiceProvider
 
         OpenGraph::setSiteName('81-IDUM');
         OpenGraph::setType('website');
+    }
+
+    private function forceLocalPublicRootUrl(): void
+    {
+        if (! app()->environment('local')) {
+            return;
+        }
+
+        $appUrl = trim((string) config('app.url', ''));
+
+        if ($appUrl !== '') {
+            URL::forceRootUrl(rtrim($appUrl, '/'));
+        }
     }
 
     private function applyRuntimeMailConfiguration(): void

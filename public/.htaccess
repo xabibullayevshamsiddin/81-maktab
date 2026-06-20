@@ -39,6 +39,7 @@
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /81-maktab/public/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
