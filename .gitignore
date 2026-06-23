@@ -2,7 +2,8 @@
 /node_modules
 /public/build
 /public/hot
-/public/storage
+/public/storage/*
+!/public/storage/.gitignore
 /storage
 /vendor
 .env
@@ -18,9 +19,16 @@ yarn-error.log
 /.idea
 /.vscode
 /bootstrap/cache
-/public/build
+
+# OS / runtime junk
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+*.pyo
 
 # Debug / scratch fayllar — hostga yuborilmasin
+/scratch/
 scratch_*.php
 replace.php
 /resources/views/playground

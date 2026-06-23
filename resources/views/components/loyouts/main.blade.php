@@ -22,22 +22,24 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ filemtime(public_path('temp/js/theme-init.js')) }}"></script>
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ filemtime(public_path('temp/css/style.css')) }}" />
+    <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}" />
     @unless(request()->routeIs('exam.session'))
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ filemtime(public_path('temp/css/site-boot-loader.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
+    {{-- Three.js — 3D loader animatsiyasi uchun --}}
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" onload="window.dispatchEvent(new Event('THREE_READY'))" crossorigin="anonymous"></script>
     @endunless
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ filemtime(public_path('temp/css/extracted-public.css')) }}" />
-	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ filemtime(public_path('temp/css/mobile-public.css')) }}" />
-	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
-	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
-	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ filemtime(public_path('temp/css/site-refresh.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ app_asset_version('temp/css/extracted-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ app_asset_version('temp/css/mobile-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ app_asset_version('temp/css/site-refresh.css') }}" />
     @if(turnstile_enabled())
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     @endif
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ filemtime(public_path('temp/img/favicon-32.png')) }}" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ app_asset_version('temp/img/favicon-32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ app_asset_version('temp/img/favicon-16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -72,15 +74,21 @@
       <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
       <div class="site-boot-loader__content">
         <div class="site-boot-loader__visual">
-          <div class="site-boot-loader__orbit">
+          {{-- Three.js WebGL canvas --}}
+          <canvas id="loader-3d-canvas" aria-hidden="true"></canvas>
+
+          {{-- CSS fallback (Three.js yuklanmasa) --}}
+          <div class="site-boot-loader__orbit" aria-hidden="true">
             <div class="site-boot-loader__ring site-boot-loader__ring--1"></div>
             <div class="site-boot-loader__ring site-boot-loader__ring--2"></div>
             <div class="site-boot-loader__ring site-boot-loader__ring--3"></div>
-            <div class="site-boot-loader__ring-inner">
-              <div class="site-boot-loader__brand">
-                <span class="site-boot-loader__num">81</span>
-                <span class="site-boot-loader__name">IDUM</span>
-              </div>
+          </div>
+
+          {{-- "81" brend overlay (canvas ustida) --}}
+          <div class="site-boot-loader__brand-overlay">
+            <div class="site-boot-loader__brand-glass">
+              <span class="site-boot-loader__num">81</span>
+              <span class="site-boot-loader__name">IDUM</span>
             </div>
           </div>
         </div>
@@ -92,6 +100,9 @@
         </div>
       </div>
     </div>
+
+    {{-- Three.js 3D loader animatsiyasi --}}
+    <script src="{{ app_public_asset('temp/js/loader-3d.js') }}?v={{ app_asset_version('temp/js/loader-3d.js') }}"></script>
 
     <!-- BOMBA WELCOME OVERLAY -->
     <div id="bomba-welcome" class="bomba-welcome" style="display: none;">
@@ -696,9 +707,9 @@
       @endunless
     @endauth
 
-	    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
-	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ filemtime(public_path('temp/js/public-layout.js')) }}"></script>
-      <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ filemtime(public_path('temp/js/site-refresh.js')) }}"></script>
+	    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
+	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}"></script>
+      <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
 	    <script>
       (function() {
         /**
@@ -858,7 +869,7 @@
       })();
     </script>
     @unless(request()->routeIs('exam.session'))
-    <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ filemtime(public_path('temp/js/site-boot-loader.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ app_asset_version('temp/js/site-boot-loader.js') }}"></script>
     @endunless
     @auth
     @unless(request()->routeIs('exam.session'))

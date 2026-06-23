@@ -1,6 +1,17 @@
 (() => {
   const body = document.body;
 
+  window.renderListSkeletonGrid = function renderListSkeletonGrid(count = 6) {
+    return Array.from({ length: count }, () => (
+      '<article class="list-skeleton-card">'
+      + '<div class="skeleton-loader skeleton-card"></div>'
+      + '<div class="skeleton-loader skeleton-line-lg"></div>'
+      + '<div class="skeleton-loader skeleton-line-md"></div>'
+      + '<div class="skeleton-loader skeleton-line-sm"></div>'
+      + '</article>'
+    )).join('');
+  };
+
   function renderFilterTags(container, tags) {
     if (!container) return;
 
@@ -48,15 +59,24 @@
       selects.forEach((select) => {
         select.addEventListener('change', () => {
           buildTags();
-          form.submit();
+          form.requestSubmit();
         });
+      });
+
+      form.addEventListener('submit', () => {
+        const targetId = form.getAttribute('data-list-skeleton-target');
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (target && typeof window.renderListSkeletonGrid === 'function') {
+          target.innerHTML = '<div class="list-skeleton-grid">' + window.renderListSkeletonGrid(6) + '</div>';
+          target.classList.add('is-loading');
+        }
       });
 
       if (qInput) {
         qInput.addEventListener('input', () => {
           buildTags();
           window.clearTimeout(debounceTimer);
-          debounceTimer = window.setTimeout(() => form.submit(), 450);
+          debounceTimer = window.setTimeout(() => form.requestSubmit(), 450);
         });
       }
 
@@ -72,7 +92,7 @@
 
         field.value = '';
         buildTags();
-        form.submit();
+        form.requestSubmit();
       });
 
       buildTags();

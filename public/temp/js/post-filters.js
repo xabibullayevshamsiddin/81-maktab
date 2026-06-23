@@ -57,6 +57,10 @@
     results.classList.add('is-loading');
     results.style.pointerEvents = 'none';
 
+    if (typeof window.renderListSkeletonGrid === 'function') {
+      results.innerHTML = '<div class="list-skeleton-grid">' + window.renderListSkeletonGrid(6) + '</div>';
+    }
+
     try {
       const response = await fetch(url, {
         headers: {

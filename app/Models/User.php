@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasNameValidation;
+use App\Models\Concerns\HasPermissions;
+use App\Models\Concerns\HasRoles;
+use App\Models\Concerns\HasUserRelationships;
+use App\Models\Concerns\ManagesCourses;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\UserNotification;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
@@ -16,67 +21,72 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    
+    // Custom traits for better organization
+    use HasRoles;
+    use HasPermissions;
+    use HasNameValidation;
+    use ManagesCourses;
+    use HasUserRelationships;
 
     protected static ?bool $legacyRoleColumnExists = null;
 
-    public const ROLE_SUPER_ADMIN = Role::NAME_SUPER_ADMIN;
-
-    public const ROLE_ADMIN = Role::NAME_ADMIN;
-
-    public const ROLE_EDITOR = Role::NAME_EDITOR;
-
-    public const ROLE_MODERATOR = Role::NAME_MODERATOR;
-
-    public const ROLE_TEACHER = Role::NAME_TEACHER;
-
-    public const ROLE_USER = Role::NAME_USER;
-
     public const UNIVERSAL_GRADE_LABEL = 'Barcha sinflar';
+
+    // Role name constants (mirrored from Role model for convenience)
+    public const ROLE_SUPER_ADMIN = Role::NAME_SUPER_ADMIN;
+    public const ROLE_ADMIN       = Role::NAME_ADMIN;
+    public const ROLE_EDITOR      = Role::NAME_EDITOR;
+    public const ROLE_MODERATOR   = Role::NAME_MODERATOR;
+    public const ROLE_TEACHER     = Role::NAME_TEACHER;
+    public const ROLE_USER        = Role::NAME_USER;
+
+    public const ROLE_HIERARCHY = [
+        self::ROLE_SUPER_ADMIN => 5,
+        self::ROLE_ADMIN       => 4,
+        self::ROLE_EDITOR      => 3,
+        self::ROLE_MODERATOR   => 2,
+        self::ROLE_TEACHER     => 2,
+        self::ROLE_USER        => 1,
+    ];
 
     public const ROLES = [
         self::ROLE_SUPER_ADMIN => 'Super Admin',
-        self::ROLE_ADMIN => 'Admin',
-        self::ROLE_EDITOR => 'Editor',
-        self::ROLE_MODERATOR => 'Moderator',
-        self::ROLE_TEACHER => 'O\'qituvchi',
-        self::ROLE_USER => 'Foydalanuvchi',
+        self::ROLE_ADMIN       => 'Admin',
+        self::ROLE_EDITOR      => 'Editor',
+        self::ROLE_MODERATOR   => 'Moderator',
+        self::ROLE_TEACHER     => 'O\'qituvchi',
+        self::ROLE_USER        => 'Foydalanuvchi',
     ];
 
     public const ROLE_LABELS = [
         'uz' => [
             self::ROLE_SUPER_ADMIN => 'Super Admin',
-            self::ROLE_ADMIN => 'Admin',
-            self::ROLE_EDITOR => 'Editor',
-            self::ROLE_MODERATOR => 'Moderator',
-            self::ROLE_TEACHER => 'O\'qituvchi',
-            self::ROLE_USER => 'Foydalanuvchi',
+            self::ROLE_ADMIN       => 'Admin',
+            self::ROLE_EDITOR      => 'Editor',
+            self::ROLE_MODERATOR   => 'Moderator',
+            self::ROLE_TEACHER     => 'O\'qituvchi',
+            self::ROLE_USER        => 'Foydalanuvchi',
         ],
         'en' => [
             self::ROLE_SUPER_ADMIN => 'Super Admin',
-            self::ROLE_ADMIN => 'Admin',
-            self::ROLE_EDITOR => 'Editor',
-            self::ROLE_MODERATOR => 'Moderator',
-            self::ROLE_TEACHER => 'Teacher',
-            self::ROLE_USER => 'User',
+            self::ROLE_ADMIN       => 'Admin',
+            self::ROLE_EDITOR      => 'Editor',
+            self::ROLE_MODERATOR   => 'Moderator',
+            self::ROLE_TEACHER     => 'Teacher',
+            self::ROLE_USER        => 'User',
         ],
         'ru' => [
             self::ROLE_SUPER_ADMIN => 'Супер админ',
-            self::ROLE_ADMIN => 'Админ',
-            self::ROLE_EDITOR => 'Редактор',
-            self::ROLE_MODERATOR => 'Модератор',
-            self::ROLE_TEACHER => 'Учитель',
-            self::ROLE_USER => 'Пользователь',
+            self::ROLE_ADMIN       => 'Админ',
+            self::ROLE_EDITOR      => 'Редактор',
+            self::ROLE_MODERATOR   => 'Модератор',
+            self::ROLE_TEACHER     => 'Учитель',
+            self::ROLE_USER        => 'Пользователь',
         ],
-    ];
-
-    public const ROLE_HIERARCHY = [
-        self::ROLE_SUPER_ADMIN => 5,
-        self::ROLE_ADMIN => 4,
-        self::ROLE_EDITOR => 3,
-        self::ROLE_MODERATOR => 2,
-        self::ROLE_TEACHER => 2,
-        self::ROLE_USER => 1,
     ];
 
     protected $fillable = [
@@ -217,11 +227,6 @@ class User extends Authenticatable
         return $this->hasMany(PostLike::class);
     }
 
-    public function bookmarks(): HasMany
-    {
-        return $this->hasMany(Bookmark::class);
-    }
-
     public function teacherLikes(): HasMany
     {
         return $this->hasMany(TeacherLike::class);
@@ -240,11 +245,6 @@ class User extends Authenticatable
     public function courseEnrollments(): HasMany
     {
         return $this->hasMany(CourseEnrollment::class);
-    }
-
-    public function notifications(): HasMany
-    {
-        return $this->hasMany(UserNotification::class);
     }
 
     public function roleLevel(): int
@@ -377,6 +377,17 @@ class User extends Authenticatable
             self::ROLE_ADMIN,
             self::ROLE_TEACHER,
         ]);
+    }
+
+    public function hasLinkedActiveTeacherProfile(): bool
+    {
+        if (array_key_exists('active_teacher_profile_count', $this->attributes)) {
+            return (int) $this->attributes['active_teacher_profile_count'] > 0;
+        }
+
+        return $this->teacherProfile()
+            ->where('is_active', true)
+            ->exists();
     }
 
     public function hasCreatedCourse(): bool
@@ -544,6 +555,11 @@ class User extends Authenticatable
         }
 
         return $grade !== null && ! in_array($grade, school_student_grade_options(), true);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
     }
 
     public function avatarUrl(): ?string

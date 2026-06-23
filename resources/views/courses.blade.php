@@ -18,7 +18,7 @@
         <p>{{ __('public.courses.section_text') }}</p>
       </div>
 
-      <form method="GET" action="{{ route('courses') }}" class="exam-filter-panel filter-shell" id="course-filter-form" data-auto-submit-filter data-filter-kind="courses" data-sticky-filter>
+      <form method="GET" action="{{ route('courses') }}" class="exam-filter-panel filter-shell" id="course-filter-form" data-auto-submit-filter data-filter-kind="courses" data-sticky-filter data-list-skeleton-target="courses-grid">
         <div class="exam-filter-row">
           <div class="exam-filter-field">
             <label class="exam-filter-label" for="course-filter-q">{{ __('public.posts.search_placeholder') }}</label>

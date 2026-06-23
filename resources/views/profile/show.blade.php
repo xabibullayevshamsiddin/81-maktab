@@ -86,7 +86,7 @@
 <x-loyouts.main :title="__('profile.page_title')">
   @push('page_styles')
     <link rel="stylesheet"
-      href="{{ app_public_asset('temp/css/profile-fix.css') }}?v={{ filemtime(public_path('temp/css/profile-fix.css')) }}">
+      href="{{ app_public_asset('temp/css/profile-fix.css') }}?v={{ app_asset_version('temp/css/profile-fix.css') }}">
     <style>
       .page-header .header-main {
         width: calc(100% - 40px) !important;
@@ -720,6 +720,6 @@
 
   @push('page_scripts')
     <script
-      src="{{ app_public_asset('temp/js/profile-page.js') }}?v={{ filemtime(public_path('temp/js/profile-page.js')) }}"></script>
+      src="{{ app_public_asset('temp/js/profile-page.js') }}?v={{ app_asset_version('temp/js/profile-page.js') }}"></script>
   @endpush
 </x-loyouts.main>

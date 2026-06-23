@@ -1,5 +1,6 @@
 <x-loyouts.main :title="__('auth_pages.register.page_title')">
     @push('page_styles')
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/auth-character.css') }}?v={{ app_asset_version('temp/css/auth-character.css') }}" />
       <style>
       </style>
     @endpush
@@ -229,4 +230,5 @@
       </div>
     </main>
 
+    <script src="{{ app_public_asset('temp/js/auth-character.js') }}?v={{ app_asset_version('temp/js/auth-character.js') }}"></script>
 </x-loyouts.main>

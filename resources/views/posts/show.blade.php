@@ -6,7 +6,7 @@
 @endphp
 <x-loyouts.main title="81-IDUM | {{ $postTitle }}">
   @push('page_styles')
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/post-embed.css') }}?v={{ filemtime(public_path('temp/css/post-embed.css')) }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/post-embed.css') }}?v={{ app_asset_version('temp/css/post-embed.css') }}" />
   @endpush
 
   <section class="news-hero" id="home">

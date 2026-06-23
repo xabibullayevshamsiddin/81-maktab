@@ -61,6 +61,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Static Asset Version (cache busting)
+    |--------------------------------------------------------------------------
+    |
+    | Production'da deploy vaqtida APP_ASSET_VERSION ni yangilang.
+    | Local muhitda bo'sh qoldirilsa, fayl o'zgarish vaqti (filemtime) ishlatiladi.
+    |
+    */
+
+    'asset_version' => env('APP_ASSET_VERSION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

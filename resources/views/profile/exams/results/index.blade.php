@@ -1,6 +1,6 @@
 <x-loyouts.main title="Imtihon Natijalari">
 @push('page_styles')
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ filemtime(public_path('temp/css/profile-results.css')) }}">
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ app_asset_version('temp/css/profile-results.css') }}">
 @endpush
 
 <div class="container exam-public-container">

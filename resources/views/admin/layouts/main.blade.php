@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ filemtime(public_path('temp/img/favicon-32.png')) }}" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ app_asset_version('temp/img/favicon-32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ app_asset_version('temp/img/favicon-16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
     <title>@yield('title', 'Admin Panel')</title>
 
     <!-- Google Fonts -->
@@ -20,9 +20,9 @@
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/materialdesignicons.min.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/fullcalendar.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/main.css') }}" />
-      <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ filemtime(public_path('temp/css/extracted-admin.css')) }}" />
-      <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
-      <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ app_asset_version('temp/css/extracted-admin.css') }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
       @stack('admin_styles')
   </head>
 	  <body
@@ -384,7 +384,7 @@
 	    <script src="{{ app_public_asset('panel-assets/js/world-merc.js') }}"></script>
 	    <script src="{{ app_public_asset('panel-assets/js/polyfill.js') }}"></script>
 	    <script src="{{ app_public_asset('panel-assets/js/main.js') }}"></script>
-      <script src="{{ app_public_asset('temp/js/extracted-admin.js') }}?v={{ filemtime(public_path('temp/js/extracted-admin.js')) }}"></script>
+      <script src="{{ app_public_asset('temp/js/extracted-admin.js') }}?v={{ app_asset_version('temp/js/extracted-admin.js') }}"></script>
 
     @stack('admin_page_scripts')
     @yield('page_scripts')
@@ -394,7 +394,7 @@
     <div id="admin-toast-container" aria-live="polite" aria-atomic="true"></div>
 
     @include('components.confirm-modal')
-    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
 
   </body>
 </html>

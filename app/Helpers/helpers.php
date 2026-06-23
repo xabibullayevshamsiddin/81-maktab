@@ -52,6 +52,37 @@ if (! function_exists('app_public_asset')) {
     }
 }
 
+if (! function_exists('app_asset_version')) {
+    /**
+     * Static asset cache-busting versiyasi.
+     * Production: APP_ASSET_VERSION. Local: fayl mtime (request ichida bir marta).
+     */
+    function app_asset_version(string $path): string
+    {
+        static $versions = [];
+
+        $normalizedPath = ltrim(str_replace('\\', '/', $path), '/');
+
+        if (isset($versions[$normalizedPath])) {
+            return $versions[$normalizedPath];
+        }
+
+        $configuredVersion = trim((string) config('app.asset_version', ''));
+
+        if (! app()->environment('local') && $configuredVersion !== '') {
+            return $versions[$normalizedPath] = $configuredVersion;
+        }
+
+        $fullPath = public_path($normalizedPath);
+
+        if (is_file($fullPath)) {
+            return $versions[$normalizedPath] = (string) filemtime($fullPath);
+        }
+
+        return $versions[$normalizedPath] = $configuredVersion !== '' ? $configuredVersion : '1';
+    }
+}
+
 if (! function_exists('app_storage_asset')) {
     /**
      * Public diskdagi fayl uchun to‘liq URL (admin va sayt bir xil ishlashi uchun).

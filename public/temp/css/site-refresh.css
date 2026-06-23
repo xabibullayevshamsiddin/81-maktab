@@ -1343,22 +1343,66 @@ body {
   margin-bottom: 10px !important;
 }
 .signin-hero, .register-hero {
-  background: radial-gradient(circle at 50% 0%, #1a6bb5 0%, #0d3f78 100%) !important;
-  padding: 100px 0 60px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-top: 130px !important;
+  padding-bottom: 60px !important;
+  background: linear-gradient(135deg, #08284d 0%, #0f172a 60%, #1e293b 100%) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.signin-hero::before, .register-hero::before {
+  content: "" !important;
+  position: absolute !important;
+  top: -20% !important;
+  left: -10% !important;
+  width: 60% !important;
+  height: 80% !important;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%) !important;
+  filter: blur(100px) !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+.signin-hero::after, .register-hero::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: -10% !important;
+  right: -5% !important;
+  width: 50% !important;
+  height: 60% !important;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%) !important;
+  filter: blur(100px) !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
 }
 
 .signin-hero h1, .register-hero h1 {
   font-family: 'Outfit', sans-serif !important;
   font-weight: 800 !important;
   font-size: clamp(32px, 5vw, 42px) !important;
-  text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff !important;
+  text-shadow: 0 10px 20px rgba(0, 0, 0, 0.22) !important;
 }
 
 .signin-hero p, .register-hero p {
+  color: rgba(219, 233, 255, 0.95) !important;
   font-size: 18px !important;
-  opacity: 0.9 !important;
+  line-height: 1.7 !important;
 }
+
+.signin-hero .container, .register-hero .container {
+  max-width: 720px !important;
+}
+
+.signin-hero .container h1,
+.register-hero .container h1,
+.signin-hero .container p,
+.register-hero .container p {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
 .signin-forgot-link {
   color: var(--accent) !important;
   background: rgba(20, 184, 166, 0.1) !important;
@@ -1726,6 +1770,29 @@ body {
 :root[data-theme='dark'] .skeleton-loader {
   background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 75%);
   background-size: 200% 100%;
+}
+
+.list-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.list-skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+#courses-grid.is-loading,
+[data-post-results].is-loading {
+  min-height: 220px;
+}
+
+@supports (view-transition-name: none) {
+  @view-transition {
+    navigation: auto;
+  }
 }
 
 /* ===== Button loading state ===== */

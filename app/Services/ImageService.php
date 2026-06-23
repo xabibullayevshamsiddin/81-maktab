@@ -2,15 +2,21 @@
 
 namespace App\Services;
 
-use App\Support\PublicStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ImageService
 {
+    public function __construct(
+        private FileUploadValidator $fileValidator
+    ) {}
+
     public function uploadAndOptimize(UploadedFile $file, string $directory = 'uploads', int $maxWidth = 1200, int $maxHeight = 800): string
     {
+        // Validate file security before processing
+        $this->fileValidator->validateImage($file);
+
         $extension = strtolower((string) $file->getClientOriginalExtension());
         if (! in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
             $extension = 'jpg';
@@ -57,14 +63,16 @@ class ImageService
             return false;
         }
 
-        return PublicStorage::delete($path);
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->delete($path);
+        }
+
+        return false;
     }
 
     public function createThumbnail(string $originalPath, string $directory = 'thumbnails', int $width = 300, int $height = 200): ?string
     {
-        $disk = Storage::disk('public');
-
-        if (! $disk->exists($originalPath)) {
+        if (! Storage::disk('public')->exists($originalPath)) {
             return null;
         }
 
@@ -75,47 +83,43 @@ class ImageService
 
         $filename = 'thumb_'.pathinfo($originalPath, PATHINFO_FILENAME).'.'.$extension;
         $thumbnailPath = trim($directory, '/').'/'.$filename;
-        $temporaryPath = $this->storeTemporaryDiskCopy($originalPath, $extension);
+        $absolutePath = Storage::disk('public')->path($originalPath);
 
-        try {
-            [$source, $sourceWidth, $sourceHeight, $mime] = $this->createImageResource($temporaryPath);
-            $source = $this->normalizeOrientation($temporaryPath, $mime, $source, $sourceWidth, $sourceHeight);
+        [$source, $sourceWidth, $sourceHeight, $mime] = $this->createImageResource($absolutePath);
+        $source = $this->normalizeOrientation($absolutePath, $mime, $source, $sourceWidth, $sourceHeight);
 
-            $canvas = imagecreatetruecolor($width, $height);
-            if (! $canvas) {
-                imagedestroy($source);
-
-                throw new \RuntimeException('Thumbnail uchun canvas yaratilmadi.');
-            }
-
-            $this->prepareCanvas($canvas);
-
-            $sourceRatio = $sourceWidth / max(1, $sourceHeight);
-            $targetRatio = $width / max(1, $height);
-
-            if ($sourceRatio > $targetRatio) {
-                $cropHeight = $sourceHeight;
-                $cropWidth = (int) round($sourceHeight * $targetRatio);
-                $srcX = (int) floor(($sourceWidth - $cropWidth) / 2);
-                $srcY = 0;
-            } else {
-                $cropWidth = $sourceWidth;
-                $cropHeight = (int) round($sourceWidth / $targetRatio);
-                $srcX = 0;
-                $srcY = (int) floor(($sourceHeight - $cropHeight) / 2);
-            }
-
-            imagecopyresampled($canvas, $source, 0, 0, $srcX, $srcY, $width, $height, $cropWidth, $cropHeight);
-
-            $binary = $this->encodeImageBinary($canvas, $extension, 80);
-
-            imagedestroy($canvas);
+        $canvas = imagecreatetruecolor($width, $height);
+        if (! $canvas) {
             imagedestroy($source);
-        } finally {
-            @unlink($temporaryPath);
+
+            throw new \RuntimeException('Thumbnail uchun canvas yaratilmadi.');
         }
 
-        $disk->put($thumbnailPath, $binary);
+        $this->prepareCanvas($canvas);
+
+        $sourceRatio = $sourceWidth / max(1, $sourceHeight);
+        $targetRatio = $width / max(1, $height);
+
+        if ($sourceRatio > $targetRatio) {
+            $cropHeight = $sourceHeight;
+            $cropWidth = (int) round($sourceHeight * $targetRatio);
+            $srcX = (int) floor(($sourceWidth - $cropWidth) / 2);
+            $srcY = 0;
+        } else {
+            $cropWidth = $sourceWidth;
+            $cropHeight = (int) round($sourceWidth / $targetRatio);
+            $srcX = 0;
+            $srcY = (int) floor(($sourceHeight - $cropHeight) / 2);
+        }
+
+        imagecopyresampled($canvas, $source, 0, 0, $srcX, $srcY, $width, $height, $cropWidth, $cropHeight);
+
+        $binary = $this->encodeImageBinary($canvas, $extension, 80);
+
+        imagedestroy($canvas);
+        imagedestroy($source);
+
+        Storage::disk('public')->put($thumbnailPath, $binary);
 
         return $thumbnailPath;
     }
@@ -131,6 +135,9 @@ class ImageService
 
     public function storeSquareWebp(UploadedFile $file, string $directory = 'uploads', int $size = 320, int $quality = 82): string
     {
+        // Validate file security before processing
+        $this->fileValidator->validateImage($file);
+
         [$source, $width, $height, $mime] = $this->createImageResource($file->getRealPath());
         $source = $this->normalizeOrientation($file->getRealPath(), $mime, $source, $width, $height);
 
@@ -195,32 +202,6 @@ class ImageService
         $mime = strtolower((string) ($dimensions['mime'] ?? ''));
 
         return [$image, (int) $dimensions[0], (int) $dimensions[1], $mime];
-    }
-
-    private function storeTemporaryDiskCopy(string $path, string $extension): string
-    {
-        $temporaryPath = tempnam(sys_get_temp_dir(), 'img_');
-
-        if ($temporaryPath === false) {
-            throw new \RuntimeException('Vaqtinchalik fayl yaratilmadi.');
-        }
-
-        $targetPath = $temporaryPath.'.'.$extension;
-
-        if (! @rename($temporaryPath, $targetPath)) {
-            @unlink($temporaryPath);
-            $targetPath = $temporaryPath;
-        }
-
-        $contents = Storage::disk('public')->get($path);
-
-        if (@file_put_contents($targetPath, $contents) === false) {
-            @unlink($targetPath);
-
-            throw new \RuntimeException('Vaqtinchalik rasm nusxasi yozilmadi.');
-        }
-
-        return $targetPath;
     }
 
     private function normalizeOrientation(string $path, string $mime, $image, int &$width, int &$height)

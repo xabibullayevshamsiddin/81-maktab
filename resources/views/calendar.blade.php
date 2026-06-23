@@ -103,6 +103,6 @@
     </div>
   </main>
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/calendar-page.js') }}?v={{ filemtime(public_path('temp/js/calendar-page.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/calendar-page.js') }}?v={{ app_asset_version('temp/js/calendar-page.js') }}"></script>
   @endpush
 </x-loyouts.main>

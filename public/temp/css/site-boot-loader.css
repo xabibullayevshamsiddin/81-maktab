@@ -1,20 +1,20 @@
 /**
- * BOMBA PRO MAX ULTRA — Site Boot Loader
- * High-Fidelity 3D Orbitals & Holographic Effects
+ * 81-IDUM — Site Boot Loader
+ * Three.js WebGL 3D animatsiya versiyasi
  */
 
 :root {
-    --loader-primary: #0d3f78;
-    --loader-accent: #14b8a6;
+    --loader-primary:   #0d3f78;
+    --loader-accent:    #14b8a6;
     --loader-secondary: #1565c0;
-    --loader-glow: rgba(21, 101, 192, 0.4);
-    --loader-ring-thickness: 3px;
+    --loader-glow:      rgba(21, 101, 192, 0.4);
 }
 
 .site-boot-loading {
     overflow: hidden;
 }
 
+/* ── ASOSIY WRAPPER ─────────────────────────────────────────────────────────── */
 .site-boot-loader {
     position: fixed;
     inset: 0;
@@ -22,7 +22,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9; /* Slightly darker than before for contrast */
+    background: #f1f5f9;
     transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 1.2s;
 }
 
@@ -36,140 +36,113 @@
     pointer-events: none;
 }
 
+/* ── BACKDROP GRADIENT ──────────────────────────────────────────────────────── */
 .site-boot-loader__backdrop {
     position: absolute;
     inset: 0;
-    background: 
-        radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(20, 184, 166, 0.08) 0%, transparent 40%);
+    background:
+        radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(20, 184, 166, 0.1) 0%, transparent 40%);
+    animation: backdropShift 6s ease-in-out infinite alternate;
 }
 
+@keyframes backdropShift {
+    from { opacity: 0.6; }
+    to   { opacity: 1; }
+}
+
+/* ── CONTENT ────────────────────────────────────────────────────────────────── */
 .site-boot-loader__content {
     position: relative;
     z-index: 10;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    gap: 36px;
 }
 
-/* 3D ORBITAL SYSTEM */
+/* ── THREE.JS VISUAL WRAPPER ────────────────────────────────────────────────── */
 .site-boot-loader__visual {
     position: relative;
-    width: 180px;
-    height: 180px;
+    width: 200px;
+    height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
-    perspective: 1000px;
-    background: none !important;
 }
 
-.site-boot-loader__orbit {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    background: none !important;
-}
-
-.site-boot-loader__ring {
+/* WebGL Canvas — to'liq maydonni egallaydi */
+#loader-3d-canvas {
     position: absolute;
     inset: 0;
+    width: 100% !important;
+    height: 100% !important;
     border-radius: 50%;
-    border: var(--loader-ring-thickness) solid transparent;
-    border-top-color: var(--loader-accent);
-    border-left-color: var(--loader-secondary);
-    filter: drop-shadow(0 0 10px rgba(20, 184, 166, 0.5));
-    -webkit-mask-image: radial-gradient(circle, #fff 100%, transparent 100%);
-    mask-image: radial-gradient(circle, #fff 100%, transparent 100%);
 }
 
-.site-boot-loader__ring--1 {
-    animation: orbitRotate1 2.2s linear infinite;
-    transform: rotateX(35deg) rotateY(-45deg);
-}
-
-.site-boot-loader__ring--2 {
-    animation: orbitRotate2 1.8s linear infinite;
-    transform: rotateX(50deg) rotateY(10deg);
-    border-top-color: var(--loader-primary);
-    border-right-color: var(--loader-accent);
-    opacity: 0.85;
-}
-
-.site-boot-loader__ring--3 {
-    animation: orbitRotate3 2.5s linear infinite;
-    transform: rotateX(35deg) rotateY(55deg);
-    border-top-color: #ec4899;
-    border-bottom-color: #8b5cf6;
-    opacity: 0.7;
-}
-
-@keyframes orbitRotate1 {
-    to { transform: rotateX(35deg) rotateY(-45deg) rotate(360deg); }
-}
-
-@keyframes orbitRotate2 {
-    to { transform: rotateX(50deg) rotateY(10deg) rotate(-360deg); }
-}
-
-@keyframes orbitRotate3 {
-    to { transform: rotateX(35deg) rotateY(55deg) rotate(360deg); }
-}
-
-/* BRAND CORE */
-.site-boot-loader__ring-inner {
+/* ── BRAND OVERLAY (canvas ustida "81" matni) ────────────────────────────────── */
+.site-boot-loader__brand-overlay {
     position: absolute;
-    inset: 30px;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 50%;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 
-        0 15px 35px rgba(0, 0, 0, 0.08),
-        inset 0 0 20px rgba(255, 255, 255, 0.3);
-    overflow: hidden; /* Prevent any square bleed */
+    pointer-events: none;
     z-index: 5;
 }
 
-:root[data-theme='dark'] .site-boot-loader__ring-inner {
-    background: rgba(15, 23, 42, 0.6);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-.site-boot-loader__brand {
+.site-boot-loader__brand-glass {
     display: flex;
     flex-direction: column;
     align-items: center;
     line-height: 1;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 50%;
+    width: 76px;
+    height: 76px;
+    justify-content: center;
+    box-shadow:
+        0 8px 32px rgba(13, 63, 120, 0.18),
+        0 0 0 1px rgba(20, 184, 166, 0.2),
+        inset 0 0 20px rgba(255, 255, 255, 0.15);
+    animation: brandPulse 2.5s ease-in-out infinite;
+}
+
+:root[data-theme='dark'] .site-boot-loader__brand-glass {
+    background: rgba(15, 23, 42, 0.55);
+    border-color: rgba(20, 184, 166, 0.25);
+}
+
+@keyframes brandPulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(13,63,120,0.18), 0 0 0 1px rgba(20,184,166,0.2), inset 0 0 20px rgba(255,255,255,0.15); }
+    50%       { box-shadow: 0 8px 40px rgba(20,184,166,0.35), 0 0 0 3px rgba(20,184,166,0.4),  inset 0 0 28px rgba(255,255,255,0.2); }
 }
 
 .site-boot-loader__num {
     display: block;
-    font-size: 48px;
+    font-size: 30px;
     font-weight: 900;
     color: var(--loader-primary);
-    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     margin: 0;
+    letter-spacing: -1px;
 }
 
 :root[data-theme='dark'] .site-boot-loader__num {
     color: var(--loader-accent);
-    text-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+    text-shadow: 0 0 16px rgba(20, 184, 166, 0.5);
 }
 
 .site-boot-loader__name {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: 0.5em;
+    letter-spacing: 0.42em;
     color: var(--loader-primary);
-    opacity: 0.5;
-    margin-top: -5px;
+    opacity: 0.55;
+    margin-top: -2px;
     text-transform: uppercase;
 }
 
@@ -177,20 +150,50 @@
     color: #94a3b8;
 }
 
-/* PROGRESS INFO */
+/* ── FALLBACK (THREE.js yuklanmasa CSS rings ko'rinadi) ─────────────────────── */
+.site-boot-loader__orbit {
+    display: none; /* Three.js bor bo'lsa yashiriladi */
+}
+
+.no-three .site-boot-loader__orbit {
+    display: block;
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+}
+
+.no-three .site-boot-loader__ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--loader-accent);
+    border-left-color: var(--loader-secondary);
+    filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.5));
+}
+
+.no-three .site-boot-loader__ring--1 { animation: orbitRotate1 2.2s linear infinite; transform: rotateX(35deg) rotateY(-45deg); }
+.no-three .site-boot-loader__ring--2 { animation: orbitRotate2 1.8s linear infinite; transform: rotateX(50deg) rotateY(10deg); border-top-color: var(--loader-primary); border-right-color: var(--loader-accent); opacity: 0.85; }
+.no-three .site-boot-loader__ring--3 { animation: orbitRotate3 2.5s linear infinite; transform: rotateX(35deg) rotateY(55deg); border-top-color: #ec4899; border-bottom-color: #8b5cf6; opacity: 0.7; }
+
+@keyframes orbitRotate1 { to { transform: rotateX(35deg) rotateY(-45deg) rotate(360deg); } }
+@keyframes orbitRotate2 { to { transform: rotateX(50deg) rotateY(10deg) rotate(-360deg); } }
+@keyframes orbitRotate3 { to { transform: rotateX(35deg) rotateY(55deg) rotate(360deg); } }
+
+/* ── PROGRESS INFO ──────────────────────────────────────────────────────────── */
 .site-boot-loader__info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 14px;
 }
 
 .site-boot-loader__hint {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--loader-primary);
-    opacity: 0.7;
-    letter-spacing: 0.05em;
+    opacity: 0.65;
+    letter-spacing: 0.06em;
     animation: hintPulse 2s infinite ease-in-out;
 }
 
@@ -199,21 +202,21 @@
 }
 
 @keyframes hintPulse {
-    0%, 100% { opacity: 0.5; transform: translateY(0); }
-    50% { opacity: 1; transform: translateY(-2px); }
+    0%, 100% { opacity: 0.45; transform: translateY(0); }
+    50%       { opacity: 0.9;  transform: translateY(-2px); }
 }
 
 .site-boot-loader__bar {
     width: 200px;
-    height: 6px;
-    background: rgba(0, 0, 0, 0.08);
+    height: 5px;
+    background: rgba(0, 0, 0, 0.07);
     border-radius: 10px;
     overflow: hidden;
     position: relative;
 }
 
 :root[data-theme='dark'] .site-boot-loader__bar {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .site-boot-loader__bar-fill {
@@ -225,33 +228,28 @@
 }
 
 @keyframes progressMove {
-    0% { transform: translateX(-150%); }
+    0%   { transform: translateX(-150%); }
     100% { transform: translateX(250%); }
 }
 
-/* Responsive */
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .site-boot-loader__visual {
-        width: 140px;
-        height: 140px;
+        width: 160px !important;
+        height: 160px !important;
+    }
+    .site-boot-loader__brand-glass {
+        width: 60px;
+        height: 60px;
     }
     .site-boot-loader__num {
-        font-size: 32px;
-    }
-}
-@media (max-width: 480px) {
-    .site-boot-loader__visual {
-        width: 140px !important;
-        height: 140px !important;
-    }
-    .site-boot-loader__ring-inner {
-        inset: 22px !important;
-    }
-    .site-boot-loader__num {
-        font-size: 32px !important;
+        font-size: 24px !important;
     }
     .site-boot-loader__name {
-        font-size: 9px !important;
+        font-size: 7px !important;
         letter-spacing: 0.3em !important;
+    }
+    .site-boot-loader__bar {
+        width: 160px;
     }
 }

@@ -15,8 +15,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(ImageService::class, function () {
-            return new ImageService;
+        $this->app->singleton(ImageService::class, function ($app) {
+            return new ImageService($app->make(\App\Services\FileUploadValidator::class));
         });
     }
 

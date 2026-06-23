@@ -159,6 +159,6 @@
   </main>
 
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/course-create-page.js') }}?v={{ filemtime(public_path('temp/js/course-create-page.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/course-create-page.js') }}?v={{ app_asset_version('temp/js/course-create-page.js') }}"></script>
   @endpush
 </x-loyouts.main>

@@ -277,11 +277,8 @@
             <h5 class="fw-bold">Haftalik Faollik (Kirishlar)</h5>
             <div class="text-muted small">Oxirgi 7 kun</div>
           </div>
-          <div class="prime-chart-container" 
-               data-chart-type="area" 
-               data-chart-color="#6366f1"
-               data-chart-categories='["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yakb"]'
-               data-chart-series='[{"name": "Kirishlar", "data": [31, 40, 28, 51, 42, 109, 100]}]'>
+          <div style="position:relative;height:280px;">
+            <canvas id="dashboard-weekly-activity-chart" aria-label="Haftalik faollik grafigi"></canvas>
           </div>
         </div>
 
@@ -379,4 +376,45 @@
 
   </div>
 </section>
+@endsection
+
+@section('page_scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var canvas = document.getElementById('dashboard-weekly-activity-chart');
+  if (!canvas || typeof Chart === 'undefined') {
+    return;
+  }
+
+  var labels = ['Dush', 'Sesh', 'Chor', 'Pay', 'Juma', 'Shan', 'Yakb'];
+  var values = [31, 40, 28, 51, 42, 109, 100];
+
+  new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Kirishlar',
+        data: values,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.12)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#6366f1',
+        fill: true,
+        lineTension: 0.35,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      legend: { display: false },
+      scales: {
+        xAxes: [{ gridLines: { display: false } }],
+        yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }],
+      },
+    },
+  });
+});
+</script>
 @endsection
