@@ -9,6 +9,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PublicCourseController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\PublicTeacherController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TeacherCommentController;
 use Illuminate\Support\Facades\Route;
 
@@ -99,3 +100,6 @@ Route::get('feature-requests', [FeatureRequestController::class, 'index'])->name
 Route::post('contact', [HomeController::class, 'storeContact'])
     ->middleware('throttle:10,1')
     ->name('contact.store');
+
+Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');

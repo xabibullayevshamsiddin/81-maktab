@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ChatGroupController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\FeatureRequestController;
 use App\Http\Controllers\GradeSelectionController;
@@ -33,6 +34,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->middleware(['active'])->name('chat.destroy');
     Route::delete('chat', [ChatController::class, 'clearAll'])->middleware(['active'])->name('chat.clear');
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
+    Route::get('chat/groups', [ChatGroupController::class, 'index'])->middleware(['active'])->name('chat.groups.index');
+    Route::post('chat/groups/{group}/join', [ChatGroupController::class, 'join'])->middleware(['active'])->name('chat.groups.join');
+    Route::get('chat/groups/{group}/requests', [ChatGroupController::class, 'requests'])->middleware(['active'])->name('chat.groups.requests.index');
+    Route::post('chat/groups/{group}/requests/{joinRequest}/accept', [ChatGroupController::class, 'accept'])->middleware(['active'])->name('chat.groups.requests.accept');
+    Route::post('chat/groups/{group}/requests/{joinRequest}/reject', [ChatGroupController::class, 'reject'])->middleware(['active'])->name('chat.groups.requests.reject');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('profile/sinfni-tanlash', [GradeSelectionController::class, 'show'])->name('profile.grade-selection.show');
