@@ -291,6 +291,10 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
 
 Route::post('ai-chat', [App\Http\Controllers\SiteAiController::class, 'generate'])->middleware(['auth', 'throttle:30,1', 'active'])->name('ai.chat');
 
+// SEO: sitemap va robots
+Route::get('sitemap.xml', [App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+Route::get('robots.txt', [App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
+
 // Qolgan barcha yo‘llar uchun custom 404 sahifa
 Route::fallback(function () {
     abort(404);
