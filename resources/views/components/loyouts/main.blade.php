@@ -523,6 +523,40 @@
       @php
         $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
         $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: __('public.layout.chat_disabled_default');
+        $chatText = [
+          'global_chat' => __('public.layout.global_chat'),
+          'group_chat' => __('public.layout.group_chat'),
+          'select_group' => __('public.layout.select_group'),
+          'join_group' => __('public.layout.join_group'),
+          'group_requests' => __('public.layout.group_requests'),
+          'group_status_owner' => __('public.layout.group_status_owner'),
+          'group_status_member' => __('public.layout.group_status_member'),
+          'group_status_pending' => __('public.layout.group_status_pending'),
+          'group_status_join' => __('public.layout.group_status_join'),
+          'group_status_requested' => __('public.layout.group_status_requested'),
+          'group_status_you_own' => __('public.layout.group_status_you_own'),
+          'group_list_empty' => __('public.layout.group_list_empty'),
+          'group_requests_empty' => __('public.layout.group_requests_empty'),
+          'group_request_accept' => __('public.layout.group_request_accept'),
+          'group_request_reject' => __('public.layout.group_request_reject'),
+          'group_request_unknown' => __('public.layout.group_request_unknown'),
+          'group_load_failed' => __('public.layout.group_load_failed'),
+          'group_requests_failed' => __('public.layout.group_requests_failed'),
+          'group_join_failed' => __('public.layout.group_join_failed'),
+          'group_join_sent' => __('public.layout.group_join_sent'),
+          'group_select_prompt' => __('public.layout.group_select_prompt'),
+          'chat_network_error' => __('public.layout.chat_network_error'),
+          'chat_action_failed' => __('public.layout.chat_action_failed'),
+          'chat_sending' => __('public.layout.sending'),
+          'chat_fullscreen_exit' => __('public.layout.chat_fullscreen_exit'),
+          'chat_fullscreen_enter' => __('public.layout.chat_fullscreen_enter'),
+          'chat_exit_fullscreen' => __('public.layout.exit_full_screen'),
+          'global_chat_cleared' => __('public.layout.global_chat_cleared'),
+          'global_chat_clear_failed' => __('public.layout.global_chat_clear_failed'),
+          'global_chat_clear_confirm' => __('public.layout.global_chat_clear_confirm'),
+          'global_chat_clear_confirm_title' => __('public.layout.global_chat_clear_confirm_title'),
+          'global_chat_clear_ok' => __('public.layout.global_chat_clear_ok'),
+        ];
       @endphp
       <div id="chat-widget" class="chat-widget"
         data-chat-status-url="{{ route('chat.status') }}"
@@ -532,10 +566,14 @@
         data-chat-clear-url="{{ request()->getBaseUrl() }}/chat"
         data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
         data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
+        data-chat-groups-url="{{ route('chat.groups.index') }}"
+        data-chat-group-join-base="{{ request()->getBaseUrl() }}/chat/groups"
+        data-chat-group-requests-base="{{ request()->getBaseUrl() }}/chat/groups"
         data-csrf="{{ csrf_token() }}"
         data-user-id="{{ auth()->id() }}"
         data-chat-enabled="{{ $globalChatEnabled ? '1' : '0' }}"
         data-chat-disabled-message="{{ e($globalChatDisabledMsg) }}"
+        data-chat-texts='@json($chatText)'
       >
         <button type="button" class="chat-bubble" id="chat-bubble" aria-label="{{ __('public.layout.chat') }}">
           <i class="fa-solid fa-comments"></i>
@@ -546,7 +584,7 @@
           <div class="chat-panel-header">
             <div class="chat-panel-title">
               <i class="fa-solid fa-comments"></i>
-              <span>{{ __('public.layout.global_chat') }}</span>
+              <span id="chat-panel-title-label">{{ __('public.layout.global_chat') }}</span>
             </div>
             <div class="chat-panel-actions">
               @if($authUser && $authUser->isAdmin())
@@ -570,9 +608,32 @@
           <div class="chat-panel-intro">
             <div class="chat-panel-kicker">
               <span class="chat-panel-live-dot chat-panel-live-dot--channel" aria-hidden="true"></span>
-              <span>{{ __('public.layout.general_chat') }}</span>
+              <span id="chat-channel-label">{{ __('public.layout.general_chat') }}</span>
             </div>
             <p class="chat-panel-subtitle">{{ __('public.layout.chat_intro') }}</p>
+          </div>
+          <div class="chat-panel-channel-switch" id="chat-channel-switch">
+            <button type="button" class="chat-panel-tab chat-panel-tab--active" data-chat-channel="global">{{ __('public.layout.general_chat') }}</button>
+            <button type="button" class="chat-panel-tab" data-chat-channel="group">{{ __('public.layout.group_chat') }}</button>
+          </div>
+          <div class="chat-group-shell" id="chat-group-shell" hidden>
+            <div class="chat-group-meta">
+              <div class="chat-group-meta-labels">
+                <strong id="chat-current-group-name">{{ __('public.layout.select_group') }}</strong>
+                <p id="chat-current-group-description" class="chat-group-description"></p>
+              </div>
+              <div class="chat-group-controls">
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-join-btn" hidden>{{ __('public.layout.join_group') }}</button>
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-requests-btn" hidden>{{ __('public.layout.group_requests') }} (<span id="chat-group-pending-count">0</span>)</button>
+              </div>
+            </div>
+            <div class="chat-group-list" id="chat-group-list"></div>
+            <div class="chat-group-requests" id="chat-group-requests-panel" hidden>
+              <div class="chat-group-requests-header">
+                <strong>{{ __('public.layout.group_requests') }}</strong>
+              </div>
+              <div class="chat-group-requests-list" id="chat-group-requests-list"></div>
+            </div>
           </div>
           <details class="chat-rules">
             <summary>{{ __('public.layout.chat_rules') }}</summary>

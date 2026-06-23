@@ -2407,10 +2407,31 @@
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
     var clearUrl = widget.getAttribute('data-chat-clear-url');
     var blockUrl = widget.getAttribute('data-chat-block-url');
+    var groupsUrl = widget.getAttribute('data-chat-groups-url');
+    var groupJoinBase = widget.getAttribute('data-chat-group-join-base');
+    var groupRequestsBase = widget.getAttribute('data-chat-group-requests-base');
+    var chatPreviewBase = widget.getAttribute('data-chat-user-preview-base');
     var csrf = widget.getAttribute('data-csrf');
     var currentUserId = String(widget.getAttribute('data-user-id') || '');
     var lastId = 0;
     var unreadCount = 0;
+    var activeChannel = 'global';
+    var selectedGroup = null;
+    var groupsLoaded = false;
+    var chatTexts = parseJson(widget.getAttribute('data-chat-texts'), {});
+
+    var channelTabs = panel.querySelectorAll('[data-chat-channel]');
+    var chatTitleLabel = document.getElementById('chat-panel-title-label');
+    var chatChannelLabel = document.getElementById('chat-channel-label');
+    var groupShell = document.getElementById('chat-group-shell');
+    var groupList = document.getElementById('chat-group-list');
+    var currentGroupName = document.getElementById('chat-current-group-name');
+    var currentGroupDescription = document.getElementById('chat-current-group-description');
+    var groupJoinBtn = document.getElementById('chat-group-join-btn');
+    var groupRequestsBtn = document.getElementById('chat-group-requests-btn');
+    var pendingCountEl = document.getElementById('chat-group-pending-count');
+    var groupRequestsPanel = document.getElementById('chat-group-requests-panel');
+    var groupRequestsList = document.getElementById('chat-group-requests-list');
     var isOpen = false;
     var isSending = false;
     var pollTimer = null;
@@ -2424,6 +2445,13 @@
       } catch (e) {
         return 0;
       }
+    }
+
+    function getChatText(key, fallback) {
+      if (chatTexts && Object.prototype.hasOwnProperty.call(chatTexts, key)) {
+        return String(chatTexts[key]);
+      }
+      return String(fallback || '');
     }
 
     function setStoredChatLastReadId(value) {
@@ -2444,7 +2472,14 @@
         chatDisabledText.textContent = message;
       }
 
-      if (chatDisabledPanel && chatPanelMain) {
+      if (activeChannel === 'group') {
+        if (chatDisabledPanel) {
+          chatDisabledPanel.hidden = true;
+        }
+        if (chatPanelMain) {
+          chatPanelMain.hidden = false;
+        }
+      } else if (chatDisabledPanel && chatPanelMain) {
         chatPanelMain.hidden = !chatEnabled;
         chatDisabledPanel.hidden = chatEnabled;
       }
@@ -2455,10 +2490,8 @@
     }
 
     function refreshChatAvailability() {
-      if (!chatStatusUrl) {
-        return loadMessages().then(function () {
-          return chatEnabled;
-        });
+      if (activeChannel === 'group' || !chatStatusUrl) {
+        return Promise.resolve(true);
       }
 
       return fetch(chatStatusUrl, {
@@ -2521,6 +2554,271 @@
       clearBtn.hidden = !canClearAll;
       clearBtn.disabled = !canClearAll;
     }
+
+    function renderGroupList(groups) {
+      if (!groupList) return;
+      var html = groups.map(function (group) {
+        var active = selectedGroup && selectedGroup.id === group.id ? ' is-active' : '';
+        var statusLabel = getChatText('group_status_join', 'Join');
+        if (group.is_owner) {
+          statusLabel = getChatText('group_status_owner', 'Owner');
+        } else if (group.is_member) {
+          statusLabel = getChatText('group_status_member', 'Member');
+        } else if (group.request_status === 'pending') {
+          statusLabel = getChatText('group_status_pending', 'Pending');
+        }
+
+        return '<button type="button" class="chat-group-item' + active + '" data-chat-group-id="' + group.id + '">' +
+          '<span class="chat-group-item-details">' +
+          '<strong>' + escChatHtml(group.name) + '</strong>' +
+          '<span class="chat-group-item-description">' + escChatHtml(group.description || '') + '</span>' +
+          '</span>' +
+          '<span class="chat-group-item-status">' + escChatHtml(statusLabel) + '</span>' +
+          '</button>';
+      }).join('');
+
+      groupList.innerHTML = html;
+      var buttons = groupList.querySelectorAll('[data-chat-group-id]');
+      buttons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          var id = Number(button.getAttribute('data-chat-group-id'));
+          var group = groups.find(function (g) { return g.id === id; });
+          if (group) {
+            selectGroup(group);
+          }
+        });
+      });
+    }
+
+    function updateGroupControls() {
+      if (!groupShell || !groupJoinBtn || !groupRequestsBtn || !pendingCountEl) return;
+      if (!selectedGroup) {
+        currentGroupName.textContent = getChatText('select_group', 'Guruh tanlang');
+        currentGroupDescription.textContent = '';
+        groupJoinBtn.hidden = true;
+        groupRequestsBtn.hidden = true;
+        pendingCountEl.textContent = '0';
+        groupRequestsPanel.hidden = true;
+        return;
+      }
+
+      currentGroupName.textContent = selectedGroup.name || getChatText('group_list_title', 'Guruh');
+      currentGroupDescription.textContent = selectedGroup.description || '';
+      var isOwner = !!selectedGroup.is_owner;
+      var isMember = !!selectedGroup.is_member;
+      var pending = selectedGroup.request_status === 'pending';
+      var canManage = !!selectedGroup.can_manage;
+
+      groupJoinBtn.hidden = isOwner || isMember;
+      groupJoinBtn.disabled = pending;
+      groupJoinBtn.textContent = pending ? getChatText('group_join_sent', 'So‘rov yuborildi') : (isOwner ? getChatText('group_status_you_own', 'Siz egaliksiz') : getChatText('join_group', 'Guruhga qo‘shilish'));
+
+      groupRequestsBtn.hidden = !canManage;
+      pendingCountEl.textContent = String(selectedGroup.pending_requests_count || 0);
+      groupRequestsPanel.hidden = true;
+    }
+
+    function selectGroup(group) {
+      selectedGroup = group;
+      lastId = 0;
+      messagesEl.innerHTML = '';
+      renderGroupList(groupsData);
+      updateGroupControls();
+      if (isOpen) {
+        loadMessages().then(function () {
+          scrollDown();
+        });
+      }
+    }
+
+    function setActiveChannel(channel) {
+      activeChannel = channel === 'group' ? 'group' : 'global';
+      if (channelTabs && channelTabs.length) {
+        channelTabs.forEach(function (tab) {
+          tab.classList.toggle('chat-panel-tab--active', tab.getAttribute('data-chat-channel') === activeChannel);
+        });
+      }
+      if (activeChannel === 'group') {
+        groupShell.hidden = false;
+        chatTitleLabel.textContent = selectedGroup ? getChatText('group_chat', 'Guruh chat') : getChatText('group_list_title', 'Guruhlar');
+        chatChannelLabel.textContent = selectedGroup ? selectedGroup.name : getChatText('group_chat', 'Guruh chat');
+      } else {
+        groupShell.hidden = true;
+        groupRequestsPanel.hidden = true;
+        chatTitleLabel.textContent = getChatText('global_chat', 'Global chat');
+        chatChannelLabel.textContent = getChatText('global_chat', 'Global chat');
+      }
+      lastId = 0;
+      messagesEl.innerHTML = '';
+      if (activeChannel === 'group' && !groupsLoaded) {
+        loadGroups();
+      }
+      if (isOpen) {
+        loadMessages().then(function () {
+          scrollDown();
+        });
+      }
+    }
+
+    function syncChannelState() {
+      if (!groupShell) return;
+      if (activeChannel === 'group') {
+        groupShell.hidden = false;
+        updateGroupControls();
+      } else {
+        groupRequestsPanel.hidden = true;
+      }
+    }
+
+    function loadGroups() {
+      if (!groupsUrl) return Promise.resolve([]);
+      return fetch(groupsUrl, {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error(getChatText('group_load_failed', 'Guruhlar yuklanmadi.'));
+          return r.json();
+        })
+        .then(function (data) {
+          groupsData = Array.isArray(data.groups) ? data.groups : [];
+          groupsLoaded = true;
+          if (selectedGroup) {
+            selectedGroup = groupsData.find(function (g) {
+              return g.id === selectedGroup.id;
+            }) || selectedGroup;
+          }
+          renderGroupList(groupsData);
+          if (!selectedGroup && groupsData.length) {
+            selectedGroup = groupsData[0];
+          }
+          updateGroupControls();
+          return groupsData;
+        })
+        .catch(function () {
+          groupsData = [];
+          groupList && (groupList.innerHTML = '<div class="chat-empty-message">' + getChatText('group_load_failed', 'Guruhlar yuklanmadi.') + '</div>');
+          return [];
+        });
+    }
+
+    function renderGroupRequests(requests) {
+      if (!groupRequestsList) return;
+      if (!requests.length) {
+        groupRequestsList.innerHTML = '<div class="chat-empty-message">' + getChatText('group_requests_empty', 'Hech qanday so‘rov yo‘q.') + '</div>';
+        return;
+      }
+      groupRequestsList.innerHTML = requests.map(function (item) {
+        return '<div class="chat-group-request-item">'
+          + '<div class="chat-group-request-meta">'
+          + (item.user_avatar ? '<img src="' + escAttr(item.user_avatar) + '" alt="" class="chat-group-request-avatar" />' : '<span class="chat-group-request-avatar-placeholder">' + escChatHtml((item.user_name || '?').charAt(0).toUpperCase()) + '</span>')
+          + '<div>'
+          + '<strong>' + escChatHtml(item.user_name || getChatText('group_request_unknown', 'Noma’lum')) + '</strong>'
+          + '<span>' + escChatHtml(item.created_at || '') + '</span>'
+          + '</div>'
+          + '</div>'
+          + '<div class="chat-group-request-actions">'
+          + '<button type="button" class="chat-panel-btn chat-group-request-accept" data-request-id="' + item.id + '">' + getChatText('group_request_accept', 'Qabul') + '</button>'
+          + '<button type="button" class="chat-panel-btn chat-group-request-reject" data-request-id="' + item.id + '">' + getChatText('group_request_reject', 'Rad et') + '</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+      groupRequestsList.querySelectorAll('[data-request-id]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var requestId = Number(button.getAttribute('data-request-id'));
+          if (button.classList.contains('chat-group-request-accept')) {
+            respondToGroupRequest(requestId, 'accept');
+          } else {
+            respondToGroupRequest(requestId, 'reject');
+          }
+        });
+      });
+    }
+
+    function loadGroupRequests() {
+      if (!groupRequestsBase || !selectedGroup) return Promise.resolve([]);
+      return fetch(groupRequestsBase + '/' + selectedGroup.id + '/requests', {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error(getChatText('group_requests_failed', 'So‘rovlar yuklanmadi.'));
+          return r.json();
+        })
+        .then(function (data) {
+          var requests = Array.isArray(data.requests) ? data.requests : [];
+          renderGroupRequests(requests);
+          groupRequestsPanel.hidden = false;
+          return requests;
+        })
+        .catch(function () {
+          groupRequestsList && (groupRequestsList.innerHTML = '<div class="chat-empty-message">' + getChatText('group_requests_failed', 'So‘rovlar yuklanmadi.') + '</div>');
+          groupRequestsPanel.hidden = false;
+          return [];
+        });
+    }
+
+    function respondToGroupRequest(requestId, action) {
+      if (!groupRequestsBase || !selectedGroup) return;
+      var url = groupRequestsBase + '/' + selectedGroup.id + '/requests/' + requestId + '/' + action;
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error(getChatText('chat_action_failed', 'Amal bajarilmadi'));
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.ok) {
+            loadGroupRequests();
+            loadGroups();
+          }
+        })
+        .catch(function (err) {
+          if (window.showToast) {
+            window.showToast(err.message || getChatText('chat_action_failed', 'Xato yuz berdi'), 'error');
+          }
+        });
+    }
+
+    function requestJoinSelectedGroup() {
+      if (!groupJoinBase || !selectedGroup) return;
+      fetch(groupJoinBase + '/' + selectedGroup.id + '/join', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+        },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          if (!r.ok) {
+            throw new Error(getChatText('group_join_failed', 'So‘rov yuborilmadi'));
+          }
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.ok) {
+            if (data.pending) {
+              selectedGroup.request_status = 'pending';
+              updateGroupControls();
+              renderGroupList(groupsData);
+              if (window.showToast) {
+                window.showToast(getChatText('group_join_sent', 'So‘rovingiz yuborildi.'), 'success');
+              }
+            }
+          }
+        })
+        .catch(function (err) {
+          if (window.showToast) {
+            window.showToast(err.message || getChatText('chat_action_failed', 'Xato yuz berdi'), 'error');
+          }
+        });
+    }
+
+    var groupsData = [];
 
     function resetChatComposeState() {
       isSending = false;
@@ -2597,10 +2895,10 @@
       markChatAsRead(lastId);
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
-        setChatEnabledState(false, widget.getAttribute('data-chat-disabled-message') || 'Global chat vaqtincha oвЂchirilgan.');
+        setChatEnabledState(false, widget.getAttribute('data-chat-disabled-message') || getChatText('chat_disabled_default', 'Global chat vaqtincha o‘chirilgan.'));
 
         if (!widget.getAttribute('data-chat-disabled-message')) {
-          setChatEnabledState(false, 'Global chat vaqtincha ochirilgan.');
+          setChatEnabledState(false, getChatText('chat_disabled_default', 'Global chat vaqtincha o‘chirilgan.'));
         }
 
         refreshChatAvailability().then(function () {
@@ -2618,16 +2916,6 @@
           }, 520);
         });
 
-        return;
-        if (fullBtn) fullBtn.style.display = 'none';
-        chatPanelMain.hidden = true;
-        chatDisabledPanel.hidden = false;
-        if (chatDisabledText) {
-          chatDisabledText.textContent = widget.getAttribute('data-chat-disabled-message') || 'Global chat vaqtincha o‘chirilgan.';
-        }
-        setTimeout(function () {
-          panel.classList.remove('is-opening');
-        }, 520);
         return;
       }
 
@@ -2677,7 +2965,7 @@
           panel.classList.remove('is-fullscreen-enter');
         }, 360);
         icon.className = 'fa-solid fa-compress';
-        fullBtn.title = 'Kichiklashtirish';
+        fullBtn.title = getChatText('chat_fullscreen_exit', 'Kichiklashtirish');
       } else {
         panel.classList.remove('is-fullscreen-enter');
         panel.classList.add('is-fullscreen-exit');
@@ -2689,7 +2977,7 @@
           if (isOpen) positionPanel();
         }, 320);
         icon.className = 'fa-solid fa-expand';
-        fullBtn.title = "To'liq ekran";
+        fullBtn.title = getChatText('chat_fullscreen_enter', "To'liq ekran");
       }
     }
 
@@ -2715,7 +3003,7 @@
 
       composeStatus.hidden = false;
       composeStatus.setAttribute('data-state', state);
-      composeStatusText.textContent = sending ? 'Yuborilmoqda' : 'Yozilyapti';
+      composeStatusText.textContent = sending ? getChatText('chat_sending', 'Yuborilmoqda') : getChatText('typing', 'Yozilyapti');
     }
 
     function syncComposeState() {
@@ -2817,7 +3105,17 @@
 
     function loadMessages() {
       var isInitialSeed = lastId === 0;
-      return fetch(messagesUrl + '?after=' + lastId, {
+      if (activeChannel === 'group' && !selectedGroup) {
+        messagesEl.innerHTML = '<div class="chat-empty-message">' + getChatText('group_select_prompt', 'Iltimos, guruh tanlang.') + '</div>';
+        return Promise.resolve([]);
+      }
+
+      var query = '?after=' + lastId;
+      if (activeChannel === 'group' && selectedGroup) {
+        query += '&group_id=' + encodeURIComponent(selectedGroup.id);
+      }
+
+      return fetch(messagesUrl + query, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
         credentials: 'same-origin',
       })
@@ -2857,7 +3155,16 @@
 
     function pollNew(options) {
       options = options || {};
-      return fetch(messagesUrl + '?after=' + lastId, {
+      if (activeChannel === 'group' && !selectedGroup) {
+        return Promise.resolve([]);
+      }
+
+      var query = '?after=' + lastId;
+      if (activeChannel === 'group' && selectedGroup) {
+        query += '&group_id=' + encodeURIComponent(selectedGroup.id);
+      }
+
+      return fetch(messagesUrl + query, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
         credentials: 'same-origin',
       })
@@ -2901,7 +3208,14 @@
     }
 
     function sendMessage(text, options) {
-      if (!chatEnabled) return Promise.resolve();
+      if (activeChannel === 'group' && !selectedGroup) {
+        if (window.showToast) {
+          window.showToast('Iltimos, guruh tanlang.', 'error');
+        }
+        return Promise.resolve();
+      }
+
+      if (!chatEnabled && activeChannel !== 'group') return Promise.resolve();
       if (isSending) return Promise.resolve();
 
       isSending = true;
@@ -2926,6 +3240,9 @@
 
 
         var payload = { body: text };
+        if (selectedGroup && selectedGroup.id) {
+          payload.chat_group_id = selectedGroup.id;
+        }
         if (turnstileToken) {
           payload.turnstile_token = turnstileToken;
         }
@@ -2973,7 +3290,7 @@
               input.value = text;
             }
             if (window.showToast) {
-              window.showToast(err && err.message ? err.message : 'Chat: tarmoq xatosi', 'error');
+              window.showToast(err && err.message ? err.message : getChatText('chat_network_error', 'Chat: tarmoq xatosi'), 'error');
             }
           })
           .finally(function () {
@@ -3115,16 +3432,40 @@
         }
 
         var cp = window.primeConfirm && window.primeConfirm({
-          message: "Global chatdagi barcha xabarlar o'chirilsinmi?",
-          title: 'Global chatni tozalash',
+          message: getChatText('global_chat_clear_confirm', "Global chatdagi barcha xabarlar o'chirilsinmi?"),
+          title: getChatText('global_chat_clear_confirm_title', 'Global chatni tozalash'),
           variant: 'danger',
-          okText: "Tozalash",
+          okText: getChatText('global_chat_clear_ok', "Tozalash"),
         });
 
         if (cp && typeof cp.then === 'function') {
           cp.then(function (ok) { if (ok) doClearAll(); });
-        } else if (window.confirm("Global chatdagi barcha xabarlar o'chirilsinmi?")) {
+        } else if (window.confirm(getChatText('global_chat_clear_confirm', "Global chatdagi barcha xabarlar o'chirilsinmi?"))) {
           doClearAll();
+        }
+      });
+    }
+
+    if (channelTabs && channelTabs.length) {
+      channelTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          setActiveChannel(tab.getAttribute('data-chat-channel'));
+        });
+      });
+    }
+
+    if (groupJoinBtn) {
+      groupJoinBtn.addEventListener('click', function () {
+        requestJoinSelectedGroup();
+      });
+    }
+
+    if (groupRequestsBtn) {
+      groupRequestsBtn.addEventListener('click', function () {
+        if (!selectedGroup) return;
+        groupRequestsPanel.hidden = !groupRequestsPanel.hidden;
+        if (!groupRequestsPanel.hidden) {
+          loadGroupRequests();
         }
       });
     }

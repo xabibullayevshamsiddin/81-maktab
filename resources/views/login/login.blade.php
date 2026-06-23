@@ -1,6 +1,5 @@
 <x-loyouts.main :title="__('auth_pages.login.page_title')">
     @push('page_styles')
-        <link rel="stylesheet" href="{{ app_public_asset('temp/css/auth-character.css') }}?v={{ app_asset_version('temp/css/auth-character.css') }}" />
         <style>
             .signin-forgot-wrap {
                 margin: 10px 0 16px;
@@ -113,5 +112,4 @@
         </div>
     </main>
 
-    <script src="{{ app_public_asset('temp/js/auth-character.js') }}?v={{ app_asset_version('temp/js/auth-character.js') }}"></script>
 </x-loyouts.main>

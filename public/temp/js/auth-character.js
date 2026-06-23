@@ -380,9 +380,6 @@
     var self = this;
 
     function update() {
-      /* Mobil/planshet → hech narsa qilma */
-      if (window.innerWidth <= 850) return;
-
       var cardH  = self.card.offsetHeight;
       var winW   = window.innerWidth;
 
@@ -666,9 +663,6 @@
      ISHGA TUSHIRISH
   ═══════════════════════════════════════════════════════════════ */
   function init() {
-    /* Mobil/planshet bo'lsa hech narsa qilma */
-    if (window.innerWidth <= 850) return;
-
     injectKF();
     var signinCard   = document.querySelector('.signin-section .signin-card');
     var registerCard = document.querySelector('.register-section .register-card');

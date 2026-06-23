@@ -2090,26 +2090,68 @@ body.chat-fullscreen-active::before {
 
 .chat-panel-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  align-items: center;
 }
 
 .chat-panel-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease;
+  min-width: 42px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .chat-panel-btn:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.chat-panel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-group-action-btn {
+  min-width: 120px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-weight: 600;
+}
+
+.chat-group-request-actions .chat-panel-btn {
+  min-width: 88px;
+  padding: 0 10px;
+  height: 34px;
+}
+
+.chat-group-request-accept {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #d9f99d;
+}
+
+.chat-group-request-reject {
+  background: rgba(248, 113, 113, 0.16);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.chat-group-request-accept:hover {
+  background: rgba(34, 197, 94, 0.28);
+}
+
+.chat-group-request-reject:hover {
+  background: rgba(248, 113, 113, 0.28);
 }
 
 .chat-messages {
@@ -2218,6 +2260,161 @@ body.chat-fullscreen-active::before {
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 12px 26px rgba(21, 101, 192, 0.2);
   }
+
+.chat-panel-channel-switch {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 16px;
+}
+
+.chat-panel-tab {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.chat-panel-tab--active {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.25);
+}
+
+.chat-group-shell {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: rgba(255,255,255,0.04);
+}
+
+.chat-group-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.chat-group-meta-labels {
+  min-width: 0;
+}
+
+.chat-group-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chat-group-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.chat-group-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.chat-group-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.chat-group-item.is-active {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.chat-group-item-details {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chat-group-item-description {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chat-group-item-status {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chat-group-requests {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.chat-group-request-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.chat-group-request-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.chat-group-request-avatar,
+.chat-group-request-avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.chat-group-request-avatar {
+  object-fit: cover;
+}
+
+.chat-group-request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-group-request-actions .chat-panel-btn {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.chat-empty-message {
+  padding: 18px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  color: var(--muted);
+  text-align: center;
+}
 
   100% {
     transform: translateY(0) scale(1);
