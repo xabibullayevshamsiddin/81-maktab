@@ -449,8 +449,13 @@ if (! function_exists('render_exam_rich_text')) {
             return new \Illuminate\Support\HtmlString('');
         }
 
+        // Xavfsiz HTML teglar ro'yxati (faqat formatlash uchun)
+        $allowedTags = '<b><strong><i><em><u><s><sub><sup><ol><li><ul><br><p><span><pre><code><blockquote><h1><h2><h3><h4><h5><h6>';
+
         $containsHtml = preg_match('/<[^>]+>/', $value) === 1;
-        $html = $containsHtml ? $value : nl2br(e($value));
+        $html = $containsHtml
+            ? strip_tags($value, $allowedTags)
+            : nl2br(e($value));
 
         return new \Illuminate\Support\HtmlString($html);
     }

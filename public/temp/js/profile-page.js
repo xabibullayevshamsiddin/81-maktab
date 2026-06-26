@@ -153,6 +153,16 @@
         return;
       }
 
+      // Dinamik hajm tekshiruvi (donor rankiga qarab)
+      const maxKb = parseInt(avatarInput.dataset.profileAvatarMax || '4096', 10);
+      const maxMb = Math.round(maxKb / 1024);
+      const maxBytes = maxKb * 1024;
+      if (file.size > maxBytes) {
+        setMeta(replaceTokens(profileI18n.avatarTooBig || 'Rasm hajmi :max MB dan oshmasin (sizning rasm: :size).', { max: maxMb, size: formatSize(file.size) }), 'is-error');
+        avatarInput.value = '';
+        return;
+      }
+
       if (removeAvatarFlag) {
         removeAvatarFlag.value = '0';
       }

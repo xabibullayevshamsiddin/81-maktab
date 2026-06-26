@@ -7,6 +7,7 @@ use App\Models\Concerns\HasPermissions;
 use App\Models\Concerns\HasRoles;
 use App\Models\Concerns\HasUserRelationships;
 use App\Models\Concerns\ManagesCourses;
+use App\Models\Concerns\HasDonationRank;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,7 @@ class User extends Authenticatable
     use HasNameValidation;
     use ManagesCourses;
     use HasUserRelationships;
+    use HasDonationRank;
 
     protected static ?bool $legacyRoleColumnExists = null;
 
@@ -104,6 +106,20 @@ class User extends Authenticatable
         'role_id',
         'is_active',
         'is_parent',
+        'donation_rank',
+        'donation_rank_expires_at',
+        'total_donated',
+        'banner_image',
+        'username_color',
+        'profile_theme',
+        'profile_border_style',
+        'profile_glow',
+        'comment_style',
+        'chat_style',
+        'badge_style',
+        'name_font_weight',
+        'show_expiry_badge',
+        'custom_css',
         'course_open_approved',
         'course_open_request_pending',
         'course_open_requested_at',
@@ -156,6 +172,8 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'is_parent' => 'boolean',
+        'donation_rank_expires_at' => 'datetime',
+        'total_donated' => 'integer',
         'grade_needs_selection' => 'boolean',
         'course_open_approved' => 'boolean',
         'course_open_request_pending' => 'boolean',

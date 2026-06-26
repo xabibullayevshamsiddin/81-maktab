@@ -19,7 +19,6 @@ Route::middleware('auth')->group(function () {
         ->middleware('active')
         ->name('chat.messages');
     Route::get('chat/user/{user}/preview', [ChatController::class, 'userPreview'])
-        ->middleware('active')
         ->middleware('throttle:60,1')
         ->name('chat.user.preview');
     Route::post('chat/user/{user}/deactivate', [ChatController::class, 'superAdminDeactivateUser'])
@@ -35,7 +34,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('chat', [ChatController::class, 'clearAll'])->middleware(['active'])->name('chat.clear');
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
     Route::get('chat/groups', [ChatGroupController::class, 'index'])->middleware(['active'])->name('chat.groups.index');
+    Route::post('chat/groups', [ChatGroupController::class, 'store'])->middleware(['active'])->name('chat.groups.store');
+    Route::put('chat/groups/{group}', [ChatGroupController::class, 'update'])->middleware(['active'])->name('chat.groups.update');
+    Route::post('chat/groups/{group}/image', [ChatGroupController::class, 'updateImage'])->middleware(['active'])->name('chat.groups.image');
+    Route::delete('chat/groups/{group}/image', [ChatGroupController::class, 'deleteImage'])->middleware(['active'])->name('chat.groups.image.delete');
+    Route::delete('chat/groups/{group}', [ChatGroupController::class, 'destroy'])->middleware(['active'])->name('chat.groups.destroy');
     Route::post('chat/groups/{group}/join', [ChatGroupController::class, 'join'])->middleware(['active'])->name('chat.groups.join');
+    Route::post('chat/groups/{group}/leave', [ChatGroupController::class, 'leave'])->middleware(['active'])->name('chat.groups.leave');
+    Route::get('chat/groups/{group}/members', [ChatGroupController::class, 'members'])->middleware(['active'])->name('chat.groups.members');
+    Route::put('chat/groups/{group}/members/{member}', [ChatGroupController::class, 'updateMemberRole'])->middleware(['active'])->name('chat.groups.members.role');
+    Route::delete('chat/groups/{group}/members/{member}', [ChatGroupController::class, 'removeMember'])->middleware(['active'])->name('chat.groups.members.remove');
     Route::get('chat/groups/{group}/requests', [ChatGroupController::class, 'requests'])->middleware(['active'])->name('chat.groups.requests.index');
     Route::post('chat/groups/{group}/requests/{joinRequest}/accept', [ChatGroupController::class, 'accept'])->middleware(['active'])->name('chat.groups.requests.accept');
     Route::post('chat/groups/{group}/requests/{joinRequest}/reject', [ChatGroupController::class, 'reject'])->middleware(['active'])->name('chat.groups.requests.reject');
@@ -45,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::put('profile/sinfni-tanlash', [GradeSelectionController::class, 'update'])->name('profile.grade-selection.update');
     Route::get('profile/bookmarks', [BookmarkController::class, 'index'])->name('profile.bookmarks.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+Route::put('profile/appearance', [ProfileController::class, 'updateAppearance'])->name('profile.update-appearance');
     Route::get('profile/natijalar', [ProfileController::class, 'resultsIndex'])->name('profile.results.index');
     Route::get('profile/results', [ProfileController::class, 'resultsIndex']);
     Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');

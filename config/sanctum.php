@@ -46,7 +46,18 @@ return [
     |
     */
 
-    'expiration' => null,
+        /*
+    |--------------------------------------------------------------------------
+    | Expiration Minutes
+    |--------------------------------------------------------------------------
+    |
+    | API tokenlarining amal qilish muddati (daqiqalarda).
+    | Production'da cheklangan muddat qo'yish tavsiya etiladi.
+    | .env: SANCTUM_EXPIRATION=1440 (24 soat)
+    |
+    */
+
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 1440),
 
     /*
     |--------------------------------------------------------------------------

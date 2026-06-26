@@ -270,7 +270,7 @@ class PublicPostController extends Controller
         $comment->user_id = $request->user()?->id;
 
         $user = $request->user();
-        $comment->is_approved = (bool) ($user && $user->canManageInbox());
+        $comment->is_approved = true;
         $comment->parent_id = $parentComment?->id;
         $comment->save();
 

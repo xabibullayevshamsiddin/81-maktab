@@ -561,6 +561,9 @@
           if (d.is_super_admin) {
             previewDialog.classList.add('is-super-admin');
             previewDialog.classList.remove('is-admin');
+          } else if (d.donor_rank) {
+            previewDialog.classList.remove('is-super-admin', 'is-admin', 'is-donor-supporter', 'is-donor-premium', 'is-donor-vip');
+            previewDialog.classList.add('is-donor-' + d.donor_rank);
             spawnSuperAdminParticles(previewDialog);
           } else if (d.is_admin) {
             previewDialog.classList.add('is-admin');
@@ -568,7 +571,7 @@
             var oldPfx = previewDialog.querySelector('.sa-particles');
             if (oldPfx) oldPfx.remove();
           } else {
-            previewDialog.classList.remove('is-super-admin', 'is-admin');
+            previewDialog.classList.remove('is-super-admin', 'is-admin', 'is-donor-supporter', 'is-donor-premium', 'is-donor-vip');
             var oldPfx = previewDialog.querySelector('.sa-particles');
             if (oldPfx) oldPfx.remove();
           }
@@ -586,6 +589,9 @@
             } else {
               previewRoleEl.innerHTML = '<span class="chat-user-preview-badge chat-user-preview-badge--base"><i class="fa-solid fa-user"></i> ' + lvlText + rl + '</span>';
             }
+          if (d.donor_badge) {
+            previewRoleEl.innerHTML = d.donor_badge + ' ' + previewRoleEl.innerHTML;
+          }
           }
           if (previewAvatar) {
             previewAvatar.className = 'chat-user-preview-avatar';
@@ -637,6 +643,10 @@
               }
               if (d.is_parent) {
                 rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
+              }
+              if (d.donor_rank) {
+                rows.push('<li><span>Donor</span> ' + d.donor_badge + '</li>');
+                rows.push('<li><span>Tugash vaqti</span> ' + escChatHtml(d.donor_expires || 'Nomalum') + '</li>');
               }
               if (d.member_year) {
                 rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
@@ -3069,12 +3079,14 @@
     }
 
     function renderMsg(m) {
-      var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '') + (m.is_super_admin ? ' is-super-admin' : '');
+      var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '') + (m.is_super_admin ? ' is-super-admin' : '') + (m.donor_rank ? ' is-donor is-donor-' + m.donor_rank : '');
       var badge = '';
       if (m.is_super_admin) {
         badge = '<span class="chat-msg-super-badge"><i class="fa-solid fa-crown"></i> Super Admin</span>';
       } else if (m.is_admin) {
         badge = '<span class="chat-msg-admin-badge">Admin</span>';
+      } else if (m.donor_badge) {
+        badge = m.donor_badge;
       }
       var avatarCls = 'chat-msg-avatar chat-msg-avatar-btn' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
       var avatarInner = m.avatar_url
@@ -3094,7 +3106,7 @@
         + '</button>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
-        + '<span class="chat-msg-name">' + escChatHtml(m.user_name) + '</span>'
+        + '<span class="chat-msg-name"' + (m.donor_color ? ' style="color:' + m.donor_color + '"' : '') + '>' + escChatHtml(m.user_name) + '</span>'
         + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + actionsHtml

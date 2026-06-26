@@ -226,8 +226,28 @@
                   <span class="text">Sozlamalar</span>
                 </a>
               </li>
-
             @endif
+          @endif
+
+          <li class="divider section-divider"><hr></li>
+          <li class="sidebar-section">Donation</li>
+
+          @if($canManageSystem)
+          <li class="nav-item {{ request()->routeIs('admin.activation-keys.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.activation-keys.index') }}">
+              <span class="icon"><i class="mdi mdi-key-variant"></i></span>
+              <span class="text">Aktivatsiya kalitlari</span>
+            </a>
+          </li>
+          @endif
+
+          @if($sidebarUser->isSuperAdmin())
+          <li class="nav-item {{ request()->routeIs('admin.donation-settings*') ? 'active' : '' }}">
+            <a href="{{ route('admin.donation-settings') }}">
+              <span class="icon"><i class="mdi mdi-currency-usd"></i></span>
+              <span class="text">Narx va chegirmalar</span>
+            </a>
+          </li>
           @endif
 
           <li class="divider section-divider"><hr></li>

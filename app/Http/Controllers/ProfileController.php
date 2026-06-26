@@ -40,7 +40,7 @@ class ProfileController extends Controller
         $user = $request->user()->load('roleRelation');
         $panel = strtolower((string) $request->query('panel', 'settings'));
 
-        if (! in_array($panel, ['settings', 'security', 'activity'], true)) {
+        if (! in_array($panel, ['settings', 'security', 'activity', 'appearance'], true)) {
             $panel = 'settings';
         }
 
@@ -197,7 +197,7 @@ class ProfileController extends Controller
             'first_name' => User::nameValidationRules(),
             'last_name' => User::nameValidationRules(),
             'phone' => uz_phone_rules(false),
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . $request->user()->donorMaxAvatarSize()],
             'remove_avatar' => ['nullable', 'boolean'],
         ], [
             'phone.regex' => uz_phone_validation_message(),
@@ -207,7 +207,7 @@ class ProfileController extends Controller
             'last_name.regex' => $nameMsg,
 'avatar.image' => 'Profil rasmi rasm bo‘lishi kerak.',
             'avatar.mimes' => 'Profil rasmi JPG, PNG yoki WebP formatda bo‘lishi kerak.',
-            'avatar.max' => 'Profil rasmi 3 MB dan oshmasligi kerak.',
+            'avatar.max' => 'Rasm hajmi ' . round($request->user()->donorMaxAvatarSize() / 1024) . ' MB dan oshmasin. Donor bo‘lish orqali kattaroq rasm yuklashingiz mumkin.',
         ]);
         $validated['phone'] = uz_phone_format($validated['phone'] ?? null);
 
@@ -927,5 +927,43 @@ class ProfileController extends Controller
         return view('profile.partials.password-card', [
             'passwordChangeUnlocked' => $this->hasConfirmedPasswordChange($request, (int) $request->user()->id),
         ])->render();
+    }
+
+    public function updateAppearance(Request $request)
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            "donor_theme" => "nullable|string|max:40",
+            "badge_style" => "nullable|string|max:20",
+            "comment_style" => "nullable|string|max:20",
+            "chat_style" => "nullable|string|max:20",
+            "show_expiry_badge" => "nullable|string|max:2",
+            "name_font_weight" => "nullable|string|max:4",
+        ]);
+
+        // Tema tanlash — server-side ruxsat tekshiruvi.
+        // Ruxsat etilgan tema bo'lsa — qabul qilamiz, aks holda joriy tema saqlanadi.
+        $theme = $user->profile_theme ?: $user->donation_rank;
+        if (!empty($data["donor_theme"]) && \App\Models\Donation::themeAllowedForUser($data["donor_theme"], $user)) {
+            $theme = $data["donor_theme"];
+        }
+
+        // Tema rangini username_color uchun olamiz
+        $themeConfig = \App\Models\Donation::themeConfig($theme);
+        $themeColor = $themeConfig["badge_color"] ?? null;
+
+        $user->update([
+            "profile_theme" => $theme,
+            "username_color" => $themeColor ?? $user->username_color,
+            "badge_style" => $data["badge_style"] ?? $user->badge_style,
+            "comment_style" => $data["comment_style"] ?? $user->comment_style,
+            "chat_style" => $data["chat_style"] ?? $user->chat_style,
+            "show_expiry_badge" => $data["show_expiry_badge"] ?? $user->show_expiry_badge,
+            "name_font_weight" => $data["name_font_weight"] ?? $user->name_font_weight,
+        ]);
+
+        return redirect()->route("profile.show", ["panel" => "appearance"])
+            ->with("success", "Korinish saqlandi!")
+            ->with("toast_type", "success");
     }
 }

@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChatGroup extends Model
 {
+    public const PRIVACY_OPEN = 'open';
+    public const PRIVACY_CLOSED = 'closed';
+
     protected $fillable = [
         'owner_id',
         'name',
         'description',
+        'privacy',
+        'image',
     ];
 
     public function owner(): BelongsTo

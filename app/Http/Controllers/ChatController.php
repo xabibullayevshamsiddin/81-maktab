@@ -36,7 +36,9 @@ class ChatController extends Controller
 
     public function messages(Request $request): JsonResponse
     {
-        if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
+        $groupId = (int) $request->query('group_id', 0);
+
+        if ($groupId <= 0 && SiteSetting::get('global_chat_enabled', '1') !== '1') {
             return response()->json([
                 'messages' => [],
                 'last_id' => (int) $request->query('after', 0),
@@ -56,9 +58,8 @@ class ChatController extends Controller
         $canModerate = $currentUser->isAdmin() || $currentUser->isModerator();
         $canClearAll = $currentUser->isAdmin();
 
-        $groupId = (int) $request->query('group_id', 0);
         $query = ChatMessage::query()
-            ->with('user:id,first_name,name,role_id,avatar,is_active')
+            ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color')
             ->with('user.roleRelation:id,name');
 
         if ($groupId > 0) {
@@ -128,6 +129,9 @@ class ChatController extends Controller
                 'avatar_url' => $avatarUrl,
                 'time' => $m->created_at?->format('H:i'),
                 'date' => $m->created_at?->format('d.m'),
+              'donor_rank' => $m->user?->donation_rank,
+              'donor_badge' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->donorBadgeHtml() ?? '') : '',
+              'donor_color' => $m->user?->donorUsernameColor() ?? '',
             ];
         });
 
@@ -185,6 +189,10 @@ class ChatController extends Controller
             'viewer_is_super_admin' => $viewerIsSuperAdmin,
             'courses' => $this->buildUserPreviewCourses($user),
             'exam_stats' => in_array($roleName, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN], true) ? null : $this->buildUserPreviewExamStats($user),
+              'donor_rank' => $user->donation_rank,
+              'donor_badge' => $user->donorBadgeHtml() ?? '',
+              'donor_color' => $user->donorUsernameColor() ?? '',
+              'donor_expires' => $user->donation_rank_expires_at?->diffForHumans(),
         ];
 
         if ($viewerIsSuperAdmin) {
@@ -315,7 +323,7 @@ class ChatController extends Controller
 
     private function currentUserCanViewGroup(ChatGroup $group, User $user): bool
     {
-        if ($group->owner_id === $user->id) {
+        if ((int) $group->owner_id === (int) $user->id) {
             return true;
         }
 
@@ -331,7 +339,7 @@ class ChatController extends Controller
 
     private function currentUserCanSendToGroup(ChatGroup $group, User $user): bool
     {
-        if ($group->owner_id === $user->id) {
+        if ((int) $group->owner_id === (int) $user->id) {
             return true;
         }
 
@@ -355,6 +363,9 @@ class ChatController extends Controller
             'email' => trim((string) ($user->email ?? '')) ?: null,
             'phone' => trim((string) ($user->phone ?? '')) ?: null,
             'role_key' => $roleName,
+                    'donor_rank' => $user->donation_rank,
+                    'donor_badge' => $user->donorBadgeHtml() ?? '',
+                    'donor_color' => $user->donorUsernameColor() ?? '',
             'role_label' => $roleLabel,
             'role_level' => $roleLevel,
             'status' => $user->is_active ? 'Faol' : 'Bloklangan',

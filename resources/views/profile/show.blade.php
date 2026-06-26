@@ -4,12 +4,16 @@
   $profileRoleLabel = \Illuminate\Support\Facades\Lang::has($profileRoleLabelKey)
     ? __($profileRoleLabelKey)
     : $user->role_label;
+  $donorRank = $user->donation_rank;
+  $donorIsActive = $user->isDonor();
   $profileCardStaffClass = match ($profileRoleKey) {
     'super_admin' => 'profile-card--super-admin',
     'admin' => 'profile-card--admin',
     'moderator' => 'profile-card--moderator',
     default => '',
   };
+  $profileOverviewDonorClass = $donorIsActive ? 'profile-overview--donor profile-overview--donor-' . $donorRank : '';
+  $profileOverviewThemeClass = $user->donorThemeClass();
 
   $profileInitial = \Illuminate\Support\Str::upper(
     \Illuminate\Support\Str::substr(trim((string) ($user->name ?: 'U')), 0, 1)
@@ -68,6 +72,14 @@
       'value' => $profileRoleLabel,
       'hint' => __('profile.facts.role.hint'),
     ],
+    [
+      'icon' => 'fa-solid fa-star',
+      'label' => 'Donor reytingi',
+      'value' => $user->isDonor()
+        ? $user->donorRankLabel() . ' ' . $user->donorBadgeHtml()
+        : 'Mavjud emas',
+      'hint' => $user->isDonor() && $user->donation_rank_expires_at ? 'Tugash vaqti: ' . $user->donation_rank_expires_at->diffForHumans() : 'Donor bolish orqali imtiyozlarga ega boling',
+    ],
   ];
 
   $profileI18n = [
@@ -77,6 +89,7 @@
     'avatarReady' => __('profile.js.avatar_ready'),
     'avatarFallback' => __('profile.js.avatar_fallback'),
     'avatarRemoved' => 'Rasm olib tashlanadi. Saqlasangiz bosh harf ko‘rinadi.',
+    'avatarTooBig' => __('profile.js.avatar_too_big'),
     'saveError' => __('profile.js.save_error'),
     'saved' => __('profile.js.saved'),
     'serverError' => __('profile.js.server_error'),
@@ -130,9 +143,12 @@
       }
     </style>
   @endpush
-  <section class="news-hero profile-hero">
+  <section class="news-hero profile-hero {{ $user->donorThemeClass() }}">
     <div class="container">
-      <div class="news-hero-content reveal">
+      @if($user->donorBannerUrl())
+    <img src="{{ $user->donorBannerUrl() }}" alt="Banner" class="donor-banner">
+  @endif
+  <div class="news-hero-content reveal">
         <span class="badge">{{ __('profile.badge') }}</span>
         <h1 class="js-split-text"><strong>{{ __('profile.title') }}</strong></h1>
         <p>{{ __('profile.intro') }}</p>
@@ -142,7 +158,7 @@
 
   <main class="profile-main" data-profile-i18n='@json($profileI18n)' data-active-panel="{{ $profilePanel }}">
     <div class="container">
-	      <section class="profile-overview-panel">
+	      <section class="profile-overview-panel {{ $profileOverviewDonorClass }} {{ $profileOverviewThemeClass }}">
         <div class="profile-overview-main">
           <div class="profile-avatar" data-profile-avatar-box data-profile-avatar-initial="{{ $profileInitial }}"
             data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}">{{ $profileInitial }}</div>
@@ -154,11 +170,14 @@
                 {{ __('profile.overview_kicker') }}
               </span>
               <span class="profile-overview-pulse">
-                <i class="fa-solid fa-sparkles"></i>
+                <i class="fa-solid fa-star"></i>
                 {{ __('public.profile_hub.center') }}
               </span>
             </div>
-            <h2 class="profile-overview-name">{{ $user->name }}</h2>
+            <div class="profile-overview-title-row">
+              <h2 class="profile-overview-name" style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->donorIsActive ? ($user->name_font_weight ?? '700') : 'inherit' }};">{{ $user->name }}</h2>
+              {!! $user->donorBadgeHtml() !!}
+            </div>
             <p class="profile-overview-intro">
               {{ __('public.profile_hub.intro') }}
             </p>
@@ -215,6 +234,10 @@
               <i class="fa-solid fa-bookmark"></i>
               <span>{{ __('profile.bookmarks.nav') }}</span>
             </a>
+            <a href="{{ route('profile.show', ['panel' => 'appearance']) }}" class="profile-panel-tab {{ $profilePanel === 'appearance' ? 'is-active' : '' }}">
+              <i class="fa-solid fa-palette" style="color: #8b5cf6;"></i>
+              <span>Donat korinishi</span>
+            </a>
           </nav>
         </section>
 
@@ -235,7 +258,7 @@
                       <span class="profile-fact-icon"><i class="{{ $fact['icon'] }}"></i></span>
                       <span class="profile-fact-label">{{ $fact['label'] }}</span>
                       <strong class="profile-fact-value" @if($fact['track_email'] ?? false) data-profile-user-email
-                      @endif>{{ $fact['value'] }}</strong>
+                      @endif>{!! $fact['value'] !!}</strong>
                       <span class="profile-fact-hint">{{ $fact['hint'] }}</span>
                     </div>
                   @endforeach
@@ -252,9 +275,9 @@
                   </div>
                 </div>
               </div>
-            @endif
-
-            @if($profilePanel === 'security')
+            @elseif($profilePanel === 'appearance')
+            @include('profile.partials.appearance-card')
+            @elseif($profilePanel === 'security')
 	            @include('profile.partials.email-card')
 	            @include('profile.partials.password-card')
 	            @include('profile.partials.app-settings-card')
@@ -278,11 +301,23 @@
 
                   <div class="profile-avatar-upload">
                     <div class="profile-avatar-upload-copy">
+                      @php
+                        $avatarMaxKb = $user->donorMaxAvatarSize();
+                        $avatarMaxMb = round($avatarMaxKb / 1024);
+                      @endphp
                       <div class="profile-field">
                         <label for="profile-avatar">{{ __('profile.main_card.avatar_label') }}</label>
-                        <span class="profile-field-hint">{{ __('profile.main_card.avatar_hint') }}</span>
+                        <span class="profile-field-hint">{!! __('profile.main_card.avatar_hint', ['max' => $avatarMaxMb]) !!}</span>
+                        @if($donorIsActive)
+                          <span class="profile-field-hint profile-field-hint--donor" style="color: {{ \App\Models\Donation::configForRank($donorRank)['badge_color'] ?? '#6366f1' }};">
+                            <i class="fa-solid {{ \App\Models\Donation::configForRank($donorRank)['badge_icon'] ?? 'fa-star' }}"></i>
+                            {!! __('profile.main_card.avatar_donor_bonus', ['max' => $avatarMaxMb, 'rank' => \App\Models\Donation::configForRank($donorRank)['label'] ?? 'Donor']) !!}
+                          </span>
+                        @endif
                         <input type="hidden" name="remove_avatar" value="0" data-profile-avatar-remove-flag />
-                        <input type="file" id="profile-avatar" name="avatar" accept="image/jpeg,image/png,image/webp" />
+                        <input type="file" id="profile-avatar" name="avatar" accept="image/jpeg,image/png,image/webp"
+                          data-profile-avatar-max="{{ $avatarMaxKb }}"
+                          data-profile-avatar-max-mb="{{ $avatarMaxMb }}" />
                         @if($profileAvatarUrl)
                           <div class="profile-actions-row profile-avatar-actions">
                             <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
@@ -291,7 +326,7 @@
                           </div>
                         @endif
                         <span class="profile-avatar-meta"
-                          data-profile-avatar-meta>{{ __('profile.main_card.avatar_meta') }}</span>
+                          data-profile-avatar-meta>{{ __('profile.main_card.avatar_meta', ['max' => $avatarMaxMb]) }}</span>
                         @error('avatar')
                           <p class="form-message profile-form-error">{{ $message }}</p>
                         @enderror

@@ -18,6 +18,7 @@ class RouteServiceProvider extends ServiceProvider
         'routes/web/admin.php',
         'routes/web/ai.php',
         'routes/web/fallback.php',
+        'routes/web/donation.php',
     ];
 
     /**

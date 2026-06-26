@@ -130,6 +130,21 @@
   font-weight: 700;
 }
 
+.profile-overview-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 14px;
+}
+.profile-overview-title-row .profile-overview-name {
+  margin: 0 !important;
+}
+.profile-overview-title-row .donor-badge {
+  font-size: 0.8rem;
+  padding: 0.2rem 0.7rem;
+}
+
 .profile-overview-name {
   font-family: var(--profile-font-heading);
   font-size: clamp(2rem, 4vw, 3rem);
@@ -975,6 +990,30 @@
 
 .profile-main[data-active-panel='security'] .profile-column-activity {
   display: none !important; /* Nothing in activity col for security */
+}
+
+/* ====== APPEARANCE PANEL — to'liq kenglik ====== */
+/* appearance kartasi .twocol grid'i ichida 2 ustunli,
+   shuning uchun butun layout kengligini egallashi kerak */
+.profile-main[data-active-panel='appearance'] .profile-layout {
+  display: block !important;
+}
+.profile-main[data-active-panel='appearance'] .profile-column-settings {
+  width: 100% !important;
+  max-width: 1200px !important;
+  flex: none !important;
+}
+.profile-main[data-active-panel='appearance'] .profile-column-activity {
+  display: none !important;
+}
+/* Appearance kartasining o'zi to'liq kenglik */
+.profile-main[data-active-panel='appearance'] .signin-card.profile-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+/* .twocol grid ichki kenglikni to'liq egallashi uchun */
+.profile-main[data-active-panel='appearance'] form {
+  width: 100% !important;
 }
 
 /* Security cards spanning */

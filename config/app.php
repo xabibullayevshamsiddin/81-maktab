@@ -29,7 +29,7 @@ return [
     |
     */
 
-    'env' => env('APP_ENV', 'production'),
+    'env' => env('APP_ENV', 'production'), // XAVFSIZLIK: Hostda APP_ENV=production qiling!
 
     /*
     |--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => (bool) env('APP_DEBUG', false), // XAVFSIZLIK: Hostda APP_DEBUG=false qiling!
 
     /*
     |--------------------------------------------------------------------------

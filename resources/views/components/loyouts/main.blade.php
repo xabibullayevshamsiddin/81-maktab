@@ -43,7 +43,17 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    @stack('page_styles')
+    <style>
+    :root {
+      --user-color: {{ auth()->check() && auth()->user()->donorUsernameColor() ? auth()->user()->donorUsernameColor() : '#6366f1' }};
+    }
+  </style>
+  @stack("page_styles")
+<style>
+.donor-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 9999px; }
+.donor-badge i { font-size: 0.75rem; }
+.comment-donor { border-left: 4px solid; padding-left: 0.75rem; border-radius: 4px; }
+</style>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -62,6 +72,7 @@
           'page-inner' => ! request()->routeIs('home')
         ])
         data-theme="light"
+	        data-donor-theme="{{ auth()->check() && auth()->user()->isDonor() ? (auth()->user()->donation_rank) : '' }}"
 	        data-site-success="{{ session('success') }}"
 	        data-site-error="{{ session('error') }}"
 	        data-site-toast-type="{{ session('toast_type') }}"
@@ -287,6 +298,10 @@
                       <a class="nav-dropdown-item {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">
                         <i class="fa-solid fa-address-book"></i>
                         {{ __('public.layout.nav.contact') }}
+                      </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('donation*') ? 'active' : '' }}" href="{{ route('donation.index') }}">
+                        <i class="fa-solid fa-hand-holding-heart" style="color: #f59e0b;"></i>
+                        Donation
                       </a>
 
                       <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
@@ -540,6 +555,30 @@
           'group_request_accept' => __('public.layout.group_request_accept'),
           'group_request_reject' => __('public.layout.group_request_reject'),
           'group_request_unknown' => __('public.layout.group_request_unknown'),
+          'group_leave' => __('public.layout.group_leave'),
+          'group_create' => __('public.layout.group_create'),
+          'group_settings' => __('public.layout.group_settings'),
+          'group_stab_info' => __('public.layout.group_stab_info'),
+          'group_stab_members' => __('public.layout.group_stab_members'),
+          'group_name' => __('public.layout.group_name'),
+          'group_description' => __('public.layout.group_description'),
+          'group_privacy' => __('public.layout.group_privacy'),
+          'group_privacy_closed' => __('public.layout.group_privacy_closed'),
+          'group_privacy_open' => __('public.layout.group_privacy_open'),
+          'group_image' => __('public.layout.group_image'),
+          'group_change_image' => __('public.layout.group_change_image'),
+          'group_remove_image' => __('public.layout.group_remove_image'),
+          'group_save' => __('public.layout.group_save'),
+          'group_delete' => __('public.layout.group_delete'),
+          'group_members' => __('public.layout.group_members'),
+          'group_role_member' => __('public.layout.group_role_member'),
+          'group_role_admin' => __('public.layout.group_role_admin'),
+          'group_promote' => __('public.layout.group_promote'),
+          'group_demote' => __('public.layout.group_demote'),
+          'group_kick' => __('public.layout.group_kick'),
+          'group_open' => __('public.layout.group_open'),
+          'group_closed' => __('public.layout.group_closed'),
+          'group_you' => __('public.layout.group_you'),
           'group_load_failed' => __('public.layout.group_load_failed'),
           'group_requests_failed' => __('public.layout.group_requests_failed'),
           'group_join_failed' => __('public.layout.group_join_failed'),
@@ -605,45 +644,40 @@
             <p id="chat-disabled-panel-text" class="chat-disabled-panel-text"></p>
           </div>
           <div id="chat-panel-main" class="chat-panel-main" @if(!$globalChatEnabled) hidden @endif>
-          <div class="chat-panel-intro">
-            <div class="chat-panel-kicker">
-              <span class="chat-panel-live-dot chat-panel-live-dot--channel" aria-hidden="true"></span>
-              <span id="chat-channel-label">{{ __('public.layout.general_chat') }}</span>
-            </div>
-            <p class="chat-panel-subtitle">{{ __('public.layout.chat_intro') }}</p>
-          </div>
+
           <div class="chat-panel-channel-switch" id="chat-channel-switch">
-            <button type="button" class="chat-panel-tab chat-panel-tab--active" data-chat-channel="global">{{ __('public.layout.general_chat') }}</button>
-            <button type="button" class="chat-panel-tab" data-chat-channel="group">{{ __('public.layout.group_chat') }}</button>
+            <button type="button" class="chat-panel-tab chat-panel-tab--active" data-chat-channel="global"><i class="fa-solid fa-comments"></i> {{ __('public.layout.general_chat') }}</button>
+            <button type="button" class="chat-panel-tab" data-chat-channel="group"><i class="fa-solid fa-users"></i> {{ __('public.layout.group_chat') }}</button>
           </div>
           <div class="chat-group-shell" id="chat-group-shell" hidden>
-            <div class="chat-group-meta">
+            <div class="chat-group-create-bar">
+              <button type="button" class="chat-panel-btn chat-group-create-btn" id="chat-group-create-btn"><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
+            </div>
+            <div class="chat-group-meta" id="chat-group-meta" hidden>
               <div class="chat-group-meta-labels">
-                <strong id="chat-current-group-name">{{ __('public.layout.select_group') }}</strong>
+                <div class="chat-group-meta-top">
+                  <strong id="chat-current-group-name" class="chat-group-meta-name"></strong>
+                  <span id="chat-group-privacy-badge" class="chat-group-privacy-dot"></span>
+                </div>
                 <p id="chat-current-group-description" class="chat-group-description"></p>
               </div>
-              <div class="chat-group-controls">
+              <div class="chat-group-controls" id="chat-group-controls">
                 <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-join-btn" hidden>{{ __('public.layout.join_group') }}</button>
-                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-requests-btn" hidden>{{ __('public.layout.group_requests') }} (<span id="chat-group-pending-count">0</span>)</button>
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-leave-btn" hidden>{{ __('public.layout.group_leave') }}</button>
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-requests-btn" hidden><i class="fa-solid fa-user-plus"></i> <span id="chat-group-pending-count">0</span></button>
+                <button type="button" class="chat-panel-btn chat-group-settings-btn" id="chat-group-settings-btn" hidden><i class="fa-solid fa-gear"></i></button>
               </div>
             </div>
             <div class="chat-group-list" id="chat-group-list"></div>
-            <div class="chat-group-requests" id="chat-group-requests-panel" hidden>
-              <div class="chat-group-requests-header">
-                <strong>{{ __('public.layout.group_requests') }}</strong>
+            <div class="chat-group-subpanel" id="chat-group-subpanel" hidden>
+              <div class="chat-group-subpanel-header">
+                <button type="button" class="chat-panel-btn chat-group-subpanel-back" id="chat-group-subpanel-back"><i class="fa-solid fa-arrow-left"></i></button>
+                <strong id="chat-group-subpanel-title"></strong>
               </div>
-              <div class="chat-group-requests-list" id="chat-group-requests-list"></div>
+              <div id="chat-group-subpanel-body"></div>
             </div>
           </div>
-          <details class="chat-rules">
-            <summary>{{ __('public.layout.chat_rules') }}</summary>
-            <ul>
-              <li>{{ __('public.layout.chat_rule_1') }}</li>
-              <li>{{ __('public.layout.chat_rule_2') }}</li>
-              <li>{{ __('public.layout.chat_rule_3') }}</li>
-              <li>{{ __('public.layout.chat_rule_4') }}</li>
-            </ul>
-          </details>
+          
           <div class="chat-feed-stack">
             <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
           </div>
@@ -704,6 +738,40 @@
     @endunless
 
     @include('components.confirm-modal')
+    <div id="prime-group-create-modal" class="prime-group-create" role="presentation" aria-hidden="true">
+      <div class="prime-group-create__backdrop" aria-hidden="true"></div>
+      <div class="prime-group-create__dialog" role="dialog" aria-modal="true" aria-labelledby="prime-group-create-title">
+        <div class="prime-group-create__icon" aria-hidden="true">
+          <span class="prime-group-create__icon-inner"><i class="fa-solid fa-users"></i></span>
+        </div>
+        <h2 id="prime-group-create-title" class="prime-group-create__title">{{ __('public.layout.group_create') }}</h2>
+        <div class="prime-group-create__body">
+          <div class="prime-group-create__field">
+            <label for="prime-group-create-name">{{ __('public.layout.group_name') }}</label>
+            <input type="text" id="prime-group-create-name" class="prime-group-create__input" maxlength="120" minlength="2" placeholder="Guruh nomi" />
+          </div>
+          <div class="prime-group-create__field">
+            <label for="prime-group-create-desc">{{ __('public.layout.group_description') }}</label>
+            <textarea id="prime-group-create-desc" class="prime-group-create__textarea" maxlength="500" placeholder="Tavsif (ixtiyoriy)"></textarea>
+          </div>
+          <div class="prime-group-create__field">
+            <label>{{ __('public.layout.group_privacy') }}</label>
+            <div class="prime-group-create__toggle">
+              <button type="button" class="prime-group-create__toggle-btn prime-group-create__toggle-btn--active" data-privacy="closed">
+                <i class="fa-solid fa-lock"></i> {{ __('public.layout.group_closed') }}
+              </button>
+              <button type="button" class="prime-group-create__toggle-btn" data-privacy="open">
+                <i class="fa-solid fa-unlock"></i> {{ __('public.layout.group_open') }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="prime-group-create__actions">
+          <button type="button" class="prime-group-create__btn prime-group-create__btn--ghost" data-group-create-cancel>{{ __('public.layout.cancel') }}</button>
+          <button type="button" class="prime-group-create__btn prime-group-create__btn--primary" data-group-create-ok><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
+        </div>
+      </div>
+    </div>
     <div id="global-modal-root"></div>
     <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
 
@@ -768,7 +836,7 @@
       @endunless
     @endauth
 
-	    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
+<script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
 	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}"></script>
       <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
 	    <script>
