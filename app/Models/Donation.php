@@ -255,10 +255,11 @@ class Donation extends Model
 
     /**
      * Berilgan foydalanuvchi tema tanlay oladimi?
-     * Ruxsat qoidasi:
+     * Ruxsat qoidalari:
+     *  - "Oddiy" (plain): barchaga ochiq, effektsiz.
      *  - Admin temalari: faqat super admin uchun.
-     *  - Donor temalari: foydalanuvchi donor bo'lsa, o'z ranki va undan past.
-     *    Super admin donor bo'lmasa ham donor temalaridan foydalanishi mumkin.
+     *  - Donor temalari: FAQAT foydalanuvchining o'z ranki (VIP=VIP, Premium=Premium).
+     *    Super admin donor bo'lmasa — donor temalari QULFLANGAN (faqat admin temalari).
      */
     public static function themeAllowedForUser(string $theme, $user): bool
     {
@@ -267,30 +268,30 @@ class Donation extends Model
             return false;
         }
 
-        // Admin temalari — faqat super admin
-        if (!empty($cfg["requires_admin"])) {
-            return method_exists($user, "isSuperAdmin") && $user->isSuperAdmin();
-        }
+        $type = $cfg["type"] ?? "";
 
-        // Donor temalari — ierarxiya bo'yicha
-        $rankOrder = array_flip(self::ALL_RANKS); // supporter=0, premium=1, vip=2
-        $userRank = $user->donation_rank ?? null;
-
-        // Super admin donor emas bo'lsa ham donor temalaridan foydalanadi
-        if (method_exists($user, "isSuperAdmin") && $user->isSuperAdmin()) {
+        // "Oddiy" — hammaga ochiq
+        if ($type === "plain") {
             return true;
         }
 
-        // Foydalanuvchi donor emas — hech qanday donor temasi
-        if ($userRank === null || !method_exists($user, "isDonor") || !$user->isDonor()) {
-            return false;
+        // Admin temalari — faqat super admin
+        if ($type === "admin") {
+            return method_exists($user, "isSuperAdmin") && $user->isSuperAdmin();
         }
 
-        $userLevel = $rankOrder[$userRank] ?? -1;
-        $themeLevel = $rankOrder[$theme] ?? -1;
+        // Donor temalari — faqat foydalanuvchining o'z ranki bilan to'g'ri kelishi kerak
+        if ($type === "donor") {
+            $userRank = $user->donation_rank ?? null;
+            // Donor emas (yoki super admin lekin donor emas) — donor temalari qulflangan
+            if ($userRank === null || !method_exists($user, "isDonor") || !$user->isDonor()) {
+                return false;
+            }
+            // Faqat aynan o'z rankidagi tema
+            return $theme === $userRank;
+        }
 
-        // Tema foydalanuvchi ranki darajasida yoki undan past bo'lishi kerak
-        return $themeLevel >= 0 && $userLevel >= $themeLevel;
+        return false;
     }
 
     public static function priceLabel(?string $rank): string

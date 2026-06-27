@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 Route::get("donation", [DonationController::class, "index"])
     ->name("donation.index");
 
+// Temalar showcase — barcha temalar jonli preview
+Route::get("donation/temalar", [DonationController::class, "themesShowcase"])
+    ->name("donation.themes");
+
 Route::get("donation/{rank}/checkout", [DonationController::class, "showCheckout"])
     ->middleware(["auth", "active"])
     ->name("donation.checkout");

@@ -24,6 +24,30 @@ class DonationController extends Controller
         ]);
     }
 
+    /**
+     * Temalar showcase — barcha temalar jonli preview bilan.
+     * Foydalanuvchilarni donor bo'lishga qiziqtirish uchun.
+     */
+    public function themesShowcase()
+    {
+        $themes = Donation::THEMES();
+        $user = auth()->user();
+
+        // Har bir tema uchun ruxsat holati
+        $themeAllowed = [];
+        if ($user) {
+            foreach ($themes as $key => $cfg) {
+                $themeAllowed[$key] = Donation::themeAllowedForUser($key, $user);
+            }
+        }
+
+        return view("donation.themes-showcase", [
+            "themes" => $themes,
+            "themeAllowed" => $themeAllowed,
+            "currentUser" => $user,
+        ]);
+    }
+
     public function showCheckout(string $rank)
     {
         if (!in_array($rank, Donation::ALL_RANKS, true)) {

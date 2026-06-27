@@ -23,7 +23,7 @@
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=9" />
     @unless(request()->routeIs('exam.session'))
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
     {{-- Three.js — 3D loader animatsiyasi uchun --}}
@@ -650,12 +650,13 @@
             <button type="button" class="chat-panel-tab" data-chat-channel="group"><i class="fa-solid fa-users"></i> {{ __('public.layout.group_chat') }}</button>
           </div>
           <div class="chat-group-shell" id="chat-group-shell" hidden>
-            <div class="chat-group-create-bar">
+            <div class="chat-group-create-bar" id="chat-group-create-bar">
               <button type="button" class="chat-panel-btn chat-group-create-btn" id="chat-group-create-btn"><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
             </div>
             <div class="chat-group-meta" id="chat-group-meta" hidden>
               <div class="chat-group-meta-labels">
                 <div class="chat-group-meta-top">
+                  <button type="button" class="chat-panel-btn chat-group-back-btn" id="chat-group-back-btn" title="Orqaga"><i class="fa-solid fa-arrow-left"></i></button>
                   <strong id="chat-current-group-name" class="chat-group-meta-name"></strong>
                   <span id="chat-group-privacy-badge" class="chat-group-privacy-dot"></span>
                 </div>
@@ -665,7 +666,8 @@
                 <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-join-btn" hidden>{{ __('public.layout.join_group') }}</button>
                 <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-leave-btn" hidden>{{ __('public.layout.group_leave') }}</button>
                 <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-requests-btn" hidden><i class="fa-solid fa-user-plus"></i> <span id="chat-group-pending-count">0</span></button>
-                <button type="button" class="chat-panel-btn chat-group-settings-btn" id="chat-group-settings-btn" hidden><i class="fa-solid fa-gear"></i></button>
+                <button type="button" class="chat-panel-btn chat-group-members-btn" id="chat-group-members-btn" hidden title="A'zolar"><i class="fa-solid fa-users"></i></button>
+                <button type="button" class="chat-panel-btn chat-group-settings-btn" id="chat-group-settings-btn" hidden title="Sozlamalar"><i class="fa-solid fa-gear"></i></button>
               </div>
             </div>
             <div class="chat-group-list" id="chat-group-list"></div>
@@ -837,7 +839,7 @@
     @endauth
 
 <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
-	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}"></script>
+	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=9"></script>
       <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
 	    <script>
       (function() {

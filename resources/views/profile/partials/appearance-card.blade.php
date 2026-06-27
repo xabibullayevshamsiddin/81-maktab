@@ -50,7 +50,7 @@
   text-align: center;
   cursor: pointer;
   background: var(--surface);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, opacity 0.2s;
 }
 .ap-theme-card:hover:not(.ap-theme-card--locked) {
   transform: translateY(-1px);
@@ -70,10 +70,38 @@
   border-radius: 999px;
 }
 
-/* Faol tema */
-.ap-theme-card--active {
+/* Tanlangan tema — check belgisi (o'ng tepada) */
+.ap-theme-card .atc-check {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--atc-color);
+  color: #fff;
+  display: none; /* faqat tanlanganda ko'rinadi */
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--atc-color) 40%, transparent);
+  z-index: 2;
+}
+
+/* Faol tema (server-side) yoki :checked holati (CSS :has) */
+.ap-theme-card--active,
+.ap-theme-card:has(input[type="radio"]:checked) {
   border-color: var(--atc-color);
-  box-shadow: 0 0 0 1px var(--atc-color), 0 4px 16px color-mix(in srgb, var(--atc-color) 15%, transparent);
+  box-shadow: 0 0 0 1px var(--atc-color), 0 6px 20px color-mix(in srgb, var(--atc-color) 18%, transparent);
+  opacity: 1;
+}
+.ap-theme-card--active .atc-check,
+.ap-theme-card:has(input[type="radio"]:checked) .atc-check {
+  display: flex;
+}
+/* Status matni tanlanganda */
+.ap-theme-card:has(input[type="radio"]:checked) .atc-status::before {
+  content: "\f00c"; /* fa-check */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
 }
 .ap-theme-card--active .atc-status {
   background: color-mix(in srgb, var(--atc-color) 15%, transparent);
@@ -111,9 +139,10 @@
   letter-spacing: 0.06em;
   padding: 0.1rem 0.35rem;
   border-radius: 0 10px 0 8px;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
   color: #fff;
 }
+.ap-theme-card .atc-badge--admin { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.ap-theme-card .atc-badge--free { background: linear-gradient(135deg, #16a34a, #15803d); }
 
 /* Preview paneli */
 .ap-preview {
@@ -230,7 +259,12 @@
   @method("PUT")
 
   {{-- ====== TEMALAR BO'LIMI (to'liq kenglik) ====== --}}
-  <div class="ap-section-title"><i class="fa-solid fa-palette"></i> Mavjud temalar</div>
+  <div class="ap-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+    <span><i class="fa-solid fa-palette"></i> Mavjud temalar</span>
+    <a href="{{ route('donation.themes') }}" style="font-size:0.65rem; font-weight:700; color:var(--primary); text-decoration:none;">
+      Barchasini ko'rish <i class="fa-solid fa-arrow-right" style="font-size:0.55rem;"></i>
+    </a>
+  </div>
   <div class="ap-theme-grid">
 
     @foreach($allThemes as $key => $t)
@@ -241,11 +275,14 @@
         $active = $currentTheme === $key;
         $allowed = $themeAllowed[$key];
         $isAdminTheme = !empty($t["requires_admin"]);
+        $isPlain = ($t["type"] ?? "") === "plain";
         $cardClass = $active ? "ap-theme-card--active" : ($allowed ? "ap-theme-card--allowed" : "ap-theme-card--locked");
       @endphp
       <label class="ap-theme-card {{ $cardClass }}" style="--atc-color: {{ $rc }};">
         @if($isAdminTheme)
-          <span class="atc-badge">Admin</span>
+          <span class="atc-badge atc-badge--admin">Admin</span>
+        @elseif($isPlain)
+          <span class="atc-badge atc-badge--free">Bepul</span>
         @endif
         <input type="radio" name="donor_theme" value="{{ $key }}"
           {{ $active ? "checked" : "" }}
@@ -269,12 +306,15 @@
   {{-- ====== PREVIEW BO'LIMI ====== --}}
   <div class="ap-section-title"><i class="fa-solid fa-eye"></i> Korinish preview</div>
   <div class="ap-preview" style="--prev-color: {{ $themeColor }};">
-    @if($donorIsActive || $themeAllowed[$currentTheme] ?? false)
+    @php $canPreview = $themeAllowed[$currentTheme] ?? false; @endphp
+    @if($canPreview)
       <div class="ap-preview-row">
         <div class="ap-preview-box">
           <div class="apb-label">Profil</div>
           <div class="apb-name"><i class="{{ $themeIcon }}" style="font-size:0.75rem;"></i> {{ $user->name ?? $user->buildNameFromParts() }}</div>
-          {!! $user->donorBadgeHtml() !!}
+          @if($donorIsActive)
+            {!! $user->donorBadgeHtml() !!}
+          @endif
         </div>
         <div class="ap-chat-msg">
           <div class="ap-chat-av">{{ mb_substr($themeLabel, 0, 1) }}</div>

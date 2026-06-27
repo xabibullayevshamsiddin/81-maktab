@@ -289,23 +289,6 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     });
 });
 
-// Chat Group routes
-Route::middleware(['auth', 'active'])->prefix('chat/groups')->name('chat.groups.')->group(function () {
-    Route::get('/', [App\Http\Controllers\ChatGroupController::class, 'index'])->name('index');
-    Route::post('/', [App\Http\Controllers\ChatGroupController::class, 'store'])->name('store');
-    Route::put('/{group}', [App\Http\Controllers\ChatGroupController::class, 'update'])->name('update');
-    Route::post('/{group}/image', [App\Http\Controllers\ChatGroupController::class, 'updateImage'])->name('updateImage');
-    Route::delete('/{group}/image', [App\Http\Controllers\ChatGroupController::class, 'deleteImage'])->name('deleteImage');
-    Route::delete('/{group}', [App\Http\Controllers\ChatGroupController::class, 'destroy'])->name('destroy');
-    Route::post('/{group}/join', [App\Http\Controllers\ChatGroupController::class, 'join'])->name('join');
-    Route::post('/{group}/leave', [App\Http\Controllers\ChatGroupController::class, 'leave'])->name('leave');
-    Route::get('/{group}/members', [App\Http\Controllers\ChatGroupController::class, 'members'])->name('members');
-    Route::put('/{group}/members/{member}', [App\Http\Controllers\ChatGroupController::class, 'updateMemberRole'])->name('updateMemberRole');
-    Route::delete('/{group}/members/{member}', [App\Http\Controllers\ChatGroupController::class, 'removeMember'])->name('removeMember');
-    Route::get('/{group}/requests', [App\Http\Controllers\ChatGroupController::class, 'requests'])->name('requests');
-    Route::post('/{group}/requests/{joinRequest}/accept', [App\Http\Controllers\ChatGroupController::class, 'accept'])->name('accept');
-    Route::post('/{group}/requests/{joinRequest}/reject', [App\Http\Controllers\ChatGroupController::class, 'reject'])->name('reject');
-});
 
 Route::post('ai-chat', [App\Http\Controllers\SiteAiController::class, 'generate'])->middleware(['auth', 'throttle:30,1', 'active'])->name('ai.chat');
 

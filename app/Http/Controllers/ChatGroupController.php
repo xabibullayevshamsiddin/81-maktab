@@ -73,6 +73,10 @@ class ChatGroupController extends Controller
                     'member_count' => $memberCount,
                 ];
             })
+            ->filter(function (array $group) {
+                // Only include groups the user can view in the list
+                return $group['can_view'];
+            })
             ->values()
             ->all();
 
@@ -83,8 +87,22 @@ class ChatGroupController extends Controller
     {
         $user = $request->user();
 
-        if (ChatGroup::query()->where('owner_id', $user->id)->exists()) {
-            return response()->json(['ok' => false, 'error' => 'Siz allaqachon bitta gruppa yaratgansiz. Har bir foydalanuvchi faqat 1 ta gruppa ocha oladi.'], 422);
+        // Roli asosida guruh yaratish limiti
+        if ($user->isSuperAdmin() || $user->isAdmin()) {
+            $maxGroups = 5; // Super admin va admin uchun 5 ta
+        } elseif ($user->isDonor() && in_array($user->donation_rank, ['premium', 'vip'], true)) {
+            $maxGroups = 2;
+        } else {
+            $maxGroups = 1; // Oddiy foydalanuvchi
+        }
+
+        $ownedCount = ChatGroup::query()->where('owner_id', $user->id)->count();
+
+        if ($ownedCount >= $maxGroups) {
+            $msg = $maxGroups === 1
+                ? 'Siz allaqachon bitta guruh yaratgansiz. Oddiy foydalanuvchilar faqat 1 ta guruh ochishi mumkin.'
+                : "Siz allaqachon {$ownedCount} ta guruh yaratgansiz. Sizning limitingiz: {$maxGroups} ta.";
+            return response()->json(['ok' => false, 'error' => $msg], 422);
         }
 
         $data = $request->validate([
@@ -461,6 +479,12 @@ class ChatGroupController extends Controller
             return true;
         }
 
+        // Open groups are visible to all logged-in users
+        if ($group->privacy === ChatGroup::PRIVACY_OPEN) {
+            return true;
+        }
+
+        // Closed groups are only visible to members
         return ChatGroupMember::query()
             ->where('chat_group_id', $group->id)
             ->where('user_id', $user->id)

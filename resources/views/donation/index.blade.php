@@ -97,6 +97,7 @@
         ["check" => true, "text" => "Profil yonida Supporter badge"],
         ["check" => false, "text" => "Maxsus profil dizayni"],
         ["check" => false, "text" => "Top donorlar royhati"],
+        ["check" => false, "text" => "Guruh chat: 1 ta guruh (oddiy)"],
     ];
     $premiumFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (binafsha)"],
@@ -105,6 +106,7 @@
         ["check" => true, "text" => "Premium badge"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => "Top donorlar royhati"],
+        ["check" => true, "icon" => "fa-solid fa-users", "text" => "Guruh chat: 2 ta guruh yaratish 🔑"],
     ];
     $vipFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (oltin)"],
@@ -114,12 +116,18 @@
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => "Top donorlar royhati"],
         ["check" => true, "text" => "Prioritet support"],
+        ["check" => true, "icon" => "fa-solid fa-users", "text" => "Guruh chat: 2 ta guruh yaratish 👑"],
     ];
 @endphp
 
 <div class="donation-hero">
     <h1>81-IDUM ni qollab-quvvatlang</h1>
     <p>Sizning donatlaringiz maktab saytini yanada yaxshilash va server xarajatlarini qoplash uchun ishlatiladi.</p>
+    <div style="margin-top: 1.25rem;">
+        <a href="{{ route('donation.themes') }}" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1.2rem; background:rgba(255,255,255,0.15); color:#fff; border-radius:999px; font-weight:700; font-size:0.9rem; text-decoration:none; backdrop-filter:blur(6px); transition:background 0.2s;">
+            <i class="fa-solid fa-palette"></i> Temalar galereyasini ko'rish
+        </a>
+    </div>
 </div>
 
 <div class="container" style="max-width: 1100px; padding: 0 1rem 3rem;">
