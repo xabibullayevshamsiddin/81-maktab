@@ -11,11 +11,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-# Dependency install (dev tools yo'q)
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+# MUHIM: composer install dan oldin .env yaratish kerak, chunki
+# post-autoload-dump scripti artisan package:discover ni chaqiradi
+# va u .env faylisiz ishlamaydi.
+# --no-scripts bilan composer install qilamiz, keyin scriptlarni o'zimiz ishga tushiramiz.
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# Build vaqtida minimal .env bilan key yaratamiz
-RUN echo "APP_KEY=" > .env && php artisan key:generate
+# Build vaqtida minimal .env yaratamiz va artisan scriptlarini ishga tushiramiz
+RUN echo "APP_KEY=base64:dummykeyforbuildonly=" > .env \
+    && php artisan package:discover --ansi \
+    && php artisan vendor:publish --tag=laravel-assets --ansi --force || true
+
+# Asl APP_KEY ni Render runtime da env orqali beradi (render.yaml dagi generateValue)
+# Build env faylini o'chiramiz
+RUN rm .env
 
 EXPOSE 8080
 

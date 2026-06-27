@@ -86,14 +86,16 @@
   z-index: 2;
 }
 
-/* Faol tema (server-side) yoki :checked holati (CSS :has) */
+/* Faol tema (server-side), :checked holati (CSS :has) yoki JS --selected klassi */
 .ap-theme-card--active,
+.ap-theme-card--selected,
 .ap-theme-card:has(input[type="radio"]:checked) {
   border-color: var(--atc-color);
   box-shadow: 0 0 0 1px var(--atc-color), 0 6px 20px color-mix(in srgb, var(--atc-color) 18%, transparent);
   opacity: 1;
 }
 .ap-theme-card--active .atc-check,
+.ap-theme-card--selected .atc-check,
 .ap-theme-card:has(input[type="radio"]:checked) .atc-check {
   display: flex;
 }
@@ -284,12 +286,13 @@
         @elseif($isPlain)
           <span class="atc-badge atc-badge--free">Bepul</span>
         @endif
+        <span class="atc-check"><i class="fa-solid fa-check"></i></span>
         <input type="radio" name="donor_theme" value="{{ $key }}"
           {{ $active ? "checked" : "" }}
           {{ !$allowed ? "disabled" : "" }}>
         <div class="atc-icon" style="color:{{ $rc }};"><i class="{{ $ri }}"></i></div>
         <div class="atc-name" style="color:{{ $rc }};">{{ $rl }}</div>
-        <div class="atc-status">
+        <div class="atc-status" data-status-allow="{{ $allowed ? '1' : '0' }}">
           @if($active)
             <i class="fa-solid fa-check"></i> Aktiv
           @elseif($allowed)
@@ -376,3 +379,43 @@
 
   <button type="submit" class="ap-btn-save"><i class="fa-solid fa-check"></i> Saqlash</button>
 </form>
+
+<script>
+// Tema kartasini bosganda vizual tanlanganlik (eski brauzerlar uchun ham)
+(function () {
+  var grid = document.querySelector('.ap-theme-grid');
+  if (!grid) return;
+
+  var cards = grid.querySelectorAll('.ap-theme-card');
+
+  function markSelected() {
+    cards.forEach(function (card) {
+      var radio = card.querySelector('input[type="radio"]');
+      var status = card.querySelector('.atc-status');
+      var allow = status && status.getAttribute('data-status-allow') === '1';
+      if (radio && radio.checked) {
+        card.classList.add('ap-theme-card--selected');
+        if (status && allow) status.innerHTML = '<i class="fa-solid fa-check"></i> Aktiv';
+      } else {
+        card.classList.remove('ap-theme-card--selected');
+        if (status && allow && !card.classList.contains('ap-theme-card--active')) {
+          status.innerHTML = '<i class="fa-solid fa-circle"></i> Tanlash';
+        }
+      }
+    });
+  }
+
+  cards.forEach(function (card) {
+    card.addEventListener('change', markSelected);
+    card.addEventListener('click', function () {
+      var radio = card.querySelector('input[type="radio"]');
+      if (radio && !radio.disabled) {
+        radio.checked = true;
+        markSelected();
+      }
+    });
+  });
+
+  markSelected();
+})();
+</script>

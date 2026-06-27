@@ -41,12 +41,14 @@ trait HasDonationRank
 
     public function donorBadgeHtml(bool $locked = false): string
     {
-        $config = Donation::configForRank($this->donation_rank);
+        // Badge ko'rinishi (rang, ikonka, yozuv) profile_theme'dan olinadi —
+        // donor ranki emas. Admin Gold tema tanlangan bo'lsa, badge ham Gold bo'ladi.
+        $theme = $this->profile_theme ?? $this->donation_rank;
+        $config = Donation::themeConfig($theme) ?? Donation::configForRank($this->donation_rank);
         if (!$config) {
             return "";
         }
 
-        $rank = $this->donation_rank;
         $label = $config["label"];
         $icon = $config["badge_icon"];
 
@@ -54,18 +56,24 @@ trait HasDonationRank
         $badgeStyle = $this->badge_style ?? "default";
         $styleClass = "donor-badge--" . $badgeStyle;
 
-        // Qulf holati (donor emas yoki majburan qulflangan)
-        if ($locked || !$this->isDonor()) {
+        // Joriy tema foydalanuvchiga ruxsat etilganmi?
+        // Bu isDonor() dan kengroq — super admin (donor emas) admin temalari uchun ham true.
+        $themeAllowed = Donation::themeAllowedForUser($theme, $this);
+
+        // Qulf holati (majburan qulflangan yoki hech qanday huquq yo'q)
+        if ($locked || !$themeAllowed) {
             $title = e("Sotib olish uchun Donat boling!");
             return "<span class=\"donor-badge donor-badge--locked {$styleClass}\" title=\"{$title}\">"
                 . "<i class=\"fa-solid fa-lock\"></i>"
                 . ($badgeStyle !== "icon" ? " {$label}</span>" : "</span>");
         }
 
-        // Qolgan kun (show_expiry_badge sozlamasi 0 bo'lsa, ko'rsatilmaydi)
+        // Qolgan kun (show_expiry_badge sozlamasi 0 bo'lsa, ko'rsatilmaydi).
+        // Faqat donor temalari uchun kun ko'rsatiladi (admin temalari muddatsiz).
+        $themeType = $config["type"] ?? "donor";
         $showExpiry = ($this->show_expiry_badge ?? "1") === "1";
         $daysLeft = 0;
-        if ($showExpiry && $this->donation_rank_expires_at) {
+        if ($showExpiry && $themeType === "donor" && $this->donation_rank_expires_at) {
             $diff = (int) $this->donation_rank_expires_at->diffInDays(now(), false);
             $daysLeft = $diff > 0 ? $diff : 0;
         }
@@ -77,7 +85,10 @@ trait HasDonationRank
             ? " <span class=\"donor-badge-days\">{$daysLeft}k</span>"
             : "";
 
-        return "<span class=\"donor-badge donor-badge--{$rank} {$styleClass}\"{$expiryTitle}>"
+        // Badge klassi tema kalitidan (admin-gold, premium, plain, va h.k.)
+        $badgeKey = $theme ?? $this->donation_rank;
+
+        return "<span class=\"donor-badge donor-badge--{$badgeKey} {$styleClass}\"{$expiryTitle}>"
             . "<i class=\"{$icon}\"></i>"
             . ($badgeStyle !== "icon" ? " {$label}" : "")
             . $expirySuffix
@@ -89,6 +100,13 @@ trait HasDonationRank
         if (!$this->isDonor()) {
             return null;
         }
+        // Izoh rangi ham profile_theme asosida — Gold tema uchun Gold rangi.
+        $theme = $this->profile_theme ?? $this->donation_rank;
+        $cfg = Donation::themeConfig($theme);
+        if ($cfg) {
+            return $cfg["badge_color"] ?? null;
+        }
+        // Donor temalari uchun comment_color (yumshoqroq rang)
         return Donation::configForRank($this->donation_rank)["comment_color"] ?? null;
     }
 
@@ -130,9 +148,11 @@ trait HasDonationRank
         if (!$this->isDonor()) {
             return null;
         }
-        // Doim to'yingan badge rangini ishlatamiz — ism matni och fonda ham,
-        // qorong'i fonda ham yaxshi ko'rinishi uchun (kontrast muhim).
-        return Donation::configForRank($this->donation_rank)["badge_color"] ?? null;
+        // Ism rangi profile_theme'dan olinadi — Gold tema tanlangan bo'lsa,
+        // ism ham Gold (sariq) rangida bo'ladi, Premium emas.
+        $theme = $this->profile_theme ?? $this->donation_rank;
+        $cfg = Donation::themeConfig($theme) ?? Donation::configForRank($this->donation_rank);
+        return $cfg["badge_color"] ?? null;
     }
 
     public function donorThemeClass(): string
