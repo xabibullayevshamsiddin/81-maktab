@@ -1,66 +1,112 @@
-<x-loyouts.main title="419 | Sessiya vaqti tugadi">
-  <section class="error-page">
-    <div class="container">
-      <div class="error-shell reveal">
-        <div class="error-card error-card--missing">
-          <div class="error-head">
-            <span class="error-badge">
-              <i class="fa-solid fa-hourglass-end"></i>
-              Sahifa muddati tugadi
-            </span>
-            <h1 class="error-code">419</h1>
-          </div>
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ __('public.errors.419_page_title') }} | {{ config('app.name') }}</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 
-          <div class="error-main">
-            <span class="error-icon">
-              <i class="fa-solid fa-rotate"></i>
-            </span>
+    <style>
+        :root {
+            --secondary: #10b981;
+            --secondary-glow: rgba(16, 185, 129, 0.4);
+            --bg-dark: #0f172a;
+        }
 
-            <div class="error-copy">
-              <h2 class="error-title">Sessiya vaqti tugadi</h2>
-              <p class="error-text">
-                Xavfsizlik maqsadida, uzoq vaqt davomida amal bajarilmagani uchun ma'lumotlaringiz vaqtincha muzlatildi (CSRF Error).
-              </p>
-              <p class="error-help">
-                Hech qisi yo'q, shunchaki quyidagi "Sahifani yangilash" tugmasini bosib, harakatingizni qayta takrorlasangiz kifoya.
-              </p>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-              <div class="error-actions">
-                <button
-                  type="button"
-                  class="btn"
-                  onclick="window.location.reload();"
-                >
-                  <i class="fa-solid fa-rotate-right"></i>
-                  Sahifani yangilash
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline error-back-btn"
-                  onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ route('home') }}'; }"
-                >
-                  <i class="fa-solid fa-arrow-left"></i>
-                  Orqaga qaytish
-                </button>
-              </div>
-            </div>
-          </div>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-          <div class="error-links">
-            <a href="javascript:window.location.reload();" class="error-link-card">
-              <span class="error-link-icon"><i class="fa-solid fa-rotate-right"></i></span>
-              <strong>Yangilash</strong>
-              <span>Sahifani tarrilab formani birboshdan jo'natsangiz hammasi soz bo'ladi.</span>
-            </a>
+        .expired-container {
+            text-align: center;
+            padding: 50px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 40px;
+            max-width: 600px;
+            width: 90%;
+            animation: fadeIn 0.6s ease-out;
+        }
 
-            <a href="{{ route('home') }}" class="error-link-card">
-              <span class="error-link-icon"><i class="fa-solid fa-house"></i></span>
-              <strong>Bosh sahifa</strong>
-              <span>Va mēng yo'nalish bo'yicha saytning asosiy betiga o'tib olaman.</span>
-            </a>
-          </div>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .error-code {
+            font-size: 100px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            text-shadow: 0 0 20px var(--secondary-glow);
+        }
+
+        .clock-icon {
+            font-size: 70px;
+            color: var(--secondary);
+            margin-bottom: 25px;
+            animation: tick 2s infinite steps(2);
+        }
+
+        @keyframes tick {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(15deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        h1 { font-size: 28px; margin-bottom: 15px; }
+        p { color: #94a3b8; margin-bottom: 35px; line-height: 1.6; }
+
+        .btn-bomba {
+            padding: 16px 35px;
+            background: var(--secondary);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px var(--secondary-glow);
+        }
+
+        .btn-bomba:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px var(--secondary-glow);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="expired-container">
+        <div class="clock-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 22h14"></path>
+                <path d="M5 2h14"></path>
+                <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path>
+                <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
+            </svg>
         </div>
-      </div>
+        <div class="error-code">419</div>
+        <h1>{{ __('public.errors.419_title') }}</h1>
+        <p>{{ __('public.errors.419_text') }}</p>
+        
+        <a href="javascript:location.reload()" class="btn-bomba">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            {{ __('public.errors.419_reload') }}
+        </a>
     </div>
-  </section>
-</x-loyouts.main>
+</body>
+</html>

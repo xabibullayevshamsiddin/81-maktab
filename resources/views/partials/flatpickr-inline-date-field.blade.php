@@ -33,19 +33,19 @@
 
 @pushOnce('page_styles', 'flatpickr-inline-date-lib')
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ app_public_asset('temp/css/flatpickr-inline-date.css') }}?v={{ filemtime(public_path('temp/css/flatpickr-inline-date.css')) }}">
+  <link rel="stylesheet" href="{{ app_public_asset('temp/css/flatpickr-inline-date.css') }}?v={{ app_asset_version('temp/css/flatpickr-inline-date.css') }}">
 @endpushOnce
 @pushOnce('admin_styles', 'flatpickr-inline-date-lib-admin')
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ app_public_asset('temp/css/flatpickr-inline-date.css') }}?v={{ filemtime(public_path('temp/css/flatpickr-inline-date.css')) }}">
+  <link rel="stylesheet" href="{{ app_public_asset('temp/css/flatpickr-inline-date.css') }}?v={{ app_asset_version('temp/css/flatpickr-inline-date.css') }}">
 @endpushOnce
 @pushOnce('page_scripts', 'flatpickr-inline-date-lib-js')
   <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" crossorigin="anonymous"></script>
-  <script src="{{ app_public_asset('temp/js/flatpickr-inline-date.js') }}?v={{ filemtime(public_path('temp/js/flatpickr-inline-date.js')) }}"></script>
+  <script src="{{ app_public_asset('temp/js/flatpickr-inline-date.js') }}?v={{ app_asset_version('temp/js/flatpickr-inline-date.js') }}"></script>
 @endpushOnce
 @pushOnce('admin_page_scripts', 'flatpickr-inline-date-lib-js-admin')
   <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" crossorigin="anonymous"></script>
-  <script src="{{ app_public_asset('temp/js/flatpickr-inline-date.js') }}?v={{ filemtime(public_path('temp/js/flatpickr-inline-date.js')) }}"></script>
+  <script src="{{ app_public_asset('temp/js/flatpickr-inline-date.js') }}?v={{ app_asset_version('temp/js/flatpickr-inline-date.js') }}"></script>
 @endpushOnce
 
 @if(isset($label) && $label !== '')

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\TeacherCommentLike;
@@ -78,6 +79,7 @@ class PublicTeacherController extends Controller
             ->values();
 
         $likedTeacherIds = collect();
+        $bookmarkedTeacherIds = collect();
         if (auth()->check()) {
             $ids = $teachers->getCollection()->pluck('id');
             if ($ids->isNotEmpty()) {
@@ -85,12 +87,15 @@ class PublicTeacherController extends Controller
                     ->where('user_id', auth()->id())
                     ->whereIn('teacher_id', $ids)
                     ->pluck('teacher_id');
+                $bookmarkedTeacherIds = Bookmark::bookmarkedIdsForUser(auth()->user(), Teacher::class, $ids);
             }
         }
 
         $teacherStats = $this->teacherPageStats();
 
-        return view('teacher', compact('teachers', 'likedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'));
+        return response()
+            ->view('teacher', compact('teachers', 'likedTeacherIds', 'bookmarkedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'))
+            ->withHeaders($this->publicCounterHeaders());
     }
 
     /**
@@ -172,6 +177,7 @@ class PublicTeacherController extends Controller
         $relatedTeachers = $this->relatedTeachersFor($teacher, 3);
 
         $likedTeacherIds = collect();
+        $bookmarkedTeacherIds = collect();
         if (auth()->check()) {
             $teacherIds = collect([$teacher->id])->merge($relatedTeachers->pluck('id'));
             if ($teacherIds->isNotEmpty()) {
@@ -179,17 +185,38 @@ class PublicTeacherController extends Controller
                     ->where('user_id', auth()->id())
                     ->whereIn('teacher_id', $teacherIds)
                     ->pluck('teacher_id');
+                $bookmarkedTeacherIds = Bookmark::bookmarkedIdsForUser(auth()->user(), Teacher::class, $teacherIds);
             }
         }
 
-        return view('teacherShow', compact(
+        return response()->view('teacherShow', compact(
             'teacher',
             'comments',
             'liked',
             'likedCommentIds',
             'relatedTeachers',
-            'likedTeacherIds'
-        ));
+            'likedTeacherIds',
+            'bookmarkedTeacherIds'
+        ))->withHeaders($this->publicCounterHeaders());
+    }
+
+    public function stats(Teacher $teacher)
+    {
+        abort_unless($teacher->is_active, 404);
+
+        $teacher->loadCount('likes');
+
+        $commentsCount = TeacherComment::query()
+            ->where('teacher_id', $teacher->id)
+            ->where('is_approved', true)
+            ->whereNull('parent_id')
+            ->count();
+
+        return response()->json([
+            'ok' => true,
+            'likes_count' => (int) $teacher->likes_count,
+            'comments_count' => $commentsCount,
+        ])->withHeaders($this->publicCounterHeaders());
     }
 
     private function relatedTeachersFor(Teacher $teacher, int $limit = 3): Collection
@@ -309,5 +336,20 @@ class PublicTeacherController extends Controller
         }
 
         return $ids;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function publicCounterHeaders(): array
+    {
+        return [
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0, s-maxage=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'CDN-Cache-Control' => 'no-store',
+            'Cloudflare-CDN-Cache-Control' => 'no-store',
+            'Vary' => 'Cookie, Authorization, Accept, X-Requested-With',
+        ];
     }
 }

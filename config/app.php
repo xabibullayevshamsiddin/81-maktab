@@ -29,7 +29,7 @@ return [
     |
     */
 
-    'env' => env('APP_ENV', 'production'),
+    'env' => env('APP_ENV', 'production'), // XAVFSIZLIK: Hostda APP_ENV=production qiling!
 
     /*
     |--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => (bool) env('APP_DEBUG', false), // XAVFSIZLIK: Hostda APP_DEBUG=false qiling!
 
     /*
     |--------------------------------------------------------------------------
@@ -58,6 +58,18 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     'asset_url' => env('ASSET_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Static Asset Version (cache busting)
+    |--------------------------------------------------------------------------
+    |
+    | Production'da deploy vaqtida APP_ASSET_VERSION ni yangilang.
+    | Local muhitda bo'sh qoldirilsa, fayl o'zgarish vaqti (filemtime) ishlatiladi.
+    |
+    */
+
+    'asset_version' => env('APP_ASSET_VERSION'),
 
     /*
     |--------------------------------------------------------------------------

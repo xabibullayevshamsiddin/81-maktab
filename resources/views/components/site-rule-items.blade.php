@@ -78,7 +78,7 @@
     data-dialog="rules-all-{{ $area }}"
     data-area="{{ $area }}"
   >
-    <i class="fa-solid fa-sparkles"></i>
+    <i class="fa-solid fa-star"></i>
     <span>{{ $config['button'] }}</span>
   </button>
   <dialog

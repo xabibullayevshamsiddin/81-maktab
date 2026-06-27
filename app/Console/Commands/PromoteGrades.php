@@ -2,73 +2,57 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Role;
-use App\Models\User;
+use App\Services\SchoolClassLifecycleService;
 use Illuminate\Console\Command;
+use LogicException;
 
 class PromoteGrades extends Command
 {
-    protected $signature = 'grades:promote {--dry-run : Hech narsani o\'zgartirmaydi, faqat ko\'rsatadi}';
+    protected $signature = 'grades:promote
+        {--from-year= : Joriy o\'quv yilining boshlanish yili}
+        {--to-year= : Keyingi o\'quv yilining boshlanish yili}
+        {--dry-run : Hech narsani o\'zgartirmaydi, faqat ko\'rsatadi}
+        {--force : Shu o\'quv yili promotionini qayta ishga tushirishga ruxsat beradi}';
 
-    protected $description = 'Barcha o\'quvchilarning sinfini 1 ga ko\'taradi. 11-sinf -> ota-ona.';
+    protected $description = 'O\'quvchilarni keyingi sinfga o\'tkazadi, 11-sinflarni ota-ona rejimiga chiqaradi.';
+
+    public function __construct(
+        private readonly SchoolClassLifecycleService $schoolClassLifecycleService,
+    ) {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
-        $dryRun = $this->option('dry-run');
+        $dryRun = (bool) $this->option('dry-run');
+        $force = (bool) $this->option('force');
+        $fromYear = (int) ($this->option('from-year') ?: now()->year);
+        $toYear = (int) ($this->option('to-year') ?: ($fromYear + 1));
 
         if ($dryRun) {
             $this->info('[DRY RUN] Hech narsa o\'zgartirilmaydi.');
         }
 
-        $userRoleId = Role::defaultUserRoleId();
+        try {
+            $summary = $this->schoolClassLifecycleService->promoteAcademicYear(
+                fromYear: $fromYear,
+                toYear: $toYear,
+                dryRun: $dryRun,
+                force: $force,
+            );
+        } catch (LogicException $exception) {
+            $this->error($exception->getMessage());
 
-        $students = User::query()
-            ->where('role_id', $userRoleId)
-            ->where('is_parent', false)
-            ->whereNotNull('grade')
-            ->where('grade', '!=', '')
-            ->get();
-
-        $promoted = 0;
-        $graduated = 0;
-        $skipped = 0;
-
-        foreach ($students as $student) {
-            $grade = trim((string) $student->grade);
-
-            if (! preg_match('/^(\d{1,2})-([A-Z0-9]+)$/i', $grade, $m)) {
-                $this->warn("Noto'g'ri format: #{$student->id} {$student->name} — \"{$grade}\" (o'tkazib yuborildi)");
-                $skipped++;
-                continue;
-            }
-
-            $num = (int) $m[1];
-            $section = strtoupper($m[2]);
-
-            // YT ni olib tashlash (har ehtimolga qarshi)
-            $section = str_replace('YT', '', $section);
-
-            if ($num >= 11) {
-                if (! $dryRun) {
-                    $student->update([
-                        'grade' => null,
-                        'is_parent' => true,
-                    ]);
-                }
-                $this->line("  Bitiruvchi: #{$student->id} {$student->name} ({$grade} -> ota-ona)");
-                $graduated++;
-            } else {
-                $newGrade = ($num + 1) . '-' . $section;
-                if (! $dryRun) {
-                    $student->update(['grade' => $newGrade]);
-                }
-                $this->line("  Ko'tarildi: #{$student->id} {$student->name} ({$grade} -> {$newGrade})");
-                $promoted++;
-            }
+            return self::FAILURE;
         }
 
         $this->newLine();
-        $this->info("Jami: {$students->count()} o'quvchi. Ko'tarildi: {$promoted}, Bitiruvchi: {$graduated}, O'tkazib yuborildi: {$skipped}.");
+        $this->info("{$fromYear}-{$toYear} o'quv yili promotion natijasi:");
+        $this->line("Jami ko'rilgan foydalanuvchilar: {$summary['total']}");
+        $this->line("Ko'tarildi: {$summary['promoted']}");
+        $this->line("Bitiruvchi -> ota-ona: {$summary['graduated']}");
+        $this->line("Majburiy sinf tanlashga yuborildi: {$summary['selection_required']}");
+        $this->line("O'tkazib yuborildi: {$summary['skipped']}");
 
         if ($dryRun) {
             $this->warn('Bu DRY RUN edi — hech narsa saqlanmadi.');

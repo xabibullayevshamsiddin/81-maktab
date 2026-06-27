@@ -15,6 +15,7 @@ use App\Models\Teacher;
 use App\Models\TeacherComment;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -87,7 +88,7 @@ class AdminController extends Controller
         $selectedStatus = (string) $request->query('status', '');
         $selectedRoleId = (int) $request->query('role_id', 0);
 
-        if (! in_array($selectedGrade, school_grade_options(), true)) {
+        if (! in_array($selectedGrade, school_student_grade_options(), true)) {
             $selectedGrade = '';
         }
 
@@ -101,11 +102,6 @@ class AdminController extends Controller
 
         $query = User::with('roleRelation')
             ->withCount('createdCourses')
-            ->withCount([
-                'teacherProfile as active_teacher_profile_count' => function ($builder): void {
-                    $builder->where('is_active', true);
-                },
-            ])
             ->latest();
 
         if ($q !== '') {
@@ -166,7 +162,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'role_id' => ['sometimes', 'required', 'integer', 'exists:roles,id'],
             'is_active' => ['sometimes', 'required', 'boolean'],
-            'grade' => ['sometimes', 'nullable', 'string', 'max:10', \Illuminate\Validation\Rule::in(school_grade_options())],
+            'grade' => ['sometimes', 'nullable', 'string', 'max:10', \Illuminate\Validation\Rule::in(school_student_grade_options())],
         ], [
             'grade.in' => school_grade_validation_message(),
         ]);
@@ -245,11 +241,13 @@ class AdminController extends Controller
                 ->with('toast_type', 'warning');
         }
 
-        $user->update([
-            'course_open_approved' => true,
-            'course_open_request_pending' => false,
-            'course_open_approved_at' => now(),
-        ]);
+        DB::transaction(function () use ($user): void {
+            $user->update([
+                'course_open_approved' => true,
+                'course_open_request_pending' => false,
+                'course_open_approved_at' => now(),
+            ]);
+        });
 
         return redirect()
             ->route('admin.courses.requests')
@@ -270,11 +268,13 @@ class AdminController extends Controller
                 ->with('toast_type', 'warning');
         }
 
-        $user->update([
-            'course_open_approved' => false,
-            'course_open_request_pending' => false,
-            'course_open_approved_at' => null,
-        ]);
+        DB::transaction(function () use ($user): void {
+            $user->update([
+                'course_open_approved' => false,
+                'course_open_request_pending' => false,
+                'course_open_approved_at' => null,
+            ]);
+        });
 
         return redirect()
             ->route('admin.courses.requests')

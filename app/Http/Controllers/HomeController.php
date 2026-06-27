@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ValidatesTurnstile;
+use App\Models\Bookmark;
 use App\Models\ContactMessage;
+use App\Models\Course;
+use App\Models\Exam;
 use App\Models\Post;
+use App\Models\PostLike;
 use App\Models\Teacher;
 use App\Models\TeacherComment;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Course;
-use App\Models\Exam;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -20,29 +23,27 @@ class HomeController extends Controller
 
     public function home()
     {
-        $posts = Cache::remember(cache_key_home_posts(), now()->addMinutes(5), function () {
-            return Post::query()
-                ->select([
-                    'id',
-                    'category_id',
-                    'title',
-                    'title_en',
-                    'short_content',
-                    'short_content_en',
-                    'image',
-                    'slug',
-                    'views',
-                    'post_kind',
-                    'video_path',
-                    'video_url',
-                    'created_at',
-                ])
-                ->with(['category:id,name,name_en'])
-                ->withCount(['comments'])
-                ->latest()
-                ->take(3)
-                ->get();
-        });
+        $posts = Post::query()
+            ->select([
+                'id',
+                'category_id',
+                'title',
+                'title_en',
+                'short_content',
+                'short_content_en',
+                'image',
+                'slug',
+                'views',
+                'post_kind',
+                'video_path',
+                'video_url',
+                'created_at',
+            ])
+            ->with(['category:id,name,name_en'])
+            ->withCount(['comments', 'likes'])
+            ->latest()
+            ->take(3)
+            ->get();
 
         $featuredTeacherId = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
             return Teacher::query()
@@ -102,16 +103,31 @@ class HomeController extends Controller
 
         $postKindLabels = config('post_kinds', []);
 
+        $bookmarkedPostIds = Bookmark::bookmarkedPostIdsForUser(auth()->user(), $posts->pluck('id'));
+
+        $likedPostIds = collect();
+        if (auth()->check() && auth()->user()->isActive()) {
+            $ids = $posts->pluck('id')->filter();
+            if ($ids->isNotEmpty()) {
+                $likedPostIds = PostLike::query()
+                    ->where('user_id', auth()->id())
+                    ->whereIn('post_id', $ids)
+                    ->pluck('post_id');
+            }
+        }
+
         SEOMeta::setTitle('Bosh sahifa');
         SEOMeta::setDescription('81-IDUM maktab sayti — yangiliklar, o\'qituvchilar, kurslar va imtihonlar.');
         OpenGraph::setUrl(route('home'));
 
-        return view('home', compact('posts', 'featuredTeacher', 'postKindLabels'));
+        return response()
+            ->view('home', compact('posts', 'featuredTeacher', 'postKindLabels', 'bookmarkedPostIds', 'likedPostIds'))
+            ->withHeaders($this->publicCounterHeaders());
     }
 
     public function about()
     {
-        return view('about');
+        return response()->view('about')->withHeaders($this->publicCounterHeaders());
     }
 
     public function courses()
@@ -147,6 +163,16 @@ class HomeController extends Controller
         $conversation = null;
 
         return view('contact', compact('conversation'));
+    }
+
+    public function privacyPolicy()
+    {
+        return response()->view('privacy-policy')->withHeaders($this->publicCounterHeaders());
+    }
+
+    public function terms()
+    {
+        return response()->view('terms')->withHeaders($this->publicCounterHeaders());
     }
 
     public function storeContact(Request $request)
@@ -216,7 +242,8 @@ class HomeController extends Controller
             return view('search-results', ['q' => $q, 'results' => []]);
         }
 
-        $results = $this->collectGlobalSearchResults($q);
+        $cacheKey = 'public_global_search:'.app()->getLocale().':'.sha1($q);
+        $results = Cache::remember($cacheKey, now()->addMinutes(2), fn () => $this->collectGlobalSearchResults($q));
 
         if ($request->expectsJson()) {
             return response()->json(['results' => $results]);
@@ -228,16 +255,25 @@ class HomeController extends Controller
     private function collectGlobalSearchResults(string $q): array
     {
         $results = [];
+        $q = trim($q);
+        $searchTerms = $this->buildSearchTerms($q);
+        if ($searchTerms === []) {
+            return [];
+        }
 
         $posts = Post::query()
-            ->where('title', 'like', "%{$q}%")
-            ->orWhere('title_en', 'like', "%{$q}%")
-            ->orWhere('short_content', 'like', "%{$q}%")
-            ->orWhere('content', 'like', "%{$q}%")
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%")
+                        ->orWhere('title_en', 'like', "%{$term}%")
+                        ->orWhere('short_content', 'like', "%{$term}%")
+                        ->orWhere('content', 'like', "%{$term}%");
+                }
+            })
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($posts as $post) {
             $results[] = [
                 'type' => 'post',
@@ -250,15 +286,17 @@ class HomeController extends Controller
 
         $teachers = Teacher::query()
             ->where('is_active', true)
-            ->where(function ($query) use ($q) {
-                $query->where('full_name', 'like', "%{$q}%")
-                    ->orWhere('subject', 'like', "%{$q}%")
-                    ->orWhere('lavozim', 'like', "%{$q}%");
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('full_name', 'like', "%{$term}%")
+                        ->orWhere('subject', 'like', "%{$term}%")
+                        ->orWhere('lavozim', 'like', "%{$term}%");
+                }
             })
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($teachers as $teacher) {
             $results[] = [
                 'type' => 'teacher',
@@ -270,43 +308,194 @@ class HomeController extends Controller
         }
 
         $courses = Course::query()
-            ->where('status', 'active')
-            ->where(function ($query) use ($q) {
-                $query->where('title', 'like', "%{$q}%")
-                    ->orWhere('title_en', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%");
+            ->where('status', Course::STATUS_PUBLISHED)
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%")
+                        ->orWhere('title_en', 'like', "%{$term}%")
+                        ->orWhere('description', 'like', "%{$term}%");
+                }
             })
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($courses as $course) {
             $results[] = [
                 'type' => 'course',
                 'title' => localized_model_value($course, 'title'),
                 'description' => strip_tags(localized_model_value($course, 'description')),
                 'url' => route('courses.show', $course->id),
-                'image' => $course->cover_image ? app_storage_asset($course->cover_image) : null,
+                'image' => $course->image ? app_storage_asset($course->image) : null,
             ];
         }
-        
+
         $exams = Exam::query()
             ->where('is_active', true)
-            ->where('title', 'like', "%{$q}%")
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%");
+                }
+            })
             ->latest()
             ->take(10)
             ->get();
-            
+
         foreach ($exams as $exam) {
             $results[] = [
                 'type' => 'exam',
                 'title' => $exam->title,
-                'description' => strip_tags((string)$exam->description),
+                'description' => strip_tags((string) $exam->description),
                 'url' => route('exam.start.page', $exam->id),
                 'image' => null,
             ];
         }
 
         return array_values($results);
+    }
+
+    private function buildSearchTerms(string $q): array
+    {
+        $q = $this->normalizeGlobalSearchText($q);
+        if ($q === '') {
+            return [];
+        }
+
+        if ($this->isStandaloneGlobalNumericOrDateQuery($q)) {
+            return [];
+        }
+
+        $tokens = preg_split('/\s+/u', $q) ?: [];
+        $tokens = array_values(array_filter(
+            $tokens,
+            fn (string $token): bool => $this->isSearchableGlobalToken($token)
+        ));
+
+        if ($tokens === []) {
+            return [];
+        }
+
+        $terms = [];
+        $phrase = Str::squish(implode(' ', $tokens));
+        if ($phrase !== '') {
+            $terms[] = $phrase;
+        }
+
+        foreach ($tokens as $token) {
+            $terms[] = $token;
+        }
+
+        if (Str::contains($q, 'kusr')) {
+            $terms[] = str_replace('kusr', 'kurs', $q);
+        }
+        if (Str::contains($q, 'kurs')) {
+            $terms[] = str_replace('kurs', 'kusr', $q);
+        }
+
+        return array_values(array_unique(array_filter($terms)));
+    }
+
+    private function normalizeGlobalSearchText(string $text): string
+    {
+        $text = Str::lower(trim($text));
+        $text = str_replace(['`', '‘', '’', 'ʼ', 'ʻ', '´'], "'", $text);
+        $text = str_replace(['o‘', 'o’', 'g‘', 'g’'], ["o'", "o'", "g'", "g'"], $text);
+        $text = preg_replace('/[^\p{L}\p{N}\']+/u', ' ', $text) ?? $text;
+
+        return Str::squish($text);
+    }
+
+    private function isStandaloneGlobalNumericOrDateQuery(string $q): bool
+    {
+        if (preg_match('/^[\d\s.,:;+\-*\/()%]+$/u', $q) === 1) {
+            return true;
+        }
+
+        $monthNames = 'yanvar|fevral|mart|aprel|may|iyun|iyul|avgust|sentabr|sentyabr|oktabr|oktyabr|noyabr|dekabr';
+
+        return preg_match('/^\d{1,2}\s+('.$monthNames.')(?:\s+\d{2,4})?$/u', $q) === 1
+            || preg_match('/^('.$monthNames.')\s+\d{1,2}(?:\s+\d{2,4})?$/u', $q) === 1;
+    }
+
+    private function isSearchableGlobalToken(string $token): bool
+    {
+        $token = trim($token);
+        if ($token === '' || mb_strlen($token) < 3) {
+            return in_array($token, ['it', 'ai', 'js'], true);
+        }
+
+        $stopWords = [
+            'men', 'menga', 'meni', 'sen', 'siz', 'biz', 'ular', 'shu', 'bu', 'ana',
+            'kim', 'nima', 'qanday', 'qanaqa', 'qaysi', 'qayerda', 'qayer', 'qachon',
+            'necha', 'qancha', 'haqida', 'kerak', 'iltimos', 'ayt', 'ayting', 'ber',
+            'bering', 'bor', 'yoq', 'yo\'q', 'ham', 'va', 'yoki', 'bilan', 'uchun',
+            'asosda', 'asosida', 'bo\'yicha', 'boyicha',
+            'davomiyligi', 'davomiligi', 'davomligi', 'muddati', 'muddat',
+            'boshlanishi', 'boshlanish', 'boshlanadi', 'boshlaydi', 'boshlash',
+            'tugashi', 'tugaydi', 'tugash', 'narxi', 'sana', 'sanasi', 'vaqti',
+            'foydasiz', 'dali',
+        ];
+        $fuzzyStopWords = [
+            'asosda', 'asosida', 'boyicha',
+            'davomiyligi', 'davomiligi', 'davomligi',
+            'boshlanishi', 'boshlanish', 'boshlanadi',
+            'muddati', 'muddat', 'narxi', 'sanasi', 'vaqti',
+        ];
+
+        if (in_array($token, $stopWords, true) || $this->isApproximateGlobalStopToken($token, $fuzzyStopWords)) {
+            return false;
+        }
+
+        foreach (['narx', 'davom', 'boshlan', 'muddat', 'sana', 'vaqt', 'asos'] as $metadataPrefix) {
+            if (str_starts_with($token, $metadataPrefix)) {
+                return false;
+            }
+        }
+
+        if (preg_match('/^\d+$/u', $token) === 1) {
+            return false;
+        }
+
+        $plain = str_replace("'", '', $token);
+        if (in_array($plain, ['php', 'css', 'html', 'sql'], true)) {
+            return true;
+        }
+
+        return preg_match('/[aeiouo\'ʻ]/u', $token) === 1;
+    }
+
+    private function isApproximateGlobalStopToken(string $token, array $stopWords): bool
+    {
+        if (mb_strlen($token) < 5) {
+            return false;
+        }
+
+        foreach ($stopWords as $stopWord) {
+            if (abs(mb_strlen($token) - mb_strlen($stopWord)) > 1) {
+                continue;
+            }
+
+            $maxErrors = mb_strlen($stopWord) >= 8 ? 2 : 1;
+            if (levenshtein($token, $stopWord) <= $maxErrors) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function publicCounterHeaders(): array
+    {
+        return [
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0, s-maxage=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'CDN-Cache-Control' => 'no-store',
+            'Cloudflare-CDN-Cache-Control' => 'no-store',
+            'Vary' => 'Cookie, Authorization, Accept, X-Requested-With',
+        ];
     }
 }

@@ -15,6 +15,28 @@ if (! function_exists('gmail_compose_url')) {
     }
 }
 
+if (! function_exists('app_public_base_url')) {
+    function app_public_base_url(): string
+    {
+        if (app()->runningInConsole()) {
+            return '';
+        }
+
+        $baseUrl = request()->getBaseUrl();
+
+        if (str_ends_with($baseUrl, '/index.php')) {
+            $baseUrl = substr($baseUrl, 0, -strlen('/index.php'));
+        }
+
+        if ($baseUrl === '') {
+            $appPath = parse_url((string) config('app.url'), PHP_URL_PATH) ?: '';
+            $baseUrl = rtrim($appPath, '/');
+        }
+
+        return rtrim($baseUrl, '/');
+    }
+}
+
 if (! function_exists('app_public_asset')) {
     function app_public_asset(string $path): string
     {
@@ -24,9 +46,40 @@ if (! function_exists('app_public_asset')) {
             return $path;
         }
 
-        $baseUrl = request()->getBaseUrl();
+        $baseUrl = app_public_base_url();
 
-        return ($baseUrl !== '' ? rtrim($baseUrl, '/') : '').$path;
+        return ($baseUrl !== '' ? $baseUrl : '').$path;
+    }
+}
+
+if (! function_exists('app_asset_version')) {
+    /**
+     * Static asset cache-busting versiyasi.
+     * Production: APP_ASSET_VERSION. Local: fayl mtime (request ichida bir marta).
+     */
+    function app_asset_version(string $path): string
+    {
+        static $versions = [];
+
+        $normalizedPath = ltrim(str_replace('\\', '/', $path), '/');
+
+        if (isset($versions[$normalizedPath])) {
+            return $versions[$normalizedPath];
+        }
+
+        $configuredVersion = trim((string) config('app.asset_version', ''));
+
+        if (! app()->environment('local') && $configuredVersion !== '') {
+            return $versions[$normalizedPath] = $configuredVersion;
+        }
+
+        $fullPath = public_path($normalizedPath);
+
+        if (is_file($fullPath)) {
+            return $versions[$normalizedPath] = (string) filemtime($fullPath);
+        }
+
+        return $versions[$normalizedPath] = $configuredVersion !== '' ? $configuredVersion : '1';
     }
 }
 
@@ -58,12 +111,14 @@ if (! function_exists('app_storage_asset')) {
             return null;
         }
 
-        // APP_URL pastki papkani hisobga olmasa, Storage::url() noto‘g‘ri URL beradi.
-        // app_public_asset bilan bir xil: joriy so‘rovning base URL + /storage/...
-        if (! app()->runningInConsole()) {
-            $baseUrl = request()->getBaseUrl();
+        $publicDiskDriver = (string) config('filesystems.disks.public.driver', 'local');
+
+        // Local public disk uchun joriy so‘rovning base URL + /storage/... yo‘li ishonchli.
+        // Cloud bucket (s3/r2) uchun esa Storage::url() to‘g‘ri public URL qaytaradi.
+        if ($publicDiskDriver === 'local' && ! app()->runningInConsole()) {
+            $baseUrl = app_public_base_url();
             if ($baseUrl !== '') {
-                return rtrim($baseUrl, '/').'/storage/'.$path;
+                return $baseUrl.'/storage/'.$path;
             }
         }
 
@@ -201,6 +256,7 @@ if (! function_exists('supported_locales')) {
         return [
             'uz' => 'UZ',
             'en' => 'EN',
+            'ru' => 'RU',
         ];
     }
 }
@@ -393,8 +449,13 @@ if (! function_exists('render_exam_rich_text')) {
             return new \Illuminate\Support\HtmlString('');
         }
 
+        // Xavfsiz HTML teglar ro'yxati (faqat formatlash uchun)
+        $allowedTags = '<b><strong><i><em><u><s><sub><sup><ol><li><ul><br><p><span><pre><code><blockquote><h1><h2><h3><h4><h5><h6>';
+
         $containsHtml = preg_match('/<[^>]+>/', $value) === 1;
-        $html = $containsHtml ? $value : nl2br(e($value));
+        $html = $containsHtml
+            ? strip_tags($value, $allowedTags)
+            : nl2br(e($value));
 
         return new \Illuminate\Support\HtmlString($html);
     }
@@ -463,10 +524,16 @@ if (! function_exists('uz_phone_format')) {
 
 if (! function_exists('school_grade_map')) {
     /**
-     * Maktabdagi barcha rasmiy sinflar ro'yxati (Rasm asosida lotincha harflarda).
+     * Maktabdagi barcha faol rasmiy sinflar ro'yxati.
      */
     function school_grade_map(): array
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('school_classes')) {
+            return \Illuminate\Support\Facades\Cache::remember('school_classes.active_map.v1', now()->addMinutes(10), function (): array {
+                return \App\Models\SchoolClass::activeMap();
+            });
+        }
+
         return [
             1 => ['A', 'B', 'D', 'E', 'G', 'K', 'V', 'Z'],
             2 => ['A', 'B', 'D', 'E', 'G', 'K', 'V'],
@@ -480,6 +547,14 @@ if (! function_exists('school_grade_map')) {
             10 => ['A', 'D', 'E', 'V', 'B'],
             11 => ['D', 'G', 'V', 'B'],
         ];
+    }
+}
+
+if (! function_exists('forget_school_grade_cache')) {
+    function forget_school_grade_cache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('school_classes.active_map.v1');
+        \Illuminate\Support\Facades\Cache::forget('school_classes.active_names.v1');
     }
 }
 
@@ -510,13 +585,24 @@ if (! function_exists('school_grade_grouped_options')) {
     }
 }
 
-if (! function_exists('school_grade_options')) {
-    function school_grade_options(): array
+if (! function_exists('school_student_grade_options')) {
+    function school_student_grade_options(): array
     {
         return collect(school_grade_grouped_options())
             ->flatMap(static fn ($options) => array_keys($options))
             ->values()
             ->all();
+    }
+}
+
+if (! function_exists('school_grade_options')) {
+    function school_grade_options(): array
+    {
+        $options = school_student_grade_options();
+
+        $options[] = 'TEACHER';
+
+        return $options;
     }
 }
 

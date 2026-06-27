@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,6 +27,39 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->reportable(function (ExamAccessDeniedException $exception): void {
+            $request = request();
+
+            Log::warning('exam.access_denied', [
+                'message' => $exception->getMessage(),
+                'url' => $request?->fullUrl(),
+                'method' => $request?->method(),
+                'user_id' => $request?->user()?->id,
+            ]);
+        });
+
+        $this->reportable(function (ExamResourceMismatchException $exception): void {
+            $request = request();
+
+            Log::notice('exam.resource_mismatch', [
+                'message' => $exception->getMessage(),
+                'url' => $request?->fullUrl(),
+                'method' => $request?->method(),
+                'user_id' => $request?->user()?->id,
+            ]);
+        });
+
+        $this->reportable(function (ExamStateException $exception): void {
+            $request = request();
+
+            Log::info('exam.invalid_state', [
+                'message' => $exception->getMessage(),
+                'url' => $request?->fullUrl(),
+                'method' => $request?->method(),
+                'user_id' => $request?->user()?->id,
+            ]);
         });
     }
 

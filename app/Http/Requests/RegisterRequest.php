@@ -22,7 +22,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => uz_phone_rules(),
             'is_parent' => ['nullable', 'in:1'],
-            'grade' => ['required_unless:is_parent,1', 'nullable', 'string', Rule::in(school_grade_options())],
+            'grade' => ['required_unless:is_parent,1', 'nullable', 'string', Rule::in(school_student_grade_options())],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }

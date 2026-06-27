@@ -36,6 +36,8 @@
 
     const avatarBoxes = Array.from(rootEl.querySelectorAll('[data-profile-avatar-box]'));
     const avatarMeta = rootEl.querySelector('[data-profile-avatar-meta]');
+    const removeAvatarBtn = rootEl.querySelector('[data-profile-avatar-remove]');
+    const removeAvatarFlag = rootEl.querySelector('[data-profile-avatar-remove-flag]');
     const avatarMetaDefault = avatarMeta ? avatarMeta.textContent.trim() : '';
     let previewObjectUrl = null;
 
@@ -65,12 +67,12 @@
       if (ok) {
         box.classList.add('profile-avatar--image');
         box.style.backgroundImage = `url("${src}")`;
+        box.textContent = '';
       } else {
         box.classList.remove('profile-avatar--image');
         box.style.backgroundImage = '';
+        box.textContent = initial;
       }
-
-      box.textContent = initial;
     };
 
     const updatePreview = async (src) => {
@@ -151,6 +153,20 @@
         return;
       }
 
+      // Dinamik hajm tekshiruvi (donor rankiga qarab)
+      const maxKb = parseInt(avatarInput.dataset.profileAvatarMax || '4096', 10);
+      const maxMb = Math.round(maxKb / 1024);
+      const maxBytes = maxKb * 1024;
+      if (file.size > maxBytes) {
+        setMeta(replaceTokens(profileI18n.avatarTooBig || 'Rasm hajmi :max MB dan oshmasin (sizning rasm: :size).', { max: maxMb, size: formatSize(file.size) }), 'is-error');
+        avatarInput.value = '';
+        return;
+      }
+
+      if (removeAvatarFlag) {
+        removeAvatarFlag.value = '0';
+      }
+
       setMeta(profileI18n.preparingAvatar, 'is-processing');
 
       try {
@@ -181,6 +197,23 @@
         applyAvatarSource(box, existingSrc);
       }
     });
+
+    if (removeAvatarBtn) {
+      removeAvatarBtn.addEventListener('click', async () => {
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+          previewObjectUrl = null;
+        }
+
+        avatarInput.value = '';
+        if (removeAvatarFlag) {
+          removeAvatarFlag.value = '1';
+        }
+
+        await updatePreview('');
+        setMeta(profileI18n.avatarRemoved || avatarMetaDefault, 'is-ready');
+      });
+    }
 
     window.addEventListener('beforeunload', () => {
       if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);

@@ -5,30 +5,33 @@
   $authUser = auth()->user();
   $canManageComment = $authUser && $authUser->canManageCommentAsStaff($comment->user, $comment->user_id);
 
-  // Vizual dizayn uchun avatar rangini navbat bilan farqlaymiz.
   $avatarAccent = (isset($comment->id) && ((int) $comment->id % 2) === 0);
   $avatarUrl = $comment->user?->avatar_url;
   $avatarInitial = \Illuminate\Support\Str::upper(
-    \Illuminate\Support\Str::substr(trim((string) ($comment->author_name ?: 'M')), 0, 1)
+    \Illuminate\Support\Str::substr(trim((string) ($comment->author_name ?: "M")), 0, 1)
   );
-  $roleKey = $comment->user?->role ?? 'guest';
-  $roleLabel = $comment->user?->role_label ?? 'Mehmon';
+  $roleKey = $comment->user?->role ?? "guest";
+  $roleLabel = $comment->user?->role_label ?? "Mehmon";
   $commentBodyMax = $comment->parent_id ? 50 : 100;
+
+  $donorRank = $comment->user?->donation_rank;
+  $donorBadge = $comment->user?->donorBadgeHtml() ?? "";
+  $commentStyleClass = $donorRank ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
   $roleCardClass = match ($roleKey) {
-    'super_admin' => 'comment-card--super-admin',
-    'admin' => 'comment-card--admin',
-    'moderator' => 'comment-card--moderator',
-    default => '',
+    "super_admin" => "comment-card--super-admin",
+    "admin" => "comment-card--admin",
+    "moderator" => "comment-card--moderator",
+    default => $donorRank ? ("comment-card--donor comment-card--donor-" . $donorRank) : "",
   };
 @endphp
 
-<article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
+<article class="comment-card reveal {{ $showReplyForm ? "" : "comment-item-reply" }} {{ $roleCardClass }} {{ $commentStyleClass }}" data-comment-id="{{ $comment->id }}">
   @php
     $replyCount = $comment->replies->count();
     $canReplyMore = $replyCount < 4;
   @endphp
   @if(auth()->check() && $comment->user_id)
-    <button type="button" class="comment-avatar comment-avatar--btn {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}" data-user-preview-id="{{ $comment->user_id }}" title="Profil" aria-label="Foydalanuvchi profili">
+    <button type="button" class="comment-avatar comment-avatar--btn {{ $avatarAccent ? "accent" : "" }} {{ $avatarUrl ? "comment-avatar--image" : "" }}" data-user-preview-id="{{ $comment->user_id }}" title="{{ __("public.comments.profile_title") }}" aria-label="{{ __("public.comments.profile_aria") }}">
       @if($avatarUrl)
         <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="" loading="lazy" decoding="async">
       @else
@@ -36,9 +39,9 @@
       @endif
     </button>
   @else
-    <div class="comment-avatar {{ $avatarAccent ? 'accent' : '' }} {{ $avatarUrl ? 'comment-avatar--image' : '' }}">
+    <div class="comment-avatar {{ $avatarAccent ? "accent" : "" }} {{ $avatarUrl ? "comment-avatar--image" : "" }}">
       @if($avatarUrl)
-        <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? 'Mehmon' }}" loading="lazy" decoding="async">
+        <img class="comment-avatar-image" src="{{ $avatarUrl }}" alt="{{ $comment->author_name ?? "Mehmon" }}" loading="lazy" decoding="async">
       @else
         <span>{{ $avatarInitial }}</span>
       @endif
@@ -47,21 +50,31 @@
 
   <div class="comment-body">
     <div class="comment-meta">
-      <strong>{{ $comment->author_name ?? 'Mehmon' }}</strong>
+      @php
+        $authorStyle = '';
+        if ($donorRank && $comment->user) {
+          $c = $comment->user->donorUsernameColor();
+          $w = $comment->user->name_font_weight ?? '700';
+          if ($c) { $authorStyle .= 'color:' . $c . ';'; }
+          $authorStyle .= 'font-weight:' . $w . ';';
+        }
+      @endphp
+      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? "Mehmon" }}</strong>
+      {!! $donorBadge !!}
       <span class="comment-role-badge role-{{ $roleKey }}">{{ $roleLabel }}</span>
       <span class="comment-date">
         <i class="fa-regular fa-clock"></i>
-        {{ $comment->created_at ? $comment->created_at->diffForHumans() : '' }}
+        {{ $comment->created_at ? $comment->created_at->diffForHumans() : "" }}
       </span>
     </div>
 
     <p>{{ $comment->body }}</p>
 
     <div class="comment-actions">
-      <form action="{{ route('post.comments.like', [$post, $comment]) }}" method="POST" class="js-like-form">
+      <form action="{{ route("post.comments.like", [$post, $comment]) }}" method="POST" class="js-like-form">
         @csrf
-        <button type="submit" class="like-btn comment-like {{ $commentIsLiked ? 'liked' : '' }}" aria-label="Yoqtirish">
-          <i class="{{ $commentIsLiked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+        <button type="submit" class="like-btn comment-like {{ $commentIsLiked ? "liked" : "" }}" aria-label="Yoqtirish">
+          <i class="{{ $commentIsLiked ? "fa-solid" : "fa-regular" }} fa-heart"></i>
           <span class="like-count">{{ $comment->likes_count ?? 0 }}</span>
         </button>
       </form>
@@ -80,7 +93,7 @@
         <div class="js-comment-reply-form-wrapper comment-reply-form-wrapper" hidden>
           <form
             class="comment-form comment-form-inline js-comment-form js-comment-reply-form"
-            action="{{ route('post.comments.store', $post) }}"
+            action="{{ route("post.comments.store", $post) }}"
             method="POST"
           >
             @csrf
@@ -98,52 +111,60 @@
         </div>
       @endif
 
-      @if ($canManageComment)
-        <details class="comment-action-box">
-          <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
-          <form
-            class="comment-form comment-form-inline js-comment-form js-comment-edit-form"
-            action="{{ route('post.comments.update', [$post, $comment]) }}"
-            method="POST"
-            data-comment-id="{{ $comment->id }}"
-          >
-            @csrf
-            @method('PUT')
-              <input
-                type="text"
-                class="comment-input"
-                name="body"
-                value="{{ $comment->body }}"
-                maxlength="{{ $commentBodyMax }}"
-                required
-              />
-            <button class="btn btn-sm" type="submit">Saqlash</button>
-          </form>
-        </details>
+      <a
+        href="{{ route("contact", ["note" => "Izoh boyicha murojaat", "message" => "Yangilik izohi ID: ".$comment->id." | Post: ".$post->slug." | Muammo: "]) }}"
+        class="comment-reply"
+      >
+        <i class="fa-regular fa-flag"></i>
+        Shikoyat
+      </a>
 
+      @if ($canManageComment)
+      <details class="comment-action-box">
+        <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
         <form
-          class="js-comment-form js-comment-delete-form"
-          action="{{ route('post.comments.destroy', [$post, $comment]) }}"
+          class="comment-form comment-form-inline js-comment-form js-comment-edit-form"
+          action="{{ route("post.comments.update", [$post, $comment]) }}"
           method="POST"
           data-comment-id="{{ $comment->id }}"
-          data-confirm="Izohni o'chirmoqchimisiz?" data-confirm-title="Izohni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish"
         >
           @csrf
-          @method('DELETE')
-          <button type="submit" class="btn btn-sm comment-delete-btn">
-            <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> O'chirish
-          </button>
+          @method("PUT")
+            <input
+              type="text"
+              class="comment-input"
+              name="body"
+              value="{{ $comment->body }}"
+              maxlength="{{ $commentBodyMax }}"
+              required
+            />
+          <button class="btn btn-sm" type="submit">Saqlash</button>
         </form>
-      @endif
+      </details>
+
+      <form
+        class="js-comment-form js-comment-delete-form"
+        action="{{ route("post.comments.destroy", [$post, $comment]) }}"
+        method="POST"
+        data-comment-id="{{ $comment->id }}"
+        data-confirm="{{ __("public.comments.delete_confirm") }}" data-confirm-title="{{ __("public.comments.delete_title") }}" data-confirm-variant="danger" data-confirm-ok="{{ __("public.comments.delete_ok") }}"
+      >
+        @csrf
+        @method("DELETE")
+        <button type="submit" class="btn btn-sm comment-delete-btn">
+          <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> Ochirish
+        </button>
+      </form>
+    @endif
     </div>
   </div>
 
   @if ($comment->replies->isNotEmpty())
     <details class="comment-replies-toggle">
-      <summary>Javoblarni o'qish ({{ $replyCount }})</summary>
+      <summary>{{ __("public.comments.read_replies", ["count" => $replyCount]) }}</summary>
       <div class="comment-list comment-replies">
         @foreach($comment->replies as $reply)
-          @include('posts.partials.comment-item', ['comment' => $reply, 'post' => $post, 'showReplyForm' => false, 'likedCommentIds' => $likedCommentIds])
+          @include("posts.partials.comment-item", ["comment" => $reply, "post" => $post, "showReplyForm" => false, "likedCommentIds" => $likedCommentIds])
         @endforeach
       </div>
     </details>

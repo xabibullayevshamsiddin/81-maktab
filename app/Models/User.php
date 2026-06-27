@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasNameValidation;
+use App\Models\Concerns\HasPermissions;
+use App\Models\Concerns\HasRoles;
+use App\Models\Concerns\HasUserRelationships;
+use App\Models\Concerns\ManagesCourses;
+use App\Models\Concerns\HasDonationRank;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\UserNotification;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
@@ -16,59 +22,73 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    
+    // Custom traits for better organization
+    use HasRoles;
+    use HasPermissions;
+    use HasNameValidation;
+    use ManagesCourses;
+    use HasUserRelationships;
+    use HasDonationRank;
 
     protected static ?bool $legacyRoleColumnExists = null;
 
-    public const ROLE_SUPER_ADMIN = Role::NAME_SUPER_ADMIN;
-
-    public const ROLE_ADMIN = Role::NAME_ADMIN;
-
-    public const ROLE_EDITOR = Role::NAME_EDITOR;
-
-    public const ROLE_MODERATOR = Role::NAME_MODERATOR;
-
-    public const ROLE_TEACHER = Role::NAME_TEACHER;
-
-    public const ROLE_USER = Role::NAME_USER;
-
     public const UNIVERSAL_GRADE_LABEL = 'Barcha sinflar';
+
+    // Role name constants (mirrored from Role model for convenience)
+    public const ROLE_SUPER_ADMIN = Role::NAME_SUPER_ADMIN;
+    public const ROLE_ADMIN       = Role::NAME_ADMIN;
+    public const ROLE_EDITOR      = Role::NAME_EDITOR;
+    public const ROLE_MODERATOR   = Role::NAME_MODERATOR;
+    public const ROLE_TEACHER     = Role::NAME_TEACHER;
+    public const ROLE_USER        = Role::NAME_USER;
+
+    public const ROLE_HIERARCHY = [
+        self::ROLE_SUPER_ADMIN => 5,
+        self::ROLE_ADMIN       => 4,
+        self::ROLE_EDITOR      => 3,
+        self::ROLE_MODERATOR   => 2,
+        self::ROLE_TEACHER     => 2,
+        self::ROLE_USER        => 1,
+    ];
 
     public const ROLES = [
         self::ROLE_SUPER_ADMIN => 'Super Admin',
-        self::ROLE_ADMIN => 'Admin',
-        self::ROLE_EDITOR => 'Editor',
-        self::ROLE_MODERATOR => 'Moderator',
-        self::ROLE_TEACHER => 'O\'qituvchi',
-        self::ROLE_USER => 'Foydalanuvchi',
+        self::ROLE_ADMIN       => 'Admin',
+        self::ROLE_EDITOR      => 'Editor',
+        self::ROLE_MODERATOR   => 'Moderator',
+        self::ROLE_TEACHER     => 'O\'qituvchi',
+        self::ROLE_USER        => 'Foydalanuvchi',
     ];
 
     public const ROLE_LABELS = [
         'uz' => [
             self::ROLE_SUPER_ADMIN => 'Super Admin',
-            self::ROLE_ADMIN => 'Admin',
-            self::ROLE_EDITOR => 'Editor',
-            self::ROLE_MODERATOR => 'Moderator',
-            self::ROLE_TEACHER => 'O\'qituvchi',
-            self::ROLE_USER => 'Foydalanuvchi',
+            self::ROLE_ADMIN       => 'Admin',
+            self::ROLE_EDITOR      => 'Editor',
+            self::ROLE_MODERATOR   => 'Moderator',
+            self::ROLE_TEACHER     => 'O\'qituvchi',
+            self::ROLE_USER        => 'Foydalanuvchi',
         ],
         'en' => [
             self::ROLE_SUPER_ADMIN => 'Super Admin',
-            self::ROLE_ADMIN => 'Admin',
-            self::ROLE_EDITOR => 'Editor',
-            self::ROLE_MODERATOR => 'Moderator',
-            self::ROLE_TEACHER => 'Teacher',
-            self::ROLE_USER => 'User',
+            self::ROLE_ADMIN       => 'Admin',
+            self::ROLE_EDITOR      => 'Editor',
+            self::ROLE_MODERATOR   => 'Moderator',
+            self::ROLE_TEACHER     => 'Teacher',
+            self::ROLE_USER        => 'User',
         ],
-    ];
-
-    public const ROLE_HIERARCHY = [
-        self::ROLE_SUPER_ADMIN => 5,
-        self::ROLE_ADMIN => 4,
-        self::ROLE_EDITOR => 3,
-        self::ROLE_MODERATOR => 2,
-        self::ROLE_TEACHER => 2,
-        self::ROLE_USER => 1,
+        'ru' => [
+            self::ROLE_SUPER_ADMIN => 'Супер админ',
+            self::ROLE_ADMIN       => 'Админ',
+            self::ROLE_EDITOR      => 'Редактор',
+            self::ROLE_MODERATOR   => 'Модератор',
+            self::ROLE_TEACHER     => 'Учитель',
+            self::ROLE_USER        => 'Пользователь',
+        ],
     ];
 
     protected $fillable = [
@@ -78,15 +98,32 @@ class User extends Authenticatable
         'email',
         'phone',
         'grade',
+        'grade_needs_selection',
+        'grade_selection_reason',
         'avatar',
         'google_id',
         'password',
         'role_id',
         'is_active',
         'is_parent',
+        'donation_rank',
+        'donation_rank_expires_at',
+        'total_donated',
+        'banner_image',
+        'username_color',
+        'profile_theme',
+        'profile_border_style',
+        'profile_glow',
+        'comment_style',
+        'chat_style',
+        'badge_style',
+        'name_font_weight',
+        'show_expiry_badge',
+        'custom_css',
         'course_open_approved',
         'course_open_request_pending',
         'course_open_requested_at',
+        'course_open_request_reason',
         'course_open_approved_at',
     ];
 
@@ -135,6 +172,9 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'is_parent' => 'boolean',
+        'donation_rank_expires_at' => 'datetime',
+        'total_donated' => 'integer',
+        'grade_needs_selection' => 'boolean',
         'course_open_approved' => 'boolean',
         'course_open_request_pending' => 'boolean',
         'course_open_requested_at' => 'datetime',
@@ -518,6 +558,26 @@ class User extends Authenticatable
     public function getGradeLabelAttribute(): string
     {
         return $this->displayGrade();
+    }
+
+    public function needsGradeSelection(): bool
+    {
+        if ($this->is_parent || $this->hasUniversalGrade()) {
+            return false;
+        }
+
+        $grade = normalize_school_grade((string) ($this->grade ?? ''));
+
+        if ((bool) ($this->grade_needs_selection ?? false)) {
+            return true;
+        }
+
+        return $grade !== null && ! in_array($grade, school_student_grade_options(), true);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
     }
 
     public function avatarUrl(): ?string

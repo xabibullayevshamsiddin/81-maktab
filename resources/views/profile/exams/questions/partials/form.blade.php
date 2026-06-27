@@ -6,6 +6,7 @@
     ? optional($question->options->firstWhere('is_correct', true))->label
     : 'A';
   $currentImageUrl = old('existing_question_image', $question->image_url ?? null);
+  $currentType = old('question_type', $question->question_type ?? 'multiple_choice');
 @endphp
 
 @if ($errors->any())
@@ -22,9 +23,9 @@
 <div class="">
   <label>Savol turi</label>
   <div class="select-position">
-    <select name="question_type" id="question_type_select">
-      <option value="multiple_choice" {{ old('question_type', $question->question_type ?? 'multiple_choice') === 'multiple_choice' ? 'selected' : '' }}>Test (A, B, C, D variantli)</option>
-      <option value="text" {{ old('question_type', $question->question_type ?? '') === 'text' ? 'selected' : '' }}>Matnli ochiq savol</option>
+    <select name="question_type" data-question-type-select>
+      <option value="multiple_choice" {{ $currentType === 'multiple_choice' ? 'selected' : '' }}>Test (A, B, C, D variantli)</option>
+      <option value="text" {{ $currentType === 'text' ? 'selected' : '' }}>Matnli ochiq savol</option>
     </select>
   </div>
   @error('question_type')
@@ -82,7 +83,7 @@
   @enderror
 </div>
 
-<div id="text_fields" style="display: none;">
+<div id="text_fields" data-question-text-fields style="{{ $currentType === 'text' ? 'display:block;' : 'display:none;' }}">
   <div class="">
     <label>Namunaviy javob (faqat tekshiruvchiga ko'rinadi)</label>
     <textarea name="model_answer" rows="4" class="form-control">{{ old('model_answer', $question->model_answer ?? '') }}</textarea>
@@ -92,7 +93,7 @@
   </div>
 </div>
 
-<div id="mcq_fields">
+<div id="mcq_fields" data-question-mcq-fields style="{{ $currentType === 'text' ? 'display:none;' : 'display:block;' }}">
   <div class="">
     <label>Variantlar</label>
     <p class="exam-builder-note" style="margin-top:-4px;margin-bottom:10px;">
@@ -127,56 +128,14 @@
 </div>
 </div>
 
-<button type="button" id="shuffle-options" class="btn btn-info btn-sm mb-20">Variantlarni joyini almashtirish</button>
-
-<script>
-  (function () {
-    function initQuestionForm() {
-    const qType = document.getElementById('question_type_select');
-    const mcqFields = document.getElementById('mcq_fields');
-    const textFields = document.getElementById('text_fields');
-    const shuffleBtn = document.getElementById('shuffle-options');
-    if (!qType || !mcqFields || !textFields || !shuffleBtn) return;
-
-    function toggleFields() {
-      const isText = qType.value === 'text';
-
-      if (isText) {
-        mcqFields.style.display = 'none';
-        shuffleBtn.style.display = 'none';
-        textFields.style.display = 'block';
-
-        mcqFields.querySelectorAll('textarea, select').forEach((el) => {
-          el.disabled = true;
-        });
-        textFields.querySelectorAll('textarea, input, select').forEach((el) => {
-          el.disabled = false;
-        });
-      } else {
-        mcqFields.style.display = 'block';
-        shuffleBtn.style.display = 'inline-block';
-        textFields.style.display = 'none';
-
-        mcqFields.querySelectorAll('textarea, select').forEach((el) => {
-          el.disabled = false;
-        });
-        textFields.querySelectorAll('textarea, input, select').forEach((el) => {
-          el.disabled = true;
-        });
-      }
-    }
-
-    qType.addEventListener('change', toggleFields);
-    toggleFields();
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initQuestionForm);
-    } else {
-      initQuestionForm();
-    }
-  })();
-</script>
+<button
+  type="button"
+  id="shuffle-options"
+  class="btn btn-info btn-sm mb-20"
+  style="{{ $currentType === 'text' ? 'display:none;' : '' }}"
+>
+  Variantlarni joyini almashtirish
+</button>
 
 <br>
 <button type="submit" class="btn btn-primary">Saqlash</button>

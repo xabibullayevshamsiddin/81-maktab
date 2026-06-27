@@ -4,10 +4,15 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ filemtime(public_path('temp/img/favicon-32.png')) }}" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ filemtime(public_path('temp/img/favicon-16.png')) }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ filemtime(public_path('temp/img/favicon-180.png')) }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ app_asset_version('temp/img/favicon-32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ app_asset_version('temp/img/favicon-16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
     <title>@yield('title', 'Admin Panel')</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- ========== All CSS files linkup ========= -->
     <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/bootstrap.min.css') }}" />
@@ -15,9 +20,9 @@
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/materialdesignicons.min.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/fullcalendar.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('panel-assets/css/main.css') }}" />
-      <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ filemtime(public_path('temp/css/extracted-admin.css')) }}" />
-      <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ filemtime(public_path('temp/css/confirm-modal.css')) }}" />
-      <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ filemtime(public_path('temp/css/calendar-public.css')) }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ app_asset_version('temp/css/extracted-admin.css') }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
       @stack('admin_styles')
   </head>
 	  <body
@@ -36,7 +41,7 @@
     <aside class="sidebar-nav-wrapper">
       <div class="navbar-logo">
         <a href="{{ route('dashboard') }}">
-          <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;" />
+          <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="logo" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;" />
         </a>
       </div>
       <nav class="sidebar-nav">
@@ -103,6 +108,13 @@
                 <a href="{{ route('admin.contact-messages.index') }}">
                   <span class="icon"><i class="mdi mdi-email-outline"></i></span>
                   <span class="text">Aloqa xabarlari</span>
+                </a>
+              </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.ai-reviews.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.ai-reviews.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI Review</span>
                 </a>
               </li>
             @endif
@@ -193,20 +205,54 @@
               </a>
             </li>
 
+            <li class="nav-item {{ request()->routeIs('admin.school-classes.*') ? 'active' : '' }}">
+              <a href="{{ route('admin.school-classes.index') }}">
+                <span class="icon"><i class="mdi mdi-school-outline"></i></span>
+                <span class="text">Sinflar boshqaruvi</span>
+              </a>
+            </li>
+
             @if($sidebarUser->isSuperAdmin())
+              <li class="nav-item {{ request()->routeIs('ai-knowledges.*') ? 'active' : '' }}">
+                <a href="{{ route('ai-knowledges.index') }}">
+                  <span class="icon"><i class="mdi mdi-robot-outline"></i></span>
+                  <span class="text">AI bilim bazasi</span>
+                </a>
+              </li>
+
               <li class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                 <a href="{{ route('admin.settings.index') }}">
                   <span class="icon"><i class="mdi mdi-cog-outline"></i></span>
                   <span class="text">Sozlamalar</span>
                 </a>
               </li>
-
             @endif
           @endif
 
           <li class="divider section-divider"><hr></li>
+          <li class="sidebar-section">Donation</li>
+
+          @if($canManageSystem)
+          <li class="nav-item {{ request()->routeIs('admin.activation-keys.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.activation-keys.index') }}">
+              <span class="icon"><i class="mdi mdi-key-variant"></i></span>
+              <span class="text">Aktivatsiya kalitlari</span>
+            </a>
+          </li>
+          @endif
+
+          @if($sidebarUser->isSuperAdmin())
+          <li class="nav-item {{ request()->routeIs('admin.donation-settings*') ? 'active' : '' }}">
+            <a href="{{ route('admin.donation-settings') }}">
+              <span class="icon"><i class="mdi mdi-currency-usd"></i></span>
+              <span class="text">Narx va chegirmalar</span>
+            </a>
+          </li>
+          @endif
+
+          <li class="divider section-divider"><hr></li>
           <li class="nav-item">
-            <a href="{{ route('home') }}">
+            <a href="{{ route('home') }}" target="_blank">
               <span class="icon"><i class="mdi mdi-open-in-new"></i></span>
               <span class="text">Saytga qaytish</span>
             </a>
@@ -231,17 +277,14 @@
                     <i class="lni lni-chevron-left me-2"></i> Menu
                   </button>
                 </div>
-                <div class="header-search d-none d-md-flex">
-                  <form action="#">
-                    <input type="text" placeholder="Search..." />
-                    <button><i class="lni lni-search-alt"></i></button>
-                  </form>
-                </div>
+               
               </div>
             </div>
             <div class="col-lg-7 col-md-7 col-6">
               <div class="header-right">
-                <!-- message start -->
+
+
+                <!-- profile start -->
                 <div class="profile-box ml-15">
                   <button class="dropdown-toggle bg-transparent border-0" type="button" id="profile"
                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -361,7 +404,7 @@
 	    <script src="{{ app_public_asset('panel-assets/js/world-merc.js') }}"></script>
 	    <script src="{{ app_public_asset('panel-assets/js/polyfill.js') }}"></script>
 	    <script src="{{ app_public_asset('panel-assets/js/main.js') }}"></script>
-      <script src="{{ app_public_asset('temp/js/extracted-admin.js') }}?v={{ filemtime(public_path('temp/js/extracted-admin.js')) }}"></script>
+      <script src="{{ app_public_asset('temp/js/extracted-admin.js') }}?v={{ app_asset_version('temp/js/extracted-admin.js') }}"></script>
 
     @stack('admin_page_scripts')
     @yield('page_scripts')
@@ -371,7 +414,7 @@
     <div id="admin-toast-container" aria-live="polite" aria-atomic="true"></div>
 
     @include('components.confirm-modal')
-    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ filemtime(public_path('temp/js/confirm-modal.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
 
   </body>
 </html>

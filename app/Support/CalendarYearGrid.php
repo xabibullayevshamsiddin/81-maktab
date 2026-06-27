@@ -10,7 +10,7 @@ class CalendarYearGrid
      * Ochiq taqvim (joriy yil): joriy oydan boshlab keyingi shuncha oy oxirigacha siljuvchi oyna.
      * Oy almashganda eng boshidagi (o‘tgan) oy tushadi, oxiriga yangi oy qo‘shiladi.
      */
-    public const PUBLIC_ROLLING_FUTURE_MONTHS_AFTER_CURRENT = 4;
+    public const PUBLIC_ROLLING_FUTURE_MONTHS_AFTER_CURRENT = 3;
 
     /**
      * @param  array<string, int>  $countsByDate

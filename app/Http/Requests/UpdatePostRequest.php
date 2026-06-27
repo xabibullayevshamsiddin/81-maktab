@@ -18,7 +18,7 @@ class UpdatePostRequest extends FormRequest
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'short_content' => ['required', 'string'],
             'content' => ['required', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 
@@ -33,6 +33,7 @@ class UpdatePostRequest extends FormRequest
             'content.required' => 'Mazmun kiritilishi shart.',
             'image.image' => 'Fayl rasm bo\'lishi kerak.',
             'image.mimes' => 'Rasm jpg, jpeg, png yoki webp formatda bo\'lishi kerak.',
+            'image.max' => 'Rasm hajmi 5 MB dan oshmasligi kerak.',
         ];
     }
 }
