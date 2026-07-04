@@ -14,18 +14,26 @@
   $roleLabel = $comment->user?->role_label ?? "Mehmon";
   $commentBodyMax = $comment->parent_id ? 50 : 100;
 
+  $userTheme = $comment->user?->profile_theme;
   $donorRank = $comment->user?->donation_rank;
   $donorBadge = $comment->user?->donorBadgeHtml() ?? "";
-  $commentStyleClass = $donorRank ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
+  // Effekt uchun joriy tema — profile_theme (Gold/Royal/Phoenix ham) yoki donor ranki
+  $effectTheme = $userTheme ?: $donorRank;
+  $commentStyleClass = $effectTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
   $roleCardClass = match ($roleKey) {
     "super_admin" => "comment-card--super-admin",
     "admin" => "comment-card--admin",
     "moderator" => "comment-card--moderator",
-    default => $donorRank ? ("comment-card--donor comment-card--donor-" . $donorRank) : "",
+    default => $effectTheme ? ("comment-card--themed comment-card--theme-" . $effectTheme) : "",
   };
-@endphp
+  // Super admin/admin/moderator bo'lsa ham, agar donor/admin temasi tanlangan bo'lsa,
+  // tema effekti ham qo'shiladi (super admin Gold = ham super-admin, ham Gold effekt).
+  $themeOverlayClass = in_array($roleKey, ['super_admin', 'admin', 'moderator']) && $effectTheme
+    ? ("comment-card--theme-" . $effectTheme)
+    : "";
+  @endphp
 
-<article class="comment-card reveal {{ $showReplyForm ? "" : "comment-item-reply" }} {{ $roleCardClass }} {{ $commentStyleClass }}" data-comment-id="{{ $comment->id }}">
+<article class="comment-card reveal {{ $showReplyForm ? "" : "comment-item-reply" }} {{ $roleCardClass }} {{ $commentStyleClass }} {{ $themeOverlayClass }}" data-comment-id="{{ $comment->id }}">
   @php
     $replyCount = $comment->replies->count();
     $canReplyMore = $replyCount < 4;

@@ -24,7 +24,7 @@
     $courseOwner = $courseOwner ?? auth()->user();
     $courseOwnerName = trim((string) ($courseOwner?->name ?: $courseOwner?->buildNameFromParts())) ?: __('public.course_create.default_author');
     $courseOwnerRole = $courseOwner?->localizedRoleLabel() ?: __('public.course_create.default_role');
-    $courseOwnerImage = $courseOwner?->avatar_url ?: app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+    $courseOwnerImage = $courseOwner?->avatar_url ?: app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
     $isAdminEditor = ($isAdmin ?? false) === true;
   @endphp
 
@@ -68,12 +68,12 @@
               class="course-create-teacher-card"
               data-course-teacher-preview
               data-course-preview='@json($teacherPreviewData)'
-              data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              data-course-preview-fallback="{{ app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
               data-course-initial-teacher-id="{{ $initialTeacherId }}"
             >
               <div class="course-create-teacher-media">
                 <img
-                  src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                  src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
                   alt="{{ __('public.course_create.teacher_image_alt') }}"
                   data-preview-image
                 >

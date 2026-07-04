@@ -95,9 +95,10 @@
         ["check" => true, "text" => "10 MB gacha avatar yuklash"],
         ["check" => true, "text" => "AI chat: 100 ta sorov/oy"],
         ["check" => true, "text" => "Profil yonida Supporter badge"],
+        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 2 ta kurs ochish imtiyoziga ega bo'lasiz"],
         ["check" => false, "text" => "Maxsus profil dizayni"],
         ["check" => false, "text" => "Top donorlar royhati"],
-        ["check" => false, "text" => "Guruh chat: 1 ta guruh (oddiy)"],
+        ["check" => false, "text" => "Guruh chat"],
     ];
     $premiumFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (binafsha)"],
@@ -106,6 +107,7 @@
         ["check" => true, "text" => "Premium badge"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => "Top donorlar royhati"],
+        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish imtiyoziga ega bo'lasiz"],
         ["check" => true, "icon" => "fa-solid fa-users", "text" => "Guruh chat: 2 ta guruh yaratish 🔑"],
     ];
     $vipFeatures = [
@@ -116,6 +118,7 @@
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => "Top donorlar royhati"],
         ["check" => true, "text" => "Prioritet support"],
+        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 5 ta kurs ochish imtiyoziga ega bo'lasiz"],
         ["check" => true, "icon" => "fa-solid fa-users", "text" => "Guruh chat: 2 ta guruh yaratish 👑"],
     ];
 @endphp

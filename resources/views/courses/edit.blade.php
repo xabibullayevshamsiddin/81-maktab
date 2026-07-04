@@ -66,13 +66,13 @@
             @if($selectedTeacher)
               data-course-teacher-preview
               data-course-preview='@json($teacherPreviewData)'
-              data-course-preview-fallback="{{ app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+              data-course-preview-fallback="{{ app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
               data-course-initial-teacher-id="{{ $initialTeacherId }}"
             @endif
           >
             <div class="course-create-teacher-media">
               <img
-                src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                src="{{ $initialTeacher['image'] ?? app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
                 alt="{{ $initialTeacher['name'] ?? 'Kurs muallifi' }}"
                 @if($selectedTeacher) data-preview-image @endif
               >

@@ -129,9 +129,12 @@ class Teacher extends Model
     public function imageUrl(): string
     {
         if (! empty($this->image)) {
-            return app_storage_asset($this->image) ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+            $url = app_storage_asset($this->image);
+            if ($url && preg_match('#^https?://#i', $url)) {
+                return $url;
+            }
         }
 
-        return app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+        return app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
     }
 }

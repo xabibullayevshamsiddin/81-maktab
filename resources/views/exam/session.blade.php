@@ -11,6 +11,8 @@
   $initialViolationCount = (int) ($result->rule_violation_count ?? 0);
   $remainingViolationCount = max(0, $violationLimit - $initialViolationCount);
   $violationFillPct = $violationLimit > 0 ? min(100, (int) round($initialViolationCount / $violationLimit * 100)) : 0;
+  // Xavfsizlik o'chirilgan bo'lsa hech qanday cheklov qo'llanilmaydi
+  $securityEnabled = (bool) ($result->exam->security_enabled ?? true);
 @endphp
 
 <x-loyouts.main :title="$examTitle . __('public.exam.session.title_suffix')">
@@ -248,6 +250,13 @@
       var violationUrl = @json(route('exam.violation', $result));
       var csrfToken = @json(csrf_token());
       var violationLimit = {{ $violationLimit }};
+      var securityEnabled = {{ $securityEnabled ? 'true' : 'false' }};
+
+      // Xavfsizlik o'chirilgan bo'lsa — xavfsizlik panelini yashirish
+      if (!securityEnabled) {
+        var secureStack = document.querySelector('.exam-secure-stack');
+        if (secureStack) secureStack.style.display = 'none';
+      }
 
       document.body.classList.add('exam-session-print-lock');
 
@@ -507,171 +516,125 @@
         }
       });
 
-      document.addEventListener('visibilitychange', function () {
-        if (document.hidden) {
-          requestResumeProtectedMode(
-            examSessionI18n.hidden_title,
-            examSessionI18n.hidden_text,
-            'visibility-hidden'
-          );
-        }
-      });
-
-      window.addEventListener('beforeprint', function () {
-        requestResumeProtectedMode(
-          examSessionI18n.print_title,
-          examSessionI18n.print_text,
-          'print-attempt'
-        );
-      });
-
-      window.addEventListener('blur', function () {
-        if (document.hidden || isTransientIgnoreActive()) return;
-        requestResumeProtectedMode(
-          examSessionI18n.blur_title,
-          examSessionI18n.blur_text,
-          'window-blur'
-        );
-      });
-
-      window.addEventListener('pagehide', function () {
-        if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
-        maybeContextWarn('pagehide');
-      });
-
-      function handleFullscreenChange() {
-        if (isTransientIgnoreActive()) return;
-
-        if (fullscreenSupported && !isFullscreenActive() && !document.hidden) {
-          requestResumeProtectedMode(
-            examSessionI18n.exit_fullscreen_title,
-            examSessionI18n.exit_fullscreen_text,
-            'fullscreen-exit'
-          );
-          return;
-        }
-
-        if (isFullscreenActive() && focusGuard && !focusGuard.hidden && document.visibilityState === 'visible') {
-          hideFocusGuard();
-        }
-      }
-
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.addEventListener('msfullscreenchange', handleFullscreenChange);
-
-      document.addEventListener('keydown', function (e) {
-        var key = e.key || '';
-        var kl = key.toLowerCase();
-        var ctrl = e.ctrlKey || e.metaKey;
-        var meta = e.metaKey;
-
-        if (
-          key === 'PrintScreen'
-          || key === 'Print'
-          || key === 'F13'
-          || key === 'Snapshot'
-          || e.keyCode === 44
-        ) {
-          showScreenshotWarn(e);
-          return;
-        }
-        if (e.altKey && (key === 'PrintScreen' || e.keyCode === 44)) {
-          showScreenshotWarn(e);
-          return;
-        }
-
-        if (key === 'F12') {
-          e.preventDefault();
-          return;
-        }
-
-        if (meta && e.shiftKey && (kl === '3' || kl === '4' || kl === '5')) {
-          showScreenshotWarn(e);
-          return;
-        }
-        if (e.shiftKey && meta && kl === 's') {
-          showScreenshotWarn(e);
-          return;
-        }
-
-        if (ctrl && kl === 'p') {
-          e.preventDefault();
-          requestResumeProtectedMode(
-            examSessionI18n.print_title,
-            examSessionI18n.print_text,
-            'print-shortcut'
-          );
-          return;
-        }
-        if (ctrl && e.shiftKey && kl === 's') {
-          e.preventDefault();
-          requestResumeProtectedMode(
-            examSessionI18n.save_forbidden_title,
-            examSessionI18n.save_forbidden_text,
-            'save-shortcut'
-          );
-          return;
-        }
-        if (ctrl && ['c', 'x', 'u', 's'].indexOf(kl) !== -1) {
-          e.preventDefault();
-          return;
-        }
-        if (ctrl && e.shiftKey && ['i', 'j', 'c', 'p'].indexOf(kl) !== -1) {
-          e.preventDefault();
-          return;
-        }
-      }, true);
-
-      document.addEventListener('keyup', function (e) {
-        var key = e.key || '';
-
-        if (
-          key === 'PrintScreen'
-          || key === 'Print'
-          || key === 'F13'
-          || key === 'Snapshot'
-          || e.keyCode === 44
-        ) {
-          showScreenshotWarn(e);
-        }
-      }, true);
-
-      if (root) {
-        ['copy', 'cut', 'contextmenu', 'dragstart', 'paste', 'selectstart'].forEach(function (ev) {
-          root.addEventListener(ev, function (e) {
-            if (e.target && e.target.closest('.exam-text-answer-field')) {
-              if (ev === 'copy' || ev === 'cut' || ev === 'paste') {
-                e.preventDefault();
-              }
-              return;
-            }
-
-            e.preventDefault();
-          }, true);
-        });
-      }
-      document.addEventListener('paste', function (e) {
-        if (e.target && e.target.closest('.exam-text-answer-field')) {
-          e.preventDefault();
-          return;
-        }
-        e.preventDefault();
-      }, true);
-
-      focusGuardResumeBtn?.addEventListener('click', function () {
-        resumeProtectedMode();
-      });
-
       buildWatermark();
       updateViolationUi(currentViolationCount);
 
-      if (fullscreenSupported) {
-        showFocusGuard(
-          examSessionI18n.start_protected_title,
-          examSessionI18n.start_protected_text,
-          examSessionI18n.focus_resume
-        );
+      if (securityEnabled) {
+        document.addEventListener('visibilitychange', function () {
+          if (document.hidden) {
+            requestResumeProtectedMode(
+              examSessionI18n.hidden_title,
+              examSessionI18n.hidden_text,
+              'visibility-hidden'
+            );
+          }
+        });
+
+        window.addEventListener('beforeprint', function () {
+          requestResumeProtectedMode(
+            examSessionI18n.print_title,
+            examSessionI18n.print_text,
+            'print-attempt'
+          );
+        });
+
+        window.addEventListener('blur', function () {
+          if (document.hidden || isTransientIgnoreActive()) return;
+          requestResumeProtectedMode(
+            examSessionI18n.blur_title,
+            examSessionI18n.blur_text,
+            'window-blur'
+          );
+        });
+
+        window.addEventListener('pagehide', function () {
+          if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
+          maybeContextWarn('pagehide');
+        });
+
+        function handleFullscreenChange() {
+          if (isTransientIgnoreActive()) return;
+          if (fullscreenSupported && !isFullscreenActive() && !document.hidden) {
+            requestResumeProtectedMode(
+              examSessionI18n.exit_fullscreen_title,
+              examSessionI18n.exit_fullscreen_text,
+              'fullscreen-exit'
+            );
+            return;
+          }
+          if (isFullscreenActive() && focusGuard && !focusGuard.hidden && document.visibilityState === 'visible') {
+            hideFocusGuard();
+          }
+        }
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        document.addEventListener('keydown', function (e) {
+          var key = e.key || '';
+          var kl = key.toLowerCase();
+          var ctrl = e.ctrlKey || e.metaKey;
+          var meta = e.metaKey;
+
+          if (key === 'PrintScreen' || key === 'Print' || key === 'F13' || key === 'Snapshot' || e.keyCode === 44) {
+            showScreenshotWarn(e); return;
+          }
+          if (e.altKey && (key === 'PrintScreen' || e.keyCode === 44)) {
+            showScreenshotWarn(e); return;
+          }
+          if (key === 'F12') { e.preventDefault(); return; }
+          if (meta && e.shiftKey && (kl === '3' || kl === '4' || kl === '5')) {
+            showScreenshotWarn(e); return;
+          }
+          if (e.shiftKey && meta && kl === 's') { showScreenshotWarn(e); return; }
+          if (ctrl && kl === 'p') {
+            e.preventDefault();
+            requestResumeProtectedMode(examSessionI18n.print_title, examSessionI18n.print_text, 'print-shortcut');
+            return;
+          }
+          if (ctrl && e.shiftKey && kl === 's') {
+            e.preventDefault();
+            requestResumeProtectedMode(examSessionI18n.save_forbidden_title, examSessionI18n.save_forbidden_text, 'save-shortcut');
+            return;
+          }
+          if (ctrl && ['c', 'x', 'u', 's'].indexOf(kl) !== -1) { e.preventDefault(); return; }
+          if (ctrl && e.shiftKey && ['i', 'j', 'c', 'p'].indexOf(kl) !== -1) { e.preventDefault(); return; }
+        }, true);
+
+        document.addEventListener('keyup', function (e) {
+          var key = e.key || '';
+          if (key === 'PrintScreen' || key === 'Print' || key === 'F13' || key === 'Snapshot' || e.keyCode === 44) {
+            showScreenshotWarn(e);
+          }
+        }, true);
+
+        if (root) {
+          ['copy', 'cut', 'contextmenu', 'dragstart', 'paste', 'selectstart'].forEach(function (ev) {
+            root.addEventListener(ev, function (e) {
+              if (e.target && e.target.closest('.exam-text-answer-field')) {
+                if (ev === 'copy' || ev === 'cut' || ev === 'paste') e.preventDefault();
+                return;
+              }
+              e.preventDefault();
+            }, true);
+          });
+        }
+        document.addEventListener('paste', function (e) {
+          if (e.target && e.target.closest('.exam-text-answer-field')) { e.preventDefault(); return; }
+          e.preventDefault();
+        }, true);
+
+        focusGuardResumeBtn?.addEventListener('click', function () {
+          resumeProtectedMode();
+        });
+
+        if (fullscreenSupported) {
+          showFocusGuard(
+            examSessionI18n.start_protected_title,
+            examSessionI18n.start_protected_text,
+            examSessionI18n.focus_resume
+          );
+        }
       }
     })();
 

@@ -14,7 +14,7 @@
     <article class="teacher-card reveal">
       <div class="teacher-photo-wrap">
         <img
-          src="{{ $rt->image ? app_storage_asset($rt->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+          src="{{ $rt->image ? app_storage_asset($rt->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
           alt="{{ $rt->full_name }} profil rasmi"
           class="teacher-photo"
           loading="lazy"

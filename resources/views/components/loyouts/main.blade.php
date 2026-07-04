@@ -23,7 +23,7 @@
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=9" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=10" />
     @unless(request()->routeIs('exam.session'))
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
     {{-- Three.js — 3D loader animatsiyasi uchun --}}
@@ -40,7 +40,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ app_asset_version('temp/img/favicon-32.png') }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ app_asset_version('temp/img/favicon-16.png') }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="{{ app_public_asset('manifest.json') }}">
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
@@ -55,11 +55,16 @@
 .comment-donor { border-left: 4px solid; padding-left: 0.75rem; border-radius: 4px; }
 </style>
     <script>
+      // Service worker'ni butunlay o'chirish (fayl yuklash xatosini tuzatish uchun)
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('SW registration failed: ', err);
-          });
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          if (registrations.length > 0) {
+            for(let registration of registrations) {
+              registration.unregister();
+            }
+            // Kuchli tozalash uchun sahifani yangilaymiz
+            window.location.reload(true);
+          }
         });
       }
     </script>
@@ -679,7 +684,7 @@
               <div id="chat-group-subpanel-body"></div>
             </div>
           </div>
-          
+
           <div class="chat-feed-stack">
             <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
           </div>
@@ -710,6 +715,14 @@
               <button type="button" class="chat-sticker-btn" data-chat-sticker="👍" title="Like">👍</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
+              @auth
+                @if($authUser && $authUser->isDonor())
+                <span class="chat-sticker-divider" aria-hidden="true"></span>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="💎" title="Gem">💎</button>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🚀" title="Rocket">🚀</button>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🌟" title="Star">🌟</button>
+                @endif
+              @endauth
             </div>
             <input type="text" id="chat-input" class="chat-input" placeholder="{{ __('public.layout.write_message') }}" maxlength="1000" autocomplete="off" />
             <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="{{ __('public.layout.send') }}">
@@ -1001,7 +1014,55 @@
     </script>
     @unless(request()->routeIs('exam.session'))
     <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ app_asset_version('temp/js/site-boot-loader.js') }}"></script>
+    <script>
+      (function() {
+        var loader = document.getElementById('site-boot-loader');
+        if (!loader) return;
+        
+        function showFullScreenLoader() {
+          loader.classList.remove('site-boot-loader--done');
+          document.body.classList.add('site-boot-loading');
+          loader.setAttribute('aria-busy', 'true');
+          // If it was removed from DOM, append it back
+          if (!loader.parentNode) {
+            document.body.appendChild(loader);
+          }
+        }
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a[href]');
+          if (!link) return;
+          var href = link.getAttribute('href');
+          if (!href) return;
+          if (
+            link.target === '_blank' ||
+            link.hasAttribute('download') ||
+            href.startsWith('#') ||
+            href.startsWith('javascript:') ||
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            (href.startsWith('http') && !href.startsWith(window.location.origin))
+          ) return;
+          
+          try {
+            var url = new URL(href, window.location.href);
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+          } catch(err) { return; }
+
+          showFullScreenLoader();
+        });
+
+        document.addEventListener('submit', function(e) {
+          var form = e.target;
+          if (!form || form.method === 'dialog') return;
+          if (!form.getAttribute('data-ajax')) {
+            showFullScreenLoader();
+          }
+        });
+      })();
+    </script>
     @endunless
+
     @auth
     @unless(request()->routeIs('exam.session'))
     @php

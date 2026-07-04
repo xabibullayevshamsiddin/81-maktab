@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SelectStudentGradeRequest;
+use App\Services\UserActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -27,11 +28,21 @@ class GradeSelectionController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
+        $previousGrade = $user->grade;
+
         $user->forceFill([
             'grade' => $validated['grade'],
             'grade_needs_selection' => false,
             'grade_selection_reason' => null,
         ])->save();
+
+        UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_GRADE_CHANGED,
+            'Sinf o\'zgartirildi: ' . ($previousGrade ?? 'yo\'q') . ' -> ' . $validated['grade'],
+            ['old_grade' => $previousGrade],
+            ['new_grade' => $validated['grade']]
+        );
 
         return redirect()
             ->intended(route('profile.show'))

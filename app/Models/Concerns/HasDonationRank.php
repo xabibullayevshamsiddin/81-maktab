@@ -3,8 +3,24 @@
 namespace App\Models\Concerns;
 
 use App\Models\Donation;
+use App\Services\UserActivityLogger;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Trait HasDonationRank
+ *
+ * @property-read string|null $donation_rank
+ * @property-read string|null $donation_rank_expires_at
+ * @property-read string|null $banner_image
+ * @property-read string|null $profile_theme
+ * @property-read string|null $badge_style
+ * @property-read string|null $comment_style
+ * @property-read string|null $chat_style
+ * @property-read string|null $show_expiry_badge
+ * @property-read string|null $name_font_weight
+ * @property-read string|null $username_color
+ * @property-read int $total_donated
+ */
 trait HasDonationRank
 {
     public function donations(): HasMany
@@ -39,11 +55,39 @@ trait HasDonationRank
         return $config["label"] ?? $this->donation_rank;
     }
 
+    /**
+     * Foydalanuvchining joriy haqiqiy temasini qaytaradi.
+     *
+     * 1. Avval profile_theme (foydalanuvchi tanlagan) ni tekshiradi.
+     * 2. Agar u ruxsat etilmasa (masalan, VIP donor eski 'premium' qiymatida qolgan) —
+     *    donor rankiga qaytadi.
+     * 3. Hech narsa ruxsat etilmasa — null (faqat plain ko'rinishi mumkin).
+     *
+     * Bu yagona manba — badge, ism rangi, comment rangi, theme klassi hammasi shu yerdan oladi.
+     * Natijada "faqat o'z ranki" qoidasi saqlanadi, lekin eski/inconsist ma'lumotlar ham mos tushadi.
+     */
+    public function effectiveTheme(): ?string
+    {
+        // 1. Foydalanuvchi tanlagan tema
+        $theme = $this->profile_theme ?: $this->donation_rank;
+        if ($theme && Donation::themeAllowedForUser($theme, $this)) {
+            return $theme;
+        }
+
+        // 2. Donor ranki (eski profile_theme noto'g'ri bo'lsa)
+        $rank = $this->donation_rank;
+        if ($rank && Donation::themeAllowedForUser($rank, $this)) {
+            return $rank;
+        }
+
+        // 3. Oddiy foydalanuvchi yoki hech qanday huquq yo'q
+        return null;
+    }
+
     public function donorBadgeHtml(bool $locked = false): string
     {
-        // Badge ko'rinishi (rang, ikonka, yozuv) profile_theme'dan olinadi —
-        // donor ranki emas. Admin Gold tema tanlangan bo'lsa, badge ham Gold bo'ladi.
-        $theme = $this->profile_theme ?? $this->donation_rank;
+        // Joriy haqiqiy tema (profile_theme yoki donor ranki, ruxsat tekshiruvi bilan).
+        $theme = $this->effectiveTheme() ?? $this->donation_rank;
         $config = Donation::themeConfig($theme) ?? Donation::configForRank($this->donation_rank);
         if (!$config) {
             return "";
@@ -57,8 +101,7 @@ trait HasDonationRank
         $styleClass = "donor-badge--" . $badgeStyle;
 
         // Joriy tema foydalanuvchiga ruxsat etilganmi?
-        // Bu isDonor() dan kengroq — super admin (donor emas) admin temalari uchun ham true.
-        $themeAllowed = Donation::themeAllowedForUser($theme, $this);
+        $themeAllowed = $theme ? Donation::themeAllowedForUser($theme, $this) : false;
 
         // Qulf holati (majburan qulflangan yoki hech qanday huquq yo'q)
         if ($locked || !$themeAllowed) {
@@ -97,11 +140,11 @@ trait HasDonationRank
 
     public function donorCommentColor(): ?string
     {
-        if (!$this->isDonor()) {
+        // Joriy haqiqiy tema rangi.
+        $theme = $this->effectiveTheme();
+        if (!$theme) {
             return null;
         }
-        // Izoh rangi ham profile_theme asosida — Gold tema uchun Gold rangi.
-        $theme = $this->profile_theme ?? $this->donation_rank;
         $cfg = Donation::themeConfig($theme);
         if ($cfg) {
             return $cfg["badge_color"] ?? null;
@@ -145,21 +188,19 @@ trait HasDonationRank
 
     public function donorUsernameColor(): ?string
     {
-        if (!$this->isDonor()) {
+        // Ism rangi joriy haqiqiy tema'dan — Gold tema = Gold (sariq) ism rangi.
+        $theme = $this->effectiveTheme();
+        if (!$theme) {
             return null;
         }
-        // Ism rangi profile_theme'dan olinadi — Gold tema tanlangan bo'lsa,
-        // ism ham Gold (sariq) rangida bo'ladi, Premium emas.
-        $theme = $this->profile_theme ?? $this->donation_rank;
-        $cfg = Donation::themeConfig($theme) ?? Donation::configForRank($this->donation_rank);
+        $cfg = Donation::themeConfig($theme) ?? Donation::configForRank($theme);
         return $cfg["badge_color"] ?? null;
     }
 
     public function donorThemeClass(): string
     {
-        // profile_theme saqlangan qiymatdan foydalanamiz (donor yoki admin temasi).
-        // Agar bo'lmasa, donor rankiga tushamiz.
-        $theme = $this->profile_theme ?: $this->donation_rank;
+        // Joriy haqiqiy tema klassi (profile-theme-{key}).
+        $theme = $this->effectiveTheme();
         if (!$theme) {
             return "";
         }
@@ -198,6 +239,14 @@ trait HasDonationRank
             "username_color" => $config["badge_color"],
             "profile_theme" => $rank,
         ]);
+
+        UserActivityLogger::log(
+            $this,
+            \App\Models\UserActivity::TYPE_DONATION_PURCHASED,
+            'Donat sotib olindi: ' . $config["label"] . ' (' . number_format($amount) . ' so\'m)',
+            ["rank" => $rank, "amount" => 0],
+            ["rank" => $rank, "amount" => $amount, "expires_at" => $expiresAt->toDateTimeString()]
+        );
 
         return $donation;
     }

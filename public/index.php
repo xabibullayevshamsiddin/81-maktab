@@ -51,6 +51,7 @@ if (str_starts_with($requestPath, $localPublicBase.'/')
     $routePath = substr($requestPath, strlen($localPublicBase)) ?: '/';
 
     $_SERVER['SCRIPT_NAME'] = $localPublicBase.'/index.php';
+    $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/index.php';
     $_SERVER['PHP_SELF'] = $localPublicBase.'/index.php'.$routePath;
     $_SERVER['PATH_INFO'] = $routePath;
 }

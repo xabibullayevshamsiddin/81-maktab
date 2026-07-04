@@ -558,22 +558,28 @@
           previewContent.hidden = false;
 
           // Super admin and Admin prime effect
+          var themeKey = d.donor_theme || d.donor_rank;
+          // Barcha mumkin bo'lgan tema klasslarini tozalash
+          var allThemeClasses = ['is-super-admin', 'is-admin',
+            'is-donor-supporter', 'is-donor-premium', 'is-donor-vip',
+            'is-themed-supporter', 'is-themed-premium', 'is-themed-vip',
+            'is-themed-admin-gold', 'is-themed-admin-royal', 'is-themed-admin-phoenix'];
           if (d.is_super_admin) {
             previewDialog.classList.add('is-super-admin');
-            previewDialog.classList.remove('is-admin');
-          } else if (d.donor_rank) {
-            previewDialog.classList.remove('is-super-admin', 'is-admin', 'is-donor-supporter', 'is-donor-premium', 'is-donor-vip');
-            previewDialog.classList.add('is-donor-' + d.donor_rank);
+            previewDialog.classList.remove(...allThemeClasses.filter(c => c !== 'is-super-admin'));
+          } else if (themeKey) {
+            previewDialog.classList.remove(...allThemeClasses);
+            previewDialog.classList.add('is-themed-' + themeKey);
             spawnSuperAdminParticles(previewDialog);
           } else if (d.is_admin) {
             previewDialog.classList.add('is-admin');
-            previewDialog.classList.remove('is-super-admin');
+            previewDialog.classList.remove(...allThemeClasses.filter(c => c !== 'is-admin'));
             var oldPfx = previewDialog.querySelector('.sa-particles');
             if (oldPfx) oldPfx.remove();
           } else {
-            previewDialog.classList.remove('is-super-admin', 'is-admin', 'is-donor-supporter', 'is-donor-premium', 'is-donor-vip');
-            var oldPfx = previewDialog.querySelector('.sa-particles');
-            if (oldPfx) oldPfx.remove();
+            previewDialog.classList.remove(...allThemeClasses);
+            var oldPfx2 = previewDialog.querySelector('.sa-particles');
+            if (oldPfx2) oldPfx2.remove();
           }
 
           if (previewNameEl) {
@@ -644,9 +650,11 @@
               if (d.is_parent) {
                 rows.push('<li><span>Hisob turi</span> Ota-ona</li>');
               }
-              if (d.donor_rank) {
-                rows.push('<li><span>Donor</span> ' + d.donor_badge + '</li>');
-                rows.push('<li><span>Tugash vaqti</span> ' + escChatHtml(d.donor_expires || 'Nomalum') + '</li>');
+              if (d.donor_theme || d.donor_rank) {
+                rows.push('<li><span>Tema</span> ' + d.donor_badge + '</li>');
+                if (d.donor_expires) {
+                  rows.push('<li><span>Tugash vaqti</span> ' + escChatHtml(d.donor_expires) + '</li>');
+                }
               }
               if (d.member_year) {
                 rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(d.member_year) + '</li>');
@@ -3009,7 +3017,7 @@
         var descInput = document.getElementById('prime-group-create-desc');
         if (nameInput) nameInput.value = '';
         if (descInput) descInput.value = '';
-        
+
         var toggleBtns = groupCreateModal.querySelectorAll('.prime-group-create__toggle-btn');
         toggleBtns.forEach(function(btn) {
           if (btn.getAttribute('data-privacy') === 'closed') {
@@ -3036,15 +3044,15 @@
       var descInput = document.getElementById('prime-group-create-desc');
       var activePrivacyBtn = groupCreateModal ? groupCreateModal.querySelector('.prime-group-create__toggle-btn--active') : null;
       var privacy = activePrivacyBtn ? activePrivacyBtn.getAttribute('data-privacy') : 'closed';
-      
+
       var name = nameInput ? nameInput.value.trim() : '';
       var desc = descInput ? descInput.value.trim() : '';
-      
+
       if(name.length < 2) {
         if (window.showToast) window.showToast("Guruh nomi kamida 2ta harf bo'lishi kerak", 'error');
         return;
       }
-      
+
       fetch(groupJoinBase, {
         method: 'POST',
         headers: {
@@ -3404,7 +3412,21 @@
     }
 
     function renderMsg(m) {
-      var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '') + (m.is_super_admin ? ' is-super-admin' : '') + (m.donor_rank ? ' is-donor is-donor-' + m.donor_rank : '');
+      // Role effekti (super_admin/admin) va tema effekti alohida — aralashmaydi.
+      // Super admin o'z animatsiyasida, donor/tema o'z effektlarida.
+      var themeKey = m.donor_theme || m.donor_rank;
+
+      var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '');
+      if (m.is_super_admin) {
+        // Super admin — eski animatsiya/dizayn saqlanadi, tema effekti QO'SHILMAYDI
+        cls += ' is-super-admin';
+      } else if (m.is_admin) {
+        cls += ' is-admin';
+      } else if (themeKey) {
+        // Oddiy foydalanuvchi/donor — tema effekti
+        cls += ' is-themed is-theme-' + themeKey;
+      }
+
       var badge = '';
       if (m.is_super_admin) {
         badge = '<span class="chat-msg-super-badge"><i class="fa-solid fa-crown"></i> Super Admin</span>';
@@ -3816,7 +3838,7 @@
         leaveGroupRequest();
       });
     }
-    
+
     if (groupCreateBtn) {
       groupCreateBtn.addEventListener('click', function () {
         openGroupCreateModal();
@@ -3827,10 +3849,10 @@
       var cancelBtn = groupCreateModal.querySelector('[data-group-create-cancel]');
       var okBtn = groupCreateModal.querySelector('[data-group-create-ok]');
       var toggleBtns = groupCreateModal.querySelectorAll('.prime-group-create__toggle-btn');
-      
+
       if(cancelBtn) cancelBtn.addEventListener('click', closeGroupCreateModal);
       if(okBtn) okBtn.addEventListener('click', submitGroupCreate);
-      
+
       toggleBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
           toggleBtns.forEach(function(b) { b.classList.remove('prime-group-create__toggle-btn--active'); });
@@ -4394,7 +4416,7 @@
       debounceTimer = window.setTimeout(function () {
         var seq = ++requestSeq;
         var loadingStartedAt = Date.now();
-        var minLoadingMs = 2000;
+        var minLoadingMs = 1000;
         if (activeController) {
           activeController.abort();
         }

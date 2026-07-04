@@ -111,18 +111,13 @@ if (! function_exists('app_storage_asset')) {
             return null;
         }
 
-        $publicDiskDriver = (string) config('filesystems.disks.public.driver', 'local');
-
-        // Local public disk uchun joriy so‘rovning base URL + /storage/... yo‘li ishonchli.
-        // Cloud bucket (s3/r2) uchun esa Storage::url() to‘g‘ri public URL qaytaradi.
-        if ($publicDiskDriver === 'local' && ! app()->runningInConsole()) {
-            $baseUrl = app_public_base_url();
-            if ($baseUrl !== '') {
-                return $baseUrl.'/storage/'.$path;
-            }
+        // Always build absolute URL using app_public_base_url()
+        $baseUrl = app_public_base_url();
+        if ($baseUrl === '') {
+            return '/storage/'.$path;
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+        return $baseUrl.'/storage/'.$path;
     }
 }
 
@@ -275,6 +270,10 @@ if (! function_exists('current_locale')) {
 if (! function_exists('localized_model_value')) {
     function localized_model_value($model, string $field, ?string $locale = null, bool $fallback = true): string
     {
+        if (! is_object($model)) {
+            return '';
+        }
+
         if (! $model) {
             return '';
         }
@@ -360,9 +359,9 @@ if (! function_exists('sanitize_exam_rich_text')) {
 
         $sanitized = '';
         if ($root instanceof \DOMNode) {
-            foreach (iterator_to_array($root->childNodes) as $childNode) {
-                $sanitized .= $document->saveHTML($childNode);
-            }
+        foreach (iterator_to_array($root->childNodes) as $childNode) {
+            $sanitized .= $document->saveHTML($childNode);
+        }
         }
 
         libxml_clear_errors();
@@ -376,23 +375,23 @@ if (! function_exists('sanitize_exam_rich_text_node')) {
     function sanitize_exam_rich_text_node(\DOMNode $parent, array $allowedTags, array $allowedAttributes): void
     {
         foreach (iterator_to_array($parent->childNodes) as $childNode) {
-            if ($childNode->nodeType === XML_COMMENT_NODE) {
-                $parent->removeChild($childNode);
+        if ($childNode->nodeType === XML_COMMENT_NODE) {
+            $parent->removeChild($childNode);
 
-                continue;
-            }
+            continue;
+        }
 
-            if ($childNode->nodeType === XML_TEXT_NODE) {
-                continue;
-            }
+        if ($childNode->nodeType === XML_TEXT_NODE) {
+            continue;
+        }
 
-            if ($childNode->nodeType !== XML_ELEMENT_NODE) {
-                $parent->removeChild($childNode);
+        if ($childNode->nodeType !== XML_ELEMENT_NODE) {
+            $parent->removeChild($childNode);
 
-                continue;
-            }
+            continue;
+        }
 
-            $tagName = strtolower($childNode->nodeName);
+        $tagName = strtolower($childNode->nodeName);
 
             if (! in_array($tagName, $allowedTags, true)) {
                 if (in_array($tagName, ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta'], true)) {
@@ -417,6 +416,7 @@ if (! function_exists('sanitize_exam_rich_text_node')) {
                     $tagAllowedAttributes = $allowedAttributes[$tagName] ?? [];
 
                     if (str_starts_with($attributeName, 'on') || ! in_array($attributeName, $tagAllowedAttributes, true)) {
+                        /** @var \DOMElement $childNode */
                         $childNode->removeAttribute($attribute->nodeName);
 
                         continue;
@@ -424,6 +424,7 @@ if (! function_exists('sanitize_exam_rich_text_node')) {
 
                     if (in_array($attributeName, ['border', 'cellpadding', 'cellspacing', 'colspan', 'rowspan'], true)
                         && preg_match('/^\d{1,2}$/', $attributeValue) !== 1) {
+                        /** @var \DOMElement $childNode */
                         $childNode->removeAttribute($attribute->nodeName);
 
                         continue;
@@ -431,6 +432,7 @@ if (! function_exists('sanitize_exam_rich_text_node')) {
 
                     if ($attributeName === 'scope'
                         && ! in_array(strtolower($attributeValue), ['col', 'row', 'colgroup', 'rowgroup'], true)) {
+                        /** @var \DOMElement $childNode */
                         $childNode->removeAttribute($attribute->nodeName);
                     }
                 }
@@ -637,6 +639,10 @@ if (! function_exists('normalize_school_grade')) {
 }
 
 if (! function_exists('normalize_school_grade_list')) {
+    /**
+     * @param $grades
+     * @return array
+     */
     function normalize_school_grade_list($grades): array
     {
         if ($grades === null) {

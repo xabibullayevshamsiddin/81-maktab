@@ -96,7 +96,7 @@
               alt="{{ $postTitle }}"
               class="js-image-zoom-trigger zoomable-image"
               data-zoom-src="{{ app_storage_asset($post->image) }}"
-              onerror="this.src='{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}'; this.onerror=null; this.removeAttribute('data-zoom-src');"
+              onerror="this.src='{{ app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_48_59 AM.png') }}'; this.onerror=null; this.removeAttribute('data-zoom-src');"
               loading="lazy"
               decoding="async"
               role="button"

@@ -61,6 +61,33 @@
   @endif
 </div>
 
+<div class="exam-form-section" style="margin-top: 1.5rem;">
+  <h6 class="exam-form-section-title" style="display:flex;align-items:center;gap:8px;">
+    <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i>
+    Xavfsizlik rejimi
+  </h6>
+  <p class="exam-form-hint" style="margin-bottom:1rem;">
+    Yoqilsa — o'quvchi imtihon boshlagan zahoti to'liq ekran (fullscreen) rejimi yonadi, sahifadan chiqsa yoki skrinshot olsa ogohlantirish keladi va qoidabuzarlik hisoblanadi. O'chirilsa — hech qanday cheklov bo'lmaydi, imtihon oddiy rejimda o'tadi.
+  </p>
+  <label class="d-flex align-items-center gap-3 cursor-pointer" style="user-select:none; padding: 1rem; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); width: fit-content;">
+    <input
+      type="checkbox"
+      name="security_enabled"
+      value="1"
+      id="exam-security-enabled"
+      {{ old('security_enabled', isset($exam) ? ($exam->security_enabled ?? true) : true) ? 'checked' : '' }}
+      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;"
+    >
+    <span>
+      <strong style="color:var(--text);">Xavfsizlik himoyasini yoqish</strong>
+      <span class="d-block small" style="color:var(--muted);margin-top:2px;">
+        Fullscreen, tab o'zgartirish va skrinshot ogohlantirishlari faollashtiriladi
+      </span>
+    </span>
+  </label>
+</div>
+
+
 @if(isset($exam))
   <p class="exam-form-hint mb-20">
     Savollar: <strong>{{ $exam->questions_count }}</strong> / {{ $exam->required_questions }} -

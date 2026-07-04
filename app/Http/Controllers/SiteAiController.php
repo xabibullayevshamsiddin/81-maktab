@@ -53,6 +53,13 @@ class SiteAiController extends Controller
             ], 403);
         }
 
+        // Donor AI chat limiti — donor ranki bo'yicha (supporter=100, premium=300, vip=cheksiz).
+        // Oddiy foydalanuvchilar uchun default limit.
+        $limitCheck = $this->enforceAiChatLimit($user);
+        if ($limitCheck !== null) {
+            return $limitCheck;
+        }
+
         $userMessage = $request->message();
         $mockDelimiter = (string) config('ai.mock_delimiter', '<<<MOCK>>>');
         $history = $this->getConversationHistory((int) $user->id);
@@ -519,6 +526,53 @@ class SiteAiController extends Controller
                 'feedback_enabled' => (bool) ($payload['feedback_enabled'] ?? false),
             ]),
         ]);
+    }
+
+    /**
+     * Donor AI chat limitini tekshirish.
+     * - VIP donor: cheksiz (-1)
+     * - Premium donor: 300/oy
+     * - Supporter donor: 100/oy
+     * - Oddiy foydalanuvchi: 20/oy (default)
+     *
+     * @return JsonResponse|null — null=OK, JsonResponse=limit oshdi
+     */
+    private function enforceAiChatLimit($user): ?JsonResponse
+    {
+        if (! $this->hasAiInteractionsTable()) {
+            return null;
+        }
+
+        $limit = method_exists($user, 'donorAiChatLimit') ? $user->donorAiChatLimit() : 20;
+
+        // Cheksiz limit (VIP = PHP_INT_MAX)
+        if ($limit >= PHP_INT_MAX) {
+            return null;
+        }
+
+        // Oylik so'rovlarni sanaymiz (current month)
+        $usedThisMonth = AiInteraction::query()
+            ->where('user_id', $user->id)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        if ($usedThisMonth >= $limit) {
+            $rankLabel = method_exists($user, 'donorRankLabel') ? $user->donorRankLabel() : null;
+            $message = $rankLabel
+                ? "Sizning {$rankLabel} limitingiz ({$limit} ta so'rov/oy) tugadi. Iltimos keyingi oyni kuting yoki VIP darajaga ko'tariling."
+                : "Oylik AI so'rovlaringiz limiti ({$limit} ta) tugadi. Donor bo'lib ko'proq so'rov oling!";
+
+            return response()->json([
+                'success' => false,
+                'error' => $message,
+                'limit_exceeded' => true,
+                'limit' => $limit,
+                'used' => $usedThisMonth,
+            ], 429);
+        }
+
+        return null;
     }
 
     private function hasAiInteractionsTable(): bool

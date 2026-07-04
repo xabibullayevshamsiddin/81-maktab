@@ -10,6 +10,7 @@ use App\Models\OneTimeCode;
 use App\Models\Result;
 use App\Models\TeacherComment;
 use App\Models\User;
+use App\Models\UserActivity;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -142,6 +143,12 @@ class ProfileController extends Controller
 
         $examResultsCount = $this->userResultsBaseQuery($user)->count();
 
+        $activities = UserActivity::query()
+            ->where('user_id', $user->id)
+            ->latest('occurred_at')
+            ->limit(30)
+            ->get();
+
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
         $passwordChangeUnlocked = $this->hasConfirmedPasswordChange($request, (int) $user->id);
 
@@ -163,7 +170,8 @@ class ProfileController extends Controller
             'examResultsCount',
             'pendingEmail',
             'passwordChangeUnlocked',
-            'panel'
+            'panel',
+            'activities'
         ));
     }
 
@@ -237,9 +245,29 @@ class ProfileController extends Controller
             $payload['avatar'] = null;
         }
 
+        $avatarChanged = array_key_exists('avatar', $payload) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar'];
+
         $user->update($payload);
 
-        if (array_key_exists('avatar', $payload) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
+        \App\Services\UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_PROFILE_UPDATED,
+            'Profil ma\'lumotlari yangilandi',
+            ['fields' => array_keys($payload)],
+            ['fields' => $payload]
+        );
+
+        if ($avatarChanged) {
+            \App\Services\UserActivityLogger::log(
+                $user,
+                \App\Models\UserActivity::TYPE_AVATAR_CHANGED,
+                $payload['avatar'] ? 'Profil rasmi yangilandi' : 'Profil rasmi olib tashlandi',
+                ['avatar' => $previousAvatar],
+                ['avatar' => $payload['avatar']]
+            );
+        }
+
+        if ($avatarChanged && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
             $imageService->deleteImage($previousAvatar);
         }
 
@@ -334,6 +362,12 @@ class ProfileController extends Controller
             'password' => Hash::make($validated['password']),
             'remember_token' => Str::random(60),
         ])->save();
+
+        \App\Services\UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_PASSWORD_CHANGED,
+            'Parol o\'zgartirildi'
+        );
 
         $this->clearPasswordChangeConfirmation($request);
         $request->session()->regenerate();
@@ -509,10 +543,19 @@ class ProfileController extends Controller
                 ->with('toast_type', 'error');
         }
 
+        $oldEmail = $user->email;
         $user->update([
             'email' => $pending,
             'email_verified_at' => now(),
         ]);
+
+        \App\Services\UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_EMAIL_CHANGED,
+            'Email manzili o\'zgartirildi',
+            ['old_email' => $oldEmail],
+            ['new_email' => $pending]
+        );
 
         $otp->delete();
         RateLimiter::clear($this->emailChangeVerifyKey($pending));
@@ -786,6 +829,13 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // CSV export — faqat VIP donor uchun (donorCanExport imtiyozlari)
+        if (! $user->donorCanExport()) {
+            return redirect()->route('profile.results.index')
+                ->with('error', 'CSV export faqat VIP donorlar uchun mavjud. VIP darajaga ko\'tarilib, barcha natijalaringizni eksport qiling!')
+                ->with('toast_type', 'error');
+        }
+
         $results = $this->userResultsBaseQuery($user)
             ->with('exam:id,title,total_points,passing_points')
             ->latest('submitted_at')
@@ -799,6 +849,13 @@ class ProfileController extends Controller
     public function exportSingleResult(Request $request, Result $result)
     {
         $user = $request->user();
+
+        // CSV export — faqat VIP donor uchun
+        if (! $user->donorCanExport()) {
+            return redirect()->route('profile.results.index')
+                ->with('error', 'CSV export faqat VIP donorlar uchun mavjud.')
+                ->with('toast_type', 'error');
+        }
 
         $result = $this->userResultsBaseQuery($user)
             ->with('exam:id,title,total_points,passing_points')

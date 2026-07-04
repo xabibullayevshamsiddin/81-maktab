@@ -89,7 +89,7 @@
 
         <article class="detail-image-card reveal">
           <img
-            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
             alt="{{ $teacher->full_name }} rasmi"
             loading="lazy"
             decoding="async"

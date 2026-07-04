@@ -1,24 +1,24 @@
 /* ===== Source: style.css ===== */
 :root {
-  --bg: #edf2fb;
-  /* Ko'zga qulay, iliq ko'k-kulrang */
-  --surface: #f7faff;
-  /* Toza oq emas, yum-yum krем-ko'k */
-  --text: #11243d;
-  --muted: #5e7088;
-  --primary: #0d3f78;
-  --primary-2: #1565c0;
-  --accent: #14b8a6;
-  --border: #cfddf0;
-  /* Oldindan biroz yumshaq */
-  --border-soft: rgba(17, 36, 61, 0.07);
-  --border-strong: rgba(17, 36, 61, 0.12);
-  --shadow: 0 14px 40px rgba(13, 63, 120, 0.11);
-  /* Scrollbar — kunduzgi rejim */
-  --scrollbar-track: rgba(13, 63, 120, 0.05);
-  --scrollbar-thumb: rgba(13, 63, 120, 0.22);
-  --scrollbar-thumb-hover: rgba(13, 63, 120, 0.42);
-  --scrollbar-glow: rgba(13, 63, 120, 0.10);
+  /* Aurora Glassmorphism Light Theme */
+  --bg: #EEF2F6;
+  --surface: rgba(255, 255, 255, 0.72);
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #3b82f6;
+  --primary-2: #60a5fa;   
+  --accent: #fbbf24;      
+  --danger: #ef4444;
+  --border: rgba(148, 163, 184, 0.3);
+  
+  --border-soft: rgba(148, 163, 184, 0.15);
+  --border-strong: rgba(148, 163, 184, 0.4);
+  --shadow: 0 10px 30px rgba(59, 130, 246, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+  
+  --scrollbar-track: rgba(59, 130, 246, 0.05);
+  --scrollbar-thumb: rgba(59, 130, 246, 0.2);
+  --scrollbar-thumb-hover: rgba(59, 130, 246, 0.4);
+  --scrollbar-glow: rgba(59, 130, 246, 0.1);
   --scrollbar-duration: 0.45s;
 }
 
@@ -412,8 +412,9 @@ a {
 
 .header-main.scrolled {
   top: 10px;
-  background: rgba(5, 24, 48, 0.88);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--surface);
+  border-color: var(--border-soft);
+  box-shadow: var(--shadow);
 }
 
 .page-header .logo {
@@ -452,7 +453,7 @@ a {
 
 /* PRIME LEVEL NAV-LINK */
 .nav-link {
-  color: #e2e8f0;
+  color: var(--text);
   font-weight: 500;
   font-size: 14.5px;
   padding: 5px 8px;
@@ -7622,13 +7623,13 @@ body.modal-open {
 }
 
 .footer ul li a:hover {
-  color: #fff;
+  color: var(--primary);
 }
 
 .footer-cop p,
 .footer-com p {
   font-size: 14px;
-  color: #c3d7f0;
+  color: var(--muted);
 }
 
 .footer-cop p a {
@@ -7642,7 +7643,7 @@ body.modal-open {
 }
 
 .footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--border-soft);
   text-align: center;
   padding: 14px;
   font-size: 13px;
@@ -8886,8 +8887,8 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 /* Footer */
 /* Professional Elite Footer */
 .footer {
-  background: #050b14;
-  color: #e2e8f0;
+  background: var(--surface);
+  color: var(--text);
   padding-top: 20px;
   position: relative;
   overflow: hidden;
@@ -8940,14 +8941,14 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 .footer-brand .footer-logo span {
   font-size: 20px;
   font-weight: 800;
-  color: #fff;
+  color: var(--text);
   letter-spacing: -0.5px;
 }
 
 .footer-desc {
   font-size: 14px;
   line-height: 1.6;
-  color: #94a3b8;
+  color: var(--muted);
   margin-bottom: 24px;
 }
 
@@ -8962,10 +8963,10 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
-  color: #94a3b8;
+  color: var(--muted);
   font-size: 18px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
@@ -8982,7 +8983,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 .footer-title {
   font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
   margin-bottom: 24px;
   position: relative;
   padding-bottom: 10px;
@@ -9009,7 +9010,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 }
 
 .footer-links a {
-  color: #94a3b8;
+  color: var(--muted);
   text-decoration: none;
   font-size: 14px;
   transition: all 0.2s ease;
@@ -9017,7 +9018,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 }
 
 .footer-links a:hover {
-  color: #fff;
+  color: var(--primary);
   transform: translateX(4px);
 }
 
@@ -9032,7 +9033,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   gap: 12px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .footer-contact-list i {
@@ -9047,7 +9048,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 }
 
 .footer-contact-list a:hover {
-  color: #fff;
+  color: var(--primary);
 }
 
 .footer-map-action .btn-outline-footer {
@@ -15086,10 +15087,10 @@ body:has(#chat-widget) .prime-audio-toggle {
 /* 4. AI Widget Enhancements: Pro Max Glassmorphism */
 
 .chat-panel {
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  backdrop-filter: blur(25px) saturate(170%) !important;
-  -webkit-backdrop-filter: blur(25px) saturate(170%) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  background: var(--bg-panel-light, rgba(255, 255, 255, 0.72)) !important;
   box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.25),
     inset 0 0 0 1px rgba(255, 255, 255, 0.2),
@@ -15108,10 +15109,16 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 .chat-panel-header {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(5px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: var(--surface) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-soft) !important;
   padding: 18px 20px !important;
+  color: var(--text) !important;
+}
+.chat-panel-header .chat-panel-btn {
+  color: var(--text) !important;
+  background: rgba(148, 163, 184, 0.15) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
 }
 
 .chat-input-wrap {
@@ -16253,7 +16260,7 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 .footer-links a {
-  color: #94a3b8;
+  color: var(--muted);
   font-size: 14.5px;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -16261,7 +16268,7 @@ body:has(#chat-widget) .prime-audio-toggle {
 }
 
 .footer-links a:hover {
-  color: #fff;
+  color: var(--primary);
   transform: translateX(8px);
 }
 
@@ -16301,7 +16308,7 @@ body:has(#chat-widget) .prime-audio-toggle {
   gap: 12px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: #94a3b8;
+  color: var(--muted);
   line-height: 1.5;
 }
 
@@ -16341,10 +16348,10 @@ body:has(#chat-widget) .prime-audio-toggle {
    BOMBA PRO MAX ULTRA � FINAL FOOTER DESIGN (OVERRIDE)
    ========================================================================== */
 .footer {
-  background: rgba(7, 27, 50, 0.88) !important;
+  background: var(--surface) !important;
   backdrop-filter: blur(25px) !important;
   -webkit-backdrop-filter: blur(25px) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top: 1px solid var(--border-soft) !important;
   padding: 0 !important;
 }
 

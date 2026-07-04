@@ -106,10 +106,10 @@ class Course extends Model
     public function instructorImageUrl(): string
     {
         if ($this->teacher?->image) {
-            return app_storage_asset($this->teacher->image) ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+            return app_storage_asset($this->teacher->image) ?? app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
         }
 
-        return $this->creator?->avatar_url ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+        return $this->creator?->avatar_url ?? app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
     }
 
     public function instructorBio(int $limit = 260): string
@@ -150,7 +150,7 @@ class Course extends Model
     public function coverImageUrl(): string
     {
         if (! empty($this->image)) {
-            return app_storage_asset($this->image) ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+            return app_storage_asset($this->image) ?? app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
         }
 
         return $this->instructorImageUrl();

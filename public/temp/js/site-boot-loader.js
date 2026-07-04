@@ -1,13 +1,16 @@
 /**
- * Boot loader: sahifa to‘liq yuklangach silliq yopiladi (min vaqt — animatsiya ko‘rinsin).
+ * Boot loader: faqat birinchi tashrifda ko‘rsatiladi, keyingi sahifalar darhol ochiladi.
  */
 (function () {
   var loader = document.getElementById('site-boot-loader');
   if (!loader) return;
 
-  /* Cinematic transition durations */
-  var minMs = 1200;      /* Stay black for 1.2s */
-  var removeDelayMs = 1500; /* Fade out takes longer */
+  // sessionStorage tekshiruvini olib tashladik, endi har sahifa yuklanganda chiqadi.
+  // var seenKey = 'site-boot-seen';
+  // if (sessionStorage.getItem(seenKey) === '1') { ... }
+
+  var minMs = 600;
+  var removeDelayMs = 700;
   var start = Date.now();
 
   function hide() {
@@ -31,5 +34,3 @@
     window.addEventListener('load', hide, { once: true });
   }
 })();
-
-

@@ -17,6 +17,7 @@ class ExamData
         public int $passingPoints,
         public array $allowedGrades,
         public ?string $availableFrom,
+        public bool $securityEnabled = true,
     ) {}
 
     public static function fromRequest(SaveExamRequest $request): self
@@ -29,6 +30,7 @@ class ExamData
             passingPoints: (int) $request->validated('passing_points'),
             allowedGrades: normalize_school_grade_list((array) $request->input('allowed_grades', [])),
             availableFrom: $request->validated('available_from'),
+            securityEnabled: (bool) $request->input('security_enabled', false),
         );
     }
 
@@ -45,6 +47,7 @@ class ExamData
             'passing_points' => $this->passingPoints,
             'allowed_grades' => $this->allowedGrades,
             'available_from' => $this->availableFrom,
+            'security_enabled' => $this->securityEnabled,
         ];
 
         if ($createdBy !== null) {

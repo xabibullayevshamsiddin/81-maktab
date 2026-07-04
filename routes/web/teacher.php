@@ -13,7 +13,4 @@ Route::middleware(['auth', 'active', 'role:teacher,super_admin,admin'])->group(f
     Route::get('course-open/{course}/edit', [TeacherCourseController::class, 'edit'])->name('teacher.courses.edit');
     Route::put('course-open/{course}', [TeacherCourseController::class, 'update'])->name('teacher.courses.update');
     Route::delete('course-open/{course}', [TeacherCourseController::class, 'destroy'])->name('teacher.courses.destroy');
-    Route::get('course-open/{course}/verify', [TeacherCourseController::class, 'verifyForm'])->name('teacher.courses.verify.form');
-    Route::post('course-open/{course}/verify', [TeacherCourseController::class, 'verifyCode'])->name('teacher.courses.verify');
-    Route::post('course-open/{course}/resend', [TeacherCourseController::class, 'resendCode'])->name('teacher.courses.verify.resend');
 });

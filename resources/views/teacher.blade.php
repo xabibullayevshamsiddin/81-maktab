@@ -87,7 +87,7 @@
             <article class="teacher-card prime-glow-hover" data-teacher-card data-search-text="{{ e(mb_strtolower($teacher->full_name)) }}" data-subject="{{ e(mb_strtolower($teacherSubject)) }}">
               <div class="teacher-photo-wrap">
                 <img
-                  src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+                  src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
                   alt="{{ $teacher->full_name }} profil rasmi"
                   class="teacher-photo"
                   loading="lazy"
@@ -125,7 +125,7 @@
                     </button>
                   </form>
                 @endauth
-              
+
                 <button
                   type="button"
                   class="btn btn-sm btn-outline share-btn js-share-trigger"

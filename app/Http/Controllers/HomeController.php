@@ -217,6 +217,19 @@ class HomeController extends Controller
             'message' => sanitize_plain_text($validated['message']),
         ];
 
+        // Donor prioritet — VIP/Premium donorlarning murojaatini ajratib ko'rsatish.
+        // Note maydoniga donor belgisini qo'shamiz (admin ro'yxatida darhol ko'rinadi).
+        if ($user && method_exists($user, 'isDonor') && $user->isDonor()) {
+            $priority = method_exists($user, 'donorPriority') ? $user->donorPriority() : 0;
+            if ($priority > 0) {
+                $rankLabel = method_exists($user, 'donorRankLabel') ? $user->donorRankLabel() : 'Donor';
+                $donorTag = "[{$rankLabel} - Prioritet: {$priority}]";
+                $data['note'] = $data['note']
+                    ? $donorTag . ' ' . $data['note']
+                    : $donorTag;
+            }
+        }
+
         ContactMessage::query()->create($data);
 
         $msg = 'Xabaringiz qabul qilindi. Tez orada siz bilan bog‘lanamiz.';

@@ -193,7 +193,7 @@ body {
 }
 
 .filter-tag,
-.filter-reset-link {
+.filter-reset-link {cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1144,11 +1144,11 @@ body {
    ========================================================================== */
 .footer {
   position: relative !important;
-  background: rgba(7, 27, 50, 0.88) !important;
+  background: var(--surface) !important;
   backdrop-filter: blur(25px) !important;
   -webkit-backdrop-filter: blur(25px) !important;
-  color: #d2e1f5 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
+  border-top: 1px solid var(--border-soft) !important;
   overflow: hidden !important;
   padding: 0 !important;
 }
@@ -1212,32 +1212,32 @@ body {
   font-family: 'Outfit', sans-serif !important;
   font-size: 24px !important;
   font-weight: 800 !important;
-  color: #fff !important;
+  color: var(--text) !important;
 }
 
 .footer-desc {
   font-size: 14.5px !important;
   line-height: 1.7 !important;
-  color: #94a3b8 !important;
+  color: var(--muted) !important;
 }
 
 .footer-title {
   font-family: 'Outfit', sans-serif !important;
   font-size: 18px !important;
   font-weight: 700 !important;
-  color: #fff !important;
+  color: var(--text) !important;
   margin-bottom: 24px !important;
 }
 
 .footer-links a {
-  color: #94a3b8 !important;
+  color: var(--muted) !important;
   transition: all 0.3s ease !important;
   display: inline-block !important;
   text-decoration: none !important;
 }
 
 .footer-links a:hover {
-  color: #fff !important;
+  color: var(--primary) !important;
   transform: translateX(10px) !important;
 }
 
@@ -1260,7 +1260,7 @@ body {
 }
 
 .footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-top: 1px solid var(--border-soft) !important;
   padding: 30px 20px !important;
   text-align: center !important;
 }

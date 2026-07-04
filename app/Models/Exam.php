@@ -22,11 +22,13 @@ class Exam extends Model
         'is_active',
         'available_from',
         'created_by',
+        'security_enabled',
     ];
 
     protected $casts = [
         'allowed_grades' => 'array',
         'is_active' => 'boolean',
+        'security_enabled' => 'boolean',
         'available_from' => 'datetime',
     ];
 

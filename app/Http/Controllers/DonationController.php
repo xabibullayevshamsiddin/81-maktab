@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Donation;
-use Illuminate\Http\Request;
 
 class DonationController extends Controller
 {
@@ -15,8 +14,7 @@ class DonationController extends Controller
             ->where("total_donated", ">", 0)
             ->whereNotNull("donation_rank")
             ->orderByDesc("total_donated")
-            ->take(10)
-            ->get();
+            ->paginate(10);
 
         return view("donation.index", [
             "ranks" => $ranks,
