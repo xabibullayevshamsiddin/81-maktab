@@ -1836,6 +1836,41 @@ class AiService
                 ."- Xususiyat: Markaziy Osiyadagi eng katta shahar 🏙️";
         }
 
+        // Personal exam results (o'quvchining shaxsiy natijalar)
+        if ($user && Str::contains($q, ['mening imtihon natija', 'mening natija', 'natijalarimni ko\'rsat', 'natijalarimni korsat', 'imtihon natijalarim', 'o\'z natijalarim', 'qanday bahola', 'qanday ball', 'nechaga o\'tdim', 'o\'tdimmi', 'yiqildimmi'])) {
+            $results = Result::where('user_id', $user->id)
+                ->with('exam:id,title')
+                ->orderByDesc('submitted_at')
+                ->limit(5)
+                ->get();
+
+            if ($results->isEmpty()) {
+                return "**Sizning imtihon natijalaringiz:**\n\n"
+                    ."Hozircha imtihon natijalaringiz mavjud emas. 📋\n"
+                    ."- Imtihonlarni ko'rish: ".route('exam.index')."\n"
+                    ."- Profil natijalarni ko'rish: ".route('profile.results.index');
+            }
+
+            $resultText = "**Sizning so'nggi imtihon natijalaringiz:**\n\n";
+            foreach ($results as $idx => $result) {
+                $examTitle = $result->exam?->title ?? 'Noomi'zin imtihon';
+                $score = $result->score ?? 0;
+                $status = $result->passed ? '✅ O\'tdi' : '❌ O\'tmadi';
+                $date = $result->submitted_at?->format('d.m.Y H:i') ?? 'Sana mavjud emas';
+                $points = "{$result->points_earned}/{$result->points_max}";
+
+                $resultText .= "**".($idx + 1).". {$examTitle}**\n"
+                    ."- Ball: {$score}%  |  Ballar: {$points}\n"
+                    ."- Holati: {$status}\n"
+                    ."- Sana: {$date}\n\n";
+            }
+
+            $resultText .= "📊 Barcha natijalarni ko'rish: ".route('profile.results.index')."\n"
+                ."📝 Imtihonlarni ko'rish: ".route('exam.index');
+
+            return $resultText;
+        }
+
         return null;
     }
 
