@@ -1871,6 +1871,67 @@ class AiService
             return $resultText;
         }
 
+        // Site statistics — posts, courses, donations
+        if (Str::contains($q, ['nechata post', 'post bor', 'yangiliklari soni', 'nechata yangilik', 'nechta yangilik', 'nechta kurs', 'kurs sonini', 'qancha kurs', 'saytda qancha', 'saytda nechata'])) {
+            $postCount = \App\Models\Post::where('status', \App\Models\Post::STATUS_PUBLISHED)->count();
+            $courseCount = \App\Models\Course::where('status', \App\Models\Course::STATUS_PUBLISHED)->count();
+            $examCount = \App\Models\Exam::where('is_active', true)->count();
+            $userCount = \App\Models\User::where('role_id', 1)->count();
+            
+            return "**81-IDUM Saytidagi kontentlar:**\n"
+                ."- 📝 **Yangiliklar (Postlar)**: {$postCount}+ post\n"
+                ."- 📚 **Kurslar**: {$courseCount}+ kurs\n"
+                ."- 📋 **Imtihonlar**: {$examCount}+ aktiv imtihon\n"
+                ."- 👥 **O'quvchilar**: {$userCount}+ ro'yxatdan o'tgan foydalanuvchi\n\n"
+                ."🔗 Yangiliklar: ".route('post')."\n"
+                ."🔗 Kurslar: ".route('courses')."\n"
+                ."🔗 Imtihonlar: ".route('exam.index');
+        }
+
+        // Specific course types queries
+        if (Str::contains($q, ['qaysi kurslar ochilgan', 'qanday kurs ruyxati', 'kurslar ro\'yxati', 'mavjud kurslar', 'aktiv kurslar', 'faol kurs'])) {
+            $courses = \App\Models\Course::where('status', \App\Models\Course::STATUS_PUBLISHED)
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get(['id', 'title', 'description', 'level']);
+
+            if ($courses->isEmpty()) {
+                return "Hozircha ko'rsatadigan aktiv kurslar mavjud emas. Tez orada qo'shiladi! 🎓";
+            }
+
+            $courseList = "**Mavjud Kurslar (So'nggi 10 ta):**\n\n";
+            foreach ($courses as $idx => $course) {
+                $level = $course->level ?? 'Nooma'lum';
+                $courseList .= "**".($idx + 1).". {$course->title}** ({$level})\n";
+                if ($course->description) {
+                    $courseList .= "   ".Str::limit($course->description, 100)."\n";
+                }
+            }
+
+            $courseList .= "\n🔗 Barcha kurslarni ko'rish: ".route('courses')."\n"
+                ."📝 Kursga yozilish uchun sahifaga kiring va \"Yozilish\" tugmasini bosing.";
+
+            return $courseList;
+        }
+
+        // Donations and payments info
+        if (Str::contains($q, ['donatsiya', 'xayriya', 'to\'lov', 'pul yubor', 'maktabga pul', 'qo\'llash', 'qollash', 'kilit', 'activation'])) {
+            $donationEnabled = SiteSetting::get('donation_enabled', '1') === '1';
+            
+            if (!$donationEnabled) {
+                return "Donatsiya xizmati hozircha mavjud emas. Keyinroq qo'shiladi! 💝";
+            }
+
+            return "**Xayriya va Donatsiya:**\n\n"
+                ."81-IDUM maktabining rivojlanishiga hissa qoʻshmoqchi boʻlsangiz:\n"
+                ."- Saytda donatsiya sahifasi mavjud: ".route('donation.index')."\n"
+                ."- Aktivatsiya kaliti orqali xususi xizmatlarga kirish mumkin.\n"
+                ."- Qoʻllab-quvvatlovchilarimiz maktabni yanada yaxshi qilib boradi. 🙏\n\n"
+                ."**To'lov usullari**: Pul o'tkazish, onlayn pul, qoqon kabi turli usullar mavjud.\n"
+                ."- Donatsiya sahifasi: ".route('donation.index')."\n"
+                ."- Murojaat: ".route('contact');
+        }
+
         return null;
     }
 
