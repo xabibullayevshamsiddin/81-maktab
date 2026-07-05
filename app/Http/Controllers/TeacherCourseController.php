@@ -55,6 +55,17 @@ class TeacherCourseController extends Controller
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'title.required' => 'Kurs sarlavhasini yozing.',
+            'title.max' => 'Sarlavha 255 belgidan oshmasligi kerak.',
+            'description.required' => 'Kurs haqida qisqacha yozing.',
+            'start_date.required' => 'Kurs qachon boshlanishini kiriting.',
+            'start_date.date' => 'Boshlanish sanasi noto‘g‘ri formatda.',
+            'teacher_id.required' => 'Ustozni tanlang.',
+            'teacher_id.exists' => 'Tanlangan ustoz mavjud emas.',
+            'image.image' => 'Fayl rasm bo‘lishi kerak.',
+            'image.max' => 'Rasm hajmi 5 MB dan oshmasligi kerak.',
+            'image.mimes' => 'Rasm JPG, PNG yoki WebP formatida bo‘lishi kerak.',
         ]);
 
         $teacherId = null;
@@ -178,6 +189,15 @@ class TeacherCourseController extends Controller
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'title.required' => 'Kurs sarlavhasini yozing.',
+            'title.max' => 'Sarlavha 255 belgidan oshmasligi kerak.',
+            'description.required' => 'Kurs haqida qisqacha yozing.',
+            'start_date.required' => 'Kurs qachon boshlanishini kiriting.',
+            'start_date.date' => 'Boshlanish sanasi noto‘g‘ri formatda.',
+            'image.image' => 'Fayl rasm bo‘lishi kerak.',
+            'image.max' => 'Rasm hajmi 5 MB dan oshmasligi kerak.',
+            'image.mimes' => 'Rasm JPG, PNG yoki WebP formatida bo‘lishi kerak.',
         ]);
 
         if ($isAdmin) {

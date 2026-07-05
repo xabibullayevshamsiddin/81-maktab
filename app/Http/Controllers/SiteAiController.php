@@ -34,12 +34,8 @@ class SiteAiController extends Controller
     public function generate(GenerateAiMessageRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        if (! $user) {
-            return response()->json([
-                'success' => false,
-                'error' => "AI yordamchidan foydalanish uchun avval ro'yxatdan o'ting va tizimga kiring.",
-            ], 401);
+        if ($user) {
+            $this->enforceAiChatLimit($user);
         }
 
         if (SiteSetting::get('ai_chat_enabled', '1') !== '1') {
@@ -543,7 +539,7 @@ class SiteAiController extends Controller
             return null;
         }
 
-        $limit = method_exists($user, 'donorAiChatLimit') ? $user->donorAiChatLimit() : 20;
+        $limit = method_exists($user, 'donorAiChatLimit') ? $user->donorAiChatLimit() : 50;
 
         // Cheksiz limit (VIP = PHP_INT_MAX)
         if ($limit >= PHP_INT_MAX) {
@@ -593,21 +589,6 @@ class SiteAiController extends Controller
 
         if ($clean === '') {
             return "Kechirasiz, hozir javob bo'sh chiqdi. Iltimos, savolni qayta yuboring.";
-        }
-
-        $q = mb_strtolower($userMessage);
-
-        if (Str::contains($q, ['muhim', 'shoshilinch', 'urgent'])
-            && ! Str::contains(mb_strtolower($clean), 'muhim:')) {
-            if (preg_match('/(?<=[.!?])\s+/u', $clean)) {
-                $parts = preg_split('/(?<=[.!?])\s+/u', $clean, 2);
-                $first = trim((string) ($parts[0] ?? $clean));
-                $rest = trim((string) ($parts[1] ?? ''));
-
-                if ($rest !== '') {
-                    $clean = "MUHIM: {$first}\n\n{$rest}";
-                }
-            }
         }
 
         // Convert URLs to Markdown links for safe frontend parsing

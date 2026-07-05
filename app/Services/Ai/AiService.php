@@ -1481,6 +1481,361 @@ class AiService
                 ."- Agar siz kurs ochmoqchi bo'lsangiz, avval rolingiz va ruxsatingiz bo'yicha admin bilan kelishish kerak.";
         }
 
+        // Maktab haqida umumiy savollari
+        if (Str::contains($q, ['81-idum nima', 'idum nima', 'maktab ismini', 'nomi nima'])) {
+            return "**81-IDUM** — \"81-Xalq Ta'lim Ujumi Maktab\" ning qisqa shakli. Tashkent shahrida joylashgan zamonaviy ta'lim muassasasi. 🏫";
+        }
+
+        if (Str::contains($q, ['maktab qachon tashkil', 'qachon ochilgan', 'yilida ochilgan', 'tarixi', 'necha yil bor'])) {
+            return "81-IDUM maktabi 1980-yillarda tashkil topgan, shundan beri zamonaviy ta'lim berish uchun doimiy yangilanib bormoqda. 📚";
+        }
+
+        if (Str::contains($q, ['maktabda nechta o\'quvchi', 'nechta talaba', 'nechta o\'quvchi bor', 'o\'quvchilar soni'])) {
+            $studentCount = \App\Models\User::where('role_id', 1)->count();
+            return "Hozirda maktabda taxminan **{$studentCount}+ o'quvchi** tahrif qilingan. 👥";
+        }
+
+        if (Str::contains($q, ['nechta ustoz', 'nechta muallim', 'o\'qituvchilar soni', 'nechta o\'qituvchi'])) {
+            $teacherCount = \App\Models\Teacher::where('is_active', true)->count();
+            return "Maktabda **{$teacherCount}+** faol o'qituvchi va shunga o'xshash sonli boshqa xodim ishlaydi. 👨‍🏫";
+        }
+
+        if (Str::contains($q, ['davlat maktabimi', 'davlat yoki xususi', 'xususi maktabmi', 'qaysi turdagi'])) {
+            return "**81-IDUM** — davlat ta'lim muassasasi. Barcha davlat standartlariga javob beradi va davlat nazorati ostida ishlaydi. 🏛️";
+        }
+
+        if (Str::contains($q, ['akkreditatsiya', 'litsenziya', 'rasmiy', 'sertifikat', 'akkred'])) {
+            return "**Rasmiy ma'lumot**: Maktab barcha kerakli akkreditatsiya va litsenziyalarga ega. Davlat ta'lim standartlari bo'yicha faoliyat olib boradi. ✅";
+        }
+
+        // Qabul jarayoni
+        if (Str::contains($q, ['farzandimni ro\'yxatdan', 'qanday ro\'yxat', 'ariza qayerga', 'ariza topshirish'])) {
+            return "**Qabul jarayoni:**\n"
+                ."- Qabul odatda iyun-avgust oylarida **my.maktab.uz** portali orqali onlayn amalga oshiriladi.\n"
+                ."- Ota-ona uchun asosiy hujjatlar: tug'ilganlik guvohnomasi, pasport nusxasi.\n"
+                ."- Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling.\n"
+                ."📞 Telefon: ".SiteSetting::get('school_phone', '+99890-958-00-67')."\n"
+                ."✉️ Email: ".SiteSetting::get('school_email', 'info@school.uz');
+        }
+
+        if (Str::contains($q, ['necha yoshdan qabul', 'yoshiga qabul', 'minimal yosh', 'qancha yoshga'])) {
+            return "**Qabul uchun yosh talabi**\n"
+                ."- 1-sinf: 6-7 yosh to'lgan bolalar qabul qilinadi.\n"
+                ."- Qabul vaqtida tug'ilgan sanasi bo'yicha tekshirish o'tkaziladi.\n"
+                ."- Aniq tartib davlat standartida belgilangan. 📋";
+        }
+
+        if (Str::contains($q, ['bo\'sh o\'rinlar bormi', 'qancha o\'rin', 'joylar tugadimi', 'ariza oralama'])) {
+            $enrollmentCount = \App\Models\CourseEnrollment::count();
+            return "**Bo'sh o'rinlar haqida**\n"
+                ."- O'rinlar mavjudligi yil davomida o'zgaradi.\n"
+                ."- Aniq ma'lumot uchun maktab ma'muriyatiga murojaat qiling.\n"
+                ."- Qabul vaqti boshlanganda e'lon qilinadi. 📣";
+        }
+
+        if (Str::contains($q, ['boshqa tumandan qabul', 'boshqa viloyatdan', 'kiritsa bo\'ladimi', 'tashqaridan'])) {
+            return "Boshqa tumandan o'quvchi qabul qilish maktab siyosatiga va bo'sh o'rinlarga bog'liq. Aniq javob uchun maktab ma'muriyatiga murojaat qiling.";
+        }
+
+        if (Str::contains($q, ['sinfda nechta o\'quvchi', 'sinf o\'rnini', 'sinfning hajmi', 'bir sinfda'])) {
+            return "Sinflardagi o'quvchi soni odatda 30-35 ta. Aniq raqam ta'lim standartlari va maktab imkoniyatlariga bog'liq. 👥";
+        }
+
+        // Dars va jadval
+        if (Str::contains($q, ['necha smenada', 'smena nechta', 'bir smenami', 'shift nechta'])) {
+            return "Maktab **bir smenada** (soat 08:30-dan boshlanib) o'qitadi. Yanada to'liq jadval uchun maktabga murojaat qiling. ⏰";
+        }
+
+        if (Str::contains($q, ['chet til', 'til qaysilari', 'ingliz', 'rus tili', 'qaysi tillar'])) {
+            return "**Chet tillar:**\n"
+                ."- Asosiy: **Ingliz tili** (chuqurlashtirib o'qitiladi)\n"
+                ."- Qo'shimcha: Boshqa tillar opsional to'garaklar orqali mavjud bo'lishi mumkin.\n"
+                ."- Fan sifatida boshqa chet tillar haqida maktabga so'rang. 🌍";
+        }
+
+        if (Str::contains($q, ['uy vazifasini qayerdan', 'darslik qayerdan', 'material qayerdan', 'uy ishini'])) {
+            return "**Uy vazifasi va materiallar:**\n"
+                ."- Uy vazifasi elektron kundalikda yoki o'qituvchi tomonidan beriladi.\n"
+                ."- Kutubxonadan darsliklar olish mumkin: ".route('contact')."\n"
+                ."- Saytda opsional ta'lim materiallari va to'garaklar mavjud: ".route('courses')."\n"
+                ."- Aniq savol uchun sinf o'qituvchisiga murojaat qiling. 📖";
+        }
+
+        // O'qituvchilar
+        if (Str::contains($q, ['matematikadan kim', 'kim fandan dars', 'fan o\'qituvchisi kim', 'tarix o\'qituvchisi'])) {
+            return "**O'qituvchilar haqida ma'lumot**\n"
+                ."- Ustozlar profili saytda mavjud: ".route('teacher')."\n"
+                ."- Fan bo'yicha o'qituvchini bilib olish uchun sinf rahbariga murojaat qiling.\n"
+                ."- Opsional kurslarni ko'rishda ustozning nomini ko'rishingiz mumkin: ".route('courses')."\n"
+                ."👨‍🏫 Aniq tafsilotlar uchun maktabga murojaat qiling.";
+        }
+
+        if (Str::contains($q, ['direktor o\'rinbosari', 'o\'rinbosarlar', 'direktor o\'rni bosarlari', 'direktor masulai'])) {
+            return "**Ma'muriyat tuzilmasi:**\n"
+                ."- Direktor va uning o\'rinbosarlari maktab ta'limiy jarayonini nazorat qiladi.\n"
+                ."- Aniq isimlar va vazifalar uchun rasmiy maktab saytiga yoki admin paneliga murojaat qiling.\n"
+                ."- Agar murojaat kerak bo'lsa: ".route('contact')." 📋";
+        }
+
+        if (Str::contains($q, ['psixolog bormi', 'psixolog xodimi', 'ruh salomatligi', 'konsultant'])) {
+            return "Maktabda o'quvchilarning ruh salomatligi va ta'limiy muammolariga yo'l ko'rsatadigan xodimlar mavjud. Aniq ma'lumot uchun maktab ma'muriyatiga murojaat qiling. 🧠";
+        }
+
+        if (Str::contains($q, ['eng tajribali ustoz', 'eng yosh ustoz', 'eng maskul', 'ustoz reytingi'])) {
+            return "**Ustoz haqida ma'lumot:**\n"
+                ."- O'qituvchilar profili va ularning tavsifi saytda mavjud: ".route('teacher')."\n"
+                ."- Har bir ustozning tajriba yili, fan va sertifikatlari ko'rsatilgan.\n"
+                ."- Batafsil ma'lumot uchun profil sahifasiga o'ting. 👨‍🎓";
+        }
+
+        if (Str::contains($q, ['bo\'sh ish o\'rni', 'ustoz kerakmi', 'ish bormi', 'vakansiya'])) {
+            return "Maktabda bo'sh ish o'rni bo'lsa, rasmiy e'lon qilinadi. Ish topish uchun **Aloqa** bo'limi orqali murojaat qiling: ".route('contact')." 📢";
+        }
+
+        // Kurslar
+        if (Str::contains($q, ['qanday kurs', 'qaysi kurslar', 'kurslar nima', 'kurslar ro\'yxati'])) {
+            $courses = \App\Models\Course::where('status', \App\Models\Course::STATUS_PUBLISHED)->limit(5)->pluck('title')->toArray();
+            $courseList = count($courses) > 0 ? implode(', ', $courses) : "ko'plab";
+            return "**Mavjud kurslar:**\n"
+                ."Saytda {$courseList} va yana ko'p kurslar mavjud.\n"
+                ."Barcha kurslar: ".route('courses')."\n"
+                ."✨ Har bir kurs turli mavzular, ustozlar va niva bo'yicha tasniflanadi.";
+        }
+
+        if (Str::contains($q, ['kursga qanday yozil', 'kursga qanday ariza', 'yozilish jarayoni', 'yozilish qanday'])) {
+            return "**Kursga yozilish:**\n"
+                ."- Saytdagi kurs sahifasiga kiring: ".route('courses')."\n"
+                ."- \"Yozilish\" tugmasini bosing va ariza topshiring.\n"
+                ."- Admin tasdiqlash kutishingiz kerak bo'lishi mumkin.\n"
+                ."- O'zingiz yozilgan kurslarni profilingizda ko'rishingiz mumkin. 📝";
+        }
+
+        if (Str::contains($q, ['kurslar pullikmi', 'kurs narxi', 'nechaga kurs', 'to\'lovli kurs'])) {
+            return "**Kurs to'lovi:**\n"
+                ."- Opsional kurslar ba'zida pullik bo'lishi mumkin.\n"
+                ."- Bepul va pullik kurslarning ro'yxati: ".route('courses')."\n"
+                ."- Har bir kurs sahifasida narx va shartlar yozilgan.\n"
+                ."- To'lov tartibi kurs egasi belgilagan. 💳";
+        }
+
+        if (Str::contains($q, ['it kurs', 'dasturlash kurs', 'robototexnika', 'IT bo\'limi'])) {
+            return "**IT va Texnik Kurslar:**\n"
+                ."- IT, dasturlash va texnik to'garaklar mavjud.\n"
+                ."- Qaysilari hozirda faol ekanligini bilib olish uchun: ".route('courses')."\n"
+                ."- Yanada to'liq ma'lumot uchun: ".route('contact')." 💻";
+        }
+
+        if (Str::contains($q, ['onlayn kurs', 'onlayn dars', 'vebinar', 'zoom'])) {
+            return "**Onlayn ta'lim imkoniyati:**\n"
+                ."- Ba'zi kurslar onlayn formatda bo'lishi mumkin.\n"
+                ."- Aniq bo'limi uchun kurs sahifasida ma'lumot yozilgan: ".route('courses')."\n"
+                ."- Jismoniy darslar asosiy, onlayn darslar komplementar bo'lishi mumkin. 📱";
+        }
+
+        if (Str::contains($q, ['kurs necha oy', 'kurs muddat', 'necha hafta davam', 'kurs davomiyligi'])) {
+            return "**Kurs davomiyligi:**\n"
+                ."- Kurs davomiyligi kurs turiga bog'liq: 1-3 oydan 1-2 yilga qadar.\n"
+                ."- Har bir kurs sahifasida davomiyligi yozilgan: ".route('courses')."\n"
+                ."- Aniq muddat uchun kurs egasi bilan bog'laning. ⏱️";
+        }
+
+        // Imtihonlar
+        if (Str::contains($q, ['imtihon qachon bo\'ladi', 'imtihon sanasi', 'imtihon kunlari', 'qachon sinovlash'])) {
+            $activeExams = \App\Models\Exam::where('is_active', true)->count();
+            return "**Imtihonlar:**\n"
+                ."- Hozirda **{$activeExams}+ faol imtihon** mavjud.\n"
+                ."- Imtihon sanalarini ko'rish: ".route('exam.index')."\n"
+                ."- Aniq sana va vaqt imtihon sahifasida yozilgan.\n"
+                ."- Taqvim: ".route('calendar')." 📅";
+        }
+
+        if (Str::contains($q, ['imtihonga tayyorlanish', 'imtihon qanday', 'imtihon shakli', 'tayyorlanish'])) {
+            return "**Imtihonga tayyorlanish:**\n"
+                ."- Imtihon vaqtida savollar ekranda ko'rsatiladi.\n"
+                ."- Test yoki kessay formasi bo'lishi mumkin.\n"
+                ."- Tayyorlanish materiallarini imtihon sahifasida topishingiz mumkin: ".route('exam.index')."\n"
+                ."- Vaqt bo'yicha tayyor bo'ling: ⏰";
+        }
+
+        if (Str::contains($q, ['o\'tish balli', 'balli nechata', 'o\'tish reytingi', 'nechchaga tugadi'])) {
+            return "**Imtihon ballari:**\n"
+                ."- O'tish balli imtihon turiga qarab turli bo'ladi.\n"
+                ."- Odatda 100 balldan 50-70 ball o'tish sifatida hisoblanadi.\n"
+                ."- Aniq talablar imtihon sahifasida yozilgan: ".route('exam.index')." 🎯";
+        }
+
+        if (Str::contains($q, ['imtihon onlaynmi', 'imtihon qog\'ozda', 'test shakli', 'onlayn test'])) {
+            return "Imtihonlar saytda **onlayn format**da o'tkaziladi. Kompyuter yoki telefon orqali saytga kirish kerak. Internet uzilishiga diqqat qiling! 💻";
+        }
+
+        // Taqvim va Tadbirlar
+        if (Str::contains($q, ['bugun qanday tadbirlar', 'bugungi e\'lon', 'bugun nima gap', 'bugun nima bor'])) {
+            $todayEvents = \App\Models\CalendarEvent::whereDate('event_date', now()->toDateString())->count();
+            return "**Bugungi tadbirlar:**\n"
+                ."- Bugun **{$todayEvents}** ta tadbir mavjud bo'lishi mumkin.\n"
+                ."- Yangiliklar va taqvimni tekshiring: ".route('calendar')."\n"
+                ."- Aniq ma'lumot uchun e'lonlarni ko'ring: ".route('post')." 📣";
+        }
+
+        if (Str::contains($q, ['yaqin kunlar yangilik', 'keyingi tadbir', 'yaqinda nima', 'kutilayotgan'])) {
+            $upcomingEvents = \App\Models\CalendarEvent::where('event_date', '>=', now())->take(3)->pluck('title')->toArray();
+            $eventList = count($upcomingEvents) > 0 ? implode(', ', $upcomingEvents) : "ko'plab";
+            return "**Yaqin tadbirlar:**\n"
+                ."- {$eventList} va yana ko'p.\n"
+                ."- To'liq taqvim: ".route('calendar')."\n"
+                ."- Yangiliklar: ".route('post')." 📅";
+        }
+
+        if (Str::contains($q, ['sana bo\'yicha tadbir', 'aprel tadbir', '20 aprelda', 'qaysi kunida'])) {
+            return "**Sana bo'yicha tadbirlar:**\n"
+                ."- Taqvimni filterlab, kerakli sanalar bo'yicha tadbirlarni topishingiz mumkin: ".route('calendar')."\n"
+                ."- Aniq sana uchun yangiliklar yoki e'lonlarni tekshiring: ".route('post')."\n"
+                ."- Maktab ma'muriyatiga murojaat qiling. 📍";
+        }
+
+        if (Str::contains($q, ['ta\'til qachon', 'ta\'til vaqti', 'kanikula', 'dam olish'])) {
+            return "**Ta'til vaqti:**\n"
+                ."- Qish ta\'tili: dekabr-yanvar\n"
+                ."- Bahor ta\'tili: mart-aprel\n"
+                ."- Yoz ta\'tili: iyun-sentyabr\n"
+                ."- Aniq sana taqvimda: ".route('calendar')."\n"
+                ."- Qo'shimcha ma'lumot uchun maktab e'lonlarini tekshiring. 🎉";
+        }
+
+        if (Str::contains($q, ['o\'quv yili qachon', 'semestr qachon', 'yil qachon boshlanadi', 'yil necha oylik'])) {
+            return "**O'quv yili:**\n"
+                ."- O'quv yili odatda **sentyabrda boshlanadi**.\n"
+                ."- Ikkita semestrga bo'lingan: 1-semestr (sentyabr-dekabr), 2-semestr (yanvar-may).\n"
+                ."- Aniq jadval taqvimda: ".route('calendar')." 📚";
+        }
+
+        if (Str::contains($q, ['bayram kunlari', 'bayram qachon', 'navro\'z', 'mustaqillik', 'bitirish tashriflari'])) {
+            return "**Muhim bayramlar:**\n"
+                ."- Navro'z (21-mart)\n"
+                ."- Mustaqillik Kuni (1-sentyabr)\n"
+                ."- Ota-ona va Pedagog Kunlari\n"
+                ."- Bitirish tadbiri (may-iyun)\n"
+                ."- To'liq taqvim: ".route('calendar')." 🎊";
+        }
+
+        // Infratuzilma
+        if (Str::contains($q, ['avtobus bormi', 'transport', 'maktabgacha transport', 'shuttle'])) {
+            return "**Transport haqida:**\n"
+                ."- Maktabgacha transport xizmati mavjudligi uchun maktab ma'muriyatiga murojaat qiling: ".route('contact')."\n"
+                ."- Agar transport bo'lsa, marşrut va jadvalini bilib olishingiz mumkin.\n"
+                ."- Aniq tartib maktab siyosatiga bog'liq. 🚌";
+        }
+
+        if (Str::contains($q, ['sport zali', 'basseyn', 'sportzal', 'sport imkoniyat', 'trenaj'])) {
+            return "**Sport imkoniyatlari:**\n"
+                ."- Maktabda sport zali, futbol maydonchasi va boshqa oynash joylari mavjud.\n"
+                ."- Sport to'garaklari: futbol, shaxmat va boshqalar.\n"
+                ."- Basseyn borligini bilib olish uchun ma'muriyatga murojaat qiling: ".route('contact')." ⚽";
+        }
+
+        if (Str::contains($q, ['tibbiyot xodimi', 'shifokor', 'hamshira', 'salomatlik', 'tibbiy'])) {
+            return "**Tibbiy xizmat:**\n"
+                ."- Maktabda tibbiy xodimlar ishlaydi.\n"
+                ."- O'quvchilar salomatligi bilan bog'liq masalalar uchun maktab tibbiy xizmatiga murojaat qilinadi.\n"
+                ."- Aniq ma'lumot uchun: ".route('contact')." 🏥";
+        }
+
+        if (Str::contains($q, ['wi-fi bormi', 'internet', 'wifi qo\'shimcha', 'internet xizmati'])) {
+            return "**Internet xizmati:**\n"
+                ."- Maktabda Wi-Fi orqali internet mavjud bo'lishi mumkin.\n"
+                ."- Qabul tartibi va shartlarini ma'muriyattan bilib oling: ".route('contact')."\n"
+                ."- Dars vaqtida internet qo'llaniladigan bo'limlarda mavjud. 📡";
+        }
+
+        // Ota-onalar uchun
+        if (Str::contains($q, ['davomatni qanday bilib', 'davomat qayerda', 'davomat tekshirish', 'o\'quvchi davomat'])) {
+            return "**Davomat:**\n"
+                ."- Elektron kundalikda davomat qaydlanadi.\n"
+                ."- Profil orqali davomat ko'rishingiz mumkin: ".route('profile.show')."\n"
+                ."- Sinf rahbari tomonidan ota-onalar bilan ulushtiriladi.\n"
+                ."- Aniq tartib uchun: ".route('contact')." ✅";
+        }
+
+        if (Str::contains($q, ['admin kabinet', 'ota-onalar portalı', 'ota onalar sajifasi', 'e-kundalik'])) {
+            return "**Foydalanuvchi kabineti:**\n"
+                ."- Saytda kirgan holda profilingizga kirish imkoniyati mavjud: ".route('profile.show')."\n"
+                ."- Imtihon natijalarini, davomatni va boshqa ma'lumotlarni ko'rishingiz mumkin.\n"
+                ."- Login va parol orqali xavfsiz kirishingiz mumkin. 🔐";
+        }
+
+        if (Str::contains($q, ['to\'lovni qanday amalga', 'to\'lov usuli', 'to\'lov qayerga', 'pul qayerga'])) {
+            return "**To'lov usuli:**\n"
+                ."- Kurs yoki xizmat to'lovi uchun Click/Payme yoki boshqa yo'l bo'lishi mumkin.\n"
+                ."- Aniq tartib kurs sahifasida yoki ma'muriyat e'lonida ko'rsatilgan.\n"
+                ."- Murojaat: ".route('contact')." 💳";
+        }
+
+        // Profil masalalari
+        if (Str::contains($q, ['ismim tizimda', 'ismim ko\'rsatilgan', 'username', 'nick'])) {
+            return "**Profil ismingiz:**\n"
+                ."- Tizimda ko'rsatiladigan ismingiz ro'yxatdan o'tishda kiritilgan ismga muvofiq.\n"
+                ."- Profilingizda tahrirlash imkoniyati mavjud: ".route('profile.show')."\n"
+                ."- Rasmiy hujjat bilan muvofiq bo'lishi kerak. 📝";
+        }
+
+        if (Str::contains($q, ['rolim nima', 'men qaysi rol', 'roli ko\'rsatilgan', 'foydalanuvchi tipi'])) {
+            return "**Foydalanuvchi roli:**\n"
+                ."- Foydalanuvchilar roli: oddiy o'quvchi, o'qituvchi, admin.\n"
+                ."- Rolingizni profilingizda ko'rishingiz mumkin: ".route('profile.show')."\n"
+                ."- Roli o'zgartirish uchun admin bilan bog'laning. 👤";
+        }
+
+        if (Str::contains($q, ['profilimni qanday tahrir', 'tahrir qilish', 'o\'zgartirish', 'profil sozla'])) {
+            return "**Profil tahrirlash:**\n"
+                ."- Profilingizga kiring: ".route('profile.show')."\n"
+                ."- \"Tahrirlash\" yoki \"Sozlash\" tugmasini bosing.\n"
+                ."- Ismingiz, rasmingiz, email, parol va boshqalarni o'zgartirishingiz mumkin.\n"
+                ."- O'zgartirilganlarni saqlashni unutmang! 💾";
+        }
+
+        // Umumiy bilim savollari (tez-tez berilib turgan)
+        if (Str::contains($q, ['pifagor', 'pifagor teoremasi', 'a2 + b2 = c2', 'to\'g\'ri burchakli'])) {
+            return "**Pifagor teoremasi**: To'g'ri burchakli uchburchakda gipotenuza kvadrati kateti kvadratlarining yig'indisiga teng.\n"
+                ."Formula: **a² + b² = c²**\n"
+                ."Ushbu qonun geometriya va trigonometriyadagi eng muhim teoremalardan biri. 📐";
+        }
+
+        if (Str::contains($q, ['fotosintez', 'fotosinтез', 'fotosintez qanday', 'o\'simlik'])) {
+            return "**Fotosintez**: O'simliklarning quyosh energiyasidan organik moddalar tuzish jarayoni.\n"
+                ."Formulasi: **6CO₂ + 6H₂O + Quyosh energiyasi → C₆H₁₂O₆ + 6O₂**\n"
+                ."Natijada kislorod va glyukoza hosil bo'ladi. 🌿☀️";
+        }
+
+        if (Str::contains($q, ['2-jahon', 'ikkinchi jahon', 'wwii', '1945'])) {
+            return "**Ikkinchi Jahon Urushi** (1939-1945)\n"
+                ."- Boshlandi: 1939-yil 1-sentyabr (Germaniya Polshani bosgan kundan)\n"
+                ."- Tugadi: 1945-yil 2-sentyabr (Yaponiya taslim olgan kundan)\n"
+                ."- XX asrning eng katta harbiy to'qnashuvi. 🌍";
+        }
+
+        if (Str::contains($q, ['suvning formulasi', 'h2o', 'voda', 'suv kimya'])) {
+            return "**Suvning kimyoviy formulasi**: **H₂O**\n"
+                ."- Ikki vodorod atomi va bir kislorod atomi birlashib suv molekulasini tuzadi.\n"
+                ."- Mollyar massa: 18 g/mol\n"
+                ."- Tabiatda eng muhim va ko'p tarqalgan moddalardan biri. 💧";
+        }
+
+        if (Str::contains($q, ['present simple', 'present continuous', 'ingliz grammari', 'zaman'])) {
+            return "**Present Simple (Sodda Hozirgi Zaman)**\n"
+                ."- Foydalanish: Muntazam harakatlar, umumiy to'g'rular, odatlar.\n"
+                ."- Formulasi: Subject + V₁ (+ s/es)\n"
+                ."- Misol: *\"I study English every day\"* (Men har kun ingliz tilini o'qiyman)\n"
+                ."- Mashq: Saytda alohida dars mavjud bo'lishi mumkin. 📚";
+        }
+
+        if (Str::contains($q, ['toshkent shahri', 'tashkent', 'poytaxt', 'toshkent qachon'])) {
+            return "**Toshkent Shahri:**\n"
+                ."- Tarix: O'zbekistonning poytaxti. XX asrning boshida katta rivojlanish\n"
+                ."- Asos solingan: Qo'qon qo'lbastisi shunoralari (eski shahar)\n"
+                ."- Aholisi: 3+ million kishi\n"
+                ."- Xususiyat: Markaziy Osiyadagi eng katta shahar 🏙️";
+        }
+
         return null;
     }
 
