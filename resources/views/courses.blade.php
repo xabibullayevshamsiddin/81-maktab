@@ -1,4 +1,4 @@
-<x-loyouts.main title="{{ __('public.courses.page_title') }}">
+<x-layouts.main title="{{ __('public.courses.page_title') }}">
   <div class="bomba-mesh"></div>
 
   <section class="news-hero" id="home">

@@ -13,7 +13,7 @@
   $courseDuration = localized_model_value($course, 'duration');
 @endphp
 
-<x-loyouts.main :title="$courseTitle.' | 81-IDUM'">
+<x-layouts.main :title="$courseTitle.' | 81-IDUM'">
   <section class="news-hero course-details-page-hero">
     <div class="container">
       <div class="news-hero-content reveal">

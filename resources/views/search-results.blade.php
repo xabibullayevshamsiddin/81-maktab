@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.search.page_title')">
+<x-layouts.main :title="__('public.search.page_title')">
   <div class="bomba-mesh"></div>
 
   <section class="news-hero search-page-hero" id="home">

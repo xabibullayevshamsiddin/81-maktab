@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.layout.terms').' | 81-IDUM'">
+<x-layouts.main :title="__('public.layout.terms').' | 81-IDUM'">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">

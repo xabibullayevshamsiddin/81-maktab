@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.contact.page_title')">
+<x-layouts.main :title="__('public.contact.page_title')">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">

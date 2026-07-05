@@ -4,7 +4,7 @@
   $postContent = localized_model_value($post, 'content');
   $postCategory = localized_model_value($post->category, 'name');
 @endphp
-<x-loyouts.main title="81-IDUM | {{ $postTitle }}">
+<x-layouts.main title="81-IDUM | {{ $postTitle }}">
   @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/post-embed.css') }}?v={{ app_asset_version('temp/css/post-embed.css') }}" />
   @endpush

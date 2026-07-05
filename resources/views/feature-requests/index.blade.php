@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.feature_requests.page_title')">
+<x-layouts.main :title="__('public.feature_requests.page_title')">
   @push('page_styles')
     <style>
       .feature-list {

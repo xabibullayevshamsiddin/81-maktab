@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.about.page_title')">
+<x-layouts.main :title="__('public.about.page_title')">
   @php
     $passportFacts = trans('public.about.passport_facts');
     $educationFacts = trans('public.about.education_process_facts');

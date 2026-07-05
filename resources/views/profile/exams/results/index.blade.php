@@ -1,4 +1,4 @@
-<x-loyouts.main title="Imtihon Natijalari">
+<x-layouts.main title="Imtihon Natijalari">
 @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ app_asset_version('temp/css/profile-results.css') }}">
 @endpush

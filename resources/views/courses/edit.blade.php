@@ -1,4 +1,4 @@
-<x-loyouts.main title="81-IDUM | Kursni tahrirlash">
+<x-layouts.main title="81-IDUM | Kursni tahrirlash">
   @php
     $teacherPreviewCollection = collect([$selectedTeacher])->filter()->values();
 

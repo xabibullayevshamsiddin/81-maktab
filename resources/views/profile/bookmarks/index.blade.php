@@ -8,7 +8,7 @@
   $bookmarkedTeacherIds = $bookmarkedTeacherIds ?? collect();
   $bookmarkedCourseIds = $bookmarkedCourseIds ?? collect();
 @endphp
-<x-loyouts.main :title="__('profile.bookmarks.page_title')">
+<x-layouts.main :title="__('profile.bookmarks.page_title')">
   <main class="news">
     <section class="container news glass-section prime-reveal" style="padding-top: 120px; padding-bottom: 48px;">
       <div class="section-head" style="margin-bottom: 24px;">

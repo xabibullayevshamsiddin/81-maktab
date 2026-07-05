@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.exam.start_page_title', ['title' => $exam->title])">
+<x-layouts.main :title="__('public.exam.start_page_title', ['title' => $exam->title])">
   <main class="news exam-page exam-start-page">
     <div class="exam-page-inner" style="max-width: 560px;">
       <header class="exam-hero">

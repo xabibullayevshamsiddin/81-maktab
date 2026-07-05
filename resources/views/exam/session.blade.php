@@ -15,7 +15,7 @@
   $securityEnabled = (bool) ($result->exam->security_enabled ?? true);
 @endphp
 
-<x-loyouts.main :title="$examTitle . __('public.exam.session.title_suffix')">
+<x-layouts.main :title="$examTitle . __('public.exam.session.title_suffix')">
   <main class="news exam-page exam-session-wrap">
     <div class="exam-page-inner exam-anti-copy" id="exam-anti-root">
       <div class="exam-watermark-layer" id="exam-watermark-layer" aria-hidden="true" data-watermark="{{ $watermarkLabel }}"></div>

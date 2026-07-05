@@ -96,7 +96,7 @@
   ];
 @endphp
 
-<x-loyouts.main :title="__('profile.page_title')">
+<x-layouts.main :title="__('profile.page_title')">
   @push('page_styles')
     <link rel="stylesheet"
       href="{{ app_public_asset('temp/css/profile-fix.css') }}?v={{ app_asset_version('temp/css/profile-fix.css') }}">

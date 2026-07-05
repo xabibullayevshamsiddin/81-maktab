@@ -1,4 +1,4 @@
-<x-loyouts.main title="{{ __('public.calendar.page_title') }}">
+<x-layouts.main title="{{ __('public.calendar.page_title') }}">
   <section class="news-hero profile-hero">
     <div class="container">
       <div class="news-hero-content prime-reveal">

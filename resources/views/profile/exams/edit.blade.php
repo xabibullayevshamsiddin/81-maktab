@@ -1,4 +1,4 @@
-<x-loyouts.main title="Imtihonlar">
+<x-layouts.main title="Imtihonlar">
 @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-exams.css') }}?v={{ app_asset_version('temp/css/profile-exams.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" crossorigin="anonymous">

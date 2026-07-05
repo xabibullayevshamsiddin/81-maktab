@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.course_create.page_title')">
+<x-layouts.main :title="__('public.course_create.page_title')">
   @php
     $teacherPreviewCollection = (($isAdmin ?? false) === true ? $teachers : collect([$selectedTeacher]))
       ->filter()

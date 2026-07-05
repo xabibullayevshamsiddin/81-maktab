@@ -1,4 +1,4 @@
-<x-loyouts.main title="Donation — 81-IDUM">
+<x-layouts.main title="Donation — 81-IDUM">
 
 @push("page_styles")
 <style>
@@ -195,10 +195,7 @@
                         <div style="padding:0.6rem; border-radius:12px; background:#22c55e15; border:1px solid #22c55e30; color:#16a34a; font-weight:600; font-size:0.85rem; text-align:center;">
                             <i class="fa-solid fa-check-circle"></i> Siz allaqachon {{ $label }} olingan
                         </div>
-                    @elseif($hasBetter)
-                        <div style="padding:0.6rem; border-radius:12px; background:#6366f115; border:1px solid #6366f130; color:#6366f1; font-weight:600; font-size:0.85rem; text-align:center;">
-                            <i class="fa-solid fa-arrow-up"></i> Sizda yuqoriroq rank mavjud
-                        </div>
+                    
                     @else
                         <a href="{{ route("donation.checkout", $key) }}" class="btn-select" style="background: {{ $color }};">
                             <i class="{{ $iconClass }}"></i> {{ $label }}ga aylanish

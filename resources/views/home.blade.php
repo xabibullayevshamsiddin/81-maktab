@@ -1,4 +1,4 @@
-<x-loyouts.main title="81-IDUM">
+<x-layouts.main title="81-IDUM">
   <section class="hero" id="home">
     <video autoplay muted loop playsinline class="bg-video">
       <source

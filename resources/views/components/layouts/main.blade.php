@@ -1018,7 +1018,7 @@
       (function() {
         var loader = document.getElementById('site-boot-loader');
         if (!loader) return;
-        
+
         function showFullScreenLoader() {
           loader.classList.remove('site-boot-loader--done');
           document.body.classList.add('site-boot-loading');
@@ -1043,7 +1043,7 @@
             href.startsWith('tel:') ||
             (href.startsWith('http') && !href.startsWith(window.location.origin))
           ) return;
-          
+
           try {
             var url = new URL(href, window.location.href);
             if (url.pathname === window.location.pathname && url.search === window.location.search) return;

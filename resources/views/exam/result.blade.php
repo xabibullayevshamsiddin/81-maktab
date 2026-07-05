@@ -5,7 +5,7 @@
     ? $passQuotes[array_rand($passQuotes)]
     : ($result->passed === false ? $failQuotes[array_rand($failQuotes)] : null);
 @endphp
-<x-loyouts.main :title="__('public.exam.result_page_title', ['title' => $result->exam->title])">
+<x-layouts.main :title="__('public.exam.result_page_title', ['title' => $result->exam->title])">
   <main class="news exam-page">
     <div class="exam-page-inner" style="max-width: 560px;">
       <header class="exam-hero">

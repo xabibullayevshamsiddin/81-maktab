@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.profile_exams.page_title')">
+<x-layouts.main :title="__('public.profile_exams.page_title')">
 @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-exams.css') }}?v={{ app_asset_version('temp/css/profile-exams.css') }}">
 @endpush

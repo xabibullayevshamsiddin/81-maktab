@@ -4,7 +4,7 @@
   $teacherToifa = localized_model_value($teacher, 'toifa');
   $teacherAchievements = localized_model_value($teacher, 'achievements');
 @endphp
-<x-loyouts.main title="81-IDUM | {{ $teacher->full_name }}">
+<x-layouts.main title="81-IDUM | {{ $teacher->full_name }}">
   <section class="sow-hero" id="home">
     <div class="overlay"></div>
     <div class="container">

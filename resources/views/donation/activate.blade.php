@@ -1,4 +1,4 @@
-<x-loyouts.main title="Kalit aktivlashtirish — 81-IDUM">
+<x-layouts.main title="Kalit aktivlashtirish — 81-IDUM">
 
 @push("page_styles")
 <style>

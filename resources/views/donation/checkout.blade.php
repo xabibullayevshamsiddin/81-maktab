@@ -1,4 +1,4 @@
-<x-loyouts.main title="Sotib olish — 81-IDUM">
+<x-layouts.main title="Sotib olish — 81-IDUM">
 
 @push("page_styles")
 <style>

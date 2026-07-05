@@ -1,4 +1,4 @@
-<x-loyouts.main title="{{ __('public.posts.page_title') }}">
+<x-layouts.main title="{{ __('public.posts.page_title') }}">
   @php
     $f = $filter ?? 'all';
     $filterOptions = [

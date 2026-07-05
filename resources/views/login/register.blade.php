@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('auth_pages.register.page_title')">
+<x-layouts.main :title="__('auth_pages.register.page_title')">
     @push('page_styles')
       <style>
       </style>

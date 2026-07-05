@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.exam.page_title')">
+<x-layouts.main :title="__('public.exam.page_title')">
   <main class="news exam-page">
     <div class="exam-page-inner">
       <header class="exam-hero">
