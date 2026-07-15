@@ -14,15 +14,22 @@
   $roleKey = $comment->user?->role ?? 'guest';
   $roleLabel = $comment->user?->role_label ?? 'Mehmon';
   $commentBodyMax = $comment->parent_id ? 50 : 100;
+  $userTheme = $comment->user?->effectiveTheme();
+  $donorBadge = $comment->user?->donorBadgeHtml() ?? '';
+  $effectThemeType = $userTheme ? (\App\Models\Donation::themeConfig($userTheme)["type"] ?? null) : null;
+  $commentStyleClass = $userTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
   $roleCardClass = match ($roleKey) {
     'super_admin' => 'comment-card--super-admin',
     'admin' => 'comment-card--admin',
     'moderator' => 'comment-card--moderator',
-    default => '',
+    default => $userTheme && $effectThemeType === 'donor' ? ('comment-card--donor comment-card--donor-' . $userTheme) : '',
   };
+  $themeOverlayClass = in_array($roleKey, ['super_admin', 'admin', 'moderator'], true) && $userTheme
+    ? ($effectThemeType === 'donor' ? ('comment-card--donor comment-card--donor-' . $userTheme) : ('comment-card--theme-' . $userTheme))
+    : '';
 @endphp
 
-<article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }}" data-comment-id="{{ $comment->id }}">
+<article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }} {{ $commentStyleClass }} {{ $themeOverlayClass }}" data-comment-id="{{ $comment->id }}">
   @php
     $replyCount = $comment->replies->count();
     $canReplyMore = $replyCount < 4;
@@ -47,7 +54,17 @@
 
   <div class="comment-body">
     <div class="comment-meta">
-      <strong>{{ $comment->author_name ?? 'Mehmon' }}</strong>
+      @php
+        $authorStyle = '';
+        if ($userTheme && $comment->user) {
+          $c = $comment->user->donorUsernameColor();
+          $w = $comment->user->name_font_weight ?? '700';
+          if ($c) { $authorStyle .= 'color:' . $c . ';'; }
+          $authorStyle .= 'font-weight:' . $w . ';';
+        }
+      @endphp
+      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? 'Mehmon' }}</strong>
+      {!! $donorBadge !!}
       <span class="comment-role-badge role-{{ $roleKey }}">{{ $roleLabel }}</span>
       <span class="comment-date">
         <i class="fa-regular fa-clock"></i>

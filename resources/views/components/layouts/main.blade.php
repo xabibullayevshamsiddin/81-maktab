@@ -77,7 +77,7 @@
           'page-inner' => ! request()->routeIs('home')
         ])
         data-theme="light"
-	        data-donor-theme="{{ auth()->check() && auth()->user()->isDonor() ? (auth()->user()->donation_rank) : '' }}"
+	        data-donor-theme="{{ auth()->check() ? (auth()->user()->effectiveTheme() ?? '') : '' }}"
 	        data-site-success="{{ session('success') }}"
 	        data-site-error="{{ session('error') }}"
 	        data-site-toast-type="{{ session('toast_type') }}"
@@ -699,7 +699,7 @@
               <span></span>
             </span>
           </div>
-          <form class="chat-input-wrap" id="chat-form">
+          <form class="chat-input-wrap" id="chat-form" data-no-loader>
             @if(turnstile_enabled())
             <div
               id="chat-turnstile-host"
@@ -1054,10 +1054,12 @@
 
         document.addEventListener('submit', function(e) {
           var form = e.target;
-          if (!form || form.method === 'dialog') return;
-          if (!form.getAttribute('data-ajax')) {
-            showFullScreenLoader();
-          }
+          if (!form || form.tagName !== 'FORM' || form.method === 'dialog') return;
+          if (e.defaultPrevented) return;
+          if (form.getAttribute('data-ajax') === 'true' || form.hasAttribute('data-no-loader')) return;
+          if (form.id === 'chat-form' || form.id === 'ai-chat-form') return;
+          if (form.closest && form.closest('#chat-widget, #ai-widget')) return;
+          showFullScreenLoader();
         });
       })();
     </script>
@@ -1128,7 +1130,7 @@
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
 
-        <form class="chat-input-wrap" id="ai-chat-form">
+        <form class="chat-input-wrap" id="ai-chat-form" data-no-loader>
           <textarea
             class="chat-textarea"
             id="ai-textarea"

@@ -991,11 +991,11 @@ class ProfileController extends Controller
         $user = $request->user();
         $data = $request->validate([
             "donor_theme" => "nullable|string|max:40",
-            "badge_style" => "nullable|string|max:20",
-            "comment_style" => "nullable|string|max:20",
-            "chat_style" => "nullable|string|max:20",
-            "show_expiry_badge" => "nullable|string|max:2",
-            "name_font_weight" => "nullable|string|max:4",
+            "badge_style" => "nullable|in:default,pill,icon",
+            "comment_style" => "nullable|in:border,filled",
+            "chat_style" => "nullable|in:show,hide",
+            "show_expiry_badge" => "nullable|in:0,1",
+            "name_font_weight" => "nullable|in:600,700,800",
         ]);
 
         // Tema tanlash — server-side ruxsat tekshiruvi.

@@ -3569,9 +3569,17 @@
         .catch(function () { return []; });
     }
 
+    function shouldPauseChatPolling() {
+      if (isSending) return true;
+      if (!input) return false;
+      if (document.activeElement !== input) return false;
+      return !!input.value.trim();
+    }
+
     function startPolling() {
       stopPolling();
       pollTimer = setInterval(function () {
+        if (shouldPauseChatPolling()) return;
         pollNew();
       }, 5000);
     }

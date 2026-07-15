@@ -1,6 +1,6 @@
 @php
   // Joriy faol tema — profile_theme (saqlangan) yoki donation_rank
-  $currentTheme = $user->profile_theme ?? $user->donation_rank;
+  $currentTheme = $user->effectiveTheme() ?? 'plain';
   $themeCfg = \App\Models\Donation::themeConfig($currentTheme);
   $themeColor = $themeCfg["badge_color"] ?? "#6366f1";
   $themeIcon = $themeCfg["badge_icon"] ?? "fa-solid fa-star";

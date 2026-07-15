@@ -8462,8 +8462,21 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   padding: 0;
   font-size: 0.85rem;
   border: none;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  text-decoration: none;
+  -webkit-appearance: none;
+  appearance: none;
   transition: all 0.2s;
+}
+
+.comment-action-box summary:focus,
+.comment-action-box summary:focus-visible,
+.comment-action-box summary:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
 }
 
 .comment-action-box summary:hover {
@@ -17939,25 +17952,12 @@ body:not([data-theme="dark"]) .profile-theme-admin-phoenix .profile-overview-nam
 /* ====== GLOBAL DONOR THEMES ====== */
 /* Applied to body[data-donor-theme] for site-wide cascade */
 
-/* Supporter theme - blue */
-[data-donor-theme="supporter"] .chat-msg .chat-msg-name,
-[data-donor-theme="supporter"] .comment-card .comment-meta strong { color: #1d4ed8 !important; }
+/* Comment colors are applied per comment author, not from body[data-donor-theme]. */
 
-/* Premium theme - purple */
-[data-donor-theme="premium"] .chat-msg .chat-msg-name,
-[data-donor-theme="premium"] .comment-card .comment-meta strong { color: #7c3aed !important; }
-
-/* VIP theme - gold */
-[data-donor-theme="vip"] .chat-msg .chat-msg-name,
-[data-donor-theme="vip"] .comment-card .comment-meta strong { color: #d97706 !important; }
-
-/* Admin themes */
-[data-donor-theme="admin-gold"] .chat-msg .chat-msg-name,
-[data-donor-theme="admin-gold"] .comment-card .comment-meta strong { color: #a16207 !important; }
-[data-donor-theme="admin-royal"] .chat-msg .chat-msg-name,
-[data-donor-theme="admin-royal"] .comment-card .comment-meta strong { color: #991b1b !important; }
-[data-donor-theme="admin-phoenix"] .chat-msg .chat-msg-name,
-[data-donor-theme="admin-phoenix"] .comment-card .comment-meta strong { color: #9a3412 !important; }
+.chat-msg-donor-badge {
+  display: inline-flex;
+  align-items: center;
+}
 
 /* Profile tags with donor theme */
 [data-donor-theme="supporter"] .profile-chip { border-color: rgba(59,130,246,0.3); }
@@ -18124,4 +18124,3 @@ body:not([data-theme="dark"]) .profile-theme-admin-phoenix .profile-overview-nam
   color: #fff !important;
   transform: scale(1.02);
 }
-

@@ -14,22 +14,23 @@
   $roleLabel = $comment->user?->role_label ?? "Mehmon";
   $commentBodyMax = $comment->parent_id ? 50 : 100;
 
-  $userTheme = $comment->user?->profile_theme;
+  $userTheme = $comment->user?->effectiveTheme();
   $donorRank = $comment->user?->donation_rank;
   $donorBadge = $comment->user?->donorBadgeHtml() ?? "";
-  // Effekt uchun joriy tema — profile_theme (Gold/Royal/Phoenix ham) yoki donor ranki
+  // Effekt uchun joriy tema — har doim shu izoh muallifining o'z aktiv tegi.
   $effectTheme = $userTheme ?: $donorRank;
+  $effectThemeType = $effectTheme ? (\App\Models\Donation::themeConfig($effectTheme)["type"] ?? null) : null;
   $commentStyleClass = $effectTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
   $roleCardClass = match ($roleKey) {
     "super_admin" => "comment-card--super-admin",
     "admin" => "comment-card--admin",
     "moderator" => "comment-card--moderator",
-    default => $effectTheme ? ("comment-card--themed comment-card--theme-" . $effectTheme) : "",
+    default => $effectTheme && $effectThemeType === "donor" ? ("comment-card--donor comment-card--donor-" . $effectTheme) : "",
   };
   // Super admin/admin/moderator bo'lsa ham, agar donor/admin temasi tanlangan bo'lsa,
   // tema effekti ham qo'shiladi (super admin Gold = ham super-admin, ham Gold effekt).
   $themeOverlayClass = in_array($roleKey, ['super_admin', 'admin', 'moderator']) && $effectTheme
-    ? ("comment-card--theme-" . $effectTheme)
+    ? ($effectThemeType === "donor" ? ("comment-card--donor comment-card--donor-" . $effectTheme) : ("comment-card--theme-" . $effectTheme))
     : "";
   @endphp
 
@@ -60,7 +61,7 @@
     <div class="comment-meta">
       @php
         $authorStyle = '';
-        if ($donorRank && $comment->user) {
+        if ($effectTheme && $comment->user) {
           $c = $comment->user->donorUsernameColor();
           $w = $comment->user->name_font_weight ?? '700';
           if ($c) { $authorStyle .= 'color:' . $c . ';'; }
