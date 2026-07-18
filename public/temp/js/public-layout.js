@@ -3453,7 +3453,7 @@
         + '</button>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
-        + '<span class="chat-msg-name"' + (m.donor_color ? ' style="color:' + m.donor_color + '"' : '') + '>' + escChatHtml(m.user_name) + '</span>'
+        + '<span class="chat-msg-name"' + (m.donor_color ? ' style="color:' + m.donor_color + '"' : '') + '>' + escChatHtml(m.user_name) + (m.status_emoji ? ' ' + escChatHtml(m.status_emoji) : '') + '</span>'
         + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + actionsHtml

@@ -280,15 +280,20 @@ class Donation extends Model
             return method_exists($user, "isSuperAdmin") && $user->isSuperAdmin();
         }
 
-        // Donor temalari — faqat foydalanuvchining o'z ranki bilan to'g'ri kelishi kerak
+        // Donor temalari — foydalanuvchining joriy ranki va undan pastroq ranklar
         if ($type === "donor") {
             $userRank = $user->donation_rank ?? null;
-            // Donor emas (yoki super admin lekin donor emas) — donor temalari qulflangan
+            // Donor emas — donor temalari qulflangan
             if ($userRank === null || !method_exists($user, "isDonor") || !$user->isDonor()) {
                 return false;
             }
-            // Faqat aynan o'z rankidagi tema
-            return $theme === $userRank;
+            $userRankCfg = self::configForRank($userRank);
+            $targetRankCfg = self::configForRank($theme);
+            if (!$userRankCfg || !$targetRankCfg) {
+                return false;
+            }
+            // Yuqori rankdagi donorlar pastki ranklar temalarini ham ishlata oladi
+            return ($targetRankCfg["priority"] ?? 0) <= ($userRankCfg["priority"] ?? 0);
         }
 
         return false;

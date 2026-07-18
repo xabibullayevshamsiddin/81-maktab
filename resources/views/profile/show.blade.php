@@ -320,12 +320,12 @@
       }
     </style>
   @endpush
-  <section class="news-hero profile-hero {{ $user->donorThemeClass() }}">
+  <section class="news-hero profile-hero {{ $user->donorThemeClass() }} banner-anim-{{ $user->banner_animation ?? 'none' }}">
     <div class="container">
       @if($user->donorBannerUrl())
-    <img src="{{ $user->donorBannerUrl() }}" alt="Banner" class="donor-banner">
-  @endif
-  <div class="news-hero-content reveal">
+        <img src="{{ $user->donorBannerUrl() }}" alt="Banner" class="donor-banner banner-anim-{{ $user->banner_animation ?? 'none' }}">
+      @endif
+      <div class="news-hero-content reveal">
         <span class="badge">{{ __('profile.badge') }}</span>
         <h1 class="js-split-text"><strong>{{ __('profile.title') }}</strong></h1>
         <p>{{ __('profile.intro') }}</p>
@@ -335,7 +335,7 @@
 
   <main class="profile-main" data-profile-i18n='@json($profileI18n)' data-active-panel="{{ $profilePanel }}">
     <div class="container">
-      <section class="profile-overview-panel {{ $profileOverviewDonorClass }} {{ $profileOverviewThemeClass }}">
+      <section class="profile-overview-panel {{ $profileOverviewDonorClass }} {{ $profileOverviewThemeClass }} profile-bg-{{ $user->profile_bg_style ?? 'plain' }}">
         <div class="profile-overview-main">
           <div class="profile-avatar" data-profile-avatar-box data-profile-avatar-initial="{{ $profileInitial }}"
             data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}">{{ $profileInitial }}</div>
@@ -352,8 +352,20 @@
               </span>
             </div>
             <div class="profile-overview-title-row">
-              <h2 class="profile-overview-name" style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->donorIsActive ? ($user->name_font_weight ?? '700') : 'inherit' }};">{{ $user->name }}</h2>
-              {!! $user->donorBadgeHtml() !!}
+              @php
+                $badgePos = $user->badge_position ?? 'after';
+                $statusEmoji = $user->status_emoji ?? '';
+                $donorBadge = $user->donorBadgeHtml();
+              @endphp
+              @if($donorBadge && $badgePos === 'before')
+                {!! $donorBadge !!}
+              @endif
+              <h2 class="profile-overview-name" style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->donorIsActive ? ($user->name_font_weight ?? '700') : 'inherit' }};">
+                {{ $user->name }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}
+              </h2>
+              @if($donorBadge && $badgePos !== 'before')
+                {!! $donorBadge !!}
+              @endif
             </div>
             <p class="profile-overview-intro">
               {{ __('public.profile_hub.intro') }}

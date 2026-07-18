@@ -26,9 +26,10 @@
             background: var(--bg-dark);
             color: #fff;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow: auto; /* Allow scrolling if necessary */
             /* circuit background directly on body */
             background-image: radial-gradient(#f59e0b 1px, transparent 1px);
             background-size: 30px 30px;

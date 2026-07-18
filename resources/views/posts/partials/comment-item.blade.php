@@ -17,7 +17,6 @@
   $userTheme = $comment->user?->effectiveTheme();
   $donorRank = $comment->user?->donation_rank;
   $donorBadge = $comment->user?->donorBadgeHtml() ?? "";
-  // Effekt uchun joriy tema — har doim shu izoh muallifining o'z aktiv tegi.
   $effectTheme = $userTheme ?: $donorRank;
   $effectThemeType = $effectTheme ? (\App\Models\Donation::themeConfig($effectTheme)["type"] ?? null) : null;
   $commentStyleClass = $effectTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
@@ -27,12 +26,14 @@
     "moderator" => "comment-card--moderator",
     default => $effectTheme && $effectThemeType === "donor" ? ("comment-card--donor comment-card--donor-" . $effectTheme) : "",
   };
-  // Super admin/admin/moderator bo'lsa ham, agar donor/admin temasi tanlangan bo'lsa,
-  // tema effekti ham qo'shiladi (super admin Gold = ham super-admin, ham Gold effekt).
   $themeOverlayClass = in_array($roleKey, ['super_admin', 'admin', 'moderator']) && $effectTheme
     ? ($effectThemeType === "donor" ? ("comment-card--donor comment-card--donor-" . $effectTheme) : ("comment-card--theme-" . $effectTheme))
     : "";
-  @endphp
+
+  // Badge pozitsiyasi va status emoji
+  $badgePos    = $comment->user?->badge_position ?? 'after';
+  $statusEmoji = $comment->user?->status_emoji ?? '';
+@endphp
 
 <article class="comment-card reveal {{ $showReplyForm ? "" : "comment-item-reply" }} {{ $roleCardClass }} {{ $commentStyleClass }} {{ $themeOverlayClass }}" data-comment-id="{{ $comment->id }}">
   @php
@@ -68,8 +69,9 @@
           $authorStyle .= 'font-weight:' . $w . ';';
         }
       @endphp
-      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? "Mehmon" }}</strong>
-      {!! $donorBadge !!}
+      @if($donorBadge && $badgePos === 'before'){!! $donorBadge !!} @endif
+      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? "Mehmon" }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}</strong>
+      @if($donorBadge && $badgePos !== 'before') {!! $donorBadge !!}@endif
       <span class="comment-role-badge role-{{ $roleKey }}">{{ $roleLabel }}</span>
       <span class="comment-date">
         <i class="fa-regular fa-clock"></i>
@@ -91,80 +93,59 @@
       @if ($showReplyForm && auth()->check() && $canReplyMore)
         <button
           type="button"
-          class="comment-reply js-comment-reply-toggle"
-          aria-label="Javob"
-          data-reply-parent-id="{{ $comment->id }}"
+          class="btn btn-sm js-reply-trigger"
+          data-comment-id="{{ $comment->id }}"
+          data-post-id="{{ $post->id }}"
         >
-          <i class="fa-regular fa-comment"></i>
-          Javob
+          <i class="fa-solid fa-reply"></i> {{ __("public.comments.reply") }}
         </button>
+      @endif
 
-        <div class="js-comment-reply-form-wrapper comment-reply-form-wrapper" hidden>
+      @if($canManageComment)
+      <details class="comment-manage-details">
+        <summary class="btn btn-sm comment-manage-btn">
+          <i class="fa-solid fa-ellipsis"></i>
+        </summary>
+
+        <details class="comment-manage-details">
+          <summary class="btn btn-sm">
+            <i class="fa-solid fa-pen"></i> {{ __("public.comments.edit") }}
+          </summary>
           <form
-            class="comment-form comment-form-inline js-comment-form js-comment-reply-form"
-            action="{{ route("post.comments.store", $post) }}"
+            class="js-comment-form js-comment-edit-form"
+            action="{{ route("post.comments.update", [$post, $comment]) }}"
             method="POST"
+            data-comment-id="{{ $comment->id }}"
           >
             @csrf
-            <input type="hidden" name="parent_id" value="{{ $comment->id }}" />
+            @method("PUT")
               <input
                 type="text"
                 class="comment-input"
                 name="body"
-                placeholder="Javobingizni yozing"
-                maxlength="50"
+                value="{{ $comment->body }}"
+                maxlength="{{ $commentBodyMax }}"
                 required
               />
-            <button class="btn btn-sm" type="submit">Javob yuborish</button>
+            <button class="btn btn-sm" type="submit">Saqlash</button>
           </form>
-        </div>
-      @endif
+        </details>
 
-      <a
-        href="{{ route("contact", ["note" => "Izoh boyicha murojaat", "message" => "Yangilik izohi ID: ".$comment->id." | Post: ".$post->slug." | Muammo: "]) }}"
-        class="comment-reply"
-      >
-        <i class="fa-regular fa-flag"></i>
-        Shikoyat
-      </a>
-
-      @if ($canManageComment)
-      <details class="comment-action-box">
-        <summary><i class="fa-solid fa-pen" style="margin-right: 6px;"></i> Tahrirlash</summary>
         <form
-          class="comment-form comment-form-inline js-comment-form js-comment-edit-form"
-          action="{{ route("post.comments.update", [$post, $comment]) }}"
+          class="js-comment-form js-comment-delete-form"
+          action="{{ route("post.comments.destroy", [$post, $comment]) }}"
           method="POST"
           data-comment-id="{{ $comment->id }}"
+          data-confirm="{{ __("public.comments.delete_confirm") }}" data-confirm-title="{{ __("public.comments.delete_title") }}" data-confirm-variant="danger" data-confirm-ok="{{ __("public.comments.delete_ok") }}"
         >
           @csrf
-          @method("PUT")
-            <input
-              type="text"
-              class="comment-input"
-              name="body"
-              value="{{ $comment->body }}"
-              maxlength="{{ $commentBodyMax }}"
-              required
-            />
-          <button class="btn btn-sm" type="submit">Saqlash</button>
+          @method("DELETE")
+          <button type="submit" class="btn btn-sm comment-delete-btn">
+            <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> Ochirish
+          </button>
         </form>
       </details>
-
-      <form
-        class="js-comment-form js-comment-delete-form"
-        action="{{ route("post.comments.destroy", [$post, $comment]) }}"
-        method="POST"
-        data-comment-id="{{ $comment->id }}"
-        data-confirm="{{ __("public.comments.delete_confirm") }}" data-confirm-title="{{ __("public.comments.delete_title") }}" data-confirm-variant="danger" data-confirm-ok="{{ __("public.comments.delete_ok") }}"
-      >
-        @csrf
-        @method("DELETE")
-        <button type="submit" class="btn btn-sm comment-delete-btn">
-          <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> Ochirish
-        </button>
-      </form>
-    @endif
+      @endif
     </div>
   </div>
 

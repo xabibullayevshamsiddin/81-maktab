@@ -62,9 +62,12 @@
           if ($c) { $authorStyle .= 'color:' . $c . ';'; }
           $authorStyle .= 'font-weight:' . $w . ';';
         }
+        $badgePos    = $comment->user?->badge_position ?? 'after';
+        $statusEmoji = $comment->user?->status_emoji ?? '';
       @endphp
-      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? 'Mehmon' }}</strong>
-      {!! $donorBadge !!}
+      @if($donorBadge && $badgePos === 'before'){!! $donorBadge !!} @endif
+      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? 'Mehmon' }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}</strong>
+      @if($donorBadge && $badgePos !== 'before') {!! $donorBadge !!}@endif
       <span class="comment-role-badge role-{{ $roleKey }}">{{ $roleLabel }}</span>
       <span class="comment-date">
         <i class="fa-regular fa-clock"></i>

@@ -77,7 +77,20 @@
               {!! __('public.contact.form_info', ['name' => '<strong>'.e(auth()->user()->name).'</strong>', 'phone' => e(auth()->user()->phone)]) !!}
             </div>
 
-            <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}">
+            @php
+              $maxMb = 2;
+              if (auth()->check() && auth()->user()->isDonor()) {
+                  $rank = auth()->user()->donation_rank;
+                  if ($rank === \App\Models\Donation::RANK_SUPPORTER) {
+                      $maxMb = 5;
+                  } elseif ($rank === \App\Models\Donation::RANK_PREMIUM) {
+                      $maxMb = 10;
+                  } elseif ($rank === \App\Models\Donation::RANK_VIP) {
+                      $maxMb = 20;
+                  }
+              }
+            @endphp
+            <form class="contact-form" id="contact-form" method="post" action="{{ route('contact.store') }}" enctype="multipart/form-data">
               @csrf
               <textarea
                 id="shikoyat"
@@ -93,6 +106,50 @@
                 placeholder="{{ __('public.contact.message_placeholder') }}"
                 required
               >{{ old('message', request()->query('message')) }}</textarea>
+              
+              <div class="contact-file-upload" style="margin-bottom: 20px;">
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:8px; color:var(--text);">
+                  Rasm biriktirish (ixtiyoriy)
+                </label>
+                <div class="custom-file-upload-wrapper" style="position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.25rem 1rem; border:2px dashed var(--border); border-radius:12px; background:rgba(0,0,0,0.15); cursor:pointer; text-align:center; transition: border-color 0.2s, background-color 0.2s;">
+                  <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.8rem; color:var(--primary); margin-bottom:8px;"></i>
+                  <span class="file-upload-text" style="font-size:0.82rem; font-weight:600; color:var(--text);">Rasm tanlash uchun bosing</span>
+                  <span class="file-upload-hint" style="font-size:0.7rem; color:var(--muted); margin-top:4px;">
+                    @if(auth()->check() && auth()->user()->isDonor())
+                      Siz <strong>{{ auth()->user()->donorRankLabel() }}</strong> bo'lganingiz uchun maksimal: <strong>{{ $maxMb }} MB</strong> rasm yuklay olasiz.
+                    @else
+                      Maksimal ruxsat etilgan hajm: <strong>2 MB</strong>. Ko'proq yuklash uchun Donat qiling!
+                    @endif
+                  </span>
+                  <input type="file" id="contact-image" name="image" accept="image/*" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" onchange="updateFileName(this)">
+                </div>
+                <div id="file-name-display" style="display:none; align-items:center; gap:8px; margin-top:8px; font-size:0.75rem; color:var(--primary); font-weight:600;">
+                  <i class="fa-solid fa-paperclip"></i> <span id="file-name-text"></span>
+                </div>
+              </div>
+
+              <script>
+                function updateFileName(input) {
+                  var display = document.getElementById('file-name-display');
+                  var text = document.getElementById('file-name-text');
+                  var wrapper = input.closest('.custom-file-upload-wrapper');
+                  if (input.files && input.files.length > 0) {
+                    text.textContent = input.files[0].name;
+                    display.style.display = 'flex';
+                    if (wrapper) {
+                      wrapper.style.borderColor = 'var(--primary)';
+                      wrapper.style.backgroundColor = 'rgba(99, 102, 241, 0.08)';
+                    }
+                  } else {
+                    display.style.display = 'none';
+                    if (wrapper) {
+                      wrapper.style.borderColor = 'var(--border)';
+                      wrapper.style.backgroundColor = 'rgba(0,0,0,0.15)';
+                    }
+                  }
+                }
+              </script>
+
               <x-turnstile-field />
               <button class="btn btn-prime" type="submit">{{ __('public.contact.submit') }}</button>
               <p id="form-message" class="form-message" aria-live="polite"></p>

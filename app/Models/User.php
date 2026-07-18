@@ -120,6 +120,11 @@ class User extends Authenticatable
         'name_font_weight',
         'show_expiry_badge',
         'custom_css',
+        'donor_cursor_animation',
+        'profile_bg_style',
+        'badge_position',
+        'banner_animation',
+        'status_emoji',
         'course_open_approved',
         'course_open_request_pending',
         'course_open_requested_at',
@@ -179,6 +184,7 @@ class User extends Authenticatable
         'course_open_request_pending' => 'boolean',
         'course_open_requested_at' => 'datetime',
         'course_open_approved_at' => 'datetime',
+        'donor_cursor_animation' => 'boolean',
     ];
 
     protected static function booted(): void

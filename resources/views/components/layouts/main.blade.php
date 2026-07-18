@@ -78,6 +78,7 @@
         ])
         data-theme="light"
 	        data-donor-theme="{{ auth()->check() ? (auth()->user()->effectiveTheme() ?? '') : '' }}"
+          data-cursor-animation="{{ auth()->check() && auth()->user()->donor_cursor_animation ? '1' : '0' }}"
 	        data-site-success="{{ session('success') }}"
 	        data-site-error="{{ session('error') }}"
 	        data-site-toast-type="{{ session('toast_type') }}"
@@ -1032,6 +1033,7 @@
         document.addEventListener('click', function(e) {
           var link = e.target.closest('a[href]');
           if (!link) return;
+          if (e.defaultPrevented) return;
           var href = link.getAttribute('href');
           if (!href) return;
           if (
@@ -1049,7 +1051,10 @@
             if (url.pathname === window.location.pathname && url.search === window.location.search) return;
           } catch(err) { return; }
 
-          showFullScreenLoader();
+          setTimeout(function() {
+            if (e.defaultPrevented) return;
+            showFullScreenLoader();
+          }, 0);
         });
 
         document.addEventListener('submit', function(e) {
@@ -1059,7 +1064,11 @@
           if (form.getAttribute('data-ajax') === 'true' || form.hasAttribute('data-no-loader')) return;
           if (form.id === 'chat-form' || form.id === 'ai-chat-form') return;
           if (form.closest && form.closest('#chat-widget, #ai-widget')) return;
-          showFullScreenLoader();
+
+          setTimeout(function() {
+            if (e.defaultPrevented) return;
+            showFullScreenLoader();
+          }, 0);
         });
       })();
     </script>
@@ -1996,5 +2005,53 @@
         })();
       </script>
     @endif
+
+    <script>
+      (function () {
+        if (document.body.getAttribute('data-cursor-animation') !== '1') return;
+
+        var dot  = document.createElement('div');
+        dot.id   = 'd-cursor-dot';
+        document.body.appendChild(dot);
+
+        var ring = document.createElement('div');
+        ring.id  = 'd-cursor-ring';
+        document.body.appendChild(ring);
+
+        var mX = -100, mY = -100;  // mouse
+        var rX = -100, rY = -100;  // ring (lagging)
+
+        // Mouse exact pozitsiyasini darhol oladi
+        document.addEventListener('mousemove', function (e) {
+          mX = e.clientX;
+          mY = e.clientY;
+          dot.style.left = mX + 'px';
+          dot.style.top  = mY + 'px';
+        });
+
+        // Ring orqasidan ergashib yuradi (smooth lag)
+        (function loop() {
+          rX += (mX - rX) * 0.1;
+          rY += (mY - rY) * 0.1;
+          ring.style.left = rX + 'px';
+          ring.style.top  = rY + 'px';
+          requestAnimationFrame(loop);
+        })();
+
+        // Hover — interaktiv element ustida
+        document.addEventListener('mouseover', function (e) {
+          var el = e.target.closest('a, button, input, select, textarea, label, [role="button"]');
+          if (el) document.body.classList.add('cursor-hovering');
+        });
+        document.addEventListener('mouseout', function (e) {
+          var el = e.target.closest('a, button, input, select, textarea, label, [role="button"]');
+          if (el) document.body.classList.remove('cursor-hovering');
+        });
+
+        // Click
+        document.addEventListener('mousedown', function () { document.body.classList.add('cursor-clicking'); });
+        document.addEventListener('mouseup',   function () { document.body.classList.remove('cursor-clicking'); });
+      })();
+    </script>
   </body>
 </html>

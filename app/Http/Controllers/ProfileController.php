@@ -990,16 +990,20 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $data = $request->validate([
-            "donor_theme" => "nullable|string|max:40",
-            "badge_style" => "nullable|in:default,pill,icon",
-            "comment_style" => "nullable|in:border,filled",
-            "chat_style" => "nullable|in:show,hide",
-            "show_expiry_badge" => "nullable|in:0,1",
-            "name_font_weight" => "nullable|in:600,700,800",
+            "donor_theme"           => "nullable|string|max:40",
+            "badge_style"           => "nullable|in:default,pill,icon",
+            "comment_style"         => "nullable|in:border,filled",
+            "chat_style"            => "nullable|in:show,hide",
+            "show_expiry_badge"     => "nullable|in:0,1",
+            "name_font_weight"      => "nullable|in:600,700,800",
+            "donor_cursor_animation"=> "nullable|boolean",
+            "profile_bg_style"      => "nullable|in:plain,gradient,mesh,aurora",
+            "badge_position"        => "nullable|in:before,after",
+            "banner_animation"      => "nullable|in:none,pulse,wave,slide",
+            "status_emoji"          => "nullable|string|max:8",
         ]);
 
         // Tema tanlash — server-side ruxsat tekshiruvi.
-        // Ruxsat etilgan tema bo'lsa — qabul qilamiz, aks holda joriy tema saqlanadi.
         $theme = $user->profile_theme ?: $user->donation_rank;
         if (!empty($data["donor_theme"]) && \App\Models\Donation::themeAllowedForUser($data["donor_theme"], $user)) {
             $theme = $data["donor_theme"];
@@ -1009,18 +1013,32 @@ class ProfileController extends Controller
         $themeConfig = \App\Models\Donation::themeConfig($theme);
         $themeColor = $themeConfig["badge_color"] ?? null;
 
+        // status_emoji — faqat 1 ta visual emoji ruxsat
+        $emoji = null;
+        if (!empty($data["status_emoji"])) {
+            $cleaned = trim($data["status_emoji"]);
+            $emoji = function_exists('grapheme_substr')
+                ? grapheme_substr($cleaned, 0, 1)
+                : mb_substr($cleaned, 0, 1);
+        }
+
         $user->update([
-            "profile_theme" => $theme,
-            "username_color" => $themeColor ?? $user->username_color,
-            "badge_style" => $data["badge_style"] ?? $user->badge_style,
-            "comment_style" => $data["comment_style"] ?? $user->comment_style,
-            "chat_style" => $data["chat_style"] ?? $user->chat_style,
-            "show_expiry_badge" => $data["show_expiry_badge"] ?? $user->show_expiry_badge,
-            "name_font_weight" => $data["name_font_weight"] ?? $user->name_font_weight,
+            "profile_theme"          => $theme,
+            "username_color"         => $themeColor ?? $user->username_color,
+            "badge_style"            => $data["badge_style"] ?? $user->badge_style,
+            "comment_style"          => $data["comment_style"] ?? $user->comment_style,
+            "chat_style"             => $data["chat_style"] ?? $user->chat_style,
+            "show_expiry_badge"      => $data["show_expiry_badge"] ?? $user->show_expiry_badge,
+            "name_font_weight"       => $data["name_font_weight"] ?? $user->name_font_weight,
+            "donor_cursor_animation" => $data["donor_cursor_animation"] ?? false,
+            "profile_bg_style"       => $data["profile_bg_style"] ?? $user->profile_bg_style ?? 'plain',
+            "badge_position"         => $data["badge_position"] ?? $user->badge_position ?? 'after',
+            "banner_animation"       => $data["banner_animation"] ?? $user->banner_animation ?? 'none',
+            "status_emoji"           => $emoji,
         ]);
 
         return redirect()->route("profile.show", ["panel" => "appearance"])
-            ->with("success", "Korinish saqlandi!")
+            ->with("success", "Ko'rinish saqlandi!")
             ->with("toast_type", "success");
     }
 }

@@ -298,7 +298,7 @@
       + '<div class="chat-msg-avatar-wrap" data-user-id="' + m.user_id + '">' + avatarHtml + '</div>'
       + '<div class="chat-msg-body">'
       + '<div class="chat-msg-meta">'
-      + '<span class="chat-msg-name" data-user-id="' + m.user_id + '"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escHtml(m.user_name) + '</span>'
+      + '<span class="chat-msg-name" data-user-id="' + m.user_id + '"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escHtml(m.user_name) + (m.status_emoji ? ' ' + escHtml(m.status_emoji) : '') + '</span>'
       + donorBadgeHtml
       + '<span class="chat-msg-time">' + (m.date ? m.date + ' ' : '') + escHtml(m.time || '') + '</span>'
       + '</div>'

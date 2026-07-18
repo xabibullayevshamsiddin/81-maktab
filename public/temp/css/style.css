@@ -6684,35 +6684,55 @@ body.modal-open {
 .news-hero {
   padding-top: 130px;
   padding-bottom: 60px;
-  background: linear-gradient(135deg, #08284d, #0f172a 60%, #1e293b);
+  background: linear-gradient(135deg, #0f172a, #3b0764, #0284c7, #7e22ce, #0f172a);
+  background-size: 400% 400%;
+  animation: heroBgMove 8s ease infinite;
   position: relative;
   overflow: hidden;
+}
+
+@keyframes heroBgMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .news-hero::before {
   content: "";
   position: absolute;
-  top: -20%;
-  left: -10%;
-  width: 60%;
-  height: 80%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-  filter: blur(100px);
+  top: -30%;
+  left: -20%;
+  width: 70%;
+  height: 90%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 60%);
+  filter: blur(80px);
   z-index: 0;
   pointer-events: none;
+  animation: floatGlow1 6s ease-in-out infinite alternate;
 }
 
 .news-hero::after {
   content: "";
   position: absolute;
-  bottom: -10%;
-  right: -5%;
-  width: 50%;
-  height: 60%;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
-  filter: blur(100px);
+  bottom: -30%;
+  right: -20%;
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(217, 70, 239, 0.4) 0%, transparent 60%);
+  filter: blur(80px);
   z-index: 0;
   pointer-events: none;
+  animation: floatGlow2 7s ease-in-out infinite alternate;
+}
+
+@keyframes floatGlow1 {
+  0% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg) blur(80px); opacity: 0.5; }
+  100% { transform: translate(150px, 80px) scale(1.5); filter: hue-rotate(180deg) blur(80px); opacity: 1; }
+}
+
+@keyframes floatGlow2 {
+  0% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg) blur(80px); opacity: 0.5; }
+  100% { transform: translate(-120px, -100px) scale(1.6); filter: hue-rotate(-180deg) blur(80px); opacity: 1; }
 }
 
 .news-page .header-main {
@@ -18124,3 +18144,277 @@ body:not([data-theme="dark"]) .profile-theme-admin-phoenix .profile-overview-nam
   color: #fff !important;
   transform: scale(1.02);
 }
+
+/* ====================================================================
+   DONOR CURSOR — Premium Smooth Cursor
+   ==================================================================== */
+
+body[data-cursor-animation="1"],
+body[data-cursor-animation="1"] * {
+  cursor: none !important;
+}
+
+#d-cursor-dot {
+  position: fixed;
+  top: 0; left: 0;
+  width: 8px; height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999999;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+  transition: width 0.2s, height 0.2s, background 0.2s, opacity 0.2s;
+}
+
+#d-cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999998;
+  transform: translate(-50%, -50%);
+  will-change: left, top, width, height;
+  transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+              height 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+              background 0.35s, opacity 0.35s, border-color 0.35s;
+  border: 1.5px solid rgba(255, 45, 120, 0.8);
+  background: transparent;
+  box-shadow: 0 0 10px rgba(255, 45, 120, 0.3), inset 0 0 10px rgba(168, 85, 247, 0.05);
+}
+
+/* Hover holati */
+body[data-cursor-animation="1"].cursor-hovering #d-cursor-dot {
+  width: 6px; height: 6px;
+  opacity: 0.5;
+}
+
+body[data-cursor-animation="1"].cursor-hovering #d-cursor-ring {
+  width: 56px; height: 56px;
+  background: rgba(255, 45, 120, 0.06);
+  border-color: rgba(168, 85, 247, 0.9);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.35), 0 0 40px rgba(255, 45, 120, 0.15);
+}
+
+/* Click holati */
+body[data-cursor-animation="1"].cursor-clicking #d-cursor-dot {
+  width: 5px; height: 5px;
+  background: #ff2d78;
+}
+
+body[data-cursor-animation="1"].cursor-clicking #d-cursor-ring {
+  width: 28px; height: 28px;
+  border-color: #ff2d78;
+  box-shadow: 0 0 16px rgba(255, 45, 120, 0.6);
+}
+
+/* ====================================================================
+   DONOR EXTRA STYLES: Profile BG styles and Banner animations
+   ==================================================================== */
+
+/* 1. Profile BG styles */
+.profile-overview-panel.profile-bg-gradient {
+  background: linear-gradient(135deg, var(--surface, #1e293b) 0%, rgba(255, 45, 120, 0.12) 50%, rgba(168, 85, 247, 0.12) 100%) !important;
+  border: 1px solid rgba(255, 45, 120, 0.15) !important;
+}
+.profile-overview-panel.profile-bg-mesh {
+  background: var(--surface, #1e293b) !important;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 45, 120, 0.12) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.08) 0px, transparent 50%) !important;
+  border: 1px solid rgba(168, 85, 247, 0.15) !important;
+}
+.profile-overview-panel.profile-bg-aurora {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface, #1e293b) !important;
+  border: 1px solid rgba(59, 130, 246, 0.15) !important;
+}
+.profile-overview-panel.profile-bg-aurora::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 45, 120, 0.08) 0%, rgba(168, 85, 247, 0.08) 35%, rgba(59, 130, 246, 0.04) 70%, transparent 100%);
+  animation: auroraFlow 15s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.profile-overview-panel.profile-bg-aurora > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes auroraFlow {
+  0% { transform: rotate(0deg) translate(0, 0); }
+  50% { transform: rotate(180deg) translate(-5%, -5%); }
+  100% { transform: rotate(360deg) translate(0, 0); }
+}
+
+/* 2. Banner Animations */
+.banner-anim-pulse .donor-banner {
+  animation: bannerPulse 4s ease-in-out infinite alternate;
+}
+.banner-anim-pulse.profile-hero {
+  animation: bgPulse 8s ease-in-out infinite alternate;
+}
+.banner-anim-wave .donor-banner {
+  animation: bannerWave 6s ease-in-out infinite;
+}
+.banner-anim-slide .donor-banner {
+  animation: bannerSlide 12s linear infinite alternate;
+  width: 110% !important;
+  max-width: none !important;
+}
+
+@keyframes bannerPulse {
+  0% { opacity: 0.85; filter: brightness(0.9) contrast(1); }
+  100% { opacity: 1; filter: brightness(1.15) contrast(1.05); }
+}
+@keyframes bgPulse {
+  0% { filter: hue-rotate(0deg) brightness(0.9); }
+  100% { filter: hue-rotate(15deg) brightness(1.05); }
+}
+@keyframes bannerWave {
+  0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  50% { clip-path: polygon(0 0, 100% 0, 100% 96%, 50% 100%, 0 96%); }
+}
+@keyframes bannerSlide {
+  0% { transform: scale(1.05) translateX(0); }
+  100% { transform: scale(1.05) translateX(-5%); }
+}
+
+/* ====================================================================
+   DONOR & THEMED USER PREVIEW DIALOG STYLES
+   ==================================================================== */
+.chat-user-preview-dialog[class*="is-themed-"] {
+  border: none !important;
+  padding: 2px;
+  overflow: visible;
+  border-radius: 18px;
+}
+
+/* Custom background for the dialog itself */
+.chat-user-preview-dialog[class*="is-themed-"]::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  z-index: 0;
+  background: var(--theme-preview-border, linear-gradient(120deg, #6366f1, #a855f7));
+  background-size: 200% 200%;
+  animation: sa-border-rotate 4s linear infinite;
+}
+
+.chat-user-preview-dialog[class*="is-themed-"] .chat-user-preview-shell {
+  position: relative;
+  z-index: 1;
+  background: var(--theme-preview-bg, #0d1526);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Subtle top aurora stripe */
+.chat-user-preview-dialog[class*="is-themed-"] .chat-user-preview-shell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--theme-preview-border, linear-gradient(90deg, #6366f1, #a855f7));
+  background-size: 200% 100%;
+  animation: sa-border-rotate 3s linear infinite;
+  border-radius: 16px 16px 0 0;
+}
+
+/* Radial glow behind avatar */
+.chat-user-preview-dialog[class*="is-themed-"] .chat-user-preview-shell::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--theme-preview-glow, rgba(99, 102, 241, 0.2)) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.chat-user-preview-dialog[class*="is-themed-"] .chat-user-preview-body {
+  position: relative;
+  z-index: 1;
+}
+
+.chat-user-preview-dialog[class*="is-themed-"] .chat-user-preview-name {
+  color: var(--theme-preview-name-color, #fff) !important;
+  text-shadow: 0 0 10px var(--theme-preview-glow-strong, rgba(99, 102, 241, 0.5)) !important;
+}
+
+/* Specific theme definitions */
+
+/* Supporter (Blue) */
+.chat-user-preview-dialog.is-themed-supporter {
+  --theme-preview-border: linear-gradient(120deg, #3b82f6, #1d4ed8, #3b82f6);
+  --theme-preview-bg: linear-gradient(160deg, #091220 0%, #0d1b30 60%, #08111e 100%);
+  --theme-preview-glow: rgba(59, 130, 246, 0.25);
+  --theme-preview-glow-strong: rgba(59, 130, 246, 0.5);
+  --theme-preview-name-color: #93c5fd;
+}
+
+/* Premium (Purple) */
+.chat-user-preview-dialog.is-themed-premium {
+  --theme-preview-border: linear-gradient(120deg, #8b5cf6, #6d28d9, #8b5cf6);
+  --theme-preview-bg: linear-gradient(160deg, #100b20 0%, #170f30 60%, #0e0a1e 100%);
+  --theme-preview-glow: rgba(139, 92, 246, 0.25);
+  --theme-preview-glow-strong: rgba(139, 92, 246, 0.5);
+  --theme-preview-name-color: #c084fc;
+}
+
+/* VIP (Gold/Amber) */
+.chat-user-preview-dialog.is-themed-vip {
+  --theme-preview-border: linear-gradient(120deg, #f59e0b, #b45309, #f59e0b);
+  --theme-preview-bg: linear-gradient(160deg, #181005 0%, #241808 60%, #150e04 100%);
+  --theme-preview-glow: rgba(245, 158, 11, 0.25);
+  --theme-preview-glow-strong: rgba(245, 158, 11, 0.5);
+  --theme-preview-name-color: #fcd34d;
+}
+
+/* Admin Gold */
+.chat-user-preview-dialog.is-themed-admin-gold {
+  --theme-preview-border: linear-gradient(120deg, #eab308, #ca8a04, #eab308);
+  --theme-preview-bg: linear-gradient(160deg, #1c1904 0%, #292506 60%, #171503 100%);
+  --theme-preview-glow: rgba(234, 179, 8, 0.3);
+  --theme-preview-glow-strong: rgba(234, 179, 8, 0.6);
+  --theme-preview-name-color: #fef08a;
+  animation: sa-glow-pulse 3s ease infinite;
+}
+
+/* Admin Royal (Red) */
+.chat-user-preview-dialog.is-themed-admin-royal {
+  --theme-preview-border: linear-gradient(120deg, #dc2626, #991b1b, #dc2626);
+  --theme-preview-bg: linear-gradient(160deg, #1a0505 0%, #2b0808 60%, #180505 100%);
+  --theme-preview-glow: rgba(220, 38, 38, 0.3);
+  --theme-preview-glow-strong: rgba(220, 38, 38, 0.6);
+  --theme-preview-name-color: #fca5a5;
+  animation: sa-glow-pulse 3s ease infinite;
+}
+
+/* Admin Phoenix (Orange/Flame) */
+.chat-user-preview-dialog.is-themed-admin-phoenix {
+  --theme-preview-border: linear-gradient(120deg, #ea580c, #9a3412, #ea580c);
+  --theme-preview-bg: linear-gradient(160deg, #1c0b03 0%, #2c1206 60%, #1a0a03 100%);
+  --theme-preview-glow: rgba(234, 88, 12, 0.3);
+  --theme-preview-glow-strong: rgba(234, 88, 12, 0.6);
+  --theme-preview-name-color: #fed7aa;
+  animation: sa-glow-pulse 3s ease infinite;
+}
+
+

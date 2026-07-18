@@ -180,9 +180,22 @@ class HomeController extends Controller
         $this->validateTurnstile($request);
         $user = $request->user();
 
+        $maxKb = 2048; // default 2MB
+        if ($user && method_exists($user, 'isDonor') && $user->isDonor()) {
+            $rank = $user->donation_rank;
+            if ($rank === \App\Models\Donation::RANK_SUPPORTER) {
+                $maxKb = 5120; // 5MB
+            } elseif ($rank === \App\Models\Donation::RANK_PREMIUM) {
+                $maxKb = 10240; // 10MB
+            } elseif ($rank === \App\Models\Donation::RANK_VIP) {
+                $maxKb = 20480; // 20MB
+            }
+        }
+
         $rules = [
             'note' => ['nullable', 'string', 'max:2000'],
             'message' => ['required', 'string', 'max:5000'],
+            'image' => ['nullable', 'image', 'max:' . $maxKb],
         ];
 
         if (! $user) {
@@ -193,6 +206,8 @@ class HomeController extends Controller
 
         $validated = $request->validate($rules, [
             'phone.regex' => uz_phone_validation_message(),
+            'image.max' => "Rasm hajmi juda katta. Siz uchun maksimal ruxsat etilgan hajm: " . ($maxKb / 1024) . " MB.",
+            'image.image' => "Faqat rasm yuklash mumkin.",
         ]);
 
         $resolvedName = $user
@@ -207,6 +222,11 @@ class HomeController extends Controller
             ? uz_phone_format((string) $user->phone)
             : uz_phone_format((string) ($validated['phone'] ?? ''));
 
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('contacts', 'public');
+        }
+
         $data = [
             'name' => sanitize_plain_text($resolvedName),
             'email' => $resolvedEmail,
@@ -215,6 +235,7 @@ class HomeController extends Controller
                 ? sanitize_plain_text($validated['note'])
                 : null,
             'message' => sanitize_plain_text($validated['message']),
+            'image_path' => $imagePath,
         ];
 
         // Donor prioritet — VIP/Premium donorlarning murojaatini ajratib ko'rsatish.

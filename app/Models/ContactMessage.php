@@ -13,6 +13,7 @@ class ContactMessage extends Model
         'phone',
         'note',
         'message',
+        'image_path',
         'read_at',
         'read_by_user_id',
         'is_blocked',
@@ -25,6 +26,11 @@ class ContactMessage extends Model
         'blocked_at' => 'datetime',
         'is_blocked' => 'boolean',
     ];
+
+    public function imageUrl(): ?string
+    {
+        return $this->image_path ? app_storage_asset($this->image_path) : null;
+    }
 
 
 

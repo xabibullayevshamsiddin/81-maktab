@@ -1853,7 +1853,7 @@ class AiService
 
             $resultText = "**Sizning so'nggi imtihon natijalaringiz:**\n\n";
             foreach ($results as $idx => $result) {
-                $examTitle = $result->exam?->title ?? 'Noomi'zin imtihon';
+                $examTitle = $result->exam?->title ?? "Noomi'zin imtihon";
                 $score = $result->score ?? 0;
                 $status = $result->passed ? '✅ O\'tdi' : '❌ O\'tmadi';
                 $date = $result->submitted_at?->format('d.m.Y H:i') ?? 'Sana mavjud emas';
@@ -1877,7 +1877,7 @@ class AiService
             $courseCount = \App\Models\Course::where('status', \App\Models\Course::STATUS_PUBLISHED)->count();
             $examCount = \App\Models\Exam::where('is_active', true)->count();
             $userCount = \App\Models\User::where('role_id', 1)->count();
-            
+
             return "**81-IDUM Saytidagi kontentlar:**\n"
                 ."- 📝 **Yangiliklar (Postlar)**: {$postCount}+ post\n"
                 ."- 📚 **Kurslar**: {$courseCount}+ kurs\n"
@@ -1901,7 +1901,7 @@ class AiService
 
             $courseList = "**Mavjud Kurslar (So'nggi 10 ta):**\n\n";
             foreach ($courses as $idx => $course) {
-                $level = $course->level ?? 'Nooma'lum';
+                $level = $course->level ?? "Nooma'lum";
                 $courseList .= "**".($idx + 1).". {$course->title}** ({$level})\n";
                 if ($course->description) {
                     $courseList .= "   ".Str::limit($course->description, 100)."\n";
@@ -1917,7 +1917,7 @@ class AiService
         // Donations and payments info
         if (Str::contains($q, ['donatsiya', 'xayriya', 'to\'lov', 'pul yubor', 'maktabga pul', 'qo\'llash', 'qollash', 'kilit', 'activation'])) {
             $donationEnabled = SiteSetting::get('donation_enabled', '1') === '1';
-            
+
             if (!$donationEnabled) {
                 return "Donatsiya xizmati hozircha mavjud emas. Keyinroq qo'shiladi! 💝";
             }

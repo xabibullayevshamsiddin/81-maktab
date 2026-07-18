@@ -375,6 +375,48 @@
         <option value="800" {{ ($user->name_font_weight??"")=="800"?"selected":"" }}>Juda qalin</option>
       </select>
     </div>
+    @if($user->isDonor())
+    <div class="ap-setting-row">
+      <div><div class="asr-label">Sichqoncha (Cursor)</div><div class="asr-desc">Saytda maxsus cursor animatsiyasi</div></div>
+      <select name="donor_cursor_animation">
+        <option value="1" {{ $user->donor_cursor_animation ? "selected" : "" }}>Yoqilgan</option>
+        <option value="0" {{ !$user->donor_cursor_animation ? "selected" : "" }}>O'chirilgan</option>
+      </select>
+    </div>
+    <div class="ap-setting-row">
+      <div><div class="asr-label">Profil fon turi</div><div class="asr-desc">Profil sahifasi background</div></div>
+      <select name="profile_bg_style">
+        <option value="plain"    {{ ($user->profile_bg_style??'plain')=='plain'   ?'selected':'' }}>Oddiy</option>
+        <option value="gradient" {{ ($user->profile_bg_style??'')=='gradient'     ?'selected':'' }}>Gradient</option>
+        <option value="mesh"     {{ ($user->profile_bg_style??'')=='mesh'         ?'selected':'' }}>Mesh to'r</option>
+        <option value="aurora"   {{ ($user->profile_bg_style??'')=='aurora'       ?'selected':'' }}>Aurora</option>
+      </select>
+    </div>
+    <div class="ap-setting-row">
+      <div><div class="asr-label">Badge joylashuvi</div><div class="asr-desc">Ismdan oldin yoki keyin</div></div>
+      <select name="badge_position">
+        <option value="after"  {{ ($user->badge_position??'after')=='after' ?'selected':'' }}>Ismdan keyin</option>
+        <option value="before" {{ ($user->badge_position??'')=='before'     ?'selected':'' }}>Ismdan oldin</option>
+      </select>
+    </div>
+    <div class="ap-setting-row">
+      <div><div class="asr-label">Banner animatsiyasi</div><div class="asr-desc">Profil banner harakati</div></div>
+      <select name="banner_animation">
+        <option value="none"  {{ ($user->banner_animation??'none')=='none'  ?'selected':'' }}>Yo'q</option>
+        <option value="pulse" {{ ($user->banner_animation??'')=='pulse'     ?'selected':'' }}>Pulsatsiya</option>
+        <option value="wave"  {{ ($user->banner_animation??'')=='wave'      ?'selected':'' }}>To'lqin</option>
+        <option value="slide" {{ ($user->banner_animation??'')=='slide'     ?'selected':'' }}>Siljish</option>
+      </select>
+    </div>
+    <div class="ap-setting-row">
+      <div><div class="asr-label">Status emoji</div><div class="asr-desc">Ismingiz yonidagi belgi</div></div>
+      <input type="text" name="status_emoji"
+        value="{{ $user->status_emoji }}"
+        maxlength="2"
+        placeholder="🔥"
+        style="width:60px; padding:0.3rem 0.45rem; border:2px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text); font-size:1rem; outline:none; text-align:center;">
+    </div>
+    @endif
   </div>
 
   <button type="submit" class="ap-btn-save"><i class="fa-solid fa-check"></i> Saqlash</button>

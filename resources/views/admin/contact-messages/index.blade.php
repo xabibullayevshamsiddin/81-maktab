@@ -101,7 +101,12 @@
                 </td>
                 <td>{{ $row->phone }}</td>
                 <td style="max-width:180px;white-space:pre-wrap;word-break:break-word;">{{ \Illuminate\Support\Str::limit($row->note ?: '—', 80) }}</td>
-                <td style="max-width:200px;white-space:pre-wrap;word-break:break-word;">{{ \Illuminate\Support\Str::limit($row->message, 120) }}</td>
+                <td style="max-width:200px;white-space:pre-wrap;word-break:break-word;">
+                  {{ \Illuminate\Support\Str::limit($row->message, 120) }}
+                  @if($row->image_path)
+                    <br><span class="badge bg-info mt-1" style="font-size: 10px;"><i class="fa-solid fa-image"></i> Rasm bor</span>
+                  @endif
+                </td>
                 <td>
                   <div class="d-flex flex-column gap-1">
                     <a href="{{ route('admin.contact-messages.show', $row) }}" class="btn btn-sm btn-primary">Ko‘rish</a>

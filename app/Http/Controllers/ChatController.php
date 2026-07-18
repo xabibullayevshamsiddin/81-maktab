@@ -59,7 +59,7 @@ class ChatController extends Controller
         $canClearAll = $currentUser->isAdmin();
 
         $query = ChatMessage::query()
-            ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color,profile_theme,chat_style,badge_style,show_expiry_badge,name_font_weight')
+            ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color,profile_theme,chat_style,badge_style,show_expiry_badge,name_font_weight,status_emoji')
             ->with('user.roleRelation:id,name');
 
         if ($groupId > 0) {
@@ -134,6 +134,7 @@ class ChatController extends Controller
                 'donor_badge' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->donorBadgeHtml() ?? '') : '',
                 'donor_color' => $m->user?->donorUsernameColor() ?? '',
                 'name_font_weight' => $m->user?->name_font_weight ?? '700',
+                'status_emoji' => $m->user?->status_emoji ?? '',
             ];
         });
 
