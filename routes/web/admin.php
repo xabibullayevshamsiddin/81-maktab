@@ -129,5 +129,8 @@ Route::prefix('admin')->middleware(['auth', 'active', 'role:super_admin,admin,ed
         Route::resource('ai-knowledges', AdminAiKnowledgeController::class)->except(['show']);
         Route::get('settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
         Route::put('settings', [AdminSettingsController::class, 'update'])->name('admin.settings.update');
+        Route::get('settings/page-locks', [AdminSettingsController::class, 'pageLocks'])->name('admin.settings.page-locks');
+        Route::post('settings/page-locks/lock', [AdminSettingsController::class, 'lockPage'])->name('admin.settings.page-locks.lock');
+        Route::post('settings/page-locks/unlock', [AdminSettingsController::class, 'unlockPage'])->name('admin.settings.page-locks.unlock');
     });
 });

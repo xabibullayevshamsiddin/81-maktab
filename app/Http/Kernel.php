@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\CheckRole::class,
         'admin' => \App\Http\Middleware\CheckIsAdmin::class,
         'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+        'page.lock' => \App\Http\Middleware\CheckPageLock::class,
     ];
 }

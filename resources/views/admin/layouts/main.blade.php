@@ -226,6 +226,13 @@
                   <span class="text">Sozlamalar</span>
                 </a>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.settings.page-locks') ? 'active' : '' }}">
+                <a href="{{ route('admin.settings.page-locks') }}">
+                  <span class="icon"><i class="mdi mdi-lock-outline"></i></span>
+                  <span class="text">Sahifalar boshqaruvi</span>
+                </a>
+              </li>
             @endif
           @endif
 

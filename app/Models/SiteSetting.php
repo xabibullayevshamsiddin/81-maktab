@@ -35,6 +35,7 @@ class SiteSetting extends Model
         'global_chat_disabled_message',
         'ai_chat_enabled',
         'ai_chat_disabled_message',
+        'page_locks',
     ];
 
     public static function get(string $key, ?string $default = null): ?string

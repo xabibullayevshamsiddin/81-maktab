@@ -393,6 +393,35 @@
   bindProfileStagger(profileRoot);
   bindActivityLists(profileRoot);
 
+  // Avatar display — input bo'lmasa ham (masalan appearance paneli)
+  (function applyStoredAvatar() {
+    // bindAvatarInput o'zi ham apply qiladi, shuning uchun input bo'lsa skip
+    if (profileRoot.querySelector('#profile-avatar')) return;
+    const boxes = Array.from(profileRoot.querySelectorAll('[data-profile-avatar-box]'));
+    boxes.forEach(function (box) {
+      const src = box.dataset.profileAvatarUrl || '';
+      const initial = box.dataset.profileAvatarInitial || '';
+      if (src) {
+        const img = new Image();
+        img.onload = function () {
+          box.classList.add('profile-avatar--image');
+          box.style.backgroundImage = 'url("' + src + '")';
+          box.textContent = '';
+        };
+        img.onerror = function () {
+          box.classList.remove('profile-avatar--image');
+          box.style.backgroundImage = '';
+          box.textContent = initial;
+        };
+        img.src = src;
+      } else {
+        box.classList.remove('profile-avatar--image');
+        box.style.backgroundImage = '';
+        box.textContent = initial;
+      }
+    });
+  })();
+
   window.showToast = function(message, type = 'info', duration = 3500) {
     let container = document.querySelector('.app-toast-container');
     if (!container) {

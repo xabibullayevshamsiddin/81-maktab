@@ -17,6 +17,8 @@ Route::get('/', [HomeController::class, 'home'])->name('home');
 Route::redirect('home', '/')->name('home.redirect');
 Route::get('lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
+Route::middleware('page.lock')->group(function () {
+
 Route::get('about', [HomeController::class, 'about'])->name('about');
 Route::get('search', [HomeController::class, 'globalSearch'])->name('search');
 Route::get('privacy-policy', [HomeController::class, 'privacyPolicy'])->name('privacy-policy');
@@ -103,3 +105,5 @@ Route::post('contact', [HomeController::class, 'storeContact'])
 
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');
+
+}); // end page.lock group

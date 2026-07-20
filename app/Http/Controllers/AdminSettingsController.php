@@ -25,6 +25,19 @@ class AdminSettingsController extends Controller
         'ai_chat_disabled_message',
     ];
 
+    private const LOCKABLE_PAGES = [
+        'post'             => 'Yangiliklar',
+        'teacher'          => 'O\'qituvchilar',
+        'courses'          => 'Kurslar',
+        'calendar'         => 'Taqvim',
+        'contact'          => 'Aloqa',
+        'about'            => 'Biz haqimizda',
+        'search'           => 'Qidiruv',
+        'feature-requests' => 'Takliflar',
+        'profile'          => 'Profil',
+        'exam'             => 'Imtihonlar',
+    ];
+
     public function index()
     {
         $defaults = [
@@ -39,6 +52,58 @@ class AdminSettingsController extends Controller
         }
 
         return view('admin.settings.index', compact('settings'));
+    }
+
+    public function pageLocks()
+    {
+        $raw = SiteSetting::get('page_locks');
+        $locks = $raw ? json_decode($raw, true) : [];
+
+        return view('admin.settings.page-locks', [
+            'pages' => self::LOCKABLE_PAGES,
+            'locks' => $locks,
+        ]);
+    }
+
+    public function lockPage(Request $request)
+    {
+        $validated = $request->validate([
+            'page'     => ['required', 'string', 'in:' . implode(',', array_keys(self::LOCKABLE_PAGES))],
+            'duration' => ['required', 'integer', 'min:1', 'max:10080'],
+            'reason'   => ['nullable', 'string', 'max:300'],
+        ]);
+
+        $raw = SiteSetting::get('page_locks');
+        $locks = $raw ? json_decode($raw, true) : [];
+
+        $locks[$validated['page']] = [
+            'locked_until' => now()->addMinutes((int) $validated['duration'])->toIso8601String(),
+            'reason'       => $validated['reason'] ?? null,
+            'page_name'    => self::LOCKABLE_PAGES[$validated['page']],
+            'locked_by_name' => auth()->user()->name,
+        ];
+
+        SiteSetting::set('page_locks', json_encode($locks));
+
+        return redirect()
+            ->route('admin.settings.page-locks')
+            ->with('success', self::LOCKABLE_PAGES[$validated['page']] . ' sahifasi ' . $validated['duration'] . ' daqiqaga bloklandi.');
+    }
+
+    public function unlockPage(Request $request)
+    {
+        $validated = $request->validate([
+            'page' => ['required', 'string', 'in:' . implode(',', array_keys(self::LOCKABLE_PAGES))],
+        ]);
+
+        $raw = SiteSetting::get('page_locks');
+        $locks = $raw ? json_decode($raw, true) : [];
+        unset($locks[$validated['page']]);
+        SiteSetting::set('page_locks', $locks ? json_encode($locks) : null);
+
+        return redirect()
+            ->route('admin.settings.page-locks')
+            ->with('success', self::LOCKABLE_PAGES[$validated['page']] . ' sahifasi blokdan chiqarildi.');
     }
 
     public function update(Request $request)

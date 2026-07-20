@@ -48,37 +48,39 @@ Route::middleware('auth')->group(function () {
     Route::post('chat/groups/{group}/requests/{joinRequest}/accept', [ChatGroupController::class, 'accept'])->middleware(['active'])->name('chat.groups.requests.accept');
     Route::post('chat/groups/{group}/requests/{joinRequest}/reject', [ChatGroupController::class, 'reject'])->middleware(['active'])->name('chat.groups.requests.reject');
 
-    Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
-    Route::get('profile/sinfni-tanlash', [GradeSelectionController::class, 'show'])->name('profile.grade-selection.show');
-    Route::put('profile/sinfni-tanlash', [GradeSelectionController::class, 'update'])->name('profile.grade-selection.update');
-    Route::get('profile/bookmarks', [BookmarkController::class, 'index'])->name('profile.bookmarks.index');
-    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
-Route::put('profile/appearance', [ProfileController::class, 'updateAppearance'])->name('profile.update-appearance');
-    Route::get('profile/natijalar', [ProfileController::class, 'resultsIndex'])->name('profile.results.index');
-    Route::get('profile/results', [ProfileController::class, 'resultsIndex']);
-    Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
-    Route::get('profile/results/export', [ProfileController::class, 'exportResults']);
-    Route::get('profile/natijalar/{result}/export', [ProfileController::class, 'exportSingleResult'])
-        ->whereNumber('result')
-        ->name('profile.results.single.export');
-    Route::get('profile/results/{result}/export', [ProfileController::class, 'exportSingleResult'])
-        ->whereNumber('result');
-    Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->middleware('active')->name('profile.email.request');
-    Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->middleware('active')->name('profile.email.verify');
-    Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->middleware('active')->name('profile.email.resend');
-    Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->middleware('active')->name('profile.email.cancel');
-    Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->middleware('active')->name('profile.password.confirm');
-    Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->middleware('active')->name('profile.password.update');
+    Route::middleware('page.lock')->group(function () {
+        Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+        Route::get('profile/sinfni-tanlash', [GradeSelectionController::class, 'show'])->name('profile.grade-selection.show');
+        Route::put('profile/sinfni-tanlash', [GradeSelectionController::class, 'update'])->name('profile.grade-selection.update');
+        Route::get('profile/bookmarks', [BookmarkController::class, 'index'])->name('profile.bookmarks.index');
+        Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('profile/appearance', [ProfileController::class, 'updateAppearance'])->name('profile.update-appearance');
+        Route::get('profile/natijalar', [ProfileController::class, 'resultsIndex'])->name('profile.results.index');
+        Route::get('profile/results', [ProfileController::class, 'resultsIndex']);
+        Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
+        Route::get('profile/results/export', [ProfileController::class, 'exportResults']);
+        Route::get('profile/natijalar/{result}/export', [ProfileController::class, 'exportSingleResult'])
+            ->whereNumber('result')
+            ->name('profile.results.single.export');
+        Route::get('profile/results/{result}/export', [ProfileController::class, 'exportSingleResult'])
+            ->whereNumber('result');
+        Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->middleware('active')->name('profile.email.request');
+        Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->middleware('active')->name('profile.email.verify');
+        Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->middleware('active')->name('profile.email.resend');
+        Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->middleware('active')->name('profile.email.cancel');
+        Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->middleware('active')->name('profile.password.confirm');
+        Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->middleware('active')->name('profile.password.update');
 
-    Route::post('feature-requests', [FeatureRequestController::class, 'store'])->middleware('active')->name('feature-requests.store');
-    Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->middleware('active')->name('feature-requests.vote');
-    Route::post('feature-requests/{featureRequest}/replies', [FeatureRequestController::class, 'storeReply'])
-        ->middleware(['active', 'role:super_admin,admin,moderator'])
-        ->name('feature-requests.replies.store');
-    Route::delete('feature-request-replies/{reply}', [FeatureRequestController::class, 'destroyReply'])
-        ->middleware('active')
-        ->name('feature-requests.replies.destroy');
-    Route::delete('feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])->middleware('active')->name('feature-requests.destroy');
+        Route::post('feature-requests', [FeatureRequestController::class, 'store'])->middleware('active')->name('feature-requests.store');
+        Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->middleware('active')->name('feature-requests.vote');
+        Route::post('feature-requests/{featureRequest}/replies', [FeatureRequestController::class, 'storeReply'])
+            ->middleware(['active', 'role:super_admin,admin,moderator'])
+            ->name('feature-requests.replies.store');
+        Route::delete('feature-request-replies/{reply}', [FeatureRequestController::class, 'destroyReply'])
+            ->middleware('active')
+            ->name('feature-requests.replies.destroy');
+        Route::delete('feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])->middleware('active')->name('feature-requests.destroy');
+    }); // end profile + feature-requests page.lock group
 
     Route::get('profile/exams/results/{result}', [TeacherExamController::class, 'showResult'])
         ->whereNumber('result')
@@ -86,7 +88,7 @@ Route::put('profile/appearance', [ProfileController::class, 'updateAppearance'])
     Route::get('profile/exams/results/export', [TeacherExamController::class, 'exportResults'])->middleware('active')->name('profile.exams.results.export');
     Route::get('profile/exams/result/export', [TeacherExamController::class, 'exportResults'])->middleware('active');
 
-    Route::middleware(['active', 'role:super_admin,admin,editor,moderator,teacher'])->group(function () {
+    Route::middleware(['active', 'role:super_admin,admin,editor,moderator,teacher', 'page.lock'])->group(function () {
         Route::get('profile/exams', [TeacherExamController::class, 'index'])->name('profile.exams.index');
         Route::get('profile/exams/create', [TeacherExamController::class, 'create'])->name('profile.exams.create');
         Route::post('profile/exams', [TeacherExamController::class, 'store'])->name('profile.exams.store');
@@ -113,14 +115,16 @@ Route::put('profile/appearance', [ProfileController::class, 'updateAppearance'])
     Route::post('profile/kurs-arizalari/{enrollment}/rad-etish', [TeacherEnrollmentController::class, 'reject'])->middleware('active')->name('teacher.enrollments.reject');
     Route::delete('profile/kurs-arizalari/{enrollment}', [TeacherEnrollmentController::class, 'destroy'])->middleware('active')->name('teacher.enrollments.destroy');
 
-    Route::get('exams', [ExamController::class, 'index'])->name('exam.index');
-    Route::get('exams/{exam}', [ExamController::class, 'startPage'])->name('exam.start.page');
-    Route::post('exams/{exam}/start', [ExamController::class, 'start'])->name('exam.start');
-    Route::get('exam-session/{result}', [ExamController::class, 'session'])->name('exam.session');
-    Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->name('exam.answer');
-    Route::post('exam-session/{result}/violation', [ExamController::class, 'reportViolation'])
-        ->middleware(['throttle:90,1'])
-        ->name('exam.violation');
-    Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->name('exam.submit');
-    Route::get('exam-results/{result}', [ResultController::class, 'show'])->name('exam.result.show');
+    Route::middleware('page.lock')->group(function () {
+        Route::get('exams', [ExamController::class, 'index'])->name('exam.index');
+        Route::get('exams/{exam}', [ExamController::class, 'startPage'])->name('exam.start.page');
+        Route::post('exams/{exam}/start', [ExamController::class, 'start'])->name('exam.start');
+        Route::get('exam-session/{result}', [ExamController::class, 'session'])->name('exam.session');
+        Route::post('exam-session/{result}/answer', [ExamController::class, 'answer'])->name('exam.answer');
+        Route::post('exam-session/{result}/violation', [ExamController::class, 'reportViolation'])
+            ->middleware(['throttle:90,1'])
+            ->name('exam.violation');
+        Route::post('exam-session/{result}/submit', [ExamController::class, 'submit'])->name('exam.submit');
+        Route::get('exam-results/{result}', [ResultController::class, 'show'])->name('exam.result.show');
+    });
 });

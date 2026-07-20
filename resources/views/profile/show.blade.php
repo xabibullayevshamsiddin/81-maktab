@@ -112,6 +112,8 @@
         padding-bottom: 80px !important;
         display: block !important;
         min-height: auto !important;
+        position: relative !important;
+        overflow: hidden !important;
       }
 
       .news-hero-content {
@@ -126,182 +128,7 @@
         z-index: 20 !important;
       }
 
-      /* ===== TIMELINE ===== */
-      .profile-activity-block--timeline {
-        background: linear-gradient(180deg, rgba(99,102,241,0.03) 0%, rgba(99,102,241,0) 100%);
-        border: 1px solid rgba(99,102,241,0.12);
-      }
-      .profile-timeline {
-        position: relative;
-        padding-left: 18px;
-      }
-      .profile-timeline::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 4px;
-        bottom: 4px;
-        width: 3px;
-        background: linear-gradient(180deg, #6366f1, #a78bfa);
-        border-radius: 999px;
-      }
-      .profile-timeline-item {
-        position: relative;
-        padding-left: 22px;
-        margin-bottom: 1.5rem;
-        animation: timelineItemIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-      }
-      .profile-timeline-item:last-child {
-        margin-bottom: 0;
-      }
-      .profile-timeline-item:nth-child(1) { animation-delay: 0.05s; }
-      .profile-timeline-item:nth-child(2) { animation-delay: 0.12s; }
-      .profile-timeline-item:nth-child(3) { animation-delay: 0.19s; }
-      .profile-timeline-item:nth-child(4) { animation-delay: 0.26s; }
-      .profile-timeline-item:nth-child(5) { animation-delay: 0.33s; }
-      .profile-timeline-item:nth-child(6) { animation-delay: 0.40s; }
-      .profile-timeline-item:nth-child(7) { animation-delay: 0.47s; }
-      .profile-timeline-item:nth-child(8) { animation-delay: 0.54s; }
-
-      @keyframes timelineItemIn {
-        from { opacity: 0; transform: translateX(-16px) scale(0.96); }
-        to   { opacity: 1; transform: translateX(0) scale(1); }
-      }
-      .profile-timeline-marker {
-        position: absolute;
-        left: -22px;
-        top: 14px;
-      }
-      .profile-timeline-dot {
-        display: inline-flex;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: #fff;
-        border: 3px solid var(--act-color, #6366f1);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--act-color, #6366f1) 25%, transparent);
-        transition: transform 0.2s ease;
-      }
-      .profile-timeline-item:hover .profile-timeline-dot {
-        transform: scale(1.25);
-      }
-      .profile-timeline-pulse {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--act-color, #6366f1) 12%, transparent);
-        transform: translate(-50%, -50%);
-        animation: pulse 2.6s ease-in-out infinite;
-      }
-      @keyframes pulse {
-        0%   { transform: translate(-50%, -50%) scale(0.8); opacity: 0.7; }
-        50%  { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
-        100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-      }
-      .profile-timeline-card {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 14px 16px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-      }
-      .profile-timeline-item:hover .profile-timeline-card {
-        transform: translateY(-3px);
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.10);
-        border-color: color-mix(in srgb, var(--act-color, #6366f1) 40%, var(--border));
-      }
-      .profile-timeline-card-head {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 8px;
-      }
-      .profile-timeline-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        font-size: 16px;
-        flex-shrink: 0;
-      }
-      .profile-timeline-title {
-        font-weight: 700;
-        color: var(--text);
-        flex: 1 1 auto;
-        min-width: 0;
-      }
-      .profile-timeline-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
-      .profile-timeline-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        color: var(--muted);
-        font-size: 12.5px;
-      }
-      .profile-timeline-meta > span {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .profile-timeline-time,
-      .profile-timeline-device,
-      .profile-timeline-ip {
-        opacity: 0.9;
-      }
-      .profile-timeline-diff {
-        margin-top: 10px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        background: var(--bg);
-        border: 1px dashed var(--border);
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--text);
-      }
-      .profile-timeline-diff-old,
-      .profile-timeline-diff-new {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .profile-timeline-diff-old {
-        color: #ef4444;
-      }
-      .profile-timeline-diff-new {
-        color: #22c55e;
-      }
-
-      @media (max-width: 768px) {
-        .profile-timeline {
-          padding-left: 10px;
-        }
-        .profile-timeline-item {
-          padding-left: 16px;
-        }
-        .profile-timeline-marker {
-          left: -16px;
-        }
-        .profile-timeline-card {
-          padding: 12px;
-        }
-      }
+     
 
       @media (max-width: 991px) {
         .page-header .header-main {
@@ -607,78 +434,7 @@
               </section>
             @endif
 
-            <section class="profile-activity-block reveal profile-activity-block--timeline" id="profile-timeline-section">
-              <div class="profile-block-head">
-                <div class="profile-block-copy">
-                  <h3><i class="fa-solid fa-wave-square"></i> Harakatlar tarixi</h3>
-                  <p>Sizning barcha faolliklar, yangilanishlar va o'zgarishlar ro'yxati.</p>
-                </div>
-                <span class="profile-section-count">{{ $activities->count() }}</span>
-              </div>
-
-              @if($activities->isNotEmpty())
-                <div class="profile-timeline" role="list" aria-label="Harakatlar tarixi">
-                  @foreach($activities as $act)
-                    @php
-                      $icon = $act->icon;
-                      $color = $act->color;
-                      $desc = $act->description;
-                      $time = $act->occurred_at?->diffForHumans();
-                      $date = $act->occurred_at?->format('d.m.Y H:i');
-                      $device = match($act->device_type) {
-                        'mobile' => '<i class="fa-solid fa-mobile-screen"></i> Telefon',
-                        'tablet' => '<i class="fa-solid fa-tablet-screen-button"></i> Planshet',
-                        default => '<i class="fa-solid fa-desktop"></i> Kompyuter',
-                      };
-                    @endphp
-                    <div class="profile-timeline-item reveal" role="listitem" style="--act-color: {{ $color }};">
-                      <div class="profile-timeline-marker" aria-hidden="true">
-                        <span class="profile-timeline-dot"></span>
-                        <span class="profile-timeline-pulse" aria-hidden="true"></span>
-                      </div>
-                      <div class="profile-timeline-card">
-                        <div class="profile-timeline-card-head">
-                          <span class="profile-timeline-icon" style="background:{{ $color }}15; color:{{ $color }};">
-                            <i class="{{ $icon }}"></i>
-                          </span>
-                          <span class="profile-timeline-title">{{ $desc }}</span>
-                          <span class="profile-timeline-badge" style="background:{{ $color }}15; color:{{ $color }};">
-                            {{ $act->type_label }}
-                          </span>
-                        </div>
-                        <div class="profile-timeline-meta">
-                          <span class="profile-timeline-time" title="{{ $date }}">
-                            <i class="fa-regular fa-clock"></i> {{ $time }}
-                          </span>
-                          <span class="profile-timeline-device">{!! $device !!}</span>
-                          @if(!empty($act->ip_address))
-                            <span class="profile-timeline-ip">
-                              <i class="fa-solid fa-globe"></i> {{ $act->ip_address }}
-                            </span>
-                          @endif
-                        </div>
-                        @if(!empty($act->old_value) || !empty($act->new_value))
-                          <div class="profile-timeline-diff">
-                            @if(!empty($act->old_value))
-                              <span class="profile-timeline-diff-old">
-                                Eski: {{ json_encode($act->old_value) }}
-                              </span>
-                            @endif
-                            @if(!empty($act->new_value))
-                              <span class="profile-timeline-diff-new">
-                                Yangi: {{ json_encode($act->new_value) }}
-                              </span>
-                            @endif
-                          </div>
-                        @endif
-                      </div>
-                    </div>
-                  @endforeach
-                </div>
-              @else
-                <p class="profile-empty">Hali faolliklar tarixi mavjud emas. Saytda harakat qilsangiz, bu yerda aks etadi.</p>
-              @endif
-            </section>
+           
 
             <section class="profile-activity-block reveal">
               <div class="profile-block-head">
@@ -1021,7 +777,7 @@
   </main>
 
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v=2025062802"></script>
+    <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v=2025062803"></script>
     <script>
     window.submitCourseRequest = function(btn) {
       if (!btn || btn.disabled) return;
