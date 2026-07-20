@@ -529,7 +529,10 @@ class SiteAiController extends Controller
      * - VIP donor: cheksiz (-1)
      * - Premium donor: 300/oy
      * - Supporter donor: 100/oy
-     * - Oddiy foydalanuvchi: 20/oy (default)
+     * - Oddiy foydalanuvchi: 30/kun (default)
+     * - Supporter donor: 100/kun
+     * - Premium donor: 300/kun
+     * - VIP donor: cheksiz (-1)
      *
      * @return JsonResponse|null — null=OK, JsonResponse=limit oshdi
      */
@@ -539,32 +542,33 @@ class SiteAiController extends Controller
             return null;
         }
 
-        $limit = method_exists($user, 'donorAiChatLimit') ? $user->donorAiChatLimit() : 50;
+        $limit = method_exists($user, 'donorAiChatLimit') ? $user->donorAiChatLimit() : 30;
 
         // Cheksiz limit (VIP = PHP_INT_MAX)
         if ($limit >= PHP_INT_MAX) {
             return null;
         }
 
-        // Oylik so'rovlarni sanaymiz (current month)
-        $usedThisMonth = AiInteraction::query()
+        // Kunlik so'rovlarni sanaymiz
+        $usedToday = AiInteraction::query()
             ->where('user_id', $user->id)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+            ->whereDate('created_at', now()->toDateString())
             ->count();
 
-        if ($usedThisMonth >= $limit) {
+        if ($usedToday >= $limit) {
             $rankLabel = method_exists($user, 'donorRankLabel') ? $user->donorRankLabel() : null;
+            $resetTime = now()->endOfDay()->diffForHumans();
             $message = $rankLabel
-                ? "Sizning {$rankLabel} limitingiz ({$limit} ta so'rov/oy) tugadi. Iltimos keyingi oyni kuting yoki VIP darajaga ko'tariling."
-                : "Oylik AI so'rovlaringiz limiti ({$limit} ta) tugadi. Donor bo'lib ko'proq so'rov oling!";
+                ? "Sizning {$rankLabel} kunlik limitingiz ({$limit} ta so'rov/kun) tugadi. {$resetTime} yangilanadi."
+                : "Kunlik AI so'rovlar limitingiz ({$limit} ta) tugadi. {$resetTime} yangilanadi yoki donor bo'lib ko'proq oling!";
 
             return response()->json([
                 'success' => false,
                 'error' => $message,
                 'limit_exceeded' => true,
                 'limit' => $limit,
-                'used' => $usedThisMonth,
+                'used' => $usedToday,
+                'reset_at' => now()->endOfDay()->toIso8601String(),
             ], 429);
         }
 

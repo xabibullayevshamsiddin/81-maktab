@@ -192,10 +192,12 @@ class ChatController extends Controller
             'viewer_is_super_admin' => $viewerIsSuperAdmin,
             'courses' => $this->buildUserPreviewCourses($user),
             'exam_stats' => in_array($roleName, [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN], true) ? null : $this->buildUserPreviewExamStats($user),
-              'donor_rank' => $user->donation_rank,
-              'donor_badge' => $user->donorBadgeHtml() ?? '',
-              'donor_color' => $user->donorUsernameColor() ?? '',
-              'donor_expires' => $user->donation_rank_expires_at?->diffForHumans(),
+            'donor_rank' => $user->donation_rank,
+            'donor_theme' => $user->effectiveTheme() ?? '',
+            'donor_badge' => $user->donorBadgeHtml() ?? '',
+            'donor_color' => $user->donorUsernameColor() ?? '',
+            'name_font_weight' => $user->name_font_weight ?? '700',
+            'donor_expires' => $user->donation_rank_expires_at?->diffForHumans(),
         ];
 
         if ($viewerIsSuperAdmin) {
@@ -367,8 +369,10 @@ class ChatController extends Controller
             'phone' => trim((string) ($user->phone ?? '')) ?: null,
             'role_key' => $roleName,
                     'donor_rank' => $user->donation_rank,
+                    'donor_theme' => $user->effectiveTheme() ?? '',
                     'donor_badge' => $user->donorBadgeHtml() ?? '',
                     'donor_color' => $user->donorUsernameColor() ?? '',
+                    'name_font_weight' => $user->name_font_weight ?? '700',
             'role_label' => $roleLabel,
             'role_level' => $roleLevel,
             'status' => $user->is_active ? 'Faol' : 'Bloklangan',

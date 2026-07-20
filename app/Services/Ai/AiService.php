@@ -114,6 +114,21 @@ class AiService
             return ['success' => true, 'text' => $universal, 'source' => 'universal_data'];
         }
 
+        // 3.5 Donation / unvon / narxlar
+        if ($donation = $this->matchDonationQuery($message, $user)) {
+            return ['success' => true, 'text' => $donation, 'source' => 'donation_data'];
+        }
+
+        // 3.6 Foydalanuvchi profili chuqur
+        if ($profileDeep = $this->matchUserProfileDeep($message, $user)) {
+            return ['success' => true, 'text' => $profileDeep, 'source' => 'profile_deep'];
+        }
+
+        // 3.7 Sayt umumiy statistikasi
+        if ($siteStats = $this->matchSiteStatsQuery($message)) {
+            return ['success' => true, 'text' => $siteStats, 'source' => 'site_stats'];
+        }
+
         // 4. Try Dynamic Data (Personal Results, Courses, Teachers)
         if ($dynamic = $this->matchDynamicData($message, $user)) {
             return ['success' => true, 'text' => $dynamic, 'source' => 'dynamic_data'];
@@ -1336,7 +1351,7 @@ class AiService
                 ."- Agar emailga kod kelmasa, spam papkani tekshiring yoki **Aloqa** orqali murojaat qiling: ".route('contact');
         }
 
-        if (Str::contains($q, ['profilimga rasm', 'avatar', 'rasm yukla', 'rasmni yuk', 'profil rasm', 'profilga rasm', 'surat yuk', 'yukla rasm'])) {
+        if (Str::contains($q, ['profilimga rasm', 'avatar', 'rasm yukla', 'rasmni yuk', 'profil rasm', 'profilga rasm', 'surat yuk', 'yukla rasm', 'profil rasm qoyish', 'rasm qoyish'])) {
             return "**Profil rasmini yuklash**\n"
                 ."- Profil sahifasiga kiring: ".route('profile.show')."\n"
                 ."- Avatar/rasm maydonidan rasm tanlang va saqlang.\n"
@@ -1873,7 +1888,7 @@ class AiService
 
         // Site statistics — posts, courses, donations
         if (Str::contains($q, ['nechata post', 'post bor', 'yangiliklari soni', 'nechata yangilik', 'nechta yangilik', 'nechta kurs', 'kurs sonini', 'qancha kurs', 'saytda qancha', 'saytda nechata'])) {
-            $postCount = \App\Models\Post::where('status', \App\Models\Post::STATUS_PUBLISHED)->count();
+            $postCount = \App\Models\Post::count();
             $courseCount = \App\Models\Course::where('status', \App\Models\Course::STATUS_PUBLISHED)->count();
             $examCount = \App\Models\Exam::where('is_active', true)->count();
             $userCount = \App\Models\User::where('role_id', 1)->count();
@@ -3774,6 +3789,12 @@ class AiService
             'mavjud kurs',
             'bor kurs',
             'kurs bor',
+            'kurs bormi',
+            'kurslar bormi',
+            'kurs yoqmi',
+            'kurslar yoqmi',
+            'kurs ochilganmi',
+            'kurs taklif',
             'royxat',
             'ro\'yxat',
             'sanab',
@@ -4062,6 +4083,304 @@ class AiService
     /**
      * Matches topics to actual database entities with typo tolerance.
      */
+    // =====================================================================
+    // DONATION / UNVON / NARX
+    // =====================================================================
+    private function matchDonationQuery(string $message, ?object $user = null): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasDonationIntent = Str::contains($q, [
+            'donat', 'donation', 'unvon', 'supporter', 'premium', 'vip',
+            'xayriya', 'homiy', 'badge', 'rank', 'daraja', 'aktivatsiya',
+            'activation', 'kalit', 'sotib ol', 'narxi', 'necha pul',
+            'qancha turadi', 'imtiyoz', 'afzallik',
+            // Shaxsiy unvon savollari
+            'mening unvonim', 'mening darajam', 'mening rankm', 'mening badgem',
+            'unvonim bormi', 'unvonim nima', 'unvonim qanaqa', 'unvonim qanday',
+            'darajam nima', 'darajam qanaqa', 'rankm nima',
+            'donor manmi', 'donormanmi', 'donor bolganmanmi',
+            'unvon oldimmi', 'unvon borm', 'unvonim borm',
+            'qanday unvon', 'qaysi unvon', 'unvon turlari',
+            'unvon narxi', 'unvon olish', 'unvon qancha',
+        ]);
+
+        if (!$hasDonationIntent) {
+            return null;
+        }
+
+        $donationUrl  = route('donation.index');
+        $activateUrl  = route('donation.activate.form');
+
+        $supporterPrice = number_format((int) \App\Models\SiteSetting::get('donation_supporter_price', '15000'), 0, '.', ' ');
+        $premiumPrice   = number_format((int) \App\Models\SiteSetting::get('donation_premium_price', '35000'), 0, '.', ' ');
+        $vipPrice       = number_format((int) \App\Models\SiteSetting::get('donation_vip_price', '75000'), 0, '.', ' ');
+
+        // Shaxsiy unvon so'ralganda to'g'ridan javob
+        $isPersonalRankQuery = $user && Str::contains($q, [
+            'mening unvonim', 'mening darajam', 'unvonim nima', 'unvonim qanaqa',
+            'unvonim qanday', 'unvonim bormi', 'donor manmi', 'donormanmi',
+            'unvon oldimmi', 'unvonim borm', 'darajam nima', 'rankm nima',
+        ]);
+
+        if ($isPersonalRankQuery) {
+            if (method_exists($user, 'isDonor') && $user->isDonor()) {
+                $rankLabel = method_exists($user, 'donorRankLabel') ? $user->donorRankLabel() : $user->donation_rank;
+                $expires   = $user->donation_rank_expires_at?->format('d.m.Y') ?? '-';
+                $aiLimit   = method_exists($user, 'donorAiChatLimit') ? $user->donorAiChatLimit() : '-';
+                $aiLimitStr = $aiLimit >= PHP_INT_MAX ? 'Cheksiz ♾️' : $aiLimit . ' ta/oy';
+                return "**Sizning unvoningiz: {$rankLabel}** 🎖️\n"
+                    . "- Muddati: **{$expires}** gacha\n"
+                    . "- AI chat limiti: **{$aiLimitStr}**\n"
+                    . "- Profil: " . route('profile.show') . "\n"
+                    . "- Donation sahifasi: " . route('donation.index');
+            } else {
+                return "**Sizda hozircha unvon yo'q.** 😊\n"
+                    . "Unvon olish uchun donation sahifasiga o'ting:\n"
+                    . "🔗 " . route('donation.index') . "\n\n"
+                    . "| Unvon | Narx/oy | AI limiti |\n"
+                    . "|-------|---------|-----------|\n"
+                    . "| ⭐ Supporter | **{$supporterPrice} so'm** | 100 ta |\n"
+                    . "| 💎 Premium | **{$premiumPrice} so'm** | 300 ta |\n"
+                    . "| 👑 VIP | **{$vipPrice} so'm** | Cheksiz ♾️ |";
+            }
+        }
+
+        $userRankBlock = '';
+        if ($user && method_exists($user, 'isDonor')) {
+            if ($user->isDonor()) {
+                $rankLabel     = method_exists($user, 'donorRankLabel') ? $user->donorRankLabel() : $user->donation_rank;
+                $expires       = $user->donation_rank_expires_at?->format('d.m.Y') ?? '-';
+                $userRankBlock = "\n\n**Sizning hozirgi unvoningiz:** {$rankLabel} (muddati: {$expires})";
+            } else {
+                $userRankBlock = "\n\n**Sizda hozircha unvon yo'q.**";
+            }
+        }
+
+        if (Str::contains($q, ['supporter', 'sporter', 'sapporter'])) {
+            return "**Supporter unvoni** ⭐\n"
+                . "- Narxi: **{$supporterPrice} so'm/oy**\n"
+                . "- AI chat limiti: **100 ta so'rov/oy**\n"
+                . "- Avatar hajmi: **10 MB gacha**\n"
+                . "- Ko'k badge va maxsus ism rangi\n"
+                . "- Murojaat prioriteti: 1-daraja\n"
+                . $userRankBlock
+                . "\n\n🔗 Sotib olish: {$donationUrl}";
+        }
+
+        if (Str::contains($q, ['premium', 'premum', 'primium'])) {
+            return "**Premium unvoni** 💎\n"
+                . "- Narxi: **{$premiumPrice} so'm/oy**\n"
+                . "- AI chat limiti: **300 ta so'rov/oy**\n"
+                . "- Avatar hajmi: **25 MB gacha**\n"
+                . "- Binafsha badge va maxsus ism rangi\n"
+                . "- Murojaat prioriteti: 2-daraja\n"
+                . $userRankBlock
+                . "\n\n🔗 Sotib olish: {$donationUrl}";
+        }
+
+        if (Str::contains($q, ['vip'])) {
+            return "**VIP unvoni** 👑\n"
+                . "- Narxi: **{$vipPrice} so'm/oy**\n"
+                . "- AI chat limiti: **Cheksiz** ♾️\n"
+                . "- Avatar hajmi: **50 MB gacha**\n"
+                . "- Oltin badge va maxsus ism rangi\n"
+                . "- Natijalarni export qilish\n"
+                . "- Status emoji qo'yish\n"
+                . "- Murojaat prioriteti: 3-daraja (eng yuqori)\n"
+                . $userRankBlock
+                . "\n\n🔗 Sotib olish: {$donationUrl}";
+        }
+
+        if (Str::contains($q, ['aktivatsiya', 'activation', 'kalit', 'kod bilan'])) {
+            return "**Aktivatsiya kaliti orqali unvon olish** 🔑\n"
+                . "- Telegram orqali 8 xonali aktivatsiya kaliti olasiz\n"
+                . "- Saytda aktivatsiya sahifasiga kirib kodni kiritasiz\n"
+                . "- Noto'g'ri urinishlar cheklangan (bruteforce himoyasi)\n"
+                . "\n🔗 Aktivatsiya: {$activateUrl}";
+        }
+
+        return "**Saytdagi Unvon (Donation) tizimi** 🎖️\n\n"
+            . "Saytni qo'llab-quvvatlash va qo'shimcha imtiyozlar olish uchun 3 ta unvon mavjud:\n\n"
+            . "| Unvon | Narx/oy | AI limiti | Avatar |\n"
+            . "|-------|---------|-----------|--------|\n"
+            . "| ⭐ Supporter | **{$supporterPrice} so'm** | 100 ta | 10 MB |\n"
+            . "| 💎 Premium | **{$premiumPrice} so'm** | 300 ta | 25 MB |\n"
+            . "| 👑 VIP | **{$vipPrice} so'm** | Cheksiz ♾️ | 50 MB |\n\n"
+            . "**Qo'shimcha imtiyozlar:**\n"
+            . "- Maxsus badge va ism rangi\n"
+            . "- Murojaat prioriteti (VIP eng tez ko'riladi)\n"
+            . "- VIP: natijalarni export, status emoji\n"
+            . "- Aktivatsiya kaliti orqali ham olish mumkin\n"
+            . $userRankBlock
+            . "\n\n🔗 Batafsil: {$donationUrl}";
+    }
+
+    // =====================================================================
+    // FOYDALANUVCHI PROFILI CHUQUR
+    // =====================================================================
+    private function matchUserProfileDeep(string $message, ?object $user = null): ?string
+    {
+        if (!$user) {
+            return null;
+        }
+
+        $q = $this->normalizeSearchText($message);
+
+        $hasProfileIntent = Str::contains($q, [
+            'mening profilim', 'mening statistikam', 'mening natijalarim',
+            'mening unvonim', 'mening darajam', 'mening imtihonlarim',
+            'men haqimda', 'profilim haqida', 'qancha imtihon',
+            'necha imtihon', 'imtihon foizim', 'mening ballim',
+            'mening kurslarim', 'yozilgan kurslarim',
+            // Qo'shimcha variantlar
+            'mening ma\'lumotlarim', 'mening hisobim', 'mening akkauntim',
+            'men kimman', 'mening rolim', 'mening sinfim',
+            'necha marta imtihon', 'imtihon o\'tdimmi', 'imtihon natijam',
+            'o\'rtacha foizim', 'o\'tish foizim', 'mening foizim',
+            'qancha kurs yozilganman', 'kurslarimni kor',
+        ]);
+
+        if (!$hasProfileIntent) {
+            return null;
+        }
+
+        $name  = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? 'Foydalanuvchi');
+        $role  = $user->role_label ?? $user->role ?? 'Foydalanuvchi';
+        $grade = $user->displayGrade('Kiritilmagan');
+        $since = $user->created_at?->format('d.m.Y') ?? '-';
+
+        $results = \App\Models\Result::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['submitted', 'expired'])
+            ->get(['passed', 'points_earned', 'points_max', 'score', 'total_questions']);
+
+        $total   = $results->count();
+        $passed  = $results->where('passed', true)->count();
+        $failed  = $results->where('passed', false)->count();
+        $pending = $results->whereNull('passed')->count();
+
+        $avgPercent = null;
+        if ($results->isNotEmpty()) {
+            $percents = $results->map(function ($r) {
+                if (($r->points_max ?? 0) > 0) return ($r->points_earned / $r->points_max) * 100;
+                if (($r->total_questions ?? 0) > 0) return ($r->score / $r->total_questions) * 100;
+                return null;
+            })->filter()->values();
+            if ($percents->isNotEmpty()) {
+                $avgPercent = round($percents->avg(), 1);
+            }
+        }
+
+        $passRate = ($passed + $failed) > 0
+            ? round($passed / ($passed + $failed) * 100, 1)
+            : null;
+
+        $enrolledCount = \App\Models\CourseEnrollment::query()
+            ->where('user_id', $user->id)
+            ->where('status', \App\Models\CourseEnrollment::STATUS_APPROVED)
+            ->count();
+
+        $rankBlock = '';
+        if (method_exists($user, 'isDonor') && $user->isDonor()) {
+            $rankLabel = method_exists($user, 'donorRankLabel') ? $user->donorRankLabel() : $user->donation_rank;
+            $expires   = $user->donation_rank_expires_at?->format('d.m.Y') ?? '-';
+            $rankBlock = "\n- 🎖️ Unvon: **{$rankLabel}** (muddati: {$expires})";
+        } else {
+            $rankBlock = "\n- 🎖️ Unvon: **Yo'q** (olish: " . route('donation.index') . ")";
+        }
+
+        $examBlock = $total > 0
+            ? "\n\n**📊 Imtihon statistikasi:**\n"
+              . "- Jami topshirilgan: **{$total} ta**\n"
+              . "- O'tgan: **{$passed} ta** ✅\n"
+              . "- O'tmagan: **{$failed} ta** ❌\n"
+              . ($pending > 0 ? "- Tekshiruvda: **{$pending} ta** ⏳\n" : '')
+              . ($avgPercent !== null ? "- O'rtacha natija: **{$avgPercent}%**\n" : '')
+              . ($passRate !== null ? "- O'tish foizi: **{$passRate}%**\n" : '')
+            : "\n\n**📊 Imtihon:** Hali imtihon topshirilmagan.";
+
+        $courseBlock = $enrolledCount > 0
+            ? "\n- 📚 Yozilgan kurslar: **{$enrolledCount} ta**"
+            : "\n- 📚 Kurslar: Hali yozilmagan";
+
+        return "**👤 Sizning profilingiz — {$name}**\n"
+            . "- Rol: **{$role}**\n"
+            . "- Sinf: **{$grade}**\n"
+            . "- Ro'yxatdan o'tgan: **{$since}**"
+            . $rankBlock
+            . $courseBlock
+            . $examBlock
+            . "\n\n🔗 To'liq profil: " . route('profile.show')
+            . "\n🔗 Natijalar: " . route('profile.results.index');
+    }
+
+    // =====================================================================
+    // SAYT UMUMIY STATISTIKASI
+    // =====================================================================
+    private function matchSiteStatsQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasStatsIntent = Str::contains($q, [
+            'saytda nechta', 'saytda qancha', 'umumiy statistika',
+            'jami foydalanuvchi', 'jami post', 'jami kurs', 'jami imtihon',
+            'nechta post', 'nechta yangilik', 'nechta kurs', 'nechta imtihon',
+            'nechta foydalanuvchi', 'qancha post', 'qancha kurs',
+            'sayt statistikasi', 'sayt haqida raqamlar',
+            // Qo'shimcha variantlar
+            'saytda qanday', 'saytda nima bor', 'sayt raqamlari',
+            'nechta donor', 'qancha donor', 'nechta vip', 'nechta premium',
+            'nechta supporter', 'nechta o\'quvchi', 'nechta ustoz',
+            'nechta izoh', 'nechta tadbir', 'nechta yozilish',
+            'sayt ko\'rsatkichlari', 'sayt ma\'lumotlari',
+        ]);
+
+        if (!$hasStatsIntent) {
+            return null;
+        }
+
+        $postCount      = $this->safePostCount();
+        $courseCount    = $this->safePublishedCourseCount();
+        $examCount      = \App\Models\Exam::where('is_active', true)->count();
+        $teacherCount   = $this->safeTeacherCount();
+        $userCount      = $this->safeUserCount();
+        $studentCount   = $this->safeStudentCount();
+        $resultCount    = $this->safeResultCount();
+        $enrollCount    = \App\Models\CourseEnrollment::where('status', \App\Models\CourseEnrollment::STATUS_APPROVED)->count();
+        $commentCount   = \App\Models\Comment::count();
+        $eventCount     = $this->safeUpcomingEventCount();
+
+        $donorCount     = \App\Models\User::whereNotNull('donation_rank')
+            ->where('donation_rank_expires_at', '>', now())->count();
+        $supporterCount = \App\Models\User::where('donation_rank', 'supporter')
+            ->where('donation_rank_expires_at', '>', now())->count();
+        $premiumCount   = \App\Models\User::where('donation_rank', 'premium')
+            ->where('donation_rank_expires_at', '>', now())->count();
+        $vipCount       = \App\Models\User::where('donation_rank', 'vip')
+            ->where('donation_rank_expires_at', '>', now())->count();
+
+        return "**📊 Sayt umumiy statistikasi**\n\n"
+            . "**👥 Foydalanuvchilar:**\n"
+            . "- Jami ro'yxatdan o'tganlar: **{$userCount} ta**\n"
+            . "- O'quvchilar: **{$studentCount} ta**\n"
+            . "- Faol o'qituvchilar: **{$teacherCount} ta**\n"
+            . "- Faol donorlar: **{$donorCount} ta** (⭐{$supporterCount} / 💎{$premiumCount} / 👑{$vipCount})\n\n"
+            . "**📚 Ta'lim:**\n"
+            . "- Yangiliklar (postlar): **{$postCount} ta**\n"
+            . "- Nashr etilgan kurslar: **{$courseCount} ta**\n"
+            . "- Kurs yozilishlari (tasdiqlangan): **{$enrollCount} ta**\n"
+            . "- Faol imtihonlar: **{$examCount} ta**\n"
+            . "- Topshirilgan imtihonlar: **{$resultCount} ta**\n\n"
+            . "**📅 Boshqa:**\n"
+            . "- Izohlar: **{$commentCount} ta**\n"
+            . "- Yaqin tadbirlar: **{$eventCount} ta**\n\n"
+            . "🔗 Yangiliklar: " . route('post') . "\n"
+            . "🔗 Kurslar: " . route('courses') . "\n"
+            . "🔗 Imtihonlar: " . route('exam.index');
+    }
+
+
     private function matchDynamicData(string $message, ?object $user = null): ?string
     {
         $q = $this->normalizeCourseIntentText($message);
@@ -4124,7 +4443,7 @@ class AiService
         }
 
         // 5. News/Events — kengaytirilgan sinonimlar
-        if ($this->isMatch($q, $qClean, ['yangilik', 'tadbir', 'nima gap', "e'lon", 'post', 'xabar', 'yangililar', 'voqea', 'maqola'])) {
+        if ($this->isMatch($q, $qClean, ['yangilik', 'tadbir', 'nima gap', "e'lon", 'post', 'xabar', 'yangililar', 'voqea', 'maqola', 'yangiliklar bormi', 'post bormi', 'yangilik yoqmi'])) {
             $posts = Post::latest()->take(3)->pluck('title')->toArray();
             $events = CalendarEvent::where('event_date', '>=', now())->orderBy('event_date')->take(3)->pluck('title')->toArray();
 

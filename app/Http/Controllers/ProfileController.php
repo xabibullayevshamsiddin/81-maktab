@@ -1004,7 +1004,7 @@ class ProfileController extends Controller
         ]);
 
         // Tema tanlash — server-side ruxsat tekshiruvi.
-        $theme = $user->profile_theme ?: $user->donation_rank;
+        $theme = $user->effectiveTheme() ?: $user->donation_rank;
         if (!empty($data["donor_theme"]) && \App\Models\Donation::themeAllowedForUser($data["donor_theme"], $user)) {
             $theme = $data["donor_theme"];
         }

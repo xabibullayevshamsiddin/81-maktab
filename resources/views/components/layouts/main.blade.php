@@ -23,7 +23,7 @@
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=11" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=10" />
     @unless(request()->routeIs('exam.session'))
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
     {{-- Three.js — 3D loader animatsiyasi uchun --}}
@@ -77,8 +77,7 @@
           'page-inner' => ! request()->routeIs('home')
         ])
         data-theme="light"
-	        data-donor-theme="{{ auth()->check() ? (auth()->user()->effectiveTheme() ?? '') : '' }}"
-          data-cursor-animation="{{ auth()->check() && auth()->user()->donor_cursor_animation ? '1' : '0' }}"
+	        data-donor-theme="{{ auth()->check() && auth()->user()->isDonor() ? (auth()->user()->donation_rank) : '' }}"
 	        data-site-success="{{ session('success') }}"
 	        data-site-error="{{ session('error') }}"
 	        data-site-toast-type="{{ session('toast_type') }}"
@@ -700,7 +699,7 @@
               <span></span>
             </span>
           </div>
-          <form class="chat-input-wrap" id="chat-form" data-no-loader>
+          <form class="chat-input-wrap" id="chat-form">
             @if(turnstile_enabled())
             <div
               id="chat-turnstile-host"
@@ -796,7 +795,7 @@
       <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
         <label id="global-search-label" for="global-search-input" class="global-search-label">{{ __('public.layout.global_search_label') }}</label>
         <div class="global-search-input-wrap">
-          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <i class="fa-solid fa-magnifying-glass" style="cursor: pointer" aria-hidden="true"></i>
           <input
             id="global-search-input"
             type="search"
@@ -1033,7 +1032,6 @@
         document.addEventListener('click', function(e) {
           var link = e.target.closest('a[href]');
           if (!link) return;
-          if (e.defaultPrevented) return;
           var href = link.getAttribute('href');
           if (!href) return;
           if (
@@ -1051,24 +1049,15 @@
             if (url.pathname === window.location.pathname && url.search === window.location.search) return;
           } catch(err) { return; }
 
-          setTimeout(function() {
-            if (e.defaultPrevented) return;
-            showFullScreenLoader();
-          }, 0);
+          showFullScreenLoader();
         });
 
         document.addEventListener('submit', function(e) {
           var form = e.target;
-          if (!form || form.tagName !== 'FORM' || form.method === 'dialog') return;
-          if (e.defaultPrevented) return;
-          if (form.getAttribute('data-ajax') === 'true' || form.hasAttribute('data-no-loader')) return;
-          if (form.id === 'chat-form' || form.id === 'ai-chat-form') return;
-          if (form.closest && form.closest('#chat-widget, #ai-widget')) return;
-
-          setTimeout(function() {
-            if (e.defaultPrevented) return;
+          if (!form || form.method === 'dialog') return;
+          if (!form.getAttribute('data-ajax')) {
             showFullScreenLoader();
-          }, 0);
+          }
         });
       })();
     </script>
@@ -1139,7 +1128,7 @@
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
 
-        <form class="chat-input-wrap" id="ai-chat-form" data-no-loader>
+        <form class="chat-input-wrap" id="ai-chat-form">
           <textarea
             class="chat-textarea"
             id="ai-textarea"
@@ -2005,53 +1994,5 @@
         })();
       </script>
     @endif
-
-    <script>
-      (function () {
-        if (document.body.getAttribute('data-cursor-animation') !== '1') return;
-
-        var dot  = document.createElement('div');
-        dot.id   = 'd-cursor-dot';
-        document.body.appendChild(dot);
-
-        var ring = document.createElement('div');
-        ring.id  = 'd-cursor-ring';
-        document.body.appendChild(ring);
-
-        var mX = -100, mY = -100;  // mouse
-        var rX = -100, rY = -100;  // ring (lagging)
-
-        // Mouse exact pozitsiyasini darhol oladi
-        document.addEventListener('mousemove', function (e) {
-          mX = e.clientX;
-          mY = e.clientY;
-          dot.style.left = mX + 'px';
-          dot.style.top  = mY + 'px';
-        });
-
-        // Ring orqasidan ergashib yuradi (smooth lag)
-        (function loop() {
-          rX += (mX - rX) * 0.1;
-          rY += (mY - rY) * 0.1;
-          ring.style.left = rX + 'px';
-          ring.style.top  = rY + 'px';
-          requestAnimationFrame(loop);
-        })();
-
-        // Hover — interaktiv element ustida
-        document.addEventListener('mouseover', function (e) {
-          var el = e.target.closest('a, button, input, select, textarea, label, [role="button"]');
-          if (el) document.body.classList.add('cursor-hovering');
-        });
-        document.addEventListener('mouseout', function (e) {
-          var el = e.target.closest('a, button, input, select, textarea, label, [role="button"]');
-          if (el) document.body.classList.remove('cursor-hovering');
-        });
-
-        // Click
-        document.addEventListener('mousedown', function () { document.body.classList.add('cursor-clicking'); });
-        document.addEventListener('mouseup',   function () { document.body.classList.remove('cursor-clicking'); });
-      })();
-    </script>
   </body>
 </html>

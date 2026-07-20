@@ -112,8 +112,6 @@
         padding-bottom: 80px !important;
         display: block !important;
         min-height: auto !important;
-        position: relative !important;
-        overflow: hidden !important;
       }
 
       .news-hero-content {
@@ -128,7 +126,7 @@
         z-index: 20 !important;
       }
 
-     
+
 
       @media (max-width: 991px) {
         .page-header .header-main {
@@ -434,7 +432,7 @@
               </section>
             @endif
 
-           
+
 
             <section class="profile-activity-block reveal">
               <div class="profile-block-head">
@@ -777,7 +775,7 @@
   </main>
 
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v=2025062803"></script>
+    <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v=2025062802"></script>
     <script>
     window.submitCourseRequest = function(btn) {
       if (!btn || btn.disabled) return;

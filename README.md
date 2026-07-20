@@ -356,4 +356,4 @@ Aloqa
 
 
 Repozitoriya: github.com/xabibullayevshamsiddin/81-maktab
-Muallif: @xabibullayevshamsiddin
+Muallif: xabibullayevshamsiddin

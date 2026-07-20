@@ -164,9 +164,9 @@ trait HasDonationRank
     public function donorAiChatLimit(): int
     {
         if (!$this->isDonor()) {
-            return 20;
+            return 30; // Kunlik
         }
-        $limit = Donation::configForRank($this->donation_rank)["ai_chat_limit"] ?? 20;
+        $limit = Donation::configForRank($this->donation_rank)["ai_chat_limit"] ?? 30;
         return $limit === -1 ? PHP_INT_MAX : $limit;
     }
 

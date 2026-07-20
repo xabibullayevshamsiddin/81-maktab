@@ -38,18 +38,26 @@
     try {
       const ctx = getPrimeAudioCtx();
       const t = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1180, t);
-      osc.frequency.exponentialRampToValueAtTime(920, t + 0.03);
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.05, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.07);
+      // Yumshoq "water drop" ding — sine + reverb tail
+      const notes = [
+        { f: 1318.5, o: 0,    d: 0.18, v: 0.07 },
+        { f: 1760,   o: 0.04, d: 0.22, v: 0.05 },
+      ];
+      notes.forEach(({ f, o, d, v }) => {
+        const t0 = t + o;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, t0);
+        osc.frequency.exponentialRampToValueAtTime(f * 0.98, t0 + d);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + d + 0.05);
+      });
     } catch (e) {}
   }
 
@@ -58,23 +66,25 @@
     try {
       const ctx = getPrimeAudioCtx();
       const now = ctx.currentTime;
+      // "Crystal chime" — 3 nota, sine, yumshoq attack, uzoq tail
       const notes = [
-        { f: 880, o: 0, d: 0.16, v: 0.1 },
-        { f: 1174.66, o: 0.07, d: 0.2, v: 0.09 },
+        { f: 523.25, o: 0,    d: 0.35, v: 0.08 },
+        { f: 659.25, o: 0.06, d: 0.38, v: 0.07 },
+        { f: 1046.5, o: 0.13, d: 0.42, v: 0.06 },
       ];
       notes.forEach(({ f, o, d, v }) => {
         const t0 = now + o;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'triangle';
+        osc.type = 'sine';
         osc.frequency.setValueAtTime(f, t0);
         gain.gain.setValueAtTime(0, t0);
-        gain.gain.linearRampToValueAtTime(v, t0 + 0.03);
+        gain.gain.linearRampToValueAtTime(v, t0 + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(t0);
-        osc.stop(t0 + d + 0.02);
+        osc.stop(t0 + d + 0.05);
       });
     } catch (e) {}
   }
@@ -109,24 +119,31 @@
     try {
       const ctx = getPrimeAudioCtx();
       const now = ctx.currentTime;
-      const notes = [
-        { f: 660, o: 0, d: 0.08, v: 0.05 },
-        { f: 880, o: 0.05, d: 0.1, v: 0.045 },
-      ];
-      notes.forEach(({ f, o, d, v }) => {
-        const t0 = now + o;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(f, t0);
-        gain.gain.setValueAtTime(0, t0);
-        gain.gain.linearRampToValueAtTime(v, t0 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t0);
-        osc.stop(t0 + d + 0.02);
-      });
+      // "Swoosh up" — frequency sweep + soft chime
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.18);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.06, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+      // Chime on top
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1760, now + 0.15);
+      gain2.gain.setValueAtTime(0, now + 0.15);
+      gain2.gain.linearRampToValueAtTime(0.05, now + 0.17);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.15);
+      osc2.stop(now + 0.42);
     } catch (e) {}
   }
 
@@ -135,18 +152,19 @@
     try {
       const ctx = getPrimeAudioCtx();
       const t = ctx.currentTime;
+      // "Soft swoosh down"
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(520, t);
-      osc.frequency.exponentialRampToValueAtTime(300, t + 0.12);
+      osc.frequency.setValueAtTime(900, t);
+      osc.frequency.exponentialRampToValueAtTime(220, t + 0.2);
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.04, t + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+      gain.gain.linearRampToValueAtTime(0.055, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(t);
-      osc.stop(t + 0.15);
+      osc.stop(t + 0.25);
     } catch (e) {}
   }
 
@@ -155,25 +173,19 @@
     try {
       const ctx = getPrimeAudioCtx();
       const now = ctx.currentTime;
-      const tones = [
-        { f: 420, o: 0, d: 0.12, v: 0.05 },
-        { f: 320, o: 0.09, d: 0.16, v: 0.045 },
-      ];
-      tones.forEach(({ f, o, d, v }) => {
-        const t0 = now + o;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(f, t0);
-        osc.frequency.exponentialRampToValueAtTime(f * 0.9, t0 + d);
-        gain.gain.setValueAtTime(0, t0);
-        gain.gain.linearRampToValueAtTime(v, t0 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, t0 + d);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t0);
-        osc.stop(t0 + d + 0.03);
-      });
+      // "Gentle hollow knock" — sine, past freq, tez so'nadi
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.055, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
     } catch (e) {}
   }
 
@@ -182,24 +194,35 @@
     try {
       const ctx = getPrimeAudioCtx();
       const now = ctx.currentTime;
+      // Dark: "moonrise" — past, yumshoq descend
+      // Light: "sunrise" — yuqori, yorqin ascend
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-
-      osc.type = isDark ? 'sine' : 'triangle';
-      const startFreq = isDark ? 300 : 500;
-      const endFreq = isDark ? 200 : 700;
-
+      osc.type = 'sine';
+      const startFreq = isDark ? 660 : 330;
+      const endFreq   = isDark ? 330 : 880;
       osc.frequency.setValueAtTime(startFreq, now);
-      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.15);
-
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.22);
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
+      gain.gain.linearRampToValueAtTime(0.07, now + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.18);
+      osc.stop(now + 0.27);
+      // Ikkinchi harmonik
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(startFreq * 1.5, now + 0.06);
+      osc2.frequency.exponentialRampToValueAtTime(endFreq * 1.5, now + 0.26);
+      gain2.gain.setValueAtTime(0, now + 0.06);
+      gain2.gain.linearRampToValueAtTime(0.04, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.06);
+      osc2.stop(now + 0.32);
     } catch (e) {}
   };
 
@@ -559,8 +582,10 @@
 
           // Super admin and Admin prime effect
           var themeKey = d.donor_theme || d.donor_rank;
+          var donorRankKeys = ['supporter', 'premium', 'vip'];
           // Barcha mumkin bo'lgan tema klasslarini tozalash
           var allThemeClasses = ['is-super-admin', 'is-admin',
+            'is-donor',
             'is-donor-supporter', 'is-donor-premium', 'is-donor-vip',
             'is-themed-supporter', 'is-themed-premium', 'is-themed-vip',
             'is-themed-admin-gold', 'is-themed-admin-royal', 'is-themed-admin-phoenix'];
@@ -570,6 +595,9 @@
           } else if (themeKey) {
             previewDialog.classList.remove(...allThemeClasses);
             previewDialog.classList.add('is-themed-' + themeKey);
+            if (donorRankKeys.indexOf(themeKey) !== -1) {
+              previewDialog.classList.add('is-donor', 'is-donor-' + themeKey);
+            }
             spawnSuperAdminParticles(previewDialog);
           } else if (d.is_admin) {
             previewDialog.classList.add('is-admin');
@@ -584,6 +612,14 @@
 
           if (previewNameEl) {
             previewNameEl.textContent = d.display_name || '';
+            var previewNameStyle = '';
+            if (d.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(d.donor_color))) {
+              previewNameStyle += 'color:' + d.donor_color + ';';
+            }
+            if (d.name_font_weight && /^(600|700|800)$/.test(String(d.name_font_weight))) {
+              previewNameStyle += 'font-weight:' + d.name_font_weight + ';';
+            }
+            previewNameEl.setAttribute('style', previewNameStyle);
           }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
@@ -1889,6 +1925,21 @@
             `
           : '';
 
+        const donorTheme = String(comment.donor_theme || comment.donor_rank || '');
+        const donorRankKeys = ['supporter', 'premium', 'vip'];
+        const donorThemeClass = donorTheme && donorRankKeys.indexOf(donorTheme) !== -1
+          ? ` comment-card--donor comment-card--donor-${escapeHtml(donorTheme)}`
+          : '';
+        const donorBadgeHtml = comment.donor_badge || '';
+        let authorStyle = '';
+        if (comment.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(comment.donor_color))) {
+          authorStyle += `color:${comment.donor_color};`;
+        }
+        if (comment.name_font_weight && /^(600|700|800)$/.test(String(comment.name_font_weight))) {
+          authorStyle += `font-weight:${comment.name_font_weight};`;
+        }
+        const authorStyleAttr = authorStyle ? ` style="${authorStyle}"` : '';
+
         function buildReplyLi() {
           const staffCardCls = roleKey === 'super_admin'
             ? ' comment-card--super-admin'
@@ -1901,11 +1952,12 @@
                   : '';
 
           return `
-            <article class="comment-card reveal comment-item-reply${staffCardCls}" data-comment-id="${escapeHtml(comment.id)}">
+            <article class="comment-card reveal comment-item-reply${staffCardCls}${donorThemeClass}" data-comment-id="${escapeHtml(comment.id)}">
               ${buildCommentAvatarHtml(comment)}
               <div class="comment-body">
                 <div class="comment-meta">
-                  <strong>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                  <strong${authorStyleAttr}>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                  ${donorBadgeHtml}
                   ${roleBadgeHtml}
                   <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
                 </div>
@@ -1954,11 +2006,12 @@
                   : '';
 
           return `
-            <article class="comment-card reveal${staffCardCls}" data-comment-id="${escapeHtml(comment.id)}">
+            <article class="comment-card reveal${staffCardCls}${donorThemeClass}" data-comment-id="${escapeHtml(comment.id)}">
               ${buildCommentAvatarHtml(comment)}
               <div class="comment-body">
                 <div class="comment-meta">
-                  <strong>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                  <strong${authorStyleAttr}>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                  ${donorBadgeHtml}
                   ${roleBadgeHtml}
                   <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
                 </div>
@@ -3415,6 +3468,7 @@
       // Role effekti (super_admin/admin) va tema effekti alohida — aralashmaydi.
       // Super admin o'z animatsiyasida, donor/tema o'z effektlarida.
       var themeKey = m.donor_theme || m.donor_rank;
+      var donorRankKeys = ['supporter', 'premium', 'vip'];
 
       var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '');
       if (m.is_super_admin) {
@@ -3425,6 +3479,9 @@
       } else if (themeKey) {
         // Oddiy foydalanuvchi/donor — tema effekti
         cls += ' is-themed is-theme-' + themeKey;
+        if (donorRankKeys.indexOf(themeKey) !== -1) {
+          cls += ' is-donor is-donor-' + themeKey;
+        }
       }
 
       var badge = '';
@@ -3447,13 +3504,20 @@
         actions += '<button type="button" class="chat-msg-action chat-msg-action--block" data-chat-block="' + m.user_id + '" title="Bloklash"><i class="fa-solid fa-ban"></i></button>';
       }
       var actionsHtml = actions ? '<div class="chat-msg-actions">' + actions + '</div>' : '';
+      var nameStyle = '';
+      if (m.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(m.donor_color))) {
+        nameStyle += 'color:' + m.donor_color + ';';
+      }
+      if (m.name_font_weight && /^(600|700|800)$/.test(String(m.name_font_weight))) {
+        nameStyle += 'font-weight:' + m.name_font_weight + ';';
+      }
       return '<div class="' + cls + '" data-msg-id="' + m.id + '">'
         + '<button type="button" class="' + avatarCls + '" data-user-preview-id="' + m.user_id + '" title="Profil" aria-label="Foydalanuvchi profili">'
         + avatarInner
         + '</button>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
-        + '<span class="chat-msg-name"' + (m.donor_color ? ' style="color:' + m.donor_color + '"' : '') + '>' + escChatHtml(m.user_name) + (m.status_emoji ? ' ' + escChatHtml(m.status_emoji) : '') + '</span>'
+        + '<span class="chat-msg-name"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escChatHtml(m.user_name) + (m.status_emoji ? ' ' + escChatHtml(m.status_emoji) : '') + '</span>'
         + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + actionsHtml
@@ -4251,6 +4315,7 @@
 
     function lockBody(lock) {
       document.body.classList.toggle('global-search-open', !!lock);
+      document.documentElement.classList.toggle('global-search-open', !!lock);
     }
 
     function renderLoading() {
