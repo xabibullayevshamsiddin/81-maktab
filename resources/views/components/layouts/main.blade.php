@@ -260,9 +260,9 @@
               @auth
 	                <li class="nav-dropdown nav-dropdown--offset">
                   <details class="nav-dropdown-details js-header-dropdown">
-                    <summary class="nav-link nav-dropdown-toggle {{ $accountMenuActive ? 'active' : '' }}">
+                    <summary class="nav-link nav-dropdown-toggle prime-dd-toggle {{ $accountMenuActive ? 'active' : '' }}">
                       {{ __('public.layout.account') }}
-                      <i class="fa-solid fa-chevron-down"></i>
+                      <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
                     </summary>
 
                     <div class="nav-dropdown-menu">
@@ -331,7 +331,7 @@
                   <summary class="nav-link nav-dropdown-toggle">
                     <i class="fa-solid fa-language"></i>
                     <span>{{ $supportedLocales[$currentLocale] }}</span>
-                    <i class="fa-solid fa-chevron-down"></i>
+                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
                   </summary>
                   <div class="nav-dropdown-menu">
                     <div class="nav-dropdown-inner">
@@ -394,7 +394,7 @@
                   <summary class="nav-link nav-dropdown-toggle">
                     <i class="fa-solid fa-language"></i>
                     <span>{{ $supportedLocales[$currentLocale] }}</span>
-                    <i class="fa-solid fa-chevron-down"></i>
+                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
                   </summary>
                   <div class="nav-dropdown-menu">
                     <div class="nav-dropdown-inner">
@@ -1055,9 +1055,19 @@
         document.addEventListener('submit', function(e) {
           var form = e.target;
           if (!form || form.method === 'dialog') return;
-          if (!form.getAttribute('data-ajax')) {
-            showFullScreenLoader();
-          }
+          // AJAX formalarni o'tkazib yuborish — ular sahifani yangilamaydi
+          if (
+            form.classList.contains('js-like-form') ||
+            form.classList.contains('js-bookmark-form') ||
+            form.classList.contains('js-comment-form') ||
+            form.classList.contains('chat-input-wrap') ||
+            form.id === 'chat-form' ||
+            form.id === 'ai-chat-form' ||
+            form.id === 'contact-form' ||
+            form.getAttribute('data-ajax') ||
+            form.getAttribute('data-no-loader')
+          ) return;
+          showFullScreenLoader();
         });
       })();
     </script>

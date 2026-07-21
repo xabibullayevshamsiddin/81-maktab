@@ -4685,3 +4685,138 @@
     runInitializers();
   }
 })();
+
+
+// DROPDOWN OVERRIDE — har marta animatsiya
+(function() {
+  function initDropdownAnimations() {
+    var dds = document.querySelectorAll('.js-header-dropdown');
+    if (!dds.length) return;
+
+    function openDD(dd) {
+      var menu = dd.querySelector('.nav-dropdown-menu');
+      if (!menu) { dd.setAttribute('open', ''); return; }
+      menu.classList.remove('is-closing');
+      dd.setAttribute('open', '');
+      menu.classList.remove('is-open');
+      void menu.offsetWidth;
+      menu.classList.add('is-open');
+    }
+
+    function closeDD(dd) {
+      var menu = dd.querySelector('.nav-dropdown-menu');
+      if (!menu) { dd.removeAttribute('open'); return; }
+      menu.classList.remove('is-open');
+      menu.classList.add('is-closing');
+      function onEnd() {
+        menu.classList.remove('is-closing');
+        dd.removeAttribute('open');
+        menu.removeEventListener('animationend', onEnd);
+      }
+      menu.addEventListener('animationend', onEnd, { once: true });
+      // Fallback: animatsiya ishlamasa ham yopilsin
+      setTimeout(function() {
+        if (dd.hasAttribute('open')) {
+          menu.classList.remove('is-closing');
+          dd.removeAttribute('open');
+        }
+      }, 350);
+    }
+
+    dds.forEach(function(dd) {
+      var summary = dd.querySelector('summary');
+      if (!summary) return;
+      // Eski click listener ni o'chirib yangi qo'yamiz
+      var newSummary = summary.cloneNode(true);
+      summary.parentNode.replaceChild(newSummary, summary);
+
+      newSummary.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dd.hasAttribute('open')) {
+          closeDD(dd);
+        } else {
+          dds.forEach(function(o) { if (o !== dd && o.hasAttribute('open')) closeDD(o); });
+          openDD(dd);
+        }
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      dds.forEach(function(dd) {
+        if (dd.hasAttribute('open') && !dd.contains(e.target)) closeDD(dd);
+      });
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      dds.forEach(function(dd) { if (dd.hasAttribute('open')) closeDD(dd); });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDropdownAnimations);
+  } else {
+    initDropdownAnimations();
+  }
+})();
+
+
+(function() {
+  function initDropdownAnimations() {
+    var dds = document.querySelectorAll('.js-header-dropdown');
+    if (!dds.length) return;
+
+    function openDD(dd) {
+      var menu = dd.querySelector('.nav-dropdown-menu');
+      if (!menu) { dd.setAttribute('open', ''); return; }
+      menu.classList.remove('is-closing');
+      dd.setAttribute('open', '');
+      menu.classList.remove('is-open');
+      void menu.offsetWidth;
+      menu.classList.add('is-open');
+    }
+
+    function closeDD(dd) {
+      var menu = dd.querySelector('.nav-dropdown-menu');
+      if (!menu) { dd.removeAttribute('open'); return; }
+      menu.classList.remove('is-open');
+      menu.classList.add('is-closing');
+      function onEnd() { menu.classList.remove('is-closing'); dd.removeAttribute('open'); }
+      menu.addEventListener('animationend', onEnd, { once: true });
+      setTimeout(function() { if (dd.hasAttribute('open')) { menu.classList.remove('is-closing'); dd.removeAttribute('open'); } }, 350);
+    }
+
+    dds.forEach(function(dd) {
+      var summary = dd.querySelector('summary');
+      if (!summary) return;
+      var fresh = summary.cloneNode(true);
+      summary.parentNode.replaceChild(fresh, summary);
+      fresh.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dd.hasAttribute('open')) {
+          closeDD(dd);
+        } else {
+          dds.forEach(function(o) { if (o !== dd && o.hasAttribute('open')) closeDD(o); });
+          openDD(dd);
+        }
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      dds.forEach(function(dd) { if (dd.hasAttribute('open') && !dd.contains(e.target)) closeDD(dd); });
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      dds.forEach(function(dd) { if (dd.hasAttribute('open')) closeDD(dd); });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDropdownAnimations);
+  } else {
+    initDropdownAnimations();
+  }
+})();
