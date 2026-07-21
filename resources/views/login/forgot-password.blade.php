@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('auth_pages.forgot.page_title')">
+<x-layouts.main :title="__('auth_pages.forgot.page_title')">
   <section class="signin-hero">
     <div class="container">
       <h1>{{ __('auth_pages.forgot.hero_title') }}</h1>

@@ -19,6 +19,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rate Limiter Store
+    |--------------------------------------------------------------------------
+    |
+    | Productionda distributed throttling uchun Redis store tavsiya etiladi.
+    | Lokal muhitda env bo'yicha default cache store'dan foydalanish mumkin.
+    |
+    */
+
+    'limiter' => env('CACHE_LIMITER_STORE', env('CACHE_DRIVER', 'file')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
     |

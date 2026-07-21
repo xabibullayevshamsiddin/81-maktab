@@ -4,18 +4,27 @@
     return $answer && ($answer->option_id !== null || filled($answer->text_answer));
   })->count();
   $progressPct = $totalQ > 0 ? min(100, (int) round($answeredCount / $totalQ * 100)) : 0;
-  $examTitle = $result->exam->title ?? 'Imtihon';
+  $examTitle = $result->exam->title ?? __('public.exam.default_title');
+  $sessionI18n = trans('public.exam.session');
+  $watermarkLabel = trim((auth()->user()->name ?? 'Foydalanuvchi') . ' • #' . $result->id . ' • ' . $examTitle);
+  $violationLimit = 5;
+  $initialViolationCount = (int) ($result->rule_violation_count ?? 0);
+  $remainingViolationCount = max(0, $violationLimit - $initialViolationCount);
+  $violationFillPct = $violationLimit > 0 ? min(100, (int) round($initialViolationCount / $violationLimit * 100)) : 0;
+  // Xavfsizlik o'chirilgan bo'lsa hech qanday cheklov qo'llanilmaydi
+  $securityEnabled = (bool) ($result->exam->security_enabled ?? true);
 @endphp
 
-<x-loyouts.main title="{{ $examTitle }} - savol">
+<x-layouts.main :title="$examTitle . __('public.exam.session.title_suffix')">
   <main class="news exam-page exam-session-wrap">
     <div class="exam-page-inner exam-anti-copy" id="exam-anti-root">
+      <div class="exam-watermark-layer" id="exam-watermark-layer" aria-hidden="true" data-watermark="{{ $watermarkLabel }}"></div>
       <header class="exam-session-header">
         <div class="exam-session-header-row">
           <div class="exam-session-title-block">
             <p class="exam-session-exam-name">{{ $examTitle }}</p>
             <p class="exam-session-step-line" id="exam-step-line">
-              Savol <span id="exam-step-current">1</span> / {{ $totalQ }}
+              {!! __('public.exam.session.question_step', ['current' => '<span id="exam-step-current">1</span>', 'total' => $totalQ]) !!}
             </p>
           </div>
           <div class="exam-timer exam-timer--compact">
@@ -23,7 +32,7 @@
               <i class="fa-solid fa-hourglass-half"></i>
             </div>
             <div>
-              <div class="exam-timer-label">Qolgan vaqt</div>
+              <div class="exam-timer-label">{{ __('public.exam.session.time_left') }}</div>
               <div class="exam-timer-digits" id="timer" role="timer" aria-live="polite">--:--</div>
             </div>
           </div>
@@ -32,17 +41,37 @@
         <div class="exam-session-header-row exam-session-header-row--2">
           <div class="exam-progress-block exam-progress-block--full">
             <div class="exam-progress-label">
-              <span>Javob berilgan</span>
+              <span>{{ __('public.exam.session.answered') }}</span>
               <span><strong id="exam-answered-num">{{ $answeredCount }}</strong> / {{ $totalQ }}</span>
             </div>
             <div class="exam-progress-track">
               <div class="exam-progress-fill" id="exam-progress-fill" style="width: {{ $progressPct }}%;"></div>
             </div>
           </div>
-          <p class="exam-secure-note">
-            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span>Skrinshot, chop etish va nusxalash taqiqlanadi. 5 ta qoida buzarlik bo‘lsa imtihon 0 ball bilan yakunlanadi.</span>
-          </p>
+          <div class="exam-secure-stack">
+            <p class="exam-secure-note">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span>{{ __('public.exam.session.secure_note', ['limit' => $violationLimit]) }}</span>
+            </p>
+            <div class="exam-violation-panel {{ $remainingViolationCount === 1 ? 'is-danger' : '' }}" id="exam-violation-panel">
+              <div class="exam-violation-head">
+                <span>{{ __('public.exam.session.violation_limit') }}</span>
+                <strong><span id="exam-violation-count">{{ $initialViolationCount }}</span> / {{ $violationLimit }}</strong>
+              </div>
+              <div class="exam-violation-track">
+                <div class="exam-violation-fill" id="exam-violation-fill" style="width: {{ $violationFillPct }}%;"></div>
+              </div>
+              <p class="exam-violation-note" id="exam-violation-note">
+                @if($remainingViolationCount > 1)
+                  {{ __('public.exam.session.violation_remaining', ['count' => $remainingViolationCount]) }}
+                @elseif($remainingViolationCount === 1)
+                  {{ __('public.exam.session.violation_last_warning') }}
+                @else
+                  {{ __('public.exam.session.violation_exhausted') }}
+                @endif
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -51,6 +80,31 @@
       </form>
 
       <div class="exam-step-stack">
+        <!-- Question Navigation Grid -->
+        <div class="exam-nav-grid-container">
+          <div class="exam-nav-grid-header">
+            <span class="exam-nav-grid-title"><i class="fa-solid fa-list-ol"></i> {{ __('public.exam.session.nav_title') }}</span>
+            <span class="exam-nav-grid-hint">{{ __('public.exam.session.nav_hint') }}</span>
+          </div>
+          <div class="exam-nav-grid" id="exam-nav-grid">
+            @foreach($orderedQuestions as $index => $question)
+              @php
+                $isAnswered = $answerMap->has($question->id) && ($answerMap->get($question->id)->option_id !== null || filled($answerMap->get($question->id)->text_answer));
+              @endphp
+              <button
+                type="button"
+                class="exam-grid-item {{ $isAnswered ? 'is-answered' : '' }} {{ $index === 0 ? 'is-active' : '' }}"
+                onclick="showStep({{ $index }})"
+                data-grid-step="{{ $index }}"
+                data-grid-question-id="{{ $question->id }}"
+                title="{{ __('public.exam.session.question_title', ['num' => $index + 1]) }}"
+              >
+                {{ $index + 1 }}
+              </button>
+            @endforeach
+          </div>
+        </div>
+
         @foreach($orderedQuestions as $index => $question)
           <article
             class="exam-q-card exam-step {{ $index === 0 ? 'exam-step--active' : '' }}"
@@ -65,7 +119,7 @@
 
             @if($question->image_url)
               <div class="exam-question-media">
-                <img src="{{ $question->image_url }}" alt="Savol rasmi" loading="lazy">
+                <img src="{{ $question->image_url }}" alt="{{ __('public.exam.session.question_image_alt') }}" loading="lazy">
               </div>
             @endif
 
@@ -74,16 +128,16 @@
                 $textAnswer = optional($answerMap->get($question->id))->text_answer ?? '';
               @endphp
               <div class="exam-text-answer-block">
-                <label class="exam-text-answer-label" for="exam_text_{{ $question->id }}">Javobingiz</label>
+                <label class="exam-text-answer-label" for="exam_text_{{ $question->id }}">{{ __('public.exam.session.your_answer') }}</label>
                 <textarea
                   id="exam_text_{{ $question->id }}"
                   class="exam-text-answer-field"
                   data-text-question-id="{{ $question->id }}"
-                  placeholder="Javobingizni shu yerga yozing..."
+                  placeholder="{{ __('public.exam.session.answer_placeholder') }}"
                   rows="7"
                 >{{ $textAnswer }}</textarea>
                 <p class="exam-answer-save-state" data-text-save-state="{{ $question->id }}">
-                  Javobingiz yozilishi bilan avtomatik saqlanadi.
+                  {{ __('public.exam.session.autosave_hint') }}
                 </p>
               </div>
             @else
@@ -109,29 +163,38 @@
         @endforeach
       </div>
 
-      <nav class="exam-step-nav" aria-label="Savollar boyicha">
+      <nav class="exam-step-nav" aria-label="{{ __('public.exam.session.nav_aria') }}">
         <button type="button" class="exam-btn-secondary" id="exam-btn-prev" disabled>
-          <i class="fa-solid fa-arrow-left"></i> Oldingi
+          <i class="fa-solid fa-arrow-left"></i> {{ __('public.exam.session.prev') }}
         </button>
         <button type="button" class="exam-btn-primary" id="exam-btn-next">
-          Keyingi savol <i class="fa-solid fa-arrow-right"></i>
+          {{ __('public.exam.session.next') }} <i class="fa-solid fa-arrow-right"></i>
         </button>
         <button type="button" class="exam-btn-primary exam-btn-submit-final" id="exam-btn-finish" hidden>
-          Yakunlash va yuborish <i class="fa-solid fa-paper-plane"></i>
+          {{ __('public.exam.session.finish_submit') }} <i class="fa-solid fa-paper-plane"></i>
         </button>
       </nav>
     </div>
   </main>
 
+  <div id="exam-focus-guard" class="exam-focus-guard" hidden role="dialog" aria-modal="true" aria-labelledby="exam-focus-guard-title">
+    <div class="exam-focus-guard-backdrop"></div>
+    <div class="exam-focus-guard-box">
+      <span class="exam-focus-guard-badge">{{ __('public.exam.session.protected_mode') }}</span>
+      <h3 id="exam-focus-guard-title">{{ __('public.exam.session.focus_title') }}</h3>
+      <p id="exam-focus-guard-text">{{ __('public.exam.session.focus_text') }}</p>
+      <button type="button" class="exam-btn-primary" id="exam-focus-guard-resume" style="width:100%;justify-content:center;">
+        {{ __('public.exam.session.focus_resume') }}
+      </button>
+    </div>
+  </div>
+
   <div id="exam-rule-modal" class="exam-rule-modal" hidden role="dialog" aria-modal="true" aria-labelledby="exam-rule-modal-title">
     <div class="exam-rule-modal-backdrop" tabindex="-1"></div>
     <div class="exam-rule-modal-box">
-      <h3 id="exam-rule-modal-title">Qoidalarga rioya qiling</h3>
-      <p>
-        Skrinshot (PrtSc, Snipping Tool, telefon ekran surati), belgilab nusxa olish va chop etish taqiqlanadi.
-        <strong>5 ta</strong> buzilish serverda qayd etilsa, imtihon <strong>0 ball, yiqildi</strong> deb yopiladi.
-      </p>
-      <button type="button" class="exam-btn-primary" id="exam-rule-modal-ok" style="width:100%;justify-content:center;margin-top:8px;">Tushunarli</button>
+      <h3 id="exam-rule-modal-title">{{ __('public.exam.session.rules_title') }}</h3>
+      <p>{!! __('public.exam.session.rules_text') !!}</p>
+      <button type="button" class="exam-btn-primary" id="exam-rule-modal-ok" style="width:100%;justify-content:center;margin-top:8px;">{{ __('public.exam.session.rules_ok') }}</button>
     </div>
   </div>
 
@@ -141,12 +204,12 @@
       <div class="exam-finish-confirm-icon" aria-hidden="true">
         <i class="fa-solid fa-circle-question"></i>
       </div>
-      <h3 id="exam-finish-confirm-title">Imtihonni yakunlaysizmi?</h3>
-      <p>Javoblaringiz yuboriladi. Keyin ularni o'zgartirish yoki imtihonga qaytish mumkin emas.</p>
+      <h3 id="exam-finish-confirm-title">{{ __('public.exam.session.finish_confirm_title') }}</h3>
+      <p>{{ __('public.exam.session.finish_confirm_text') }}</p>
       <div class="exam-rule-modal-actions">
-        <button type="button" class="exam-btn-secondary" id="exam-finish-confirm-cancel">Bekor qilish</button>
+        <button type="button" class="exam-btn-secondary" id="exam-finish-confirm-cancel">{{ __('public.exam.session.cancel') }}</button>
         <button type="button" class="exam-btn-primary" id="exam-finish-confirm-submit">
-          Ha, yuborish <i class="fa-solid fa-paper-plane"></i>
+          {{ __('public.exam.session.confirm_submit') }} <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
     </div>
@@ -154,6 +217,7 @@
 
   <script>
     (function () {
+      var examSessionI18n = @json($sessionI18n);
       var modal = document.getElementById('exam-rule-modal');
       var modalTitleEl = document.getElementById('exam-rule-modal-title');
       var modalTextEl = modal ? modal.querySelector('p') : null;
@@ -162,15 +226,141 @@
       var defaultModalText = modalTextEl ? modalTextEl.innerHTML : '';
       var defaultModalOkText = modalOkBtn ? modalOkBtn.textContent : '';
       var root = document.getElementById('exam-anti-root');
+      var watermarkLayer = document.getElementById('exam-watermark-layer');
+      var focusGuard = document.getElementById('exam-focus-guard');
+      var focusGuardTitleEl = document.getElementById('exam-focus-guard-title');
+      var focusGuardTextEl = document.getElementById('exam-focus-guard-text');
+      var focusGuardResumeBtn = document.getElementById('exam-focus-guard-resume');
+      var violationPanelEl = document.getElementById('exam-violation-panel');
+      var violationCountEl = document.getElementById('exam-violation-count');
+      var violationFillEl = document.getElementById('exam-violation-fill');
+      var violationNoteEl = document.getElementById('exam-violation-note');
       var lastContextWarnAt = 0;
+      var lastViolationReportAt = 0;
       var disqualifiedNav = false;
       var modalLockActive = false;
+      var transientIgnoreUntil = 0;
+      var currentViolationCount = {{ $initialViolationCount }};
+      var fullscreenSupported = !!(
+        document.documentElement.requestFullscreen
+        || document.documentElement.webkitRequestFullscreen
+        || document.documentElement.msRequestFullscreen
+      );
 
       var violationUrl = @json(route('exam.violation', $result));
       var csrfToken = @json(csrf_token());
-      var violationLimit = 5;
+      var violationLimit = {{ $violationLimit }};
+      var securityEnabled = {{ $securityEnabled ? 'true' : 'false' }};
+
+      // Xavfsizlik o'chirilgan bo'lsa — xavfsizlik panelini yashirish
+      if (!securityEnabled) {
+        var secureStack = document.querySelector('.exam-secure-stack');
+        if (secureStack) secureStack.style.display = 'none';
+      }
 
       document.body.classList.add('exam-session-print-lock');
+
+      function syncBodyLock() {
+        var shouldLock = (modal && !modal.hidden)
+          || (focusGuard && !focusGuard.hidden)
+          || (typeof finishConfirmModal !== 'undefined' && finishConfirmModal && !finishConfirmModal.hidden);
+        document.body.style.overflow = shouldLock ? 'hidden' : '';
+      }
+
+      function buildWatermark() {
+        if (!watermarkLayer) return;
+
+        var label = watermarkLayer.getAttribute('data-watermark') || 'Protected exam';
+        watermarkLayer.innerHTML = '';
+
+        for (var i = 0; i < 18; i += 1) {
+          var tile = document.createElement('span');
+          tile.className = 'exam-watermark-tile';
+          tile.textContent = label + ' • ' + String(i + 1).padStart(2, '0');
+          watermarkLayer.appendChild(tile);
+        }
+      }
+
+      function setTransientIgnore(ms) {
+        transientIgnoreUntil = Date.now() + (ms || 0);
+      }
+
+      function isTransientIgnoreActive() {
+        return Date.now() < transientIgnoreUntil;
+      }
+
+      function getFullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+      }
+
+      function isFullscreenActive() {
+        return !!getFullscreenElement();
+      }
+
+      function requestProtectedFullscreen() {
+        var target = document.documentElement;
+        var fn = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen;
+
+        if (!fn) {
+          return Promise.resolve(false);
+        }
+
+        try {
+          var result = fn.call(target);
+
+          if (result && typeof result.then === 'function') {
+            return result.then(function () { return true; }).catch(function () { return false; });
+          }
+
+          return Promise.resolve(true);
+        } catch (err) {
+          return Promise.resolve(false);
+        }
+      }
+
+      function showFocusGuard(title, text, buttonText) {
+        if (!focusGuard) return;
+        if (focusGuardTitleEl) focusGuardTitleEl.textContent = title || examSessionI18n.focus_title;
+        if (focusGuardTextEl) focusGuardTextEl.textContent = text || examSessionI18n.focus_text;
+        if (focusGuardResumeBtn) {
+          focusGuardResumeBtn.textContent = buttonText || (fullscreenSupported ? examSessionI18n.focus_resume_retry : examSessionI18n.continue_btn);
+        }
+        focusGuard.hidden = false;
+        if (root) root.classList.add('is-obscured');
+        syncBodyLock();
+      }
+
+      function hideFocusGuard() {
+        if (!focusGuard) return;
+        focusGuard.hidden = true;
+        if (root) root.classList.remove('is-obscured');
+        syncBodyLock();
+      }
+
+      function updateViolationUi(count) {
+        currentViolationCount = Math.max(0, Math.min(violationLimit, Number(count || 0)));
+
+        var remaining = Math.max(0, violationLimit - currentViolationCount);
+        var fillPct = violationLimit > 0 ? Math.min(100, Math.round((currentViolationCount / violationLimit) * 100)) : 0;
+
+        if (violationCountEl) violationCountEl.textContent = String(currentViolationCount);
+        if (violationFillEl) violationFillEl.style.width = fillPct + '%';
+
+        if (violationPanelEl) {
+          violationPanelEl.classList.toggle('is-danger', remaining <= 1);
+          violationPanelEl.classList.toggle('is-warning', remaining === 2);
+        }
+
+        if (violationNoteEl) {
+          if (remaining > 1) {
+            violationNoteEl.textContent = examSessionI18n.violation_remaining.replace(':count', String(remaining));
+          } else if (remaining === 1) {
+            violationNoteEl.textContent = examSessionI18n.violation_last_warning;
+          } else {
+            violationNoteEl.textContent = examSessionI18n.violation_exhausted;
+          }
+        }
+      }
 
       // Natija sahifasidan "Orqaga" (BFCache) — eski imtihon ko‘rinmasin; server holatini qayta olamiz
       window.addEventListener('pageshow', function (ev) {
@@ -179,8 +369,11 @@
         }
       });
 
-      function reportRuleViolation() {
+      function reportRuleViolation(reason) {
         if (disqualifiedNav) return;
+        var now = Date.now();
+        if (now - lastViolationReportAt < 1400) return;
+        lastViolationReportAt = now;
         fetch(violationUrl, {
           method: 'POST',
           headers: {
@@ -188,7 +381,9 @@
             'Accept': 'application/json',
             'X-CSRF-TOKEN': csrfToken,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            reason: reason || 'generic',
+          }),
         })
           .then(function (r) { return r.json().catch(function () { return {}; }); })
           .then(function (data) {
@@ -200,17 +395,9 @@
 
             var count = Number(data.count || 0);
             if (!Number.isFinite(count) || count <= 0) return;
+            updateViolationUi(count);
 
             var remaining = Math.max(0, violationLimit - count);
-            var message = remaining > 0
-              ? ('Ogohlantirish: qoida buzarlik qayd etildi (' + count + '/' + violationLimit + '). Yana ' + remaining + ' ta imkon qoldi.')
-              : ('Ogohlantirish: limit tugadi (' + violationLimit + '/' + violationLimit + '). Imtihon yakunlanadi.');
-
-            if (typeof window.showToast === 'function') {
-              window.showToast(message, remaining > 0 ? 'warning' : 'error');
-            } else {
-              window.alert(message);
-            }
 
             if (remaining === 1) {
               showLockedLastChanceModal();
@@ -239,73 +426,77 @@
         }
       }
 
-      function warnAndReport(e) {
+      function warnAndReport(e, reason) {
         if (e) {
           e.preventDefault();
           e.stopPropagation();
         }
         playViolationSound();
-        showRuleModal();
-        reportRuleViolation();
+        reportRuleViolation(reason);
       }
 
       function showRuleModal() {
         if (!modal) return;
         modal.hidden = false;
-        document.body.style.overflow = 'hidden';
+        syncBodyLock();
       }
 
       function hideRuleModal() {
         if (!modal || modalLockActive) return;
         modal.hidden = true;
-        document.body.style.overflow = '';
         if (modalTitleEl) modalTitleEl.textContent = defaultModalTitle;
         if (modalTextEl) modalTextEl.innerHTML = defaultModalText;
         if (modalOkBtn) modalOkBtn.textContent = defaultModalOkText;
+        syncBodyLock();
       }
 
       function showLockedLastChanceModal() {
-        if (!modal) return;
-
-        modalLockActive = true;
-        if (modalTitleEl) modalTitleEl.textContent = 'Oxirgi ogohlantirish';
-        if (modalTextEl) {
-          modalTextEl.innerHTML = 'Sizda <strong>faqat 1 ta</strong> qoida buzarlik imkoniyati qoldi. Yana buzilsa imtihon avtomatik yopiladi.';
-        }
-        if (modalOkBtn) {
-          modalOkBtn.disabled = true;
-          modalOkBtn.textContent = 'Kutish... 5s';
-        }
-
-        showRuleModal();
-
-        var remainingSec = 5;
-        var lockTimer = setInterval(function () {
-          remainingSec -= 1;
-          if (modalOkBtn) {
-            modalOkBtn.textContent = remainingSec > 0 ? ('Kutish... ' + remainingSec + 's') : 'Tushunarli';
-          }
-
-          if (remainingSec <= 0) {
-            clearInterval(lockTimer);
-            modalLockActive = false;
-            if (modalOkBtn) {
-              modalOkBtn.disabled = false;
-            }
-            hideRuleModal();
-          }
-        }, 1000);
+        showFocusGuard(
+          examSessionI18n.last_chance_title,
+          examSessionI18n.last_chance_text,
+          fullscreenSupported ? examSessionI18n.focus_resume_retry : examSessionI18n.understood
+        );
       }
 
       function showScreenshotWarn(e) {
-        warnAndReport(e);
+        showFocusGuard(
+          examSessionI18n.screenshot_title,
+          examSessionI18n.screenshot_text,
+          fullscreenSupported ? examSessionI18n.reenter : examSessionI18n.continue_btn
+        );
+        warnAndReport(e, 'screen-capture');
       }
 
-      function maybeContextWarn() {
+      function maybeContextWarn(reason) {
         var now = Date.now();
-        if (now - lastContextWarnAt < 600) return;
+        if (now - lastContextWarnAt < 1000) return;
         lastContextWarnAt = now;
-        warnAndReport(null);
+        warnAndReport(null, reason || 'context-loss');
+      }
+
+      function requestResumeProtectedMode(title, text, reason) {
+        if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
+        showFocusGuard(title, text, fullscreenSupported ? examSessionI18n.focus_resume_retry : examSessionI18n.continue_btn);
+        maybeContextWarn(reason);
+      }
+
+      async function resumeProtectedMode() {
+        setTransientIgnore(1500);
+
+        if (fullscreenSupported && !isFullscreenActive()) {
+          var fullOk = await requestProtectedFullscreen();
+
+          if (!fullOk && !isFullscreenActive()) {
+            showFocusGuard(
+              examSessionI18n.fullscreen_required_title,
+              examSessionI18n.fullscreen_required_text,
+              examSessionI18n.retry_fullscreen
+            );
+            return;
+          }
+        }
+
+        hideFocusGuard();
       }
 
       document.getElementById('exam-rule-modal-ok')?.addEventListener('click', hideRuleModal);
@@ -325,92 +516,129 @@
         }
       });
 
-      document.addEventListener('visibilitychange', function () {
-        if (document.hidden) maybeContextWarn();
-      });
+      buildWatermark();
+      updateViolationUi(currentViolationCount);
 
-      window.addEventListener('beforeprint', function () {
-        warnAndReport(null);
-      });
-
-      document.addEventListener('keydown', function (e) {
-        var key = e.key || '';
-        var kl = key.toLowerCase();
-        var ctrl = e.ctrlKey || e.metaKey;
-        var meta = e.metaKey;
-
-        if (
-          key === 'PrintScreen'
-          || key === 'Print'
-          || key === 'F13'
-          || key === 'Snapshot'
-          || e.keyCode === 44
-        ) {
-          showScreenshotWarn(e);
-          return;
-        }
-        if (e.altKey && (key === 'PrintScreen' || e.keyCode === 44)) {
-          showScreenshotWarn(e);
-          return;
-        }
-
-        if (key === 'F12') {
-          e.preventDefault();
-          return;
-        }
-
-        if (meta && e.shiftKey && (kl === '3' || kl === '4' || kl === '5')) {
-          showScreenshotWarn(e);
-          return;
-        }
-        if (e.shiftKey && meta && kl === 's') {
-          showScreenshotWarn(e);
-          return;
-        }
-
-        if (ctrl && kl === 'p') {
-          e.preventDefault();
-          warnAndReport(null);
-          return;
-        }
-        if (ctrl && e.shiftKey && kl === 's') {
-          e.preventDefault();
-          warnAndReport(null);
-          return;
-        }
-        if (ctrl && ['c', 'x', 'u', 's'].indexOf(kl) !== -1) {
-          e.preventDefault();
-          return;
-        }
-        if (ctrl && e.shiftKey && ['i', 'j', 'c', 'p'].indexOf(kl) !== -1) {
-          e.preventDefault();
-          return;
-        }
-      }, true);
-
-      if (root) {
-        ['copy', 'cut', 'contextmenu', 'dragstart', 'paste', 'selectstart'].forEach(function (ev) {
-          root.addEventListener(ev, function (e) {
-            if (e.target && e.target.closest('.exam-text-answer-field')) {
-              if (ev === 'copy' || ev === 'cut' || ev === 'paste') {
-                e.preventDefault();
-              }
-              return;
-            }
-
-            e.preventDefault();
-          }, true);
+      if (securityEnabled) {
+        document.addEventListener('visibilitychange', function () {
+          if (document.hidden) {
+            requestResumeProtectedMode(
+              examSessionI18n.hidden_title,
+              examSessionI18n.hidden_text,
+              'visibility-hidden'
+            );
+          }
         });
-      }
-      document.addEventListener('paste', function (e) {
-        if (e.target && e.target.closest('.exam-text-answer-field')) {
-          e.preventDefault();
-          return;
+
+        window.addEventListener('beforeprint', function () {
+          requestResumeProtectedMode(
+            examSessionI18n.print_title,
+            examSessionI18n.print_text,
+            'print-attempt'
+          );
+        });
+
+        window.addEventListener('blur', function () {
+          if (document.hidden || isTransientIgnoreActive()) return;
+          requestResumeProtectedMode(
+            examSessionI18n.blur_title,
+            examSessionI18n.blur_text,
+            'window-blur'
+          );
+        });
+
+        window.addEventListener('pagehide', function () {
+          if (disqualifiedNav || examSubmitLocked || isTransientIgnoreActive()) return;
+          maybeContextWarn('pagehide');
+        });
+
+        function handleFullscreenChange() {
+          if (isTransientIgnoreActive()) return;
+          if (fullscreenSupported && !isFullscreenActive() && !document.hidden) {
+            requestResumeProtectedMode(
+              examSessionI18n.exit_fullscreen_title,
+              examSessionI18n.exit_fullscreen_text,
+              'fullscreen-exit'
+            );
+            return;
+          }
+          if (isFullscreenActive() && focusGuard && !focusGuard.hidden && document.visibilityState === 'visible') {
+            hideFocusGuard();
+          }
         }
-        e.preventDefault();
-      }, true);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        document.addEventListener('keydown', function (e) {
+          var key = e.key || '';
+          var kl = key.toLowerCase();
+          var ctrl = e.ctrlKey || e.metaKey;
+          var meta = e.metaKey;
+
+          if (key === 'PrintScreen' || key === 'Print' || key === 'F13' || key === 'Snapshot' || e.keyCode === 44) {
+            showScreenshotWarn(e); return;
+          }
+          if (e.altKey && (key === 'PrintScreen' || e.keyCode === 44)) {
+            showScreenshotWarn(e); return;
+          }
+          if (key === 'F12') { e.preventDefault(); return; }
+          if (meta && e.shiftKey && (kl === '3' || kl === '4' || kl === '5')) {
+            showScreenshotWarn(e); return;
+          }
+          if (e.shiftKey && meta && kl === 's') { showScreenshotWarn(e); return; }
+          if (ctrl && kl === 'p') {
+            e.preventDefault();
+            requestResumeProtectedMode(examSessionI18n.print_title, examSessionI18n.print_text, 'print-shortcut');
+            return;
+          }
+          if (ctrl && e.shiftKey && kl === 's') {
+            e.preventDefault();
+            requestResumeProtectedMode(examSessionI18n.save_forbidden_title, examSessionI18n.save_forbidden_text, 'save-shortcut');
+            return;
+          }
+          if (ctrl && ['c', 'x', 'u', 's'].indexOf(kl) !== -1) { e.preventDefault(); return; }
+          if (ctrl && e.shiftKey && ['i', 'j', 'c', 'p'].indexOf(kl) !== -1) { e.preventDefault(); return; }
+        }, true);
+
+        document.addEventListener('keyup', function (e) {
+          var key = e.key || '';
+          if (key === 'PrintScreen' || key === 'Print' || key === 'F13' || key === 'Snapshot' || e.keyCode === 44) {
+            showScreenshotWarn(e);
+          }
+        }, true);
+
+        if (root) {
+          ['copy', 'cut', 'contextmenu', 'dragstart', 'paste', 'selectstart'].forEach(function (ev) {
+            root.addEventListener(ev, function (e) {
+              if (e.target && e.target.closest('.exam-text-answer-field')) {
+                if (ev === 'copy' || ev === 'cut' || ev === 'paste') e.preventDefault();
+                return;
+              }
+              e.preventDefault();
+            }, true);
+          });
+        }
+        document.addEventListener('paste', function (e) {
+          if (e.target && e.target.closest('.exam-text-answer-field')) { e.preventDefault(); return; }
+          e.preventDefault();
+        }, true);
+
+        focusGuardResumeBtn?.addEventListener('click', function () {
+          resumeProtectedMode();
+        });
+
+        if (fullscreenSupported) {
+          showFocusGuard(
+            examSessionI18n.start_protected_title,
+            examSessionI18n.start_protected_text,
+            examSessionI18n.focus_resume
+          );
+        }
+      }
     })();
 
+    const examSessionI18n = @json($sessionI18n);
     const expiresAt = new Date(@json(optional($result->expires_at)->toIso8601String())).getTime();
     const timerEl = document.getElementById('timer');
     const totalQuestions = {{ (int) $totalQ }};
@@ -426,16 +654,43 @@
     function showStep(idx) {
       if (idx < 0 || idx >= steps.length) return;
       currentIdx = idx;
+
       steps.forEach(function (el, i) {
         var on = i === idx;
         el.classList.toggle('exam-step--active', on);
         el.hidden = !on;
       });
+
+      var isFirst = idx === 0;
+      var isLast = idx === steps.length - 1;
+
       if (stepCurrentEl) stepCurrentEl.textContent = String(idx + 1);
-      if (btnPrev) btnPrev.disabled = idx === 0;
-      var last = idx === steps.length - 1;
-      if (btnNext) btnNext.hidden = last;
-      if (btnFinish) btnFinish.hidden = !last;
+
+      if (btnPrev) {
+        btnPrev.disabled = isFirst;
+        btnPrev.style.opacity = isFirst ? '0.5' : '1';
+        btnPrev.style.cursor = isFirst ? 'not-allowed' : 'pointer';
+      }
+
+      if (btnNext) {
+        // Instead of hiding, we can disable it on the last step or keep it hidden if Finish is shown.
+        // User asked to disable it, so let's keep it visible but disabled on the last step.
+        btnNext.disabled = isLast;
+        btnNext.style.opacity = isLast ? '0.5' : '1';
+        btnNext.style.cursor = isLast ? 'not-allowed' : 'pointer';
+        // If we want to show Finish button alongside or instead:
+        btnNext.hidden = isLast;
+      }
+
+      if (btnFinish) {
+        btnFinish.hidden = !isLast;
+      }
+
+      // Add active state to navigation grid if it exists
+      var gridItems = document.querySelectorAll('.exam-grid-item');
+      gridItems.forEach(function(item, i) {
+        item.classList.toggle('is-active', i === idx);
+      });
     }
 
     async function flushPendingTextAnswers() {
@@ -487,7 +742,7 @@
         loader.className = 'prime-exam-loader';
         loader.innerHTML =
           '<div class="prime-grading-container">' +
-          '<div class="prime-grading-title">Natijalaringiz tahlil qilinmoqda...</div>' +
+          '<div class="prime-grading-title">' + examSessionI18n.grading_title + '</div>' +
           '<div class="prime-grading-bar-wrap"><div class="prime-grading-bar"></div></div>' +
           '</div>';
         document.body.appendChild(loader);
@@ -579,16 +834,36 @@
     }
 
     function updateProgress() {
-      const checked = document.querySelectorAll('.exam-option input[type=radio]:checked').length;
-      const textAnswered = Array.prototype.slice.call(document.querySelectorAll('.exam-text-answer-field'))
-        .filter(function (field) { return field.value.trim() !== ''; }).length;
-      const answered = checked + textAnswered;
+      const checkedInputs = document.querySelectorAll('.exam-option input[type=radio]:checked');
+      const answeredQuestionIds = new Set();
+
+      checkedInputs.forEach(function(input) {
+        // name is "q_{questionId}"
+        const qId = input.name.replace('q_', '');
+        answeredQuestionIds.add(qId);
+      });
+
+      const textFields = document.querySelectorAll('.exam-text-answer-field');
+      textFields.forEach(function(field) {
+        if (field.value.trim() !== '') {
+          answeredQuestionIds.add(field.dataset.textQuestionId);
+        }
+      });
+
+      const answered = answeredQuestionIds.size;
       const fill = document.getElementById('exam-progress-fill');
       const num = document.getElementById('exam-answered-num');
       if (num) num.textContent = answered;
       if (fill && totalQuestions > 0) {
         fill.style.width = Math.min(100, Math.round(answered / totalQuestions * 100)) + '%';
       }
+
+      // Update Grid Items
+      const gridItems = document.querySelectorAll('.exam-grid-item');
+      gridItems.forEach(function(item) {
+        const qId = item.dataset.gridQuestionId;
+        item.classList.toggle('is-answered', answeredQuestionIds.has(qId));
+      });
     }
 
     async function saveAnswer(questionId, optionId) {
@@ -613,7 +888,7 @@
           if (data.message) alert(data.message);
         }
       } catch (e) {
-        alert("Javobni saqlashda xato bo'ldi.");
+        alert(examSessionI18n.save_error);
       }
     }
 
@@ -666,7 +941,7 @@
         updateProgress();
       } catch (error) {
         field.dataset.dirty = '1';
-        setTextSaveState(questionId, error.message || "Javobni saqlashda xato bo'ldi.", 'is-error');
+        setTextSaveState(questionId, error.message || examSessionI18n.save_error, 'is-error');
       }
     }
 

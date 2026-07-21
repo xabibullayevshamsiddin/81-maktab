@@ -29,9 +29,10 @@
           @method('PUT')
 
           <div class="mb-3">
-            <label class="form-label">Ustoz *</label>
+            <label class="form-label">Public ustoz kartasi</label>
             @if($isAdminEditor)
-              <select name="teacher_id" class="form-select" required>
+              <select name="teacher_id" class="form-select">
+                <option value="">Biriktirilmagan - kurs muallifi akkaunti ishlatiladi</option>
                 @foreach($teachers as $teacher)
                   <option value="{{ $teacher->id }}" {{ (int) old('teacher_id', $course->teacher_id) === (int) $teacher->id ? 'selected' : '' }}>
                     {{ $teacher->full_name }}{{ filled($teacher->subject) ? ' — '.$teacher->subject : '' }}
@@ -39,7 +40,6 @@
                 @endforeach
               </select>
             @else
-              <input type="hidden" name="teacher_id" value="{{ $course->teacher_id }}">
               <p class="form-control mb-0" style="background:#f8fafc;">{{ $course->teacher?->full_name ?? '—' }}</p>
               <p class="text-muted small mt-1 mb-0">Ustozni faqat admin o‘zgartira oladi.</p>
             @endif

@@ -1,5 +1,6 @@
 @php
   $likedTeacherIds = $likedTeacherIds ?? collect();
+  $bookmarkedTeacherIds = $bookmarkedTeacherIds ?? collect();
 @endphp
 
 <div class="teachers-grid related-teachers-grid">
@@ -13,7 +14,7 @@
     <article class="teacher-card reveal">
       <div class="teacher-photo-wrap">
         <img
-          src="{{ $rt->image ? app_storage_asset($rt->image) : app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png') }}"
+          src="{{ $rt->image ? app_storage_asset($rt->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
           alt="{{ $rt->full_name }} profil rasmi"
           class="teacher-photo"
           loading="lazy"
@@ -47,6 +48,11 @@
             </button>
           </form>
         @endauth
+        @include('posts.partials.bookmark-button', [
+          'toggleUrl' => auth()->check() ? route('teacher.bookmark.toggle', $rt) : null,
+          'isSaved' => $bookmarkedTeacherIds->contains($rt->id),
+          'ariaLabel' => __('public.bookmark.aria_teacher'),
+        ])
         <button
           type="button"
           class="btn btn-sm btn-outline share-btn js-share-trigger"

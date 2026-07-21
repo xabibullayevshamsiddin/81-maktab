@@ -1,4 +1,4 @@
-<x-loyouts.main :title="__('public.about.page_title')">
+<x-layouts.main :title="__('public.about.page_title')">
   @php
     $passportFacts = trans('public.about.passport_facts');
     $educationFacts = trans('public.about.education_process_facts');
@@ -7,6 +7,7 @@
     $facilityFacts = trans('public.about.facilities');
     $facilityDomestic = trans('public.about.facility_domestic');
     $siteCreditsMembers = trans('public.about.site_credits_members');
+    $siteCreditsContributors = trans('public.about.site_credits_contributors');
     $quickFacts = trans('public.about.quick_facts');
     $stats = trans('public.about.stats');
   @endphp
@@ -156,10 +157,21 @@
           @foreach($siteCreditsMembers as $member)
             <li class="site-credits-item">
               <span class="site-credits-name">{{ $member['name'] }}</span>
-              <span class="site-credits-date">{{ $member['date'] }}</span>
+              <span class="site-credits-date">{{ $member['meta'] ?? $member['date'] ?? '' }}</span>
             </li>
           @endforeach
         </ul>
+        @if(is_array($siteCreditsContributors) && count($siteCreditsContributors) > 0)
+          <h4 style="margin: 18px 0 10px; color: var(--primary)">{{ __('public.about.site_credits_contributors_title') }}</h4>
+          <ul class="site-credits-list">
+            @foreach($siteCreditsContributors as $member)
+              <li class="site-credits-item">
+                <span class="site-credits-name">{{ $member['name'] }}</span>
+                <span class="site-credits-date">{{ $member['meta'] ?? $member['date'] ?? '' }}</span>
+              </li>
+            @endforeach
+          </ul>
+        @endif
       </div>
     </section>
 

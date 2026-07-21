@@ -1,4 +1,4 @@
-<x-loyouts.main title="{{ __('public.posts.page_title') }}">
+<x-layouts.main title="{{ __('public.posts.page_title') }}">
   @php
     $f = $filter ?? 'all';
     $filterOptions = [
@@ -32,14 +32,17 @@
       </div>
 
       <form method="GET" action="{{ route('post') }}" class="post-filters">
-        <div class="post-filter">
+        <div class="post-filter search-filter-wrap">
           <input
             type="text"
             name="q"
             value="{{ $q ?? '' }}"
             placeholder="{{ __('public.posts.search_placeholder') }}"
-            class="comment-input"
+            class="comment-input js-post-search-input"
           />
+          <button type="button" class="search-clear-btn js-post-filter-reset" title="{{ __('public.common.clear') }}" style="display: {{ $q ? 'flex' : 'none' }}">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
 
         <div class="post-filter">
@@ -94,6 +97,6 @@
   </main>
 
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/post-filters.js') }}?v={{ filemtime(public_path('temp/js/post-filters.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/post-filters.js') }}?v={{ app_asset_version('temp/js/post-filters.js') }}"></script>
   @endpush
 </x-loyouts.main>

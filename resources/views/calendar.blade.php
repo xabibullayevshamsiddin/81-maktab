@@ -1,4 +1,4 @@
-<x-loyouts.main title="{{ __('public.calendar.page_title') }}">
+<x-layouts.main title="{{ __('public.calendar.page_title') }}">
   <section class="news-hero profile-hero">
     <div class="container">
       <div class="news-hero-content prime-reveal">
@@ -11,16 +11,7 @@
 
   <main class="profile-main calendar-page">
     <div class="container">
-      <div class="calendar-toolbar prime-reveal">
-        <form method="get" action="{{ route('calendar') }}" class="calendar-year-form">
-          <label for="cal-y">{{ __('public.calendar.year') }}</label>
-          <select id="cal-y" name="y" data-calendar-year-select>
-            @for($y = (int) now()->year + 1; $y >= 2020; $y--)
-              <option value="{{ $y }}" {{ (int) $year === $y ? 'selected' : '' }}>{{ $y }}</option>
-            @endfor
-          </select>
-        </form>
-      </div>
+
 
       @if($events->isEmpty())
         <p class="profile-muted">{{ __('public.calendar.empty', ['year' => $year]) }}</p>
@@ -112,6 +103,6 @@
     </div>
   </main>
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/calendar-page.js') }}?v={{ filemtime(public_path('temp/js/calendar-page.js')) }}"></script>
+    <script src="{{ app_public_asset('temp/js/calendar-page.js') }}?v={{ app_asset_version('temp/js/calendar-page.js') }}"></script>
   @endpush
 </x-loyouts.main>

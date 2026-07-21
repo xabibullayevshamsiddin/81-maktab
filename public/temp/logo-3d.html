@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>81-Maktab – 3D Logo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0b14;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+    #canvas-wrapper {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+    canvas { display: block; }
+
+    /* Glow rings behind canvas */
+    .glow-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    .glow-ring:nth-child(1) {
+      width: 320px; height: 320px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(54,92,245,0.18) 0%, transparent 70%);
+      animation-delay: 0s;
+    }
+    .glow-ring:nth-child(2) {
+      width: 460px; height: 460px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(148,111,255,0.10) 0%, transparent 70%);
+      animation-delay: 1s;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+      50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    /* Floating particles */
+    .particles { position: absolute; inset: 0; pointer-events: none; }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float-particle linear infinite;
+      opacity: 0;
+    }
+    @keyframes float-particle {
+      0%   { transform: translateY(0) scale(0); opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+    }
+
+    /* Text label */
+    .brand-label {
+      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      animation: fadeUp 1s ease 0.5s both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .brand-text {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #365CF5, #946FFF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Controls hint */
+    .hint {
+      position: fixed;
+      bottom: 24px;
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+      letter-spacing: 1px;
+      animation: fadeUp 1s ease 1s both;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="canvas-wrapper">
+    <div class="glow-ring"></div>
+    <div class="glow-ring"></div>
+    <div class="particles" id="particles"></div>
+    <canvas id="logo3d"></canvas>
+  </div>
+
+  <div class="brand-label">
+    <div>
+      <div class="brand-text">81-MAKTAB</div>
+      <div class="brand-sub">Ixtisoslashgan Davlat Maktabi</div>
+    </div>
+  </div>
+
+  <p class="hint">🖱 Sichqoncha bilan aylantiring</p>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+  // ─── PARTICLES ───────────────────────────────────────────────
+  const container = document.getElementById('particles');
+  const colors = ['#365CF5','#946FFF','#5A9FFF','#C87AFF'];
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 5 + 2;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${Math.random()*100}%;
+      top:${60 + Math.random()*40}%;
+      animation-duration:${3 + Math.random()*4}s;
+      animation-delay:${Math.random()*5}s;
+      filter: blur(${Math.random()*1}px);
+      box-shadow: 0 0 ${size*2}px ${colors[Math.floor(Math.random()*colors.length)]};
+    `;
+    container.appendChild(p);
+  }
+
+  // ─── THREE.JS SCENE ──────────────────────────────────────────
+  const canvas = document.getElementById('logo3d');
+  const W = 500, H = 500;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+  camera.position.set(0, 0, 5.5);
+
+  // ─── LIGHTS ──────────────────────────────────────────────────
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight.position.set(5, 8, 6);
+  dirLight.castShadow = true;
+  scene.add(dirLight);
+
+  const bluePoint = new THREE.PointLight(0x365CF5, 3, 12);
+  bluePoint.position.set(-3, 2, 3);
+  scene.add(bluePoint);
+
+  const purplePoint = new THREE.PointLight(0x946FFF, 3, 12);
+  purplePoint.position.set(3, -2, 3);
+  scene.add(purplePoint);
+
+  const rimLight = new THREE.PointLight(0x5A9FFF, 1.5, 10);
+  rimLight.position.set(0, -4, -2);
+  scene.add(rimLight);
+
+  // ─── GRADIENT TEXTURE ────────────────────────────────────────
+  function makeGradientTexture(c1, c2, size = 256) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = size;
+    const ctx = cv.getContext('2d');
+    const grd = ctx.createLinearGradient(size, size, 0, 0);
+    grd.addColorStop(0, c1);
+    grd.addColorStop(1, c2);
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(cv);
+  }
+
+  // ─── MAIN BODY: Rounded Box ───────────────────────────────────
+  const boxGeo = new THREE.BoxGeometry(2.2, 2.2, 0.45, 8, 8, 4);
+  // Smooth the corners by displacing vertices
+  const posArr = boxGeo.attributes.position;
+  const radius = 0.28;
+  for (let i = 0; i < posArr.count; i++) {
+    let x = posArr.getX(i);
+    let y = posArr.getY(i);
+    let z = posArr.getZ(i);
+    const hw = 1.1 - radius, hh = 1.1 - radius;
+    const cx = Math.max(-hw, Math.min(hw, x));
+    const cy = Math.max(-hh, Math.min(hh, y));
+    const dx = x - cx, dy = y - cy;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len > 0.001) {
+      x = cx + (dx / len) * radius;
+      y = cy + (dy / len) * radius;
+    }
+    posArr.setXYZ(i, x, y, z);
+  }
+  boxGeo.computeVertexNormals();
+
+  const bodyTex = makeGradientTexture('#946FFF', '#365CF5');
+  const bodyMat = new THREE.MeshPhysicalMaterial({
+    map: bodyTex,
+    roughness: 0.08,
+    metalness: 0.4,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    reflectivity: 0.9,
+  });
+  const body = new THREE.Mesh(boxGeo, bodyMat);
+  body.castShadow = true;
+  scene.add(body);
+
+  // ─── LARGE CIRCLE ────────────────────────────────────────────
+  const bigCircleGeo = new THREE.CylinderGeometry(0.92, 0.92, 0.22, 64);
+  bigCircleGeo.rotateX(Math.PI / 2);
+  const bigCircleMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.05,
+    metalness: 0.1,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.02,
+    transparent: true,
+    opacity: 0.95,
+  });
+  const bigCircle = new THREE.Mesh(bigCircleGeo, bigCircleMat);
+  bigCircle.position.set(0.35, 0.2, 0.24);
+  bigCircle.castShadow = true;
+  scene.add(bigCircle);
+
+  // ─── SMALL CIRCLE ────────────────────────────────────────────
+  const smCircleGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.22, 64);
+  smCircleGeo.rotateX(Math.PI / 2);
+  const smCircleMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.05,
+    metalness: 0.1,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.02,
+    transparent: true,
+    opacity: 0.88,
+  });
+  const smCircle = new THREE.Mesh(smCircleGeo, smCircleMat);
+  smCircle.position.set(-0.44, -0.38, 0.24);
+  smCircle.castShadow = true;
+  scene.add(smCircle);
+
+  // ─── INNER GLOW CIRCLES (thin emissive rings) ─────────────────
+  function makeRing(innerR, outerR, color) {
+    const geo = new THREE.RingGeometry(innerR, outerR, 64);
+    const mat = new THREE.MeshBasicMaterial({
+      color,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.5,
+    });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  const ring1 = makeRing(0.88, 0.96, 0xffffff);
+  ring1.position.set(0.35, 0.2, 0.35);
+  scene.add(ring1);
+
+  const ring2 = makeRing(0.44, 0.52, 0xffffff);
+  ring2.position.set(-0.44, -0.38, 0.35);
+  scene.add(ring2);
+
+  // ─── FLOATING ORB PARTICLES (3D) ─────────────────────────────
+  const orbGroup = new THREE.Group();
+  const orbColors = [0x365CF5, 0x946FFF, 0x5A9FFF, 0xC87AFF, 0xffffff];
+  for (let i = 0; i < 30; i++) {
+    const r = 0.04 + Math.random() * 0.06;
+    const geo = new THREE.SphereGeometry(r, 8, 8);
+    const mat = new THREE.MeshBasicMaterial({
+      color: orbColors[Math.floor(Math.random() * orbColors.length)],
+      transparent: true,
+      opacity: 0.6 + Math.random() * 0.4,
+    });
+    const orb = new THREE.Mesh(geo, mat);
+    const phi   = Math.random() * Math.PI * 2;
+    const theta = Math.random() * Math.PI;
+    const dist  = 1.6 + Math.random() * 1.2;
+    orb.position.set(
+      dist * Math.sin(theta) * Math.cos(phi),
+      dist * Math.sin(theta) * Math.sin(phi),
+      dist * Math.cos(theta)
+    );
+    orb.userData = {
+      speed: 0.004 + Math.random() * 0.008,
+      phi,
+      theta,
+      dist,
+      phiSpeed: (Math.random() - 0.5) * 0.015,
+      thetaSpeed: (Math.random() - 0.5) * 0.01,
+    };
+    orbGroup.add(orb);
+  }
+  scene.add(orbGroup);
+
+  // ─── OUTER RING HALO ─────────────────────────────────────────
+  const haloGeo = new THREE.TorusGeometry(1.85, 0.025, 16, 100);
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: 0x5A9FFF,
+    transparent: true,
+    opacity: 0.35,
+  });
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.rotation.x = Math.PI / 8;
+  scene.add(halo);
+
+  const halo2 = new THREE.Mesh(
+    new THREE.TorusGeometry(2.1, 0.015, 16, 100),
+    new THREE.MeshBasicMaterial({ color: 0x946FFF, transparent: true, opacity: 0.2 })
+  );
+  halo2.rotation.x = -Math.PI / 6;
+  halo2.rotation.y = Math.PI / 5;
+  scene.add(halo2);
+
+  // ─── MOUSE INTERACTION ───────────────────────────────────────
+  let targetRotX = 0, targetRotY = 0;
+  let currentRotX = 0, currentRotY = 0;
+  let autoRotate = true;
+  let autoRotAngle = 0;
+  let mouseTimeout;
+
+  document.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const cx = rect.left + W / 2;
+    const cy = rect.top  + H / 2;
+    const dx = (e.clientX - cx) / (W / 2);
+    const dy = (e.clientY - cy) / (H / 2);
+    targetRotY = dx * 0.6;
+    targetRotX = dy * 0.4;
+    autoRotate = false;
+    clearTimeout(mouseTimeout);
+    mouseTimeout = setTimeout(() => { autoRotate = true; }, 2500);
+  });
+
+  // ─── ANIMATE ─────────────────────────────────────────────────
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    // Auto-rotate
+    if (autoRotate) {
+      autoRotAngle += 0.007;
+      targetRotY = Math.sin(autoRotAngle) * 0.5;
+      targetRotX = Math.sin(autoRotAngle * 0.5) * 0.25;
+    }
+
+    // Smooth interpolation
+    currentRotX += (targetRotX - currentRotX) * 0.06;
+    currentRotY += (targetRotY - currentRotY) * 0.06;
+
+    body.rotation.x = currentRotX;
+    body.rotation.y = currentRotY;
+    bigCircle.rotation.x = currentRotX;
+    bigCircle.rotation.y = currentRotY;
+    smCircle.rotation.x  = currentRotX;
+    smCircle.rotation.y  = currentRotY;
+    ring1.rotation.x = currentRotX;
+    ring1.rotation.y = currentRotY;
+    ring2.rotation.x = currentRotX;
+    ring2.rotation.y = currentRotY;
+    orbGroup.rotation.y = currentRotY * 0.5;
+    orbGroup.rotation.x = currentRotX * 0.5;
+
+    // Floating animation
+    body.position.y = Math.sin(t * 0.9) * 0.06;
+    bigCircle.position.y = 0.2 + Math.sin(t * 0.9) * 0.06;
+    smCircle.position.y  = -0.38 + Math.sin(t * 0.9) * 0.06;
+    ring1.position.y = 0.2 + Math.sin(t * 0.9) * 0.06;
+    ring2.position.y = -0.38 + Math.sin(t * 0.9) * 0.06;
+
+    // Halo slow spin
+    halo.rotation.z  = t * 0.15;
+    halo2.rotation.z = -t * 0.10;
+
+    // Pulsing rings
+    const pulse = 0.9 + 0.1 * Math.sin(t * 2);
+    ring1.scale.setScalar(pulse);
+    ring2.scale.setScalar(0.9 + 0.1 * Math.sin(t * 2 + 1));
+
+    // Animate orbs
+    orbGroup.children.forEach(orb => {
+      const d = orb.userData;
+      d.phi   += d.phiSpeed;
+      d.theta += d.thetaSpeed;
+      orb.position.set(
+        d.dist * Math.sin(d.theta) * Math.cos(d.phi),
+        d.dist * Math.sin(d.theta) * Math.sin(d.phi),
+        d.dist * Math.cos(d.theta)
+      );
+    });
+
+    // Animate point lights
+    bluePoint.position.x   = 3 * Math.sin(t * 0.7);
+    bluePoint.position.y   = 2 * Math.cos(t * 0.5);
+    purplePoint.position.x = -3 * Math.cos(t * 0.6);
+    purplePoint.position.y = -2 * Math.sin(t * 0.4);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+  </script>
+</body>
+</html>

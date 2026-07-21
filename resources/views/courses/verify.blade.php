@@ -1,4 +1,4 @@
-<x-loyouts.main title="81-IDUM | Kurs tasdiqlash">
+<x-layouts.main title="81-IDUM | Kurs tasdiqlash">
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content reveal">

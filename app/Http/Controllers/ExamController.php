@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ExamAccessDeniedException;
+use App\Exceptions\ExamResourceMismatchException;
+use App\Exceptions\ExamStateException;
 use App\Models\Answer;
 use App\Models\Exam;
 use App\Models\Option;
@@ -10,8 +13,10 @@ use App\Models\Result;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ExamController extends Controller
 {
@@ -49,7 +54,9 @@ class ExamController extends Controller
                 ->with('toast_type', 'error');
         }
 
-        abort_unless($exam->is_active, 404);
+        if (! $exam->is_active) {
+            throw new ExamResourceMismatchException('Faol imtihon topilmadi.');
+        }
 
         $existing = Result::query()
             ->where('exam_id', $exam->id)
@@ -66,7 +73,7 @@ class ExamController extends Controller
         return view('exam.start', [
             'exam' => $exam,
             'existing' => $existing,
-            'canStartNow' => $exam->isOpenForStarting(),
+            'canStartNow' => $exam->isOpenForStarting($request->user()),
         ]);
     }
 
@@ -83,7 +90,7 @@ class ExamController extends Controller
             ->where('user_id', $request->user()->id)
             ->first();
 
-        if ($redirect = $this->ensureExamAvailable($exam, $existing)) {
+        if ($redirect = $this->ensureExamAvailable($exam, $existing, $request->user())) {
             return $redirect;
         }
 
@@ -103,7 +110,9 @@ class ExamController extends Controller
         }
 
         $questionIds = $exam->questions()->pluck('id')->shuffle()->values()->all();
-        abort_if(empty($questionIds), 422, "Bu imtihonda savollar yo'q.");
+        if ($questionIds === []) {
+            throw new ExamStateException("Bu imtihonda savollar yo'q.");
+        }
 
         $startedAt = now();
         $expiresAt = (clone $startedAt)->addMinutes((int) $exam->duration_minutes);
@@ -120,6 +129,13 @@ class ExamController extends Controller
                 'expires_at' => $expiresAt,
                 'status' => 'started',
             ]);
+
+            Log::info('exam.started', [
+                'exam_id' => (int) $exam->id,
+                'result_id' => (int) $result->id,
+                'user_id' => (int) $request->user()->id,
+                'question_count' => count($questionIds),
+            ]);
         } catch (QueryException $e) {
             $concurrentResult = Result::query()
                 ->where('exam_id', $exam->id)
@@ -127,6 +143,13 @@ class ExamController extends Controller
                 ->first();
 
             if ($concurrentResult) {
+                Log::warning('exam.start.concurrent_result_reused', [
+                    'exam_id' => (int) $exam->id,
+                    'result_id' => (int) $concurrentResult->id,
+                    'user_id' => (int) $request->user()->id,
+                    'status' => (string) $concurrentResult->status,
+                ]);
+
                 if ($concurrentResult->status === 'submitted' || $concurrentResult->status === 'expired') {
                     return redirect()->route('exam.result.show', $concurrentResult);
                 }
@@ -165,7 +188,9 @@ class ExamController extends Controller
         }
 
         $questionIds = collect($result->question_order_json ?? [])->map(fn ($id) => (int) $id)->all();
-        abort_if(empty($questionIds), 422, "Savollar tartibi topilmadi.");
+        if ($questionIds === []) {
+            throw new ExamStateException('Savollar tartibi topilmadi.');
+        }
 
         $questions = Question::query()
             ->whereIn('id', $questionIds)
@@ -210,7 +235,9 @@ class ExamController extends Controller
         $questionId = (int) $validated['question_id'];
 
         $order = collect($result->question_order_json ?? [])->map(fn ($id) => (int) $id);
-        abort_unless($order->contains($questionId), 403);
+        if (! $order->contains($questionId)) {
+            throw new ExamAccessDeniedException("Ushbu savol sizning imtihon tartibingizga tegishli emas.");
+        }
 
         $question = Question::query()->findOrFail($questionId);
 
@@ -243,7 +270,9 @@ class ExamController extends Controller
         }
 
         $optionId = (int) ($validated['option_id'] ?? 0);
-        abort_if($optionId <= 0, 422, "Variant tanlanmadi.");
+        if ($optionId <= 0) {
+            throw new ExamStateException('Variant tanlanmadi.');
+        }
 
         $option = Option::query()
             ->where('id', $optionId)
@@ -269,6 +298,7 @@ class ExamController extends Controller
     public function reportViolation(Request $request, Result $result): JsonResponse
     {
         $this->authorizeResult($request, $result);
+        $reason = Str::limit((string) $request->input('reason', 'generic'), 80, '');
 
         if ($result->status !== 'started') {
             return response()->json([
@@ -286,7 +316,7 @@ class ExamController extends Controller
             ]);
         }
 
-        return DB::transaction(function () use ($result): JsonResponse {
+        return DB::transaction(function () use ($result, $reason): JsonResponse {
             $row = Result::query()->whereKey($result->id)->lockForUpdate()->firstOrFail();
 
             if ($row->status !== 'started') {
@@ -310,8 +340,24 @@ class ExamController extends Controller
 
             $count = (int) $row->rule_violation_count;
 
+            Log::notice('exam.rule_violation_reported', [
+                'exam_id' => (int) $row->exam_id,
+                'result_id' => (int) $row->id,
+                'user_id' => (int) $row->user_id,
+                'violation_count' => $count,
+                'reason' => $reason,
+            ]);
+
             if ($count >= self::RULE_VIOLATION_DISQUALIFY_THRESHOLD) {
                 $this->finalizeResult($row, false);
+
+                Log::warning('exam.disqualified_for_rule_violations', [
+                    'exam_id' => (int) $row->exam_id,
+                    'result_id' => (int) $row->id,
+                    'user_id' => (int) $row->user_id,
+                    'violation_count' => $count,
+                    'reason' => $reason,
+                ]);
 
                 return response()->json([
                     'disqualified' => true,
@@ -431,6 +477,16 @@ class ExamController extends Controller
                 'submitted_at' => now(),
                 'status' => $expired ? 'expired' : 'submitted',
             ]);
+
+            Log::info('exam.finalized', [
+                'exam_id' => (int) $row->exam_id,
+                'result_id' => (int) $row->id,
+                'user_id' => (int) $row->user_id,
+                'expired' => $expired,
+                'score' => (int) $correctCount,
+                'points_earned' => (int) $pointsEarned,
+                'passed' => $passed,
+            ]);
         });
     }
 
@@ -442,15 +498,17 @@ class ExamController extends Controller
     /**
      * @return RedirectResponse|null
      */
-    private function ensureExamAvailable(Exam $exam, ?Result $existing = null)
+    private function ensureExamAvailable(Exam $exam, ?Result $existing = null, $user = null)
     {
-        abort_unless($exam->is_active, 404);
+        if (! $exam->is_active) {
+            throw new ExamResourceMismatchException('Faol imtihon topilmadi.');
+        }
 
         if ($existing && $existing->status === 'started') {
             return null;
         }
 
-        if (! $exam->isOpenForStarting()) {
+        if (! $exam->isOpenForStarting($user)) {
             $dateLabel = $exam->availableFromLabel() ?? '';
 
             return redirect()
@@ -466,6 +524,8 @@ class ExamController extends Controller
 
     private function authorizeResult(Request $request, Result $result): void
     {
-        abort_unless((int) $result->user_id === (int) $request->user()->id, 403);
+        if ((int) $result->user_id !== (int) $request->user()->id) {
+            throw new ExamAccessDeniedException();
+        }
     }
 }

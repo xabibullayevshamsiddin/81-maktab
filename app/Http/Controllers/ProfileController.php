@@ -8,10 +8,9 @@ use App\Models\CourseEnrollment;
 use App\Models\Exam;
 use App\Models\OneTimeCode;
 use App\Models\Result;
-use App\Models\PostLike;
 use App\Models\TeacherComment;
-use App\Models\TeacherLike;
 use App\Models\User;
+use App\Models\UserActivity;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +20,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
@@ -39,63 +39,100 @@ class ProfileController extends Controller
     public function show(Request $request)
     {
         $user = $request->user()->load('roleRelation');
+        $panel = strtolower((string) $request->query('panel', 'settings'));
 
-        $postComments = Comment::query()
-            ->where('user_id', $user->id)
-            ->with(['post:id,title,slug'])
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $teacherComments = TeacherComment::query()
-            ->where('user_id', $user->id)
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $likedPosts = PostLike::query()
-            ->where('user_id', $user->id)
-            ->with(['post:id,title,slug'])
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $teacherLikes = TeacherLike::query()
-            ->where('user_id', $user->id)
-            ->with(['teacher:id,full_name,slug'])
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $createdCourses = Course::query()
-            ->where('created_by', $user->id)
-            ->with(['teacher:id,full_name'])
-            ->latest()
-            ->limit(20)
-            ->get();
-
-        $courseEnrollments = CourseEnrollment::query()
-            ->where('user_id', $user->id)
-            ->with(['course.teacher'])
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        $canViewCourseEnrollments = Course::query()->where('created_by', $user->id)->exists();
-
-        $pendingTeacherEnrollments = collect();
-        if ($canViewCourseEnrollments) {
-            $pendingTeacherEnrollments = CourseEnrollment::query()
-                ->whereHas('course', fn ($q) => $q->where('created_by', $user->id))
-                ->where('status', CourseEnrollment::STATUS_PENDING)
-                ->with(['course.teacher', 'user'])
-                ->latest()
-                ->limit(8)
-                ->get();
+        if (! in_array($panel, ['settings', 'security', 'activity', 'appearance'], true)) {
+            $panel = 'settings';
         }
 
+        $postCommentCount = Comment::query()
+            ->where('user_id', $user->id)
+            ->count();
+
+        $teacherCommentCount = TeacherComment::query()
+            ->where('user_id', $user->id)
+            ->count();
+
+        $createdCourseCount = Course::query()
+            ->where('created_by', $user->id)
+            ->count();
+
+        $courseEnrollmentCount = CourseEnrollment::query()
+            ->where('user_id', $user->id)
+            ->count();
+
+        $canViewCourseEnrollments = Course::query()->where('created_by', $user->id)->exists();
+        $pendingTeacherEnrollmentCount = $canViewCourseEnrollments
+            ? CourseEnrollment::query()
+                ->whereHas('course', fn ($query) => $query->where('created_by', $user->id))
+                ->where('status', CourseEnrollment::STATUS_PENDING)
+                ->count()
+            : 0;
+
+        $createdExamsCount = $user->canManageExams()
+            ? Exam::query()->where('created_by', $user->id)->count()
+            : 0;
+
+        $postComments = collect();
+        $teacherComments = collect();
+        $createdCourses = collect();
+        $courseEnrollments = collect();
+        $pendingTeacherEnrollments = collect();
         $createdExams = collect();
-        if ($user->canManageExams()) {
+
+        if ($panel === 'activity') {
+            $postComments = Comment::query()
+                ->where('user_id', $user->id)
+                ->with(['post:id,title,slug'])
+                ->latest()
+                ->limit(40)
+                ->get();
+
+            $teacherComments = TeacherComment::query()
+                ->where('user_id', $user->id)
+                ->latest()
+                ->limit(40)
+                ->get();
+
+            $createdCourses = Course::query()
+                ->where('created_by', $user->id)
+                ->with([
+                    'teacher:id,full_name,subject,subject_en,image,is_active',
+                    'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                    'creator.roleRelation:id,name,label,level',
+                ])
+                ->latest()
+                ->limit(20)
+                ->get();
+
+            $courseEnrollments = CourseEnrollment::query()
+                ->where('user_id', $user->id)
+                ->with([
+                    'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                    'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                    'course.creator.roleRelation:id,name,label,level',
+                ])
+                ->latest()
+                ->limit(40)
+                ->get();
+
+            if ($canViewCourseEnrollments) {
+                $pendingTeacherEnrollments = CourseEnrollment::query()
+                    ->whereHas('course', fn ($query) => $query->where('created_by', $user->id))
+                    ->where('status', CourseEnrollment::STATUS_PENDING)
+                    ->with([
+                        'course.teacher:id,full_name,subject,subject_en,image,is_active',
+                        'course.creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                        'course.creator.roleRelation:id,name,label,level',
+                        'user',
+                    ])
+                    ->latest()
+                    ->limit(8)
+                    ->get();
+            }
+        }
+
+        if ($panel === 'activity' && $user->canManageExams()) {
             $createdExams = Exam::query()
                 ->where('created_by', $user->id)
                 ->withCount('questions')
@@ -104,12 +141,12 @@ class ProfileController extends Controller
                 ->get();
         }
 
-        $examResults = Result::query()
+        $examResultsCount = $this->userResultsBaseQuery($user)->count();
+
+        $activities = UserActivity::query()
             ->where('user_id', $user->id)
-            ->whereIn('status', ['submitted', 'expired'])
-            ->with('exam:id,title,total_points,passing_points')
-            ->latest('submitted_at')
-            ->limit(50)
+            ->latest('occurred_at')
+            ->limit(30)
             ->get();
 
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
@@ -119,17 +156,43 @@ class ProfileController extends Controller
             'user',
             'postComments',
             'teacherComments',
-            'likedPosts',
-            'teacherLikes',
             'createdCourses',
             'createdExams',
             'courseEnrollments',
             'canViewCourseEnrollments',
             'pendingTeacherEnrollments',
-            'examResults',
+            'postCommentCount',
+            'teacherCommentCount',
+            'createdCourseCount',
+            'courseEnrollmentCount',
+            'pendingTeacherEnrollmentCount',
+            'createdExamsCount',
+            'examResultsCount',
             'pendingEmail',
-            'passwordChangeUnlocked'
+            'passwordChangeUnlocked',
+            'panel',
+            'activities'
         ));
+    }
+
+    public function resultsIndex(Request $request)
+    {
+        $user = $request->user();
+
+        $resultSummary = $this->userResultsBaseQuery($user)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN passed = true THEN 1 ELSE 0 END) as passed_count')
+            ->selectRaw('SUM(CASE WHEN passed = false THEN 1 ELSE 0 END) as failed_count')
+            ->selectRaw('AVG(points_earned) as average_points')
+            ->selectRaw('MAX(points_earned) as best_points')
+            ->first();
+
+        $results = $this->userResultsBaseQuery($user)
+            ->with('exam:id,title,total_points,passing_points')
+            ->latest('submitted_at')
+            ->paginate(12);
+
+        return view('profile.results.index', compact('results', 'resultSummary'));
     }
 
     public function update(Request $request, ImageService $imageService)
@@ -142,7 +205,8 @@ class ProfileController extends Controller
             'first_name' => User::nameValidationRules(),
             'last_name' => User::nameValidationRules(),
             'phone' => uz_phone_rules(false),
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . $request->user()->donorMaxAvatarSize()],
+            'remove_avatar' => ['nullable', 'boolean'],
         ], [
             'phone.regex' => uz_phone_validation_message(),
                         'first_name.required' => 'Ism kiritilishi shart.',
@@ -151,7 +215,7 @@ class ProfileController extends Controller
             'last_name.regex' => $nameMsg,
 'avatar.image' => 'Profil rasmi rasm bo‘lishi kerak.',
             'avatar.mimes' => 'Profil rasmi JPG, PNG yoki WebP formatda bo‘lishi kerak.',
-            'avatar.max' => 'Profil rasmi 3 MB dan oshmasligi kerak.',
+            'avatar.max' => 'Rasm hajmi ' . round($request->user()->donorMaxAvatarSize() / 1024) . ' MB dan oshmasin. Donor bo‘lish orqali kattaroq rasm yuklashingiz mumkin.',
         ]);
         $validated['phone'] = uz_phone_format($validated['phone'] ?? null);
 
@@ -177,16 +241,38 @@ class ProfileController extends Controller
                     'avatar' => 'Profil rasmini tayyorlab bo‘lmadi. Boshqa rasm bilan qayta urinib ko‘ring.',
                 ]);
             }
+        } elseif ($request->boolean('remove_avatar')) {
+            $payload['avatar'] = null;
         }
+
+        $avatarChanged = array_key_exists('avatar', $payload) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar'];
 
         $user->update($payload);
 
-        if (isset($payload['avatar']) && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
+        \App\Services\UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_PROFILE_UPDATED,
+            'Profil ma\'lumotlari yangilandi',
+            ['fields' => array_keys($payload)],
+            ['fields' => $payload]
+        );
+
+        if ($avatarChanged) {
+            \App\Services\UserActivityLogger::log(
+                $user,
+                \App\Models\UserActivity::TYPE_AVATAR_CHANGED,
+                $payload['avatar'] ? 'Profil rasmi yangilandi' : 'Profil rasmi olib tashlandi',
+                ['avatar' => $previousAvatar],
+                ['avatar' => $payload['avatar']]
+            );
+        }
+
+        if ($avatarChanged && ! empty($previousAvatar) && $previousAvatar !== $payload['avatar']) {
             $imageService->deleteImage($previousAvatar);
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'settings'])
             ->with('success', 'Profil maʼlumotlari yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -236,7 +322,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Joriy parol tasdiqlandi. Endi yangi parolni kiriting.')
             ->with('toast_type', 'success');
     }
@@ -253,7 +339,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->withErrors([
                     'current_password' => 'Avval joriy parolni tasdiqlang.',
                 ]);
@@ -277,6 +363,12 @@ class ProfileController extends Controller
             'remember_token' => Str::random(60),
         ])->save();
 
+        \App\Services\UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_PASSWORD_CHANGED,
+            'Parol o\'zgartirildi'
+        );
+
         $this->clearPasswordChangeConfirmation($request);
         $request->session()->regenerate();
         $request->session()->regenerateToken();
@@ -286,7 +378,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Parol muvaffaqiyatli yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -294,6 +386,18 @@ class ProfileController extends Controller
     public function requestEmailChange(Request $request)
     {
         $user = $request->user();
+
+        if (! $this->mailDeliveryEnabled()) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
+                    'email' => [$this->mailDeliveryDisabledMessage()],
+                ]);
+            }
+
+            return back()
+                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
+                ->withInput();
+        }
 
         $validated = $request->validate([
             'email' => [
@@ -356,7 +460,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', "Tasdiqlash kodi {$newEmail} manziliga yuborildi.")
             ->with('toast_type', 'success');
     }
@@ -374,7 +478,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Avval yangi email kiriting va kod oling.')
                 ->with('toast_type', 'error');
         }
@@ -418,7 +522,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Tasdiqlash sessiyasi yaroqsiz. Qaytadan urinib ko‘ring.')
                 ->with('toast_type', 'error');
         }
@@ -434,15 +538,24 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Bu email allaqachon boshqa hisobda ishlatilgan.')
                 ->with('toast_type', 'error');
         }
 
+        $oldEmail = $user->email;
         $user->update([
             'email' => $pending,
             'email_verified_at' => now(),
         ]);
+
+        \App\Services\UserActivityLogger::log(
+            $user,
+            \App\Models\UserActivity::TYPE_EMAIL_CHANGED,
+            'Email manzili o\'zgartirildi',
+            ['old_email' => $oldEmail],
+            ['new_email' => $pending]
+        );
 
         $otp->delete();
         RateLimiter::clear($this->emailChangeVerifyKey($pending));
@@ -453,7 +566,7 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Email manzili yangilandi.')
             ->with('toast_type', 'success');
     }
@@ -467,12 +580,24 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Avval yangi email kiriting.')
                 ->with('toast_type', 'error');
         }
 
         $user = $request->user();
+
+        if (! $this->mailDeliveryEnabled()) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
+                    'code' => [$this->mailDeliveryDisabledMessage()],
+                ]);
+            }
+
+            return back()->withErrors([
+                'code' => $this->mailDeliveryDisabledMessage(),
+            ]);
+        }
 
         if (! $this->canSendEmailChangeOtp($pending)) {
             if ($this->wantsJson($request)) {
@@ -498,7 +623,7 @@ class ProfileController extends Controller
             }
 
             return redirect()
-                ->route('profile.show')
+                ->route('profile.show', ['panel' => 'security'])
                 ->with('error', 'Kodni qayta yuborish mumkin emas. Emailni qayta kiriting.')
                 ->with('toast_type', 'error');
         }
@@ -546,13 +671,17 @@ class ProfileController extends Controller
         }
 
         return redirect()
-            ->route('profile.show')
+            ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Email almashtirish bekor qilindi.')
             ->with('toast_type', 'warning');
     }
 
     private function issueEmailChangeOtp(string $email, int $userId): void
     {
+        if (! $this->mailDeliveryEnabled()) {
+            throw new \RuntimeException('Mail delivery is disabled.');
+        }
+
         $code = (string) random_int(100000, 999999);
 
         OneTimeCode::query()
@@ -636,6 +765,42 @@ class ProfileController extends Controller
         return RateLimiter::availableIn($this->emailChangeVerifyKey($email));
     }
 
+    private function mailDeliveryEnabled(): bool
+    {
+        return (bool) config('mail.enabled', true)
+            && (bool) config('mail.code_delivery_enabled', false)
+            && $this->mailConfigurationReady();
+    }
+
+    private function mailDeliveryDisabledMessage(): string
+    {
+        return 'Email yuborish vaqtincha ishlamayapti. Keyinroq qayta urinib ko\'ring.';
+    }
+
+    private function mailConfigurationReady(): bool
+    {
+        return match ((string) config('mail.default', 'smtp')) {
+            'resend' => $this->hasConfiguredResendApiKey(),
+            'smtp' => filled(config('mail.mailers.smtp.host')),
+            default => true,
+        };
+    }
+
+    private function hasConfiguredResendApiKey(): bool
+    {
+        $apiKey = trim((string) (config('resend.api_key') ?? config('services.resend.key') ?? ''));
+
+        if ($apiKey === '' || ! str_starts_with($apiKey, 're_')) {
+            return false;
+        }
+
+        $normalizedKey = strtolower($apiKey);
+
+        return ! str_contains($normalizedKey, 'sizning_kalitingiz')
+            && ! str_contains($normalizedKey, 'your_key')
+            && ! str_contains($normalizedKey, 'your-api-key');
+    }
+
     private function passwordChangeKey(Request $request, int $userId): string
     {
         return 'profile-password-change:'.$userId.':'.$request->ip();
@@ -664,24 +829,58 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $results = Result::query()
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['submitted', 'expired'])
+        // CSV export — faqat VIP donor uchun (donorCanExport imtiyozlari)
+        if (! $user->donorCanExport()) {
+            return redirect()->route('profile.results.index')
+                ->with('error', 'CSV export faqat VIP donorlar uchun mavjud. VIP darajaga ko\'tarilib, barcha natijalaringizni eksport qiling!')
+                ->with('toast_type', 'error');
+        }
+
+        $results = $this->userResultsBaseQuery($user)
             ->with('exam:id,title,total_points,passing_points')
             ->latest('submitted_at')
             ->get();
 
-        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'natijalar_' . Str::slug($user->name) . '_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
+        return $this->streamResultsCsv($results, $filename);
+    }
+
+    public function exportSingleResult(Request $request, Result $result)
+    {
+        $user = $request->user();
+
+        // CSV export — faqat VIP donor uchun
+        if (! $user->donorCanExport()) {
+            return redirect()->route('profile.results.index')
+                ->with('error', 'CSV export faqat VIP donorlar uchun mavjud.')
+                ->with('toast_type', 'error');
+        }
+
+        $result = $this->userResultsBaseQuery($user)
+            ->with('exam:id,title,total_points,passing_points')
+            ->findOrFail($result->id);
+
+        $filename = 'natija_' . Str::slug((string) ($result->exam->title ?? 'imtihon')) . '_' . $result->id . '_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        return $this->streamResultsCsv(collect([$result]), $filename);
+    }
+
+    private function streamResultsCsv($results, string $filename): StreamedResponse
+    {
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ];
 
         $callback = function () use ($results) {
             $out = fopen('php://output', 'w');
             fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana']);
+            fwrite($out, "sep=;\r\n");
+            fputcsv($out, ['Imtihon', 'Ball', 'Max ball', 'Natija', "To'g'ri javoblar", 'Jami savollar', 'Holat', 'Sana'], ';', '"', '\\');
 
             foreach ($results as $r) {
                 fputcsv($out, [
@@ -693,13 +892,20 @@ class ProfileController extends Controller
                     $r->total_questions,
                     $r->status === 'expired' ? 'Vaqt tugagan' : 'Topshirilgan',
                     $r->submitted_at?->format('d.m.Y H:i') ?? '-',
-                ]);
+                ], ';', '"', '\\');
             }
 
             fclose($out);
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function userResultsBaseQuery(User $user)
+    {
+        return Result::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['submitted', 'expired']);
     }
 
     private function hasConfirmedPasswordChange(Request $request, int $userId): bool
@@ -778,5 +984,61 @@ class ProfileController extends Controller
         return view('profile.partials.password-card', [
             'passwordChangeUnlocked' => $this->hasConfirmedPasswordChange($request, (int) $request->user()->id),
         ])->render();
+    }
+
+    public function updateAppearance(Request $request)
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            "donor_theme"           => "nullable|string|max:40",
+            "badge_style"           => "nullable|in:default,pill,icon",
+            "comment_style"         => "nullable|in:border,filled",
+            "chat_style"            => "nullable|in:show,hide",
+            "show_expiry_badge"     => "nullable|in:0,1",
+            "name_font_weight"      => "nullable|in:600,700,800",
+            "donor_cursor_animation"=> "nullable|boolean",
+            "profile_bg_style"      => "nullable|in:plain,gradient,mesh,aurora",
+            "badge_position"        => "nullable|in:before,after",
+            "banner_animation"      => "nullable|in:none,pulse,wave,slide",
+            "status_emoji"          => "nullable|string|max:8",
+        ]);
+
+        // Tema tanlash — server-side ruxsat tekshiruvi.
+        $theme = $user->effectiveTheme() ?: $user->donation_rank;
+        if (!empty($data["donor_theme"]) && \App\Models\Donation::themeAllowedForUser($data["donor_theme"], $user)) {
+            $theme = $data["donor_theme"];
+        }
+
+        // Tema rangini username_color uchun olamiz
+        $themeConfig = \App\Models\Donation::themeConfig($theme);
+        $themeColor = $themeConfig["badge_color"] ?? null;
+
+        // status_emoji — faqat 1 ta visual emoji ruxsat
+        $emoji = null;
+        if (!empty($data["status_emoji"])) {
+            $cleaned = trim($data["status_emoji"]);
+            $emoji = function_exists('grapheme_substr')
+                ? grapheme_substr($cleaned, 0, 1)
+                : mb_substr($cleaned, 0, 1);
+        }
+
+        $user->update([
+            "profile_theme"          => $theme,
+            "username_color"         => $themeColor ?? $user->username_color,
+            "badge_style"            => $data["badge_style"] ?? $user->badge_style,
+            "comment_style"          => $data["comment_style"] ?? $user->comment_style,
+            "chat_style"             => $data["chat_style"] ?? $user->chat_style,
+            "show_expiry_badge"      => $data["show_expiry_badge"] ?? $user->show_expiry_badge,
+            "name_font_weight"       => $data["name_font_weight"] ?? $user->name_font_weight,
+            "donor_cursor_animation" => $data["donor_cursor_animation"] ?? false,
+            "profile_bg_style"       => $data["profile_bg_style"] ?? $user->profile_bg_style ?? 'plain',
+            "badge_position"         => $data["badge_position"] ?? $user->badge_position ?? 'after',
+            "banner_animation"       => $data["banner_animation"] ?? $user->banner_animation ?? 'none',
+            "status_emoji"           => $emoji,
+        ]);
+
+        return redirect()->route("profile.show", ["panel" => "appearance"])
+            ->with("success", "Ko'rinish saqlandi!")
+            ->with("toast_type", "success");
     }
 }

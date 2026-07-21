@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('full_name');
             $table->string('slug')->unique();
-            $table->string('subject');
+            $table->string('subject')->nullable();
             $table->unsignedSmallInteger('experience_years')->default(0);
             $table->string('grades')->nullable();
             $table->text('bio')->nullable();
@@ -28,4 +28,3 @@ return new class extends Migration
         Schema::dropIfExists('teachers');
     }
 };
-

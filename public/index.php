@@ -35,6 +35,29 @@ require __DIR__.'/../vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
+| OSPanel subdirectory routing (GET/POST/formlar uchun)
+|--------------------------------------------------------------------------
+|
+| /81-maktab/public/logout kabi yo'llar Laravel route'iga to'g'ri tushishi uchun.
+|
+*/
+
+$localPublicBase = '/81-maktab/public';
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+
+if (str_starts_with($requestPath, $localPublicBase.'/')
+    && ! str_starts_with($requestPath, $localPublicBase.'/index.php')
+    && ! preg_match('#^'.preg_quote($localPublicBase, '#').'/(?:storage|temp|build|panel-assets)/#', $requestPath)) {
+    $routePath = substr($requestPath, strlen($localPublicBase)) ?: '/';
+
+    $_SERVER['SCRIPT_NAME'] = $localPublicBase.'/index.php';
+    $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/index.php';
+    $_SERVER['PHP_SELF'] = $localPublicBase.'/index.php'.$routePath;
+    $_SERVER['PATH_INFO'] = $routePath;
+}
+
+/*
+|--------------------------------------------------------------------------
 | Run The Application
 |--------------------------------------------------------------------------
 |

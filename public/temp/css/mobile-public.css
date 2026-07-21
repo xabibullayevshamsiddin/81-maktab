@@ -112,8 +112,9 @@
     padding-bottom: 50px;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 18px;
+    height: auto;
     min-height: 100svh;
   }
 
@@ -132,6 +133,12 @@
   }
 
   .home-btn {
+    position: static;
+    right: auto;
+    top: auto;
+    transform: none;
+    flex-direction: row;
+    flex-wrap: wrap;
     grid-auto-flow: column;
     justify-content: flex-start;
     margin-top: 8px;
@@ -174,6 +181,7 @@
   .section-head {
     margin-top: 36px;
     margin-bottom: 18px;
+    text-align: center;
   }
 
   .about-modern {
@@ -357,8 +365,8 @@
   }
 
   .teacher-img img {
-    height: 200px;
-    border-radius: 10px;
+    height: 380px;
+    border-radius: 12px;
   }
 
   .teacher-img-actions {
@@ -382,7 +390,7 @@
   }
 
   .teacher-img img {
-    height: 180px;
+    height: 340px;
   }
 
   .teacher-img h3 {
@@ -413,23 +421,51 @@
 @media (max-width: 580px) {
   .footer-container {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 30px;
     padding-top: 28px;
     padding-bottom: 20px;
+    text-align: center;
   }
 
   .footer-brand {
     grid-column: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-socials {
+    justify-content: center;
+  }
+
+  .footer-title {
+    text-align: center;
+    position: relative;
+  }
+
+  .footer-title::after {
+    left: 50% !important;
+    transform: translateX(-50%);
+  }
+
+  .footer-contact-list li {
+    justify-content: center;
   }
 
   .footer-bottom {
     font-size: 12px;
     padding: 12px;
+    text-align: center;
   }
 
   .footer-bottom-inner {
     flex-direction: column;
     gap: 8px;
+    align-items: center;
+  }
+
+  .footer-bottom-links {
+    justify-content: center;
   }
 }
 
@@ -1016,8 +1052,9 @@
   }
 
   .glass-section::before {
-    left: 12px;
-    width: 44px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
   }
 
   .news-card h3,

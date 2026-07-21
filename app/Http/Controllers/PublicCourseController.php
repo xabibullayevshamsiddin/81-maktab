@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use Illuminate\Http\Request;
@@ -48,7 +49,13 @@ class PublicCourseController extends Controller
             ->sort()
             ->values();
 
-        return view('courses', compact('courses', 'enrolledCourseIds', 'enrollmentByCourseId', 'q', 'selectedSubject', 'allSubjects'));
+        $bookmarkedCourseIds = Bookmark::bookmarkedIdsForUser(
+            auth()->user(),
+            Course::class,
+            $courses->getCollection()->pluck('id')
+        );
+
+        return view('courses', compact('courses', 'enrolledCourseIds', 'enrollmentByCourseId', 'bookmarkedCourseIds', 'q', 'selectedSubject', 'allSubjects'));
     }
 
     private function getCoursesQuery(string $q = '', string $selectedSubject = '')
@@ -71,10 +78,18 @@ class PublicCourseController extends Controller
                 'status',
                 'created_at',
             ])
-            ->with(['teacher:id,full_name,image,is_active,subject,subject_en'])
+            ->with([
+                'teacher:id,full_name,image,is_active,subject,subject_en',
+                'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                'creator.roleRelation:id,name,label,level',
+            ])
             ->where('status', Course::STATUS_PUBLISHED)
-            ->whereHas('teacher', function ($query) {
-                $query->where('is_active', true);
+            ->where(function ($query): void {
+                $query
+                    ->whereNull('teacher_id')
+                    ->orWhereHas('teacher', function ($teacherQuery): void {
+                        $teacherQuery->where('is_active', true);
+                    });
             });
 
         if ($q !== '') {
@@ -85,6 +100,12 @@ class PublicCourseController extends Controller
                         $t->where('full_name', 'like', "%{$q}%")
                             ->orWhere('subject', 'like', "%{$q}%")
                             ->orWhere('subject_en', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('creator', function ($creator) use ($q): void {
+                        $creator->where('name', 'like', "%{$q}%")
+                            ->orWhere('first_name', 'like', "%{$q}%")
+                            ->orWhere('last_name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%");
                     });
             });
         }
@@ -119,17 +140,26 @@ class PublicCourseController extends Controller
                     'start_date',
                     'status',
                 ])
-                ->with(['teacher:id,full_name,slug,subject,subject_en,lavozim,lavozim_en,toifa,toifa_en,experience_years,grades,achievements,achievements_en,image,is_active'])
+                ->with([
+                    'teacher:id,full_name,slug,subject,subject_en,lavozim,lavozim_en,toifa,toifa_en,experience_years,grades,achievements,achievements_en,image,is_active',
+                    'creator:id,name,first_name,last_name,avatar,role_id,grade,is_parent',
+                    'creator.roleRelation:id,name,label,level',
+                ])
                 ->findOrFail($course->id);
         });
 
         abort_unless(
             $course->status === Course::STATUS_PUBLISHED
-            && $course->teacher
-            && $course->teacher->is_active,
+            && (! $course->teacher_id || ($course->teacher && $course->teacher->is_active)),
             404
         );
 
-        return view('courses.show', compact('course'));
+        $bookmarkedCourseIds = Bookmark::bookmarkedIdsForUser(
+            auth()->user(),
+            Course::class,
+            collect([$course->id])
+        );
+
+        return view('courses.show', compact('course', 'bookmarkedCourseIds'));
     }
 }

@@ -1,0 +1,2008 @@
+@props(['title' => '81-IDUM'])
+
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{{ $title }}</title>
+    {!! \Artesaos\SEOTools\Facades\SEOMeta::generate() !!}
+    {!! \Artesaos\SEOTools\Facades\OpenGraph::generate() !!}
+    @stack('seo')
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=10" />
+    @unless(request()->routeIs('exam.session'))
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
+    {{-- Three.js — 3D loader animatsiyasi uchun --}}
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" onload="window.dispatchEvent(new Event('THREE_READY'))" crossorigin="anonymous"></script>
+    @endunless
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ app_asset_version('temp/css/extracted-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ app_asset_version('temp/css/mobile-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ app_asset_version('temp/css/site-refresh.css') }}" />
+    @if(turnstile_enabled())
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ app_asset_version('temp/img/favicon-32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ app_asset_version('temp/img/favicon-16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
+    <link rel="manifest" href="{{ app_public_asset('manifest.json') }}">
+    <meta name="theme-color" content="#4f46e5">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+    :root {
+      --user-color: {{ auth()->check() && auth()->user()->donorUsernameColor() ? auth()->user()->donorUsernameColor() : '#6366f1' }};
+    }
+  </style>
+  @stack("page_styles")
+<style>
+.donor-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 9999px; }
+.donor-badge i { font-size: 0.75rem; }
+.comment-donor { border-left: 4px solid; padding-left: 0.75rem; border-radius: 4px; }
+</style>
+    <script>
+      // Service worker'ni butunlay o'chirish (fayl yuklash xatosini tuzatish uchun)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          if (registrations.length > 0) {
+            for(let registration of registrations) {
+              registration.unregister();
+            }
+            // Kuchli tozalash uchun sahifani yangilaymiz
+            window.location.reload(true);
+          }
+        });
+      }
+    </script>
+  </head>
+
+    <body
+        @class([
+          'site-boot-loading' => ! request()->routeIs('exam.session'),
+          'page-home' => request()->routeIs('home'),
+          'page-inner' => ! request()->routeIs('home')
+        ])
+        data-theme="light"
+	        data-donor-theme="{{ auth()->check() && auth()->user()->isDonor() ? (auth()->user()->donation_rank) : '' }}"
+	        data-site-success="{{ session('success') }}"
+	        data-site-error="{{ session('error') }}"
+	        data-site-toast-type="{{ session('toast_type') }}"
+	        data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
+		        data-phone-pattern="{{ uz_phone_input_pattern() }}"
+		        data-phone-title="{{ uz_phone_input_title() }}"
+		      >
+    @unless(request()->routeIs('exam.session'))
+    <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
+      <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
+      <div class="site-boot-loader__content">
+        <div class="site-boot-loader__visual">
+          {{-- Three.js WebGL canvas --}}
+          <canvas id="loader-3d-canvas" aria-hidden="true"></canvas>
+
+          {{-- CSS fallback (Three.js yuklanmasa) --}}
+          <div class="site-boot-loader__orbit" aria-hidden="true">
+            <div class="site-boot-loader__ring site-boot-loader__ring--1"></div>
+            <div class="site-boot-loader__ring site-boot-loader__ring--2"></div>
+            <div class="site-boot-loader__ring site-boot-loader__ring--3"></div>
+          </div>
+
+          {{-- "81" brend overlay (canvas ustida) --}}
+          <div class="site-boot-loader__brand-overlay">
+            <div class="site-boot-loader__brand-glass">
+              <span class="site-boot-loader__num">81</span>
+              <span class="site-boot-loader__name">IDUM</span>
+            </div>
+          </div>
+        </div>
+        <div class="site-boot-loader__info">
+          <p class="site-boot-loader__hint">Tizim tayyorlanmoqda...</p>
+          <div class="site-boot-loader__bar">
+            <div class="site-boot-loader__bar-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{-- Three.js 3D loader animatsiyasi --}}
+    <script src="{{ app_public_asset('temp/js/loader-3d.js') }}?v={{ app_asset_version('temp/js/loader-3d.js') }}"></script>
+
+    <!-- BOMBA WELCOME OVERLAY -->
+    <div id="bomba-welcome" class="bomba-welcome" style="display: none;">
+      <div class="bomba-welcome__inner">
+        <div class="bomba-welcome__icon">🚀</div>
+        <h2 class="bomba-welcome__title">{{ __('public.common.welcome_title', ['name' => auth()->check() ? auth()->user()->first_name : '']) }}</h2>
+        <p class="bomba-welcome__text">{{ __('public.common.welcome_subtitle') }}</p>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        if (!localStorage.getItem('bomba_welcome_shown')) {
+          window.addEventListener('load', function() {
+            var welcome = document.getElementById('bomba-welcome');
+            if (welcome) {
+              // Wait for boot loader to fade out slightly
+              setTimeout(function() {
+                welcome.style.display = 'flex';
+                setTimeout(function() {
+                  welcome.classList.add('is-active');
+                  // Auto hide after 4 seconds
+                  setTimeout(function() {
+                    welcome.classList.remove('is-active');
+                    setTimeout(function() {
+                      welcome.style.display = 'none';
+                    }, 800);
+                  }, 4000);
+                }, 100);
+              }, 1200);
+              localStorage.setItem('bomba_welcome_shown', 'true');
+            }
+          });
+        }
+      })();
+    </script>
+    @endunless
+
+		    @php
+		      $authUser = auth()->user();
+		      $teacherCourseCandidate = $authUser && $authUser->isTeacher();
+		      $teacherAtCourseLimit = $teacherCourseCandidate && $authUser->hasReachedCourseOpenLimit();
+		      $canOpenCourseForm = $authUser && (
+		        $authUser->isAdmin()
+		        || ($teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
+		      );
+		      $teacherNeedsCourseOpenRequest = $teacherCourseCandidate && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
+		      $teacherCourseOpenPending = $teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
+	      $canCreateCourse = $canOpenCourseForm;
+	      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
+	      $currentLocale = current_locale();
+	      $supportedLocales = supported_locales();
+	      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
+	      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
+	      $isExamSessionRoute = request()->routeIs('exam.session');
+	      $accountMenuActive = $authUser && (
+	        request()->routeIs('exam.*')
+	        || request()->routeIs('profile.*')
+	        || request()->routeIs('teacher.courses.*')
+	        || request()->routeIs('dashboard')
+	      );
+	    @endphp
+	    <div class="site-shell" data-locale-shell>
+      <div class="prime-progress-container" aria-hidden="true">
+        <div class="prime-progress-bar" id="prime-scroll-bar"></div>
+      </div>
+	    @unless($isExamSessionRoute)
+	    @php
+	      $announcementActive = \App\Models\SiteSetting::get('announcement_active', '0') === '1';
+	      $announcementText = \App\Models\SiteSetting::get('announcement_text', '');
+	      $announcementType = \App\Models\SiteSetting::get('announcement_type', 'info');
+	    @endphp
+	    @if($announcementActive && filled($announcementText))
+	      <div class="global-announcement global-announcement--{{ $announcementType }}" id="global-announcement" role="alert">
+	        <div class="global-announcement-inner">
+	          <span class="global-announcement-icon">
+	            @switch($announcementType)
+	              @case('success') <i class="fa-solid fa-circle-check"></i> @break
+	              @case('warning') <i class="fa-solid fa-triangle-exclamation"></i> @break
+	              @case('danger') <i class="fa-solid fa-circle-exclamation"></i> @break
+	              @default <i class="fa-solid fa-bullhorn"></i>
+	            @endswitch
+	          </span>
+	          <p class="global-announcement-text">{{ $announcementText }}</p>
+	          <button type="button" class="global-announcement-close" aria-label="{{ __('public.layout.close') }}" onclick="let el = this.closest('.global-announcement'); el.classList.add('closing'); setTimeout(() => el.remove(), 450);">
+	            <i class="fa-solid fa-xmark"></i>
+	          </button>
+	        </div>
+	      </div>
+	    @endif
+	    <header class="page-header">
+	      <div class="container">
+	        <div class="header-main header-main--offset" id="navbar">
+          <a class="logo" href="{{ route('home') }}" aria-label="{{ __('public.layout.nav.home') }}">
+            <img
+              src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
+              alt="{{ __('public.layout.logo_alt') }}"
+            />
+          </a>
+
+          <button
+            class="menu-toggle"
+            id="menu-toggle"
+            type="button"
+            aria-label="{{ __('public.layout.mobile_menu') }}"
+            aria-expanded="false"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <nav id="site-nav">
+            <ul>
+              <li><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">{{ __('public.layout.nav.about') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+              <li class="mobile-theme-toggle-wrap">
+                <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
+                  <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+                  <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+                </button>
+              </li>
+              @auth
+                <li class="mobile-ai-toggle-wrap">
+                  <button
+                    class="nav-link ai-header-toggle"
+                    id="ai-header-toggle"
+                    type="button"
+                    aria-label="{{ __('public.layout.ai_assistant') }}"
+                    title="{{ __('public.layout.ai_assistant') }}"
+                  >
+                    <i class="fa-solid fa-magic-wand-sparkles"></i>
+                    <span>{{ __('public.layout.ai_assistant') }}</span>
+                  </button>
+                </li>
+              @endauth
+              @auth
+	                <li class="nav-dropdown nav-dropdown--offset">
+                  <details class="nav-dropdown-details js-header-dropdown">
+                    <summary class="nav-link nav-dropdown-toggle prime-dd-toggle {{ $accountMenuActive ? 'active' : '' }}">
+                      {{ __('public.layout.account') }}
+                      <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
+                    </summary>
+
+                    <div class="nav-dropdown-menu">
+                      <a class="nav-dropdown-item {{ request()->routeIs('exam.*') ? 'active' : '' }}" href="{{ route('exam.index') }}">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        {{ __('public.layout.menu.exams') }}
+                      </a>
+	                      <a class="nav-dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
+	                        <i class="fa-solid fa-user"></i>
+	                        {{ __('public.layout.menu.profile') }}
+	                      </a>
+		                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
+		                        <i class="fa-solid fa-lightbulb"></i>
+		                        {{ __('public.layout.feature_requests') }}
+	                      </a>
+                      @if($canCreateCourse)
+                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
+                          <i class="fa-solid fa-book-open"></i>
+                          {{ __('public.layout.menu.course_open') }}
+                        </a>
+                      @elseif($teacherCourseOpenPending)
+                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
+                          <i class="fa-solid fa-hourglass-half"></i>
+                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">{{ __('public.layout.wait_admin_approval_profile') }}</small></span>
+                        </span>
+                      @elseif($teacherNeedsCourseOpenRequest)
+                        <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
+                          <i class="fa-solid fa-paper-plane"></i>
+                          {{ __('public.layout.course_request_action') }}
+                        </a>
+                      @endif
+                      @if($canAccessDashboard)
+                        <a class="nav-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                          <i class="fa-solid fa-table-columns"></i>
+                          {{ __('public.layout.menu.dashboard') }}
+                        </a>
+                      @endif
+                      <a class="nav-dropdown-item {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">
+                        <i class="fa-solid fa-address-book"></i>
+                        {{ __('public.layout.nav.contact') }}
+                      </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('donation*') ? 'active' : '' }}" href="{{ route('donation.index') }}">
+                        <i class="fa-solid fa-hand-holding-heart" style="color: #f59e0b;"></i>
+                        Donation
+                      </a>
+
+                      <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="nav-dropdown-item">
+                          <i class="fa-solid fa-right-from-bracket"></i>
+                          {{ __('public.layout.menu.logout') }}
+                        </button>
+                      </form>
+                    </div>
+                  </details>
+                </li>
+              @endauth
+              @guest
+                <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
+              @endguest
+            </ul>
+
+            <div class="mobile-nav-extras">
+              <li class="nav-dropdown nav-dropdown--bomba-locale">
+                <details class="nav-dropdown-details js-header-dropdown">
+                  <summary class="nav-link nav-dropdown-toggle">
+                    <i class="fa-solid fa-language"></i>
+                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
+                  </summary>
+                  <div class="nav-dropdown-menu">
+                    <div class="nav-dropdown-inner">
+                      @foreach($supportedLocales as $localeKey => $localeLabel)
+                        <a
+                          href="{{ route('locale.switch', $localeKey) }}"
+                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                          data-locale-switch
+                        >
+                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          <span class="locale-name">{{ $localeLabel }}</span>
+                          @if($currentLocale === $localeKey)
+                            <i class="fa-solid fa-check-circle active-indicator"></i>
+                          @endif
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                </details>
+              </li>
+
+	              @guest
+	                <div class="mobile-nav-actions">
+                    <a href="{{ route('search') }}" class="btn btn-outline">{{ __('public.common.search') }}</a>
+	                  <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+	                  <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+	                </div>
+	              @else
+                <div class="mobile-nav-user">
+                  <span class="mobile-nav-user-name">{{ $authUser->first_name ?: $authUser->name }}</span>
+                  <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
+                </div>
+
+			                <div class="mobile-nav-actions mobile-nav-actions--auth">
+			                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+			                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+		                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
+	                  @if($canCreateCourse)
+	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
+	                  @elseif($teacherNeedsCourseOpenRequest)
+	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">{{ __('public.layout.course_request_short') }}</a>
+	                  @elseif($teacherCourseOpenPending)
+	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">{{ __('public.layout.course_pending_short') }}</span>
+	                  @endif
+	                  @if($canAccessDashboard)
+	                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
+	                  @endif
+	                  <form action="{{ route('logout') }}" method="POST" class="mobile-nav-form">
+	                    @csrf
+	                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
+	                  </form>
+	                </div>
+	              @endguest
+	            </div>
+          </nav>
+
+	          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
+	            <div class="nav-dropdown nav-dropdown--bomba-locale desktop-only">
+                <details class="nav-dropdown-details js-header-dropdown">
+                  <summary class="nav-link nav-dropdown-toggle">
+                    <i class="fa-solid fa-language"></i>
+                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
+                  </summary>
+                  <div class="nav-dropdown-menu">
+                    <div class="nav-dropdown-inner">
+                      @foreach($supportedLocales as $localeKey => $localeLabel)
+                        <a
+                          href="{{ route('locale.switch', $localeKey) }}"
+                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                          data-locale-switch
+                        >
+                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          <span class="locale-name">{{ $localeLabel }}</span>
+                          @if($currentLocale === $localeKey)
+                            <i class="fa-solid fa-check-circle active-indicator"></i>
+                          @endif
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                </details>
+	            </div>
+	              <div class="header-tool-cluster">
+	  	            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
+	  	              <i class="fa-solid fa-magnifying-glass"></i>
+	  	            </button>
+	              </div>
+	            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
+	              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+	              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+            </button>
+
+            @auth
+              <p class="header-user-name">{{ $authUser->first_name ?: $authUser->name }}</p>
+            @endauth
+
+            @guest
+              <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+              <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+            @endguest
+          </div>
+	        </div>
+	      </div>
+	    </header>
+	    @endunless
+
+	    {{ $slot }}
+
+	    @unless($isExamSessionRoute)
+    <div id="image-lightbox" class="image-lightbox" aria-hidden="true">
+      <button type="button" class="image-lightbox-close" aria-label="{{ __('public.layout.image_close') }}">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="image-lightbox-stage">
+        <img id="image-lightbox-img" class="image-lightbox-img" alt="" />
+        <p id="image-lightbox-caption" class="image-lightbox-caption" hidden></p>
+      </div>
+    </div>
+
+    <footer class="footer prime-reveal">
+      <div class="footer-container container prime-stagger">
+        <!-- Column 1: Branding -->
+        <div class="footer-column footer-brand">
+          <a href="{{ route('home') }}" class="footer-logo">
+            <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="{{ __('public.layout.logo_alt') }}" />
+            <span>{{ __('public.layout.school_name') }}</span>
+          </a>
+          <p class="footer-desc">{{ __('public.layout.footer.description') }}</p>
+          <div class="footer-socials">
+            @php
+              $tg = \App\Models\SiteSetting::get('social_telegram', '#');
+              $ig = \App\Models\SiteSetting::get('social_instagram', '#');
+              $fb = \App\Models\SiteSetting::get('social_facebook', '#');
+            @endphp
+            <a href="{{ $tg }}" {!! $tg !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
+            <a href="{{ $ig }}" {!! $ig !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="{{ $fb }}" {!! $fb !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+          </div>
+        </div>
+
+        <!-- Column 2: Explore -->
+        <div class="footer-column">
+          <h4 class="footer-title">{{ __('public.layout.footer.quick_links') }}</h4>
+          <ul class="footer-links">
+            <li><a href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
+            <li><a href="{{ route('about') }}">{{ __('public.layout.nav.about') }}</a></li>
+            <li><a href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
+            <li><a href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Resources -->
+        <div class="footer-column">
+          <h4 class="footer-title">{{ __('public.layout.resources') }}</h4>
+          <ul class="footer-links">
+            <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
+            <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+            <li><a href="{{ route('feature-requests.index') }}">{{ __('public.layout.feature_requests') }}</a></li>
+            @auth
+              <li><a href="{{ route('exam.index') }}">{{ __('public.layout.menu.exams') }}</a></li>
+            @else
+              <li><a href="{{ route('login') }}">{{ __('public.layout.footer.exams_guest') }}</a></li>
+            @endauth
+            <li><a href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 4: Contact -->
+        <div class="footer-column">
+          <h4 class="footer-title">{{ __('public.layout.footer.contact') }}</h4>
+          <ul class="footer-contact-list">
+            <li>
+              <i class="fa-solid fa-location-dot"></i>
+              <span>{{ __('public.layout.address') }}</span>
+            </li>
+            <li>
+              <i class="fa-solid fa-phone"></i>
+              <a href="tel:+998711234567">+998 71 123 45 67</a>
+            </li>
+            <li>
+              <i class="fa-solid fa-envelope"></i>
+              <a href="mailto:info@school81.uz">info@school81.uz</a>
+            </li>
+          </ul>
+          <div class="footer-map-action">
+            <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer btn-prime">
+              <i class="fa-solid fa-map-location-dot"></i> {{ __('public.layout.view_on_map') }}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container footer-bottom-inner">
+          <p>&copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}</p>
+          <div class="footer-bottom-links">
+            <a href="{{ route('privacy-policy') }}">{{ __('public.layout.privacy_policy') }}</a>
+            <a href="{{ route('terms') }}">{{ __('public.layout.terms') }}</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+	    @endunless
+	    </div>
+
+    @auth
+      @unless($isExamSessionRoute)
+      @php
+        $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
+        $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: __('public.layout.chat_disabled_default');
+        $chatText = [
+          'global_chat' => __('public.layout.global_chat'),
+          'group_chat' => __('public.layout.group_chat'),
+          'select_group' => __('public.layout.select_group'),
+          'join_group' => __('public.layout.join_group'),
+          'group_requests' => __('public.layout.group_requests'),
+          'group_status_owner' => __('public.layout.group_status_owner'),
+          'group_status_member' => __('public.layout.group_status_member'),
+          'group_status_pending' => __('public.layout.group_status_pending'),
+          'group_status_join' => __('public.layout.group_status_join'),
+          'group_status_requested' => __('public.layout.group_status_requested'),
+          'group_status_you_own' => __('public.layout.group_status_you_own'),
+          'group_list_empty' => __('public.layout.group_list_empty'),
+          'group_requests_empty' => __('public.layout.group_requests_empty'),
+          'group_request_accept' => __('public.layout.group_request_accept'),
+          'group_request_reject' => __('public.layout.group_request_reject'),
+          'group_request_unknown' => __('public.layout.group_request_unknown'),
+          'group_leave' => __('public.layout.group_leave'),
+          'group_create' => __('public.layout.group_create'),
+          'group_settings' => __('public.layout.group_settings'),
+          'group_stab_info' => __('public.layout.group_stab_info'),
+          'group_stab_members' => __('public.layout.group_stab_members'),
+          'group_name' => __('public.layout.group_name'),
+          'group_description' => __('public.layout.group_description'),
+          'group_privacy' => __('public.layout.group_privacy'),
+          'group_privacy_closed' => __('public.layout.group_privacy_closed'),
+          'group_privacy_open' => __('public.layout.group_privacy_open'),
+          'group_image' => __('public.layout.group_image'),
+          'group_change_image' => __('public.layout.group_change_image'),
+          'group_remove_image' => __('public.layout.group_remove_image'),
+          'group_save' => __('public.layout.group_save'),
+          'group_delete' => __('public.layout.group_delete'),
+          'group_members' => __('public.layout.group_members'),
+          'group_role_member' => __('public.layout.group_role_member'),
+          'group_role_admin' => __('public.layout.group_role_admin'),
+          'group_promote' => __('public.layout.group_promote'),
+          'group_demote' => __('public.layout.group_demote'),
+          'group_kick' => __('public.layout.group_kick'),
+          'group_open' => __('public.layout.group_open'),
+          'group_closed' => __('public.layout.group_closed'),
+          'group_you' => __('public.layout.group_you'),
+          'group_load_failed' => __('public.layout.group_load_failed'),
+          'group_requests_failed' => __('public.layout.group_requests_failed'),
+          'group_join_failed' => __('public.layout.group_join_failed'),
+          'group_join_sent' => __('public.layout.group_join_sent'),
+          'group_select_prompt' => __('public.layout.group_select_prompt'),
+          'chat_network_error' => __('public.layout.chat_network_error'),
+          'chat_action_failed' => __('public.layout.chat_action_failed'),
+          'chat_sending' => __('public.layout.sending'),
+          'chat_fullscreen_exit' => __('public.layout.chat_fullscreen_exit'),
+          'chat_fullscreen_enter' => __('public.layout.chat_fullscreen_enter'),
+          'chat_exit_fullscreen' => __('public.layout.exit_full_screen'),
+          'global_chat_cleared' => __('public.layout.global_chat_cleared'),
+          'global_chat_clear_failed' => __('public.layout.global_chat_clear_failed'),
+          'global_chat_clear_confirm' => __('public.layout.global_chat_clear_confirm'),
+          'global_chat_clear_confirm_title' => __('public.layout.global_chat_clear_confirm_title'),
+          'global_chat_clear_ok' => __('public.layout.global_chat_clear_ok'),
+        ];
+      @endphp
+      <div id="chat-widget" class="chat-widget"
+        data-chat-status-url="{{ route('chat.status') }}"
+        data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
+        data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
+        data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
+        data-chat-clear-url="{{ request()->getBaseUrl() }}/chat"
+        data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
+        data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
+        data-chat-groups-url="{{ route('chat.groups.index') }}"
+        data-chat-group-join-base="{{ request()->getBaseUrl() }}/chat/groups"
+        data-chat-group-requests-base="{{ request()->getBaseUrl() }}/chat/groups"
+        data-csrf="{{ csrf_token() }}"
+        data-user-id="{{ auth()->id() }}"
+        data-chat-enabled="{{ $globalChatEnabled ? '1' : '0' }}"
+        data-chat-disabled-message="{{ e($globalChatDisabledMsg) }}"
+        data-chat-texts='@json($chatText)'
+      >
+        <button type="button" class="chat-bubble" id="chat-bubble" aria-label="{{ __('public.layout.chat') }}">
+          <i class="fa-solid fa-comments"></i>
+          <span class="chat-bubble-badge" id="chat-badge" hidden>0</span>
+        </button>
+
+        <div class="chat-panel" id="chat-panel" hidden>
+          <div class="chat-panel-header">
+            <div class="chat-panel-title">
+              <i class="fa-solid fa-comments"></i>
+              <span id="chat-panel-title-label">{{ __('public.layout.global_chat') }}</span>
+            </div>
+            <div class="chat-panel-actions">
+              @if($authUser && $authUser->isAdmin())
+                <button type="button" class="chat-panel-btn" id="chat-clear-btn" aria-label="{{ __('public.layout.chat_clear') }}" title="{{ __('public.layout.chat_delete_all') }}" hidden>
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              @endif
+              <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="{{ __('public.layout.expand') }}" title="{{ __('public.layout.full_screen') }}">
+                <i class="fa-solid fa-expand"></i>
+              </button>
+              <button type="button" class="chat-panel-btn" id="chat-close-btn" aria-label="{{ __('public.layout.close') }}">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <div id="chat-disabled-panel" class="chat-disabled-panel" @if($globalChatEnabled) hidden @endif>
+            <div class="chat-disabled-panel-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+            <p id="chat-disabled-panel-text" class="chat-disabled-panel-text"></p>
+          </div>
+          <div id="chat-panel-main" class="chat-panel-main" @if(!$globalChatEnabled) hidden @endif>
+
+          <div class="chat-panel-channel-switch" id="chat-channel-switch">
+            <button type="button" class="chat-panel-tab chat-panel-tab--active" data-chat-channel="global"><i class="fa-solid fa-comments"></i> {{ __('public.layout.general_chat') }}</button>
+            <button type="button" class="chat-panel-tab" data-chat-channel="group"><i class="fa-solid fa-users"></i> {{ __('public.layout.group_chat') }}</button>
+          </div>
+          <div class="chat-group-shell" id="chat-group-shell" hidden>
+            <div class="chat-group-create-bar" id="chat-group-create-bar">
+              <button type="button" class="chat-panel-btn chat-group-create-btn" id="chat-group-create-btn"><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
+            </div>
+            <div class="chat-group-meta" id="chat-group-meta" hidden>
+              <div class="chat-group-meta-labels">
+                <div class="chat-group-meta-top">
+                  <button type="button" class="chat-panel-btn chat-group-back-btn" id="chat-group-back-btn" title="Orqaga"><i class="fa-solid fa-arrow-left"></i></button>
+                  <strong id="chat-current-group-name" class="chat-group-meta-name"></strong>
+                  <span id="chat-group-privacy-badge" class="chat-group-privacy-dot"></span>
+                </div>
+                <p id="chat-current-group-description" class="chat-group-description"></p>
+              </div>
+              <div class="chat-group-controls" id="chat-group-controls">
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-join-btn" hidden>{{ __('public.layout.join_group') }}</button>
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-leave-btn" hidden>{{ __('public.layout.group_leave') }}</button>
+                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-requests-btn" hidden><i class="fa-solid fa-user-plus"></i> <span id="chat-group-pending-count">0</span></button>
+                <button type="button" class="chat-panel-btn chat-group-members-btn" id="chat-group-members-btn" hidden title="A'zolar"><i class="fa-solid fa-users"></i></button>
+                <button type="button" class="chat-panel-btn chat-group-settings-btn" id="chat-group-settings-btn" hidden title="Sozlamalar"><i class="fa-solid fa-gear"></i></button>
+              </div>
+            </div>
+            <div class="chat-group-list" id="chat-group-list"></div>
+            <div class="chat-group-subpanel" id="chat-group-subpanel" hidden>
+              <div class="chat-group-subpanel-header">
+                <button type="button" class="chat-panel-btn chat-group-subpanel-back" id="chat-group-subpanel-back"><i class="fa-solid fa-arrow-left"></i></button>
+                <strong id="chat-group-subpanel-title"></strong>
+              </div>
+              <div id="chat-group-subpanel-body"></div>
+            </div>
+          </div>
+
+          <div class="chat-feed-stack">
+            <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          </div>
+          <div class="chat-compose-status" id="chat-compose-status" hidden>
+            <span class="chat-compose-status-icon" aria-hidden="true">
+              <i class="fa-solid fa-pen-nib"></i>
+            </span>
+            <span class="chat-compose-status-text" id="chat-compose-status-text">{{ __('public.layout.typing') }}</span>
+            <span class="chat-compose-status-dots" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </div>
+          <form class="chat-input-wrap" id="chat-form">
+            @if(turnstile_enabled())
+            <div
+              id="chat-turnstile-host"
+              class="cf-turnstile chat-turnstile-host"
+              data-sitekey="{{ turnstile_site_key() }}"
+              data-size="invisible"
+            ></div>
+            @endif
+            <div class="chat-sticker-row" aria-label="{{ __('public.layout.stickers_label') }}">
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="😄" title="Smile">😄</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👍" title="Like">👍</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
+              @auth
+                @if($authUser && $authUser->isDonor())
+                <span class="chat-sticker-divider" aria-hidden="true"></span>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="💎" title="Gem">💎</button>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🚀" title="Rocket">🚀</button>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🌟" title="Star">🌟</button>
+                @endif
+              @endauth
+            </div>
+            <input type="text" id="chat-input" class="chat-input" placeholder="{{ __('public.layout.write_message') }}" maxlength="1000" autocomplete="off" />
+            <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="{{ __('public.layout.send') }}">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+          </div>
+        </div>
+      </div>
+
+      <span id="user-preview-config" hidden
+        data-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
+        data-csrf="{{ csrf_token() }}"
+        data-current-user-id="{{ auth()->id() }}"
+      ></span>
+      @endunless
+    @endauth
+
+    @unless($isExamSessionRoute)
+    <button
+      id="scroll-top"
+      class="scroll-top"
+      type="button"
+      aria-label="{{ __('public.layout.to_top') }}"
+    >
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+    @endunless
+
+    @include('components.confirm-modal')
+    <div id="prime-group-create-modal" class="prime-group-create" role="presentation" aria-hidden="true">
+      <div class="prime-group-create__backdrop" aria-hidden="true"></div>
+      <div class="prime-group-create__dialog" role="dialog" aria-modal="true" aria-labelledby="prime-group-create-title">
+        <div class="prime-group-create__icon" aria-hidden="true">
+          <span class="prime-group-create__icon-inner"><i class="fa-solid fa-users"></i></span>
+        </div>
+        <h2 id="prime-group-create-title" class="prime-group-create__title">{{ __('public.layout.group_create') }}</h2>
+        <div class="prime-group-create__body">
+          <div class="prime-group-create__field">
+            <label for="prime-group-create-name">{{ __('public.layout.group_name') }}</label>
+            <input type="text" id="prime-group-create-name" class="prime-group-create__input" maxlength="120" minlength="2" placeholder="Guruh nomi" />
+          </div>
+          <div class="prime-group-create__field">
+            <label for="prime-group-create-desc">{{ __('public.layout.group_description') }}</label>
+            <textarea id="prime-group-create-desc" class="prime-group-create__textarea" maxlength="500" placeholder="Tavsif (ixtiyoriy)"></textarea>
+          </div>
+          <div class="prime-group-create__field">
+            <label>{{ __('public.layout.group_privacy') }}</label>
+            <div class="prime-group-create__toggle">
+              <button type="button" class="prime-group-create__toggle-btn prime-group-create__toggle-btn--active" data-privacy="closed">
+                <i class="fa-solid fa-lock"></i> {{ __('public.layout.group_closed') }}
+              </button>
+              <button type="button" class="prime-group-create__toggle-btn" data-privacy="open">
+                <i class="fa-solid fa-unlock"></i> {{ __('public.layout.group_open') }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="prime-group-create__actions">
+          <button type="button" class="prime-group-create__btn prime-group-create__btn--ghost" data-group-create-cancel>{{ __('public.layout.cancel') }}</button>
+          <button type="button" class="prime-group-create__btn prime-group-create__btn--primary" data-group-create-ok><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
+        </div>
+      </div>
+    </div>
+    <div id="global-modal-root"></div>
+    <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
+
+    <div id="global-search-modal" class="global-search-modal" hidden>
+      <div class="bomba-mesh"></div>
+      <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
+        <label id="global-search-label" for="global-search-input" class="global-search-label">{{ __('public.layout.global_search_label') }}</label>
+        <div class="global-search-input-wrap">
+          <i class="fa-solid fa-magnifying-glass" style="cursor: pointer" aria-hidden="true"></i>
+          <input
+            id="global-search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="{{ __('public.layout.global_search_placeholder') }}"
+            maxlength="120"
+          >
+        </div>
+        <div id="global-search-results" class="global-search-results"></div>
+      </div>
+    </div>
+
+    @auth
+      @unless($isExamSessionRoute)
+      <dialog id="chat-user-preview-dialog" class="chat-user-preview-dialog" aria-labelledby="chat-user-preview-name">
+        <div class="chat-user-preview-shell">
+          <button type="button" class="chat-user-preview-close" id="chat-user-preview-close" aria-label="{{ __('public.layout.close') }}">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="chat-user-preview-body">
+            <p class="chat-user-preview-loading" id="chat-user-preview-loading">{{ __('public.layout.loading') }}</p>
+            <div class="chat-user-preview-content" id="chat-user-preview-content" hidden>
+              <div class="chat-user-preview-avatar" id="chat-user-preview-avatar"></div>
+              <h3 class="chat-user-preview-name" id="chat-user-preview-name"></h3>
+              <p class="chat-user-preview-role" id="chat-user-preview-role"></p>
+              <ul class="chat-user-preview-details" id="chat-user-preview-details"></ul>
+              <div class="chat-user-preview-extra" id="chat-user-preview-extra"></div>
+              <div class="chat-user-preview-admin-actions" id="chat-user-preview-admin-actions" hidden></div>
+              <div class="chat-user-preview-contact" id="chat-user-preview-contact" hidden></div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+      @endunless
+    @endauth
+
+    @if(turnstile_enabled())
+    <div
+      id="comment-turnstile-host"
+      class="cf-turnstile comment-turnstile-host"
+      data-sitekey="{{ turnstile_site_key() }}"
+      data-size="invisible"
+      aria-hidden="true"
+    ></div>
+    @endif
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    @auth
+      @unless($isExamSessionRoute)
+      {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
+      <div id="prime-audio-slot" class="prime-audio-slot"></div>
+      @endunless
+    @endauth
+
+<script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
+	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=9"></script>
+      <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
+	    <script>
+      (function() {
+        /**
+         * PRIME ANIMATION ENGINE v3.0 (Pro Max Ultra)
+         * - Letter-by-letter split text
+         * - Scroll progress bar tracking
+         * - Staggered grid/list entry
+         * - Universal intersection reveals
+         */
+
+        const primeEngine = {
+          initProgressBar() {
+            const bar = document.getElementById('prime-scroll-bar');
+            if (!bar) return;
+
+            const updateBar = () => {
+              const h = document.documentElement;
+              const st = h.scrollTop || document.body.scrollTop;
+              const sh = h.scrollHeight || document.body.scrollHeight;
+              const scrollPercent = (st / (sh - h.clientHeight)) * 100;
+              bar.style.width = scrollPercent + "%";
+            };
+
+            window.addEventListener('scroll', updateBar, { passive: true });
+            updateBar();
+          },
+
+          splitText(target) {
+            if (target.dataset.animated === 'true') return;
+            target.dataset.animated = 'true';
+
+            // H1/H2 (yoki ularning ichidagi js-split-text) uchun harfma-harf animatsiyani o‘chirib,
+            // oddiy ko‘rinish qoldiramiz. Bu "son sanashga o‘xshash" effektni yo‘q qiladi.
+            const headingHost = target.closest('h1, h2');
+            if (headingHost) {
+              target.classList.add('active');
+              return;
+            }
+
+            const processNode = (node, state) => {
+              if (node.nodeType === 3) {
+                const fragment = document.createDocumentFragment();
+                const words = node.textContent.split(/(\s+)/);
+
+                words.forEach((word) => {
+                  if (word.trim() === '') {
+                    fragment.appendChild(document.createTextNode(word));
+                    return;
+                  }
+
+                  const wordSpan = document.createElement('span');
+                  wordSpan.className = 'anim-word';
+                  wordSpan.style.cssText = 'display:inline-block; white-space:nowrap; vertical-align:top;';
+
+                  [...word].forEach((char) => {
+                    const letter = document.createElement('span');
+                    letter.textContent = char;
+                    letter.className = 'letter';
+                    const lift = 88;
+                    /* Klassik: barcha harflar yuqoridan pastga (eski Prime split-text) */
+                    letter.style.transform = `translate3d(0, ${-lift}px, 0)`;
+                    wordSpan.appendChild(letter);
+                    setTimeout(() => letter.classList.add('active'), 100 + state.delay);
+                    state.delay += 25;
+                  });
+                  fragment.appendChild(wordSpan);
+                });
+                node.parentNode.replaceChild(fragment, node);
+              } else if (node.nodeType === 1) {
+                Array.from(node.childNodes).forEach(child => processNode(child, state));
+              }
+            };
+
+            const state = { delay: 0 };
+            Array.from(target.childNodes).forEach(c => processNode(c, state));
+            /* Brauzer/setTimeout xatolari uchun: ba’zi harflar .active olmasa ham matn ko‘rinsin */
+            const safetyMs = 100 + state.delay + 400;
+            window.setTimeout(() => {
+              target.querySelectorAll('.letter:not(.active)').forEach((el) => el.classList.add('active'));
+            }, safetyMs);
+          },
+
+          stagger(target) {
+            if (target.dataset.animated === 'true') return;
+            target.dataset.animated = 'true';
+
+            const children = target.children;
+            const delayStep = 100;
+
+            Array.from(children).forEach((child, i) => {
+              setTimeout(() => {
+                child.style.opacity = '1';
+                child.style.transform = 'translateY(0)';
+              }, i * delayStep);
+            });
+            target.classList.add('active');
+          },
+
+          reveal(target) {
+            target.classList.add('active');
+          }
+        };
+
+        const initAllAnimations = () => {
+          // Delay initialization by 350ms to allow browser scroll restoration to finish
+          window.setTimeout(() => {
+            primeEngine.initProgressBar();
+
+            const activatePrimeEl = (el, staggerIdx = 0) => {
+              const delay = staggerIdx * 100;
+              window.setTimeout(() => {
+                if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
+                else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
+                else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
+              }, delay);
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  // No stagger needed for normal scroll reveals
+                  activatePrimeEl(entry.target, 0);
+                  observer.unobserve(entry.target);
+                }
+              });
+            }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
+
+            const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
+            nodes.forEach(el => observer.observe(el));
+
+            /* Birinchi ekrandagi bloklar uchun: staggered yuklanish */
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                let inViewCount = 0;
+                nodes.forEach((el) => {
+                  const r = el.getBoundingClientRect();
+                  if (r.bottom > 0 && r.top < vh) {
+                    activatePrimeEl(el, inViewCount);
+                    observer.unobserve(el);
+                    inViewCount++;
+                  }
+                });
+              });
+            });
+          }, 350);
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initAllAnimations);
+        } else {
+          initAllAnimations();
+        }
+
+        /* Expose to window for AJAX pages */
+        window.initPrimeAnimations = initAllAnimations;
+      })();
+    </script>
+    @unless(request()->routeIs('exam.session'))
+    <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ app_asset_version('temp/js/site-boot-loader.js') }}"></script>
+    <script>
+      (function() {
+        var loader = document.getElementById('site-boot-loader');
+        if (!loader) return;
+
+        function showFullScreenLoader() {
+          loader.classList.remove('site-boot-loader--done');
+          document.body.classList.add('site-boot-loading');
+          loader.setAttribute('aria-busy', 'true');
+          // If it was removed from DOM, append it back
+          if (!loader.parentNode) {
+            document.body.appendChild(loader);
+          }
+        }
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a[href]');
+          if (!link) return;
+          var href = link.getAttribute('href');
+          if (!href) return;
+          if (
+            link.target === '_blank' ||
+            link.hasAttribute('download') ||
+            href.startsWith('#') ||
+            href.startsWith('javascript:') ||
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            (href.startsWith('http') && !href.startsWith(window.location.origin))
+          ) return;
+
+          try {
+            var url = new URL(href, window.location.href);
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+          } catch(err) { return; }
+
+          showFullScreenLoader();
+        });
+
+        document.addEventListener('submit', function(e) {
+          var form = e.target;
+          if (!form || form.method === 'dialog') return;
+          // AJAX formalarni o'tkazib yuborish — ular sahifani yangilamaydi
+          if (
+            form.classList.contains('js-like-form') ||
+            form.classList.contains('js-bookmark-form') ||
+            form.classList.contains('js-comment-form') ||
+            form.classList.contains('chat-input-wrap') ||
+            form.id === 'chat-form' ||
+            form.id === 'ai-chat-form' ||
+            form.id === 'contact-form' ||
+            form.getAttribute('data-ajax') ||
+            form.getAttribute('data-no-loader')
+          ) return;
+          showFullScreenLoader();
+        });
+      })();
+    </script>
+    @endunless
+
+    @auth
+    @unless(request()->routeIs('exam.session'))
+    @php
+      $aiChatEnabled = \App\Models\SiteSetting::get('ai_chat_enabled', '1') === '1';
+      $aiChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('ai_chat_disabled_message', '')) ?: __('public.layout.ai_disabled_default');
+    @endphp
+    <div
+      id="ai-widget"
+      class="ai-widget"
+      data-ai-url="{{ route('ai.chat') }}"
+      data-ai-status-url="{{ route('ai.chat.status') }}"
+      data-ai-feedback-url="{{ route('ai.chat.feedback') }}"
+      data-csrf="{{ csrf_token() }}"
+      data-ai-mock-delim="{{ config('ai.mock_delimiter') }}"
+      data-ai-enabled="{{ $aiChatEnabled ? '1' : '0' }}"
+      data-ai-disabled-message="{{ e($aiChatDisabledMsg) }}"
+    >
+      <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="{{ __('public.layout.ai_assistant') }}" title="{{ __('public.layout.ai_assistant') }}">
+        <i class="fa-solid fa-magic-wand-sparkles" aria-hidden="true"></i>
+      </button>
+
+      <div class="chat-panel ai-panel" id="ai-panel">
+        <div class="chat-panel-header">
+          <div class="chat-panel-title">
+            <i class="fa-solid fa-robot"></i>
+            <span>{{ __('public.layout.ai_assistant_brand') }}</span>
+          </div>
+          <div class="chat-panel-actions">
+            <button type="button" class="chat-panel-btn" id="ai-close-btn" aria-label="{{ __('public.layout.close') }}">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <div id="ai-disabled-panel" class="ai-disabled-panel chat-disabled-panel" @if($aiChatEnabled) hidden @endif>
+          <div class="chat-disabled-panel-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+          <p id="ai-disabled-panel-text" class="chat-disabled-panel-text"></p>
+        </div>
+        <div id="ai-panel-main" class="ai-panel-main" @if(!$aiChatEnabled) hidden @endif>
+        <div class="chat-panel-intro">
+          <div class="chat-panel-kicker">
+            <span class="chat-panel-live-dot chat-panel-live-dot--ai" aria-hidden="true"></span>
+            <span>{{ __('public.layout.ai_assistant') }}</span>
+          </div>
+          <p class="chat-panel-subtitle">{{ __('public.layout.ai_greeting') }}</p>
+        </div>
+
+        <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
+          <div class="chat-msg is-ai reveal">
+            <div class="chat-msg-content">{{ __('public.layout.ai_first_message') }}</div>
+          </div>
+        </div>
+        <div class="chat-compose-status ai-status" id="ai-compose-status" hidden>
+          <span class="chat-compose-status-icon ai-typing-indicator">
+             <i class="fa-solid fa-circle-notch fa-spin"></i>
+          </span>
+          <span class="chat-compose-status-text">{{ __('public.layout.thinking') }}</span>
+        </div>
+
+        <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
+          <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
+          <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
+          <button type="button" class="ai-action-btn" data-msg="Saytda nechata post va kurs bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Statistika</button>
+          <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
+        </div>
+
+        <form class="chat-input-wrap" id="ai-chat-form">
+          <textarea
+            class="chat-textarea"
+            id="ai-textarea"
+            placeholder="{{ __('public.layout.question_input') }}"
+            rows="1"
+            maxlength="5000"
+            style="resize:none; padding:10px; border-radius:12px; font-family:inherit"
+          ></textarea>
+          <button type="submit" class="chat-send-btn" id="ai-send-btn" aria-label="{{ __('public.layout.send') }}">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+        </div>
+      </div>
+    </div>
+    @endunless
+    @unless(request()->routeIs('exam.session'))
+    @php
+      $aiText = [
+        'feedback_question' => __('public.layout.ai_feedback_question'),
+        'feedback_useful' => __('public.layout.ai_feedback_useful'),
+        'feedback_not_useful' => __('public.layout.ai_feedback_not_useful'),
+        'feedback_preset_unclear' => __('public.layout.ai_feedback_preset_unclear'),
+        'feedback_preset_wrong_direction' => __('public.layout.ai_feedback_preset_wrong_direction'),
+        'feedback_preset_not_enough_info' => __('public.layout.ai_feedback_preset_not_enough_info'),
+        'feedback_reason_placeholder' => __('public.layout.ai_feedback_reason_placeholder'),
+        'feedback_send' => __('public.layout.send'),
+        'feedback_send_without_reason' => __('public.layout.ai_feedback_send_without_reason'),
+        'thinking' => __('public.layout.thinking'),
+        'ai_disabled_default' => __('public.layout.ai_disabled_default'),
+      ];
+    @endphp
+    <script>
+      (function() {
+        console.log('AI Script Initialized');
+        var widget = document.getElementById('ai-widget');
+        if (!widget) { console.log('AI Widget not found'); return; }
+        var aiText = @json($aiText);
+
+        var bubble = document.getElementById('ai-bubble');
+        var panel = document.getElementById('ai-panel');
+        var closeBtn = document.getElementById('ai-close-btn');
+        var messagesEl = document.getElementById('ai-messages');
+        var form = document.getElementById('ai-chat-form');
+        var input = document.getElementById('ai-textarea');
+        var sendBtn = document.getElementById('ai-send-btn');
+        var statusWrap = document.getElementById('ai-compose-status');
+        var statusText = statusWrap ? statusWrap.querySelector('.chat-compose-status-text') : null;
+
+        var aiUrl = widget.getAttribute('data-ai-url');
+        var aiStatusUrl = widget.getAttribute('data-ai-status-url');
+        var aiFeedbackUrl = widget.getAttribute('data-ai-feedback-url');
+        var csrfToken = widget.getAttribute('data-csrf');
+        var aiMockDelim = widget.getAttribute('data-ai-mock-delim') || '';
+        var headerToggle = document.getElementById('ai-header-toggle');
+        var isSending = false;
+        var aiDisabledPanel = document.getElementById('ai-disabled-panel');
+        var aiPanelMain = document.getElementById('ai-panel-main');
+        var aiDisabledText = document.getElementById('ai-disabled-panel-text');
+        var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
+        var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* PRIME AI Typewriter v2.0 — all keyframes live in style.css, nothing to inject */
+
+        function setAiEnabledState(enabled, message) {
+          aiEnabled = !!enabled;
+          widget.setAttribute('data-ai-enabled', aiEnabled ? '1' : '0');
+
+          if (message && aiDisabledText) {
+            aiDisabledText.textContent = message;
+          }
+
+          if (aiDisabledPanel && aiPanelMain) {
+            aiPanelMain.hidden = !aiEnabled;
+            aiDisabledPanel.hidden = aiEnabled;
+          }
+        }
+
+        function refreshAiAvailability() {
+          if (!aiStatusUrl) {
+            return Promise.resolve(aiEnabled);
+          }
+
+          return fetch(aiStatusUrl, {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            credentials: 'same-origin',
+          })
+            .then(function (res) {
+              if (!res.ok) return null;
+              return res.json();
+            })
+            .then(function (data) {
+              if (!data) return aiEnabled;
+
+              setAiEnabledState(!!data.enabled, data.disabled_message || data.error || widget.getAttribute('data-ai-disabled-message'));
+
+              return aiEnabled;
+            })
+            .catch(function () {
+              return aiEnabled;
+            });
+        }
+
+        function syncAiDockState() {
+          document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
+        }
+
+        function showAiComposeStatus(text) {
+          if (!statusWrap) return;
+          if (statusText) {
+            /* PRIME v2: Show animated bounce-dot thinking indicator */
+            statusText.innerHTML = '<span class="ai-thinking-dots" aria-label="' + (text || aiText.thinking) + '"><span></span><span></span><span></span></span>';
+          }
+          statusWrap.style.display = 'flex';
+          statusWrap.removeAttribute('hidden');
+        }
+
+        function resetAiComposeState() {
+          isSending = false;
+          if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.removeAttribute('aria-busy');
+            sendBtn.style.pointerEvents = 'auto';
+          }
+          if (input) {
+            input.disabled = false;
+            input.removeAttribute('aria-busy');
+          }
+          if (actionBtns && actionBtns.forEach) {
+            actionBtns.forEach(function (b) {
+              b.disabled = false;
+              b.style.opacity = '1';
+              b.style.cursor = 'pointer';
+            });
+          }
+          if (statusWrap) {
+            statusWrap.style.display = 'none';
+            statusWrap.setAttribute('hidden', '');
+          }
+          if (statusText) {
+            statusText.innerHTML = ''; /* clear animated dots on reset */
+          }
+        }
+
+        function closePanel() {
+          if (!isSending) {
+            resetAiComposeState();
+          }
+          panel.classList.remove('is-open');
+          widget.classList.remove('is-open');
+          syncAiDockState();
+        }
+
+        function openPanel() {
+          if (typeof window.primeCloseGlobalChatPanel === 'function') {
+            window.primeCloseGlobalChatPanel();
+          }
+          panel.classList.add('is-open');
+          widget.classList.add('is-open');
+          syncAiDockState();
+          if (!aiEnabled && aiDisabledPanel && aiPanelMain) {
+            setAiEnabledState(false, widget.getAttribute('data-ai-disabled-message') || aiText.ai_disabled_default);
+            refreshAiAvailability().then(function (enabled) {
+              if (!enabled) return;
+              if (!isSending) {
+                resetAiComposeState();
+                input.focus();
+              }
+            });
+            if (window.playPrimeSuccess) window.playPrimeSuccess();
+            return;
+          }
+          setAiEnabledState(true);
+          if (!isSending) {
+            resetAiComposeState();
+          }
+          if (window.playPrimeSuccess) window.playPrimeSuccess();
+          if (!isSending) {
+            input.focus();
+          }
+        }
+
+        window.primeCloseAiPanel = function() {
+          if (panel.classList.contains('is-open')) closePanel();
+        };
+
+        function togglePanel(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (panel.classList.contains('is-open')) {
+            closePanel();
+          } else {
+            openPanel();
+          }
+        }
+
+        bubble.addEventListener('click', togglePanel);
+        if (headerToggle) headerToggle.addEventListener('click', togglePanel);
+
+        document.addEventListener('click', function (e) {
+          if (panel.classList.contains('is-open') && !panel.contains(e.target) && !bubble.contains(e.target)) {
+            closePanel();
+          }
+        });
+
+        closeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          closePanel();
+        });
+
+        function scrollToBottom(immediate) {
+          if (!messagesEl) return;
+          if (immediate) {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return;
+          }
+          messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+        }
+
+        function stripMockTailForDisplay(full) {
+          if (!aiMockDelim || full.indexOf(aiMockDelim) === -1) return full;
+          var head = full.split(aiMockDelim)[0].trim();
+          return head || '…';
+        }
+
+        function escapeAiHtml(value) {
+          return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        function formatPlainMessageHtml(text) {
+          return escapeAiHtml(text).replace(/\n/g, '<br>');
+        }
+
+        function formatAiMessageHtml(text) {
+          var safe = escapeAiHtml(text).replace(/\r\n?/g, '\n');
+          safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong style="color:inherit;font-weight:700;">$1</strong>');
+          safe = safe.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" class="ai-response-link" target="_blank" rel="noopener noreferrer">$1</a>');
+
+          var lines = safe.split('\n');
+          var html = '';
+          var listItems = [];
+
+          function flushList() {
+            if (!listItems.length) return;
+            html += '<ul style="margin:8px 0 10px 18px;padding:0;">' + listItems.join('') + '</ul>';
+            listItems = [];
+          }
+
+          lines.forEach(function (rawLine) {
+            var line = rawLine.trim();
+
+            if (!line) {
+              flushList();
+              html += '<div style="height:8px;"></div>';
+              return;
+            }
+
+            if (/^(-|•)\s+/.test(line)) {
+              listItems.push('<li style="margin:0 0 6px 0;">' + line.replace(/^(-|•)\s+/, '') + '</li>');
+              return;
+            }
+
+            flushList();
+            html += '<div style="margin:0 0 6px 0;line-height:1.6;color:inherit;">' + line + '</div>';
+          });
+
+          flushList();
+
+          return html;
+        }
+
+        function sendAiMessage(message) {
+          if (!message || isSending || !aiEnabled) return;
+          input.value = message;
+          form.dispatchEvent(new Event('submit'));
+        }
+
+        function buildActionNode(action) {
+          if (!action || !action.label) return null;
+
+          var commonStyle = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.04);color:inherit;font-size:12px;text-decoration:none;cursor:pointer;';
+
+          if (action.type === 'link' && action.url) {
+            var link = document.createElement('a');
+            link.href = action.url;
+            link.textContent = action.label;
+            link.style.cssText = commonStyle;
+            return link;
+          }
+
+          if (action.type === 'reply' && action.message) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = action.label;
+            btn.style.cssText = commonStyle;
+            btn.addEventListener('click', function () {
+              sendAiMessage(action.message);
+            });
+            return btn;
+          }
+
+          return null;
+        }
+
+        function submitAiFeedback(interactionId, helpful, holder, reason) {
+          if (!interactionId || !aiFeedbackUrl || !holder) return;
+          var payload = { interaction_id: interactionId, helpful: helpful };
+          if (typeof reason === 'string' && reason.trim()) {
+            payload.reason = reason.trim();
+          }
+
+          fetch(aiFeedbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(payload)
+          })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            holder.innerHTML = '<small style="opacity:.8;">' + escapeAiHtml((data && data.message) || 'Rahmat!') + '</small>';
+          })
+          .catch(function () {
+            holder.innerHTML = '<small style="opacity:.8;">Feedback yuborilmadi.</small>';
+          });
+        }
+
+        function renderUnhelpfulFeedbackPrompt(interactionId, holder) {
+          if (!interactionId || !holder) return;
+
+          holder.innerHTML = '';
+          holder.style.cssText = 'display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding:10px;border-radius:14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);';
+
+          var title = document.createElement('small');
+          title.textContent = 'Nima noto\'g\'ri edi?';
+          title.style.cssText = 'color:var(--text);opacity:.88;font-weight:600;';
+          holder.appendChild(title);
+
+          var presetsWrap = document.createElement('div');
+          presetsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+
+          [aiText.feedback_preset_unclear, aiText.feedback_preset_wrong_direction, aiText.feedback_preset_not_enough_info].forEach(function (preset) {
+            var presetBtn = document.createElement('button');
+            presetBtn.type = 'button';
+            presetBtn.textContent = preset;
+            presetBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.12);color:var(--text);font-size:12px;cursor:pointer;';
+            presetBtn.addEventListener('click', function () {
+              textarea.value = preset;
+              textarea.focus();
+            });
+            presetsWrap.appendChild(presetBtn);
+          });
+
+          holder.appendChild(presetsWrap);
+
+          var textarea = document.createElement('textarea');
+          textarea.rows = 2;
+          textarea.maxLength = 500;
+          textarea.placeholder = aiText.feedback_reason_placeholder;
+          textarea.style.cssText = 'width:100%;resize:none;padding:8px 10px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:var(--bg);color:var(--text);font:inherit;';
+          holder.appendChild(textarea);
+
+          var actionsWrap = document.createElement('div');
+          actionsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+
+          var sendBtn = document.createElement('button');
+          sendBtn.type = 'button';
+          sendBtn.textContent = aiText.feedback_send;
+          sendBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;';
+          sendBtn.addEventListener('click', function () {
+            submitAiFeedback(interactionId, false, holder, textarea.value);
+          });
+          actionsWrap.appendChild(sendBtn);
+
+          var skipBtn = document.createElement('button');
+          skipBtn.type = 'button';
+          skipBtn.textContent = aiText.feedback_send_without_reason;
+          skipBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.10);color:var(--text);font-size:12px;cursor:pointer;';
+          skipBtn.addEventListener('click', function () {
+            submitAiFeedback(interactionId, false, holder, '');
+          });
+          actionsWrap.appendChild(skipBtn);
+
+          holder.appendChild(actionsWrap);
+        }
+
+        function buildMessageElement(isAi) {
+          var el = document.createElement('div');
+          el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
+
+          var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
+
+          el.innerHTML = avatarHtml + '<div class="chat-msg-content"></div>';
+          messagesEl.appendChild(el);
+
+          void el.offsetWidth;
+          el.classList.add('reveal');
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+          scrollToBottom();
+
+          return el;
+        }
+
+        function attachAiMeta(contentEl, meta) {
+          if (!contentEl || !meta) return;
+
+          if (Array.isArray(meta.actions) && meta.actions.length) {
+            var actionsWrap = document.createElement('div');
+            actionsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+            meta.actions.forEach(function (action) {
+              var node = buildActionNode(action);
+              if (node) actionsWrap.appendChild(node);
+            });
+            if (actionsWrap.childNodes.length) {
+              contentEl.appendChild(actionsWrap);
+            }
+          }
+
+          if (meta.feedbackEnabled && meta.interactionId) {
+            var feedbackWrap = document.createElement('div');
+            feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
+
+            var label = document.createElement('small');
+            label.textContent = aiText.feedback_question;
+            label.style.cssText = 'color:var(--text);opacity:.82;';
+            feedbackWrap.appendChild(label);
+
+            var feedbackBtnBaseStyle = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;color:var(--text);font-size:12px;font-weight:600;line-height:1;cursor:pointer;backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;';
+
+            var yesBtn = document.createElement('button');
+            yesBtn.type = 'button';
+            yesBtn.textContent = aiText.feedback_useful;
+            yesBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(16,185,129,.55);background:rgba(16,185,129,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
+            yesBtn.addEventListener('click', function () {
+              submitAiFeedback(meta.interactionId, true, feedbackWrap);
+            });
+            feedbackWrap.appendChild(yesBtn);
+
+            var noBtn = document.createElement('button');
+            noBtn.type = 'button';
+            noBtn.textContent = aiText.feedback_not_useful;
+            noBtn.style.cssText = feedbackBtnBaseStyle + 'border:1px solid rgba(248,113,113,.55);background:rgba(248,113,113,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);';
+            noBtn.addEventListener('click', function () {
+              renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
+            });
+            feedbackWrap.appendChild(noBtn);
+
+            contentEl.appendChild(feedbackWrap);
+          }
+
+          scrollToBottom();
+        }
+
+        /**
+         * PRIME AI TYPEWRITER v2.0 — "Holographic Spring" Engine
+         *
+         * Skill 1 — Physics-based per-character spring-pop reveal:
+         *   Each character is wrapped in a .ai-msg-char span with a
+         *   staggered animation-delay. The keyframe (aiCharSpring in CSS)
+         *   shoots the char up from below with blur, overshoots (scale 1.08),
+         *   then settles — simulating a spring/bounce physics feel.
+         *   For long texts (>400 chars) we switch to word-level wave mode
+         *   (aiWordWave) for performance — each word lands as a wave.
+         *
+         * Skill 2 — Holographic gradient cursor:
+         *   A thin vertical bar (.ai-holo-cursor) with a cycling linear-gradient
+         *   (purple → indigo → blue → emerald) that animates background-position
+         *   AND box-shadow color simultaneously — creating a living holographic
+         *   glow effect. Blinks independently via a second animation layer.
+         *   On completion the cursor fades out and a shimmer sweep (.ai-msg-done)
+         *   runs across the finished bubble once.
+         */
+        function animateAiMessage(contentEl, text, meta) {
+          if (!contentEl) return Promise.resolve();
+
+          var fullText = String(text || '');
+
+          /* Reduced motion or empty → instant render */
+          if (!fullText.trim() || prefersReducedMotion) {
+            contentEl.innerHTML = formatAiMessageHtml(fullText);
+            attachAiMeta(contentEl, meta);
+            scrollToBottom();
+            return Promise.resolve();
+          }
+
+          /* Tune speed based on length */
+          var isLong = fullText.length > 400;
+          /* charDelay: ms between revealing each character/word */
+          var charDelay = fullText.length > 1200 ? 14
+                        : fullText.length > 700  ? 18
+                        : fullText.length > 300  ? 22
+                        : 28;
+
+          /* --- BUILD HOLOGRAPHIC CURSOR --- */
+          var cursor = document.createElement('span');
+          cursor.className = 'ai-holo-cursor';
+          cursor.setAttribute('aria-hidden', 'true');
+
+          /* Helper: append cursor after current content */
+          function appendCursor() {
+            if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+            contentEl.appendChild(cursor);
+          }
+
+          return new Promise(function (resolve) {
+
+            if (isLong) {
+              /* =========================================
+                 WORD-WAVE MODE (long text)
+                 Each word gets .ai-msg-word with staggered
+                 animation-delay for a cascading wave effect.
+                 ========================================= */
+              var words = fullText.split(/(\s+)/);
+              var wordIndex = 0;
+              var accDelay = 0;
+
+              function revealNextWord() {
+                if (wordIndex >= words.length) {
+                  /* Done — remove cursor, shimmer, attach meta */
+                  if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+                  contentEl.innerHTML = formatAiMessageHtml(fullText);
+                  var msgBubble = contentEl.closest('.chat-msg');
+                  if (msgBubble) msgBubble.classList.add('ai-msg-done');
+                  attachAiMeta(contentEl, meta);
+                  scrollToBottom();
+                  resolve();
+                  return;
+                }
+
+                var chunk = words[wordIndex];
+                wordIndex++;
+
+                /* Whitespace chunks: invisible spans, no animation */
+                if (!chunk.trim()) {
+                  /* Append as text node so spaces render correctly */
+                  var space = document.createElement('span');
+                  space.className = 'ai-msg-char--space';
+                  space.textContent = chunk;
+                  contentEl.appendChild(space);
+                  appendCursor();
+                  scrollToBottom(true);
+                  revealNextWord();
+                  return;
+                }
+
+                var wordSpan = document.createElement('span');
+                wordSpan.className = 'ai-msg-word';
+                wordSpan.style.animationDelay = '0ms'; /* immediate — delay is setTimeout-driven */
+                /* Render word with bold/formatting preserved */
+                wordSpan.innerHTML = formatAiMessageHtml(chunk);
+                contentEl.appendChild(wordSpan);
+                appendCursor();
+                scrollToBottom(true);
+
+                /* Pause with punctuation rhythm */
+                var extra = 0;
+                var lastChar = chunk[chunk.length - 1];
+                if (/[.!?]/.test(lastChar))  extra = 90;
+                else if (/[,:;]/.test(lastChar)) extra = 40;
+                else if (chunk === '\n') extra = 60;
+
+                window.setTimeout(revealNextWord, charDelay + extra);
+              }
+
+              revealNextWord();
+
+            } else {
+              /* =========================================
+                 CHAR-SPRING MODE (short/medium text)
+                 Each character gets .ai-msg-char with a
+                 staggered delay creating a cascading spring
+                 pop from bottom-blur to final position.
+                 ========================================= */
+              var chars = fullText.split('');
+              var charIndex = 0;
+
+              function revealNextChar() {
+                if (charIndex >= chars.length) {
+                  /* Done — rebuild with full formatter, add shimmer class */
+                  if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+                  contentEl.innerHTML = formatAiMessageHtml(fullText);
+                  var msgBubble = contentEl.closest('.chat-msg');
+                  if (msgBubble) msgBubble.classList.add('ai-msg-done');
+                  attachAiMeta(contentEl, meta);
+                  scrollToBottom();
+                  resolve();
+                  return;
+                }
+
+                var ch = chars[charIndex];
+                charIndex++;
+
+                if (ch === ' ' || ch === '\u00a0') {
+                  var spaceSpan = document.createElement('span');
+                  spaceSpan.className = 'ai-msg-char--space';
+                  spaceSpan.textContent = ch;
+                  contentEl.appendChild(spaceSpan);
+                } else if (ch === '\n') {
+                  contentEl.appendChild(document.createElement('br'));
+                } else {
+                  var charSpan = document.createElement('span');
+                  charSpan.className = 'ai-msg-char';
+                  charSpan.style.animationDelay = '0ms';
+                  charSpan.textContent = ch;
+                  contentEl.appendChild(charSpan);
+                }
+
+                appendCursor();
+                scrollToBottom(true);
+
+                var extra = 0;
+                if (ch === '\n')          extra = 70;
+                else if (/[.!?]/.test(ch))  extra = 55;
+                else if (/[,:;]/.test(ch))  extra = 25;
+
+                window.setTimeout(revealNextChar, charDelay + extra);
+              }
+
+              revealNextChar();
+            }
+          });
+        }
+
+        function addMessage(text, isAi, meta) {
+          if (!text || !text.trim()) return Promise.resolve(null);
+
+          var el = buildMessageElement(isAi);
+          var contentEl = el.querySelector('.chat-msg-content');
+
+          if (!contentEl) {
+            return Promise.resolve(el);
+          }
+
+          if (!isAi) {
+            contentEl.innerHTML = formatPlainMessageHtml(text);
+            scrollToBottom();
+            return Promise.resolve(el);
+          }
+
+          return animateAiMessage(contentEl, text, meta).then(function () {
+            return el;
+          });
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          if (!aiEnabled) return;
+          var txt = input.value.trim();
+          if (!txt || isSending) return;
+
+          console.log('Sending message:', txt);
+          isSending = true;
+          addMessage(stripMockTailForDisplay(txt), false);
+          input.value = '';
+          sendBtn.disabled = true;
+          sendBtn.setAttribute('aria-busy', 'true');
+          sendBtn.style.pointerEvents = 'none';
+          input.disabled = true;
+          input.setAttribute('aria-busy', 'true');
+          if (actionBtns && actionBtns.forEach) {
+            actionBtns.forEach(function (b) {
+              b.disabled = true;
+              b.style.opacity = '0.5';
+              b.style.cursor = 'not-allowed';
+            });
+          }
+          showAiComposeStatus(aiText.thinking);
+          scrollToBottom();
+
+          fetch(aiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ message: txt })
+          })
+          .then(function(res) {
+            return res.json().then(function(data) {
+              return { ok: res.ok, status: res.status, data: data };
+            });
+          })
+          .then(function(payload) {
+            var data = payload.data;
+
+            if (data && data.disabled) {
+              data.error = data.error || "AI vaqtincha o'chirilgan.";
+              setAiEnabledState(false, data.error);
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(data.error || "AI vaqtincha o'chirilgan.", true).then(function () {
+                resetAiComposeState();
+              });
+            }
+
+            if (!data || !data.success) {
+              var backendError = (data && (data.error || data.message))
+                || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
+                || "Xatolik yuz berdi.";
+
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(backendError, true, null).then(function () {
+                resetAiComposeState();
+              });
+            }
+
+            if (data && data.success) {
+              showAiComposeStatus('Yozmoqda...');
+              return addMessage(data.text, true, {
+                actions: data.actions || [],
+                interactionId: data.interaction_id,
+                feedbackEnabled: !!data.feedback_enabled
+              }).then(function () {
+                resetAiComposeState();
+                if (window.playPrimeResultPass) window.playPrimeResultPass();
+              });
+            } else if (data && data.disabled) {
+              data.error = data.error || "AI vaqtincha o'chirilgan.";
+              setAiEnabledState(false, data.error);
+              addMessage(data.error || 'AI vaqtincha o‘chirilgan.', true);
+            } else {
+              var backendError = (data && (data.error || data.message))
+                || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
+                || "Xatolik yuz berdi.";
+              addMessage(backendError, true, null);
+            }
+          })
+          .catch(function(err) {
+            console.error('AI Fetch error:', err);
+            resetAiComposeState();
+            addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true, null);
+          });
+        });
+
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+          }
+        });
+
+        // Quick Action Buttons Handler
+        var actionBtns = document.querySelectorAll('.ai-action-btn');
+        actionBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+             if (!aiEnabled || btn.disabled || isSending) return;
+
+             var msg = this.getAttribute('data-msg');
+             sendAiMessage(msg);
+          });
+        });
+      })();
+    </script>
+    @endunless
+    @endauth
+    @if($gradeSelectionLocked)
+      <section
+        class="grade-lock-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="grade-lock-title"
+        aria-describedby="grade-lock-description"
+        data-grade-lock
+      >
+        <div class="grade-lock-modal__veil" aria-hidden="true"></div>
+        <div class="grade-lock-modal__aurora grade-lock-modal__aurora--one" aria-hidden="true"></div>
+        <div class="grade-lock-modal__aurora grade-lock-modal__aurora--two" aria-hidden="true"></div>
+
+        <div class="grade-lock-modal__panel">
+          <div class="grade-lock-modal__crest" aria-hidden="true">
+            <span></span>
+          </div>
+
+          <div class="grade-lock-modal__copy">
+            <p class="grade-lock-modal__eyebrow">{{ __('public.grade_lock.eyebrow') }}</p>
+            <h2 id="grade-lock-title">{{ __('public.grade_lock.title') }}</h2>
+            <p id="grade-lock-description">
+              {{ $authUser->grade_selection_reason ?: __('public.grade_lock.description_default') }}
+            </p>
+          </div>
+
+          @if ($errors->any())
+            <div class="grade-lock-modal__error" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ $errors->first() }}</span>
+            </div>
+          @endif
+
+          <form action="{{ route('profile.grade-selection.update') }}" method="POST" class="grade-lock-modal__form" data-grade-lock-form>
+            @csrf
+            @method('PUT')
+
+            <label for="locked-grade-select">{{ __('public.grade_lock.label_new_grade') }}</label>
+            <div class="grade-lock-modal__select-shell">
+              <select id="locked-grade-select" name="grade" required autofocus>
+                <option value="">Sinfni tanlang</option>
+                @foreach ($gradeSelectionGroups as $groupLabel => $options)
+                  <optgroup label="{{ $groupLabel }}">
+                    @foreach ($options as $value => $label)
+                      <option value="{{ $value }}" @selected(old('grade') === $value)>{{ $label }}</option>
+                    @endforeach
+                  </optgroup>
+                @endforeach
+              </select>
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </div>
+
+            <div class="grade-lock-modal__actions">
+              <button type="submit" class="grade-lock-modal__submit">
+                <span>Sinfni saqlash</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </form>
+
+          <div class="grade-lock-modal__note">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Bu oynani sinf tanlamasdan yopib bo'lmaydi.</span>
+          </div>
+        </div>
+      </section>
+    @endif
+    @stack('page_scripts')
+    @if($gradeSelectionLocked)
+      <script>
+        (function () {
+          var lock = document.querySelector('[data-grade-lock]');
+          var select = document.getElementById('locked-grade-select');
+          var form = document.querySelector('[data-grade-lock-form]');
+
+          if (!lock || !select || !form) return;
+
+          document.documentElement.classList.add('grade-lock-active');
+          document.body.classList.add('grade-lock-active');
+
+          window.setTimeout(function () {
+            select.focus({ preventScroll: true });
+          }, 120);
+
+          document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              event.stopPropagation();
+              select.focus({ preventScroll: true });
+            }
+          }, true);
+
+          lock.addEventListener('click', function (event) {
+            if (event.target === lock || event.target.classList.contains('grade-lock-modal__veil')) {
+              event.preventDefault();
+              select.focus({ preventScroll: true });
+            }
+          });
+
+          form.addEventListener('submit', function () {
+            var button = form.querySelector('button[type="submit"]');
+            if (button) {
+              button.classList.add('is-loading');
+            }
+          });
+        })();
+      </script>
+    @endif
+  </body>
+</html>

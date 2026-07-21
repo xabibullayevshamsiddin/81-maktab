@@ -75,7 +75,7 @@
                         @endif
                       </td>
                       <td class="min-width"><p>{{ $post->title }}</p></td>
-                      <td class="min-width"><p>{{ $post->category->name }}</p></td>
+                      <td class="min-width"><p>{{ $post->category?->name ?? "Kategoriya yo'q" }}</p></td>
                       <td class="min-width"><p>{{ \Illuminate\Support\Str::limit($post->short_content, 80) }}</p></td>
                       <td class="min-width">
                         <div class="action">

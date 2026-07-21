@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class Teacher extends Model
@@ -46,6 +49,25 @@ class Teacher extends Model
                 $teacher->slug = Str::slug($teacher->full_name);
             }
         });
+
+        static::updating(function (Teacher $teacher): void {
+            if ($teacher->isDirty('image')) {
+                PublicStorage::delete($teacher->getOriginal('image'));
+            }
+        });
+
+        static::deleting(function (Teacher $teacher): void {
+            PublicStorage::delete($teacher->image);
+        });
+
+        static::deleted(function (Teacher $teacher): void {
+            if (Schema::hasTable('bookmarks')) {
+                Bookmark::query()
+                    ->where('bookmarkable_type', self::class)
+                    ->where('bookmarkable_id', $teacher->id)
+                    ->delete();
+            }
+        });
     }
 
     public function courses(): HasMany
@@ -61,6 +83,11 @@ class Teacher extends Model
     public function likes(): HasMany
     {
         return $this->hasMany(TeacherLike::class);
+    }
+
+    public function bookmarks(): MorphMany
+    {
+        return $this->morphMany(Bookmark::class, 'bookmarkable');
     }
 
     public function achievementItems(?int $limit = null, ?string $locale = null): array
@@ -102,9 +129,12 @@ class Teacher extends Model
     public function imageUrl(): string
     {
         if (! empty($this->image)) {
-            return app_storage_asset($this->image) ?? app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+            $url = app_storage_asset($this->image);
+            if ($url && preg_match('#^https?://#i', $url)) {
+                return $url;
+            }
         }
 
-        return app_public_asset('temp/img/how-to-be-teacher-malaysia-feature.png');
+        return app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
     }
 }

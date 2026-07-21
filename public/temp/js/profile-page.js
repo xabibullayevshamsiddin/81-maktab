@@ -4,6 +4,52 @@
 
   const profileI18n = JSON.parse(profileRoot.dataset.profileI18n || '{}');
 
+  // Global fallback handler for course request form
+  window.handleCourseRequestSubmit = async function(form) {
+    if (!form) return true;
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          Accept: 'application/json',
+        },
+        body: new FormData(form),
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_e) {
+        data = { ok: false, message: 'Server xatosi' };
+      }
+
+      if (!response.ok || !data.ok) {
+        if (window.showToast) {
+          window.showToast(data.message || 'Saqlashda xato', data.toast_type || 'error');
+        }
+        return false;
+      }
+
+      if (window.showToast) {
+        window.showToast(data.message || 'Muvaffaqiyatli saqlandi', data.toast_type || 'success');
+      }
+
+      if (data.redirect) {
+        setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 600);
+      }
+    } catch (error) {
+      if (window.showToast) {
+        window.showToast('Server xatosi', 'error');
+      }
+    }
+
+    return false;
+  };
+
   const replaceTokens = (template, params = {}) => Object.entries(params).reduce((result, [key, value]) => {
     return result.replace(`:${key}`, String(value));
   }, String(template || ''));
@@ -36,6 +82,8 @@
 
     const avatarBoxes = Array.from(rootEl.querySelectorAll('[data-profile-avatar-box]'));
     const avatarMeta = rootEl.querySelector('[data-profile-avatar-meta]');
+    const removeAvatarBtn = rootEl.querySelector('[data-profile-avatar-remove]');
+    const removeAvatarFlag = rootEl.querySelector('[data-profile-avatar-remove-flag]');
     const avatarMetaDefault = avatarMeta ? avatarMeta.textContent.trim() : '';
     let previewObjectUrl = null;
 
@@ -65,12 +113,12 @@
       if (ok) {
         box.classList.add('profile-avatar--image');
         box.style.backgroundImage = `url("${src}")`;
+        box.textContent = '';
       } else {
         box.classList.remove('profile-avatar--image');
         box.style.backgroundImage = '';
+        box.textContent = initial;
       }
-
-      box.textContent = initial;
     };
 
     const updatePreview = async (src) => {
@@ -151,6 +199,20 @@
         return;
       }
 
+      // Dinamik hajm tekshiruvi (donor rankiga qarab)
+      const maxKb = parseInt(avatarInput.dataset.profileAvatarMax || '4096', 10);
+      const maxMb = Math.round(maxKb / 1024);
+      const maxBytes = maxKb * 1024;
+      if (file.size > maxBytes) {
+        setMeta(replaceTokens(profileI18n.avatarTooBig || 'Rasm hajmi :max MB dan oshmasin (sizning rasm: :size).', { max: maxMb, size: formatSize(file.size) }), 'is-error');
+        avatarInput.value = '';
+        return;
+      }
+
+      if (removeAvatarFlag) {
+        removeAvatarFlag.value = '0';
+      }
+
       setMeta(profileI18n.preparingAvatar, 'is-processing');
 
       try {
@@ -181,6 +243,23 @@
         applyAvatarSource(box, existingSrc);
       }
     });
+
+    if (removeAvatarBtn) {
+      removeAvatarBtn.addEventListener('click', async () => {
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+          previewObjectUrl = null;
+        }
+
+        avatarInput.value = '';
+        if (removeAvatarFlag) {
+          removeAvatarFlag.value = '1';
+        }
+
+        await updatePreview('');
+        setMeta(profileI18n.avatarRemoved || avatarMetaDefault, 'is-ready');
+      });
+    }
 
     window.addEventListener('beforeunload', () => {
       if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
@@ -314,53 +393,100 @@
   bindProfileStagger(profileRoot);
   bindActivityLists(profileRoot);
 
-  document.addEventListener('submit', async (event) => {
-    const form = event.target.closest('form[data-profile-async]');
-    if (!form || !profileRoot.contains(form)) return;
+  // Avatar display — input bo'lmasa ham (masalan appearance paneli)
+  (function applyStoredAvatar() {
+    // bindAvatarInput o'zi ham apply qiladi, shuning uchun input bo'lsa skip
+    if (profileRoot.querySelector('#profile-avatar')) return;
+    const boxes = Array.from(profileRoot.querySelectorAll('[data-profile-avatar-box]'));
+    boxes.forEach(function (box) {
+      const src = box.dataset.profileAvatarUrl || '';
+      const initial = box.dataset.profileAvatarInitial || '';
+      if (src) {
+        const img = new Image();
+        img.onload = function () {
+          box.classList.add('profile-avatar--image');
+          box.style.backgroundImage = 'url("' + src + '")';
+          box.textContent = '';
+        };
+        img.onerror = function () {
+          box.classList.remove('profile-avatar--image');
+          box.style.backgroundImage = '';
+          box.textContent = initial;
+        };
+        img.src = src;
+      } else {
+        box.classList.remove('profile-avatar--image');
+        box.style.backgroundImage = '';
+        box.textContent = initial;
+      }
+    });
+  })();
 
-    event.preventDefault();
-    clearFormErrors(form);
-    setSubmitting(form, true);
-
-    try {
-      const response = await fetch(form.action, {
-        method: 'POST',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          Accept: 'application/json',
-        },
-        body: new FormData(form),
+  window.showToast = function(message, type = 'info', duration = 3500) {
+    let container = document.querySelector('.app-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'app-toast-container';
+      Object.assign(container.style, {
+        position: 'fixed',
+        top: '16px',
+        right: '16px',
+        zIndex: '99999',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        pointerEvents: 'none',
       });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.ok) {
-        renderFormErrors(form, data.errors || {});
-        window.showToast?.(data.message || profileI18n.saveError, data.toast_type || 'error');
-        return;
-      }
-
-      if (data.section && data.html) {
-        replaceSection(data.section, data.html);
-      }
-
-      if (data.user_email) {
-        syncEmailText(data.user_email);
-      }
-
-      window.showToast?.(data.message || profileI18n.saved, data.toast_type || 'success');
-
-      if (data.section === 'password' && data.password_unlocked) {
-        profileRoot.querySelector('#profile-new-password')?.focus();
-      }
-
-      if (data.section === 'email' && data.pending_email) {
-        profileRoot.querySelector('#email-code')?.focus();
-      }
-    } catch (error) {
-      window.showToast?.(profileI18n.serverError, 'error');
-    } finally {
-      setSubmitting(form, false);
+      document.body.appendChild(container);
     }
-  });
+
+    const colors = {
+      success: { bg: '#0f766e', border: '#14b8a6', icon: 'fa-solid fa-check-circle' },
+      error:   { bg: '#991b1b', border: '#dc2626', icon: 'fa-solid fa-triangle-exclamation' },
+      warning: { bg: '#92400e', border: '#f59e0b', icon: 'fa-solid fa-triangle-exclamation' },
+      info:    { bg: '#1e3a5f', border: '#2563eb', icon: 'fa-solid fa-circle-info' },
+    };
+    const theme = colors[type] || colors.info;
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      pointer-events: auto;
+      min-width: 260px;
+      max-width: 380px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: ${theme.bg};
+      color: #fff;
+      border: 1px solid ${theme.border};
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.35;
+      opacity: 0;
+      transform: translateX(12px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    `;
+    toast.innerHTML = `<i class="${theme.icon}" style="font-size:16px; opacity:0.9;"></i>
+      <span style="flex:1 1 auto;">${message}</span>`;
+
+    container.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(0)';
+    });
+
+    const remove = () => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(12px)';
+      setTimeout(() => toast.remove(), 240);
+    };
+
+    const timer = setTimeout(remove, duration);
+    toast.addEventListener('click', () => {
+      clearTimeout(timer);
+      remove();
+    });
+  };
 })();

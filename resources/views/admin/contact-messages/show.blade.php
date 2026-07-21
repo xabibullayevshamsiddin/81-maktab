@@ -76,6 +76,15 @@
               <h5 class="mb-3 text-primary">Murojaat matni:</h5>
               <div class="p-4 bg-light rounded border mb-4" style="font-size:16px; line-height:1.6; white-space: pre-wrap;">{{ $message->message }}</div>
 
+              @if($message->image_path)
+                <h5 class="mb-3 text-primary">Biriktirilgan rasm:</h5>
+                <div class="mb-4">
+                  <a href="{{ $message->imageUrl() }}" target="_blank">
+                    <img src="{{ $message->imageUrl() }}" alt="Murojaat rasmi" class="img-fluid rounded border" style="max-height: 450px; max-width: 100%; object-fit: contain;">
+                  </a>
+                </div>
+              @endif
+
               @if($message->read_at)
                 <div class="alert alert-light border shadow-sm mb-0" style="font-size:13px;">
                   <i class="fa-solid fa-eye me-1"></i>

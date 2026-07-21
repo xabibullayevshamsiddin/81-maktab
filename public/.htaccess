@@ -39,6 +39,7 @@
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /81-maktab/public/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
@@ -48,6 +49,11 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
+
+    # Serve storage files directly from storage/app/public (OSPanel Junction fix)
+    RewriteCond %{REQUEST_URI} ^/81-maktab/public/storage/(.*)$
+    RewriteCond %{DOCUMENT_ROOT}/81-maktab/storage/app/public/%1 -f
+    RewriteRule ^storage/(.*)$ ../../storage/app/public/$1 [L]
 
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d

@@ -1,4 +1,4 @@
-<x-loyouts.main title="81-IDUM | Kursga yozilishlar">
+<x-layouts.main title="81-IDUM | Kursga yozilishlar">
   <section class="news-hero profile-hero">
     <div class="container">
       <div class="news-hero-content reveal">

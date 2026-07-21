@@ -36,6 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\EnsureStudentGradeSelectionIsResolved::class,
         ],
 
         'api' => [
@@ -67,5 +68,6 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\CheckRole::class,
         'admin' => \App\Http\Middleware\CheckIsAdmin::class,
         'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+        'page.lock' => \App\Http\Middleware\CheckPageLock::class,
     ];
 }
