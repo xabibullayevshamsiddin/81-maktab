@@ -5,11 +5,11 @@
     <div class="prime-confirm__icon" aria-hidden="true">
       <span class="prime-confirm__icon-inner">!</span>
     </div>
-    <h2 id="prime-confirm-title" class="prime-confirm__title">Tasdiqlash</h2>
+    <h2 id="prime-confirm-title" class="prime-confirm__title">{{ __('public.donation.confirm_title') }}</h2>
     <p class="prime-confirm__message" id="prime-confirm-message"></p>
     <div class="prime-confirm__actions">
-      <button type="button" class="prime-confirm__btn prime-confirm__btn--ghost" data-prime-confirm-cancel>Bekor qilish</button>
-      <button type="button" class="prime-confirm__btn prime-confirm__btn--danger" data-prime-confirm-ok>Ha, davom etish</button>
+      <button type="button" class="prime-confirm__btn prime-confirm__btn--ghost" data-prime-confirm-cancel>{{ __('public.donation.confirm_cancel') }}</button>
+      <button type="button" class="prime-confirm__btn prime-confirm__btn--danger" data-prime-confirm-ok>{{ __('public.donation.confirm_ok') }}</button>
     </div>
   </div>
 </div>

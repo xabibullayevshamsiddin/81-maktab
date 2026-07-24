@@ -1,5 +1,4 @@
-<x-layouts.main title="Tolov muvaffaqiyatli — 81-IDUM">
-
+<x-layouts.main :title="__('public.donation.success_title').' — 81-IDUM'">
 @push("page_styles")
 <style>
 .success-card { max-width: 450px; margin: 3rem auto; padding: 3rem 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 2rem; box-shadow: var(--shadow); text-align: center; }
@@ -11,15 +10,16 @@
 <div class="success-card">
     @php $color = $config["badge_color"] ?? "#4338ca"; @endphp
     <div style="font-size: 4rem;">🎉</div>
-    <h2>Tolov muvaffaqiyatli amalga oshirildi!</h2>
+    <h2>{{ __('public.donation.success_title') }}</h2>
     <span style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1.5rem; border-radius:9999px; font-weight:700; font-size:1.1rem; background:{{$color}}20; color:{{$color}};">
-        <i class="{{ $config["badge_icon"] ?? "" }}"></i> {{ $config["label"] ?? "" }}
+        <i class="{{ $config['badge_icon'] ?? '' }}"></i> {{ $config['label'] ?? '' }}
     </span>
     <p style="margin-top:1rem;">
-        Sizning {{ $config["label"] ?? "" }} rankingiz aktivlashtirildi! <br>
-        Barcha imtiyozlardan foydalanishingiz mumkin.
+        {{ __('public.donation.success_activated', ['label' => $config['label'] ?? '']) }}<br>
+        {{ __('public.donation.success_enjoy') }}
     </p>
-    <a href="{{ route("home") }}" style="display:inline-block; padding:0.8rem 2rem; border-radius:9999px; background:var(--primary); color:#fff; text-decoration:none; font-weight:600;">Bosh sahifaga qaytish</a>
+    <a href="{{ route('home') }}" style="display:inline-block; padding:0.8rem 2rem; border-radius:9999px; background:var(--primary); color:#fff; text-decoration:none; font-weight:600;">
+        {{ __('public.donation.success_home') }}
+    </a>
 </div>
-
 </x-loyouts.main>

@@ -1,5 +1,4 @@
-<x-layouts.main title="Sotib olish — 81-IDUM">
-
+<x-layouts.main :title="__('public.donation.checkout_title').' — 81-IDUM'">
 @push("page_styles")
 <style>
 .checkout-wrapper { max-width: 480px; margin: 0 auto; padding: 100px 1rem 2rem; }
@@ -30,33 +29,25 @@
             $label = $config["label"];
             $price = number_format($config["price"], 0, ".", " ");
         @endphp
-
-        <div class="icon" style="color: {{ $color }};">
-            <i class="{{ $iconClass }}"></i>
-        </div>
+        <div class="icon" style="color: {{ $color }};"><i class="{{ $iconClass }}"></i></div>
         <h2>{{ $label }}</h2>
         <div class="price-text">{{ $price }} <small>som</small></div>
-
         <div class="steps">
-            <h4>Qanday olish mumkin?</h4>
+            <h4>{{ __('public.donation.checkout_how_title') }}</h4>
             <ol>
-                <li><strong>1.</strong> <span>Telegram orqali @NgLord_404 ga yozing</span></li>
-                <li><strong>2.</strong> <span>"{{ $label }}" rankini sotib olmoqchi ekanligingizni ayting</span></li>
-                <li><strong>3.</strong> <span>Tolov qiling va 8 belgili kodni oling</span></li>
-                <li><strong>4.</strong> <span>Kodni saytga kiriting va rankingiz aktivlashsin!</span></li>
+                <li><strong>1.</strong> <span>{{ __('public.donation.checkout_step1') }}</span></li>
+                <li><strong>2.</strong> <span>{{ __('public.donation.checkout_step2', ['label' => $label]) }}</span></li>
+                <li><strong>3.</strong> <span>{{ __('public.donation.checkout_step3') }}</span></li>
+                <li><strong>4.</strong> <span>{{ __('public.donation.checkout_step4') }}</span></li>
             </ol>
         </div>
-
         <a href="https://t.me/NgLord_404" target="_blank" class="btn-tg">
-            <i class="fa-brands fa-telegram"></i> @NgLord_404 ga yozish
+            <i class="fa-brands fa-telegram"></i> {{ __('public.donation.checkout_tg_btn') }}
         </a>
-
-        <div class="divider"><hr><span>yoki</span><hr></div>
-
-        <a href="{{ route("donation.activate.form") }}" class="btn-code">
-            <i class="fa-solid fa-key"></i> Kodni kiritish
+        <div class="divider"><hr><span>{{ __('public.donation.checkout_or') }}</span><hr></div>
+        <a href="{{ route('donation.activate.form') }}" class="btn-code">
+            <i class="fa-solid fa-key"></i> {{ __('public.donation.checkout_code_btn') }}
         </a>
     </div>
 </div>
-
 </x-loyouts.main>

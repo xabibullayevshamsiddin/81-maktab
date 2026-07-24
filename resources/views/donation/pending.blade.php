@@ -1,5 +1,4 @@
-<x-layouts.main title="Tolov kutilmoqda — 81-IDUM">
-
+<x-layouts.main :title="__('public.donation.pending_title').' — 81-IDUM'">
 @push("page_styles")
 <style>
 .pending-card { max-width: 450px; margin: 3rem auto; padding: 3rem 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 2rem; box-shadow: var(--shadow); text-align: center; }
@@ -12,9 +11,10 @@
 
 <div class="pending-card">
     <div class="spinner"></div>
-    <h2>Tolov kutilmoqda</h2>
-    <p>Tolovingiz qayta ishlanmoqda. <br> Bu bir necha daqiqa olishi mumkin.</p>
-    <a href="{{ route("donation.index") }}" style="display:inline-block; margin-top:1.5rem; color:var(--primary);">Donation sahifasiga qaytish</a>
+    <h2>{{ __('public.donation.pending_title') }}</h2>
+    <p>{{ __('public.donation.pending_text') }}</p>
+    <a href="{{ route('donation.index') }}" style="display:inline-block; margin-top:1.5rem; color:var(--primary);">
+        {{ __('public.donation.pending_back') }}
+    </a>
 </div>
-
 </x-loyouts.main>

@@ -74,11 +74,13 @@
     ],
     [
       'icon' => 'fa-solid fa-star',
-      'label' => 'Donor reytingi',
+      'label' => __('profile.facts.donor_rank.label'),
       'value' => $user->isDonor()
         ? $user->donorRankLabel() . ' ' . $user->donorBadgeHtml()
-        : 'Mavjud emas',
-      'hint' => $user->isDonor() && $user->donation_rank_expires_at ? 'Tugash vaqti: ' . $user->donation_rank_expires_at->diffForHumans() : 'Donor bolish orqali imtiyozlarga ega boling',
+        : __('profile.facts.donor_rank.value_none'),
+      'hint' => $user->isDonor() && $user->donation_rank_expires_at
+        ? __('profile.facts.donor_rank.hint_expires', ['time' => $user->donation_rank_expires_at->diffForHumans()])
+        : __('profile.facts.donor_rank.hint_none'),
     ],
   ];
 
@@ -251,7 +253,7 @@
           </a>
           <a href="{{ route('profile.show', ['panel' => 'appearance']) }}" class="profile-panel-tab {{ $profilePanel === 'appearance' ? 'is-active' : '' }}">
             <i class="fa-solid fa-palette" style="color: #8b5cf6;"></i>
-            <span>Donat korinishi</span>
+            <span>{{ __('profile.appearance_tab') }}</span>
           </a>
         </nav>
       </section>
@@ -304,7 +306,7 @@
             <!-- Update Form Column (Right) -->
             <div class="signin-card profile-card">
               <div class="profile-card-head">
-                <span class="profile-card-kicker">Tahrirlash</span>
+                <span class="profile-card-kicker">{{ __('profile.main_card.edit_kicker') }}</span>
                 <h2>{{ __('profile.main_card.title') }}</h2>
                 <p class="signin-subtitle">{{ __('profile.main_card.subtitle') }}</p>
               </div>
@@ -336,7 +338,7 @@
                       @if($profileAvatarUrl)
                         <div class="profile-actions-row profile-avatar-actions">
                           <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
-                            Rasmni olib tashlash
+                            {{ __('profile.main_card.avatar_remove') }}
                           </button>
                         </div>
                       @endif
@@ -351,8 +353,8 @@
 
                 <div class="profile-form-grid">
                   <div class="profile-field">
-                    <label for="profile-first-name">Ism</label>
-                    <span class="profile-field-hint">Faqat harflar, probel va defis</span>
+                    <label for="profile-first-name">{{ __('profile.main_card.first_name_label') }}</label>
+                    <span class="profile-field-hint">{{ __('profile.main_card.first_name_hint') }}</span>
                     <input type="text" id="profile-first-name" name="first_name"
                       value="{{ old('first_name', $user->first_name) }}" required maxlength="120"
                       autocomplete="given-name" />
@@ -361,8 +363,8 @@
                     @enderror
                   </div>
                   <div class="profile-field">
-                    <label for="profile-last-name">Familiya</label>
-                    <span class="profile-field-hint">Faqat harflar, probel va defis</span>
+                    <label for="profile-last-name">{{ __('profile.main_card.last_name_label') }}</label>
+                    <span class="profile-field-hint">{{ __('profile.main_card.last_name_hint') }}</span>
                     <input type="text" id="profile-last-name" name="last_name"
                       value="{{ old('last_name', $user->last_name) }}" required maxlength="120"
                       autocomplete="family-name" />
@@ -400,7 +402,7 @@
                 <div class="profile-block-head">
                   <div class="profile-block-copy">
                     <h3><i class="fa-solid fa-pen-nib"></i> {{ __('public.profile_hub.my_exams_title') }}</h3>
-                    <p>Siz yaratgan imtihonlar va o'quvchilar natijalarini boshqaring.</p>
+                    <p>{{ __('profile.activity_manage_exams_text') }}</p>
                   </div>
                   <span class="profile-section-count">{{ $createdExams->count() }}</span>
                 </div>
@@ -426,8 +428,8 @@
                 @endif
 
                 <div class="profile-actions-row">
-                  <a href="{{ route('profile.exams.index') }}" class="btn btn-sm">Boshqarish</a>
-                  <a href="{{ route('profile.exams.create') }}" class="btn btn-outline btn-sm">Yangi imtihon</a>
+                  <a href="{{ route('profile.exams.index') }}" class="btn btn-sm">{{ __('profile.manage') }}</a>
+                  <a href="{{ route('profile.exams.create') }}" class="btn btn-outline btn-sm">{{ __('profile.new_exam') }}</a>
                 </div>
               </section>
             @endif
@@ -452,16 +454,16 @@
               <div class="profile-block-head">
                 <div class="profile-block-copy">
                   <h3><i class="fa-solid fa-chart-column"></i> {{ __('public.profile_hub.my_results_title') }}</h3>
-                  <p>Topshirgan imtihonlaringiz endi alohida sahifada jamlanadi, profil esa ixcham qoladi.</p>
+                  <p>{{ __('profile.activity_results_text') }}</p>
                 </div>
-                <span class="profile-section-count">{{ $examResultsCount }} ta</span>
+                <span class="profile-section-count">{{ $examResultsCount }} {{ __('profile.results_count_suffix') }}</span>
               </div>
 
               <div class="profile-actions-row">
                 <a href="{{ route('profile.results.index') }}" class="btn btn-sm">{{ __('public.profile_results.page_title') }}</a>
                 @if($examResultsCount > 0)
                   <a href="{{ route('profile.results.export') }}" class="btn btn-outline btn-sm">
-                    <i class="fa-solid fa-file-csv"></i> Barchasini Excel (CSV)
+                    <i class="fa-solid fa-file-csv"></i> {{ __('profile.export_all_csv') }}
                   </a>
                 @endif
               </div>
@@ -476,8 +478,7 @@
                     @if($user->isDonor())
                       <p style="font-size:0.85rem; color:var(--muted); margin-top:4px;">
                         <i class="fa-solid fa-gem" style="color:{{ $user->donorUsernameColor() ?? '#6366f1' }};"></i>
-                        Donor imtiyoz: <strong>{{ $user->donorCourseLimit() }} ta</strong> kurs ochish mumkin
-                        ({{ $user->donorRankLabel() }})
+                        {{ __('profile.donor_course_limit', ['count' => $user->donorCourseLimit(), 'rank' => $user->donorRankLabel()]) }}
                       </p>
                     @endif
                   </div>
@@ -485,7 +486,7 @@
                 @if($user->hasReachedCourseOpenLimit())
                   <p class="profile-empty" style="margin:0;">
                     @if($user->isDonor())
-                      Donor imtiyozlaringiz bilan jami <strong>{{ $user->donorCourseLimit() }}</strong> ta kurs ochdingiz.
+                      {{ __('profile.donor_course_limit_reached', ['count' => $user->donorCourseLimit()]) }}
                     @else
                       {{ __('profile.course_open.limit_reached') }}
                     @endif
@@ -613,7 +614,7 @@
               @if($postCommentCount > $activityPreviewLimit)
                 <div class="profile-actions-row profile-actions-row--activity">
                   <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
-                    Yana ko'rsatish
+                    {{ __('profile.show_more') }}
                   </button>
                 </div>
               @endif
@@ -646,7 +647,7 @@
               @if($teacherCommentCount > $activityPreviewLimit)
                 <div class="profile-actions-row profile-actions-row--activity">
                   <button type="button" class="btn btn-outline btn-sm" data-activity-more data-more-step="{{ $activityStep }}">
-                    Yana ko'rsatish
+                    {{ __('profile.show_more') }}
                   </button>
                 </div>
               @endif
@@ -723,9 +724,9 @@
                       @if($course->status === \App\Models\Course::STATUS_DRAFT && $course->rejection_reason)
                         <div class="profile-rejection-block mt-10">
                           <span class="profile-tag profile-tag--rejected mb-5"
-                            style="display: inline-block;">Rad etilgan</span>
+                            style="display: inline-block;">{{ __('profile.rejection_label') }}</span>
                           <p class="profile-enroll-note" style="color: #b91c1c; border-left-color: #b91c1c;">
-                            <strong>Sabab:</strong> {{ $course->rejection_reason }}
+                            <strong>{{ __('profile.rejection_reason_label') }}:</strong> {{ $course->rejection_reason }}
                           </p>
                         </div>
                       @endif
@@ -737,7 +738,7 @@
                       <div class="profile-actions-row" style="margin-top:10px;">
                         @if($user->isTeacher() && (int) $course->created_by === (int) $user->id)
                           <a href="{{ route('teacher.courses.edit', $course) }}" class="btn btn-outline btn-sm">
-                            <i class="fa-solid fa-pen"></i> Tahrirlash
+                            <i class="fa-solid fa-pen"></i> {{ __('profile.edit') }}
                           </a>
                           <a href="{{ route('courses.show', $course) }}"
                             class="btn btn-sm">{{ __('public.common.details') }}</a>
@@ -781,7 +782,7 @@
       if (!btn || btn.disabled) return;
       btn.disabled = true;
       const originalText = btn.textContent;
-      btn.textContent = 'Yuborilmoqda...';
+      btn.textContent = '{{ __('profile.submitting') }}';
 
       const form = btn.closest('form');
       if (!form) {

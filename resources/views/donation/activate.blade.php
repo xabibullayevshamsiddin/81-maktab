@@ -1,5 +1,4 @@
-<x-layouts.main title="Kalit aktivlashtirish — 81-IDUM">
-
+<x-layouts.main :title="__('public.donation.activate_title').' — 81-IDUM'">
 @push("page_styles")
 <style>
 .activate-card { max-width: 450px; margin: 0 auto; padding: 110px 2.5rem 2.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 1.5rem; box-shadow: var(--shadow); text-align: center; }
@@ -18,29 +17,30 @@
 
 <div class="activate-card">
     <div style="font-size: 3rem; margin-bottom: 1rem;">🔑</div>
-    <h2>Aktivatsiya kodini kiriting</h2>
-    <p>Telegram orqali sotib olgan kodingizni kiriting</p>
+    <h2>{{ __('public.donation.activate_title') }}</h2>
+    <p>{{ __('public.donation.activate_subtitle') }}</p>
 
-    <form method="POST" action="{{ route("donation.activate") }}">
+    <form method="POST" action="{{ route('donation.activate') }}">
         @csrf
         <input type="text" name="code" class="code-input" placeholder="XXXX-XXXX" maxlength="8" autocomplete="off" required>
-        <button type="submit" class="btn-activate"><i class="fa-solid fa-check"></i> Aktivlashtirish</button>
+        <button type="submit" class="btn-activate">
+            <i class="fa-solid fa-check"></i> {{ __('public.donation.activate_btn') }}
+        </button>
     </form>
 
     <div class="how-to">
-        <h4>Qanday olish mumkin?</h4>
+        <h4>{{ __('public.donation.activate_how_title') }}</h4>
         <ol>
-            <li>Telegram orqali @NgLord_404 ga yozing</li>
-            <li>Qaysi rank va necha oylik kerakligini ayting</li>
-            <li>Tolovni amalga oshiring</li>
-            <li>8 belgili kodni olasiz</li>
-            <li>Yuqoridagi maydonga kodni kiriting</li>
-            <li>Rankingiz aktivlashadi!</li>
+            <li>{{ __('public.donation.activate_step1') }}</li>
+            <li>{{ __('public.donation.activate_step2') }}</li>
+            <li>{{ __('public.donation.activate_step3') }}</li>
+            <li>{{ __('public.donation.activate_step4') }}</li>
+            <li>{{ __('public.donation.activate_step5') }}</li>
+            <li>{{ __('public.donation.activate_step6') }}</li>
         </ol>
         <a href="https://t.me/NgLord_404" target="_blank" style="display:inline-flex; align-items:center; gap:0.5rem; margin-top:1rem; padding:0.7rem 1.5rem; background:#1e96e1; color:#fff; border-radius:9999px; text-decoration:none; font-weight:600;">
-            <i class="fa-brands fa-telegram"></i> @NgLord_404 ga yozish
+            <i class="fa-brands fa-telegram"></i> {{ __('public.donation.activate_tg_btn') }}
         </a>
     </div>
 </div>
-
 </x-loyouts.main>

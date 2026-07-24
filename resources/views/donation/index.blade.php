@@ -106,7 +106,7 @@
         ["check" => true, "text" => "Premium badge"],
         ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish ⚡"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
-        ["check" => true, "text" => "Top donorlar ro'yhati"],
+        ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
     ];
     $vipFeatures = [
@@ -116,18 +116,18 @@
         ["check" => true, "text" => "VIP badge"],
         ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish ⚡"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
-        ["check" => true, "text" => "Top donorlar ro'yhati"],
+        ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "text" => "Prioritet support"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
     ];
 @endphp
 
 <div class="donation-hero">
-    <h1>81-IDUM ni qollab-quvvatlang</h1>
-    <p>Sizning donatlaringiz maktab saytini yanada yaxshilash va server xarajatlarini qoplash uchun ishlatiladi.</p>
+    <h1>{{ __('public.donation.index_hero_title') }}</h1>
+    <p>{{ __('public.donation.index_hero_text') }}</p>
     <div style="margin-top: 1.25rem;">
         <a href="{{ route('donation.themes') }}" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1.2rem; background:rgba(255,255,255,0.15); color:#fff; border-radius:999px; font-weight:700; font-size:0.9rem; text-decoration:none; backdrop-filter:blur(6px); transition:background 0.2s;">
-            <i class="fa-solid fa-palette"></i> Temalar galereyasini ko'rish
+            <i class="fa-solid fa-palette"></i> {{ __('public.donation.showcase_section_title') }}
         </a>
     </div>
 </div>
@@ -192,24 +192,24 @@
 
                     @if($alreadyHas)
                         <div style="padding:0.6rem; border-radius:12px; background:#22c55e15; border:1px solid #22c55e30; color:#16a34a; font-weight:600; font-size:0.85rem; text-align:center;">
-                            <i class="fa-solid fa-check-circle"></i> Siz allaqachon {{ $label }} olingan
+                            <i class="fa-solid fa-check-circle"></i> {{ __('public.donation.index_already_has', ['label' => $label]) }}
                         </div>
                     
                     @else
                         <a href="{{ route("donation.checkout", $key) }}" class="btn-select" style="background: {{ $color }};">
-                            <i class="{{ $iconClass }}"></i> {{ $label }}ga aylanish
+                            <i class="{{ $iconClass }}"></i> {{ __('public.donation.index_become', ['label' => $label]) }}
                         </a>
                     @endif
                 @endauth
                 @guest
-                    <a href="{{ route("login") }}" class="btn-select" style="background: #0d3f78;">Kirish</a>
+                    <a href="{{ route('login') }}" class="btn-select" style="background: #0d3f78;">{{ __('public.common.login') }}</a>
                 @endguest
             </div>
         @endforeach
     </div>
 
     <div class="top-donors">
-        <h3>Top donorlar</h3>
+        <h3>{{ __('public.donation.index_top_donors') }}</h3>
         @forelse($topDonors as $index => $donor)
             <div class="donor-item">
                 <span class="pos">#{{ $index + 1 }}</span>
@@ -219,19 +219,19 @@
                 <span class="amt">{{ number_format($donor->total_donated, 0, ".", " ") }} som</span>
             </div>
         @empty
-            <p style="color:#5e7088;">Hali donorlar mavjud emas. Birinchi donor boling!</p>
+            <p style="color:#5e7088;">{{ __('public.donation.index_no_donors') }}</p>
         @endforelse
     </div>
 
     <div class="telegram-section">
         <div style="font-size: 2rem; margin-bottom: 0.5rem;">💬</div>
-        <h3>Kod orqali aktivlashtirish</h3>
-        <p>Agar siz Telegram orqali tolov qilgan bolsangiz, kodingizni kiriting:</p>
+        <h3>{{ __('public.donation.index_tg_title') }}</h3>
+        <p>{{ __('public.donation.index_tg_text') }}</p>
         <a href="{{ route("donation.activate.form") }}" class="btn-tg">
-            <i class="fa-brands fa-telegram"></i> Kodni kiritish
+            <i class="fa-brands fa-telegram"></i> {{ __('public.donation.index_tg_btn') }}
         </a>
         <p style="font-size: 0.85rem; margin-top: 0.75rem;">
-            Sotib olish uchun: <a href="https://t.me/NgLord_404" target="_blank" style="color:#0d3f78;">@NgLord_404</a>
+            {{ __('public.donation.index_tg_contact') }} <a href="https://t.me/NgLord_404" target="_blank" style="color:#0d3f78;">@NgLord_404</a>
         </p>
     </div>
 </div>

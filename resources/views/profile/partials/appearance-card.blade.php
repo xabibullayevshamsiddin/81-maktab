@@ -262,9 +262,9 @@
 
   {{-- ====== TEMALAR BO'LIMI (to'liq kenglik) ====== --}}
   <div class="ap-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-    <span><i class="fa-solid fa-palette"></i> Mavjud temalar</span>
+    <span><i class="fa-solid fa-palette"></i> {{ __('profile.appearance.themes_title') }}</span>
     <a href="{{ route('donation.themes') }}" style="font-size:0.65rem; font-weight:700; color:var(--primary); text-decoration:none;">
-      Barchasini ko'rish <i class="fa-solid fa-arrow-right" style="font-size:0.55rem;"></i>
+      {{ __('profile.appearance.themes_view_all') }} <i class="fa-solid fa-arrow-right" style="font-size:0.55rem;"></i>
     </a>
   </div>
   <div class="ap-theme-grid">
@@ -282,9 +282,9 @@
       @endphp
       <label class="ap-theme-card {{ $cardClass }}" style="--atc-color: {{ $rc }};">
         @if($isAdminTheme)
-          <span class="atc-badge atc-badge--admin">Admin</span>
+          <span class="atc-badge atc-badge--admin">{{ __('profile.appearance.tag_admin') }}</span>
         @elseif($isPlain)
-          <span class="atc-badge atc-badge--free">Bepul</span>
+          <span class="atc-badge atc-badge--free">{{ __('profile.appearance.tag_free') }}</span>
         @endif
         <span class="atc-check"><i class="fa-solid fa-check"></i></span>
         <input type="radio" name="donor_theme" value="{{ $key }}"
@@ -294,11 +294,11 @@
         <div class="atc-name" style="color:{{ $rc }};">{{ $rl }}</div>
         <div class="atc-status" data-status-allow="{{ $allowed ? '1' : '0' }}">
           @if($active)
-            <i class="fa-solid fa-check"></i> Aktiv
+            <i class="fa-solid fa-check"></i> {{ __('profile.appearance.theme_active') }}
           @elseif($allowed)
-            <i class="fa-solid fa-circle"></i> Tanlash
+            <i class="fa-solid fa-circle"></i> {{ __('profile.appearance.theme_select') }}
           @else
-            <i class="fa-solid fa-lock"></i> Qulflangan
+            <i class="fa-solid fa-lock"></i> {{ __('profile.appearance.theme_locked') }}
           @endif
         </div>
       </label>
@@ -307,13 +307,13 @@
   </div>
 
   {{-- ====== PREVIEW BO'LIMI ====== --}}
-  <div class="ap-section-title"><i class="fa-solid fa-eye"></i> Korinish preview</div>
+  <div class="ap-section-title"><i class="fa-solid fa-eye"></i> {{ __('profile.appearance.preview_title') }}</div>
   <div class="ap-preview" style="--prev-color: {{ $themeColor }};">
     @php $canPreview = $themeAllowed[$currentTheme] ?? false; @endphp
     @if($canPreview)
       <div class="ap-preview-row">
         <div class="ap-preview-box">
-          <div class="apb-label">Profil</div>
+          <div class="apb-label">{{ __('profile.appearance.preview_profile') }}</div>
           <div class="apb-name"><i class="{{ $themeIcon }}" style="font-size:0.75rem;"></i> {{ $user->name ?? $user->buildNameFromParts() }}</div>
           @if($donorIsActive)
             {!! $user->donorBadgeHtml() !!}
@@ -322,94 +322,94 @@
         <div class="ap-chat-msg">
           <div class="ap-chat-av">{{ mb_substr($themeLabel, 0, 1) }}</div>
           <div>
-            <div class="ap-chat-name">{{ $themeLabel }} foydalanuvchi</div>
-            <div class="ap-chat-text">Chatdagi xabar ko'rinishi</div>
+            <div class="ap-chat-name">{{ __('profile.appearance.preview_chat_user', ['theme' => $themeLabel]) }}</div>
+            <div class="ap-chat-text">{{ __('profile.appearance.preview_chat') }}</div>
           </div>
         </div>
       </div>
     @else
       <div style="padding:0.75rem; text-align:center;">
-        <p style="color:var(--muted); font-size:0.8rem; margin:0;">Donor boling va profilingizni bezang!</p>
-        <a href="{{ route('donation.index') }}" class="btn btn-sm" style="margin-top:0.5rem;"><i class="fa-solid fa-star"></i> Donat qilish</a>
+        <p style="color:var(--muted); font-size:0.8rem; margin:0;">{{ __('profile.appearance.preview_locked') }}</p>
+        <a href="{{ route('donation.index') }}" class="btn btn-sm" style="margin-top:0.5rem;"><i class="fa-solid fa-star"></i> {{ __('profile.appearance.preview_donate_btn') }}</a>
       </div>
     @endif
   </div>
 
   {{-- ====== SOZLAMALAR BO'LIMI ====== --}}
-  <div class="ap-section-title"><i class="fa-solid fa-sliders"></i> Sozlamalar</div>
+  <div class="ap-section-title"><i class="fa-solid fa-sliders"></i> {{ __('profile.appearance.settings_title') }}</div>
   <div class="ap-settings-grid">
     <div class="ap-setting-row">
-      <div><div class="asr-label">Badge stili</div><div class="asr-desc">Badge korinishi</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.badge_style_label') }}</div><div class="asr-desc">{{ __('profile.appearance.badge_style_desc') }}</div></div>
       <select name="badge_style">
-        <option value="default" {{ ($user->badge_style??"default")=="default"?"selected":"" }}>Standart</option>
-        <option value="pill" {{ ($user->badge_style??"")=="pill"?"selected":"" }}>Uzun</option>
-        <option value="icon" {{ ($user->badge_style??"")=="icon"?"selected":"" }}>Ikonka</option>
+        <option value="default" {{ ($user->badge_style??"default")=="default"?"selected":"" }}>{{ __('profile.appearance.badge_style_default') }}</option>
+        <option value="pill" {{ ($user->badge_style??"")=="pill"?"selected":"" }}>{{ __('profile.appearance.badge_style_pill') }}</option>
+        <option value="icon" {{ ($user->badge_style??"")=="icon"?"selected":"" }}>{{ __('profile.appearance.badge_style_icon') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Izoh stili</div><div class="asr-desc">Izoxda ajratish</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.comment_style_label') }}</div><div class="asr-desc">{{ __('profile.appearance.comment_style_desc') }}</div></div>
       <select name="comment_style">
-        <option value="border" {{ ($user->comment_style??"border")=="border"?"selected":"" }}>Chet chiziq</option>
-        <option value="filled" {{ ($user->comment_style??"")=="filled"?"selected":"" }}>Fon bilan</option>
+        <option value="border" {{ ($user->comment_style??"border")=="border"?"selected":"" }}>{{ __('profile.appearance.comment_style_border') }}</option>
+        <option value="filled" {{ ($user->comment_style??"")=="filled"?"selected":"" }}>{{ __('profile.appearance.comment_style_filled') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Chatda badge</div><div class="asr-desc">Chatda korsatish</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.chat_badge_label') }}</div><div class="asr-desc">{{ __('profile.appearance.chat_badge_desc') }}</div></div>
       <select name="chat_style">
-        <option value="show" {{ ($user->chat_style??"show")=="show"?"selected":"" }}>Korsatilsin</option>
-        <option value="hide" {{ ($user->chat_style??"")=="hide"?"selected":"" }}>Yashirilsin</option>
+        <option value="show" {{ ($user->chat_style??"show")=="show"?"selected":"" }}>{{ __('profile.appearance.chat_badge_show') }}</option>
+        <option value="hide" {{ ($user->chat_style??"")=="hide"?"selected":"" }}>{{ __('profile.appearance.chat_badge_hide') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Qolgan vaqt</div><div class="asr-desc">Badgeda kun korsatish</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.expiry_label') }}</div><div class="asr-desc">{{ __('profile.appearance.expiry_desc') }}</div></div>
       <select name="show_expiry_badge">
-        <option value="1" {{ ($user->show_expiry_badge??"1")=="1"?"selected":"" }}>Korsatilsin</option>
-        <option value="0" {{ ($user->show_expiry_badge??"")=="0"?"selected":"" }}>Yashirilsin</option>
+        <option value="1" {{ ($user->show_expiry_badge??"1")=="1"?"selected":"" }}>{{ __('profile.appearance.expiry_show') }}</option>
+        <option value="0" {{ ($user->show_expiry_badge??"")=="0"?"selected":"" }}>{{ __('profile.appearance.expiry_hide') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Ism qalinligi</div><div class="asr-desc">Ism qalinligi</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.font_weight_label') }}</div><div class="asr-desc">{{ __('profile.appearance.font_weight_label') }}</div></div>
       <select name="name_font_weight">
-        <option value="600" {{ ($user->name_font_weight??"700")=="600"?"selected":"" }}>Normal</option>
-        <option value="700" {{ ($user->name_font_weight??"700")=="700"?"selected":"" }}>Qalin</option>
-        <option value="800" {{ ($user->name_font_weight??"")=="800"?"selected":"" }}>Juda qalin</option>
+        <option value="600" {{ ($user->name_font_weight??"700")=="600"?"selected":"" }}>{{ __('profile.appearance.font_weight_normal') }}</option>
+        <option value="700" {{ ($user->name_font_weight??"700")=="700"?"selected":"" }}>{{ __('profile.appearance.font_weight_bold') }}</option>
+        <option value="800" {{ ($user->name_font_weight??"")=="800"?"selected":"" }}>{{ __('profile.appearance.font_weight_bolder') }}</option>
       </select>
     </div>
     @if($user->isDonor())
     <div class="ap-setting-row">
-      <div><div class="asr-label">Sichqoncha (Cursor)</div><div class="asr-desc">Saytda maxsus cursor animatsiyasi</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.cursor_label') }}</div><div class="asr-desc">{{ __('profile.appearance.cursor_desc') }}</div></div>
       <select name="donor_cursor_animation">
-        <option value="1" {{ $user->donor_cursor_animation ? "selected" : "" }}>Yoqilgan</option>
-        <option value="0" {{ !$user->donor_cursor_animation ? "selected" : "" }}>O'chirilgan</option>
+        <option value="1" {{ $user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_on') }}</option>
+        <option value="0" {{ !$user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_off') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Profil fon turi</div><div class="asr-desc">Profil sahifasi background</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.bg_label') }}</div><div class="asr-desc">{{ __('profile.appearance.bg_desc') }}</div></div>
       <select name="profile_bg_style">
-        <option value="plain"    {{ ($user->profile_bg_style??'plain')=='plain'   ?'selected':'' }}>Oddiy</option>
-        <option value="gradient" {{ ($user->profile_bg_style??'')=='gradient'     ?'selected':'' }}>Gradient</option>
-        <option value="mesh"     {{ ($user->profile_bg_style??'')=='mesh'         ?'selected':'' }}>Mesh to'r</option>
-        <option value="aurora"   {{ ($user->profile_bg_style??'')=='aurora'       ?'selected':'' }}>Aurora</option>
+        <option value="plain"    {{ ($user->profile_bg_style??'plain')=='plain'   ?'selected':'' }}>{{ __('profile.appearance.bg_plain') }}</option>
+        <option value="gradient" {{ ($user->profile_bg_style??'')=='gradient'     ?'selected':'' }}>{{ __('profile.appearance.bg_gradient') }}</option>
+        <option value="mesh"     {{ ($user->profile_bg_style??'')=='mesh'         ?'selected':'' }}>{{ __('profile.appearance.bg_mesh') }}</option>
+        <option value="aurora"   {{ ($user->profile_bg_style??'')=='aurora'       ?'selected':'' }}>{{ __('profile.appearance.bg_aurora') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Badge joylashuvi</div><div class="asr-desc">Ismdan oldin yoki keyin</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.badge_pos_label') }}</div><div class="asr-desc">{{ __('profile.appearance.badge_pos_desc') }}</div></div>
       <select name="badge_position">
-        <option value="after"  {{ ($user->badge_position??'after')=='after' ?'selected':'' }}>Ismdan keyin</option>
-        <option value="before" {{ ($user->badge_position??'')=='before'     ?'selected':'' }}>Ismdan oldin</option>
+        <option value="after"  {{ ($user->badge_position??'after')=='after' ?'selected':'' }}>{{ __('profile.appearance.badge_pos_after') }}</option>
+        <option value="before" {{ ($user->badge_position??'')=='before'     ?'selected':'' }}>{{ __('profile.appearance.badge_pos_before') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Banner animatsiyasi</div><div class="asr-desc">Profil banner harakati</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.banner_anim_label') }}</div><div class="asr-desc">{{ __('profile.appearance.banner_anim_desc') }}</div></div>
       <select name="banner_animation">
-        <option value="none"  {{ ($user->banner_animation??'none')=='none'  ?'selected':'' }}>Yo'q</option>
-        <option value="pulse" {{ ($user->banner_animation??'')=='pulse'     ?'selected':'' }}>Pulsatsiya</option>
-        <option value="wave"  {{ ($user->banner_animation??'')=='wave'      ?'selected':'' }}>To'lqin</option>
-        <option value="slide" {{ ($user->banner_animation??'')=='slide'     ?'selected':'' }}>Siljish</option>
+        <option value="none"  {{ ($user->banner_animation??'none')=='none'  ?'selected':'' }}>{{ __('profile.appearance.banner_anim_none') }}</option>
+        <option value="pulse" {{ ($user->banner_animation??'')=='pulse'     ?'selected':'' }}>{{ __('profile.appearance.banner_anim_pulse') }}</option>
+        <option value="wave"  {{ ($user->banner_animation??'')=='wave'      ?'selected':'' }}>{{ __('profile.appearance.banner_anim_wave') }}</option>
+        <option value="slide" {{ ($user->banner_animation??'')=='slide'     ?'selected':'' }}>{{ __('profile.appearance.banner_anim_slide') }}</option>
       </select>
     </div>
     <div class="ap-setting-row">
-      <div><div class="asr-label">Status emoji</div><div class="asr-desc">Ismingiz yonidagi belgi</div></div>
+      <div><div class="asr-label">{{ __('profile.appearance.status_emoji_label') }}</div><div class="asr-desc">{{ __('profile.appearance.status_emoji_desc') }}</div></div>
       <input type="text" name="status_emoji"
         value="{{ $user->status_emoji }}"
         maxlength="2"
@@ -419,7 +419,7 @@
     @endif
   </div>
 
-  <button type="submit" class="ap-btn-save"><i class="fa-solid fa-check"></i> Saqlash</button>
+  <button type="submit" class="ap-btn-save"><i class="fa-solid fa-check"></i> {{ __('profile.appearance.save') }}</button>
 </form>
 
 <script>
@@ -437,11 +437,11 @@
       var allow = status && status.getAttribute('data-status-allow') === '1';
       if (radio && radio.checked) {
         card.classList.add('ap-theme-card--selected');
-        if (status && allow) status.innerHTML = '<i class="fa-solid fa-check"></i> Aktiv';
+        if (status && allow) status.innerHTML = '<i class="fa-solid fa-check"></i> {{ __('profile.appearance.theme_active') }}';
       } else {
         card.classList.remove('ap-theme-card--selected');
         if (status && allow && !card.classList.contains('ap-theme-card--active')) {
-          status.innerHTML = '<i class="fa-solid fa-circle"></i> Tanlash';
+          status.innerHTML = '<i class="fa-solid fa-circle"></i> {{ __('profile.appearance.theme_select') }}';
         }
       }
     });

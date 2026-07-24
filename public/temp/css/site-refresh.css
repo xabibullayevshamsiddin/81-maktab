@@ -30,11 +30,7 @@ body {
   gap: 10px;
 }
 
-.header-user-name {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+
 
 .header-notification-link {
   position: relative;
@@ -874,9 +870,6 @@ body {
     font-size: 13px;
   }
 
-  .header-user-name {
-    display: none;
-  }
 
   #site-nav {
     position: static !important;
@@ -1621,9 +1614,7 @@ body {
     font-size: 12px !important;
   }
 
-  .header-user-name {
-    display: none !important;
-  }
+
 
   .card-home {
     min-height: 100svh !important;
