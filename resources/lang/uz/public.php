@@ -889,6 +889,8 @@ return [
     'comments' => [
         'profile_title' => 'Profil',
         'profile_aria' => 'Foydalanuvchi profili',
+        'reply' => 'Javob',
+        'edit' => 'Tahrirlash',
         'read_replies' => 'Javoblarni o\'qish (:count)',
         'delete_confirm' => 'Izohni o\'chirmoqchimisiz?',
         'delete_title' => 'Izohni o\'chirish',

@@ -157,6 +157,21 @@
   box-shadow: 0 24px 60px rgba(0,0,0,0.15), 0 0 0 1px var(--tc);
 }
 
+/* Taste pass: theme cards use a full material ring, not a flat top stripe. */
+.ts-card {
+  border-color: color-mix(in srgb, var(--tc) 24%, var(--border));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 18px 46px rgba(0,0,0,0.10);
+}
+
+.ts-card:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 26px 70px rgba(0,0,0,0.18),
+    0 0 0 1px color-mix(in srgb, var(--tc) 52%, transparent);
+}
+
 /* VIP/Premium/Admin uchun shimmer border */
 .ts-card--premium::before,
 .ts-card--vip::before,
@@ -165,10 +180,15 @@
 .ts-card--admin-phoenix::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: 0;
   border-radius: inherit;
-  padding: 1.5px;
-  background: linear-gradient(135deg, var(--tc), transparent, var(--tc));
+  padding: 1px;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--tc) 96%, #ffffff) 0%,
+      color-mix(in srgb, var(--tc) 42%, transparent) 22%,
+      rgba(255,255,255,0.08) 52%,
+      color-mix(in srgb, var(--tc) 70%, transparent) 100%);
   background-size: 200% 100%;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

@@ -91,35 +91,34 @@
 @php
     $durations = \App\Models\Donation::DURATIONS();
     $supporterFeatures = [
-        ["check" => true, "text" => "Rangli kommentlar (kok)"],
+        ["check" => true, "text" => "Rangli kommentlar (ko'k)"],
         ["check" => true, "text" => "10 MB gacha avatar yuklash"],
-        ["check" => true, "text" => "AI chat: 100 ta sorov/oy"],
+        ["check" => true, "text" => "AI chat: 100 ta so'rov/kun"],
         ["check" => true, "text" => "Profil yonida Supporter badge"],
-        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 2 ta kurs ochish imtiyoziga ega bo'lasiz"],
+        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 2 ta kurs ochish"],
+        ["check" => false, "text" => "Sahifalar orasida tezkor o'tish ⚡"],
         ["check" => false, "text" => "Maxsus profil dizayni"],
-        ["check" => false, "text" => "Top donorlar royhati"],
-        ["check" => false, "text" => "Guruh chat"],
     ];
     $premiumFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (binafsha)"],
         ["check" => true, "text" => "25 MB gacha avatar yuklash"],
-        ["check" => true, "text" => "AI chat: 300 ta sorov/oy"],
+        ["check" => true, "text" => "AI chat: 300 ta so'rov/kun"],
         ["check" => true, "text" => "Premium badge"],
+        ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish ⚡"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
-        ["check" => true, "text" => "Top donorlar royhati"],
-        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish imtiyoziga ega bo'lasiz"],
-        ["check" => true, "icon" => "fa-solid fa-users", "text" => "Guruh chat: 2 ta guruh yaratish 🔑"],
+        ["check" => true, "text" => "Top donorlar ro'yhati"],
+        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
     ];
     $vipFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (oltin)"],
         ["check" => true, "text" => "50 MB gacha avatar yuklash"],
-        ["check" => true, "text" => "AI chat: cheksiz sorovlar"],
+        ["check" => true, "text" => "AI chat: cheksiz so'rovlar"],
         ["check" => true, "text" => "VIP badge"],
+        ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish ⚡"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
-        ["check" => true, "text" => "Top donorlar royhati"],
+        ["check" => true, "text" => "Top donorlar ro'yhati"],
         ["check" => true, "text" => "Prioritet support"],
-        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 5 ta kurs ochish imtiyoziga ega bo'lasiz"],
-        ["check" => true, "icon" => "fa-solid fa-users", "text" => "Guruh chat: 2 ta guruh yaratish 👑"],
+        ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
     ];
 @endphp
 

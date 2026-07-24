@@ -23,6 +23,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 trait HasDonationRank
 {
+    /** @var array<string,mixed> instance-level memoize cache */
+    private array $_donorCache = [];
+
     public function donations(): HasMany
     {
         return $this->hasMany(Donation::class);
@@ -35,15 +38,23 @@ trait HasDonationRank
 
     public function isDonor(): bool
     {
-        return $this->donation_rank !== null && !$this->isDonationExpired();
+        if (!array_key_exists('isDonor', $this->_donorCache)) {
+            $this->_donorCache['isDonor'] = $this->donation_rank !== null && !$this->isDonationExpired();
+        }
+        return $this->_donorCache['isDonor'];
     }
 
     public function isDonationExpired(): bool
     {
-        if ($this->donation_rank === null) {
-            return true;
+        if (!array_key_exists('isDonationExpired', $this->_donorCache)) {
+            if ($this->donation_rank === null) {
+                $this->_donorCache['isDonationExpired'] = true;
+            } else {
+                $this->_donorCache['isDonationExpired'] = $this->donation_rank_expires_at !== null
+                    && $this->donation_rank_expires_at->isPast();
+            }
         }
-        return $this->donation_rank_expires_at !== null && $this->donation_rank_expires_at->isPast();
+        return $this->_donorCache['isDonationExpired'];
     }
 
     public function donorRankLabel(): ?string
@@ -68,51 +79,48 @@ trait HasDonationRank
      */
     public function effectiveTheme(): ?string
     {
-        // 1. Foydalanuvchi tanlagan tema
-        $theme = $this->profile_theme ?: $this->donation_rank;
-        if ($theme && Donation::themeAllowedForUser($theme, $this)) {
-            return $theme;
+        if (!array_key_exists('effectiveTheme', $this->_donorCache)) {
+            $theme = $this->profile_theme ?: $this->donation_rank;
+            if ($theme && Donation::themeAllowedForUser($theme, $this)) {
+                $this->_donorCache['effectiveTheme'] = $theme;
+            } else {
+                $rank = $this->donation_rank;
+                if ($rank && Donation::themeAllowedForUser($rank, $this)) {
+                    $this->_donorCache['effectiveTheme'] = $rank;
+                } else {
+                    $this->_donorCache['effectiveTheme'] = null;
+                }
+            }
         }
-
-        // 2. Donor ranki (eski profile_theme noto'g'ri bo'lsa)
-        $rank = $this->donation_rank;
-        if ($rank && Donation::themeAllowedForUser($rank, $this)) {
-            return $rank;
-        }
-
-        // 3. Oddiy foydalanuvchi yoki hech qanday huquq yo'q
-        return null;
+        return $this->_donorCache['effectiveTheme'];
     }
 
     public function donorBadgeHtml(bool $locked = false): string
     {
-        // Joriy haqiqiy tema (profile_theme yoki donor ranki, ruxsat tekshiruvi bilan).
+        $cacheKey = 'donorBadgeHtml_' . ($locked ? '1' : '0');
+        if (array_key_exists($cacheKey, $this->_donorCache)) {
+            return $this->_donorCache[$cacheKey];
+        }
+
         $theme = $this->effectiveTheme() ?? $this->donation_rank;
         $config = Donation::themeConfig($theme) ?? Donation::configForRank($this->donation_rank);
         if (!$config) {
-            return "";
+            return $this->_donorCache[$cacheKey] = "";
         }
 
         $label = $config["label"];
         $icon = $config["badge_icon"];
-
-        // Badge stili (profile appearance sozlamasi): default | pill | icon
         $badgeStyle = $this->badge_style ?? "default";
         $styleClass = "donor-badge--" . $badgeStyle;
-
-        // Joriy tema foydalanuvchiga ruxsat etilganmi?
         $themeAllowed = $theme ? Donation::themeAllowedForUser($theme, $this) : false;
 
-        // Qulf holati (majburan qulflangan yoki hech qanday huquq yo'q)
         if ($locked || !$themeAllowed) {
             $title = e("Sotib olish uchun Donat boling!");
-            return "<span class=\"donor-badge donor-badge--locked {$styleClass}\" title=\"{$title}\">"
+            return $this->_donorCache[$cacheKey] = "<span class=\"donor-badge donor-badge--locked {$styleClass}\" title=\"{$title}\">"
                 . "<i class=\"fa-solid fa-lock\"></i>"
                 . ($badgeStyle !== "icon" ? " {$label}</span>" : "</span>");
         }
 
-        // Qolgan kun (show_expiry_badge sozlamasi 0 bo'lsa, ko'rsatilmaydi).
-        // Faqat donor temalari uchun kun ko'rsatiladi (admin temalari muddatsiz).
         $themeType = $config["type"] ?? "donor";
         $showExpiry = ($this->show_expiry_badge ?? "1") === "1";
         $daysLeft = 0;
@@ -120,18 +128,12 @@ trait HasDonationRank
             $diff = (int) $this->donation_rank_expires_at->diffInDays(now(), false);
             $daysLeft = $diff > 0 ? $diff : 0;
         }
-        $expiryTitle = $daysLeft > 0
-            ? " title=\"" . e($daysLeft . " kun qoldi") . "\""
-            : "";
-
+        $expiryTitle = $daysLeft > 0 ? " title=\"" . e($daysLeft . " kun qoldi") . "\"" : "";
         $expirySuffix = $daysLeft > 0 && $badgeStyle !== "icon"
-            ? " <span class=\"donor-badge-days\">{$daysLeft}k</span>"
-            : "";
-
-        // Badge klassi tema kalitidan (admin-gold, premium, plain, va h.k.)
+            ? " <span class=\"donor-badge-days\">{$daysLeft}k</span>" : "";
         $badgeKey = $theme ?? $this->donation_rank;
 
-        return "<span class=\"donor-badge donor-badge--{$badgeKey} {$styleClass}\"{$expiryTitle}>"
+        return $this->_donorCache[$cacheKey] = "<span class=\"donor-badge donor-badge--{$badgeKey} {$styleClass}\"{$expiryTitle}>"
             . "<i class=\"{$icon}\"></i>"
             . ($badgeStyle !== "icon" ? " {$label}" : "")
             . $expirySuffix
@@ -140,17 +142,18 @@ trait HasDonationRank
 
     public function donorCommentColor(): ?string
     {
-        // Joriy haqiqiy tema rangi.
-        $theme = $this->effectiveTheme();
-        if (!$theme) {
-            return null;
+        if (!array_key_exists('donorCommentColor', $this->_donorCache)) {
+            $theme = $this->effectiveTheme();
+            if (!$theme) {
+                $this->_donorCache['donorCommentColor'] = null;
+            } else {
+                $cfg = Donation::themeConfig($theme);
+                $this->_donorCache['donorCommentColor'] = $cfg
+                    ? ($cfg["badge_color"] ?? null)
+                    : (Donation::configForRank($this->donation_rank)["comment_color"] ?? null);
+            }
         }
-        $cfg = Donation::themeConfig($theme);
-        if ($cfg) {
-            return $cfg["badge_color"] ?? null;
-        }
-        // Donor temalari uchun comment_color (yumshoqroq rang)
-        return Donation::configForRank($this->donation_rank)["comment_color"] ?? null;
+        return $this->_donorCache['donorCommentColor'];
     }
 
     public function donorMaxAvatarSize(): int
@@ -188,23 +191,25 @@ trait HasDonationRank
 
     public function donorUsernameColor(): ?string
     {
-        // Ism rangi joriy haqiqiy tema'dan — Gold tema = Gold (sariq) ism rangi.
-        $theme = $this->effectiveTheme();
-        if (!$theme) {
-            return null;
+        if (!array_key_exists('donorUsernameColor', $this->_donorCache)) {
+            $theme = $this->effectiveTheme();
+            if (!$theme) {
+                $this->_donorCache['donorUsernameColor'] = null;
+            } else {
+                $cfg = Donation::themeConfig($theme) ?? Donation::configForRank($theme);
+                $this->_donorCache['donorUsernameColor'] = $cfg["badge_color"] ?? null;
+            }
         }
-        $cfg = Donation::themeConfig($theme) ?? Donation::configForRank($theme);
-        return $cfg["badge_color"] ?? null;
+        return $this->_donorCache['donorUsernameColor'];
     }
 
     public function donorThemeClass(): string
     {
-        // Joriy haqiqiy tema klassi (profile-theme-{key}).
-        $theme = $this->effectiveTheme();
-        if (!$theme) {
-            return "";
+        if (!array_key_exists('donorThemeClass', $this->_donorCache)) {
+            $theme = $this->effectiveTheme();
+            $this->_donorCache['donorThemeClass'] = $theme ? "profile-theme-" . $theme : "";
         }
-        return "profile-theme-" . $theme;
+        return $this->_donorCache['donorThemeClass'];
     }
 
     public function donorCanExport(): bool

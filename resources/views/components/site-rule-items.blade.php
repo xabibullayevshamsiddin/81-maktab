@@ -3,6 +3,7 @@
   $presets = [
     'comment' => [
       'button' => 'Izoh qoidalari',
+      'button_icon' => 'fa-solid fa-list-check',
       'kicker' => 'Madaniyatli muhit',
       'title' => 'Izoh yozish qoidalari',
       'description' => "Fikringiz foydali, hurmatli va tushunarli bo'lsa, moderator tasdiqlashi ancha tezlashadi.",
@@ -36,6 +37,7 @@
     ],
     'contact' => [
       'button' => 'Aloqa qoidalari',
+      'button_icon' => 'fa-solid fa-envelope-open-text',
       'kicker' => 'Toza murojaat',
       'title' => 'Xabar yuborish qoidalari',
       'description' => "Murojaatingiz aniq va tartibli bo'lsa, javob berish jarayoni ancha qulay bo'ladi.",
@@ -78,7 +80,7 @@
     data-dialog="rules-all-{{ $area }}"
     data-area="{{ $area }}"
   >
-    <i class="fa-solid fa-info"></i>
+    <i class="{{ $config['button_icon'] ?? 'fa-solid fa-circle-info' }}"></i>
     <span>{{ $config['button'] }}</span>
   </button>
   <dialog

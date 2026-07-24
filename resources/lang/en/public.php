@@ -889,6 +889,8 @@ return [
     'comments' => [
         'profile_title' => 'Profile',
         'profile_aria' => 'User profile',
+        'reply' => 'Reply',
+        'edit' => 'Edit',
         'read_replies' => 'Read replies (:count)',
         'delete_confirm' => 'Delete this comment?',
         'delete_title' => 'Delete comment',

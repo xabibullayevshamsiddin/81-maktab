@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\ChatController;
-use App\Http\Controllers\ChatGroupController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\FeatureRequestController;
 use App\Http\Controllers\GradeSelectionController;
@@ -33,20 +32,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('chat/{chatMessage}', [ChatController::class, 'destroy'])->middleware(['active'])->name('chat.destroy');
     Route::delete('chat', [ChatController::class, 'clearAll'])->middleware(['active'])->name('chat.clear');
     Route::post('chat/block/{user}', [ChatController::class, 'blockUser'])->middleware(['active'])->name('chat.block');
-    Route::get('chat/groups', [ChatGroupController::class, 'index'])->middleware(['active'])->name('chat.groups.index');
-    Route::post('chat/groups', [ChatGroupController::class, 'store'])->middleware(['active'])->name('chat.groups.store');
-    Route::put('chat/groups/{group}', [ChatGroupController::class, 'update'])->middleware(['active'])->name('chat.groups.update');
-    Route::post('chat/groups/{group}/image', [ChatGroupController::class, 'updateImage'])->middleware(['active'])->name('chat.groups.image');
-    Route::delete('chat/groups/{group}/image', [ChatGroupController::class, 'deleteImage'])->middleware(['active'])->name('chat.groups.image.delete');
-    Route::delete('chat/groups/{group}', [ChatGroupController::class, 'destroy'])->middleware(['active'])->name('chat.groups.destroy');
-    Route::post('chat/groups/{group}/join', [ChatGroupController::class, 'join'])->middleware(['active'])->name('chat.groups.join');
-    Route::post('chat/groups/{group}/leave', [ChatGroupController::class, 'leave'])->middleware(['active'])->name('chat.groups.leave');
-    Route::get('chat/groups/{group}/members', [ChatGroupController::class, 'members'])->middleware(['active'])->name('chat.groups.members');
-    Route::put('chat/groups/{group}/members/{member}', [ChatGroupController::class, 'updateMemberRole'])->middleware(['active'])->name('chat.groups.members.role');
-    Route::delete('chat/groups/{group}/members/{member}', [ChatGroupController::class, 'removeMember'])->middleware(['active'])->name('chat.groups.members.remove');
-    Route::get('chat/groups/{group}/requests', [ChatGroupController::class, 'requests'])->middleware(['active'])->name('chat.groups.requests.index');
-    Route::post('chat/groups/{group}/requests/{joinRequest}/accept', [ChatGroupController::class, 'accept'])->middleware(['active'])->name('chat.groups.requests.accept');
-    Route::post('chat/groups/{group}/requests/{joinRequest}/reject', [ChatGroupController::class, 'reject'])->middleware(['active'])->name('chat.groups.requests.reject');
 
     Route::middleware('page.lock')->group(function () {
         Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');

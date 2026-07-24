@@ -17,10 +17,10 @@
       <div class="news-hero-content prime-reveal">
         <h1 class="js-split-text">{{ __('public.posts.hero_title') }}</h1>
         <p>{{ __('public.posts.hero_text') }}</p>
+        <a href="#posts" class="btn btn-prime" style="margin-top: 20px; display: inline-flex; align-items: center;">
+          {{ __('public.posts.jump') }} <i class="fa-solid fa-arrow-down" style="margin-left: 10px;"></i>
+        </a>
       </div>
-      <a href="#posts" class="btn btn-prime" style="margin-top: 20px">
-        {{ __('public.posts.jump') }} <i class="fa-solid fa-arrow-down" style="margin-left: 10px;"></i>
-      </a>
     </div>
   </section>
 

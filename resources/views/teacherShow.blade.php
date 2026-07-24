@@ -5,14 +5,14 @@
   $teacherAchievements = localized_model_value($teacher, 'achievements');
 @endphp
 <x-layouts.main title="81-IDUM | {{ $teacher->full_name }}">
-  <section class="sow-hero" id="home">
+  <section class="news-hero" id="home">
     <div class="overlay"></div>
     <div class="container">
-      <div class="sow-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">{{ __('public.teachers.badge') }}</span>
         <h1 class="js-split-text">{{ __('public.teachers.detail_title', ['name' => $teacher->full_name]) }}</h1>
         <p>{{ __('public.teachers.detail_text') }}</p>
-        <a href="#teachers-detail" class="btn">
+        <a href="#teachers-detail" class="btn" style="display: inline-flex; align-items: center;">
           {{ __('public.teachers.detail_jump') }}
           <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i>
         </a>
@@ -25,16 +25,27 @@
       <div class="detail-grid">
         <div class="detail-content reveal">
           <span class="eyebrow">{{ __('public.teachers.detail_badge') }}</span>
+          <h2 class="js-split-text">{{ $teacher->full_name }}</h2>
           @php
-            $detailHeading = $teacherSubject ?: $teacherLavozim;
+            $teacherRoleLabel = array_filter([$teacherLavozim, $teacherSubject ? $teacherSubject . ' fani' : null]);
+            $teacherBioText = localized_model_value($teacher, 'bio');
           @endphp
-          <h2 class="js-split-text">{{ $detailHeading ?: $teacher->full_name }}</h2>
-          @if(filled($teacherLavozim))
-            <p class="teacher-detail-lavozim">{{ $teacherLavozim }}</p>
+          @if($teacherRoleLabel !== [])
+            <p class="teacher-detail-lavozim" style="font-size: 1.15rem; font-weight: 600; color: var(--primary); margin-top: 4px; margin-bottom: 16px;">
+              {{ implode(' · ', $teacherRoleLabel) }}
+            </p>
           @endif
-          <p class="teacher-detail-summary">{{ $teacher->shortBio(320) }}</p>
+
+          @if(filled($teacherBioText))
+            <p class="teacher-detail-summary" style="margin-bottom: 20px; line-height: 1.6; color: var(--muted);">
+              {{ $teacherBioText }}
+            </p>
+          @endif
+
           <ul class="detail-list">
-            <li><i class="fa-solid fa-check"></i> {{ __('public.common.years_experience', ['count' => $teacher->experience_years]) }}</li>
+            @if($teacher->experience_years)
+              <li><i class="fa-solid fa-check"></i> {{ __('public.common.years_experience', ['count' => $teacher->experience_years]) }}</li>
+            @endif
             @if(filled($teacherToifa))
               <li><i class="fa-solid fa-check"></i> {{ __('public.teachers.detail_toifa') }}: {{ $teacherToifa }}</li>
             @endif

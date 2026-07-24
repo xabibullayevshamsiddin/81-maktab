@@ -48,12 +48,19 @@ class Donation extends Model
         return $query->where("status", self::STATUS_COMPLETED);
     }
 
+    /** @var array<string,array>|null */
+    private static ?array $rankConfigCache = null;
+
     /**
-     * Barcha ranklarning konfiguratsiyasi
+     * Barcha ranklarning konfiguratsiyasi (request-level cache)
      */
     public static function RANK_CONFIG(): array
     {
-        return [
+        if (self::$rankConfigCache !== null) {
+            return self::$rankConfigCache;
+        }
+
+        self::$rankConfigCache = [
             self::RANK_SUPPORTER => [
                 "label" => "Supporter",
                 "badge_color" => "#3b82f6",
@@ -85,6 +92,8 @@ class Donation extends Model
                 "priority" => 3,
             ],
         ];
+
+        return self::$rankConfigCache;
     }
 
     /**
@@ -150,18 +159,21 @@ class Donation extends Model
         return $config[$rank] ?? null;
     }
 
+    /** @var array<string,array>|null */
+    private static ?array $themesCache = null;
+
     /**
      * Yagona tema ro'yxati — Oddiy (plain) + donor temalari + super admin temalari.
-     * Har tema uchun: type (plain|donor|admin), label, badge_color, badge_icon.
-     * - plain: barchaga ochiq, effektsiz
-     * - admin: faqat super admin
      */
     public static function THEMES(): array
     {
+        if (self::$themesCache !== null) {
+            return self::$themesCache;
+        }
+
         $donorConfig = self::RANK_CONFIG();
         $themes = [];
 
-        // "Oddiy" — effektsiz, barchaga ochiq
         $themes["plain"] = [
             "key" => "plain",
             "type" => "plain",
@@ -171,7 +183,6 @@ class Donation extends Model
             "requires_admin" => false,
         ];
 
-        // Donor temalari
         foreach (self::ALL_RANKS as $rank) {
             if (!isset($donorConfig[$rank])) {
                 continue;
@@ -187,7 +198,6 @@ class Donation extends Model
             ];
         }
 
-        // Super admin temalari (maxsus)
         $themes["admin-gold"] = [
             "key" => "admin-gold",
             "type" => "admin",
@@ -213,7 +223,8 @@ class Donation extends Model
             "requires_admin" => true,
         ];
 
-        return $themes;
+        self::$themesCache = $themes;
+        return self::$themesCache;
     }
 
     /**

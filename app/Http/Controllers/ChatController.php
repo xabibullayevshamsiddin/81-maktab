@@ -181,6 +181,7 @@ class ChatController extends Controller
 
         $payload = [
             'display_name' => $displayName,
+            'status_emoji' => $user->status_emoji ?? '',
             'avatar_url' => $avatarUrl,
             'role_label' => $roleLabel,
             'role_level' => $roleLevel,

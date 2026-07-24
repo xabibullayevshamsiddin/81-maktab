@@ -11,6 +11,7 @@ class DonationController extends Controller
         $ranks = Donation::RANK_CONFIG();
 
         $topDonors = \App\Models\User::query()
+            ->select(['id','name','first_name','last_name','avatar','donation_rank','donation_rank_expires_at','total_donated','profile_theme','badge_style','show_expiry_badge','username_color'])
             ->where("total_donated", ">", 0)
             ->whereNotNull("donation_rank")
             ->orderByDesc("total_donated")

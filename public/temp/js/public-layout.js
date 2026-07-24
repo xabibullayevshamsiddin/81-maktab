@@ -588,7 +588,8 @@
             'is-donor',
             'is-donor-supporter', 'is-donor-premium', 'is-donor-vip',
             'is-themed-supporter', 'is-themed-premium', 'is-themed-vip',
-            'is-themed-admin-gold', 'is-themed-admin-royal', 'is-themed-admin-phoenix'];
+            'is-themed-admin-gold', 'is-themed-admin-royal', 'is-themed-admin-phoenix'
+            ];
           if (d.is_super_admin) {
             previewDialog.classList.add('is-super-admin');
             previewDialog.classList.remove(...allThemeClasses.filter(c => c !== 'is-super-admin'));
@@ -611,7 +612,9 @@
           }
 
           if (previewNameEl) {
-            previewNameEl.textContent = d.display_name || '';
+            var statusHtml = d.status_emoji ? ' <span class="user-status-emoji">' + escChatHtml(d.status_emoji) + '</span>' : '';
+            var badgeInlineHtml = d.donor_badge ? ' ' + d.donor_badge : '';
+            previewNameEl.innerHTML = escChatHtml(d.display_name || '') + statusHtml + badgeInlineHtml;
             var previewNameStyle = '';
             if (d.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(d.donor_color))) {
               previewNameStyle += 'color:' + d.donor_color + ';';
@@ -631,9 +634,6 @@
             } else {
               previewRoleEl.innerHTML = '<span class="chat-user-preview-badge chat-user-preview-badge--base"><i class="fa-solid fa-user"></i> ' + lvlText + rl + '</span>';
             }
-          if (d.donor_badge) {
-            previewRoleEl.innerHTML = d.donor_badge + ' ' + previewRoleEl.innerHTML;
-          }
           }
           if (previewAvatar) {
             previewAvatar.className = 'chat-user-preview-avatar';
@@ -908,7 +908,50 @@
 
     if (scrollTopBtn) {
       scrollTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (scrollTopBtn.classList.contains('is-blasting')) return;
+
+        const rect = scrollTopBtn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const colors = isDark
+          ? ['#0ea5e9','#6366f1','#a855f7','#38bdf8','#818cf8']
+          : ['#6366f1','#8b5cf6','#3b82f6','#06b6d4','#a78bfa'];
+
+        [0, 1].forEach((i) => {
+          const ring = document.createElement('div');
+          ring.className = 'st-blast-ring' + (i === 1 ? ' st-blast-ring--2' : '');
+          ring.style.left = cx + 'px';
+          ring.style.top  = cy + 'px';
+          document.body.appendChild(ring);
+          ring.addEventListener('animationend', () => ring.remove(), { once: true });
+        });
+
+        for (let i = 0; i < 10; i++) {
+          const p = document.createElement('div');
+          p.className = 'st-particle';
+          const angle = (Math.PI * 2 * i) / 10 + (Math.random() - 0.5) * 0.5;
+          const dist  = 38 + Math.random() * 52;
+          p.style.left = cx + 'px';
+          p.style.top  = cy + 'px';
+          p.style.background = colors[i % colors.length];
+          p.style.setProperty('--st-px', Math.cos(angle) * dist + 'px');
+          p.style.setProperty('--st-py', Math.sin(angle) * dist + 'px');
+          p.style.animationDelay = (i * 28) + 'ms';
+          document.body.appendChild(p);
+          p.addEventListener('animationend', () => p.remove(), { once: true });
+        }
+
+        scrollTopBtn.classList.add('is-blasting');
+        scrollTopBtn.classList.remove('is-returning');
+
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 120);
+
+        setTimeout(() => {
+          scrollTopBtn.classList.remove('is-blasting');
+          scrollTopBtn.classList.add('is-returning');
+          setTimeout(() => scrollTopBtn.classList.remove('is-returning'), 500);
+        }, 540);
       });
     }
   }
@@ -1929,7 +1972,7 @@
         const donorRankKeys = ['supporter', 'premium', 'vip'];
         const donorThemeClass = donorTheme && donorRankKeys.indexOf(donorTheme) !== -1
           ? ` comment-card--donor comment-card--donor-${escapeHtml(donorTheme)}`
-          : '';
+          : (donorTheme.indexOf('admin-') === 0 ? ` comment-card--theme comment-card--theme-${escapeHtml(donorTheme)}` : '');
         const donorBadgeHtml = comment.donor_badge || '';
         let authorStyle = '';
         if (comment.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(comment.donor_color))) {
@@ -1941,18 +1984,8 @@
         const authorStyleAttr = authorStyle ? ` style="${authorStyle}"` : '';
 
         function buildReplyLi() {
-          const staffCardCls = roleKey === 'super_admin'
-            ? ' comment-card--super-admin'
-            : roleKey === 'admin'
-              ? ' comment-card--admin'
-              : roleKey === 'moderator'
-                ? ' comment-card--moderator'
-                : roleKey === 'teacher'
-                  ? ' comment-card--teacher'
-                  : '';
-
           return `
-            <article class="comment-card reveal comment-item-reply${staffCardCls}${donorThemeClass}" data-comment-id="${escapeHtml(comment.id)}">
+            <article class="comment-card reveal comment-item-reply${donorThemeClass}" data-comment-id="${escapeHtml(comment.id)}">
               ${buildCommentAvatarHtml(comment)}
               <div class="comment-body">
                 <div class="comment-meta">
@@ -1995,18 +2028,8 @@
             </div>
           `;
 
-          const staffCardCls = roleKey === 'super_admin'
-            ? ' comment-card--super-admin'
-            : roleKey === 'admin'
-              ? ' comment-card--admin'
-              : roleKey === 'moderator'
-                ? ' comment-card--moderator'
-                : roleKey === 'teacher'
-                  ? ' comment-card--teacher'
-                  : '';
-
           return `
-            <article class="comment-card reveal${staffCardCls}${donorThemeClass}" data-comment-id="${escapeHtml(comment.id)}">
+            <article class="comment-card reveal${donorThemeClass}" data-comment-id="${escapeHtml(comment.id)}">
               ${buildCommentAvatarHtml(comment)}
               <div class="comment-body">
                 <div class="comment-meta">
@@ -2478,709 +2501,114 @@
     var deleteUrl = widget.getAttribute('data-chat-delete-url');
     var clearUrl = widget.getAttribute('data-chat-clear-url');
     var blockUrl = widget.getAttribute('data-chat-block-url');
-    var groupsUrl = widget.getAttribute('data-chat-groups-url');
-    var groupJoinBase = widget.getAttribute('data-chat-group-join-base');
-    var groupRequestsBase = widget.getAttribute('data-chat-group-requests-base');
-    var chatPreviewBase = widget.getAttribute('data-chat-user-preview-base');
     var csrf = widget.getAttribute('data-csrf');
     var currentUserId = String(widget.getAttribute('data-user-id') || '');
-    var lastId = 0;
-    var unreadCount = 0;
-    var activeChannel = 'global'; // Always start fresh on page load
-    var selectedGroup = null;
-    var groupsLoaded = false;
-    var chatTexts = parseJson(widget.getAttribute('data-chat-texts'), {});
-
-    var channelTabs = panel.querySelectorAll('[data-chat-channel]');
-    var chatTitleLabel = document.getElementById('chat-panel-title-label');
-    var chatChannelLabel = document.getElementById('chat-channel-label');
-    var groupShell = document.getElementById('chat-group-shell');
-    var groupList = document.getElementById('chat-group-list');
-    var currentGroupName = document.getElementById('chat-current-group-name');
-    var currentGroupDescription = document.getElementById('chat-current-group-description');
-    var groupJoinBtn = document.getElementById('chat-group-join-btn');
-    var groupRequestsBtn = document.getElementById('chat-group-requests-btn');
-    var pendingCountEl = document.getElementById('chat-group-pending-count');
-    var groupRequestsPanel = document.getElementById('chat-group-requests-panel');
-    var groupRequestsList = document.getElementById('chat-group-requests-list');
-    var groupLeaveBtn = document.getElementById('chat-group-leave-btn');
-    var groupMembersBtn = document.getElementById('chat-group-members-btn');
-    var groupSettingsBtn = document.getElementById('chat-group-settings-btn');
-    var groupPrivacyBadge = document.getElementById('chat-group-privacy-badge');
-    var groupSubpanel = document.getElementById('chat-group-subpanel');
-    var groupSubpanelTitle = document.getElementById('chat-group-subpanel-title');
-    var groupSubpanelBody = document.getElementById('chat-group-subpanel-body');
-    var groupSubpanelBackBtn = document.getElementById('chat-group-subpanel-back');
-    var groupCreateBtn = document.getElementById('chat-group-create-btn');
-    var groupCreateModal = document.getElementById('prime-group-create-modal');
+    var groupsData = [];
+    var chatTexts = (function() { try { return JSON.parse(widget.getAttribute('data-chat-texts') || '{}'); } catch(e) { return {}; } })();
     var isOpen = false;
     var isSending = false;
-    var pollTimer = null;
+    var lastId = 0;
+    var unreadCount = 0;
+    var activeChannel = 'global';
+    var lastReadStorageKey = 'prime-chat-last-read:' + (widget.getAttribute('data-user-id') || '0');
+    var lastReadId = (function() {
+      try { return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0); } catch(e) { return 0; }
+    })();
     var canClearAll = false;
-    var lastReadStorageKey = 'prime-chat-last-read:' + currentUserId;
-    var lastReadId = getStoredChatLastReadId();
+    var pollTimer = null;
 
-    function getStoredChatLastReadId() {
-      try {
-        return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0);
-      } catch (e) {
-        return 0;
-      }
-    }
+function getStoredChatLastReadId() {
+  try { return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0); } catch(e) { return 0; }
+}
 
-    function getChatText(key, fallback) {
-      if (chatTexts && Object.prototype.hasOwnProperty.call(chatTexts, key)) {
-        return String(chatTexts[key]);
-      }
-      return String(fallback || '');
-    }
+function setStoredChatLastReadId(value) {
+  var normalized = Math.max(0, parseInt(value, 10) || 0);
+  lastReadId = normalized;
+  try { window.localStorage.setItem(lastReadStorageKey, String(normalized)); } catch(e) {}
+}
 
-    function setStoredChatLastReadId(value) {
-      var normalized = Math.max(0, parseInt(value, 10) || 0);
-      lastReadId = normalized;
-      try {
-        window.localStorage.setItem(lastReadStorageKey, String(normalized));
-      } catch (e) {
-        /* localStorage bo'lmasa ham chat ishlayveradi */
-      }
-    }
+function getChatText(key, fallback) {
+  var chatTexts = (function() { try { return JSON.parse(widget.getAttribute('data-chat-texts') || '{}'); } catch(e) { return {}; } })();
+  if (chatTexts && Object.prototype.hasOwnProperty.call(chatTexts, key)) return String(chatTexts[key]);
+  return String(fallback || '');
+}
 
-    function setChatEnabledState(enabled, message) {
-      chatEnabled = !!enabled;
-      widget.setAttribute('data-chat-enabled', chatEnabled ? '1' : '0');
+function syncChatBadge() {
+  if (!badge) return;
+  if (unreadCount > 0) { badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount); badge.hidden = false; return; }
+  badge.textContent = '0'; badge.hidden = true;
+}
 
-      if (message && chatDisabledText) {
-        chatDisabledText.textContent = message;
-      }
+function countUnreadMessages(msgs, thresholdId) {
+  var minId = Math.max(0, parseInt(thresholdId, 10) || 0);
+  return msgs.reduce(function(count, msg) {
+    if (!msg || msg.is_mine) return count;
+    return (parseInt(msg.id, 10) || 0) > minId ? count + 1 : count;
+  }, 0);
+}
 
-      if (activeChannel === 'group') {
-        if (chatDisabledPanel) {
-          chatDisabledPanel.hidden = true;
-        }
-        if (chatPanelMain) {
-          chatPanelMain.hidden = false;
-        }
-      } else if (chatDisabledPanel && chatPanelMain) {
-        chatPanelMain.hidden = !chatEnabled;
-        chatDisabledPanel.hidden = chatEnabled;
-      }
+function markChatAsRead(uptoId) {
+  var normalized = Math.max(lastId, Math.max(0, parseInt(uptoId, 10) || 0));
+  if (normalized > lastReadId) setStoredChatLastReadId(normalized);
+  unreadCount = 0; syncChatBadge();
+}
 
-      if (fullBtn) {
-        fullBtn.style.display = chatEnabled ? '' : 'none';
-      }
-    }
+function syncChatAdminActions() {
+  if (!clearBtn) return;
+  clearBtn.hidden = !canClearAll; clearBtn.disabled = !canClearAll;
+}
 
-    function refreshChatAvailability() {
-      if (activeChannel === 'group' || !chatStatusUrl) {
-        return Promise.resolve(true);
-      }
+function setChatEnabledState(enabled, message) {
+  chatEnabled = !!enabled;
+  widget.setAttribute('data-chat-enabled', chatEnabled ? '1' : '0');
 
-      return fetch(chatStatusUrl, {
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-        credentials: 'same-origin',
-      })
-        .then(function (r) {
-          if (!r.ok) return null;
-          return r.json();
-        })
-        .then(function (data) {
-          if (!data) return chatEnabled;
+  if (message && chatDisabledText) {
+    chatDisabledText.textContent = message;
+  }
 
-          if (data.chat_disabled) {
-            setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
-            stopPolling();
-            return false;
-          }
+  if (chatDisabledPanel && chatPanelMain) {
+    chatPanelMain.hidden = !chatEnabled;
+    chatDisabledPanel.hidden = chatEnabled;
+  }
 
-          setChatEnabledState(true);
-          return true;
-        })
-        .catch(function () {
-          return chatEnabled;
-        });
-    }
+  if (fullBtn) {
+    fullBtn.style.display = chatEnabled ? '' : 'none';
+  }
 
-    function syncChatBadge() {
-      if (!badge) return;
+  if (form) {
+    form.hidden = !chatEnabled;
+  }
+}
 
-      if (unreadCount > 0) {
-        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
-        badge.hidden = false;
-        return;
+function refreshChatAvailability() {
+  if (!chatStatusUrl) {
+    return Promise.resolve(chatEnabled);
+  }
+
+  return fetch(chatStatusUrl, {
+    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+    credentials: 'same-origin',
+  })
+    .then(function (r) {
+      if (!r.ok) return null;
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data) return chatEnabled;
+
+      if (data.chat_disabled) {
+        setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
+        stopPolling();
+        return false;
       }
 
-      badge.textContent = '0';
-      badge.hidden = true;
-    }
-
-    function countUnreadMessages(msgs, thresholdId) {
-      var minId = Math.max(0, parseInt(thresholdId, 10) || 0);
-      return msgs.reduce(function (count, msg) {
-        if (!msg || msg.is_mine) return count;
-        return (parseInt(msg.id, 10) || 0) > minId ? count + 1 : count;
-      }, 0);
-    }
-
-    function markChatAsRead(uptoId) {
-      var normalized = Math.max(lastId, Math.max(0, parseInt(uptoId, 10) || 0));
-      if (normalized > lastReadId) {
-        setStoredChatLastReadId(normalized);
-      }
-      unreadCount = 0;
-      syncChatBadge();
-    }
-
-    function syncChatAdminActions() {
-      if (!clearBtn) return;
-      clearBtn.hidden = !canClearAll;
-      clearBtn.disabled = !canClearAll;
-    }
-
-    function renderGroupList(groups) {
-      if (!groupList) return;
-      if (!groups || !groups.length) {
-        groupList.innerHTML = '<div class="chat-empty-message" style="text-align:center;padding:2rem 1rem;">'
-          + '<i class="fa-solid fa-users" style="font-size:2.5rem;opacity:0.25;display:block;margin-bottom:0.75rem;"></i>'
-          + '<span>' + getChatText('no_groups', 'Hozircha guruhlar yo\'q. Birinchi bo\'lib guruh oching!') + '</span>'
-          + '</div>';
-        return;
-      }
-      var html = groups.map(function (group) {
-        var active = selectedGroup && selectedGroup.id === group.id ? ' is-active' : '';
-        var statusLabel = getChatText('group_status_join', 'Join');
-        if (group.is_owner) {
-          statusLabel = getChatText('group_status_owner', 'Owner');
-        } else if (group.is_member) {
-          statusLabel = getChatText('group_status_member', 'Member');
-        } else if (group.request_status === 'pending') {
-          statusLabel = getChatText('group_status_pending', 'Pending');
-        }
-
-        return '<button type="button" class="chat-group-item' + active + '" data-chat-group-id="' + group.id + '">' +
-          '<span class="chat-group-item-details">' +
-          '<strong>' + escChatHtml(group.name) + '</strong>' +
-          '<span class="chat-group-item-description">' + escChatHtml(group.description || '') + '</span>' +
-          '</span>' +
-          '<span class="chat-group-item-status">' + escChatHtml(statusLabel) + '</span>' +
-          '</button>';
-      }).join('');
-
-      groupList.innerHTML = html;
-      var buttons = groupList.querySelectorAll('[data-chat-group-id]');
-      buttons.forEach(function (button) {
-        button.addEventListener('click', function () {
-          var id = Number(button.getAttribute('data-chat-group-id'));
-          var group = groups.find(function (g) { return g.id === id; });
-          if (group) {
-            selectGroup(group);
-          }
-        });
-      });
-    }
-
-    function updateGroupControls() {
-      if (!groupShell) return;
-      var groupMeta = document.getElementById('chat-group-meta');
-      var createBar = document.getElementById('chat-group-create-bar');
-      var composePanel = document.getElementById('chat-form');
-
-      if (!selectedGroup) {
-        currentGroupName.textContent = getChatText('select_group', 'Guruh tanlang');
-        currentGroupDescription.textContent = '';
-        if(groupPrivacyBadge) groupPrivacyBadge.textContent = '';
-        if(groupJoinBtn) groupJoinBtn.hidden = true;
-        if(groupRequestsBtn) groupRequestsBtn.hidden = true;
-        if(groupLeaveBtn) groupLeaveBtn.hidden = true;
-        if(groupMembersBtn) groupMembersBtn.hidden = true;
-        if(groupSettingsBtn) groupSettingsBtn.hidden = true;
-        if(pendingCountEl) pendingCountEl.textContent = '0';
-        if(groupRequestsPanel) groupRequestsPanel.hidden = true;
-
-        if (groupMeta) groupMeta.hidden = true;
-        if (createBar) createBar.hidden = false;
-        if (groupList) groupList.hidden = false;
-        if (messagesEl) messagesEl.hidden = true;
-        if (composePanel) composePanel.hidden = true;
-
-        return;
-      }
-
-      currentGroupName.textContent = selectedGroup.name || getChatText('group_list_title', 'Guruh');
-      currentGroupDescription.textContent = selectedGroup.description || '';
-      if(groupPrivacyBadge) {
-        groupPrivacyBadge.textContent = selectedGroup.privacy === 'closed' ? '🔒' : '🔓';
-      }
-
-      var isOwner = !!selectedGroup.is_owner;
-      var isMember = !!selectedGroup.is_member;
-      var pending = selectedGroup.request_status === 'pending';
-      var canManage = !!selectedGroup.can_manage;
-
-      if(groupJoinBtn) {
-        groupJoinBtn.hidden = isOwner || isMember;
-        groupJoinBtn.disabled = pending;
-        groupJoinBtn.textContent = pending ? getChatText('group_join_sent', 'So‘rov yuborildi') : (isOwner ? getChatText('group_status_you_own', 'Siz egaliksiz') : getChatText('join_group', 'Guruhga qo‘shilish'));
-      }
-
-      if(groupLeaveBtn) groupLeaveBtn.hidden = !isMember && !isOwner;
-      if(groupMembersBtn) groupMembersBtn.hidden = !isMember && !isOwner && !canManage;
-      if(groupSettingsBtn) groupSettingsBtn.hidden = !selectedGroup.can_edit;
-
-      if(groupRequestsBtn) groupRequestsBtn.hidden = !canManage;      if (pendingCountEl) pendingCountEl.textContent = String(selectedGroup.pending_requests_count || 0);
-      if (groupRequestsPanel) groupRequestsPanel.hidden = true;
-
-      if (groupMeta) groupMeta.hidden = false;
-      if (createBar) createBar.hidden = true;
-      if (groupList) groupList.hidden = true;
-      if (messagesEl) messagesEl.hidden = false;
-      if (composePanel) composePanel.hidden = false;
-    }
-
-    function selectGroup(group) {
-      selectedGroup = group;
-      lastId = 0;
-      messagesEl.innerHTML = '';
-      renderGroupList(groupsData);
-      updateGroupControls();
-      if (isOpen) {
-        loadMessages().then(function () {
-          scrollDown();
-        });
-      }
-    }
-
-    function setActiveChannel(channel) {
-      var prevChannel = activeChannel;
-      activeChannel = channel === 'group' ? 'group' : 'global';
-
-      // Update tab styles
-      if (channelTabs && channelTabs.length) {
-        channelTabs.forEach(function (tab) {
-          tab.classList.toggle('chat-panel-tab--active', tab.getAttribute('data-chat-channel') === activeChannel);
-        });
-      }
-
-      var composePanel = document.getElementById('chat-form');
-
-      // Reset messages when switching channels
-      lastId = 0;
-      messagesEl.innerHTML = '';
-
-      if (activeChannel === 'group') {
-        // Show group shell, hide message composer
-        if (groupShell) groupShell.hidden = false;
-        // Reset selected group only when switching FROM global to group
-        if (prevChannel !== 'group') { selectedGroup = null; }
-        updateGroupControls();
-        if (chatTitleLabel) chatTitleLabel.textContent = getChatText('group_list_title', 'Guruhlar');
-        if (chatChannelLabel) chatChannelLabel.textContent = getChatText('group_chat', 'Guruh chat');
-        // Load groups if not loaded yet, or re-render if already loaded
-        if (!groupsLoaded) {
-          loadGroups();
-        } else {
-          renderGroupList(groupsData);
-          updateGroupControls();
-        }
-        // Only load group messages if a group is selected
-        if (isOpen && selectedGroup) {
-          loadMessages().then(function () { scrollDown(); });
-        }
-      } else {
-        // Show global chat
-        if (groupShell) groupShell.hidden = true;
-        if (groupRequestsPanel) groupRequestsPanel.hidden = true;
-        if (messagesEl) messagesEl.hidden = false;
-        if (composePanel) composePanel.hidden = false;
-        if (chatTitleLabel) chatTitleLabel.textContent = getChatText('global_chat', 'Global chat');
-        if (chatChannelLabel) chatChannelLabel.textContent = getChatText('global_chat', 'Global chat');
-        // Load global messages
-        if (isOpen) {
-          loadMessages().then(function () { scrollDown(); });
-        }
-      }
-    }
-
-    function syncChannelState() {
-      if (!groupShell) return;
-      if (activeChannel === 'group') {
-        groupShell.hidden = false;
-        updateGroupControls();
-      } else {        if (groupRequestsPanel) groupRequestsPanel.hidden = true;
-      }
-    }
-
-    function loadGroups() {
-      if (!groupsUrl) return Promise.resolve([]);
-      return fetch(groupsUrl, {
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-        credentials: 'same-origin',
-      })
-        .then(function (r) {
-          if (!r.ok) throw new Error(getChatText('group_load_failed', 'Guruhlar yuklanmadi.'));
-          return r.json();
-        })
-        .then(function (data) {
-          groupsData = Array.isArray(data.groups) ? data.groups : [];
-          groupsLoaded = true;
-          if (selectedGroup) {
-            selectedGroup = groupsData.find(function (g) {
-              return g.id === selectedGroup.id;
-            }) || null;
-          }
-          renderGroupList(groupsData);
-          updateGroupControls();
-          return groupsData;
-        })
-        .catch(function () {
-          groupsData = [];
-          groupsLoaded = true;
-          renderGroupList([]);
-          updateGroupControls();
-          return [];
-        });
-    }
-
-    function openGroupSubpanel(title, type) {
-      if (!groupSubpanel || !groupSubpanelTitle || !groupSubpanelBody) return;
-      groupSubpanelTitle.textContent = title;
-      groupSubpanelBody.innerHTML = '<div class="chat-loading"><i class="fa-solid fa-spinner fa-spin"></i></div>';
-      groupSubpanel.hidden = false;
-      groupSubpanel.setAttribute('data-subpanel-type', type);
-      groupList.hidden = true;
-    }
-
-    function closeGroupSubpanel() {
-      if (!groupSubpanel) return;
-      groupSubpanel.hidden = true;
-      groupSubpanelBody.innerHTML = '';
-      groupList.hidden = false;
-      groupSubpanel.removeAttribute('data-subpanel-type');
-    }
-
-    function renderGroupRequests(requests) {
-      if (!groupSubpanelBody || groupSubpanel.getAttribute('data-subpanel-type') !== 'requests') return;
-      if (!requests.length) {
-        groupSubpanelBody.innerHTML = '<div class="chat-empty-message">' + getChatText('group_requests_empty', 'Hech qanday so‘rov yo‘q.') + '</div>';
-        return;
-      }
-      groupSubpanelBody.innerHTML = requests.map(function (item) {
-        return '<div class="chat-group-request-item">'
-          + '<div class="chat-group-request-meta">'
-          + (item.user_avatar ? '<img src="' + escAttr(item.user_avatar) + '" alt="" class="chat-group-request-avatar" />' : '<span class="chat-group-request-avatar-placeholder">' + escChatHtml((item.user_name || '?').charAt(0).toUpperCase()) + '</span>')
-          + '<div>'
-          + '<strong>' + escChatHtml(item.user_name || getChatText('group_request_unknown', 'Noma’lum')) + '</strong>'
-          + '<span>' + escChatHtml(item.created_at || '') + '</span>'
-          + '</div>'
-          + '</div>'
-          + '<div class="chat-group-request-actions">'
-          + '<button type="button" class="chat-panel-btn chat-group-request-accept" data-request-id="' + item.id + '"><i class="fa-solid fa-check"></i></button>'
-          + '<button type="button" class="chat-panel-btn chat-group-request-reject" data-request-id="' + item.id + '"><i class="fa-solid fa-xmark"></i></button>'
-          + '</div>'
-          + '</div>';
-      }).join('');
-      groupSubpanelBody.querySelectorAll('[data-request-id]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          var requestId = Number(button.getAttribute('data-request-id'));
-          if (button.classList.contains('chat-group-request-accept')) {
-            respondToGroupRequest(requestId, 'accept');
-          } else {
-            respondToGroupRequest(requestId, 'reject');
-          }
-        });
-      });
-    }
-
-    function loadGroupRequests() {
-      if (!groupJoinBase || !selectedGroup) return Promise.resolve([]);
-      return fetch(groupJoinBase + '/' + selectedGroup.id + '/requests', {
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-        credentials: 'same-origin',
-      })
-        .then(function (r) {
-          if (!r.ok) throw new Error(getChatText('group_requests_failed', 'So‘rovlar yuklanmadi.'));
-          return r.json();
-        })
-        .then(function (data) {
-          var requests = Array.isArray(data.requests) ? data.requests : [];
-          renderGroupRequests(requests);
-          return requests;
-        })
-        .catch(function () {
-          if (groupSubpanelBody && groupSubpanel.getAttribute('data-subpanel-type') === 'requests') {
-            groupSubpanelBody.innerHTML = '<div class="chat-empty-message">' + getChatText('group_requests_failed', 'So‘rovlar yuklanmadi.') + '</div>';
-          }
-          return [];
-        });
-    }
-
-    function respondToGroupRequest(requestId, action) {
-      if (!groupJoinBase || !selectedGroup) return;
-      var url = groupJoinBase + '/' + selectedGroup.id + '/requests/' + requestId + '/' + action;
-      return fetch(url, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-        credentials: 'same-origin',
-      })
-        .then(function (r) {
-          if (!r.ok) throw new Error(getChatText('chat_action_failed', 'Amal bajarilmadi'));
-          return r.json();
-        })
-        .then(function (data) {
-          if (data.ok) {
-            loadGroupRequests();
-            loadGroups();
-          }
-        })
-        .catch(function (err) {
-          if (window.showToast) {
-            window.showToast(err.message || getChatText('chat_action_failed', 'Xato yuz berdi'), 'error');
-          }
-        });
-    }
-
-    function leaveGroupRequest() {
-      if (!groupJoinBase || !selectedGroup) return;
-      if (confirm(getChatText('confirm_leave_group', 'Siz rostdan ham bu guruhdan chiqmoqchimisiz?'))) {
-        fetch(groupJoinBase + '/' + selectedGroup.id + '/leave', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrf,
-          },
-          credentials: 'same-origin',
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.ok) {
-            selectedGroup = null;
-            loadGroups();
-          } else if (data.error && window.showToast) {
-            window.showToast(data.error, 'error');
-          }
-        });
-      }
-    }
-
-    function renderGroupMembers(members) {
-      if (!groupSubpanelBody || groupSubpanel.getAttribute('data-subpanel-type') !== 'members') return;
-      if (!members.length) {
-        groupSubpanelBody.innerHTML = '<div class="chat-empty-message">Hech qanday a’zo yo‘q.</div>';
-        return;
-      }
-      groupSubpanelBody.innerHTML = members.map(function (item) {
-        var isMe = String(item.user_id) === currentUserId;
-        var roleBadge = item.is_owner ? '<span class="chat-group-role-badge owner">Ega</span>' : (item.role === 'admin' ? '<span class="chat-group-role-badge admin">Admin</span>' : '');
-        var actions = '';
-        if (selectedGroup.can_edit && !item.is_owner && !isMe) {
-          actions = '<div class="chat-group-request-actions">'
-            + '<button class="chat-panel-btn kick-member" data-member-id="'+item.id+'" title="Chetlatish"><i class="fa-solid fa-user-slash"></i></button>'
-            + '</div>';
-        }
-
-        return '<div class="chat-group-request-item">'
-          + '<div class="chat-group-request-meta">'
-          + (item.user_avatar ? '<img src="' + escAttr(item.user_avatar) + '" alt="" class="chat-group-request-avatar" />' : '<span class="chat-group-request-avatar-placeholder">' + escChatHtml((item.user_name || '?').charAt(0).toUpperCase()) + '</span>')
-          + '<div>'
-          + '<strong>' + escChatHtml(item.user_name) + ' ' + roleBadge + '</strong>'
-          + '</div>'
-          + '</div>'
-          + actions
-          + '</div>';
-      }).join('');
-
-      groupSubpanelBody.querySelectorAll('.kick-member').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          if(!confirm("A'zoni chetlatmoqchimisiz?")) return;
-          var mid = btn.getAttribute('data-member-id');
-          fetch(groupJoinBase + '/' + selectedGroup.id + '/members/' + mid, {
-            method: 'DELETE',
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-            credentials: 'same-origin',
-          }).then(function(r){ return r.json(); }).then(function(d){
-             if(d.ok) loadGroupMembers();
-          });
-        });
-      });
-    }
-
-    function loadGroupMembers() {
-      if (!groupJoinBase || !selectedGroup) return;
-      return fetch(groupJoinBase + '/' + selectedGroup.id + '/members', {
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-        credentials: 'same-origin',
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-         renderGroupMembers(data.members || []);
-      })
-      .catch(function() {
-         if (groupSubpanelBody && groupSubpanel.getAttribute('data-subpanel-type') === 'members') {
-            groupSubpanelBody.innerHTML = '<div class="chat-empty-message">Xatolik.</div>';
-         }
-      });
-    }
-
-    function renderGroupSettings() {
-      if (!groupSubpanelBody || groupSubpanel.getAttribute('data-subpanel-type') !== 'settings') return;
-      groupSubpanelBody.innerHTML = '<div class="chat-group-settings-form">'
-        + '<div class="chat-group-settings-field"><label>Guruh nomi:</label><input type="text" id="cg-edit-name" value="'+escAttr(selectedGroup.name)+'" class="prime-group-create__input"/></div>'
-        + '<div class="chat-group-settings-field"><label>Tavsif:</label><textarea id="cg-edit-desc" class="prime-group-create__textarea">'+escChatHtml(selectedGroup.description || '')+'</textarea></div>'
-        + '<div class="chat-group-settings-field"><label>Maxfiylik (Yopiq bo\'lsa tasdiqlash kerak bo\'ladi):</label><select id="cg-edit-privacy" class="prime-group-create__input"><option value="open" '+(selectedGroup.privacy==='open'?'selected':'')+'>Ochiq</option><option value="closed" '+(selectedGroup.privacy==='closed'?'selected':'')+'>Yopiq</option></select></div>'
-        + '<div class="chat-group-settings-actions"><button type="button" class="prime-group-create__btn prime-group-create__btn--primary" id="cg-save-btn">Saqlash</button>'
-        + '<button type="button" class="prime-group-create__btn prime-group-create__btn--ghost" style="color:var(--danger, red); margin-top:8px" id="cg-del-btn">Guruhni O\'chirish</button></div>'
-        + '</div>';
-
-      document.getElementById('cg-save-btn').addEventListener('click', function() {
-        var n = document.getElementById('cg-edit-name').value;
-        var d = document.getElementById('cg-edit-desc').value;
-        var p = document.getElementById('cg-edit-privacy').value;
-        fetch(groupJoinBase + '/' + selectedGroup.id, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-          credentials: 'same-origin',
-          body: JSON.stringify({ name: n, description: d, privacy: p })
-        }).then(function(r) { return r.json(); }).then(function(res) {
-          if(res.ok) {
-            if(window.showToast) window.showToast('Saqlandi!', 'success');
-            loadGroups();
-            closeGroupSubpanel();
-          }
-        });
-      });
-
-      document.getElementById('cg-del-btn').addEventListener('click', function() {
-        if(!confirm("Guruhni butunlay o'chirib yubormoqchimisiz?")) return;
-        fetch(groupJoinBase + '/' + selectedGroup.id, {
-          method: 'DELETE',
-          headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-          credentials: 'same-origin',
-        }).then(function(r) { return r.json(); }).then(function(res) {
-          if(res.ok) {
-            selectedGroup = null;
-            loadGroups();
-            closeGroupSubpanel();
-          }
-        });
-      });
-    }
-
-    function openGroupCreateModal() {
-      if(groupCreateModal) {
-        var nameInput = document.getElementById('prime-group-create-name');
-        var descInput = document.getElementById('prime-group-create-desc');
-        if (nameInput) nameInput.value = '';
-        if (descInput) descInput.value = '';
-
-        var toggleBtns = groupCreateModal.querySelectorAll('.prime-group-create__toggle-btn');
-        toggleBtns.forEach(function(btn) {
-          if (btn.getAttribute('data-privacy') === 'closed') {
-            btn.classList.add('prime-group-create__toggle-btn--active');
-          } else {
-            btn.classList.remove('prime-group-create__toggle-btn--active');
-          }
-        });
-
-        groupCreateModal.classList.add('is-active');
-        groupCreateModal.setAttribute('aria-hidden', 'false');
-      }
-    }
-
-    function closeGroupCreateModal() {
-      if(groupCreateModal) {
-        groupCreateModal.classList.remove('is-active');
-        groupCreateModal.setAttribute('aria-hidden', 'true');
-      }
-    }
-
-    function submitGroupCreate() {
-      var nameInput = document.getElementById('prime-group-create-name');
-      var descInput = document.getElementById('prime-group-create-desc');
-      var activePrivacyBtn = groupCreateModal ? groupCreateModal.querySelector('.prime-group-create__toggle-btn--active') : null;
-      var privacy = activePrivacyBtn ? activePrivacyBtn.getAttribute('data-privacy') : 'closed';
-
-      var name = nameInput ? nameInput.value.trim() : '';
-      var desc = descInput ? descInput.value.trim() : '';
-
-      if(name.length < 2) {
-        if (window.showToast) window.showToast("Guruh nomi kamida 2ta harf bo'lishi kerak", 'error');
-        return;
-      }
-
-      fetch(groupJoinBase, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': csrf,
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          name: name,
-          description: desc,
-          privacy: privacy
-        })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if(data.ok) {
-          closeGroupCreateModal();
-          if (nameInput) nameInput.value = '';
-          if (descInput) descInput.value = '';
-          loadGroups();
-          if (window.showToast) window.showToast("Guruh muvaffaqiyatli yaratildi", 'success');
-        } else {
-          if (window.showToast) {
-            window.showToast(data.error || getChatText('chat_action_failed', 'Xato yuz berdi'), 'error');
-          } else {
-            alert(data.error || 'Xato yuz berdi');
-          }
-        }
-      })
-      .catch(function(err) {
-        if (window.showToast) {
-          window.showToast(err.message || getChatText('chat_action_failed', 'Xato yuz berdi'), 'error');
-        } else {
-          alert('Xato yuz berdi');
-        }
-      });
-    }
-
-    function requestJoinSelectedGroup() {
-      if (!groupJoinBase || !selectedGroup) return;
-      fetch(groupJoinBase + '/' + selectedGroup.id + '/join', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': csrf,
-        },
-        credentials: 'same-origin',
-      })
-        .then(function (r) {
-          if (!r.ok) {
-            throw new Error(getChatText('group_join_failed', 'So‘rov yuborilmadi'));
-          }
-          return r.json();
-        })
-        .then(function (data) {
-          if (data.ok) {
-            if (data.pending) {
-              selectedGroup.request_status = 'pending';
-              updateGroupControls();
-              renderGroupList(groupsData);
-              if (window.showToast) {
-                window.showToast(getChatText('group_join_sent', 'So‘rovingiz yuborildi.'), 'success');
-              }
-            }
-          }
-        })
-        .catch(function (err) {
-          if (window.showToast) {
-            window.showToast(err.message || getChatText('chat_action_failed', 'Xato yuz berdi'), 'error');
-          }
-        });
-    }
-
-    var groupsData = [];
+      setChatEnabledState(true);
+      return true;
+    })
+    .catch(function () {
+      return chatEnabled;
+    });
+}
 
     function resetChatComposeState() {
       isSending = false;
@@ -3283,38 +2711,7 @@
 
       setChatEnabledState(true);
 
-      if (activeChannel === 'group') {
-        // Ensure group UI is visible
-        if (groupShell) groupShell.hidden = false;
-        var composePanel = document.getElementById('chat-form');
-        if (!selectedGroup) {
-          // No group selected - show group list
-          if (messagesEl) messagesEl.hidden = true;
-          if (composePanel) composePanel.hidden = true;
-        }
-        updateGroupControls();
-        if (!groupsLoaded) {
-          loadGroups().finally(function () {
-            if (input) input.focus();
-            syncComposeState();
-            setTimeout(function () { panel.classList.remove('is-opening'); }, 520);
-          });
-        } else {
-          renderGroupList(groupsData);
-          updateGroupControls();
-          if (selectedGroup) {
-            loadMessages().finally(function () {
-              markChatAsRead(lastId);
-              scrollDown();
-            });
-          }
-          if (input) input.focus();
-          syncComposeState();
-          setTimeout(function () { panel.classList.remove('is-opening'); }, 520);
-        }
-      } else {
-        // Global chat
-        if (groupShell) groupShell.hidden = true;
+      // Global chat
         if (messagesEl) messagesEl.hidden = false;
         var composePanelG = document.getElementById('chat-form');
         if (composePanelG) composePanelG.hidden = false;
@@ -3325,7 +2722,6 @@
           syncComposeState();
           setTimeout(function () { panel.classList.remove('is-opening'); }, 520);
         });
-      }
     }
 
     function closePanel() {
@@ -3471,12 +2867,20 @@
       var donorRankKeys = ['supporter', 'premium', 'vip'];
 
       var cls = 'chat-msg' + (m.is_mine ? ' is-mine' : '');
+      if (themeKey) {
+        cls += ' is-themed is-theme-' + themeKey;
+        if (donorRankKeys.indexOf(themeKey) !== -1) {
+          cls += ' is-donor is-donor-' + themeKey;
+        } else if (String(themeKey).indexOf('admin-') === 0) {
+          cls += ' is-admin-theme';
+        }
+      }
       if (m.is_super_admin) {
         // Super admin — eski animatsiya/dizayn saqlanadi, tema effekti QO'SHILMAYDI
         cls += ' is-super-admin';
       } else if (m.is_admin) {
         cls += ' is-admin';
-      } else if (themeKey) {
+      } else if (false && themeKey) {
         // Oddiy foydalanuvchi/donor — tema effekti
         cls += ' is-themed is-theme-' + themeKey;
         if (donorRankKeys.indexOf(themeKey) !== -1) {
@@ -3489,8 +2893,9 @@
         badge = '<span class="chat-msg-super-badge"><i class="fa-solid fa-crown"></i> Super Admin</span>';
       } else if (m.is_admin) {
         badge = '<span class="chat-msg-admin-badge">Admin</span>';
-      } else if (m.donor_badge) {
-        badge = m.donor_badge;
+      }
+      if (m.donor_badge) {
+        badge += m.donor_badge;
       }
       var avatarCls = 'chat-msg-avatar chat-msg-avatar-btn' + (m.is_super_admin ? ' chat-msg-avatar--super' : '');
       var avatarInner = m.avatar_url
@@ -3528,18 +2933,7 @@
 
     function loadMessages() {
       var isInitialSeed = lastId === 0;
-      var currentChannel = activeChannel;
-      var currentGroupId = selectedGroup ? selectedGroup.id : null;
-
-      if (activeChannel === 'group' && !selectedGroup) {
-        messagesEl.innerHTML = '<div class="chat-empty-message">' + getChatText('group_select_prompt', 'Iltimos, guruh tanlang.') + '</div>';
-        return Promise.resolve([]);
-      }
-
       var query = '?after=' + lastId;
-      if (activeChannel === 'group' && selectedGroup) {
-        query += '&group_id=' + encodeURIComponent(selectedGroup.id);
-      }
 
       return fetch(messagesUrl + query, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
@@ -3547,10 +2941,6 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          if (activeChannel !== currentChannel || (selectedGroup ? selectedGroup.id : null) !== currentGroupId) {
-            return [];
-          }
-
           if (data.chat_disabled) {
             setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
@@ -3585,17 +2975,7 @@
 
     function pollNew(options) {
       options = options || {};
-      var currentChannel = activeChannel;
-      var currentGroupId = selectedGroup ? selectedGroup.id : null;
-
-      if (activeChannel === 'group' && !selectedGroup) {
-        return Promise.resolve([]);
-      }
-
       var query = '?after=' + lastId;
-      if (activeChannel === 'group' && selectedGroup) {
-        query += '&group_id=' + encodeURIComponent(selectedGroup.id);
-      }
 
       return fetch(messagesUrl + query, {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
@@ -3603,10 +2983,6 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          if (activeChannel !== currentChannel || (selectedGroup ? selectedGroup.id : null) !== currentGroupId) {
-            return [];
-          }
-
           if (data.chat_disabled) {
             setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
@@ -3653,14 +3029,7 @@
     }
 
     function sendMessage(text, options) {
-      if (activeChannel === 'group' && !selectedGroup) {
-        if (window.showToast) {
-          window.showToast('Iltimos, guruh tanlang.', 'error');
-        }
-        return Promise.resolve();
-      }
-
-      if (!chatEnabled && activeChannel !== 'group') return Promise.resolve();
+      if (!chatEnabled) return Promise.resolve();
       if (isSending) return Promise.resolve();
 
       isSending = true;
@@ -3685,9 +3054,6 @@
 
 
         var payload = { body: text };
-        if (selectedGroup && selectedGroup.id) {
-          payload.chat_group_id = selectedGroup.id;
-        }
         if (turnstileToken) {
           payload.turnstile_token = turnstileToken;
         }
@@ -3891,33 +3257,19 @@
       });
     }
 
-    if (channelTabs && channelTabs.length) {
-      channelTabs.forEach(function (tab) {
-        tab.addEventListener('click', function () {
-          setActiveChannel(tab.getAttribute('data-chat-channel'));
-        });
-      });
-    }
 
-    if (groupJoinBtn) {
-      groupJoinBtn.addEventListener('click', function () {
-        requestJoinSelectedGroup();
-      });
-    }
 
-    if (groupLeaveBtn) {
-      groupLeaveBtn.addEventListener('click', function () {
-        leaveGroupRequest();
-      });
-    }
 
-    if (groupCreateBtn) {
+    var groupCreateBtn = document.getElementById('chat-group-create-btn');
+    var groupCreateModal = document.getElementById('prime-group-create-modal');
+
+    if (groupCreateBtn && typeof openGroupCreateModal === 'function') {
       groupCreateBtn.addEventListener('click', function () {
         openGroupCreateModal();
       });
     }
 
-    if (groupCreateModal) {
+    if (groupCreateModal && typeof closeGroupCreateModal === 'function' && typeof submitGroupCreate === 'function') {
       var cancelBtn = groupCreateModal.querySelector('[data-group-create-cancel]');
       var okBtn = groupCreateModal.querySelector('[data-group-create-ok]');
       var toggleBtns = groupCreateModal.querySelectorAll('.prime-group-create__toggle-btn');
@@ -3933,42 +3285,6 @@
       });
     }
 
-    if (groupMembersBtn) {
-      groupMembersBtn.addEventListener('click', function () {
-        if (!selectedGroup) return;
-        openGroupSubpanel('A\'zolar', 'members');
-        loadGroupMembers();
-      });
-    }
-
-    if (groupSettingsBtn) {
-      groupSettingsBtn.addEventListener('click', function () {
-        openGroupSubpanel('Sozlamalar', 'settings');
-        renderGroupSettings();
-      });
-    }
-
-    var groupBackBtn = document.getElementById('chat-group-back-btn');
-    if (groupBackBtn) {
-      groupBackBtn.addEventListener('click', function () {
-        selectedGroup = null;
-        lastId = 0;
-        messagesEl.innerHTML = '';
-        updateGroupControls();
-      });
-    }
-
-    if (groupRequestsBtn) {
-      groupRequestsBtn.addEventListener('click', function () {
-        if (!selectedGroup) return;
-        openGroupSubpanel('So‘rovlar', 'requests');
-        loadGroupRequests();
-      });
-    }
-
-    if (groupSubpanelBackBtn) {
-      groupSubpanelBackBtn.addEventListener('click', closeGroupSubpanel);
-    }
 
     window.addEventListener('resize', function () {
       if (!isOpen) return;
@@ -4095,16 +3411,6 @@
     syncChatBadge();
 
     if (chatEnabled) {
-      // Always start with global chat on page load - simpler and more reliable
-      activeChannel = 'global';
-      // Sync UI tabs
-      if (channelTabs && channelTabs.length) {
-        channelTabs.forEach(function (tab) {
-          tab.classList.toggle('chat-panel-tab--active', tab.getAttribute('data-chat-channel') === 'global');
-        });
-      }
-      // Ensure correct initial UI state
-      if (groupShell) groupShell.hidden = true;
       if (messagesEl) messagesEl.hidden = false;
       loadMessages();
       startPolling();
@@ -4629,6 +3935,52 @@
     });
   }
 
+  /** Advanced Parallax Scroll Engine for .news-hero & .profile-hero */
+  function initHeroParallax() {
+    const heroSections = document.querySelectorAll('.news-hero, .profile-hero');
+    if (!heroSections.length) return;
+
+    let ticking = false;
+
+    function updateParallax() {
+      const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+
+      heroSections.forEach((hero) => {
+        const rect = hero.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+          const heroContent = hero.querySelector('.news-hero-content');
+          const heroButtons = hero.querySelectorAll('.btn-prime, .btn');
+          const donorBanner = hero.querySelector('.donor-banner');
+          const heroHeight = hero.offsetHeight || 400;
+
+          if (heroContent) {
+            const translateY = (scrollY * 0.28).toFixed(2);
+            const opacity = Math.max(0, 1 - (scrollY / (heroHeight * 1.3))).toFixed(2);
+            heroContent.style.transform = `translate3d(0, ${translateY}px, 0)`;
+            heroContent.style.opacity = opacity;
+          }
+
+          if (donorBanner) {
+            const translateY = (scrollY * 0.14).toFixed(2);
+            const scale = (1 + (scrollY / (heroHeight * 3.5))).toFixed(3);
+            donorBanner.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
+          }
+        }
+      });
+
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateParallax);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    updateParallax();
+  }
+
   function runInitializers() {
     moveGlobalModals();
     initChatUserPreviewChrome();
@@ -4655,6 +4007,7 @@
     initPrimeAudioControl();
     initGlobalSearchModal();
     initSeniorInteractions();
+    initHeroParallax();
 
     // Prime Pro Max Initializers
     initPrimeCharts();

@@ -424,15 +424,30 @@ class User extends Authenticatable
     }
 
     /**
-     * Teacher bitta kurs yaratgandan keyin yana ocholmaydi.
+     * Teacher kurs ochish limitiga yetganmi?
+     * Donor rank ga qarab limit farqlanadi:
+     * - Oddiy: 1 ta
+     * - Supporter: 2 ta
+     * - Premium: 3 ta
+     * - VIP: 3 ta
      */
     public function hasReachedCourseOpenLimit(): bool
     {
-        if (array_key_exists('created_courses_count', $this->attributes)) {
-            return (int) $this->attributes['created_courses_count'] >= 1;
+        $limit = 1;
+        if ($this->isDonor()) {
+            $limit = match ($this->donation_rank) {
+                'supporter' => 2,
+                'premium'   => 3,
+                'vip'       => 3,
+                default     => 1,
+            };
         }
 
-        return $this->createdCourses()->count() >= 1;
+        if (array_key_exists('created_courses_count', $this->attributes)) {
+            return (int) $this->attributes['created_courses_count'] >= $limit;
+        }
+
+        return $this->createdCourses()->count() >= $limit;
     }
 
     public function hasCourseOpenApproval(): bool

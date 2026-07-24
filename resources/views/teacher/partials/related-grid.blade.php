@@ -30,9 +30,14 @@
           @endif
         </div>
       </div>
-      <p class="teacher-desc">{{ $rt->shortBio(220) }}</p>
+      @php $rtBioText = localized_model_value($rt, 'bio'); @endphp
+      @if(filled($rtBioText))
+        <p class="teacher-desc">{{ \Illuminate\Support\Str::limit(trim($rtBioText), 180) }}</p>
+      @endif
       <ul class="teacher-meta">
-        <li><i class="fa-solid fa-award"></i> {{ __('public.common.years_experience', ['count' => $rt->experience_years]) }}</li>
+        @if($rt->experience_years)
+          <li><i class="fa-solid fa-award"></i> {{ __('public.common.years_experience', ['count' => $rt->experience_years]) }}</li>
+        @endif
         <li><i class="fa-solid fa-users"></i> {{ $rt->grades ?: __('public.common.all_grades') }}</li>
       </ul>
       @if(filled($teacherAchievements))

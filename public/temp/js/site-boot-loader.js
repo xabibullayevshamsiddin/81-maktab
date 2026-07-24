@@ -1,16 +1,15 @@
 /**
- * Boot loader: faqat birinchi tashrifda ko‘rsatiladi, keyingi sahifalar darhol ochiladi.
+ * Boot loader: donor foydalanuvchilar uchun tezlashtirilgan.
  */
 (function () {
   var loader = document.getElementById('site-boot-loader');
   if (!loader) return;
 
-  // sessionStorage tekshiruvini olib tashladik, endi har sahifa yuklanganda chiqadi.
-  // var seenKey = 'site-boot-seen';
-  // if (sessionStorage.getItem(seenKey) === '1') { ... }
-
-  var minMs = 600;
-  var removeDelayMs = 700;
+  // Donor bo'lsa minMs=0 (darhol yashiriladi), oddiy user uchun 600ms
+  var isDonor = document.body.getAttribute('data-donor-theme') &&
+                document.body.getAttribute('data-donor-theme') !== '';
+  var minMs = isDonor ? 0 : 600;
+  var removeDelayMs = isDonor ? 200 : 700;
   var start = Date.now();
 
   function hide() {

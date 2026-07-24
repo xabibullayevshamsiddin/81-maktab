@@ -20,15 +20,13 @@
   $effectTheme = $userTheme ?: $donorRank;
   $effectThemeType = $effectTheme ? (\App\Models\Donation::themeConfig($effectTheme)["type"] ?? null) : null;
   $commentStyleClass = $effectTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
-  $roleCardClass = match ($roleKey) {
-    "super_admin" => "comment-card--super-admin",
-    "admin" => "comment-card--admin",
-    "moderator" => "comment-card--moderator",
-    default => $effectTheme && $effectThemeType === "donor" ? ("comment-card--donor comment-card--donor-" . $effectTheme) : "",
-  };
-  $themeOverlayClass = in_array($roleKey, ['super_admin', 'admin', 'moderator']) && $effectTheme
-    ? ($effectThemeType === "donor" ? ("comment-card--donor comment-card--donor-" . $effectTheme) : ("comment-card--theme-" . $effectTheme))
-    : "";
+  $roleCardClass = "";
+  $themeOverlayClass = "";
+  if ($effectTheme && $effectThemeType === "donor") {
+    $themeOverlayClass = "comment-card--donor comment-card--donor-" . $effectTheme;
+  } elseif ($effectTheme && $effectThemeType === "admin") {
+    $themeOverlayClass = "comment-card--theme comment-card--theme-" . $effectTheme;
+  }
 
   // Badge pozitsiyasi va status emoji
   $badgePos    = $comment->user?->badge_position ?? 'after';
@@ -102,12 +100,7 @@
       @endif
 
       @if($canManageComment)
-      <details class="comment-manage-details">
-        <summary class="btn btn-sm comment-manage-btn">
-          <i class="fa-solid fa-ellipsis"></i>
-        </summary>
-
-        <details class="comment-manage-details">
+        <details class="comment-action-box">
           <summary class="btn btn-sm">
             <i class="fa-solid fa-pen"></i> {{ __("public.comments.edit") }}
           </summary>
@@ -141,10 +134,9 @@
           @csrf
           @method("DELETE")
           <button type="submit" class="btn btn-sm comment-delete-btn">
-            <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> Ochirish
+            <i class="fa-solid fa-trash" style="margin-right: 8px;"></i> {{ __("public.comments.delete_ok") }}
           </button>
         </form>
-      </details>
       @endif
     </div>
   </div>

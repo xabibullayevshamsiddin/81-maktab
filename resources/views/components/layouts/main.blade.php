@@ -266,6 +266,19 @@
                     </summary>
 
                     <div class="nav-dropdown-menu">
+                      <div class="nav-dropdown-user-badge">
+                        @if($authUser->avatar_url)
+                          <img src="{{ $authUser->avatar_url }}" class="nav-dd-avatar" alt="" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                          <div class="nav-dd-avatar-fallback" style="display:none;">{{ $authUser->avatar_initial }}</div>
+                        @else
+                          <div class="nav-dd-avatar-fallback">{{ $authUser->avatar_initial }}</div>
+                        @endif
+                        <div class="nav-dd-user-info">
+                          <span class="nav-dd-name">{{ $authUser->first_name ?: $authUser->name }}{{ $authUser->status_emoji ? ' '.$authUser->status_emoji : '' }}</span>
+                          <span class="nav-dd-role">{{ $authUser->role_label }}</span>
+                        </div>
+                      </div>
+                      <div class="nav-dropdown-divider"></div>
                       <a class="nav-dropdown-item {{ request()->routeIs('exam.*') ? 'active' : '' }}" href="{{ route('exam.index') }}">
                         <i class="fa-solid fa-graduation-cap"></i>
                         {{ __('public.layout.menu.exams') }}
@@ -604,15 +617,12 @@
       @endphp
       <div id="chat-widget" class="chat-widget"
         data-chat-status-url="{{ route('chat.status') }}"
-        data-chat-messages-url="{{ request()->getBaseUrl() }}/chat/messages"
-        data-chat-send-url="{{ request()->getBaseUrl() }}/chat/send"
-        data-chat-delete-url="{{ request()->getBaseUrl() }}/chat"
-        data-chat-clear-url="{{ request()->getBaseUrl() }}/chat"
-        data-chat-block-url="{{ request()->getBaseUrl() }}/chat/block"
-        data-chat-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
-        data-chat-groups-url="{{ route('chat.groups.index') }}"
-        data-chat-group-join-base="{{ request()->getBaseUrl() }}/chat/groups"
-        data-chat-group-requests-base="{{ request()->getBaseUrl() }}/chat/groups"
+        data-chat-messages-url="{{ route('chat.messages') }}"
+        data-chat-send-url="{{ route('chat.send') }}"
+        data-chat-delete-url="{{ url('chat') }}"
+        data-chat-clear-url="{{ url('chat') }}"
+        data-chat-block-url="{{ url('chat/block') }}"
+        data-chat-user-preview-base="{{ url('chat/user') }}"
         data-csrf="{{ csrf_token() }}"
         data-user-id="{{ auth()->id() }}"
         data-chat-enabled="{{ $globalChatEnabled ? '1' : '0' }}"
@@ -652,38 +662,8 @@
 
           <div class="chat-panel-channel-switch" id="chat-channel-switch">
             <button type="button" class="chat-panel-tab chat-panel-tab--active" data-chat-channel="global"><i class="fa-solid fa-comments"></i> {{ __('public.layout.general_chat') }}</button>
-            <button type="button" class="chat-panel-tab" data-chat-channel="group"><i class="fa-solid fa-users"></i> {{ __('public.layout.group_chat') }}</button>
           </div>
-          <div class="chat-group-shell" id="chat-group-shell" hidden>
-            <div class="chat-group-create-bar" id="chat-group-create-bar">
-              <button type="button" class="chat-panel-btn chat-group-create-btn" id="chat-group-create-btn"><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
-            </div>
-            <div class="chat-group-meta" id="chat-group-meta" hidden>
-              <div class="chat-group-meta-labels">
-                <div class="chat-group-meta-top">
-                  <button type="button" class="chat-panel-btn chat-group-back-btn" id="chat-group-back-btn" title="Orqaga"><i class="fa-solid fa-arrow-left"></i></button>
-                  <strong id="chat-current-group-name" class="chat-group-meta-name"></strong>
-                  <span id="chat-group-privacy-badge" class="chat-group-privacy-dot"></span>
-                </div>
-                <p id="chat-current-group-description" class="chat-group-description"></p>
-              </div>
-              <div class="chat-group-controls" id="chat-group-controls">
-                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-join-btn" hidden>{{ __('public.layout.join_group') }}</button>
-                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-leave-btn" hidden>{{ __('public.layout.group_leave') }}</button>
-                <button type="button" class="chat-panel-btn chat-group-action-btn" id="chat-group-requests-btn" hidden><i class="fa-solid fa-user-plus"></i> <span id="chat-group-pending-count">0</span></button>
-                <button type="button" class="chat-panel-btn chat-group-members-btn" id="chat-group-members-btn" hidden title="A'zolar"><i class="fa-solid fa-users"></i></button>
-                <button type="button" class="chat-panel-btn chat-group-settings-btn" id="chat-group-settings-btn" hidden title="Sozlamalar"><i class="fa-solid fa-gear"></i></button>
-              </div>
-            </div>
-            <div class="chat-group-list" id="chat-group-list"></div>
-            <div class="chat-group-subpanel" id="chat-group-subpanel" hidden>
-              <div class="chat-group-subpanel-header">
-                <button type="button" class="chat-panel-btn chat-group-subpanel-back" id="chat-group-subpanel-back"><i class="fa-solid fa-arrow-left"></i></button>
-                <strong id="chat-group-subpanel-title"></strong>
-              </div>
-              <div id="chat-group-subpanel-body"></div>
-            </div>
-          </div>
+
 
           <div class="chat-feed-stack">
             <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
@@ -734,7 +714,7 @@
       </div>
 
       <span id="user-preview-config" hidden
-        data-user-preview-base="{{ request()->getBaseUrl() }}/chat/user"
+        data-user-preview-base="{{ url('chat/user') }}"
         data-csrf="{{ csrf_token() }}"
         data-current-user-id="{{ auth()->id() }}"
       ></span>
@@ -753,40 +733,7 @@
     @endunless
 
     @include('components.confirm-modal')
-    <div id="prime-group-create-modal" class="prime-group-create" role="presentation" aria-hidden="true">
-      <div class="prime-group-create__backdrop" aria-hidden="true"></div>
-      <div class="prime-group-create__dialog" role="dialog" aria-modal="true" aria-labelledby="prime-group-create-title">
-        <div class="prime-group-create__icon" aria-hidden="true">
-          <span class="prime-group-create__icon-inner"><i class="fa-solid fa-users"></i></span>
-        </div>
-        <h2 id="prime-group-create-title" class="prime-group-create__title">{{ __('public.layout.group_create') }}</h2>
-        <div class="prime-group-create__body">
-          <div class="prime-group-create__field">
-            <label for="prime-group-create-name">{{ __('public.layout.group_name') }}</label>
-            <input type="text" id="prime-group-create-name" class="prime-group-create__input" maxlength="120" minlength="2" placeholder="Guruh nomi" />
-          </div>
-          <div class="prime-group-create__field">
-            <label for="prime-group-create-desc">{{ __('public.layout.group_description') }}</label>
-            <textarea id="prime-group-create-desc" class="prime-group-create__textarea" maxlength="500" placeholder="Tavsif (ixtiyoriy)"></textarea>
-          </div>
-          <div class="prime-group-create__field">
-            <label>{{ __('public.layout.group_privacy') }}</label>
-            <div class="prime-group-create__toggle">
-              <button type="button" class="prime-group-create__toggle-btn prime-group-create__toggle-btn--active" data-privacy="closed">
-                <i class="fa-solid fa-lock"></i> {{ __('public.layout.group_closed') }}
-              </button>
-              <button type="button" class="prime-group-create__toggle-btn" data-privacy="open">
-                <i class="fa-solid fa-unlock"></i> {{ __('public.layout.group_open') }}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="prime-group-create__actions">
-          <button type="button" class="prime-group-create__btn prime-group-create__btn--ghost" data-group-create-cancel>{{ __('public.layout.cancel') }}</button>
-          <button type="button" class="prime-group-create__btn prime-group-create__btn--primary" data-group-create-ok><i class="fa-solid fa-plus"></i> {{ __('public.layout.group_create') }}</button>
-        </div>
-      </div>
-    </div>
+
     <div id="global-modal-root"></div>
     <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
 
@@ -1019,11 +966,14 @@
         var loader = document.getElementById('site-boot-loader');
         if (!loader) return;
 
+        var isDonorUser = document.body.getAttribute('data-donor-theme') !== '';
+
         function showFullScreenLoader() {
+          // Donor foydalanuvchilar uchun loader ko'rsatilmaydi
+          if (isDonorUser) return;
           loader.classList.remove('site-boot-loader--done');
           document.body.classList.add('site-boot-loading');
           loader.setAttribute('aria-busy', 'true');
-          // If it was removed from DOM, append it back
           if (!loader.parentNode) {
             document.body.appendChild(loader);
           }
@@ -1134,7 +1084,7 @@
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
           <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
           <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
-          <button type="button" class="ai-action-btn" data-msg="Saytda nechata post va kurs bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Statistika</button>
+          
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
 
@@ -1964,6 +1914,65 @@
       </section>
     @endif
     @stack('page_scripts')
+    @auth
+    @php $isDonorSpeedBoost = auth()->check() && auth()->user()->isDonor(); @endphp
+    @if($isDonorSpeedBoost)
+    <script>
+    // ============================================================
+    // DONOR SPEED BOOST — link hover prefetch + instant navigation
+    // ============================================================
+    (function() {
+      var prefetched = new Set();
+      var prefetchQueue = [];
+      var prefetchTimer = null;
+
+      function prefetchUrl(url) {
+        if (!url || prefetched.has(url)) return;
+        try {
+          var u = new URL(url, location.origin);
+          if (u.origin !== location.origin) return;
+          if (u.pathname === location.pathname && u.search === location.search) return;
+        } catch(e) { return; }
+
+        prefetched.add(url);
+        var link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.href = url;
+        link.as = 'document';
+        document.head.appendChild(link);
+      }
+
+      // Hover da 80ms delay bilan prefetch (accidental hover larni o'tkazib yuborish)
+      document.addEventListener('mouseover', function(e) {
+        var a = e.target.closest('a[href]');
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
+            href.startsWith('mailto:') || href.startsWith('tel:') ||
+            a.target === '_blank' || a.hasAttribute('download')) return;
+
+        clearTimeout(prefetchTimer);
+        prefetchTimer = setTimeout(function() { prefetchUrl(a.href); }, 80);
+      }, { passive: true });
+
+      document.addEventListener('mouseout', function(e) {
+        if (e.target.closest('a[href]')) clearTimeout(prefetchTimer);
+      }, { passive: true });
+
+      // Touch devices: touchstart da darhol prefetch
+      document.addEventListener('touchstart', function(e) {
+        var a = e.target.closest('a[href]');
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
+            href.startsWith('mailto:') || href.startsWith('tel:') ||
+            a.target === '_blank') return;
+        prefetchUrl(a.href);
+      }, { passive: true });
+    })();
+    </script>
+    @endif
+    @endauth
     @if($gradeSelectionLocked)
       <script>
         (function () {

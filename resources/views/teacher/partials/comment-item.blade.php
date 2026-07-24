@@ -18,15 +18,13 @@
   $donorBadge = $comment->user?->donorBadgeHtml() ?? '';
   $effectThemeType = $userTheme ? (\App\Models\Donation::themeConfig($userTheme)["type"] ?? null) : null;
   $commentStyleClass = $userTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
-  $roleCardClass = match ($roleKey) {
-    'super_admin' => 'comment-card--super-admin',
-    'admin' => 'comment-card--admin',
-    'moderator' => 'comment-card--moderator',
-    default => $userTheme && $effectThemeType === 'donor' ? ('comment-card--donor comment-card--donor-' . $userTheme) : '',
-  };
-  $themeOverlayClass = in_array($roleKey, ['super_admin', 'admin', 'moderator'], true) && $userTheme
-    ? ($effectThemeType === 'donor' ? ('comment-card--donor comment-card--donor-' . $userTheme) : ('comment-card--theme-' . $userTheme))
-    : '';
+  $roleCardClass = '';
+  $themeOverlayClass = '';
+  if ($userTheme && $effectThemeType === 'donor') {
+    $themeOverlayClass = 'comment-card--donor comment-card--donor-' . $userTheme;
+  } elseif ($userTheme && $effectThemeType === 'admin') {
+    $themeOverlayClass = 'comment-card--theme comment-card--theme-' . $userTheme;
+  }
 @endphp
 
 <article class="comment-card reveal {{ $showReplyForm ? '' : 'comment-item-reply' }} {{ $roleCardClass }} {{ $commentStyleClass }} {{ $themeOverlayClass }}" data-comment-id="{{ $comment->id }}">

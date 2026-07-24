@@ -121,9 +121,51 @@
     <section class="teachers prime-reveal" id="teachers">
       <div class="container teacher">
         <div class="teacher-content">
+          <div class="home-teacher-eyebrow">
+            <i class="fa-solid fa-award"></i> Malakali va Tajribali Pedagoglar
+          </div>
           <h2 class="js-split-text">{{ __('public.home.teachers_title') }}</h2>
           <p>{{ __('public.home.teachers_text') }}</p>
-          <a href="{{ route('teacher') }}" class="btn btn-prime">{{ __('public.home.teachers_action') }}</a>
+
+          <div class="home-teacher-stats-grid">
+            <div class="home-teacher-stat-card">
+              <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+              <div class="stat-info">
+                <span class="stat-num">50+</span>
+                <span class="stat-lbl">Malakali Ustozlar</span>
+              </div>
+            </div>
+            <div class="home-teacher-stat-card">
+              <div class="stat-icon"><i class="fa-solid fa-certificate"></i></div>
+              <div class="stat-info">
+                <span class="stat-num">100%</span>
+                <span class="stat-lbl">Oliy Ma'lumotli</span>
+              </div>
+            </div>
+            <div class="home-teacher-stat-card">
+              <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+              <div class="stat-info">
+                <span class="stat-num">20+ yil</span>
+                <span class="stat-lbl">O'rtacha Staj</span>
+              </div>
+            </div>
+            <div class="home-teacher-stat-card">
+              <div class="stat-icon"><i class="fa-solid fa-earth-americas"></i></div>
+              <div class="stat-info">
+                <span class="stat-num">Oliy</span>
+                <span class="stat-lbl">Toifali Ustozlar</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-teacher-cta-group">
+            <a href="{{ route('teacher') }}" class="btn-island-primary">
+              <span>{{ __('public.home.teachers_action') }}</span>
+              <div class="btn-island-icon">
+                <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </a>
+          </div>
         </div>
 
         @if(isset($featuredTeacher) && $featuredTeacher)
@@ -139,11 +181,16 @@
               decoding="async"
             />
             <h3>{{ $featuredTeacher->full_name }}</h3>
-            <p>
-              {{ $featuredTeacher->shortBio(180) }}
-            </p>
+            @php
+              $featuredTeacherBio = localized_model_value($featuredTeacher, 'bio');
+            @endphp
+            @if(filled($featuredTeacherBio))
+              <p class="teacher-desc">
+                {{ \Illuminate\Support\Str::limit(trim($featuredTeacherBio), 160) }}
+              </p>
+            @endif
             @if(filled($featuredTeacherMetaLine) || $featuredTeacher->experience_years)
-              <p class="profile-muted home-featured-teacher-meta">
+              <p class="profile-muted home-featured-teacher-meta" style="margin-top: 6px; font-weight: 600;">
                 @if(filled($featuredTeacherMetaLine))
                   {{ $featuredTeacherMetaLine }}
                 @endif
