@@ -94,6 +94,13 @@
                 </a>
               </li>
 
+              <li class="nav-item {{ request()->routeIs('admin.books.*', 'admin.book-categories.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.books.index') }}">
+                  <span class="icon"><i class="mdi mdi-book-open-page-variant"></i></span>
+                  <span class="text">Kutubxona</span>
+                </a>
+              </li>
+
             @endif
 
             @if($canManageInbox)
@@ -236,8 +243,10 @@
             @endif
           @endif
 
+          @if($canManageSystem || $sidebarUser->isSuperAdmin())
           <li class="divider section-divider"><hr></li>
           <li class="sidebar-section">Donation</li>
+          @endif
 
           @if($canManageSystem)
           <li class="nav-item {{ request()->routeIs('admin.activation-keys.*') ? 'active' : '' }}">

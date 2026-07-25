@@ -6,6 +6,7 @@ use App\Http\Controllers\CourseEnrollmentController;
 use App\Http\Controllers\FeatureRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PublicBookController;
 use App\Http\Controllers\PublicCourseController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\PublicTeacherController;
@@ -102,6 +103,12 @@ Route::get('feature-requests', [FeatureRequestController::class, 'index'])->name
 Route::post('contact', [HomeController::class, 'storeContact'])
     ->middleware('throttle:10,1')
     ->name('contact.store');
+
+// Kutubxona
+Route::get('kutubxona', [PublicBookController::class, 'index'])->name('books.index');
+Route::get('kutubxona/{book}', [PublicBookController::class, 'show'])->name('books.show');
+Route::get('kutubxona/{book}/stream', [PublicBookController::class, 'stream'])->name('books.stream');
+Route::get('kutubxona/{book}/download', [PublicBookController::class, 'download'])->name('books.download');
 
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');

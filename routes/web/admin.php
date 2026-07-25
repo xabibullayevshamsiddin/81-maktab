@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminBookController;
 use App\Http\Controllers\AdminAiKnowledgeController;
 use App\Http\Controllers\AdminAiReviewController;
 use App\Http\Controllers\AdminCalendarEventController;
@@ -43,6 +44,16 @@ Route::prefix('admin')->middleware(['auth', 'active', 'role:super_admin,admin,ed
         Route::resource('posts', PostController::class);
         Route::resource('categories', CategoryController::class)->except('show');
         Route::resource('calendar-events', AdminCalendarEventController::class)->except(['show']);
+        // Books
+        Route::get('books', [AdminBookController::class, 'index'])->name('admin.books.index');
+        Route::get('books/create', [AdminBookController::class, 'create'])->name('admin.books.create');
+        Route::post('books', [AdminBookController::class, 'store'])->name('admin.books.store');
+        Route::get('books/{book}/edit', [AdminBookController::class, 'edit'])->name('admin.books.edit');
+        Route::put('books/{book}', [AdminBookController::class, 'update'])->name('admin.books.update');
+        Route::delete('books/{book}', [AdminBookController::class, 'destroy'])->name('admin.books.destroy');
+        Route::get('book-categories', [AdminBookController::class, 'categoriesIndex'])->name('admin.book-categories.index');
+        Route::post('book-categories', [AdminBookController::class, 'categoriesStore'])->name('admin.book-categories.store');
+        Route::delete('book-categories/{bookCategory}', [AdminBookController::class, 'categoriesDestroy'])->name('admin.book-categories.destroy');
     });
 
     Route::middleware('role:super_admin,admin,moderator')->group(function () {

@@ -152,7 +152,7 @@
       @if($user->donorBannerUrl())
         <img src="{{ $user->donorBannerUrl() }}" alt="Banner" class="donor-banner banner-anim-{{ $user->banner_animation ?? 'none' }}">
       @endif
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">{{ __('profile.badge') }}</span>
         <h1 class="js-split-text"><strong>{{ __('profile.title') }}</strong></h1>
         <p>{{ __('profile.intro') }}</p>

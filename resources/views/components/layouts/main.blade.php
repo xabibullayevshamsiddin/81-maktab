@@ -236,6 +236,7 @@
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">{{ __('public.layout.nav.library') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
               <li class="mobile-theme-toggle-wrap">
                 <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
@@ -266,19 +267,26 @@
                     </summary>
 
                     <div class="nav-dropdown-menu">
-                      <div class="nav-dropdown-user-badge">
+                      {{-- ─── User badge card ─── --}}
+                      <a href="{{ route('profile.show') }}" class="nav-dropdown-user-badge">
                         @if($authUser->avatar_url)
-                          <img src="{{ $authUser->avatar_url }}" class="nav-dd-avatar" alt="" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
-                          <div class="nav-dd-avatar-fallback" style="display:none;">{{ $authUser->avatar_initial }}</div>
+                          <img
+                            src="{{ $authUser->avatar_url }}"
+                            alt="{{ $authUser->name }}"
+                            class="nav-dd-avatar"
+                            onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
+                          >
+                          <span class="nav-dd-avatar-fallback" style="display:none;">{{ $authUser->avatar_initial }}</span>
                         @else
-                          <div class="nav-dd-avatar-fallback">{{ $authUser->avatar_initial }}</div>
+                          <span class="nav-dd-avatar-fallback">{{ $authUser->avatar_initial }}</span>
                         @endif
-                        <div class="nav-dd-user-info">
-                          <span class="nav-dd-name">{{ $authUser->first_name ?: $authUser->name }}{{ $authUser->status_emoji ? ' '.$authUser->status_emoji : '' }}</span>
+                        <span class="nav-dd-user-info">
+                          <span class="nav-dd-name">{{ $authUser->first_name ?: $authUser->name }}</span>
                           <span class="nav-dd-role">{{ $authUser->role_label }}</span>
-                        </div>
-                      </div>
+                        </span>
+                      </a>
                       <div class="nav-dropdown-divider"></div>
+                      {{-- ─── Menu items ─── --}}
                       <a class="nav-dropdown-item {{ request()->routeIs('exam.*') ? 'active' : '' }}" href="{{ route('exam.index') }}">
                         <i class="fa-solid fa-graduation-cap"></i>
                         {{ __('public.layout.menu.exams') }}
@@ -316,6 +324,10 @@
                       <a class="nav-dropdown-item {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">
                         <i class="fa-solid fa-address-book"></i>
                         {{ __('public.layout.nav.contact') }}
+                      </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">
+                        <i class="fa-solid fa-book-open"></i>
+                        {{ __('public.layout.nav.library') }}
                       </a>
                       <a class="nav-dropdown-item {{ request()->routeIs('donation*') ? 'active' : '' }}" href="{{ route('donation.index') }}">
                         <i class="fa-solid fa-hand-holding-heart" style="color: #f59e0b;"></i>
@@ -438,9 +450,7 @@
 	              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
             </button>
 
-            @auth
-              <p class="header-user-name">{{ $authUser->first_name ?: $authUser->name }}</p>
-            @endauth
+
 
             @guest
               <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
@@ -502,6 +512,7 @@
           <h4 class="footer-title">{{ __('public.layout.resources') }}</h4>
           <ul class="footer-links">
             <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
+            <li><a href="{{ route('books.index') }}">{{ __('public.layout.nav.library') }}</a></li>
             <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
             <li><a href="{{ route('feature-requests.index') }}">{{ __('public.layout.feature_requests') }}</a></li>
             @auth
@@ -660,9 +671,7 @@
           </div>
           <div id="chat-panel-main" class="chat-panel-main" @if(!$globalChatEnabled) hidden @endif>
 
-          <div class="chat-panel-channel-switch" id="chat-channel-switch">
-            <button type="button" class="chat-panel-tab chat-panel-tab--active" data-chat-channel="global"><i class="fa-solid fa-comments"></i> {{ __('public.layout.general_chat') }}</button>
-          </div>
+
 
 
           <div class="chat-feed-stack">
@@ -1084,7 +1093,7 @@
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
           <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
           <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
-          
+          <button type="button" class="ai-action-btn" data-msg="Saytda nechata post va kurs bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Statistika</button>
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
 

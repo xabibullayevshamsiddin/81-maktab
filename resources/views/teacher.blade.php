@@ -2,7 +2,7 @@
   <div class="bomba-mesh"></div>
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
           <span class="badge">{{ __('public.teachers.badge') }}</span>
           <h1 class="js-split-text">{{ __('public.teachers.hero_title') }}</h1>
           <p>{{ __('public.teachers.hero_text') }}</p>

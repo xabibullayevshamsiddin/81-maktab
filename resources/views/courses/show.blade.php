@@ -16,7 +16,7 @@
 <x-layouts.main :title="$courseTitle.' | 81-IDUM'">
   <section class="news-hero course-details-page-hero">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">{{ __('public.courses.badge') }}</span>
         <h1>{{ $courseTitle }}</h1>
         <p>{{ __('public.courses.modal_title') }}</p>

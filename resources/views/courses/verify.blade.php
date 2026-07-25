@@ -1,7 +1,7 @@
 <x-layouts.main :title="__('profile.verify_course.page_title')">
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <h1>{{ __('profile.verify_course.title') }}</h1>
         <p><strong>{{ $course->title }}</strong> {{ __('profile.verify_course.subtitle', ['title' => $course->title]) }}</p>
       </div>

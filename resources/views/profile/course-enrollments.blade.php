@@ -1,7 +1,7 @@
 <x-layouts.main title="81-IDUM | Kursga yozilishlar">
   <section class="news-hero profile-hero">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <span class="badge">Kurslar</span>
         <h1><strong>Kursga yozilish arizalari</strong></h1>
         <p>O'z kursingizga yozilgan o'quvchilarni ko'ring, telefon va sinf bo'yicha bog'laning, tasdiqlang yoki rad eting.</p>

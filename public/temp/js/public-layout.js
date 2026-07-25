@@ -3937,7 +3937,7 @@ function refreshChatAvailability() {
 
   /** Advanced Parallax Scroll Engine for .news-hero & .profile-hero */
   function initHeroParallax() {
-    const heroSections = document.querySelectorAll('.news-hero, .profile-hero');
+    const heroSections = document.querySelectorAll('.news-hero, .profile-hero, .bv-hero');
     if (!heroSections.length) return;
 
     let ticking = false;
@@ -3948,7 +3948,7 @@ function refreshChatAvailability() {
       heroSections.forEach((hero) => {
         const rect = hero.getBoundingClientRect();
         if (rect.bottom > 0 && rect.top < window.innerHeight) {
-          const heroContent = hero.querySelector('.news-hero-content');
+          const heroContent = hero.querySelector('.news-hero-content, .bv-hero-inner');
           const heroButtons = hero.querySelectorAll('.btn-prime, .btn');
           const donorBanner = hero.querySelector('.donor-banner');
           const heroHeight = hero.offsetHeight || 400;

@@ -30,7 +30,7 @@
 
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <h1>{{ __('public.course_create.hero_title') }}</h1>
         <p>
           @if($requiresEmailVerification)

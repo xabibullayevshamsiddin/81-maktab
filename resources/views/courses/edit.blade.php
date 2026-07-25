@@ -30,7 +30,7 @@
 
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <h1>Kursni tahrirlash</h1>
         <p>
           Ma'lumotlarni yangilang va saqlang. O'zgarishlar saytdagi kurs kartasiga qo'llanadi.

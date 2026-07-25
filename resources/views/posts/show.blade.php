@@ -11,15 +11,15 @@
 
   <section class="news-hero" id="home">
     <div class="container">
-      <div class="news-hero-content reveal">
+      <div class="news-hero-content prime-reveal">
         <h1 class="js-split-text">{{ $postTitle }}</h1>
         @if($post->category)
           <p>{{ $postCategory }}</p>
         @endif
+        <a href="{{ route('post') }}" class="btn" style="margin-top: 16px; display: inline-flex; align-items: center;">
+          <i class="fa-solid fa-arrow-left" style="margin-right: 8px"></i> {{ __('public.posts.show_back') }}
+        </a>
       </div>
-      <a href="{{ route('post') }}" class="btn">
-        {{ __('public.posts.show_back') }} <i class="fa-solid fa-arrow-left" style="margin-left: 6px"></i>
-      </a>
     </div>
   </section>
 
