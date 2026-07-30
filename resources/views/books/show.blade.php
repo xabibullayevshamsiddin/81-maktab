@@ -131,7 +131,20 @@
           <span>{{ __('public.donation.library_prev_page') }}</span>
         </button>
 
-        <span id="bv-page-info" class="bv-page-info">— / —</span>
+        <span id="bv-page-info" class="bv-page-info" title="Sahifa raqamini kiriting"
+          style="cursor:pointer;"
+          onclick="this.style.display='none';document.getElementById('bv-page-input-inline').style.display='inline-flex';document.getElementById('bv-page-input-inline').focus();"
+        >— / —</span>
+        <input
+          id="bv-page-input-inline"
+          type="number"
+          class="bv-zoom-info"
+          min="1"
+          step="1"
+          placeholder="#"
+          style="display:none;width:64px;"
+          title="Sahifa raqamini kiriting va Enter bosing"
+        />
 
         <button id="bv-btn-next" class="bv-ctrl-btn" title="{{ __('public.donation.library_next_page') }}">
           <span>{{ __('public.donation.library_next_page') }}</span>
@@ -146,7 +159,17 @@
         <button id="bv-btn-zoom-out" class="bv-ctrl-btn" title="{{ __('public.donation.library_zoom_out') }}">
           <i class="fa-solid fa-magnifying-glass-minus"></i>
         </button>
-        <span id="bv-zoom-info" class="bv-zoom-info">100%</span>
+        <input
+          id="bv-zoom-info"
+          type="number"
+          class="bv-zoom-info"
+          value="100"
+          min="30"
+          max="400"
+          step="10"
+          title="Zoom foizini kiriting"
+          style="cursor:text;"
+        />
         <button id="bv-btn-zoom-in" class="bv-ctrl-btn" title="{{ __('public.donation.library_zoom_in') }}">
           <i class="fa-solid fa-magnifying-glass-plus"></i>
         </button>
