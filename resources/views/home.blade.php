@@ -11,10 +11,10 @@
 	    <div class="container">
 	      <div class="card-home">
 	        <div class="home-content">
-	          <h1 class="hero-title" id="animated-hero">
-	            <span class="js-split-text">{{ __('public.home.hero_top') }}</span>
-            <strong class="js-split-text">{{ __('public.home.hero_main') }}</strong>
-          </h1>
+	          <h1 class="hero-title hero-title-3d" id="animated-hero">
+	            <span class="js-hero-3d-top">{{ __('public.home.hero_top') }}</span>
+	            <strong class="js-hero-3d-main">{{ __('public.home.hero_main') }}</strong>
+	          </h1>
           <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
             <div class="home-primary-actions prime-reveal" style="transition-delay: 1s;">
               <a href="{{ route('courses') }}" class="btn">{{ __('public.home.hero_courses_action') }}</a>

@@ -239,11 +239,17 @@
           <span class="bv-page-num" id="bv-pnum-right"></span>
         </div>
 
-        {{-- Flip leaf (animatsiya uchun) --}}
+        {{-- Flip leaf (3D animatsiya uchun) --}}
         <div class="bv-flip-container" aria-hidden="true">
           <div class="bv-flip-leaf bv-flip-leaf--right" id="bv-flip-leaf">
-            <div class="bv-flip-leaf-front" style="background:#f5f0e8;"></div>
-            <div class="bv-flip-leaf-back"  style="background:#faf7f2;"></div>
+            <div class="bv-flip-leaf-front" id="bv-flip-front">
+              <canvas id="bv-canvas-flip-front"></canvas>
+              <div class="bv-flip-shadow-front"></div>
+            </div>
+            <div class="bv-flip-leaf-back" id="bv-flip-back">
+              <canvas id="bv-canvas-flip-back"></canvas>
+              <div class="bv-flip-shadow-back"></div>
+            </div>
           </div>
         </div>
 
@@ -261,7 +267,12 @@
         <span class="bv-page-num" id="bv-pnum-single" style="right:18px;bottom:10px;position:absolute;"></span>
       </div>
 
-      {{-- ── Bottom navigation ── --}}
+      </div>
+
+    </div>{{-- /bv-stage --}}
+
+    {{-- ── Dedicated Fixed Footer Bar (Tugmalar va Progress) ── --}}
+    <div class="bv-footer-bar">
       <div class="bv-bottom-nav">
         <button class="bv-nav-btn bv-nav-prev" onclick="window.bvGoPrev && window.bvGoPrev()">
           <i class="fa-solid fa-chevron-left"></i>
@@ -273,7 +284,6 @@
         </button>
       </div>
 
-      {{-- Progress --}}
       <div class="bv-progress-wrap">
         <div class="bv-progress-track">
           <div class="bv-progress-fill" id="bv-progress-fill" style="width:0%"></div>
@@ -283,7 +293,6 @@
           <span style="opacity:.5;">{{ __('public.donation.library_use_arrows') }}</span>
         </div>
       </div>
-
     </div>
 
     {{-- ── Tabs: Sahifalar / Izohlar / Belgilar ── --}}

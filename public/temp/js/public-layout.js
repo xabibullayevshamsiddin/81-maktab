@@ -4167,9 +4167,99 @@ function refreshChatAvailability() {
     });
   }
 
+  /**
+   * Agency-Tier 3D Kinetic Hero Title Engine
+   */
+  function init3DHeroTitleAnimation() {
+    var heroTitle = document.getElementById('animated-hero');
+    if (!heroTitle) return;
+
+    var topEl = heroTitle.querySelector('.js-hero-3d-top');
+    var mainEl = heroTitle.querySelector('.js-hero-3d-main');
+
+    function splitInto3DUnits(el, baseDelay) {
+      if (!el) return;
+      var text = el.textContent.trim();
+      if (!text) return;
+
+      el.innerHTML = '';
+      var words = text.split(/\s+/);
+      var globalCharIndex = 0;
+
+      words.forEach(function(wordText, wIdx) {
+        var wordSpan = document.createElement('span');
+        wordSpan.className = 'word-3d';
+
+        Array.from(wordText).forEach(function(charStr) {
+          var charSpan = document.createElement('span');
+          charSpan.className = 'char-3d';
+          charSpan.textContent = charStr;
+          charSpan.style.setProperty('--char-index', globalCharIndex);
+
+          var delay = (baseDelay + (globalCharIndex * 0.045)).toFixed(3);
+          charSpan.style.transitionDelay = delay + 's';
+
+          wordSpan.appendChild(charSpan);
+          globalCharIndex++;
+        });
+
+        el.appendChild(wordSpan);
+
+        if (wIdx < words.length - 1) {
+          var space = document.createElement('span');
+          space.innerHTML = '&nbsp;';
+          space.style.display = 'inline-block';
+          el.appendChild(space);
+        }
+      });
+    }
+
+    splitInto3DUnits(topEl, 0.12);
+    splitInto3DUnits(mainEl, 0.45);
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        var chars = heroTitle.querySelectorAll('.char-3d');
+        chars.forEach(function(c) { c.classList.add('is-revealed'); });
+      });
+    });
+
+    // 3D Parallax Mouse Tilt Physics
+    var heroCard = heroTitle.closest('.card-home') || heroTitle.closest('.hero');
+    if (heroCard) {
+      var mouseX = 0, mouseY = 0;
+      var currentX = 0, currentY = 0;
+
+      heroCard.addEventListener('mousemove', function(e) {
+        var rect = heroCard.getBoundingClientRect();
+        var x = e.clientX - rect.left - (rect.width / 2);
+        var y = e.clientY - rect.top - (rect.height / 2);
+        mouseX = (x / (rect.width / 2)) * 10;
+        mouseY = -(y / (rect.height / 2)) * 8;
+      });
+
+      heroCard.addEventListener('mouseleave', function() {
+        mouseX = 0;
+        mouseY = 0;
+      });
+
+      function renderTilt() {
+        currentX += (mouseX - currentX) * 0.08;
+        currentY += (mouseY - currentY) * 0.08;
+        heroTitle.style.transform = 'rotateY(' + currentX.toFixed(2) + 'deg) rotateX(' + currentY.toFixed(2) + 'deg)';
+        requestAnimationFrame(renderTilt);
+      }
+      renderTilt();
+    }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDropdownAnimations);
+    document.addEventListener('DOMContentLoaded', function() {
+      initDropdownAnimations();
+      init3DHeroTitleAnimation();
+    });
   } else {
     initDropdownAnimations();
+    init3DHeroTitleAnimation();
   }
 })();

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicYearPromotion;
 use App\Models\Role;
 use App\Models\SchoolClass;
 use App\Models\User;

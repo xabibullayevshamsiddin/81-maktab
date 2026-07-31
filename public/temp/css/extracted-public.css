@@ -17,17 +17,7 @@
   background: rgba(255, 255, 255, 0.16);
 }
 
-.theme-toggle .theme-toggle-dark-icon {
-  display: none;
-}
-
-[data-theme='dark'] .theme-toggle .theme-toggle-light-icon {
-  display: none;
-}
-
-[data-theme='dark'] .theme-toggle .theme-toggle-dark-icon {
-  display: inline-block;
-}
+/* .theme-toggle icon display rules overridden in style.css */
 
 .mobile-theme-toggle-wrap {
   display: none;

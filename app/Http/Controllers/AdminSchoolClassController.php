@@ -112,7 +112,7 @@ class AdminSchoolClassController extends Controller
             ->route('admin.school-classes.index')
             ->with(
                 'success',
-                "{$prefix}Ko'tarildi: {$summary['promoted']}, bitiruvchi: {$summary['graduated']}, qayta sinf tanlash kerak: {$summary['selection_required']}."
+                "{$prefix}Ko'tarildi: {$summary['promoted_classes']} ta sinf ({$summary['promoted_students']} ta o'quvchi), Bitiruvchi: {$summary['graduated_classes']} ta sinf ({$summary['graduated_students']} ta o'quvchi)."
             )
             ->with('toast_type', $summary['dry_run'] ? 'warning' : 'success');
     }

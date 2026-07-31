@@ -119,28 +119,79 @@ class SchoolClassLifecycleService
         }
 
         $summary = [
-            'total' => 0,
-            'promoted' => 0,
-            'graduated' => 0,
+            'total_classes' => 0,
+            'promoted_classes' => 0,
+            'graduated_classes' => 0,
+            'total_students' => 0,
+            'promoted_students' => 0,
+            'graduated_students' => 0,
             'selection_required' => 0,
             'skipped' => 0,
             'dry_run' => $dryRun,
+            /* Legacy aliases for backward compatibility */
+            'promoted' => 0,
+            'graduated' => 0,
         ];
 
         $runner = function () use (&$summary, $dryRun): void {
+            /* 1. Promote active SchoolClass entities (even if 0 students) */
+            $activeClasses = SchoolClass::query()
+                ->active()
+                ->orderByDesc('grade_number')
+                ->orderBy('sort_order')
+                ->get();
+
+            foreach ($activeClasses as $schoolClass) {
+                $summary['total_classes']++;
+                $gn = (int) $schoolClass->grade_number;
+                $sec = (string) $schoolClass->section;
+
+                if ($gn >= 11) {
+                    $summary['graduated_classes']++;
+                    if (! $dryRun) {
+                        $schoolClass->update(['is_active' => false]);
+                    }
+                } else {
+                    $newGn = $gn + 1;
+                    $newName = SchoolClass::buildName($newGn, $sec);
+                    $summary['promoted_classes']++;
+                    if (! $dryRun) {
+                        $targetExisting = SchoolClass::query()
+                            ->where('grade_number', $newGn)
+                            ->where('section', $sec)
+                            ->where('id', '!=', $schoolClass->id)
+                            ->first();
+
+                        if ($targetExisting) {
+                            $targetExisting->update(['is_active' => true]);
+                            $schoolClass->update(['is_active' => false]);
+                        } else {
+                            $schoolClass->update([
+                                'grade_number' => $newGn,
+                                'name' => $newName,
+                                'sort_order' => ($newGn * 100) + (int) $schoolClass->id,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            /* 2. Promote Users / Students */
             User::query()
-                ->where('is_parent', false)
-                ->whereHas('roleRelation', fn ($query) => $query->where('name', User::ROLE_USER))
+                ->whereNotNull('grade')
+                ->where('grade', '!=', '')
                 ->orderBy('id')
                 ->chunkById(100, function ($students) use (&$summary, $dryRun): void {
                     foreach ($students as $student) {
-                        $summary['total']++;
+                        $summary['total_students']++;
                         $grade = normalize_school_grade((string) ($student->grade ?? ''));
 
                         if ($grade === null || preg_match('/^(\d{1,2})-([A-Z0-9]+)$/', $grade, $matches) !== 1) {
-                            $summary['selection_required']++;
-                            if (! $dryRun) {
-                                $this->requireGradeSelection($student, 'Sinfingiz formati eski yoki bo\'sh. Iltimos, mavjud sinflardan birini tanlang.');
+                            if (! $student->is_parent) {
+                                $summary['selection_required']++;
+                                if (! $dryRun) {
+                                    $this->requireGradeSelection($student, 'Sinfingiz formati eski yoki bo\'sh. Iltimos, mavjud sinflardan birini tanlang.');
+                                }
                             }
                             continue;
                         }
@@ -149,20 +200,22 @@ class SchoolClassLifecycleService
                         $section = $matches[2];
 
                         if ($gradeNumber >= 11) {
+                            $summary['graduated_students']++;
                             $summary['graduated']++;
                             if (! $dryRun) {
-                                $student->forceFill([
-                                    'grade' => null,
-                                    'is_parent' => true,
-                                    'grade_needs_selection' => false,
-                                    'grade_selection_reason' => null,
-                                ])->save();
+                                $updateData = ['grade' => null];
+                                if (! $student->is_parent) {
+                                    $updateData['is_parent'] = true;
+                                    $updateData['grade_needs_selection'] = false;
+                                    $updateData['grade_selection_reason'] = null;
+                                }
+                                $student->forceFill($updateData)->save();
 
                                 $this->notifyUser(
                                     $student,
                                     'success',
                                     'Bitiruvchi akkaunt ota-ona rejimiga o\'tkazildi',
-                                    '11-sinf yakunlangani uchun akkauntingiz ota-ona rejimiga o\'tkazildi.'
+                                    '11-sinf yakunlangani uchun sinf ma\'lumotlaringiz yangilandi.'
                                 );
                             }
                             continue;
@@ -170,10 +223,9 @@ class SchoolClassLifecycleService
 
                         $newGrade = ($gradeNumber + 1).'-'.$section;
 
+                        $summary['promoted_students']++;
                         $summary['promoted']++;
                         if (! $dryRun) {
-                            $this->upsertClass($gradeNumber + 1, $section);
-
                             $student->forceFill([
                                 'grade' => $newGrade,
                                 'grade_needs_selection' => false,
@@ -189,6 +241,8 @@ class SchoolClassLifecycleService
                         }
                     }
                 });
+
+            forget_school_grade_cache();
         };
 
         if ($dryRun) {

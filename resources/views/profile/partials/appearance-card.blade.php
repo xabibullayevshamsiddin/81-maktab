@@ -6,6 +6,7 @@
   $themeIcon = $themeCfg["badge_icon"] ?? "fa-solid fa-star";
   $themeLabel = $themeCfg["label"] ?? "Foydalanuvchi";
   $userColor = $user->donorUsernameColor() ?? "#3b82f6";
+  $donorIsActive = $user->isDonor();
 
   // Barcha temalar ro'yxati
   $allThemes = \App\Models\Donation::THEMES();
@@ -231,6 +232,59 @@
   width: 100px;
 }
 
+/* Qulflangan (Non-Donor) sozlama satri */
+.ap-setting-row--locked {
+  position: relative;
+  opacity: 0.75;
+  background: color-mix(in srgb, var(--surface) 95%, #f59e0b 5%);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  transition: all 0.25s ease;
+}
+.ap-setting-row--locked:hover {
+  opacity: 1;
+  border-color: rgba(245, 158, 11, 0.75);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.12);
+}
+.ap-setting-row--locked select,
+.ap-setting-row--locked input {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.ap-lock-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.25));
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  margin-left: 0.3rem;
+}
+.ap-lock-unlock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #f59e0b;
+  text-decoration: none;
+  padding: 0.25rem 0.6rem;
+  border-radius: 7px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ap-lock-unlock-btn:hover {
+  background: #f59e0b;
+  color: #000;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
 .ap-btn-save {
   width: 100%;
   padding: 0.7rem;
@@ -338,85 +392,213 @@
   {{-- ====== SOZLAMALAR BO'LIMI ====== --}}
   <div class="ap-section-title"><i class="fa-solid fa-sliders"></i> {{ __('profile.appearance.settings_title') }}</div>
   <div class="ap-settings-grid">
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.badge_style_label') }}</div><div class="asr-desc">{{ __('profile.appearance.badge_style_desc') }}</div></div>
-      <select name="badge_style">
-        <option value="default" {{ ($user->badge_style??"default")=="default"?"selected":"" }}>{{ __('profile.appearance.badge_style_default') }}</option>
-        <option value="pill" {{ ($user->badge_style??"")=="pill"?"selected":"" }}>{{ __('profile.appearance.badge_style_pill') }}</option>
-        <option value="icon" {{ ($user->badge_style??"")=="icon"?"selected":"" }}>{{ __('profile.appearance.badge_style_icon') }}</option>
-      </select>
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.badge_style_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.badge_style_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="badge_style">
+          <option value="default" {{ ($user->badge_style??"default")=="default"?"selected":"" }}>{{ __('profile.appearance.badge_style_default') }}</option>
+          <option value="pill" {{ ($user->badge_style??"")=="pill"?"selected":"" }}>{{ __('profile.appearance.badge_style_pill') }}</option>
+          <option value="icon" {{ ($user->badge_style??"")=="icon"?"selected":"" }}>{{ __('profile.appearance.badge_style_icon') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.comment_style_label') }}</div><div class="asr-desc">{{ __('profile.appearance.comment_style_desc') }}</div></div>
-      <select name="comment_style">
-        <option value="border" {{ ($user->comment_style??"border")=="border"?"selected":"" }}>{{ __('profile.appearance.comment_style_border') }}</option>
-        <option value="filled" {{ ($user->comment_style??"")=="filled"?"selected":"" }}>{{ __('profile.appearance.comment_style_filled') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.comment_style_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.comment_style_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="comment_style">
+          <option value="border" {{ ($user->comment_style??"border")=="border"?"selected":"" }}>{{ __('profile.appearance.comment_style_border') }}</option>
+          <option value="filled" {{ ($user->comment_style??"")=="filled"?"selected":"" }}>{{ __('profile.appearance.comment_style_filled') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.chat_badge_label') }}</div><div class="asr-desc">{{ __('profile.appearance.chat_badge_desc') }}</div></div>
-      <select name="chat_style">
-        <option value="show" {{ ($user->chat_style??"show")=="show"?"selected":"" }}>{{ __('profile.appearance.chat_badge_show') }}</option>
-        <option value="hide" {{ ($user->chat_style??"")=="hide"?"selected":"" }}>{{ __('profile.appearance.chat_badge_hide') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.chat_badge_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.chat_badge_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="chat_style">
+          <option value="show" {{ ($user->chat_style??"show")=="show"?"selected":"" }}>{{ __('profile.appearance.chat_badge_show') }}</option>
+          <option value="hide" {{ ($user->chat_style??"")=="hide"?"selected":"" }}>{{ __('profile.appearance.chat_badge_hide') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.expiry_label') }}</div><div class="asr-desc">{{ __('profile.appearance.expiry_desc') }}</div></div>
-      <select name="show_expiry_badge">
-        <option value="1" {{ ($user->show_expiry_badge??"1")=="1"?"selected":"" }}>{{ __('profile.appearance.expiry_show') }}</option>
-        <option value="0" {{ ($user->show_expiry_badge??"")=="0"?"selected":"" }}>{{ __('profile.appearance.expiry_hide') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.expiry_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.expiry_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="show_expiry_badge">
+          <option value="1" {{ ($user->show_expiry_badge??"1")=="1"?"selected":"" }}>{{ __('profile.appearance.expiry_show') }}</option>
+          <option value="0" {{ ($user->show_expiry_badge??"")=="0"?"selected":"" }}>{{ __('profile.appearance.expiry_hide') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.font_weight_label') }}</div><div class="asr-desc">{{ __('profile.appearance.font_weight_label') }}</div></div>
-      <select name="name_font_weight">
-        <option value="600" {{ ($user->name_font_weight??"700")=="600"?"selected":"" }}>{{ __('profile.appearance.font_weight_normal') }}</option>
-        <option value="700" {{ ($user->name_font_weight??"700")=="700"?"selected":"" }}>{{ __('profile.appearance.font_weight_bold') }}</option>
-        <option value="800" {{ ($user->name_font_weight??"")=="800"?"selected":"" }}>{{ __('profile.appearance.font_weight_bolder') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.font_weight_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.font_weight_label') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="name_font_weight">
+          <option value="600" {{ ($user->name_font_weight??"700")=="600"?"selected":"" }}>{{ __('profile.appearance.font_weight_normal') }}</option>
+          <option value="700" {{ ($user->name_font_weight??"700")=="700"?"selected":"" }}>{{ __('profile.appearance.font_weight_bold') }}</option>
+          <option value="800" {{ ($user->name_font_weight??"")=="800"?"selected":"" }}>{{ __('profile.appearance.font_weight_bolder') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    @if($user->isDonor())
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.cursor_label') }}</div><div class="asr-desc">{{ __('profile.appearance.cursor_desc') }}</div></div>
-      <select name="donor_cursor_animation">
-        <option value="1" {{ $user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_on') }}</option>
-        <option value="0" {{ !$user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_off') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.cursor_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.cursor_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="donor_cursor_animation">
+          <option value="1" {{ $user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_on') }}</option>
+          <option value="0" {{ !$user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_off') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.bg_label') }}</div><div class="asr-desc">{{ __('profile.appearance.bg_desc') }}</div></div>
-      <select name="profile_bg_style">
-        <option value="plain"    {{ ($user->profile_bg_style??'plain')=='plain'   ?'selected':'' }}>{{ __('profile.appearance.bg_plain') }}</option>
-        <option value="gradient" {{ ($user->profile_bg_style??'')=='gradient'     ?'selected':'' }}>{{ __('profile.appearance.bg_gradient') }}</option>
-        <option value="mesh"     {{ ($user->profile_bg_style??'')=='mesh'         ?'selected':'' }}>{{ __('profile.appearance.bg_mesh') }}</option>
-        <option value="aurora"   {{ ($user->profile_bg_style??'')=='aurora'       ?'selected':'' }}>{{ __('profile.appearance.bg_aurora') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.bg_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.bg_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="profile_bg_style">
+          <option value="plain"    {{ ($user->profile_bg_style??'plain')=='plain'   ?'selected':'' }}>{{ __('profile.appearance.bg_plain') }}</option>
+          <option value="gradient" {{ ($user->profile_bg_style??'')=='gradient'     ?'selected':'' }}>{{ __('profile.appearance.bg_gradient') }}</option>
+          <option value="mesh"     {{ ($user->profile_bg_style??'')=='mesh'         ?'selected':'' }}>{{ __('profile.appearance.bg_mesh') }}</option>
+          <option value="aurora"   {{ ($user->profile_bg_style??'')=='aurora'       ?'selected':'' }}>{{ __('profile.appearance.bg_aurora') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.badge_pos_label') }}</div><div class="asr-desc">{{ __('profile.appearance.badge_pos_desc') }}</div></div>
-      <select name="badge_position">
-        <option value="after"  {{ ($user->badge_position??'after')=='after' ?'selected':'' }}>{{ __('profile.appearance.badge_pos_after') }}</option>
-        <option value="before" {{ ($user->badge_position??'')=='before'     ?'selected':'' }}>{{ __('profile.appearance.badge_pos_before') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.badge_pos_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.badge_pos_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="badge_position">
+          <option value="after"  {{ ($user->badge_position??'after')=='after' ?'selected':'' }}>{{ __('profile.appearance.badge_pos_after') }}</option>
+          <option value="before" {{ ($user->badge_position??'')=='before'     ?'selected':'' }}>{{ __('profile.appearance.badge_pos_before') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.banner_anim_label') }}</div><div class="asr-desc">{{ __('profile.appearance.banner_anim_desc') }}</div></div>
-      <select name="banner_animation">
-        <option value="none"  {{ ($user->banner_animation??'none')=='none'  ?'selected':'' }}>{{ __('profile.appearance.banner_anim_none') }}</option>
-        <option value="pulse" {{ ($user->banner_animation??'')=='pulse'     ?'selected':'' }}>{{ __('profile.appearance.banner_anim_pulse') }}</option>
-        <option value="wave"  {{ ($user->banner_animation??'')=='wave'      ?'selected':'' }}>{{ __('profile.appearance.banner_anim_wave') }}</option>
-        <option value="slide" {{ ($user->banner_animation??'')=='slide'     ?'selected':'' }}>{{ __('profile.appearance.banner_anim_slide') }}</option>
-      </select>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.banner_anim_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.banner_anim_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <select name="banner_animation">
+          <option value="none"  {{ ($user->banner_animation??'none')=='none'  ?'selected':'' }}>{{ __('profile.appearance.banner_anim_none') }}</option>
+          <option value="pulse" {{ ($user->banner_animation??'')=='pulse'     ?'selected':'' }}>{{ __('profile.appearance.banner_anim_pulse') }}</option>
+          <option value="wave"  {{ ($user->banner_animation??'')=='wave'      ?'selected':'' }}>{{ __('profile.appearance.banner_anim_wave') }}</option>
+          <option value="slide" {{ ($user->banner_animation??'')=='slide'     ?'selected':'' }}>{{ __('profile.appearance.banner_anim_slide') }}</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    <div class="ap-setting-row">
-      <div><div class="asr-label">{{ __('profile.appearance.status_emoji_label') }}</div><div class="asr-desc">{{ __('profile.appearance.status_emoji_desc') }}</div></div>
-      <input type="text" name="status_emoji"
-        value="{{ $user->status_emoji }}"
-        maxlength="2"
-        placeholder="🔥"
-        style="width:60px; padding:0.3rem 0.45rem; border:2px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text); font-size:1rem; outline:none; text-align:center;">
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          {{ __('profile.appearance.status_emoji_label') }}
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">{{ __('profile.appearance.status_emoji_desc') }}</div>
+      </div>
+      @if($donorIsActive)
+        <input type="text" name="status_emoji"
+          value="{{ $user->status_emoji }}"
+          maxlength="2"
+          placeholder="🔥"
+          style="width:60px; padding:0.3rem 0.45rem; border:2px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text); font-size:1rem; outline:none; text-align:center;">
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
     </div>
-    @endif
+
   </div>
 
   <button type="submit" class="ap-btn-save"><i class="fa-solid fa-check"></i> {{ __('profile.appearance.save') }}</button>

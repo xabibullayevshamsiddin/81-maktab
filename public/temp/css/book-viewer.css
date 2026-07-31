@@ -16,7 +16,7 @@
   --bv-success:      #10b981;
   --bv-text:         #f1f5f9;
   --bv-text-muted:   rgba(241, 245, 249, 0.55);
-  --bv-page-bg:      #f5f0e8;
+  --bv-page-bg:      #ffffff;
   --bv-radius:       1.25rem;
 }
 
@@ -283,14 +283,13 @@
 
 /* ── Stage ── */
 .bv-stage {
-  background: radial-gradient(ellipse at center, #1a1f35 0%, #0a0e1a 100%);
-  border-radius: 0 0 var(--bv-radius) var(--bv-radius);
-  padding: 0.5rem;
+  background: radial-gradient(ellipse at center, #111827 0%, #070a12 100%);
+  border-radius: 0;
+  padding: 0;
   position: relative;
   overflow: hidden;
-  /* Aniq balandlik — calcFitScale to'g'ri ishlashi uchun */
-  height: calc(100vh - 260px);
-  min-height: 520px;
+  height: calc(100vh - 165px);
+  min-height: 600px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -311,7 +310,7 @@
   align-items: stretch;
   justify-content: center;
   width: 100%;
-  /* flex:1 — stage ichidagi barcha bo'sh joyni egallaydi */
+  height: 100%;
   flex: 1;
   min-height: 0;
   perspective: 2000px;
@@ -335,7 +334,7 @@
 .bv-page-right {
   flex: 1;
   max-width: 50%;
-  /* min-height yo'q — flex:1 o'zi to'ldiradi */
+  height: 100%;
   background: var(--bv-page-bg);
   position: relative;
   overflow: hidden;
@@ -344,13 +343,13 @@
 }
 .bv-page-left {
   border-radius: 4px 0 0 4px;
-  box-shadow: -8px 0 20px rgba(0,0,0,.35), inset -4px 0 12px rgba(0,0,0,.12);
-  background: linear-gradient(to right, #e8e0d0 0%, #f5f0e8 8%, #faf7f2 100%);
+  box-shadow: -8px 0 20px rgba(0,0,0,.35), inset -6px 0 16px rgba(0,0,0,.08);
+  background: linear-gradient(to right, #e2e8f0 0%, #ffffff 6%, #ffffff 100%);
 }
 .bv-page-right {
   border-radius: 0 4px 4px 0;
-  box-shadow: 8px 0 20px rgba(0,0,0,.35), inset 4px 0 12px rgba(0,0,0,.12);
-  background: linear-gradient(to left, #e8e0d0 0%, #f5f0e8 8%, #faf7f2 100%);
+  box-shadow: 8px 0 20px rgba(0,0,0,.35), inset 6px 0 16px rgba(0,0,0,.08);
+  background: linear-gradient(to left, #e2e8f0 0%, #ffffff 6%, #ffffff 100%);
 }
 .bv-page-left::before,
 .bv-page-right::before {
@@ -384,14 +383,44 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  /* min-height:0 — flex child overflow bo'lmasin */
+  width: 100%;
+  height: 100%;
   min-height: 0;
 }
 .bv-page-canvas canvas {
-  /* Canvas o'z hisoblangan o'lchamida ko'rinsin — max cheklov yo'q */
   display: block;
   max-width: 100%;
   max-height: 100%;
+  object-fit: contain;
+}
+
+/* ── Zoom mode overrides (Full Zoom Expansion) ── */
+.bv-stage.is-zoomed {
+  overflow: auto !important;
+  align-items: flex-start !important;
+}
+.bv-stage.is-zoomed .bv-book-wrap {
+  height: auto !important;
+  min-height: 100% !important;
+  width: auto !important;
+  min-width: 100% !important;
+  align-items: flex-start !important;
+}
+.bv-stage.is-zoomed .bv-page-left,
+.bv-stage.is-zoomed .bv-page-right {
+  max-width: none !important;
+  height: auto !important;
+  flex: none !important;
+  overflow: visible !important;
+}
+.bv-stage.is-zoomed .bv-page-canvas {
+  overflow: visible !important;
+  width: auto !important;
+  height: auto !important;
+}
+.bv-stage.is-zoomed .bv-page-canvas canvas {
+  max-width: none !important;
+  max-height: none !important;
 }
 
 /* ── Dog-ear ── */
@@ -432,21 +461,25 @@
 .bv-page-left .bv-page-num  { left: 18px; }
 .bv-page-right .bv-page-num { right: 18px; }
 
-/* ── Flip animation ── */
+/* ── Flip animation (Apple Books 3D Tier) ── */
 .bv-flip-container {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 20;
-  perspective: 1800px;
+  perspective: 2200px;
+  display: none;
+}
+.bv-flip-container.is-active {
+  display: block;
 }
 .bv-flip-leaf {
   position: absolute;
   top: 0; bottom: 0;
   width: 50%;
   transform-style: preserve-3d;
-  backface-visibility: hidden;
   will-change: transform;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 .bv-flip-leaf--left  { left: 0;  transform-origin: right center; }
 .bv-flip-leaf--right { right: 0; transform-origin: left center; }
@@ -454,19 +487,49 @@
 .bv-flip-leaf-back {
   position: absolute; inset: 0;
   backface-visibility: hidden;
-  border-radius: 2px; overflow: hidden;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bv-flip-leaf-front canvas,
+.bv-flip-leaf-back canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 .bv-flip-leaf-back { transform: rotateY(180deg); }
+
+/* Dynamic 3D lighting shadow overlay */
+.bv-flip-shadow-front,
+.bv-flip-shadow-back {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.5s ease;
+}
+.bv-flip-shadow-front {
+  background: linear-gradient(to right, rgba(0,0,0,0.28) 0%, transparent 25%, rgba(255,255,255,0.3) 70%, rgba(0,0,0,0.35) 100%);
+}
+.bv-flip-shadow-back {
+  background: linear-gradient(to left, rgba(0,0,0,0.28) 0%, transparent 25%, rgba(255,255,255,0.3) 70%, rgba(0,0,0,0.35) 100%);
+}
+
 @keyframes bvFlipNext {
   0%   { transform: rotateY(0deg); }
+  50%  { transform: rotateY(-90deg) scale(1.01); }
   100% { transform: rotateY(-180deg); }
 }
 @keyframes bvFlipPrev {
   0%   { transform: rotateY(-180deg); }
+  50%  { transform: rotateY(-90deg) scale(1.01); }
   100% { transform: rotateY(0deg); }
 }
-.bv-flipping-next { animation: bvFlipNext .55s cubic-bezier(.645,.045,.355,1) forwards; }
-.bv-flipping-prev { animation: bvFlipPrev .55s cubic-bezier(.645,.045,.355,1) forwards; }
+.bv-flipping-next { animation: bvFlipNext .42s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.bv-flipping-prev { animation: bvFlipPrev .42s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
 
 /* ── Loading overlay ── */
 .bv-loading {
@@ -494,13 +557,29 @@
 @keyframes bvSpin { to { transform: rotate(360deg); } }
 .bv-loading-text { font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.7); letter-spacing: .04em; }
 
+/* ── Footer Bar (Fixed Control Dock) ── */
+.bv-footer-bar {
+  background: rgba(11, 15, 25, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.85rem 1.5rem 1rem;
+  border-radius: 0 0 var(--bv-radius) var(--bv-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  z-index: 30;
+  position: relative;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+
 /* ── Bottom nav ── */
 .bv-bottom-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 0;
   flex-wrap: wrap;
   z-index: 2;
   position: relative;
@@ -527,7 +606,7 @@
 .bv-progress-wrap {
   width: 100%;
   max-width: 600px;
-  margin: .75rem auto 0;
+  margin: .25rem auto 0;
   z-index: 2;
   position: relative;
 }

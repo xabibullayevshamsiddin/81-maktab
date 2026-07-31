@@ -23,25 +23,35 @@
   var thumbsWrap;
   var pdfUrl;
 
-  /* ── Scale: stage.getBoundingClientRect() ishlatiladi ── */
+  var baseFitScale = 1.0;
+
+  /* ── Scale: Large, crystal clear reading scale ── */
   function calcFitScale(natW, natH) {
     var stage = document.getElementById('bv-stage');
     var rect  = stage ? stage.getBoundingClientRect() : null;
     var sw = rect && rect.width  > 0 ? rect.width  : window.innerWidth;
-    var sh = rect && rect.height > 0 ? rect.height : window.innerHeight - 200;
-    var pw = Math.floor((sw - 14) / 2) - 8;
-    var ph = sh - 20;
+    var sh = rect && rect.height > 0 ? rect.height : (window.innerHeight - 165);
+    var pw = Math.floor((sw - 14) / 2) - 4;
+    var ph = sh - 10;
     if (pw <= 0 || ph <= 0 || natW <= 0 || natH <= 0) return 1.0;
-    return Math.min(Math.max(Math.min(pw / natW, ph / natH), 0.3), 4.0);
+    
+    /* Optimal large reading fit: fill width or height comfortably (1.25x multiplier for crisp large text) */
+    var scaleH = ph / natH;
+    var scaleW = pw / natW;
+    var optimal = Math.max(scaleH, scaleW * 0.95);
+    baseFitScale = Math.min(Math.max(optimal, 0.8), 3.0);
+    return baseFitScale;
   }
 
   function calcFitScaleMobile(natW, natH) {
     var stage = document.getElementById('bv-stage');
     var rect  = stage ? stage.getBoundingClientRect() : null;
-    var w = rect && rect.width  > 0 ? rect.width  - 16 : window.innerWidth  - 32;
-    var h = rect && rect.height > 0 ? rect.height - 20 : window.innerHeight - 200;
+    var w = rect && rect.width  > 0 ? rect.width  - 8 : window.innerWidth - 16;
+    var h = rect && rect.height > 0 ? rect.height - 10 : (window.innerHeight - 165);
     if (w <= 0 || h <= 0 || natW <= 0 || natH <= 0) return 1.0;
-    return Math.min(Math.max(Math.min(w / natW, h / natH), 0.3), 4.0);
+    var optimal = Math.max(h / natH, w / natW);
+    baseFitScale = Math.min(Math.max(optimal, 0.8), 3.0);
+    return baseFitScale;
   }
 
   /* ── Bootstrap ── */
@@ -131,6 +141,7 @@
       canvas.height       = vp.height;
       canvas.style.width  = (vp.width  / dpr) + 'px';
       canvas.style.height = (vp.height / dpr) + 'px';
+      checkZoomState();
 
       page.render({ canvasContext: ctx, viewport: vp }).promise
         .then(function ()  { cb && cb(useScale); })
@@ -221,19 +232,42 @@
     if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  /* ── Page flip ── */
+  /* ── Page flip with 3D Canvas Snapshot ── */
   function playFlip(direction, callback) {
+    var flipContainer = document.querySelector('.bv-flip-container');
     var flipEl = document.getElementById('bv-flip-leaf');
     if (!flipEl) { callback && callback(); return; }
+
+    var canvasFront = document.getElementById('bv-canvas-flip-front');
+    var canvasBack  = document.getElementById('bv-canvas-flip-back');
+
+    try {
+      if (canvasFront && canvasRight && canvasRight.width > 0) {
+        canvasFront.width  = canvasRight.width;
+        canvasFront.height = canvasRight.height;
+        var ctxF = canvasFront.getContext('2d');
+        ctxF.drawImage(canvasRight, 0, 0);
+      }
+      if (canvasBack && canvasLeft && canvasLeft.width > 0) {
+        canvasBack.width  = canvasLeft.width;
+        canvasBack.height = canvasLeft.height;
+        var ctxB = canvasBack.getContext('2d');
+        ctxB.drawImage(canvasLeft, 0, 0);
+      }
+    } catch (e) {}
+
+    if (flipContainer) flipContainer.classList.add('is-active');
     isFlipping = true;
     flipEl.classList.remove('bv-flipping-next', 'bv-flipping-prev');
     void flipEl.offsetWidth;
     flipEl.classList.add(direction === 'next' ? 'bv-flipping-next' : 'bv-flipping-prev');
+
     setTimeout(function () {
       flipEl.classList.remove('bv-flipping-next', 'bv-flipping-prev');
+      if (flipContainer) flipContainer.classList.remove('is-active');
       isFlipping = false;
       callback && callback();
-    }, 580);
+    }, 420);
   }
 
   /* ── Navigation ── */
@@ -268,12 +302,31 @@
     num = Math.max(1, Math.min(num, totalPages));
     if (!isMobile && num % 2 === 0) num = Math.max(1, num - 1);
     currentPage = num;
+    playPageSound();
     renderSpread(currentPage, true, 'next');
   }
 
+  function checkZoomState() {
+    var stage = document.getElementById('bv-stage');
+    if (!stage) return;
+    if (scale > (baseFitScale * 1.05)) {
+      stage.classList.add('is-zoomed');
+    } else {
+      stage.classList.remove('is-zoomed');
+    }
+  }
+
   /* ── Zoom ── */
-  function zoomIn()  { scale = Math.min(scale + 0.2, 4.0); if (!isRendering) renderSpreadFixed(currentPage); }
-  function zoomOut() { scale = Math.max(scale - 0.2, 0.3); if (!isRendering) renderSpreadFixed(currentPage); }
+  function zoomIn()  {
+    scale = Math.min(scale + 0.25, 4.0);
+    checkZoomState();
+    if (!isRendering) renderSpreadFixed(currentPage);
+  }
+  function zoomOut() {
+    scale = Math.max(scale - 0.25, 0.4);
+    checkZoomState();
+    if (!isRendering) renderSpreadFixed(currentPage);
+  }
 
   /* ── Fullscreen ── */
   function toggleFullscreen() {
@@ -286,75 +339,44 @@
     }
   }
 
-  /* ── Web Audio: kitob varaq foley ── */
+  /* ── Web Audio: Ultra-Soft Silky Book Paper Glide Audio ── */
   var audioCtx = null;
   function playPageSound() {
     try {
-      /* Sayt ovozi o'chirilgan bo'lsa — jim */
       if (localStorage.getItem('site-audio-muted') === 'true') return;
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
       var sr  = audioCtx.sampleRate;
       var now = audioCtx.currentTime;
 
-      /* ─ 1. Qog'oz "rustle" — filtered noise, 0.18s ─ */
-      var rustleLen = Math.floor(sr * 0.18);
-      var rustleBuf = audioCtx.createBuffer(1, rustleLen, sr);
-      var rustleData = rustleBuf.getChannelData(0);
-      for (var i = 0; i < rustleLen; i++) {
-        /* attack 0–10ms, decay exponential */
-        var env = Math.min(i / (sr * 0.01), 1) * Math.pow(1 - i / rustleLen, 1.6);
-        rustleData[i] = (Math.random() * 2 - 1) * env * 0.22;
+      /* Soft organic paper glide: low-pass filtered brownian noise sweep, 140ms */
+      var len = Math.floor(sr * 0.14);
+      var buf = audioCtx.createBuffer(1, len, sr);
+      var data = buf.getChannelData(0);
+      var lastOut = 0.0;
+      for (var i = 0; i < len; i++) {
+        var white = (Math.random() * 2 - 1);
+        var brown = (lastOut + (0.02 * white)) / 1.02;
+        lastOut = brown;
+        var env = Math.sin((i / len) * Math.PI); // smooth bell curve
+        data[i] = brown * env * 0.14;
       }
-      var rustleSrc = audioCtx.createBufferSource();
-      rustleSrc.buffer = rustleBuf;
-      /* Band-pass: qog'oz frekvensi 1.8kHz atrofida */
-      var bp = audioCtx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = 1800;
-      bp.Q.value = 0.9;
-      var rustleGain = audioCtx.createGain();
-      rustleGain.gain.setValueAtTime(0.55, now);
-      rustleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-      rustleSrc.connect(bp);
-      bp.connect(rustleGain);
-      rustleGain.connect(audioCtx.destination);
-      rustleSrc.start(now);
 
-      /* ─ 2. "Whoosh" sweep — sine chirp 400→120 Hz, 0.14s ─ */
-      var whooshLen = Math.floor(sr * 0.14);
-      var whooshBuf = audioCtx.createBuffer(1, whooshLen, sr);
-      var whooshData = whooshBuf.getChannelData(0);
-      var phase = 0;
-      for (var j = 0; j < whooshLen; j++) {
-        var t   = j / sr;
-        var env2 = Math.pow(1 - j / whooshLen, 2.2) * 0.12;
-        var freq = 400 - 280 * (j / whooshLen);   /* 400 → 120 Hz */
-        phase += (2 * Math.PI * freq) / sr;
-        whooshData[j] = Math.sin(phase) * env2;
-      }
-      var whooshSrc = audioCtx.createBufferSource();
-      whooshSrc.buffer = whooshBuf;
-      var whooshGain = audioCtx.createGain();
-      whooshGain.gain.setValueAtTime(0.38, now);
-      whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-      whooshSrc.connect(whooshGain);
-      whooshGain.connect(audioCtx.destination);
-      whooshSrc.start(now);
+      var src = audioCtx.createBufferSource();
+      src.buffer = buf;
 
-      /* ─ 3. Yumshoq "thud" — low sine 80 Hz, 0.06s ─ */
-      var thudOsc = audioCtx.createOscillator();
-      thudOsc.type = 'sine';
-      thudOsc.frequency.setValueAtTime(80, now);
-      thudOsc.frequency.exponentialRampToValueAtTime(40, now + 0.06);
-      var thudGain = audioCtx.createGain();
-      thudGain.gain.setValueAtTime(0.18, now);
-      thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-      thudOsc.connect(thudGain);
-      thudGain.connect(audioCtx.destination);
-      thudOsc.start(now);
-      thudOsc.stop(now + 0.07);
+      // Lowpass filter sweep at 1100Hz -> 450Hz for smooth paper texture
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass';
+      lpf.frequency.setValueAtTime(1100, now);
+      lpf.frequency.exponentialRampToValueAtTime(450, now + 0.14);
 
-    } catch (e) { /* AudioContext yo'q — jim */ }
+      src.connect(lpf);
+      lpf.connect(audioCtx.destination);
+      src.start(now);
+
+    } catch (e) {}
   }
 
   /* ── Thumbnails (lazy-load + retry) ── */
