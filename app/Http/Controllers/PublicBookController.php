@@ -81,7 +81,8 @@ class PublicBookController extends Controller
         abort_unless($book->is_active, 404);
         abort_unless(Storage::disk('public')->exists($book->file_path), 404);
 
-        $book->incrementView();
+        // incrementView() faqat show() da chaqiriladi — stream() har byte-range
+        // so'rovida chaqirilgani uchun bu yerda olib tashlandi.
 
         $path = Storage::disk('public')->path($book->file_path);
 

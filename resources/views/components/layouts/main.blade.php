@@ -236,8 +236,10 @@
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
-              <li><a class="nav-link {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">{{ __('public.layout.nav.library') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+              @auth
+              <li><a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">{{ __('public.layout.menu.profile') }}</a></li>
+              @endauth
               <li class="mobile-theme-toggle-wrap">
                 <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
                   <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
@@ -291,10 +293,6 @@
                         <i class="fa-solid fa-graduation-cap"></i>
                         {{ __('public.layout.menu.exams') }}
                       </a>
-	                      <a class="nav-dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
-	                        <i class="fa-solid fa-user"></i>
-	                        {{ __('public.layout.menu.profile') }}
-	                      </a>
 		                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
 		                        <i class="fa-solid fa-lightbulb"></i>
 		                        {{ __('public.layout.feature_requests') }}

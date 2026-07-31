@@ -1106,7 +1106,12 @@ return [
         'library_zoom_out' => 'Kichiklashtirish',
         'library_loading' => 'PDF yuklanmoqda...',
         'library_use_arrows' => 'Klaviatura: ← → yoki suring',
-
+        'library_pages' => 'Sahifalar',
+        'library_notes' => 'Izohlar',
+        'library_bookmarks' => 'Belgilar',
+        'library_bookmark_page' => 'Belgilash',
+        'library_notes_empty' => 'Hozircha izohlar yo\'q.',
+        'library_bookmarks_empty' => 'Hozircha belgilangan sahifalar yo\'q.',
         'index_hero_title' => '81-IDUM ni qo\'llab-quvvatlang',
         'index_hero_text' => 'Sizning donatlaringiz maktab saytini yanada yaxshilash va server xarajatlarini qoplash uchun ishlatiladi.',
         'index_tg_title' => 'Kod orqali aktivlashtirish',

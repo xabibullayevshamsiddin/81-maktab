@@ -1101,7 +1101,12 @@ return [
         'library_zoom_out' => 'Zoom out',
         'library_loading' => 'Loading PDF...',
         'library_use_arrows' => 'Keyboard: ← → or swipe',
-
+        'library_pages' => 'Pages',
+        'library_notes' => 'Notes',
+        'library_bookmarks' => 'Bookmarks',
+        'library_bookmark_page' => 'Bookmark',
+        'library_notes_empty' => 'No notes yet.',
+        'library_bookmarks_empty' => 'No bookmarked pages yet.',
         'index_hero_title' => 'Support 81-IDUM',
         'index_hero_text' => 'Your donations help improve the school website and cover server costs.',
         'index_tg_title' => 'Activate with a code',

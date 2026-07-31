@@ -126,7 +126,9 @@
         <button id="bv-btn-first" class="bv-ctrl-btn" title="{{ __('public.donation.library_first_page') }}">
           <i class="fa-solid fa-backward-step"></i>
         </button>
-        <button id="bv-btn-prev" class="bv-ctrl-btn" title="{{ __('public.donation.library_prev_page') }}">
+
+        {{-- Navigatsiya strelkasi: PREV --}}
+        <button id="bv-btn-prev" class="bv-ctrl-btn bv-ctrl-btn--nav" title="{{ __('public.donation.library_prev_page') }}">
           <i class="fa-solid fa-chevron-left"></i>
           <span>{{ __('public.donation.library_prev_page') }}</span>
         </button>
@@ -146,7 +148,8 @@
           title="Sahifa raqamini kiriting va Enter bosing"
         />
 
-        <button id="bv-btn-next" class="bv-ctrl-btn" title="{{ __('public.donation.library_next_page') }}">
+        {{-- Navigatsiya strelkasi: NEXT --}}
+        <button id="bv-btn-next" class="bv-ctrl-btn bv-ctrl-btn--nav" title="{{ __('public.donation.library_next_page') }}">
           <span>{{ __('public.donation.library_next_page') }}</span>
           <i class="fa-solid fa-chevron-right"></i>
         </button>
@@ -179,6 +182,12 @@
         <button id="bv-btn-fullscreen" class="bv-ctrl-btn bv-ctrl-btn--accent" title="{{ __('public.donation.library_fullscreen') }}">
           <i class="fa-solid fa-expand"></i>
           <span>{{ __('public.donation.library_fullscreen') }}</span>
+        </button>
+
+        {{-- Bookmark tugmasi --}}
+        <button id="bv-btn-bookmark" class="bv-ctrl-btn bv-ctrl-btn--bookmark" title="{{ __('public.donation.library_bookmark_page') }}">
+          <i class="fa-regular fa-bookmark" id="bv-bm-icon"></i>
+          <span>{{ __('public.donation.library_bookmark_page') }}</span>
         </button>
 
         @if($book->allow_download)
@@ -277,8 +286,43 @@
 
     </div>
 
-    {{-- ── Thumbnail strip ── --}}
-    <div class="bv-thumbs" id="bv-thumbs"></div>
+    {{-- ── Tabs: Sahifalar / Izohlar / Belgilar ── --}}
+    <div class="bv-tabs-bar">
+      <button class="bv-tab active" data-tab="pages">
+        <i class="fa-solid fa-grip"></i>
+        <span>{{ __('public.donation.library_pages') }}</span>
+      </button>
+      <button class="bv-tab" data-tab="notes">
+        <i class="fa-solid fa-note-sticky"></i>
+        <span>{{ __('public.donation.library_notes') }}</span>
+      </button>
+      <button class="bv-tab" data-tab="bookmarks">
+        <i class="fa-solid fa-bookmark"></i>
+        <span>{{ __('public.donation.library_bookmarks') }}</span>
+      </button>
+    </div>
+
+    {{-- Tab: Sahifalar (thumbnail strip) --}}
+    <div class="bv-tab-panel" id="bv-tab-pages">
+      <div class="bv-thumbs" id="bv-thumbs"></div>
+    </div>
+
+    {{-- Tab: Izohlar --}}
+    <div class="bv-tab-panel bv-tab-panel--hidden" id="bv-tab-notes">
+      <div class="bv-tab-empty">
+        <i class="fa-regular fa-note-sticky"></i>
+        <p>{{ __('public.donation.library_notes_empty') }}</p>
+      </div>
+    </div>
+
+    {{-- Tab: Belgilar --}}
+    <div class="bv-tab-panel bv-tab-panel--hidden" id="bv-tab-bookmarks">
+      <div class="bv-tab-empty" id="bv-bm-empty">
+        <i class="fa-regular fa-bookmark"></i>
+        <p>{{ __('public.donation.library_bookmarks_empty') }}</p>
+      </div>
+      <div class="bv-bm-list" id="bv-bm-list"></div>
+    </div>
 
   </div>
 </div>

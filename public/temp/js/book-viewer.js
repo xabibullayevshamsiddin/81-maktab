@@ -65,6 +65,11 @@
     if (canvasSingle) ctxSingle = canvasSingle.getContext('2d');
 
     bindControls();
+    initTabs();
+    loadBookmarks();
+    renderBookmarkList();
+    var bmBtn = document.getElementById('bv-btn-bookmark');
+    if (bmBtn) bmBtn.addEventListener('click', function () { toggleBookmark(); });
     loadPdfJs();
   }
 
@@ -241,6 +246,7 @@
       if (currentPage + 1 >= totalPages) return;
       currentPage += 2;
     }
+    playPageSound();
     renderSpread(currentPage, true, 'next');
   }
 
@@ -253,6 +259,7 @@
       if (currentPage <= 1) return;
       currentPage = Math.max(1, currentPage - 2);
     }
+    playPageSound();
     renderSpread(currentPage, true, 'prev');
   }
 
@@ -279,12 +286,115 @@
     }
   }
 
-  /* ── Thumbnails ── */
+  /* ── Web Audio: kitob varaq foley ── */
+  var audioCtx = null;
+  function playPageSound() {
+    try {
+      /* Sayt ovozi o'chirilgan bo'lsa — jim */
+      if (localStorage.getItem('site-audio-muted') === 'true') return;
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var sr  = audioCtx.sampleRate;
+      var now = audioCtx.currentTime;
+
+      /* ─ 1. Qog'oz "rustle" — filtered noise, 0.18s ─ */
+      var rustleLen = Math.floor(sr * 0.18);
+      var rustleBuf = audioCtx.createBuffer(1, rustleLen, sr);
+      var rustleData = rustleBuf.getChannelData(0);
+      for (var i = 0; i < rustleLen; i++) {
+        /* attack 0–10ms, decay exponential */
+        var env = Math.min(i / (sr * 0.01), 1) * Math.pow(1 - i / rustleLen, 1.6);
+        rustleData[i] = (Math.random() * 2 - 1) * env * 0.22;
+      }
+      var rustleSrc = audioCtx.createBufferSource();
+      rustleSrc.buffer = rustleBuf;
+      /* Band-pass: qog'oz frekvensi 1.8kHz atrofida */
+      var bp = audioCtx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1800;
+      bp.Q.value = 0.9;
+      var rustleGain = audioCtx.createGain();
+      rustleGain.gain.setValueAtTime(0.55, now);
+      rustleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      rustleSrc.connect(bp);
+      bp.connect(rustleGain);
+      rustleGain.connect(audioCtx.destination);
+      rustleSrc.start(now);
+
+      /* ─ 2. "Whoosh" sweep — sine chirp 400→120 Hz, 0.14s ─ */
+      var whooshLen = Math.floor(sr * 0.14);
+      var whooshBuf = audioCtx.createBuffer(1, whooshLen, sr);
+      var whooshData = whooshBuf.getChannelData(0);
+      var phase = 0;
+      for (var j = 0; j < whooshLen; j++) {
+        var t   = j / sr;
+        var env2 = Math.pow(1 - j / whooshLen, 2.2) * 0.12;
+        var freq = 400 - 280 * (j / whooshLen);   /* 400 → 120 Hz */
+        phase += (2 * Math.PI * freq) / sr;
+        whooshData[j] = Math.sin(phase) * env2;
+      }
+      var whooshSrc = audioCtx.createBufferSource();
+      whooshSrc.buffer = whooshBuf;
+      var whooshGain = audioCtx.createGain();
+      whooshGain.gain.setValueAtTime(0.38, now);
+      whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      whooshSrc.connect(whooshGain);
+      whooshGain.connect(audioCtx.destination);
+      whooshSrc.start(now);
+
+      /* ─ 3. Yumshoq "thud" — low sine 80 Hz, 0.06s ─ */
+      var thudOsc = audioCtx.createOscillator();
+      thudOsc.type = 'sine';
+      thudOsc.frequency.setValueAtTime(80, now);
+      thudOsc.frequency.exponentialRampToValueAtTime(40, now + 0.06);
+      var thudGain = audioCtx.createGain();
+      thudGain.gain.setValueAtTime(0.18, now);
+      thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      thudOsc.connect(thudGain);
+      thudGain.connect(audioCtx.destination);
+      thudOsc.start(now);
+      thudOsc.stop(now + 0.07);
+
+    } catch (e) { /* AudioContext yo'q — jim */ }
+  }
+
+  /* ── Thumbnails (lazy-load + retry) ── */
   function buildThumbs() {
     if (!thumbsWrap || !pdfDoc) return;
     thumbsWrap.innerHTML = '';
     var ts = 0.15;
-    for (var i = 1; i <= Math.min(totalPages, 40); i++) {
+
+    function renderThumb(n, c, attempt) {
+      attempt = attempt || 1;
+      pdfDoc.getPage(n).then(function (page) {
+        var vp = page.getViewport({ scale: ts });
+        c.width = vp.width; c.height = vp.height;
+        return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      }).catch(function (err) {
+        if (attempt < 3) {
+          setTimeout(function () { renderThumb(n, c, attempt + 1); }, 600 * attempt);
+        } else {
+          console.error('[BookViewer] Thumbnail render xatosi (sahifa ' + n + '):', err);
+        }
+      });
+    }
+
+    var obs = window.IntersectionObserver
+      ? new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            var wrap = entry.target;
+            if (wrap.dataset.loaded) return;
+            wrap.dataset.loaded = '1';
+            obs.unobserve(wrap);
+            renderThumb(
+              parseInt(wrap.getAttribute('data-page'), 10),
+              wrap.querySelector('canvas')
+            );
+          });
+        }, { root: thumbsWrap, rootMargin: '0px 120px 0px 120px', threshold: 0 })
+      : null;
+
+    for (var i = 1; i <= totalPages; i++) {
       (function (n) {
         var wrap = document.createElement('div');
         wrap.className = 'bv-thumb';
@@ -293,12 +403,14 @@
         var c = document.createElement('canvas');
         wrap.appendChild(c);
         thumbsWrap.appendChild(wrap);
-        pdfDoc.getPage(n).then(function (page) {
-          var vp = page.getViewport({ scale: ts });
-          c.width = vp.width; c.height = vp.height;
-          page.render({ canvasContext: c.getContext('2d'), viewport: vp });
-        });
         wrap.addEventListener('click', function () { goToPage(n); });
+
+        if (obs) {
+          obs.observe(wrap);
+        } else {
+          /* IntersectionObserver yo'q — darhol render (eski brauzer) */
+          renderThumb(n, c);
+        }
       })(i);
     }
   }
@@ -364,6 +476,7 @@
     if (pnR) pnR.textContent = (currentPage + 1 <= totalPages) ? currentPage + 1 : '';
 
     updateThumbActive();
+    updateBookmarkBtn();
   }
 
   /* ── Loading / Error ── */
@@ -547,6 +660,70 @@
   function bindBtn(id, fn) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('click', function (e) { e.preventDefault(); fn(); });
+  }
+
+  /* ── Tabs ── */
+  function initTabs() {
+    document.querySelectorAll('.bv-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.bv-tab').forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.bv-tab-panel').forEach(function (p) { p.classList.add('bv-tab-panel--hidden'); });
+        tab.classList.add('active');
+        var panel = document.getElementById('bv-tab-' + tab.getAttribute('data-tab'));
+        if (panel) panel.classList.remove('bv-tab-panel--hidden');
+      });
+    });
+  }
+
+  /* ── Bookmarks (localStorage) ── */
+  var BM_KEY = 'bv_bookmarks_' + (window.location.pathname);
+  var bookmarks = [];
+
+  function loadBookmarks() {
+    try { bookmarks = JSON.parse(localStorage.getItem(BM_KEY) || '[]'); } catch(e) { bookmarks = []; }
+  }
+  function saveBookmarks() {
+    try { localStorage.setItem(BM_KEY, JSON.stringify(bookmarks)); } catch(e) {}
+  }
+  function toggleBookmark() {
+    var p = currentPage;
+    var idx = bookmarks.indexOf(p);
+    if (idx === -1) { bookmarks.push(p); bookmarks.sort(function(a,b){return a-b;}); }
+    else { bookmarks.splice(idx, 1); }
+    saveBookmarks();
+    renderBookmarkList();
+    updateBookmarkBtn();
+  }
+  function updateBookmarkBtn() {
+    var btn  = document.getElementById('bv-btn-bookmark');
+    var icon = document.getElementById('bv-bm-icon');
+    if (!btn || !icon) return;
+    var active = bookmarks.indexOf(currentPage) !== -1;
+    btn.classList.toggle('active', active);
+    icon.className = active ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
+  }
+  function renderBookmarkList() {
+    var list  = document.getElementById('bv-bm-list');
+    var empty = document.getElementById('bv-bm-empty');
+    if (!list) return;
+    list.innerHTML = '';
+    if (bookmarks.length === 0) {
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    bookmarks.forEach(function (p) {
+      var chip = document.createElement('span');
+      chip.className = 'bv-bm-chip';
+      chip.innerHTML = '<i class="fa-solid fa-bookmark"></i>' + p + '-sahifa<span class="bv-bm-del" title="O\'chirish">×</span>';
+      chip.querySelector('.bv-bm-del').addEventListener('click', function (e) {
+        e.stopPropagation();
+        bookmarks.splice(bookmarks.indexOf(p), 1);
+        saveBookmarks(); renderBookmarkList(); updateBookmarkBtn();
+      });
+      chip.addEventListener('click', function () { goToPage(p); });
+      list.appendChild(chip);
+    });
   }
 
   /* ── Globals ── */

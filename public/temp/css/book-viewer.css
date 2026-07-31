@@ -171,10 +171,84 @@
 }
 .bv-ctrl-btn:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.38); transform: translateY(-1px); }
 .bv-ctrl-btn:active { transform: scale(.96); }
-.bv-ctrl-btn--primary { background: linear-gradient(135deg, #10b981, #059669); border-color: transparent; box-shadow: 0 4px 14px rgba(16,185,129,.35); }
-.bv-ctrl-btn--primary:hover { opacity:.9; }
-.bv-ctrl-btn--accent { background: linear-gradient(135deg, #6366f1, #4f46e5); border-color: transparent; box-shadow: 0 4px 14px rgba(99,102,241,.35); }
-.bv-ctrl-btn--accent:hover { opacity:.9; }
+.bv-ctrl-btn--nav {
+  background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(168,85,247,.2));
+  border-color: rgba(99,102,241,.5);
+  padding: .38rem 1rem;
+  font-size: .78rem;
+}
+.bv-ctrl-btn--nav:hover {
+  background: linear-gradient(135deg, rgba(99,102,241,.45), rgba(168,85,247,.35));
+  border-color: rgba(99,102,241,.8);
+  box-shadow: 0 4px 14px rgba(99,102,241,.35);
+}
+.bv-ctrl-btn--bookmark {
+  background: rgba(245,158,11,.12);
+  border-color: rgba(245,158,11,.35);
+  color: #fbbf24;
+}
+.bv-ctrl-btn--bookmark:hover { background: rgba(245,158,11,.25); border-color: rgba(245,158,11,.6); }
+.bv-ctrl-btn--bookmark.active { background: rgba(245,158,11,.3); border-color: #f59e0b; }
+
+/* ── Tabs bar ── */
+.bv-tabs-bar {
+  display: flex;
+  gap: 0;
+  background: rgba(0,0,0,.3);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.bv-tab {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  padding: .65rem 1rem;
+  font-size: .72rem; font-weight: 700;
+  color: rgba(255,255,255,.45);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color .2s, background .2s, box-shadow .2s;
+  position: relative;
+  white-space: nowrap;
+}
+.bv-tab::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: transparent;
+  transition: background .2s;
+}
+.bv-tab:hover { color: rgba(255,255,255,.75); background: rgba(255,255,255,.04); }
+.bv-tab.active { color: #fff; }
+.bv-tab[data-tab="pages"].active::after   { background: #6366f1; }
+.bv-tab[data-tab="notes"].active::after   { background: #f59e0b; }
+.bv-tab[data-tab="bookmarks"].active::after { background: #10b981; }
+
+/* ── Tab panels ── */
+.bv-tab-panel { display: block; }
+.bv-tab-panel--hidden { display: none; }
+.bv-tab-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .5rem; padding: 1.5rem;
+  color: rgba(255,255,255,.3); font-size: .78rem; font-weight: 600;
+}
+.bv-tab-empty i { font-size: 1.6rem; }
+.bv-bm-list {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  padding: .75rem 1rem;
+}
+.bv-bm-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .3rem .7rem;
+  background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3);
+  border-radius: 999px; font-size: .7rem; font-weight: 700; color: #6ee7b7;
+  cursor: pointer; transition: background .2s;
+}
+.bv-bm-chip:hover { background: rgba(16,185,129,.28); }
+.bv-bm-chip .bv-bm-del {
+  margin-left: .2rem; color: rgba(255,255,255,.4);
+  font-size: .65rem; cursor: pointer;
+}
+.bv-bm-chip .bv-bm-del:hover { color: #f87171; }
 
 .bv-page-info {
   font-size:.72rem; font-weight:700; color:rgba(255,255,255,.8);

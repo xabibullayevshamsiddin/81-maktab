@@ -1053,7 +1053,12 @@ return array_replace_recursive($fallback, [
         'library_zoom_out' => 'Уменьшить',
         'library_loading' => 'Загрузка PDF...',
         'library_use_arrows' => 'Клавиши: ← → или смахните',
-
+        'library_pages' => 'Страницы',
+        'library_notes' => 'Заметки',
+        'library_bookmarks' => 'Закладки',
+        'library_bookmark_page' => 'Закладка',
+        'library_notes_empty' => 'Заметок пока нет.',
+        'library_bookmarks_empty' => 'Закладок пока нет.',
         'index_hero_title' => 'Поддержите 81-IDUM',
         'index_hero_text' => 'Ваши донаты помогают улучшать сайт школы и покрывать расходы на сервер.',
         'index_tg_title' => 'Активация по коду',
