@@ -27,6 +27,17 @@
   <input type="number" min="1" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?? 60) }}" required>
 </div>
 
+<div class="input-style-1">
+  <label>Maksimal ishtirokchilar soni</label>
+  <input type="number" min="0" max="100000" name="max_participants" value="{{ old('max_participants', $exam->max_participants ?? '') }}" placeholder="0 yoki bo'sh = cheksiz">
+  <p class="text-sm mt-6" style="color:#64748b;">
+    Belgilangan son topshirilgandan keyin imtihon boshqa ishtirokchilar uchun yopiladi. 0 yoki bo'sh qoldirsangiz — cheksiz.
+  </p>
+  @if ($errors->has('max_participants'))
+    <p class="text-sm mt-6" style="color:#dc2626;">{{ $errors->first('max_participants') }}</p>
+  @endif
+</div>
+
 @include('exams.partials.available-from-picker', [
   'exam' => $exam ?? null,
   'label' => 'Boshlash sanasi va vaqti (reja)',
@@ -43,6 +54,57 @@
   @if ($errors->has('allowed_grades') || $errors->has('allowed_grades.*'))
     <p class="text-sm mt-10" style="color:#dc2626;">{{ $errors->first('allowed_grades') ?: $errors->first('allowed_grades.*') }}</p>
   @endif
+</div>
+
+<div style="margin-top: 1.5rem;">
+  <h6 style="display:flex;align-items:center;gap:8px; margin-bottom:8px; font-size:14px; font-weight:700; color:var(--text);">
+    <i class="fa-solid fa-chalkboard-user" style="color: var(--primary);"></i>
+    O'qituvchilar uchun ruxsat
+  </h6>
+  <p class="text-sm mb-12" style="color:#64748b;">
+    Agar belgilansa, maktab o'qituvchilari (shu jumladan siz ham) bu imtihonni topshirish imkoniyatiga ega bo'ladilar.
+  </p>
+  <label class="d-flex align-items-center gap-3 cursor-pointer" style="user-select:none; padding: 1rem; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); width: fit-content;">
+    <input
+      type="checkbox"
+      name="allowed_grades[]"
+      value="TEACHER"
+      {{ in_array('TEACHER', $selectedAllowedGrades, true) ? 'checked' : '' }}
+      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;"
+    >
+    <span>
+      <strong style="color:var(--text);">O'qituvchilar ham imtihonni topshirishi mumkin</strong>
+      <span class="d-block small" style="color:var(--muted);margin-top:2px;">
+        O'qituvchi akkauntlari orqali imtihon boshlash va topshirishga ruxsat beriladi
+      </span>
+    </span>
+  </label>
+</div>
+
+<div style="margin-top: 1.5rem;">
+  <h6 style="display:flex;align-items:center;gap:8px; margin-bottom:8px; font-size:14px; font-weight:700; color:var(--text);">
+    <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i>
+    Xavfsizlik rejimi
+  </h6>
+  <p class="text-sm mb-12" style="color:#64748b;">
+    Yoqilsa — o'quvchi imtihon boshlagan zahoti to'liq ekran (fullscreen) rejimi yonadi, sahifadan chiqsa yoki skrinshot olsa ogohlantirish keladi va qoidabuzarlik hisoblanadi. O'chirilsa — hech qanday cheklov bo'lmaydi, imtihon oddiy rejimda o'tadi.
+  </p>
+  <label class="d-flex align-items-center gap-3 cursor-pointer" style="user-select:none; padding: 1rem; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); width: fit-content;">
+    <input
+      type="checkbox"
+      name="security_enabled"
+      value="1"
+      id="exam-security-enabled"
+      {{ old('security_enabled', isset($exam) ? ($exam->security_enabled ?? true) : true) ? 'checked' : '' }}
+      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;"
+    >
+    <span>
+      <strong style="color:var(--text);">Xavfsizlik himoyasini yoqish</strong>
+      <span class="d-block small" style="color:var(--muted);margin-top:2px;">
+        Fullscreen, tab o'zgartirish va skrinshot ogohlantirishlari faollashtiriladi
+      </span>
+    </span>
+  </label>
 </div>
 
 @if(isset($exam))

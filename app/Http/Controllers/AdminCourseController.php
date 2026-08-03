@@ -53,36 +53,16 @@ class AdminCourseController extends Controller
         $user = auth()->user();
         abort_unless($user && $user->isAdmin(), 403);
 
-        $q = trim((string) $request->query('q', ''));
-
-        $query = Course::query()
-            ->with(['teacher', 'creator'])
-            ->where('status', Course::STATUS_PENDING_VERIFICATION)
-            ->latest();
-
-        if ($q !== '') {
-            $query->where(function ($w) use ($q): void {
-                $w->where('title', 'like', '%'.$q.'%')
-                    ->orWhereHas('teacher', function ($t) use ($q): void {
-                        $t->where('full_name', 'like', '%'.$q.'%');
-                    });
-            });
-        }
-
-        $courses = $query->paginate(10)->withQueryString();
-
         $courseOpenRequestUsers = User::query()
             ->withCount('createdCourses')
-            ->whereHas('roleRelation', function ($r): void {
-                $r->where('name', User::ROLE_TEACHER);
-            })
+            ->with('roleRelation')
             ->where('course_open_request_pending', true)
             ->where('course_open_approved', false)
             ->orderByDesc('course_open_requested_at')
             ->paginate(15, ['*'], 'open_page')
             ->withQueryString();
 
-        return view('admin.courses.requests', compact('courses', 'courseOpenRequestUsers'));
+        return view('admin.courses.requests', compact('courseOpenRequestUsers'));
     }
 
     public function updateStatus(Request $request, Course $course)

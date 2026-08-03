@@ -264,7 +264,21 @@
         var shouldLock = (modal && !modal.hidden)
           || (focusGuard && !focusGuard.hidden)
           || (typeof finishConfirmModal !== 'undefined' && finishConfirmModal && !finishConfirmModal.hidden);
-        document.body.style.overflow = shouldLock ? 'hidden' : '';
+        if (shouldLock) {
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.position = 'fixed';
+          document.body.style.top = '-' + window.scrollY + 'px';
+          document.body.style.width = '100%';
+        } else {
+          var scrollY = Math.abs(parseInt(document.body.style.top || '0', 10) || 0);
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          window.scrollTo(0, scrollY);
+        }
       }
 
       function buildWatermark() {

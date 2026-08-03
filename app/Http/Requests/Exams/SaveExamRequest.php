@@ -19,6 +19,10 @@ class SaveExamRequest extends FormRequest
         if ($this->input('available_from') === '') {
             $this->merge(['available_from' => null]);
         }
+
+        if ($this->input('max_participants') === '' || $this->input('max_participants') === null) {
+            $this->merge(['max_participants' => null]);
+        }
     }
 
     /**
@@ -35,6 +39,7 @@ class SaveExamRequest extends FormRequest
             'allowed_grades' => ['required', 'array', 'min:1'],
             'allowed_grades.*' => ['string', Rule::in(school_grade_options())],
             'available_from' => ['nullable', 'date_format:Y-m-d H:i'],
+            'max_participants' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ];
     }
 

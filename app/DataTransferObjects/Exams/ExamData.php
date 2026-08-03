@@ -18,10 +18,14 @@ class ExamData
         public array $allowedGrades,
         public ?string $availableFrom,
         public bool $securityEnabled = true,
+        public ?int $maxParticipants = null,
     ) {}
 
     public static function fromRequest(SaveExamRequest $request): self
     {
+        $maxParticipants = $request->input('max_participants');
+        $maxParticipants = ($maxParticipants !== null && $maxParticipants !== '') ? (int) $maxParticipants : null;
+
         return new self(
             title: (string) $request->validated('title'),
             durationMinutes: (int) $request->validated('duration_minutes'),
@@ -31,6 +35,7 @@ class ExamData
             allowedGrades: normalize_school_grade_list((array) $request->input('allowed_grades', [])),
             availableFrom: $request->validated('available_from'),
             securityEnabled: (bool) $request->input('security_enabled', false),
+            maxParticipants: $maxParticipants,
         );
     }
 
@@ -48,6 +53,7 @@ class ExamData
             'allowed_grades' => $this->allowedGrades,
             'available_from' => $this->availableFrom,
             'security_enabled' => $this->securityEnabled,
+            'max_participants' => $this->maxParticipants,
         ];
 
         if ($createdBy !== null) {

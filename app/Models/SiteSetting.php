@@ -22,15 +22,11 @@ class SiteSetting extends Model
     private static bool $uncachedLoaded = false;
 
     private const TOGGLE_KEYS = [
-        'announcement_active',
         'global_chat_enabled',
         'ai_chat_enabled',
     ];
 
     private const UNCACHED_KEYS = [
-        'announcement_active',
-        'announcement_text',
-        'announcement_type',
         'global_chat_enabled',
         'global_chat_disabled_message',
         'ai_chat_enabled',

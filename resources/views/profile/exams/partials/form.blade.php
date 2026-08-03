@@ -28,6 +28,17 @@
     <label for="exam-duration">Davomiyligi (daqiqa)</label>
     <input id="exam-duration" type="number" min="1" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?? 60) }}" required>
   </div>
+
+  <div class="exam-field">
+    <label for="exam-max-participants">Maksimal ishtirokchilar soni</label>
+    <input id="exam-max-participants" type="number" min="0" max="100000" name="max_participants" value="{{ old('max_participants', $exam->max_participants ?? '') }}" placeholder="0 yoki bo'sh = cheksiz">
+    <p class="exam-form-hint" style="margin-top:4px; margin-bottom:0; font-size:12px; color:var(--muted);">
+      Belgilangan son topshirilgandan keyin imtihon boshqa ishtirokchilar uchun yopiladi. 0 yoki bo'sh qoldirsangiz — cheksiz.
+    </p>
+    @if ($errors->has('max_participants'))
+      <p class="exam-form-error">{{ $errors->first('max_participants') }}</p>
+    @endif
+  </div>
 </div>
 
 <div class="exam-form-section exam-form-section--schedule">
@@ -35,7 +46,7 @@
     <span class="exam-schedule-icon" aria-hidden="true"><i class="fa-regular fa-calendar-days"></i></span>
     <div>
       <h6 class="exam-form-section-title exam-form-section-title--schedule">Boshlash sanasi va vaqti (reja)</h6>
-      <p class="exam-form-hint">Qachon va qaysi vaqtdan boshlab o‘quvchilar imtihonni boshlashi mumkinligi. Tanlangan vaqtdan boshlab ruxsat beriladi.</p>
+      <p class="exam-form-hint">Qachon va qaysi vaqtdan boshlab o'quvchilar imtihonni boshlashi mumkinligi. Tanlangan vaqtdan boshlab ruxsat beriladi.</p>
     </div>
   </div>
   @include('exams.partials.available-from-picker', ['exam' => $exam ?? null])
@@ -44,21 +55,37 @@
 <div class="exam-form-section exam-grade-field">
   <h6 class="exam-form-section-title">Ruxsat etilgan sinflar</h6>
   <p class="exam-form-hint exam-grade-help">
-    Faqat tanlangan sinflar topshira oladi. Hech narsa tanlanmasa, imtihon barcha sinflar uchun ochiq bo‘ladi.
+    Faqat tanlangan sinflar topshira oladi. Hech narsa tanlanmasa, imtihon barcha sinflar uchun ochiq bo'ladi.
   </p>
   @include('partials.school-grade-matrix', ['selected' => $selectedAllowedGrades])
-  
-  <div class="mt-4 p-3 rounded" style="background: var(--surface); border: 1px solid var(--border);">
-      <label class="d-flex align-items-center gap-2 cursor-pointer mb-1">
-          <input type="checkbox" name="allowed_grades[]" value="TEACHER" {{ in_array('TEACHER', $selectedAllowedGrades, true) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; cursor: pointer; accent-color: var(--primary);">
-          <span class="fw-bold" style="color: var(--text-color);">O'qituvchilar ham ushbu imtihonni topshirishi mumkin</span>
-      </label>
-      <p class="small text-muted mb-0" style="padding-left: 1.7rem;">Agar belgilansa, maktab o'qituvchilari (shu jumladan siz ham) bu imtihonni topshirish imkoniyatiga ega bo'ladilar.</p>
-  </div>
-
   @if ($errors->has('allowed_grades') || $errors->has('allowed_grades.*'))
     <p class="exam-form-error">{{ $errors->first('allowed_grades') ?: $errors->first('allowed_grades.*') }}</p>
   @endif
+</div>
+
+<div class="exam-form-section" style="margin-top: 1.5rem;">
+  <h6 class="exam-form-section-title" style="display:flex;align-items:center;gap:8px;">
+    <i class="fa-solid fa-chalkboard-user" style="color: var(--primary);"></i>
+    O'qituvchilar uchun ruxsat
+  </h6>
+  <p class="exam-form-hint" style="margin-bottom:1rem;">
+    Agar belgilansa, maktab o'qituvchilari (shu jumladan siz ham) bu imtihonni topshirish imkoniyatiga ega bo'ladilar.
+  </p>
+  <label class="d-flex align-items-center gap-3 cursor-pointer" style="user-select:none; padding: 1rem; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); width: fit-content;">
+    <input
+      type="checkbox"
+      name="allowed_grades[]"
+      value="TEACHER"
+      {{ in_array('TEACHER', $selectedAllowedGrades, true) ? 'checked' : '' }}
+      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;"
+    >
+    <span>
+      <strong style="color:var(--text);">O'qituvchilar ham imtihonni topshirishi mumkin</strong>
+      <span class="d-block small" style="color:var(--muted);margin-top:2px;">
+        O'qituvchi akkauntlari orqali imtihon boshlash va topshirishga ruxsat beriladi
+      </span>
+    </span>
+  </label>
 </div>
 
 <div class="exam-form-section" style="margin-top: 1.5rem;">
@@ -99,7 +126,14 @@
     <br>
     Ruxsat etilgan sinflar: <strong>{{ $exam->allowedGradesLabel() }}</strong>
     <br>
-    Boshlash (reja): <strong>{{ $exam->availableFromLabel() ?? 'cheklov yo‘q' }}</strong>
+    Boshlash (reja): <strong>{{ $exam->availableFromLabel() ?? 'cheklov yo\'q' }}</strong>
+    @if($exam->hasParticipantLimit())
+      <br>
+      Ishtirokchilar: <strong>{{ $exam->participantLimitLabel() }}</strong>
+      @if($exam->isParticipantLimitReached())
+        <span style="color:#dc2626;font-weight:600;">(limit to'ldi!)</span>
+      @endif
+    @endif
   </p>
 @else
   <p class="exam-form-hint mb-20">

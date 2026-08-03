@@ -17,7 +17,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('chat_messages', function (Blueprint $table) {
-            $table->dropForeign(['chat_group_id']);
+            // SQLite dropForeign'ni qo'llab-quvvatlamaydi (testlar uchun)
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['chat_group_id']);
+            }
             $table->dropIndex(['chat_group_id']);
             $table->dropColumn('chat_group_id');
         });

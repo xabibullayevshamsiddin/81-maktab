@@ -15,7 +15,7 @@ class CourseEnrollmentController extends Controller
         $this->ensureEnrollable($course);
 
         $user = $request->user();
-        if ($user->isParent()) {
+        if ($user->isParentOnly()) {
             return redirect()
                 ->route('courses')
                 ->with('error', 'Ota-ona akkaunti bilan kursga yozilish mumkin emas.')

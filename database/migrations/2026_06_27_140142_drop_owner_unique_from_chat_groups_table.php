@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('chat_groups', function (Blueprint $table) {
-            $table->dropForeign(['owner_id']);
+            // SQLite dropForeign'ni qo'llab-quvvatlamaydi (testlar uchun);
+            // foreign() esa SQLite'da jadval yaratilishida boshqariladi (no-op).
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['owner_id']);
+            }
             $table->dropUnique('chat_groups_owner_unique');
             $table->foreign('owner_id')->references('id')->on('users')->cascadeOnDelete();
         });

@@ -16,6 +16,15 @@
           <i class="fa-solid fa-users"></i>
           {{ __('public.exam.allowed_grades', ['grades' => $exam->allowedGradesLabel()]) }}
         </p>
+        @if($exam->hasParticipantLimit())
+          <p class="exam-hero-lead exam-hero-hint" style="font-size:0.9rem;margin-top:6px;{{ $exam->isParticipantLimitReached() ? 'color:#dc2626;' : '' }}">
+            <i class="fa-solid fa-user-group"></i>
+            Ishtirokchilar: {{ $exam->participantLimitLabel() }}
+            @if($exam->remainingSlots() !== null && $exam->remainingSlots() > 0 && ! $exam->isParticipantLimitReached())
+              <span style="opacity:0.7;">(qolgan: {{ $exam->remainingSlots() }} ta o'rin)</span>
+            @endif
+          </p>
+        @endif
       </header>
 
       <article class="exam-card" style="text-align:center;">

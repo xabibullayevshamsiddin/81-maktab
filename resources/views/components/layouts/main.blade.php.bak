@@ -1,0 +1,1013 @@
+@props(['title' => '81-IDUM'])
+
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{{ $title }}</title>
+    {!! \Artesaos\SEOTools\Facades\SEOMeta::generate() !!}
+    {!! \Artesaos\SEOTools\Facades\OpenGraph::generate() !!}
+    @stack('seo')
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=10" />
+    @unless(request()->routeIs('exam.session'))
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
+    {{-- Three.js — 3D loader animatsiyasi uchun --}}
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" onload="window.dispatchEvent(new Event('THREE_READY'))" crossorigin="anonymous"></script>
+    @endunless
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ app_asset_version('temp/css/extracted-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ app_asset_version('temp/css/mobile-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ app_asset_version('temp/css/site-refresh.css') }}" />
+    @if(turnstile_enabled())
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ app_public_asset('temp/img/favicon-32.png') }}?v={{ app_asset_version('temp/img/favicon-32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ app_public_asset('temp/img/favicon-16.png') }}?v={{ app_asset_version('temp/img/favicon-16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
+    <link rel="manifest" href="{{ app_public_asset('manifest.json') }}">
+    <meta name="theme-color" content="#4f46e5">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+    :root {
+      --user-color: {{ auth()->check() && auth()->user()->donorUsernameColor() ? auth()->user()->donorUsernameColor() : '#6366f1' }};
+    }
+  </style>
+  @stack("page_styles")
+<style>
+.donor-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 9999px; }
+.donor-badge i { font-size: 0.75rem; }
+.comment-donor { border-left: 4px solid; padding-left: 0.75rem; border-radius: 4px; }
+</style>
+    <script>
+      // Service worker'ni butunlay o'chirish (fayl yuklash xatosini tuzatish uchun)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          if (registrations.length > 0) {
+            for(let registration of registrations) {
+              registration.unregister();
+            }
+            // Kuchli tozalash uchun sahifani yangilaymiz
+            window.location.reload(true);
+          }
+        });
+      }
+    </script>
+  </head>
+
+    <body
+        @class([
+          'site-boot-loading' => ! request()->routeIs('exam.session'),
+          'page-home' => request()->routeIs('home'),
+          'page-inner' => ! request()->routeIs('home')
+        ])
+        data-theme="light"
+	        data-donor-theme="{{ auth()->check() && auth()->user()->isDonor() ? (auth()->user()->donation_rank) : '' }}"
+	        data-site-success="{{ session('success') }}"
+	        data-site-error="{{ session('error') }}"
+	        data-site-toast-type="{{ session('toast_type') }}"
+	        data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
+		        data-phone-pattern="{{ uz_phone_input_pattern() }}"
+		        data-phone-title="{{ uz_phone_input_title() }}"
+		      >
+    @unless(request()->routeIs('exam.session'))
+    <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
+      <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
+      <div class="site-boot-loader__content">
+        <div class="site-boot-loader__visual">
+          {{-- Three.js WebGL canvas --}}
+          <canvas id="loader-3d-canvas" aria-hidden="true"></canvas>
+
+          {{-- CSS fallback (Three.js yuklanmasa) --}}
+          <div class="site-boot-loader__orbit" aria-hidden="true">
+            <div class="site-boot-loader__ring site-boot-loader__ring--1"></div>
+            <div class="site-boot-loader__ring site-boot-loader__ring--2"></div>
+            <div class="site-boot-loader__ring site-boot-loader__ring--3"></div>
+          </div>
+
+          {{-- "81" brend overlay (canvas ustida) --}}
+          <div class="site-boot-loader__brand-overlay">
+            <div class="site-boot-loader__brand-glass">
+              <span class="site-boot-loader__num">81</span>
+              <span class="site-boot-loader__name">IDUM</span>
+            </div>
+          </div>
+        </div>
+        <div class="site-boot-loader__info">
+          <p class="site-boot-loader__hint">Tizim tayyorlanmoqda...</p>
+          <div class="site-boot-loader__bar">
+            <div class="site-boot-loader__bar-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{-- Three.js 3D loader animatsiyasi --}}
+    <script src="{{ app_public_asset('temp/js/loader-3d.js') }}?v={{ app_asset_version('temp/js/loader-3d.js') }}"></script>
+
+    <!-- BOMBA WELCOME OVERLAY -->
+    <div id="bomba-welcome" class="bomba-welcome" style="display: none;">
+      <div class="bomba-welcome__inner">
+        <div class="bomba-welcome__icon">🚀</div>
+        <h2 class="bomba-welcome__title">{{ __('public.common.welcome_title', ['name' => auth()->check() ? auth()->user()->first_name : '']) }}</h2>
+        <p class="bomba-welcome__text">{{ __('public.common.welcome_subtitle') }}</p>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        if (!localStorage.getItem('bomba_welcome_shown')) {
+          window.addEventListener('load', function() {
+            var welcome = document.getElementById('bomba-welcome');
+            if (welcome) {
+              // Wait for boot loader to fade out slightly
+              setTimeout(function() {
+                welcome.style.display = 'flex';
+                setTimeout(function() {
+                  welcome.classList.add('is-active');
+                  // Auto hide after 4 seconds
+                  setTimeout(function() {
+                    welcome.classList.remove('is-active');
+                    setTimeout(function() {
+                      welcome.style.display = 'none';
+                    }, 800);
+                  }, 4000);
+                }, 100);
+              }, 1200);
+              localStorage.setItem('bomba_welcome_shown', 'true');
+            }
+          });
+        }
+      })();
+    </script>
+    @endunless
+
+		    @php
+		      $authUser = auth()->user();
+		      $teacherCourseCandidate = $authUser && $authUser->isTeacher();
+		      $teacherAtCourseLimit = $teacherCourseCandidate && $authUser->hasReachedCourseOpenLimit();
+		      $canOpenCourseForm = $authUser && (
+		        $authUser->isAdmin()
+		        || ($teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasCourseOpenApproval())
+		      );
+		      $teacherNeedsCourseOpenRequest = $teacherCourseCandidate && ! $teacherAtCourseLimit && ! $authUser->hasCourseOpenApproval() && ! $authUser->hasPendingCourseOpenRequest();
+		      $teacherCourseOpenPending = $teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
+	      $canCreateCourse = $canOpenCourseForm;
+	      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
+	      $currentLocale = current_locale();
+	      $supportedLocales = supported_locales();
+	      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
+	      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
+	      $isExamSessionRoute = request()->routeIs('exam.session');
+	      $accountMenuActive = $authUser && (
+	        request()->routeIs('exam.*')
+	        || request()->routeIs('profile.*')
+	        || request()->routeIs('teacher.courses.*')
+	        || request()->routeIs('dashboard')
+	      );
+	    @endphp
+	    <div class="site-shell" data-locale-shell>
+      <div class="prime-progress-container" aria-hidden="true">
+        <div class="prime-progress-bar" id="prime-scroll-bar"></div>
+      </div>
+	    @unless($isExamSessionRoute)
+	    <header class="page-header">
+	      <div class="container">
+	        <div class="header-main header-main--offset" id="navbar">
+          <a class="logo" href="{{ route('home') }}" aria-label="{{ __('public.layout.nav.home') }}">
+            <img
+              src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
+              alt="{{ __('public.layout.logo_alt') }}"
+            />
+          </a>
+
+          <button
+            class="menu-toggle"
+            id="menu-toggle"
+            type="button"
+            aria-label="{{ __('public.layout.mobile_menu') }}"
+            aria-expanded="false"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <nav id="site-nav">
+            <ul>
+              <li><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">{{ __('public.layout.nav.about') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+              @auth
+              <li><a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">{{ __('public.layout.menu.profile') }}</a></li>
+              @endauth
+              <li class="mobile-theme-toggle-wrap">
+                <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
+                  <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+                  <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+                </button>
+              </li>
+              @auth
+                <li class="mobile-ai-toggle-wrap">
+                  <button
+                    class="nav-link ai-header-toggle"
+                    id="ai-header-toggle"
+                    type="button"
+                    aria-label="{{ __('public.layout.ai_assistant') }}"
+                    title="{{ __('public.layout.ai_assistant') }}"
+                  >
+                    <i class="fa-solid fa-magic-wand-sparkles"></i>
+                    <span>{{ __('public.layout.ai_assistant') }}</span>
+                  </button>
+                </li>
+              @endauth
+              @auth
+	                <li class="nav-dropdown nav-dropdown--offset">
+                  <details class="nav-dropdown-details js-header-dropdown">
+                    <summary class="nav-link nav-dropdown-toggle prime-dd-toggle {{ $accountMenuActive ? 'active' : '' }}">
+                      {{ __('public.layout.account') }}
+                      <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
+                    </summary>
+
+                    <div class="nav-dropdown-menu">
+                      {{-- ─── User badge card ─── --}}
+                      <a href="{{ route('profile.show') }}" class="nav-dropdown-user-badge">
+                        @if($authUser->avatar_url)
+                          <img
+                            src="{{ $authUser->avatar_url }}"
+                            alt="{{ $authUser->name }}"
+                            class="nav-dd-avatar"
+                            onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
+                          >
+                          <span class="nav-dd-avatar-fallback" style="display:none;">{{ $authUser->avatar_initial }}</span>
+                        @else
+                          <span class="nav-dd-avatar-fallback">{{ $authUser->avatar_initial }}</span>
+                        @endif
+                        <span class="nav-dd-user-info">
+                          <span class="nav-dd-name">{{ $authUser->first_name ?: $authUser->name }}</span>
+                          <span class="nav-dd-role">{{ $authUser->role_label }}</span>
+                        </span>
+                      </a>
+                      <div class="nav-dropdown-divider"></div>
+                      {{-- ─── Menu items ─── --}}
+                      <a class="nav-dropdown-item {{ request()->routeIs('exam.*') ? 'active' : '' }}" href="{{ route('exam.index') }}">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        {{ __('public.layout.menu.exams') }}
+                      </a>
+		                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
+		                        <i class="fa-solid fa-lightbulb"></i>
+		                        {{ __('public.layout.feature_requests') }}
+	                      </a>
+                      @if($canCreateCourse)
+                        <a class="nav-dropdown-item {{ request()->routeIs('teacher.courses.*') ? 'active' : '' }}" href="{{ route('teacher.courses.create') }}">
+                          <i class="fa-solid fa-book-open"></i>
+                          {{ __('public.layout.menu.course_open') }}
+                        </a>
+                      @elseif($teacherCourseOpenPending)
+                        <span class="nav-dropdown-item nav-dropdown-item-disabled">
+                          <i class="fa-solid fa-hourglass-half"></i>
+                          <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">{{ __('public.layout.wait_admin_approval_profile') }}</small></span>
+                        </span>
+                      @elseif($teacherNeedsCourseOpenRequest)
+                        <a class="nav-dropdown-item" href="{{ route('profile.show', ['panel' => 'activity']) }}#course-open-request">
+                          <i class="fa-solid fa-paper-plane"></i>
+                          {{ __('public.layout.course_request_action') }}
+                        </a>
+                      @endif
+                      @if($canAccessDashboard)
+                        <a class="nav-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                          <i class="fa-solid fa-table-columns"></i>
+                          {{ __('public.layout.menu.dashboard') }}
+                        </a>
+                      @endif
+                      <a class="nav-dropdown-item {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">
+                        <i class="fa-solid fa-address-book"></i>
+                        {{ __('public.layout.nav.contact') }}
+                      </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">
+                        <i class="fa-solid fa-book-open"></i>
+                        {{ __('public.layout.nav.library') }}
+                      </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('donation*') ? 'active' : '' }}" href="{{ route('donation.index') }}">
+                        <i class="fa-solid fa-hand-holding-heart" style="color: #f59e0b;"></i>
+                        Donation
+                      </a>
+
+                      <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="nav-dropdown-item">
+                          <i class="fa-solid fa-right-from-bracket"></i>
+                          {{ __('public.layout.menu.logout') }}
+                        </button>
+                      </form>
+                    </div>
+                  </details>
+                </li>
+              @endauth
+              @guest
+                <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
+              @endguest
+            </ul>
+
+            <div class="mobile-nav-extras">
+              <li class="nav-dropdown nav-dropdown--bomba-locale">
+                <details class="nav-dropdown-details js-header-dropdown">
+                  <summary class="nav-link nav-dropdown-toggle">
+                    <i class="fa-solid fa-language"></i>
+                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
+                  </summary>
+                  <div class="nav-dropdown-menu">
+                    <div class="nav-dropdown-inner">
+                      @foreach($supportedLocales as $localeKey => $localeLabel)
+                        <a
+                          href="{{ route('locale.switch', $localeKey) }}"
+                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                          data-locale-switch
+                        >
+                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          <span class="locale-name">{{ $localeLabel }}</span>
+                          @if($currentLocale === $localeKey)
+                            <i class="fa-solid fa-check-circle active-indicator"></i>
+                          @endif
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                </details>
+              </li>
+
+	              @guest
+	                <div class="mobile-nav-actions">
+                    <a href="{{ route('search') }}" class="btn btn-outline">{{ __('public.common.search') }}</a>
+	                  <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+	                  <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+	                </div>
+	              @else
+                <div class="mobile-nav-user">
+                  <span class="mobile-nav-user-name">{{ $authUser->first_name ?: $authUser->name }}</span>
+                  <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
+                </div>
+
+			                <div class="mobile-nav-actions mobile-nav-actions--auth">
+			                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+			                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
+		                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
+	                  @if($canCreateCourse)
+	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
+	                  @elseif($teacherNeedsCourseOpenRequest)
+	                    <a href="{{ route('profile.show', ['panel' => 'activity']) }}#course-open-request" class="btn btn-outline">{{ __('public.layout.course_request_short') }}</a>
+	                  @elseif($teacherCourseOpenPending)
+	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">{{ __('public.layout.course_pending_short') }}</span>
+	                  @endif
+	                  @if($canAccessDashboard)
+	                    <a href="{{ route('dashboard') }}" class="btn btn-outline">{{ __('public.layout.menu.dashboard') }}</a>
+	                  @endif
+	                  <form action="{{ route('logout') }}" method="POST" class="mobile-nav-form">
+	                    @csrf
+	                    <button type="submit" class="btn">{{ __('public.layout.menu.logout') }}</button>
+	                  </form>
+	                </div>
+	              @endguest
+	            </div>
+          </nav>
+
+	          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
+	            <div class="nav-dropdown nav-dropdown--bomba-locale desktop-only">
+                <details class="nav-dropdown-details js-header-dropdown">
+                  <summary class="nav-link nav-dropdown-toggle">
+                    <i class="fa-solid fa-language"></i>
+                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
+                  </summary>
+                  <div class="nav-dropdown-menu">
+                    <div class="nav-dropdown-inner">
+                      @foreach($supportedLocales as $localeKey => $localeLabel)
+                        <a
+                          href="{{ route('locale.switch', $localeKey) }}"
+                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                          data-locale-switch
+                        >
+                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          <span class="locale-name">{{ $localeLabel }}</span>
+                          @if($currentLocale === $localeKey)
+                            <i class="fa-solid fa-check-circle active-indicator"></i>
+                          @endif
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                </details>
+	            </div>
+	              <div class="header-tool-cluster">
+	  	            <button class="theme-toggle nav-search-trigger" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
+	  	              <i class="fa-solid fa-magnifying-glass"></i>
+	  	            </button>
+	              </div>
+	            <button class="theme-toggle js-theme-toggle" type="button" aria-label="{{ __('public.layout.dark_mode_toggle') }}" title="{{ __('public.layout.dark_mode_toggle') }}">
+	              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
+	              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
+            </button>
+
+
+
+            @guest
+              <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
+              <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
+            @endguest
+          </div>
+	        </div>
+	      </div>
+	    </header>
+	    @endunless
+
+	    {{ $slot }}
+
+	    @unless($isExamSessionRoute)
+    <div id="image-lightbox" class="image-lightbox" aria-hidden="true">
+      <button type="button" class="image-lightbox-close" aria-label="{{ __('public.layout.image_close') }}">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="image-lightbox-stage">
+        <img id="image-lightbox-img" class="image-lightbox-img" alt="" />
+        <p id="image-lightbox-caption" class="image-lightbox-caption" hidden></p>
+      </div>
+    </div>
+
+    <footer class="footer prime-reveal">
+      <div class="footer-container container prime-stagger">
+        <!-- Column 1: Branding -->
+        <div class="footer-column footer-brand">
+          <a href="{{ route('home') }}" class="footer-logo">
+            <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="{{ __('public.layout.logo_alt') }}" />
+            <span>{{ __('public.layout.school_name') }}</span>
+          </a>
+          <p class="footer-desc">{{ __('public.layout.footer.description') }}</p>
+          <div class="footer-socials">
+              <button type="button" class="chat-panel-btn" id="chat-fullscreen-btn" aria-label="{{ __('public.layout.expand') }}" title="{{ __('public.layout.full_screen') }}">
+                <i class="fa-solid fa-expand"></i>
+              </button>
+              <button type="button" class="chat-panel-btn" id="chat-close-btn" aria-label="{{ __('public.layout.close') }}">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <div id="chat-disabled-panel" class="chat-disabled-panel" @if($globalChatEnabled) hidden @endif>
+            <div class="chat-disabled-panel-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+            <p id="chat-disabled-panel-text" class="chat-disabled-panel-text"></p>
+          </div>
+          <div id="chat-panel-main" class="chat-panel-main" @if(!$globalChatEnabled) hidden @endif>
+
+
+
+
+          <div class="chat-feed-stack">
+            <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          </div>
+          <div class="chat-compose-status" id="chat-compose-status" hidden>
+            <span class="chat-compose-status-icon" aria-hidden="true">
+              <i class="fa-solid fa-pen-nib"></i>
+            </span>
+            <span class="chat-compose-status-text" id="chat-compose-status-text">{{ __('public.layout.typing') }}</span>
+            <span class="chat-compose-status-dots" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </div>
+          <form class="chat-input-wrap" id="chat-form">
+            @if(turnstile_enabled())
+            <div
+              id="chat-turnstile-host"
+              class="cf-turnstile chat-turnstile-host"
+              data-sitekey="{{ turnstile_site_key() }}"
+              data-size="invisible"
+            ></div>
+            @endif
+            <div class="chat-sticker-row" aria-label="{{ __('public.layout.stickers_label') }}">
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="😄" title="Smile">😄</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👍" title="Like">👍</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
+              @auth
+                @if($authUser && $authUser->isDonor())
+                <span class="chat-sticker-divider" aria-hidden="true"></span>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="💎" title="Gem">💎</button>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🚀" title="Rocket">🚀</button>
+                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🌟" title="Star">🌟</button>
+                @endif
+              @endauth
+            </div>
+            <input type="text" id="chat-input" class="chat-input" placeholder="{{ __('public.layout.write_message') }}" maxlength="1000" autocomplete="off" />
+            <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="{{ __('public.layout.send') }}">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+          </div>
+        </div>
+      </div>
+
+      <span id="user-preview-config" hidden
+        data-user-preview-base="{{ url('chat/user') }}"
+        data-csrf="{{ csrf_token() }}"
+        data-current-user-id="{{ auth()->id() }}"
+      ></span>
+      @endunless
+    @endauth
+
+    @unless($isExamSessionRoute)
+    <button
+      id="scroll-top"
+      class="scroll-top"
+      type="button"
+      aria-label="{{ __('public.layout.to_top') }}"
+    >
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+    @endunless
+
+    @include('components.confirm-modal')
+
+    <div id="global-modal-root"></div>
+    <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
+
+    <div id="global-search-modal" class="global-search-modal" hidden>
+      <div class="bomba-mesh"></div>
+      <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
+        <label id="global-search-label" for="global-search-input" class="global-search-label">{{ __('public.layout.global_search_label') }}</label>
+        <div class="global-search-input-wrap">
+          <i class="fa-solid fa-magnifying-glass" style="cursor: pointer" aria-hidden="true"></i>
+          <input
+            id="global-search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="{{ __('public.layout.global_search_placeholder') }}"
+            maxlength="120"
+          >
+        </div>
+        <div id="global-search-results" class="global-search-results"></div>
+      </div>
+    </div>
+
+    @auth
+      @unless($isExamSessionRoute)
+      <dialog id="chat-user-preview-dialog" class="chat-user-preview-dialog" aria-labelledby="chat-user-preview-name">
+        <div class="chat-user-preview-shell">
+          <button type="button" class="chat-user-preview-close" id="chat-user-preview-close" aria-label="{{ __('public.layout.close') }}">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="chat-user-preview-body">
+            <p class="chat-user-preview-loading" id="chat-user-preview-loading">{{ __('public.layout.loading') }}</p>
+            <div class="chat-user-preview-content" id="chat-user-preview-content" hidden>
+              <div class="chat-user-preview-avatar" id="chat-user-preview-avatar"></div>
+              <h3 class="chat-user-preview-name" id="chat-user-preview-name"></h3>
+              <p class="chat-user-preview-role" id="chat-user-preview-role"></p>
+              <ul class="chat-user-preview-details" id="chat-user-preview-details"></ul>
+              <div class="chat-user-preview-extra" id="chat-user-preview-extra"></div>
+              <div class="chat-user-preview-admin-actions" id="chat-user-preview-admin-actions" hidden></div>
+              <div class="chat-user-preview-contact" id="chat-user-preview-contact" hidden></div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+      @endunless
+    @endauth
+
+    @if(turnstile_enabled())
+    <div
+      id="comment-turnstile-host"
+      class="cf-turnstile comment-turnstile-host"
+      data-sitekey="{{ turnstile_site_key() }}"
+      data-size="invisible"
+      aria-hidden="true"
+    ></div>
+    @endif
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    @auth
+      @unless($isExamSessionRoute)
+      {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
+      <div id="prime-audio-slot" class="prime-audio-slot"></div>
+      @endunless
+    @endauth
+
+<script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
+	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=9"></script>
+      <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
+	    <script>
+      (function() {
+        /**
+         * PRIME ANIMATION ENGINE v3.0 (Pro Max Ultra)
+         * - Letter-by-letter split text
+         * - Scroll progress bar tracking
+         * - Staggered grid/list entry
+         * - Universal intersection reveals
+         */
+
+        const primeEngine = {
+          initProgressBar() {
+            const bar = document.getElementById('prime-scroll-bar');
+            if (!bar) return;
+
+            const updateBar = () => {
+              const h = document.documentElement;
+              const st = h.scrollTop || document.body.scrollTop;
+              const sh = h.scrollHeight || document.body.scrollHeight;
+              const scrollPercent = (st / (sh - h.clientHeight)) * 100;
+              bar.style.width = scrollPercent + "%";
+            };
+
+            window.addEventListener('scroll', updateBar, { passive: true });
+            updateBar();
+          },
+
+          splitText(target) {
+            if (target.dataset.animated === 'true') return;
+            target.dataset.animated = 'true';
+
+            // H1/H2 (yoki ularning ichidagi js-split-text) uchun harfma-harf animatsiyani o‘chirib,
+            // oddiy ko‘rinish qoldiramiz. Bu "son sanashga o‘xshash" effektni yo‘q qiladi.
+            const headingHost = target.closest('h1, h2');
+            if (headingHost) {
+              target.classList.add('active');
+              return;
+            }
+
+            const processNode = (node, state) => {
+              if (node.nodeType === 3) {
+                const fragment = document.createDocumentFragment();
+                const words = node.textContent.split(/(\s+)/);
+
+                words.forEach((word) => {
+                  if (word.trim() === '') {
+                    fragment.appendChild(document.createTextNode(word));
+                    return;
+                  }
+
+                  const wordSpan = document.createElement('span');
+                  wordSpan.className = 'anim-word';
+                  wordSpan.style.cssText = 'display:inline-block; white-space:nowrap; vertical-align:top;';
+
+                  [...word].forEach((char) => {
+                    const letter = document.createElement('span');
+                    letter.textContent = char;
+                    letter.className = 'letter';
+                    const lift = 88;
+                    /* Klassik: barcha harflar yuqoridan pastga (eski Prime split-text) */
+                    letter.style.transform = `translate3d(0, ${-lift}px, 0)`;
+                    wordSpan.appendChild(letter);
+                    setTimeout(() => letter.classList.add('active'), 100 + state.delay);
+                    state.delay += 25;
+                  });
+                  fragment.appendChild(wordSpan);
+                });
+                node.parentNode.replaceChild(fragment, node);
+              } else if (node.nodeType === 1) {
+                Array.from(node.childNodes).forEach(child => processNode(child, state));
+              }
+            };
+
+            const state = { delay: 0 };
+            Array.from(target.childNodes).forEach(c => processNode(c, state));
+            /* Brauzer/setTimeout xatolari uchun: ba’zi harflar .active olmasa ham matn ko‘rinsin */
+            const safetyMs = 100 + state.delay + 400;
+            window.setTimeout(() => {
+              target.querySelectorAll('.letter:not(.active)').forEach((el) => el.classList.add('active'));
+            }, safetyMs);
+          },
+
+          stagger(target) {
+            if (target.dataset.animated === 'true') return;
+            target.dataset.animated = 'true';
+
+            const children = target.children;
+            const delayStep = 100;
+
+            Array.from(children).forEach((child, i) => {
+              setTimeout(() => {
+                child.style.opacity = '1';
+                child.style.transform = 'translateY(0)';
+              }, i * delayStep);
+            });
+            target.classList.add('active');
+          },
+
+          reveal(target) {
+            target.classList.add('active');
+          }
+        };
+
+        const initAllAnimations = () => {
+          // Delay initialization by 350ms to allow browser scroll restoration to finish
+          window.setTimeout(() => {
+            primeEngine.initProgressBar();
+
+            const activatePrimeEl = (el, staggerIdx = 0) => {
+              const delay = staggerIdx * 100;
+              window.setTimeout(() => {
+                if (el.classList.contains('js-split-text')) primeEngine.splitText(el);
+                else if (el.classList.contains('prime-stagger')) primeEngine.stagger(el);
+                else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
+              }, delay);
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  // No stagger needed for normal scroll reveals
+                  activatePrimeEl(entry.target, 0);
+                  observer.unobserve(entry.target);
+                }
+              });
+            }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
+
+            const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
+            nodes.forEach(el => observer.observe(el));
+
+            /* Birinchi ekrandagi bloklar uchun: staggered yuklanish */
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                let inViewCount = 0;
+                nodes.forEach((el) => {
+                  const r = el.getBoundingClientRect();
+                  if (r.bottom > 0 && r.top < vh) {
+                    activatePrimeEl(el, inViewCount);
+                    observer.unobserve(el);
+                    inViewCount++;
+                  }
+                });
+              });
+            });
+          }, 350);
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initAllAnimations);
+        } else {
+          initAllAnimations();
+        }
+
+        /* Expose to window for AJAX pages */
+        window.initPrimeAnimations = initAllAnimations;
+      })();
+    </script>
+    @unless(request()->routeIs('exam.session'))
+    <script src="{{ app_public_asset('temp/js/site-boot-loader.js') }}?v={{ app_asset_version('temp/js/site-boot-loader.js') }}"></script>
+    <script>
+      (function() {
+        var loader = document.getElementById('site-boot-loader');
+        if (!loader) return;
+
+        var isDonorUser = document.body.getAttribute('data-donor-theme') !== '';
+
+        function showFullScreenLoader() {
+          // Donor foydalanuvchilar uchun loader ko'rsatilmaydi
+          if (isDonorUser) return;
+          loader.classList.remove('site-boot-loader--done');
+          document.body.classList.add('site-boot-loading');
+          loader.setAttribute('aria-busy', 'true');
+          if (!loader.parentNode) {
+            document.body.appendChild(loader);
+          }
+        }
+
+        document.addEventListener('click', function(e) {
+          var link = e.target.closest('a[href]');
+          if (!link) return;
+          var href = link.getAttribute('href');
+          if (!href) return;
+          if (
+            link.target === '_blank' ||
+            link.hasAttribute('download') ||
+            href.startsWith('#') ||
+            href.startsWith('javascript:') ||
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            (href.startsWith('http') && !href.startsWith(window.location.origin))
+          ) return;
+
+          try {
+            var url = new URL(href, window.location.href);
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+          } catch(err) { return; }
+
+          showFullScreenLoader();
+        });
+
+        document.addEventListener('submit', function(e) {
+          var form = e.target;
+          if (!form || form.method === 'dialog') return;
+          // AJAX formalarni o'tkazib yuborish — ular sahifani yangilamaydi
+          if (
+            form.classList.contains('js-like-form') ||
+            form.classList.contains('js-bookmark-form') ||
+            form.classList.contains('js-comment-form') ||
+            form.classList.contains('chat-input-wrap') ||
+            form.id === 'chat-form' ||
+            form.id === 'ai-chat-form' ||
+            form.id === 'contact-form' ||
+            form.getAttribute('data-ajax') ||
+            form.getAttribute('data-no-loader')
+          ) return;
+          showFullScreenLoader();
+        });
+      })();
+    </script>
+    @endunless
+
+    @auth
+    @unless(request()->routeIs('exam.session'))
+          <form action="{{ route('profile.grade-selection.update') }}" method="POST" class="grade-lock-modal__form" data-grade-lock-form>
+            @csrf
+            @method('PUT')
+
+            {{-- Hidden native select (for form submission) --}}
+            <input type="hidden" name="grade" id="locked-grade-hidden" value="{{ old('grade', '') }}" required>
+
+            <label>{{ __('public.grade_lock.label_new_grade') }}</label>
+
+            {{-- Custom styled dropdown --}}
+            <div class="glm-custom-select" id="glm-custom-select" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
+              <div class="glm-cs-trigger" id="glm-cs-trigger">
+                <span class="glm-cs-value" id="glm-cs-value">Sinfni tanlang</span>
+                <i class="fa-solid fa-chevron-down glm-cs-arrow"></i>
+              </div>
+              <div class="glm-cs-dropdown" id="glm-cs-dropdown" role="listbox" aria-label="Sinfni tanlang">
+                @foreach ($gradeSelectionGroups as $groupLabel => $options)
+                  <div class="glm-cs-group">
+                    <div class="glm-cs-group-label">{{ $groupLabel }}</div>
+                    @foreach ($options as $value => $label)
+                      <div class="glm-cs-option {{ old('grade') === $value ? 'is-selected' : '' }}"
+                           role="option"
+                           data-value="{{ $value }}"
+                           aria-selected="{{ old('grade') === $value ? 'true' : 'false' }}">
+                        {{ $label }}
+                      </div>
+                    @endforeach
+                  </div>
+                @endforeach
+              </div>
+            </div>
+
+            <div class="grade-lock-modal__actions">
+              <button type="submit" class="grade-lock-modal__submit" id="glm-submit-btn" disabled>
+                <span>Sinfni saqlash</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </form>
+
+          <div class="grade-lock-modal__note">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Bu oynani sinf tanlamasdan yopib bo'lmaydi.</span>
+          </div>
+        </div>
+      </section>
+    @endif
+    @stack('page_scripts')
+    @auth
+    @endauth
+    @if($gradeSelectionLocked)
+      <script>
+        (function () {
+          var lock   = document.querySelector('[data-grade-lock]');
+          var form   = document.querySelector('[data-grade-lock-form]');
+          var cs     = document.getElementById('glm-custom-select');
+          var trigger = document.getElementById('glm-cs-trigger');
+          var valueEl = document.getElementById('glm-cs-value');
+          var dropdown = document.getElementById('glm-cs-dropdown');
+          var hidden  = document.getElementById('locked-grade-hidden');
+          var submitBtn = document.getElementById('glm-submit-btn');
+
+          if (!lock || !form || !cs) return;
+
+          document.documentElement.classList.add('grade-lock-active');
+          document.body.classList.add('grade-lock-active');
+
+          /* ---- Init: if old() has a value, mark it selected ---- */
+          var preselected = hidden ? hidden.value : '';
+          var allOptions = cs.querySelectorAll('.glm-cs-option');
+
+          function selectOption(el) {
+            allOptions.forEach(function(o) {
+              o.classList.remove('is-selected');
+              o.setAttribute('aria-selected', 'false');
+            });
+            el.classList.add('is-selected');
+            el.setAttribute('aria-selected', 'true');
+            valueEl.textContent = el.textContent.trim();
+            valueEl.classList.remove('is-placeholder');
+            if (hidden) hidden.value = el.dataset.value;
+            if (submitBtn) submitBtn.disabled = false;
+            closeDropdown();
+          }
+
+          if (preselected) {
+            allOptions.forEach(function(o) {
+              if (o.dataset.value === preselected) {
+                o.classList.add('is-selected');
+                valueEl.textContent = o.textContent.trim();
+                valueEl.classList.remove('is-placeholder');
+                if (submitBtn) submitBtn.disabled = false;
+              }
+            });
+          } else {
+            valueEl.classList.add('is-placeholder');
+          }
+
+          /* ---- Open / close ---- */
+          function openDropdown() {
+            cs.setAttribute('aria-expanded', 'true');
+            var selected = dropdown.querySelector('.is-selected');
+            if (selected) selected.scrollIntoView({ block: 'nearest' });
+          }
+          function closeDropdown() {
+            cs.setAttribute('aria-expanded', 'false');
+          }
+          function toggleDropdown() {
+            cs.getAttribute('aria-expanded') === 'true' ? closeDropdown() : openDropdown();
+          }
+
+          trigger.addEventListener('click', toggleDropdown);
+          cs.addEventListener('keydown', function(e) {
+            var open = cs.getAttribute('aria-expanded') === 'true';
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDropdown(); }
+            if (e.key === 'Escape') { e.preventDefault(); closeDropdown(); }
+            if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && open) {
+              e.preventDefault();
+              var opts = Array.from(allOptions);
+              var focused = dropdown.querySelector('.is-focused');
+              var idx = focused ? opts.indexOf(focused) : -1;
+              if (focused) focused.classList.remove('is-focused');
+              idx = e.key === 'ArrowDown' ? Math.min(idx + 1, opts.length - 1) : Math.max(idx - 1, 0);
+              opts[idx].classList.add('is-focused');
+              opts[idx].scrollIntoView({ block: 'nearest' });
+            }
+            if (e.key === 'Enter') {
+              var focused = dropdown.querySelector('.is-focused');
+              if (focused) selectOption(focused);
+            }
+          });
+
+          allOptions.forEach(function(opt) {
+            opt.addEventListener('click', function() { selectOption(opt); });
+            opt.addEventListener('mouseenter', function() {
+              allOptions.forEach(function(o) { o.classList.remove('is-focused'); });
+              opt.classList.add('is-focused');
+            });
+          });
+
+          /* Close on outside click */
+          document.addEventListener('click', function(e) {
+            if (!cs.contains(e.target)) closeDropdown();
+          });
+
+          /* Trap Escape — keep modal open */
+          document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              event.stopPropagation();
+              closeDropdown();
+              cs.focus();
+            }
+          }, true);
+
+          lock.addEventListener('click', function (event) {
+            if (event.target === lock || event.target.classList.contains('grade-lock-modal__veil')) {
+              event.preventDefault();
+              cs.focus();
+            }
+          });
+
+          form.addEventListener('submit', function () {
+            if (!hidden || !hidden.value) return false;
+            var button = form.querySelector('button[type="submit"]');
+            if (button) button.classList.add('is-loading');
+          });
+        })();
+      </script>
+    @endif
+  </body>
+</html>
+
+

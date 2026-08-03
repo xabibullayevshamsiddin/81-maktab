@@ -37,18 +37,31 @@ class ExamController extends Controller
             ->get()
             ->keyBy('exam_id');
 
+        // Admin/teacher uchun barcha imtihonlar ko'rinadi, oddiy foydalanuvchi uchun limit to'lganlari yashiriladi
+        if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
+            $exams = $exams->filter(function (Exam $exam) use ($resultByExam) {
+                // Agar foydalanuvchi allaqachon imtihonni boshlagan bo'lsa, ko'rinadi
+                if ($resultByExam->has($exam->id)) {
+                    return true;
+                }
+                // Limit o'tgan bo'lsa, yashiriladi
+                return ! $exam->isParticipantLimitReached();
+            })->values();
+        }
+
         $hasRestrictedExams = $exams->contains(
             fn (Exam $exam) => ! $exam->allowsUser($user) && ! $resultByExam->has($exam->id)
         );
 
-        $isParent = $user->isParent();
+        // Teacher/admin rolidagi ota-onalar imtihon topshira oladi
+        $isParent = $user->isParentOnly();
 
         return view('exam.index', compact('exams', 'resultByExam', 'user', 'hasRestrictedExams', 'isParent'));
     }
 
     public function startPage(Request $request, Exam $exam)
     {
-        if ($request->user()->isParent()) {
+        if ($request->user()->isParentOnly()) {
             return redirect()->route('exam.index')
                 ->with('error', 'Ota-onalar imtihon topshira olmaydi.')
                 ->with('toast_type', 'error');
@@ -62,6 +75,14 @@ class ExamController extends Controller
             ->where('exam_id', $exam->id)
             ->where('user_id', $request->user()->id)
             ->first();
+
+        // Agar foydalanuvchi allaqachon imtihonni boshlagan bo'lsa, limit tekshirilmaydi
+        if (! $existing && $exam->isParticipantLimitReached()) {
+            return redirect()
+                ->route('exam.index')
+                ->with('error', "Bu imtihon uchun ishtirokchilar limiti to'lgan ({$exam->max_participants} ta).")
+                ->with('toast_type', 'error');
+        }
 
         if (! $exam->allowsUser($request->user()) && ! $existing) {
             return redirect()
@@ -79,7 +100,7 @@ class ExamController extends Controller
 
     public function start(Request $request, Exam $exam)
     {
-        if ($request->user()->isParent()) {
+        if ($request->user()->isParentOnly()) {
             return redirect()->route('exam.index')
                 ->with('error', 'Ota-onalar imtihon topshira olmaydi.')
                 ->with('toast_type', 'error');
@@ -89,6 +110,14 @@ class ExamController extends Controller
             ->where('exam_id', $exam->id)
             ->where('user_id', $request->user()->id)
             ->first();
+
+        // Agar foydalanuvchi allaqachon imtihonni boshlagan bo'lsa, limit tekshirilmaydi
+        if (! $existing && $exam->isParticipantLimitReached()) {
+            return redirect()
+                ->route('exam.index')
+                ->with('error', "Bu imtihon uchun ishtirokchilar limiti to'lgan ({$exam->max_participants} ta).")
+                ->with('toast_type', 'error');
+        }
 
         if ($redirect = $this->ensureExamAvailable($exam, $existing, $request->user())) {
             return $redirect;

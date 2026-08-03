@@ -926,27 +926,6 @@
 }
 
 /* ====================================================================
-   22. GLOBAL E'LON BANNERI
-   ==================================================================== */
-@media (max-width: 580px) {
-  .global-announcement-inner {
-    padding: 10px 14px;
-    gap: 10px;
-  }
-
-  .global-announcement-text {
-    font-size: 12.5px;
-    line-height: 1.45;
-  }
-
-  .global-announcement-close {
-    width: 26px;
-    height: 26px;
-    font-size: 12px;
-  }
-}
-
-/* ====================================================================
    23. KICHIK EKRANLAR UCHUN UMUMIY TYPOGRAPHY
    ==================================================================== */
 @media (max-width: 580px) {
@@ -1152,7 +1131,6 @@
 }
 
 @media print {
-  .global-announcement,
   .chat-widget,
   .scroll-top,
   .mobile-theme-toggle-wrap,

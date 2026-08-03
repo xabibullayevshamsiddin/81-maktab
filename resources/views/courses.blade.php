@@ -132,7 +132,7 @@
                     $en = $enrollmentByCourseId->get($course->id);
                     $isOwnCourse = (int) $course->created_by === (int) auth()->id();
                     $canManageCourse = auth()->user()->canManageSystem() || $isOwnCourse;
-                    $isParentUser = auth()->user()->isParent();
+                    $isParentUser = auth()->user()->isParentOnly();
                   @endphp
                   @if($canManageCourse)
                     @php

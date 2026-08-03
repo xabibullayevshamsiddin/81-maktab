@@ -42,7 +42,12 @@ class TeacherExamController extends Controller
 
         $q = trim((string) $request->query('q', ''));
 
-        $query = Exam::query()->withCount('questions')->latest();
+        $query = Exam::query()
+            ->withCount('questions')
+            ->withCount(['results as active_participants_count' => function ($q) {
+                $q->whereIn('status', ['started', 'submitted', 'expired']);
+            }])
+            ->latest();
 
         if (! $user->isAdmin() && ! $user->isSuperAdmin()) {
             $query->where('created_by', $user->id);

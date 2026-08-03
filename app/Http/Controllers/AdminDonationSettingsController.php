@@ -39,10 +39,7 @@ class AdminDonationSettingsController extends Controller
         ]);
 
         foreach ($data as $key => $value) {
-            SiteSetting::query()->updateOrCreate(
-                ["key" => $key],
-                ["value" => (string) $value]
-            );
+            SiteSetting::set($key, (string) $value);
         }
 
         return redirect()->route("admin.donation-settings")

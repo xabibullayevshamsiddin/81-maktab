@@ -24,7 +24,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('course_enrollments', function (Blueprint $table) {
-            $table->dropForeign(['reviewed_by']);
+            // SQLite dropForeign'ni qo'llab-quvvatlamaydi (testlar uchun)
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['reviewed_by']);
+            }
             $table->dropColumn(['reviewed_by', 'reviewed_at', 'subject_level', 'grade', 'contact_phone', 'status']);
         });
     }

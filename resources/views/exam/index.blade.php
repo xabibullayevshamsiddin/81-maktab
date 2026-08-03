@@ -136,6 +136,9 @@
               <div class="exam-card-meta">
                 <span class="exam-meta-pill"><i class="fa-regular fa-clock"></i> {{ $exam->duration_minutes }} {{ __('public.exam.minutes_short') }}</span>
                 <span class="exam-meta-pill"><i class="fa-solid fa-star"></i> {{ $exam->total_points ?? '-' }} {{ __('public.exam.points_short') }}</span>
+                @if($exam->hasParticipantLimit())
+                  <span class="exam-meta-pill" style="{{ $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:700;' : '' }}"><i class="fa-solid fa-user-group"></i> {{ $exam->participantLimitLabel() }}</span>
+                @endif
               </div>
 
               @if($exam->hasGradeRestrictions())

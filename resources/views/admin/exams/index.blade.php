@@ -27,13 +27,14 @@
               <th>Boshlash (reja)</th>
               <th>Sinflar</th>
               <th>Holat</th>
+              <th>Ishtirokchilar</th>
               <th>Amal</th>
             </tr>
           </thead>
           <tbody>
             @if($exams->isEmpty())
               <tr>
-                <td colspan="10">Hozircha imtihon yo'q.</td>
+                <td colspan="11">Hozircha imtihon yo'q.</td>
               </tr>
             @else
               @foreach($exams as $exam)
@@ -47,6 +48,7 @@
                   <td>{{ $exam->availableFromLabel() ?? '—' }}</td>
                   <td title="{{ $exam->allowedGradesLabel() }}">{{ $exam->allowedGradesLabel() }}</td>
                   <td>{{ $exam->is_active ? 'Faol' : 'Tayyorlanmoqda' }}</td>
+                  <td style="{{ $exam->hasParticipantLimit() && $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:600;' : '' }}">{{ $exam->participantLimitLabel() }}</td>
                   <td style="display:flex;gap:8px;flex-wrap:wrap;">
                     <a href="{{ route('admin.exams.questions.index', $exam) }}" class="main-btn dark-btn btn-hover btn-sm">Savollar</a>
                     <a href="{{ route('admin.exams.edit', $exam) }}" class="main-btn warning-btn btn-hover btn-sm">Tahrirlash</a>

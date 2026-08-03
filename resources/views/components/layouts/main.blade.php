@@ -1,5 +1,4 @@
 @props(['title' => '81-IDUM'])
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
   <head>
@@ -69,7 +68,6 @@
       }
     </script>
   </head>
-
     <body
         @class([
           'site-boot-loading' => ! request()->routeIs('exam.session'),
@@ -92,14 +90,12 @@
         <div class="site-boot-loader__visual">
           {{-- Three.js WebGL canvas --}}
           <canvas id="loader-3d-canvas" aria-hidden="true"></canvas>
-
           {{-- CSS fallback (Three.js yuklanmasa) --}}
           <div class="site-boot-loader__orbit" aria-hidden="true">
             <div class="site-boot-loader__ring site-boot-loader__ring--1"></div>
             <div class="site-boot-loader__ring site-boot-loader__ring--2"></div>
             <div class="site-boot-loader__ring site-boot-loader__ring--3"></div>
           </div>
-
           {{-- "81" brend overlay (canvas ustida) --}}
           <div class="site-boot-loader__brand-overlay">
             <div class="site-boot-loader__brand-glass">
@@ -116,10 +112,8 @@
         </div>
       </div>
     </div>
-
     {{-- Three.js 3D loader animatsiyasi --}}
     <script src="{{ app_public_asset('temp/js/loader-3d.js') }}?v={{ app_asset_version('temp/js/loader-3d.js') }}"></script>
-
     <!-- BOMBA WELCOME OVERLAY -->
     <div id="bomba-welcome" class="bomba-welcome" style="display: none;">
       <div class="bomba-welcome__inner">
@@ -128,7 +122,6 @@
         <p class="bomba-welcome__text">{{ __('public.common.welcome_subtitle') }}</p>
       </div>
     </div>
-
     <script>
       (function() {
         if (!localStorage.getItem('bomba_welcome_shown')) {
@@ -156,7 +149,6 @@
       })();
     </script>
     @endunless
-
 		    @php
 		      $authUser = auth()->user();
 		      $teacherCourseCandidate = $authUser && $authUser->isTeacher();
@@ -169,11 +161,13 @@
 		      $teacherCourseOpenPending = $teacherCourseCandidate && ! $teacherAtCourseLimit && $authUser->hasPendingCourseOpenRequest();
 	      $canCreateCourse = $canOpenCourseForm;
 	      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
-	      $currentLocale = current_locale();
-	      $supportedLocales = supported_locales();
+      $currentLocale = current_locale();
+      $supportedLocales = supported_locales();
+      $localeFlags = ['uz' => '🇺🇿', 'ru' => '🇷🇺', 'en' => '🇬🇧'];
 	      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
 	      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
 	      $isExamSessionRoute = request()->routeIs('exam.session');
+	      $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
 	      $accountMenuActive = $authUser && (
 	        request()->routeIs('exam.*')
 	        || request()->routeIs('profile.*')
@@ -186,29 +180,6 @@
         <div class="prime-progress-bar" id="prime-scroll-bar"></div>
       </div>
 	    @unless($isExamSessionRoute)
-	    @php
-	      $announcementActive = \App\Models\SiteSetting::get('announcement_active', '0') === '1';
-	      $announcementText = \App\Models\SiteSetting::get('announcement_text', '');
-	      $announcementType = \App\Models\SiteSetting::get('announcement_type', 'info');
-	    @endphp
-	    @if($announcementActive && filled($announcementText))
-	      <div class="global-announcement global-announcement--{{ $announcementType }}" id="global-announcement" role="alert">
-	        <div class="global-announcement-inner">
-	          <span class="global-announcement-icon">
-	            @switch($announcementType)
-	              @case('success') <i class="fa-solid fa-circle-check"></i> @break
-	              @case('warning') <i class="fa-solid fa-triangle-exclamation"></i> @break
-	              @case('danger') <i class="fa-solid fa-circle-exclamation"></i> @break
-	              @default <i class="fa-solid fa-bullhorn"></i>
-	            @endswitch
-	          </span>
-	          <p class="global-announcement-text">{{ $announcementText }}</p>
-	          <button type="button" class="global-announcement-close" aria-label="{{ __('public.layout.close') }}" onclick="let el = this.closest('.global-announcement'); el.classList.add('closing'); setTimeout(() => el.remove(), 450);">
-	            <i class="fa-solid fa-xmark"></i>
-	          </button>
-	        </div>
-	      </div>
-	    @endif
 	    <header class="page-header">
 	      <div class="container">
 	        <div class="header-main header-main--offset" id="navbar">
@@ -218,7 +189,6 @@
               alt="{{ __('public.layout.logo_alt') }}"
             />
           </a>
-
           <button
             class="menu-toggle"
             id="menu-toggle"
@@ -228,7 +198,36 @@
           >
             <i class="fa-solid fa-bars"></i>
           </button>
-
+          <div class="mobile-header-locale nav-dropdown nav-dropdown--bomba-locale">
+            <details class="nav-dropdown-details js-header-dropdown">
+              <summary class="nav-link nav-dropdown-toggle">
+                <span class="locale-flags-row">
+                  @foreach($localeFlags as $flagKey => $flagEmoji)
+                    <span class="locale-flag{{ $currentLocale === $flagKey ? ' is-current' : '' }}">{{ $flagEmoji }}</span>
+                  @endforeach
+                </span>
+              </summary>
+              <div class="nav-dropdown-menu">
+                <div class="nav-dropdown-inner">
+                  @foreach($supportedLocales as $localeKey => $localeLabel)
+                    <a
+                      href="{{ route('locale.switch', $localeKey) }}"
+                      class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
+                      data-locale-switch
+                    >
+                      @if(isset($localeFlags[$localeKey]))
+                        <span class="locale-flag">{{ $localeFlags[$localeKey] }}</span>
+                      @endif
+                      <span class="locale-name">{{ $localeLabel }}</span>
+                      @if($currentLocale === $localeKey)
+                        <i class="fa-solid fa-check-circle active-indicator"></i>
+                      @endif
+                    </a>
+                  @endforeach
+                </div>
+              </div>
+            </details>
+          </div>
           <nav id="site-nav">
             <ul>
               <li><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
@@ -267,7 +266,6 @@
                       {{ __('public.layout.account') }}
                       <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
                     </summary>
-
                     <div class="nav-dropdown-menu">
                       {{-- ─── User badge card ─── --}}
                       <a href="{{ route('profile.show') }}" class="nav-dropdown-user-badge">
@@ -308,7 +306,7 @@
                           <span>{{ __('public.layout.menu.course_open') }} <small class="nav-dropdown-item-note">{{ __('public.layout.wait_admin_approval_profile') }}</small></span>
                         </span>
                       @elseif($teacherNeedsCourseOpenRequest)
-                        <a class="nav-dropdown-item" href="{{ route('profile.show') }}#course-open-request">
+                        <a class="nav-dropdown-item" href="{{ route('profile.show', ['panel' => 'activity']) }}#course-open-request">
                           <i class="fa-solid fa-paper-plane"></i>
                           {{ __('public.layout.course_request_action') }}
                         </a>
@@ -331,7 +329,6 @@
                         <i class="fa-solid fa-hand-holding-heart" style="color: #f59e0b;"></i>
                         Donation
                       </a>
-
                       <form class="nav-dropdown-form" action="{{ route('logout') }}" method="POST">
                         @csrf
                         <button type="submit" class="nav-dropdown-item">
@@ -347,35 +344,7 @@
                 <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
               @endguest
             </ul>
-
             <div class="mobile-nav-extras">
-              <li class="nav-dropdown nav-dropdown--bomba-locale">
-                <details class="nav-dropdown-details js-header-dropdown">
-                  <summary class="nav-link nav-dropdown-toggle">
-                    <i class="fa-solid fa-language"></i>
-                    <span>{{ $supportedLocales[$currentLocale] }}</span>
-                    <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
-                  </summary>
-                  <div class="nav-dropdown-menu">
-                    <div class="nav-dropdown-inner">
-                      @foreach($supportedLocales as $localeKey => $localeLabel)
-                        <a
-                          href="{{ route('locale.switch', $localeKey) }}"
-                          class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
-                          data-locale-switch
-                        >
-                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
-                          <span class="locale-name">{{ $localeLabel }}</span>
-                          @if($currentLocale === $localeKey)
-                            <i class="fa-solid fa-check-circle active-indicator"></i>
-                          @endif
-                        </a>
-                      @endforeach
-                    </div>
-                  </div>
-                </details>
-              </li>
-
 	              @guest
 	                <div class="mobile-nav-actions">
                     <a href="{{ route('search') }}" class="btn btn-outline">{{ __('public.common.search') }}</a>
@@ -387,7 +356,6 @@
                   <span class="mobile-nav-user-name">{{ $authUser->first_name ?: $authUser->name }}</span>
                   <span class="mobile-nav-user-role">{{ $authUser->role_label }}</span>
                 </div>
-
 			                <div class="mobile-nav-actions mobile-nav-actions--auth">
 			                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
 			                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
@@ -395,7 +363,7 @@
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
-	                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline">{{ __('public.layout.course_request_short') }}</a>
+	                    <a href="{{ route('profile.show', ['panel' => 'activity']) }}#course-open-request" class="btn btn-outline">{{ __('public.layout.course_request_short') }}</a>
 	                  @elseif($teacherCourseOpenPending)
 	                    <span class="btn btn-outline" style="opacity:.75;pointer-events:none;">{{ __('public.layout.course_pending_short') }}</span>
 	                  @endif
@@ -410,13 +378,15 @@
 	              @endguest
 	            </div>
           </nav>
-
 	          <div class="login desktop-header-tools {{ auth()->guest() ? 'login--guest' : '' }}">
 	            <div class="nav-dropdown nav-dropdown--bomba-locale desktop-only">
                 <details class="nav-dropdown-details js-header-dropdown">
                   <summary class="nav-link nav-dropdown-toggle">
-                    <i class="fa-solid fa-language"></i>
-                    <span>{{ $supportedLocales[$currentLocale] }}</span>
+                    <span class="locale-flags-row">
+                      @foreach($localeFlags as $flagKey => $flagEmoji)
+                        <span class="locale-flag{{ $currentLocale === $flagKey ? ' is-current' : '' }}">{{ $flagEmoji }}</span>
+                      @endforeach
+                    </span>
                     <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
                   </summary>
                   <div class="nav-dropdown-menu">
@@ -427,7 +397,9 @@
                           class="nav-dropdown-item {{ $currentLocale === $localeKey ? 'active' : '' }}"
                           data-locale-switch
                         >
-                          <span class="locale-code">{{ strtoupper($localeKey) }}</span>
+                          @if(isset($localeFlags[$localeKey]))
+                            <span class="locale-flag">{{ $localeFlags[$localeKey] }}</span>
+                          @endif
                           <span class="locale-name">{{ $localeLabel }}</span>
                           @if($currentLocale === $localeKey)
                             <i class="fa-solid fa-check-circle active-indicator"></i>
@@ -447,9 +419,6 @@
 	              <i class="fa-solid fa-moon theme-toggle-light-icon"></i>
 	              <i class="fa-solid fa-sun theme-toggle-dark-icon"></i>
             </button>
-
-
-
             @guest
               <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
               <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
@@ -459,9 +428,7 @@
 	      </div>
 	    </header>
 	    @endunless
-
 	    {{ $slot }}
-
 	    @unless($isExamSessionRoute)
     <div id="image-lightbox" class="image-lightbox" aria-hidden="true">
       <button type="button" class="image-lightbox-close" aria-label="{{ __('public.layout.image_close') }}">
@@ -472,7 +439,6 @@
         <p id="image-lightbox-caption" class="image-lightbox-caption" hidden></p>
       </div>
     </div>
-
     <footer class="footer prime-reveal">
       <div class="footer-container container prime-stagger">
         <!-- Column 1: Branding -->
@@ -493,7 +459,6 @@
             <a href="{{ $fb }}" {!! $fb !== '#' ? 'target="_blank" rel="noopener"' : '' !!} class="social-link" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
           </div>
         </div>
-
         <!-- Column 2: Explore -->
         <div class="footer-column">
           <h4 class="footer-title">{{ __('public.layout.footer.quick_links') }}</h4>
@@ -504,7 +469,6 @@
             <li><a href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
           </ul>
         </div>
-
         <!-- Column 3: Resources -->
         <div class="footer-column">
           <h4 class="footer-title">{{ __('public.layout.resources') }}</h4>
@@ -521,7 +485,6 @@
             <li><a href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
           </ul>
         </div>
-
         <!-- Column 4: Contact -->
         <div class="footer-column">
           <h4 class="footer-title">{{ __('public.layout.footer.contact') }}</h4>
@@ -546,7 +509,6 @@
           </div>
         </div>
       </div>
-
       <div class="footer-bottom">
         <div class="container footer-bottom-inner">
           <p>&copy; <span id="year"></span> {{ __('public.layout.footer.copyright') }}</p>
@@ -559,7 +521,6 @@
     </footer>
 	    @endunless
 	    </div>
-
     @auth
       @unless($isExamSessionRoute)
       @php
@@ -642,7 +603,6 @@
           <i class="fa-solid fa-comments"></i>
           <span class="chat-bubble-badge" id="chat-badge" hidden>0</span>
         </button>
-
         <div class="chat-panel" id="chat-panel" hidden>
           <div class="chat-panel-header">
             <div class="chat-panel-title">
@@ -668,10 +628,6 @@
             <p id="chat-disabled-panel-text" class="chat-disabled-panel-text"></p>
           </div>
           <div id="chat-panel-main" class="chat-panel-main" @if(!$globalChatEnabled) hidden @endif>
-
-
-
-
           <div class="chat-feed-stack">
             <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
           </div>
@@ -719,7 +675,6 @@
           </div>
         </div>
       </div>
-
       <span id="user-preview-config" hidden
         data-user-preview-base="{{ url('chat/user') }}"
         data-csrf="{{ csrf_token() }}"
@@ -727,7 +682,6 @@
       ></span>
       @endunless
     @endauth
-
     @unless($isExamSessionRoute)
     <button
       id="scroll-top"
@@ -738,12 +692,9 @@
       <i class="fa-solid fa-chevron-up"></i>
     </button>
     @endunless
-
     @include('components.confirm-modal')
-
     <div id="global-modal-root"></div>
     <span id="global-search-config" hidden data-search-url="{{ route('search') }}"></span>
-
     <div id="global-search-modal" class="global-search-modal" hidden>
       <div class="bomba-mesh"></div>
       <div class="global-search-shell" role="dialog" aria-modal="true" aria-labelledby="global-search-label">
@@ -761,7 +712,6 @@
         <div id="global-search-results" class="global-search-results"></div>
       </div>
     </div>
-
     @auth
       @unless($isExamSessionRoute)
       <dialog id="chat-user-preview-dialog" class="chat-user-preview-dialog" aria-labelledby="chat-user-preview-name">
@@ -785,7 +735,6 @@
       </dialog>
       @endunless
     @endauth
-
     @if(turnstile_enabled())
     <div
       id="comment-turnstile-host"
@@ -795,16 +744,13 @@
       aria-hidden="true"
     ></div>
     @endif
-
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
-
     @auth
       @unless($isExamSessionRoute)
       {{-- Ovoz tugmasi JS orqali shu konteynerga qo‘yiladi (global chat + AI bilan bir ustunda) --}}
       <div id="prime-audio-slot" class="prime-audio-slot"></div>
       @endunless
     @endauth
-
 <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
 	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=9"></script>
       <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
@@ -817,12 +763,10 @@
          * - Staggered grid/list entry
          * - Universal intersection reveals
          */
-
         const primeEngine = {
           initProgressBar() {
             const bar = document.getElementById('prime-scroll-bar');
             if (!bar) return;
-
             const updateBar = () => {
               const h = document.documentElement;
               const st = h.scrollTop || document.body.scrollTop;
@@ -830,15 +774,12 @@
               const scrollPercent = (st / (sh - h.clientHeight)) * 100;
               bar.style.width = scrollPercent + "%";
             };
-
             window.addEventListener('scroll', updateBar, { passive: true });
             updateBar();
           },
-
           splitText(target) {
             if (target.dataset.animated === 'true') return;
             target.dataset.animated = 'true';
-
             // H1/H2 (yoki ularning ichidagi js-split-text) uchun harfma-harf animatsiyani o‘chirib,
             // oddiy ko‘rinish qoldiramiz. Bu "son sanashga o‘xshash" effektni yo‘q qiladi.
             const headingHost = target.closest('h1, h2');
@@ -846,22 +787,18 @@
               target.classList.add('active');
               return;
             }
-
             const processNode = (node, state) => {
               if (node.nodeType === 3) {
                 const fragment = document.createDocumentFragment();
                 const words = node.textContent.split(/(\s+)/);
-
                 words.forEach((word) => {
                   if (word.trim() === '') {
                     fragment.appendChild(document.createTextNode(word));
                     return;
                   }
-
                   const wordSpan = document.createElement('span');
                   wordSpan.className = 'anim-word';
                   wordSpan.style.cssText = 'display:inline-block; white-space:nowrap; vertical-align:top;';
-
                   [...word].forEach((char) => {
                     const letter = document.createElement('span');
                     letter.textContent = char;
@@ -880,7 +817,6 @@
                 Array.from(node.childNodes).forEach(child => processNode(child, state));
               }
             };
-
             const state = { delay: 0 };
             Array.from(target.childNodes).forEach(c => processNode(c, state));
             /* Brauzer/setTimeout xatolari uchun: ba’zi harflar .active olmasa ham matn ko‘rinsin */
@@ -889,14 +825,11 @@
               target.querySelectorAll('.letter:not(.active)').forEach((el) => el.classList.add('active'));
             }, safetyMs);
           },
-
           stagger(target) {
             if (target.dataset.animated === 'true') return;
             target.dataset.animated = 'true';
-
             const children = target.children;
             const delayStep = 100;
-
             Array.from(children).forEach((child, i) => {
               setTimeout(() => {
                 child.style.opacity = '1';
@@ -905,17 +838,14 @@
             });
             target.classList.add('active');
           },
-
           reveal(target) {
             target.classList.add('active');
           }
         };
-
         const initAllAnimations = () => {
           // Delay initialization by 350ms to allow browser scroll restoration to finish
           window.setTimeout(() => {
             primeEngine.initProgressBar();
-
             const activatePrimeEl = (el, staggerIdx = 0) => {
               const delay = staggerIdx * 100;
               window.setTimeout(() => {
@@ -924,7 +854,6 @@
                 else if (el.classList.contains('prime-reveal')) primeEngine.reveal(el);
               }, delay);
             };
-
             const observer = new IntersectionObserver((entries) => {
               entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -934,10 +863,8 @@
                 }
               });
             }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
-
             const nodes = document.querySelectorAll('.js-split-text, .prime-stagger, .prime-reveal');
             nodes.forEach(el => observer.observe(el));
-
             /* Birinchi ekrandagi bloklar uchun: staggered yuklanish */
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
@@ -955,13 +882,11 @@
             });
           }, 350);
         };
-
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', initAllAnimations);
         } else {
           initAllAnimations();
         }
-
         /* Expose to window for AJAX pages */
         window.initPrimeAnimations = initAllAnimations;
       })();
@@ -972,9 +897,7 @@
       (function() {
         var loader = document.getElementById('site-boot-loader');
         if (!loader) return;
-
         var isDonorUser = document.body.getAttribute('data-donor-theme') !== '';
-
         function showFullScreenLoader() {
           // Donor foydalanuvchilar uchun loader ko'rsatilmaydi
           if (isDonorUser) return;
@@ -985,7 +908,6 @@
             document.body.appendChild(loader);
           }
         }
-
         document.addEventListener('click', function(e) {
           var link = e.target.closest('a[href]');
           if (!link) return;
@@ -1000,15 +922,12 @@
             href.startsWith('tel:') ||
             (href.startsWith('http') && !href.startsWith(window.location.origin))
           ) return;
-
           try {
             var url = new URL(href, window.location.href);
             if (url.pathname === window.location.pathname && url.search === window.location.search) return;
           } catch(err) { return; }
-
           showFullScreenLoader();
         });
-
         document.addEventListener('submit', function(e) {
           var form = e.target;
           if (!form || form.method === 'dialog') return;
@@ -1029,7 +948,6 @@
       })();
     </script>
     @endunless
-
     @auth
     @unless(request()->routeIs('exam.session'))
     @php
@@ -1050,7 +968,6 @@
       <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="{{ __('public.layout.ai_assistant') }}" title="{{ __('public.layout.ai_assistant') }}">
         <i class="fa-solid fa-magic-wand-sparkles" aria-hidden="true"></i>
       </button>
-
       <div class="chat-panel ai-panel" id="ai-panel">
         <div class="chat-panel-header">
           <div class="chat-panel-title">
@@ -1075,7 +992,6 @@
           </div>
           <p class="chat-panel-subtitle">{{ __('public.layout.ai_greeting') }}</p>
         </div>
-
         <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
           <div class="chat-msg is-ai reveal">
             <div class="chat-msg-content">{{ __('public.layout.ai_first_message') }}</div>
@@ -1087,14 +1003,12 @@
           </span>
           <span class="chat-compose-status-text">{{ __('public.layout.thinking') }}</span>
         </div>
-
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
           <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
           <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
           <button type="button" class="ai-action-btn" data-msg="Saytda nechata post va kurs bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Statistika</button>
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
-
         <form class="chat-input-wrap" id="ai-chat-form">
           <textarea
             class="chat-textarea"
@@ -1134,7 +1048,6 @@
         var widget = document.getElementById('ai-widget');
         if (!widget) { console.log('AI Widget not found'); return; }
         var aiText = @json($aiText);
-
         var bubble = document.getElementById('ai-bubble');
         var panel = document.getElementById('ai-panel');
         var closeBtn = document.getElementById('ai-close-btn');
@@ -1144,7 +1057,6 @@
         var sendBtn = document.getElementById('ai-send-btn');
         var statusWrap = document.getElementById('ai-compose-status');
         var statusText = statusWrap ? statusWrap.querySelector('.chat-compose-status-text') : null;
-
         var aiUrl = widget.getAttribute('data-ai-url');
         var aiStatusUrl = widget.getAttribute('data-ai-status-url');
         var aiFeedbackUrl = widget.getAttribute('data-ai-feedback-url');
@@ -1157,28 +1069,22 @@
         var aiDisabledText = document.getElementById('ai-disabled-panel-text');
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
         var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
         /* PRIME AI Typewriter v2.0 — all keyframes live in style.css, nothing to inject */
-
         function setAiEnabledState(enabled, message) {
           aiEnabled = !!enabled;
           widget.setAttribute('data-ai-enabled', aiEnabled ? '1' : '0');
-
           if (message && aiDisabledText) {
             aiDisabledText.textContent = message;
           }
-
           if (aiDisabledPanel && aiPanelMain) {
             aiPanelMain.hidden = !aiEnabled;
             aiDisabledPanel.hidden = aiEnabled;
           }
         }
-
         function refreshAiAvailability() {
           if (!aiStatusUrl) {
             return Promise.resolve(aiEnabled);
           }
-
           return fetch(aiStatusUrl, {
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
             credentials: 'same-origin',
@@ -1189,20 +1095,16 @@
             })
             .then(function (data) {
               if (!data) return aiEnabled;
-
               setAiEnabledState(!!data.enabled, data.disabled_message || data.error || widget.getAttribute('data-ai-disabled-message'));
-
               return aiEnabled;
             })
             .catch(function () {
               return aiEnabled;
             });
         }
-
         function syncAiDockState() {
           document.body.classList.toggle('ai-panel-open', panel.classList.contains('is-open'));
         }
-
         function showAiComposeStatus(text) {
           if (!statusWrap) return;
           if (statusText) {
@@ -1212,7 +1114,6 @@
           statusWrap.style.display = 'flex';
           statusWrap.removeAttribute('hidden');
         }
-
         function resetAiComposeState() {
           isSending = false;
           if (sendBtn) {
@@ -1239,7 +1140,6 @@
             statusText.innerHTML = ''; /* clear animated dots on reset */
           }
         }
-
         function closePanel() {
           if (!isSending) {
             resetAiComposeState();
@@ -1248,7 +1148,6 @@
           widget.classList.remove('is-open');
           syncAiDockState();
         }
-
         function openPanel() {
           if (typeof window.primeCloseGlobalChatPanel === 'function') {
             window.primeCloseGlobalChatPanel();
@@ -1277,11 +1176,9 @@
             input.focus();
           }
         }
-
         window.primeCloseAiPanel = function() {
           if (panel.classList.contains('is-open')) closePanel();
         };
-
         function togglePanel(e) {
           e.preventDefault();
           e.stopPropagation();
@@ -1291,21 +1188,17 @@
             openPanel();
           }
         }
-
         bubble.addEventListener('click', togglePanel);
         if (headerToggle) headerToggle.addEventListener('click', togglePanel);
-
         document.addEventListener('click', function (e) {
           if (panel.classList.contains('is-open') && !panel.contains(e.target) && !bubble.contains(e.target)) {
             closePanel();
           }
         });
-
         closeBtn.addEventListener('click', function(e) {
           e.preventDefault();
           closePanel();
         });
-
         function scrollToBottom(immediate) {
           if (!messagesEl) return;
           if (immediate) {
@@ -1314,13 +1207,11 @@
           }
           messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
         }
-
         function stripMockTailForDisplay(full) {
           if (!aiMockDelim || full.indexOf(aiMockDelim) === -1) return full;
           var head = full.split(aiMockDelim)[0].trim();
           return head || '…';
         }
-
         function escapeAiHtml(value) {
           return String(value || '')
             .replace(/&/g, '&amp;')
@@ -1329,60 +1220,46 @@
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
         }
-
         function formatPlainMessageHtml(text) {
           return escapeAiHtml(text).replace(/\n/g, '<br>');
         }
-
         function formatAiMessageHtml(text) {
           var safe = escapeAiHtml(text).replace(/\r\n?/g, '\n');
           safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong style="color:inherit;font-weight:700;">$1</strong>');
           safe = safe.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" class="ai-response-link" target="_blank" rel="noopener noreferrer">$1</a>');
-
           var lines = safe.split('\n');
           var html = '';
           var listItems = [];
-
           function flushList() {
             if (!listItems.length) return;
             html += '<ul style="margin:8px 0 10px 18px;padding:0;">' + listItems.join('') + '</ul>';
             listItems = [];
           }
-
           lines.forEach(function (rawLine) {
             var line = rawLine.trim();
-
             if (!line) {
               flushList();
               html += '<div style="height:8px;"></div>';
               return;
             }
-
             if (/^(-|•)\s+/.test(line)) {
               listItems.push('<li style="margin:0 0 6px 0;">' + line.replace(/^(-|•)\s+/, '') + '</li>');
               return;
             }
-
             flushList();
             html += '<div style="margin:0 0 6px 0;line-height:1.6;color:inherit;">' + line + '</div>';
           });
-
           flushList();
-
           return html;
         }
-
         function sendAiMessage(message) {
           if (!message || isSending || !aiEnabled) return;
           input.value = message;
           form.dispatchEvent(new Event('submit'));
         }
-
         function buildActionNode(action) {
           if (!action || !action.label) return null;
-
           var commonStyle = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.04);color:inherit;font-size:12px;text-decoration:none;cursor:pointer;';
-
           if (action.type === 'link' && action.url) {
             var link = document.createElement('a');
             link.href = action.url;
@@ -1390,7 +1267,6 @@
             link.style.cssText = commonStyle;
             return link;
           }
-
           if (action.type === 'reply' && action.message) {
             var btn = document.createElement('button');
             btn.type = 'button';
@@ -1401,17 +1277,14 @@
             });
             return btn;
           }
-
           return null;
         }
-
         function submitAiFeedback(interactionId, helpful, holder, reason) {
           if (!interactionId || !aiFeedbackUrl || !holder) return;
           var payload = { interaction_id: interactionId, helpful: helpful };
           if (typeof reason === 'string' && reason.trim()) {
             payload.reason = reason.trim();
           }
-
           fetch(aiFeedbackUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
@@ -1427,21 +1300,16 @@
             holder.innerHTML = '<small style="opacity:.8;">Feedback yuborilmadi.</small>';
           });
         }
-
         function renderUnhelpfulFeedbackPrompt(interactionId, holder) {
           if (!interactionId || !holder) return;
-
           holder.innerHTML = '';
           holder.style.cssText = 'display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding:10px;border-radius:14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);';
-
           var title = document.createElement('small');
           title.textContent = 'Nima noto\'g\'ri edi?';
           title.style.cssText = 'color:var(--text);opacity:.88;font-weight:600;';
           holder.appendChild(title);
-
           var presetsWrap = document.createElement('div');
           presetsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
-
           [aiText.feedback_preset_unclear, aiText.feedback_preset_wrong_direction, aiText.feedback_preset_not_enough_info].forEach(function (preset) {
             var presetBtn = document.createElement('button');
             presetBtn.type = 'button';
@@ -1453,19 +1321,15 @@
             });
             presetsWrap.appendChild(presetBtn);
           });
-
           holder.appendChild(presetsWrap);
-
           var textarea = document.createElement('textarea');
           textarea.rows = 2;
           textarea.maxLength = 500;
           textarea.placeholder = aiText.feedback_reason_placeholder;
           textarea.style.cssText = 'width:100%;resize:none;padding:8px 10px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:var(--bg);color:var(--text);font:inherit;';
           holder.appendChild(textarea);
-
           var actionsWrap = document.createElement('div');
           actionsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
-
           var sendBtn = document.createElement('button');
           sendBtn.type = 'button';
           sendBtn.textContent = aiText.feedback_send;
@@ -1474,7 +1338,6 @@
             submitAiFeedback(interactionId, false, holder, textarea.value);
           });
           actionsWrap.appendChild(sendBtn);
-
           var skipBtn = document.createElement('button');
           skipBtn.type = 'button';
           skipBtn.textContent = aiText.feedback_send_without_reason;
@@ -1483,31 +1346,23 @@
             submitAiFeedback(interactionId, false, holder, '');
           });
           actionsWrap.appendChild(skipBtn);
-
           holder.appendChild(actionsWrap);
         }
-
         function buildMessageElement(isAi) {
           var el = document.createElement('div');
           el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
-
           var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
-
           el.innerHTML = avatarHtml + '<div class="chat-msg-content"></div>';
           messagesEl.appendChild(el);
-
           void el.offsetWidth;
           el.classList.add('reveal');
           el.style.opacity = '1';
           el.style.transform = 'translateY(0)';
           scrollToBottom();
-
           return el;
         }
-
         function attachAiMeta(contentEl, meta) {
           if (!contentEl || !meta) return;
-
           if (Array.isArray(meta.actions) && meta.actions.length) {
             var actionsWrap = document.createElement('div');
             actionsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
@@ -1519,18 +1374,14 @@
               contentEl.appendChild(actionsWrap);
             }
           }
-
           if (meta.feedbackEnabled && meta.interactionId) {
             var feedbackWrap = document.createElement('div');
             feedbackWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;padding:8px 10px;border-radius:14px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);';
-
             var label = document.createElement('small');
             label.textContent = aiText.feedback_question;
             label.style.cssText = 'color:var(--text);opacity:.82;';
             feedbackWrap.appendChild(label);
-
             var feedbackBtnBaseStyle = 'display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;color:var(--text);font-size:12px;font-weight:600;line-height:1;cursor:pointer;backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;';
-
             var yesBtn = document.createElement('button');
             yesBtn.type = 'button';
             yesBtn.textContent = aiText.feedback_useful;
@@ -1539,7 +1390,6 @@
               submitAiFeedback(meta.interactionId, true, feedbackWrap);
             });
             feedbackWrap.appendChild(yesBtn);
-
             var noBtn = document.createElement('button');
             noBtn.type = 'button';
             noBtn.textContent = aiText.feedback_not_useful;
@@ -1548,13 +1398,10 @@
               renderUnhelpfulFeedbackPrompt(meta.interactionId, feedbackWrap);
             });
             feedbackWrap.appendChild(noBtn);
-
             contentEl.appendChild(feedbackWrap);
           }
-
           scrollToBottom();
         }
-
         /**
          * PRIME AI TYPEWRITER v2.0 — "Holographic Spring" Engine
          *
@@ -1576,9 +1423,7 @@
          */
         function animateAiMessage(contentEl, text, meta) {
           if (!contentEl) return Promise.resolve();
-
           var fullText = String(text || '');
-
           /* Reduced motion or empty → instant render */
           if (!fullText.trim() || prefersReducedMotion) {
             contentEl.innerHTML = formatAiMessageHtml(fullText);
@@ -1586,7 +1431,6 @@
             scrollToBottom();
             return Promise.resolve();
           }
-
           /* Tune speed based on length */
           var isLong = fullText.length > 400;
           /* charDelay: ms between revealing each character/word */
@@ -1594,20 +1438,16 @@
                         : fullText.length > 700  ? 18
                         : fullText.length > 300  ? 22
                         : 28;
-
           /* --- BUILD HOLOGRAPHIC CURSOR --- */
           var cursor = document.createElement('span');
           cursor.className = 'ai-holo-cursor';
           cursor.setAttribute('aria-hidden', 'true');
-
           /* Helper: append cursor after current content */
           function appendCursor() {
             if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
             contentEl.appendChild(cursor);
           }
-
           return new Promise(function (resolve) {
-
             if (isLong) {
               /* =========================================
                  WORD-WAVE MODE (long text)
@@ -1617,7 +1457,6 @@
               var words = fullText.split(/(\s+)/);
               var wordIndex = 0;
               var accDelay = 0;
-
               function revealNextWord() {
                 if (wordIndex >= words.length) {
                   /* Done — remove cursor, shimmer, attach meta */
@@ -1630,10 +1469,8 @@
                   resolve();
                   return;
                 }
-
                 var chunk = words[wordIndex];
                 wordIndex++;
-
                 /* Whitespace chunks: invisible spans, no animation */
                 if (!chunk.trim()) {
                   /* Append as text node so spaces render correctly */
@@ -1646,7 +1483,6 @@
                   revealNextWord();
                   return;
                 }
-
                 var wordSpan = document.createElement('span');
                 wordSpan.className = 'ai-msg-word';
                 wordSpan.style.animationDelay = '0ms'; /* immediate — delay is setTimeout-driven */
@@ -1655,19 +1491,15 @@
                 contentEl.appendChild(wordSpan);
                 appendCursor();
                 scrollToBottom(true);
-
                 /* Pause with punctuation rhythm */
                 var extra = 0;
                 var lastChar = chunk[chunk.length - 1];
                 if (/[.!?]/.test(lastChar))  extra = 90;
                 else if (/[,:;]/.test(lastChar)) extra = 40;
                 else if (chunk === '\n') extra = 60;
-
                 window.setTimeout(revealNextWord, charDelay + extra);
               }
-
               revealNextWord();
-
             } else {
               /* =========================================
                  CHAR-SPRING MODE (short/medium text)
@@ -1677,7 +1509,6 @@
                  ========================================= */
               var chars = fullText.split('');
               var charIndex = 0;
-
               function revealNextChar() {
                 if (charIndex >= chars.length) {
                   /* Done — rebuild with full formatter, add shimmer class */
@@ -1690,10 +1521,8 @@
                   resolve();
                   return;
                 }
-
                 var ch = chars[charIndex];
                 charIndex++;
-
                 if (ch === ' ' || ch === '\u00a0') {
                   var spaceSpan = document.createElement('span');
                   spaceSpan.className = 'ai-msg-char--space';
@@ -1708,50 +1537,39 @@
                   charSpan.textContent = ch;
                   contentEl.appendChild(charSpan);
                 }
-
                 appendCursor();
                 scrollToBottom(true);
-
                 var extra = 0;
                 if (ch === '\n')          extra = 70;
                 else if (/[.!?]/.test(ch))  extra = 55;
                 else if (/[,:;]/.test(ch))  extra = 25;
-
                 window.setTimeout(revealNextChar, charDelay + extra);
               }
-
               revealNextChar();
             }
           });
         }
-
         function addMessage(text, isAi, meta) {
           if (!text || !text.trim()) return Promise.resolve(null);
-
           var el = buildMessageElement(isAi);
           var contentEl = el.querySelector('.chat-msg-content');
-
           if (!contentEl) {
             return Promise.resolve(el);
           }
-
           if (!isAi) {
             contentEl.innerHTML = formatPlainMessageHtml(text);
             scrollToBottom();
             return Promise.resolve(el);
           }
-
           return animateAiMessage(contentEl, text, meta).then(function () {
             return el;
           });
         }
-
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           if (!aiEnabled) return;
           var txt = input.value.trim();
           if (!txt || isSending) return;
-
           console.log('Sending message:', txt);
           isSending = true;
           addMessage(stripMockTailForDisplay(txt), false);
@@ -1770,7 +1588,6 @@
           }
           showAiComposeStatus(aiText.thinking);
           scrollToBottom();
-
           fetch(aiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
@@ -1783,7 +1600,6 @@
           })
           .then(function(payload) {
             var data = payload.data;
-
             if (data && data.disabled) {
               data.error = data.error || "AI vaqtincha o'chirilgan.";
               setAiEnabledState(false, data.error);
@@ -1792,18 +1608,15 @@
                 resetAiComposeState();
               });
             }
-
             if (!data || !data.success) {
               var backendError = (data && (data.error || data.message))
                 || (data && data.errors && Object.values(data.errors)[0] && Object.values(data.errors)[0][0])
                 || "Xatolik yuz berdi.";
-
               showAiComposeStatus('Yozmoqda...');
               return addMessage(backendError, true, null).then(function () {
                 resetAiComposeState();
               });
             }
-
             if (data && data.success) {
               showAiComposeStatus('Yozmoqda...');
               return addMessage(data.text, true, {
@@ -1831,20 +1644,17 @@
             addMessage("Tarmoqda xatolik yuz berdi. Iltimos qayta urinib ko'ring.", true, null);
           });
         });
-
         input.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             form.dispatchEvent(new Event('submit'));
           }
         });
-
         // Quick Action Buttons Handler
         var actionBtns = document.querySelectorAll('.ai-action-btn');
         actionBtns.forEach(function(btn) {
           btn.addEventListener('click', function() {
              if (!aiEnabled || btn.disabled || isSending) return;
-
              var msg = this.getAttribute('data-msg');
              sendAiMessage(msg);
           });
@@ -1886,7 +1696,7 @@
             </div>
           @endif
 
-          <form action="{{ route('profile.grade-selection.update') }}" method="POST" class="grade-lock-modal__form" data-grade-lock-form>
+          <form action="{{ route('profile.grade-selection.update') }}" method="POST" class="grade-lock-modal__form" data-grade-lock-form data-no-loader>
             @csrf
             @method('PUT')
 
@@ -1922,63 +1732,6 @@
     @endif
     @stack('page_scripts')
     @auth
-    @php $isDonorSpeedBoost = auth()->check() && auth()->user()->isDonor(); @endphp
-    @if($isDonorSpeedBoost)
-    <script>
-    // ============================================================
-    // DONOR SPEED BOOST — link hover prefetch + instant navigation
-    // ============================================================
-    (function() {
-      var prefetched = new Set();
-      var prefetchQueue = [];
-      var prefetchTimer = null;
-
-      function prefetchUrl(url) {
-        if (!url || prefetched.has(url)) return;
-        try {
-          var u = new URL(url, location.origin);
-          if (u.origin !== location.origin) return;
-          if (u.pathname === location.pathname && u.search === location.search) return;
-        } catch(e) { return; }
-
-        prefetched.add(url);
-        var link = document.createElement('link');
-        link.rel = 'prefetch';
-        link.href = url;
-        link.as = 'document';
-        document.head.appendChild(link);
-      }
-
-      // Hover da 80ms delay bilan prefetch (accidental hover larni o'tkazib yuborish)
-      document.addEventListener('mouseover', function(e) {
-        var a = e.target.closest('a[href]');
-        if (!a) return;
-        var href = a.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
-            href.startsWith('mailto:') || href.startsWith('tel:') ||
-            a.target === '_blank' || a.hasAttribute('download')) return;
-
-        clearTimeout(prefetchTimer);
-        prefetchTimer = setTimeout(function() { prefetchUrl(a.href); }, 80);
-      }, { passive: true });
-
-      document.addEventListener('mouseout', function(e) {
-        if (e.target.closest('a[href]')) clearTimeout(prefetchTimer);
-      }, { passive: true });
-
-      // Touch devices: touchstart da darhol prefetch
-      document.addEventListener('touchstart', function(e) {
-        var a = e.target.closest('a[href]');
-        if (!a) return;
-        var href = a.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
-            href.startsWith('mailto:') || href.startsWith('tel:') ||
-            a.target === '_blank') return;
-        prefetchUrl(a.href);
-      }, { passive: true });
-    })();
-    </script>
-    @endif
     @endauth
     @if($gradeSelectionLocked)
       <script>

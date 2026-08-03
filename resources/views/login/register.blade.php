@@ -109,25 +109,36 @@
                 @enderror
               </div>
               <div class="register-field" id="reg-grade-field">
-                <label for="reg-grade">{{ __('auth_pages.register.grade') }}</label>
-                <div class="register-select-wrap">
-                  <select id="reg-grade" name="grade" {{ old('is_parent') ? '' : 'required' }}>
-                    <option value="">{{ __('auth_pages.register.grade_placeholder') }}</option>
+                <label>{{ __('auth_pages.register.grade') }}</label>
+                {{-- Hidden input for form submission --}}
+                <input type="hidden" id="reg-grade" name="grade" value="{{ old('grade', '') }}" {{ old('is_parent') ? '' : 'required' }}>
+                {{-- Custom dropdown --}}
+                <div class="reg-custom-select" id="reg-grade-custom" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
+                  <div class="reg-cs-trigger" id="reg-cs-trigger">
+                    <i class="fa-solid fa-graduation-cap reg-cs-icon"></i>
+                    <span class="reg-cs-value" id="reg-cs-value">{{ __('auth_pages.register.grade_placeholder') }}</span>
+                    <i class="fa-solid fa-chevron-down reg-cs-arrow"></i>
+                  </div>
+                  <div class="reg-cs-dropdown" id="reg-cs-dropdown" role="listbox">
                     @foreach (school_grade_grouped_options() as $groupLabel => $options)
                       @php
                         $localizedGroupLabel = app()->getLocale() === 'en'
                           ? str_replace('-sinf', __('auth_pages.register.grade_group_suffix'), $groupLabel)
                           : $groupLabel;
                       @endphp
-                      <optgroup label="{{ $localizedGroupLabel }}">
+                      <div class="reg-cs-group">
+                        <div class="reg-cs-group-label">{{ $localizedGroupLabel }}</div>
                         @foreach ($options as $value => $label)
-                          <option value="{{ $value }}" {{ old('grade') === $value ? 'selected' : '' }}>
+                          <div class="reg-cs-option {{ old('grade') === $value ? 'is-selected' : '' }}"
+                               role="option"
+                               data-value="{{ $value }}"
+                               aria-selected="{{ old('grade') === $value ? 'true' : 'false' }}">
                             {{ $label }}
-                          </option>
+                          </div>
                         @endforeach
-                      </optgroup>
+                      </div>
                     @endforeach
-                  </select>
+                  </div>
                 </div>
                 @error('grade')
                   <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
@@ -147,22 +158,85 @@
             </div>
             <script>
               (function() {
-                var cb = document.getElementById('reg-is-parent');
+                var cb        = document.getElementById('reg-is-parent');
                 var gradeField = document.getElementById('reg-grade-field');
-                var gradeSelect = document.getElementById('reg-grade');
-                if (!cb || !gradeField || !gradeSelect) return;
+                var gradeHidden = document.getElementById('reg-grade');
+                var cs        = document.getElementById('reg-grade-custom');
+                var trigger   = document.getElementById('reg-cs-trigger');
+                var valueEl   = document.getElementById('reg-cs-value');
+                var dropdown  = document.getElementById('reg-cs-dropdown');
+                var allOpts   = cs ? cs.querySelectorAll('.reg-cs-option') : [];
+                var isOpen    = false;
+
+                /* ---- Init preselected ---- */
+                var pre = gradeHidden ? gradeHidden.value : '';
+                if (pre) {
+                  allOpts.forEach(function(o) {
+                    if (o.dataset.value === pre) {
+                      o.classList.add('is-selected');
+                      valueEl.textContent = o.textContent.trim();
+                      valueEl.classList.remove('is-placeholder');
+                    }
+                  });
+                } else {
+                  if (valueEl) valueEl.classList.add('is-placeholder');
+                }
+
+                function selectOption(el) {
+                  allOpts.forEach(function(o) { o.classList.remove('is-selected'); o.setAttribute('aria-selected','false'); });
+                  el.classList.add('is-selected');
+                  el.setAttribute('aria-selected','true');
+                  valueEl.textContent = el.textContent.trim();
+                  valueEl.classList.remove('is-placeholder');
+                  if (gradeHidden) gradeHidden.value = el.dataset.value;
+                  closeDD();
+                }
+                function openDD()  { if (!cs) return; isOpen=true;  cs.setAttribute('aria-expanded','true'); }
+                function closeDD() { if (!cs) return; isOpen=false; cs.setAttribute('aria-expanded','false'); }
+                function toggleDD() { isOpen ? closeDD() : openDD(); }
+
+                if (trigger) trigger.addEventListener('click', function(e){ e.stopPropagation(); toggleDD(); });
+                if (cs) cs.addEventListener('keydown', function(e) {
+                  if (e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleDD(); }
+                  if (e.key==='Escape'){ e.preventDefault(); closeDD(); }
+                  if ((e.key==='ArrowDown'||e.key==='ArrowUp') && isOpen) {
+                    e.preventDefault();
+                    var opts = Array.from(allOpts);
+                    var focused = dropdown.querySelector('.is-focused');
+                    var idx = focused ? opts.indexOf(focused) : -1;
+                    if (focused) focused.classList.remove('is-focused');
+                    idx = e.key==='ArrowDown' ? Math.min(idx+1,opts.length-1) : Math.max(idx-1,0);
+                    opts[idx].classList.add('is-focused');
+                    opts[idx].scrollIntoView({block:'nearest'});
+                  }
+                  if (e.key==='Enter' && isOpen) {
+                    var focused = dropdown.querySelector('.is-focused');
+                    if (focused) selectOption(focused);
+                  }
+                });
+                allOpts.forEach(function(opt) {
+                  opt.addEventListener('click', function(){ selectOption(opt); });
+                  opt.addEventListener('mouseenter', function(){
+                    allOpts.forEach(function(o){ o.classList.remove('is-focused'); });
+                    opt.classList.add('is-focused');
+                  });
+                });
+                document.addEventListener('click', function(e){ if(cs && !cs.contains(e.target)) closeDD(); });
+
+                /* ---- Parent toggle ---- */
                 function toggle() {
+                  if (!cb) return;
                   if (cb.checked) {
                     gradeField.style.display = 'none';
-                    gradeSelect.removeAttribute('required');
-                    gradeSelect.value = '';
+                    if (gradeHidden) { gradeHidden.removeAttribute('required'); gradeHidden.value = ''; }
+                    if (valueEl) { valueEl.textContent = '{{ __("auth_pages.register.grade_placeholder") }}'; valueEl.classList.add('is-placeholder'); }
+                    closeDD();
                   } else {
                     gradeField.style.display = '';
-                    gradeSelect.setAttribute('required', '');
+                    if (gradeHidden) gradeHidden.setAttribute('required', '');
                   }
                 }
-                cb.addEventListener('change', toggle);
-                toggle();
+                if (cb) { cb.addEventListener('change', toggle); toggle(); }
               })();
             </script>
             <p class="register-field-note">{{ __('auth_pages.register.grade_note') }}</p>

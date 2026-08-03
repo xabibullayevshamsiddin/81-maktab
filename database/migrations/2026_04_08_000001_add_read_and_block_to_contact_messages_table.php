@@ -39,7 +39,10 @@ return new class extends Migration
 
         Schema::table('contact_messages', function (Blueprint $table) {
             if (Schema::hasColumn('contact_messages', 'blocked_by_user_id')) {
-                $table->dropForeign(['blocked_by_user_id']);
+                // SQLite dropForeign'ni qo'llab-quvvatlamaydi (testlar uchun)
+                if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                    $table->dropForeign(['blocked_by_user_id']);
+                }
                 $table->dropColumn('blocked_by_user_id');
             }
             if (Schema::hasColumn('contact_messages', 'blocked_at')) {
@@ -49,7 +52,10 @@ return new class extends Migration
                 $table->dropColumn('is_blocked');
             }
             if (Schema::hasColumn('contact_messages', 'read_by_user_id')) {
-                $table->dropForeign(['read_by_user_id']);
+                // SQLite dropForeign'ni qo'llab-quvvatlamaydi (testlar uchun)
+                if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                    $table->dropForeign(['read_by_user_id']);
+                }
                 $table->dropColumn('read_by_user_id');
             }
             if (Schema::hasColumn('contact_messages', 'read_at')) {

@@ -21,39 +21,6 @@
         @csrf
         @method('PUT')
 
-        <h6 class="mb-10" style="font-size:14px;margin-top:20px;">Global e'lon (sayt tepasida)</h6>
-        <p class="text-sm" style="color:#64748b;margin-bottom:16px;">Barcha tashrifchilar uchun sahifa yuqorisidagi tasma. Chat va AI vidjetlari alohida sozlanadi (pastdagi bo‘lim).</p>
-
-        <div class="input-style-1 mb-20">
-          <label>E'lon holati</label>
-          <div style="display:flex;gap:16px;align-items:center;margin-top:6px;">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="radio" name="announcement_active" value="1" {{ old('announcement_active', $settings['announcement_active'] ?? '0') === '1' ? 'checked' : '' }} />
-              <span style="font-size:14px;">Yoqilgan</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="radio" name="announcement_active" value="0" {{ old('announcement_active', $settings['announcement_active'] ?? '0') !== '1' ? 'checked' : '' }} />
-              <span style="font-size:14px;">O'chirilgan</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="input-style-1 mb-20">
-          <label>E'lon matni</label>
-          <input type="text" name="announcement_text" value="{{ old('announcement_text', $settings['announcement_text'] ?? '') }}" placeholder="Masalan: 15-apreldan imtihonlar boshlanadi!" maxlength="500" />
-          @error('announcement_text') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="input-style-1 mb-20">
-          <label>E'lon turi (rang)</label>
-          <select name="announcement_type" class="form-control" style="padding:10px 12px;border-radius:8px;">
-            <option value="info" {{ old('announcement_type', $settings['announcement_type'] ?? 'info') === 'info' ? 'selected' : '' }}>Axborot (ko'k)</option>
-            <option value="success" {{ old('announcement_type', $settings['announcement_type'] ?? '') === 'success' ? 'selected' : '' }}>Muvaffaqiyat (yashil)</option>
-            <option value="warning" {{ old('announcement_type', $settings['announcement_type'] ?? '') === 'warning' ? 'selected' : '' }}>Ogohlantirish (sariq)</option>
-            <option value="danger" {{ old('announcement_type', $settings['announcement_type'] ?? '') === 'danger' ? 'selected' : '' }}>Muhim (qizil)</option>
-          </select>
-        </div>
-
         <hr style="margin:28px 0;border-color:#e2e8f0;">
 
         <h6 class="mb-10" style="font-size:14px;margin-top:20px;">Global chat va AI (sayt vidjetlari)</h6>

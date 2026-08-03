@@ -32,6 +32,7 @@
               <th>{{ __('public.profile_exams.col_start_planned') }}</th>
               <th>{{ __('public.profile_exams.col_grades') }}</th>
               <th>{{ __('public.profile_exams.col_status') }}</th>
+              <th>Ishtirokchilar</th>
               <th>{{ __('public.profile_exams.col_actions') }}</th>
             </tr>
           </thead>
@@ -51,6 +52,7 @@
                   <td>{{ $exam->duration_minutes }} {{ __('public.exam.minutes_short') }}</td>
                   <td>{{ $exam->availableFromLabel() ?? '—' }}</td>
                   <td title="{{ $exam->allowedGradesLabel() }}">{{ $exam->allowedGradesLabel() }}</td>
+                  <td style="{{ $exam->hasParticipantLimit() && $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:600;' : '' }}">{{ $exam->participantLimitLabel() }}</td>
                   <td>{{ $exam->is_active ? __('public.profile_exams.status_active') : __('public.profile_exams.status_draft') }}</td>
                   <td style="display:flex;gap:8px;flex-wrap:wrap;">
                     <a href="{{ route('profile.exams.results', ['exam_id' => $exam->id]) }}" class="btn btn-info btn-sm">{{ __('public.profile_exams.results_btn') }}</a>

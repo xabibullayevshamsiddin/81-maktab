@@ -48,19 +48,12 @@ class Donation extends Model
         return $query->where("status", self::STATUS_COMPLETED);
     }
 
-    /** @var array<string,array>|null */
-    private static ?array $rankConfigCache = null;
-
     /**
-     * Barcha ranklarning konfiguratsiyasi (request-level cache)
+     * Barcha ranklarning konfiguratsiyasi
      */
     public static function RANK_CONFIG(): array
     {
-        if (self::$rankConfigCache !== null) {
-            return self::$rankConfigCache;
-        }
-
-        self::$rankConfigCache = [
+        return [
             self::RANK_SUPPORTER => [
                 "label" => "Supporter",
                 "badge_color" => "#3b82f6",
@@ -93,7 +86,6 @@ class Donation extends Model
             ],
         ];
 
-        return self::$rankConfigCache;
     }
 
     /**
@@ -159,18 +151,11 @@ class Donation extends Model
         return $config[$rank] ?? null;
     }
 
-    /** @var array<string,array>|null */
-    private static ?array $themesCache = null;
-
     /**
      * Yagona tema ro'yxati — Oddiy (plain) + donor temalari + super admin temalari.
      */
     public static function THEMES(): array
     {
-        if (self::$themesCache !== null) {
-            return self::$themesCache;
-        }
-
         $donorConfig = self::RANK_CONFIG();
         $themes = [];
 
@@ -223,8 +208,7 @@ class Donation extends Model
             "requires_admin" => true,
         ];
 
-        self::$themesCache = $themes;
-        return self::$themesCache;
+        return $themes;
     }
 
     /**

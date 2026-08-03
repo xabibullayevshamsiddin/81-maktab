@@ -495,19 +495,20 @@
                   <p style="margin:0 0 12px;">{{ __('profile.course_open.approved') }}</p>
                   <a href="{{ route('teacher.courses.create') }}" class="btn btn-sm">{{ __('profile.course_open.goto_create') }}</a>
                 @elseif($user->hasPendingCourseOpenRequest())
-                  <p class="profile-empty" style="margin:0;">{{ __('profile.course_open.pending') }}</p>
-                  @if($user->course_open_request_reason)
-                    <p class="profile-request-note">{{ __('profile.course_open.reason_sent', ['reason' => $user->course_open_request_reason]) }}</p>
-                  @endif
+                  <div class="course-req-sent">
+                    <p class="profile-empty" style="margin:0;"><i class="fa-solid fa-clock" style="color:var(--primary-2);"></i> {{ __('profile.course_open.pending') }}</p>
+                    @if($user->course_open_request_reason)
+                      <p class="profile-request-note">{{ __('profile.course_open.reason_sent', ['reason' => $user->course_open_request_reason]) }}</p>
+                    @endif
+                  </div>
                 @else
                   <form method="POST" action="{{ route('teacher.courses.request') }}" id="course-request-form">
                     @csrf
-                    <input type="hidden" name="reason" value="Kurs ochish uchun ruxsat so‘rash" />
-                    <button type="button" class="btn btn-sm" onclick="submitCourseRequest(this)">
+                    <input type="hidden" name="reason" value="" />
+                    <button type="button" class="btn btn-sm" id="course-req-btn" onclick="submitCourseRequest(this)">
                       {{ __('profile.course_open.request_button') }}
                     </button>
                   </form>
-
                 @endif
               </section>
             @endif
@@ -575,7 +576,7 @@
                     <a href="{{ route('teacher.courses.create') }}"
                       class="btn btn-outline btn-sm">{{ __('profile.blocks.teacher_requests.open_course') }}</a>
                   @elseif($user->isTeacher() && !$user->hasReachedCourseOpenLimit())
-                    <a href="{{ route('profile.show') }}#course-open-request" class="btn btn-outline btn-sm">{{ __('profile.course_open.shortcut') }}</a>
+                    <a href="{{ route('profile.show', ['panel' => 'activity']) }}#course-open-request" class="btn btn-outline btn-sm">{{ __('profile.course_open.shortcut') }}</a>
                   @endif
                   @if(auth()->user()->isAdmin())
                     <a href="{{ route('admin.courses.index') }}"
@@ -780,41 +781,78 @@
     <script>
     window.submitCourseRequest = function(btn) {
       if (!btn || btn.disabled) return;
-      btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = '{{ __('profile.submitting') }}';
 
-      const form = btn.closest('form');
-      if (!form) {
-        btn.disabled = false;
-        btn.textContent = originalText;
+      var form = btn.closest('form');
+      if (!form) return;
+
+      var textarea = form.querySelector('textarea[name="reason"]');
+      var errorEl  = document.getElementById('course-req-error');
+
+      /* Client-side validation */
+      if (textarea && textarea.value.trim().length < 10) {
+        if (errorEl) { errorEl.textContent = 'Sabab kamida 10 ta belgidan iborat bo\'lishi kerak.'; errorEl.style.display = 'block'; }
+        textarea.focus();
         return;
       }
+      if (errorEl) errorEl.style.display = 'none';
 
-      const formData = new FormData(form);
+      btn.disabled = true;
+      var originalText = btn.textContent;
+      btn.textContent = '{{ __('profile.submitting') }}';
+
+      var formData = new FormData(form);
 
       fetch(form.action, {
         method: 'POST',
         headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
         body: formData,
       })
-      .then(r => r.json().catch(() => ({ ok: false, message: 'Server xatosi' })))
-      .then(data => {
+      .then(function(r) {
+        if (r.status === 422) {
+          return r.json().then(function(data) {
+            /* Validation error */
+            var msg = '';
+            if (data.errors && data.errors.reason) {
+              msg = data.errors.reason[0];
+            } else {
+              msg = data.message || 'Maydonlarni tekshiring.';
+            }
+            if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
+            return { ok: false, _handled: true };
+          });
+        }
+        return r.json().catch(function() { return { ok: false, message: 'Server javobi noto\'g\'ri.' }; });
+      })
+      .then(function(data) {
+        if (!data || data._handled) return;
+
         if (!data.ok) {
-          alert(data.message || 'Xato yuz berdi');
+          /* Show toast error, not alert */
+          if (window.showToast) window.showToast(data.message || 'Xato yuz berdi.', data.toast_type || 'error');
           return;
         }
-        if (window.showToast) {
-          window.showToast(data.message || 'Muvaffaqiyatli yuborildi', data.toast_type || 'success');
+
+        /* SUCCESS — show toast, update section inline without reload */
+        if (window.showToast) window.showToast(data.message || 'So\'rovingiz yuborildi!', data.toast_type || 'success');
+
+        /* Replace form with "pending" message inline */
+        var section = form.closest('section');
+        if (section) {
+          var body = section.querySelector('.profile-block-head') ? section : null;
+          var pendingHtml = '<div class="course-req-sent" style="margin-top:8px;">'
+            + '<p class="profile-empty" style="margin:0;"><i class="fa-solid fa-clock" style="color:var(--primary-2);"></i> So\'rovingiz adminga yuborildi. Javob kutilmoqda.</p>'
+            + '</div>';
+          form.outerHTML = pendingHtml;
         }
+
         if (data.redirect) {
-          setTimeout(() => { window.location.href = data.redirect; }, 500);
-        } else {
-          setTimeout(() => { window.location.reload(); }, 600);
+          setTimeout(function() { window.location.href = data.redirect; }, 1000);
         }
       })
-      .catch(e => alert('Server xatosi: ' + e.message))
-      .finally(() => {
+      .catch(function(e) {
+        if (window.showToast) window.showToast('Server xatosi: ' + e.message, 'error');
+      })
+      .finally(function() {
         btn.disabled = false;
         btn.textContent = originalText;
       });

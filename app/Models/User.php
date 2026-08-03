@@ -539,9 +539,23 @@ class User extends Authenticatable
         return (bool) $this->is_parent;
     }
 
+    /**
+     * Faqat ota-ona bo'lib, hech qanday katta rol (teacher/admin) ga ega bo'lmagan.
+     * Teacher yoki admin rolidagi ota-onalar imtihon/kursdan foydalana oladi.
+     */
+    public function isParentOnly(): bool
+    {
+        if (! $this->is_parent) {
+            return false;
+        }
+        // Teacher yoki undan yuqori rolidagi ota-onalar cheklovdan mustasno
+        return ! ($this->isTeacher() || $this->isAdmin());
+    }
+
     public function canTakeExams(): bool
     {
-        return ! $this->is_parent;
+        // Ota-ona bo'lsa ham teacher/admin rollarda bo'lsa imtihon topshira oladi
+        return ! $this->isParentOnly();
     }
 
     /** O‘quvchi sinfi faqat oddiy foydalanuvchilar uchun; xodimlar — «Barcha sinflar» (role_id.level asosida). */

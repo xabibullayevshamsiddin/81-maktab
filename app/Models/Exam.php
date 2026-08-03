@@ -23,6 +23,7 @@ class Exam extends Model
         'available_from',
         'created_by',
         'security_enabled',
+        'max_participants',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class Exam extends Model
         'is_active' => 'boolean',
         'security_enabled' => 'boolean',
         'available_from' => 'datetime',
+        'max_participants' => 'integer',
     ];
 
     protected static function booted(): void
@@ -201,5 +203,69 @@ class Exam extends Model
     public function isOwnedByTeacher(): bool
     {
         return $this->created_by !== null;
+    }
+
+    /**
+     * Maksimal ishtirokchilar soni belgilanganmi?
+     */
+    public function hasParticipantLimit(): bool
+    {
+        return $this->max_participants !== null && $this->max_participants > 0;
+    }
+
+    /**
+     * Imtihonni topshirgan (submitted/started) ishtirokchilar soni
+     * Agar withCount bilan yuklangan bo'lsa, cached attribute ishlatiladi
+     */
+    public function currentParticipantCount(): int
+    {
+        if (isset($this->active_participants_count)) {
+            return (int) $this->active_participants_count;
+        }
+
+        return (int) Result::query()
+            ->where('exam_id', $this->id)
+            ->whereIn('status', ['started', 'submitted', 'expired'])
+            ->distinct('user_id')
+            ->count('user_id');
+    }
+
+    /**
+     * Ishtirokchilar limiti to'lganmi?
+     */
+    public function isParticipantLimitReached(): bool
+    {
+        if (! $this->hasParticipantLimit()) {
+            return false;
+        }
+
+        return $this->currentParticipantCount() >= $this->max_participants;
+    }
+
+    /**
+     * Qolgan joylar soni (null = cheksiz)
+     */
+    public function remainingSlots(): ?int
+    {
+        if (! $this->hasParticipantLimit()) {
+            return null;
+        }
+
+        return max(0, $this->max_participants - $this->currentParticipantCount());
+    }
+
+    /**
+     * Ishtirokchi limiti matni
+     */
+    public function participantLimitLabel(): string
+    {
+        if (! $this->hasParticipantLimit()) {
+            return 'Cheksiz';
+        }
+
+        $current = $this->currentParticipantCount();
+        $max = $this->max_participants;
+
+        return "{$current}/{$max} ishtirokchi";
     }
 }
