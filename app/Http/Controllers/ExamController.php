@@ -17,6 +17,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class ExamController extends Controller
 {
@@ -27,10 +28,13 @@ class ExamController extends Controller
     {
         $user = $request->user()->loadMissing('roleRelation');
 
-        $exams = Exam::query()
-            ->where('is_active', true)
-            ->latest('id')
-            ->get();
+        // Faol imtihonlar ro'yxati — cache (5 daqiqa)
+        $exams = Cache::remember('active_exams_list', now()->addMinutes(5), function () {
+            return Exam::query()
+                ->where('is_active', true)
+                ->latest('id')
+                ->get();
+        });
 
         $resultByExam = Result::query()
             ->where('user_id', $user->id)

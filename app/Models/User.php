@@ -121,6 +121,7 @@ class User extends Authenticatable
         'show_expiry_badge',
         'custom_css',
         'donor_cursor_animation',
+        'donor_cursor_type',
         'profile_bg_style',
         'badge_position',
         'banner_animation',

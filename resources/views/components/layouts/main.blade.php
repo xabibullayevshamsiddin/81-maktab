@@ -54,16 +54,40 @@
 .comment-donor { border-left: 4px solid; padding-left: 0.75rem; border-radius: 4px; }
 </style>
     <script>
-      // Service worker'ni butunlay o'chirish (fayl yuklash xatosini tuzatish uchun)
+      // ═══════════════════════════════════════════════════════════════
+      // SERVICE WORKER — PWA / Offline Mode
+      // ═══════════════════════════════════════════════════════════════
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          if (registrations.length > 0) {
-            for(let registration of registrations) {
-              registration.unregister();
-            }
-            // Kuchli tozalash uchun sahifani yangilaymiz
-            window.location.reload(true);
-          }
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('[PWA] Service Worker registered:', registration.scope);
+              
+              // Yangi versiya mavjud bo'lsa, yangilash
+              registration.addEventListener('updatefound', function() {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', function() {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Foydalanuvchiga xabar berish — sahifani yangilash
+                    console.log('[PWA] New version available');
+                  }
+                });
+              });
+            })
+            .catch(function(error) {
+              console.log('[PWA] Service Worker registration failed:', error);
+            });
+        });
+        
+        // Online/offline holatini kuzatish
+        window.addEventListener('online', function() {
+          console.log('[PWA] Back online');
+          document.body.classList.remove('offline');
+        });
+        
+        window.addEventListener('offline', function() {
+          console.log('[PWA] Gone offline');
+          document.body.classList.add('offline');
         });
       }
     </script>
@@ -82,6 +106,10 @@
 	        data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
 		        data-phone-pattern="{{ uz_phone_input_pattern() }}"
 		        data-phone-title="{{ uz_phone_input_title() }}"
+		        @if(auth()->check() && auth()->user()->donor_cursor_animation && (auth()->user()->donor_cursor_type ?? 'off') !== 'off')
+		        data-cursor-animation="1"
+		        data-cursor-type="{{ auth()->user()->donor_cursor_type ?? 'orbit' }}"
+		        @endif
 		      >
     @unless(request()->routeIs('exam.session'))
     <div id="site-boot-loader" class="site-boot-loader" aria-busy="true" aria-live="polite" role="status">
@@ -189,22 +217,16 @@
               alt="{{ __('public.layout.logo_alt') }}"
             />
           </a>
-          <button
-            class="menu-toggle"
-            id="menu-toggle"
-            type="button"
-            aria-label="{{ __('public.layout.mobile_menu') }}"
-            aria-expanded="false"
-          >
-            <i class="fa-solid fa-bars"></i>
-          </button>
-          <div class="mobile-header-locale nav-dropdown nav-dropdown--bomba-locale">
+          <div class="mobile-header-actions">
+            <button class="theme-toggle mobile-search-btn" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <div class="mobile-header-locale nav-dropdown nav-dropdown--bomba-locale">
             <details class="nav-dropdown-details js-header-dropdown">
               <summary class="nav-link nav-dropdown-toggle">
-                <span class="locale-flags-row">
-                  @foreach($localeFlags as $flagKey => $flagEmoji)
-                    <span class="locale-flag{{ $currentLocale === $flagKey ? ' is-current' : '' }}">{{ $flagEmoji }}</span>
-                  @endforeach
+                <span class="locale-current">
+                  <span class="locale-flag">{{ $localeFlags[$currentLocale] ?? '🌐' }}</span>
+                  <span class="locale-code">{{ strtoupper($currentLocale) }}</span>
                 </span>
               </summary>
               <div class="nav-dropdown-menu">
@@ -228,6 +250,18 @@
               </div>
             </details>
           </div>
+          <button
+            class="menu-toggle"
+            id="menu-toggle"
+            type="button"
+            aria-label="{{ __('public.layout.mobile_menu') }}"
+            aria-expanded="false"
+          >
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+            <span class="burger-bar"></span>
+          </button>
+          </div>
           <nav id="site-nav">
             <ul>
               <li><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
@@ -236,6 +270,7 @@
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">{{ __('public.layout.nav.library') }}</a></li>
               @auth
               <li><a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">{{ __('public.layout.menu.profile') }}</a></li>
               @endauth
@@ -254,7 +289,17 @@
                     aria-label="{{ __('public.layout.ai_assistant') }}"
                     title="{{ __('public.layout.ai_assistant') }}"
                   >
-                    <i class="fa-solid fa-magic-wand-sparkles"></i>
+                    <svg class="ai-icon-svg" viewBox="0 0 32 32" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-right:6px;vertical-align:middle;">
+                      <defs><linearGradient id="aiBrainGradM" x1="4" y1="4" x2="28" y2="28"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+                      <circle cx="16" cy="16" r="14" fill="url(#aiBrainGradM)" opacity="0.15"/>
+                      <circle cx="16" cy="16" r="14" stroke="url(#aiBrainGradM)" stroke-width="1.5" fill="none"/>
+                      <circle cx="11" cy="12" r="2.5" fill="#38bdf8"/>
+                      <circle cx="21" cy="12" r="2.5" fill="#a855f7"/>
+                      <circle cx="16" cy="20" r="2.5" fill="#6366f1"/>
+                      <line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
+                      <line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/>
+                      <line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/>
+                    </svg>
                     <span>{{ __('public.layout.ai_assistant') }}</span>
                   </button>
                 </li>
@@ -574,7 +619,7 @@
           'group_select_prompt' => __('public.layout.group_select_prompt'),
           'chat_network_error' => __('public.layout.chat_network_error'),
           'chat_action_failed' => __('public.layout.chat_action_failed'),
-          'chat_sending' => __('public.layout.sending'),
+          'chat_sending' => __('public.layout.send'),
           'chat_fullscreen_exit' => __('public.layout.chat_fullscreen_exit'),
           'chat_fullscreen_enter' => __('public.layout.chat_fullscreen_enter'),
           'chat_exit_fullscreen' => __('public.layout.exit_full_screen'),
@@ -966,12 +1011,59 @@
       data-ai-disabled-message="{{ e($aiChatDisabledMsg) }}"
     >
       <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="{{ __('public.layout.ai_assistant') }}" title="{{ __('public.layout.ai_assistant') }}">
-        <i class="fa-solid fa-magic-wand-sparkles" aria-hidden="true"></i>
+        <svg class="ai-icon-svg" viewBox="0 0 32 32" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="aiBrainGrad" x1="4" y1="4" x2="28" y2="28">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+          </defs>
+          <circle cx="16" cy="16" r="14" fill="url(#aiBrainGrad)" opacity="0.15"/>
+          <circle cx="16" cy="16" r="14" stroke="url(#aiBrainGrad)" stroke-width="1.5" fill="none"/>
+          <circle cx="11" cy="12" r="2.5" fill="#38bdf8"/>
+          <circle cx="21" cy="12" r="2.5" fill="#a855f7"/>
+          <circle cx="16" cy="20" r="2.5" fill="#6366f1"/>
+          <circle cx="8" cy="18" r="1.5" fill="#38bdf8" opacity="0.6"/>
+          <circle cx="24" cy="18" r="1.5" fill="#a855f7" opacity="0.6"/>
+          <line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
+          <line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/>
+          <line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/>
+          <line x1="8" y1="18" x2="11" y2="12" stroke="#38bdf8" stroke-width="0.6" opacity="0.3"/>
+          <line x1="24" y1="18" x2="21" y2="12" stroke="#a855f7" stroke-width="0.6" opacity="0.3"/>
+          <circle cx="16" cy="6" r="1" fill="#38bdf8" opacity="0.8">
+            <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="26" cy="10" r="0.8" fill="#a855f7" opacity="0.6">
+            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="6" cy="10" r="0.8" fill="#6366f1" opacity="0.6">
+            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="3s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
       </button>
       <div class="chat-panel ai-panel" id="ai-panel">
         <div class="chat-panel-header">
           <div class="chat-panel-title">
-            <i class="fa-solid fa-robot"></i>
+            <svg class="ai-icon-svg" viewBox="0 0 32 32" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="aiBrainGradH" x1="4" y1="4" x2="28" y2="28">
+                  <stop offset="0%" stop-color="#38bdf8"/>
+                  <stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+              </defs>
+              <circle cx="16" cy="16" r="14" fill="url(#aiBrainGradH)" opacity="0.15"/>
+              <circle cx="16" cy="16" r="14" stroke="url(#aiBrainGradH)" stroke-width="1.5" fill="none"/>
+              <circle cx="11" cy="12" r="2.5" fill="#38bdf8"/>
+              <circle cx="21" cy="12" r="2.5" fill="#a855f7"/>
+              <circle cx="16" cy="20" r="2.5" fill="#6366f1"/>
+              <circle cx="8" cy="18" r="1.5" fill="#38bdf8" opacity="0.6"/>
+              <circle cx="24" cy="18" r="1.5" fill="#a855f7" opacity="0.6"/>
+              <line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
+              <line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/>
+              <line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/>
+              <line x1="8" y1="18" x2="11" y2="12" stroke="#38bdf8" stroke-width="0.6" opacity="0.3"/>
+              <line x1="24" y1="18" x2="21" y2="12" stroke="#a855f7" stroke-width="0.6" opacity="0.3"/>
+            </svg>
             <span>{{ __('public.layout.ai_assistant_brand') }}</span>
           </div>
           <div class="chat-panel-actions">
@@ -1006,7 +1098,6 @@
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
           <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
           <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
-          <button type="button" class="ai-action-btn" data-msg="Saytda nechata post va kurs bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Statistika</button>
           <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
         </div>
         <form class="chat-input-wrap" id="ai-chat-form">
@@ -1351,7 +1442,8 @@
         function buildMessageElement(isAi) {
           var el = document.createElement('div');
           el.className = 'chat-msg ' + (isAi ? 'is-ai' : 'is-user');
-          var avatarHtml = isAi ? '<div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
+          var aiSvgAvatar = '<svg viewBox="0 0 32 32" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="aiBrA" x1="4" y1="4" x2="28" y2="28"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="16" cy="16" r="14" fill="url(#aiBrA)" opacity="0.2"/><circle cx="16" cy="16" r="14" stroke="url(#aiBrA)" stroke-width="1.5" fill="none"/><circle cx="11" cy="12" r="2.5" fill="#38bdf8"/><circle cx="21" cy="12" r="2.5" fill="#a855f7"/><circle cx="16" cy="20" r="2.5" fill="#6366f1"/><line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/><line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/><line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/></svg>';
+          var avatarHtml = isAi ? '<div class="ai-avatar">' + aiSvgAvatar + '</div>' : '<div class="ai-avatar"><i class="fa-solid fa-user-circle"></i></div>';
           el.innerHTML = avatarHtml + '<div class="chat-msg-content"></div>';
           messagesEl.appendChild(el);
           void el.offsetWidth;
@@ -1772,6 +1864,160 @@
           });
         })();
       </script>
+    @endif
+
+    <!-- Exam session body lock tozalash — BFCache yoki navigatsiya ortidan qolgan inline style'larni olib tashlaydi -->
+    <script>
+      (function() {
+        var b = document.body;
+        if (b && (b.style.position === 'fixed' || b.style.top)) {
+          var savedTop = parseInt(b.style.top || '0', 10) || 0;
+          b.style.position = '';
+          b.style.top = '';
+          b.style.width = '';
+          b.style.overflow = '';
+          document.documentElement.style.overflow = '';
+          if (savedTop !== 0) window.scrollTo(0, Math.abs(savedTop));
+        }
+      })();
+    </script>
+
+    {{-- DONOR PREMIUM CURSOR --}}
+    @if(auth()->check() && auth()->user()->donor_cursor_animation)
+    <div id="d-cursor-dot"></div>
+    <div id="d-cursor-ring"></div>
+    <script>
+    (function() {
+      var cursorType = document.body.getAttribute('data-cursor-type') || 'orbit';
+      var dot = document.getElementById('d-cursor-dot');
+      var ring = document.getElementById('d-cursor-ring');
+      if (!dot || !ring) return;
+
+      var mouseX = 0, mouseY = 0;
+      var dotX = 0, dotY = 0;
+      var ringX = 0, ringY = 0;
+      var isHovering = false;
+      var isClicking = false;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CURSOR TYPES — Har biri butunlay farqli dizayn!
+      // ═══════════════════════════════════════════════════════════════════
+      var cursorStyles = {
+        // 🔵 ORBIT — Markaziy nuqta + aylanuvchi neon halqa
+        orbit: {
+          dot: 'width: 8px; height: 8px; background: #00f5ff; border-radius: 50%; box-shadow: 0 0 8px #00f5ff, 0 0 16px #00f5ff, 0 0 24px #0891b2;',
+          ring: 'width: 44px; height: 44px; border: 2.5px solid transparent; border-top-color: #00f5ff; border-right-color: #0891b2; border-radius: 50%; background: transparent; box-shadow: 0 0 12px rgba(0,245,255,0.3), inset 0 0 12px rgba(0,245,255,0.1); animation: cursorOrbitSpin 2s linear infinite;',
+          hoverRing: 'width: 64px; height: 64px; border-top-color: #22d3ee; border-right-color: #06b6d4; border-bottom-color: #0891b2; box-shadow: 0 0 20px rgba(0,245,255,0.5), inset 0 0 16px rgba(0,245,255,0.15);'
+        },
+        // 💚 PULSE — Yurak urishi — katta-kichrayuvchi halqa
+        pulse: {
+          dot: 'width: 6px; height: 6px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 6px #00ff88, 0 0 12px #00ff88;',
+          ring: 'width: 24px; height: 24px; border: 2px solid rgba(0,255,136,0.8); border-radius: 50%; background: transparent; animation: cursorPulsePulse 1s ease-in-out infinite; box-shadow: 0 0 10px rgba(0,255,136,0.4);',
+          hoverRing: 'width: 36px; height: 36px; border-color: #10b981; box-shadow: 0 0 16px rgba(16,185,129,0.6);'
+        },
+        // 🟣 GLASS — Shisha linza — kattaroq, blur effektli
+        glass: {
+          dot: 'width: 4px; height: 4px; background: rgba(168,85,247,0.9); border-radius: 50%; box-shadow: 0 0 4px rgba(168,85,247,0.8);',
+          ring: 'width: 52px; height: 52px; border: 2px solid rgba(168,85,247,0.4); border-radius: 50%; background: radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 0 20px rgba(168,85,247,0.25), inset 0 0 20px rgba(168,85,247,0.08);',
+          hoverRing: 'width: 72px; height: 72px; background: radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(168,85,247,0.35);'
+        },
+        // ✨ TRAILING — Yulduzli iz — kichik nuqtalar ketma-ketligi
+        trailing: {
+          dot: 'width: 10px; height: 10px; background: radial-gradient(circle, #fbbf24 30%, #f59e0b 60%, transparent 100%); border-radius: 50%; box-shadow: 0 0 12px #fbbf24, 0 0 24px rgba(245,158,11,0.6);',
+          ring: 'width: 8px; height: 8px; border: none; border-radius: 50%; background: radial-gradient(circle, rgba(251,191,36,0.6) 0%, transparent 70%); box-shadow: -12px 8px 0 2px rgba(251,191,36,0.3), -20px 4px 0 1px rgba(251,191,36,0.2), -28px 12px 0 0px rgba(251,191,36,0.1);',
+          hoverRing: 'box-shadow: -12px 8px 0 4px rgba(251,191,36,0.5), -24px 4px 0 2px rgba(251,191,36,0.3), -36px 12px 0 1px rgba(251,191,36,0.15);'
+        },
+        // 🔺 ARROW — Strelka — aylanuvchi uchburchak
+        arrow: {
+          dot: 'width: 0; height: 0; background: transparent; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 16px solid #ff3366; border-radius: 0; filter: drop-shadow(0 0 6px #ff3366) drop-shadow(0 0 12px rgba(255,51,102,0.5)); animation: cursorArrowRotate 3s linear infinite; transform-origin: center bottom;',
+          ring: 'width: 32px; height: 32px; border: 1.5px dashed rgba(255,51,102,0.4); border-radius: 50%; background: transparent; animation: cursorOrbitSpin 4s linear infinite reverse;',
+          hoverRing: 'width: 44px; height: 44px; border-color: rgba(255,51,102,0.7); box-shadow: 0 0 16px rgba(255,51,102,0.4);'
+        },
+        // 🌈 COLOR_SHIFT — Rainbow — doimiy rang o'zgarishi
+        color_shifter: {
+          dot: 'width: 12px; height: 12px; background: conic-gradient(from 0deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0000); border-radius: 50%; box-shadow: 0 0 8px rgba(255,255,255,0.5); animation: cursorColorSpin 2s linear infinite;',
+          ring: 'width: 48px; height: 48px; border: 3px solid transparent; border-image: conic-gradient(from 0deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0000) 1; border-radius: 50%; animation: cursorColorSpin 3s linear infinite reverse; box-shadow: 0 0 16px rgba(255,255,255,0.2);',
+          hoverRing: 'width: 64px; height: 64px; box-shadow: 0 0 24px rgba(255,255,255,0.3);'
+        }
+      };
+
+      var style = cursorStyles[cursorType] || cursorStyles.orbit;
+      dot.style.cssText = style.dot;
+      ring.style.cssText = style.ring;
+
+      document.addEventListener('mousemove', function(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      document.addEventListener('mousedown', function() {
+        isClicking = true;
+        document.body.classList.add('cursor-clicking');
+      });
+
+      document.addEventListener('mouseup', function() {
+        isClicking = false;
+        document.body.classList.remove('cursor-clicking');
+      });
+
+      var hoverTargets = 'a, button, input, select, textarea, [role="button"], .btn, .nav-link, label';
+      document.addEventListener('mouseover', function(e) {
+        if (e.target.closest(hoverTargets)) {
+          isHovering = true;
+          document.body.classList.add('cursor-hovering');
+          ring.style.cssText = style.ring + (style.hoverRing || '');
+        }
+      });
+
+      document.addEventListener('mouseout', function(e) {
+        if (e.target.closest(hoverTargets)) {
+          isHovering = false;
+          document.body.classList.remove('cursor-hovering');
+          ring.style.cssText = style.ring;
+        }
+      });
+
+      // Har bir kursor turiga xos harakat tezligi
+      // dotCenter: true = nuqta halqaning markazida (orbit, pulse, color_shifter)
+      var cursorConfig = {
+        orbit:         { speed: 0.10, dotCenter: true },   // Nuqta halqada
+        pulse:         { speed: 0.12, dotCenter: true },   // Nuqta halqada
+        glass:         { speed: 0.08, dotCenter: false },  // Nuqta kichik, halqa katta
+        trailing:      { speed: 0.06, dotCenter: false },  // Iz qoldirish
+        arrow:         { speed: 0.12, dotCenter: false },  // Strelka
+        color_shifter: { speed: 0.10, dotCenter: true }    // Nuqta halqada
+      };
+      var config = cursorConfig[cursorType] || cursorConfig.orbit;
+      var followSpeed = config.speed;
+      var dotFollowRing = config.dotCenter;
+
+      function animate() {
+        // Halqa harakati
+        ringX += (mouseX - ringX) * followSpeed;
+        ringY += (mouseY - ringY) * followSpeed;
+
+        // Nuqta harakati — markazda yoki mustaqil
+        if (dotFollowRing) {
+          // Nuqta doimo halqaning markazida
+          dotX = ringX;
+          dotY = ringY;
+        } else {
+          // Nuqta mustaqil harakatlanadi (tezroq)
+          dotX += (mouseX - dotX) * (followSpeed * 2.5);
+          dotY += (mouseY - dotY) * (followSpeed * 2.5);
+        }
+
+        dot.style.left = dotX + 'px';
+        dot.style.top = dotY + 'px';
+        ring.style.left = ringX + 'px';
+        ring.style.top = ringY + 'px';
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    })();
+    </script>
     @endif
   </body>
 </html>

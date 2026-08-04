@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class PublicTeacherController extends Controller
 {
@@ -66,17 +67,19 @@ class PublicTeacherController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        // Collect all unique subjects for the filter dropdown (from all active teachers)
-        $allSubjects = Teacher::query()
-            ->where('is_active', true)
-            ->whereNotNull('image')
-            ->where('image', '!=', '')
-            ->whereNotNull('subject')
-            ->where('subject', '!=', '')
-            ->orderBy('subject')
-            ->pluck('subject')
-            ->unique()
-            ->values();
+        // Collect all unique subjects for the filter dropdown (cached)
+        $allSubjects = Cache::remember('teacher_all_subjects', now()->addMinutes(30), function () {
+            return Teacher::query()
+                ->where('is_active', true)
+                ->whereNotNull('image')
+                ->where('image', '!=', '')
+                ->whereNotNull('subject')
+                ->where('subject', '!=', '')
+                ->orderBy('subject')
+                ->pluck('subject')
+                ->unique()
+                ->values();
+        });
 
         $likedTeacherIds = collect();
         $bookmarkedTeacherIds = collect();
@@ -91,7 +94,7 @@ class PublicTeacherController extends Controller
             }
         }
 
-        $teacherStats = $this->teacherPageStats();
+        $teacherStats = Cache::remember('teacher_page_stats', now()->addMinutes(15), fn () => $this->teacherPageStats());
 
         return response()
             ->view('teacher', compact('teachers', 'likedTeacherIds', 'bookmarkedTeacherIds', 'teacherStats', 'q', 'selectedSubject', 'allSubjects'))
@@ -221,6 +224,9 @@ class PublicTeacherController extends Controller
 
     private function relatedTeachersFor(Teacher $teacher, int $limit = 3): Collection
     {
+        $cacheKey = "related_teachers_{$teacher->id}_{$limit}";
+
+        return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($teacher, $limit) {
         $q = Teacher::query()
             ->select([
                 'id',
@@ -253,6 +259,7 @@ class PublicTeacherController extends Controller
         }
 
         return $q->orderBy('sort_order')->orderBy('full_name')->limit($limit)->get();
+        });
     }
 
     public function toggleLike(Request $request, Teacher $teacher)

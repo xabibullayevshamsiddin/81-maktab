@@ -1013,8 +1013,14 @@ class AiService
             return "Arziydi! 😊 Yordam bera olganimdan xursandman. Boshqa savollaringiz bo'lsa, yozing! ✅";
         }
 
-        if ($this->containsNormalizedPhrase($normalized, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan', 'sen kimsan', 'siz kimsiz'])) {
-            return "Men 81-IDUM saytining AI yordamchisiman! ✨ Maktab haqida, darslarga oid, matematik va boshqa fan savollariga — qo'ldan kelgancha javob berishga harakat qilaman. Savol bering! 🚀";
+        if ($this->containsNormalizedPhrase($normalized, ['qandaysan', 'yaxshimi', 'tuzukmi', 'kimsan', 'nima qilasan', 'sen kimsan', 'siz kimsiz', 'ahvollarin qale', 'ahvoling qale', 'ahvoling qalay', 'ahvolim qale', 'qalaysan', 'qalayman', 'yaxshimisan', 'yaxshiman', 'tuzukmi', 'tuzukmisiz', 'nima gap', 'gap yoqmi', 'salom', 'hello', 'hi', 'hey'])) {
+            $responses = [
+                "Yaxshiman! 😊 Sizga qanday yordam bera olaman?",
+                "Rahmat, yaxshiman! 🌟 Maktab, kurslar yoki boshqa savol bo'lsa — yozing!",
+                "Zo'r! 😄 Sizga xizmat qilishga tayyorman. Savolingiz bormi?",
+                "Yaxshiman, rahmat! 🙏 Qanday savolingiz bor?",
+            ];
+            return $responses[array_rand($responses)];
         }
 
         if (Str::contains($q, ['muallfi', 'mualif', 'kim ishtirok', 'ishtirok etgan', 'saytda kim'])) {
@@ -1053,11 +1059,19 @@ class AiService
             return 'Hozirgi paytda saytni **Xabibullayev Shamsiddin** boshqaradi. Qolgan hamkorlar moderator va editor sifatida yordam beradi. ✨';
         }
 
-        // Hozir soat nechchi / bugungi sana
-        if (Str::contains($q, ['soat nech', 'vaqt nech', 'bugun necha', 'bugungi sana', 'nechinchi'])) {
+        // Hozir soat nechchi / bugungi sana / qanaqa kun
+        if (Str::contains($q, ['soat nech', 'vaqt nech', 'bugun necha', 'bugungi sana', 'nechinchi', 'bugun qanaqa kun', 'bugungi kun', 'bugun qaysi kun', 'qaysi kun', 'qanaqa kun', 'sana necha', 'necha sana', 'hozir soat', 'hozir vaqt', 'mening vaqtim', 'kun necha', 'what time', 'what day', 'today'])) {
             $now = Carbon::now((string) config('app.timezone', 'UTC'));
+            $dayName = $now->translatedFormat('l');
+            $date = $now->format('d.m.Y');
+            $time = $now->format('H:i');
 
-            return "🕐 Hozir soat **{$now->format('H:i')}** ({$now->format('d.m.Y')}, {$now->translatedFormat('l')}).";
+            $responses = [
+                "📅 Bugun **{$dayName}**, **{$date}**. Hozir soat **{$time}**.",
+                "🕐 Hozirgi vaqt: **{$time}**. Sana: **{$dayName}**, **{$date}**.",
+                "📆 Bugun **{$dayName}**, **{$date}** yil, soat **{$time}**.",
+            ];
+            return $responses[array_rand($responses)];
         }
 
         // --- Qoshimcha Maktab Ma'lumotlari (Static) ---
@@ -1093,11 +1107,24 @@ class AiService
         }
 
         // Kutubxona
-        if (Str::contains($q, ['kutubxona', 'kitob', 'darslik', 'nima oqish'])) {
-            return "📚 **Kutubxona:**\n"
-                ."- Maktabda boy kitob fondiga ega kutubxona mavjud.\n"
-                ."- Darsliklar bilan ta'minlash va badiiy adabiyotlarni olish uchun kutubxonaga murojaat qilishingiz mumkin.\n"
-                ."- Ish vaqti: 08:30 - 17:00.";
+        // Kutubxona / Kitoblar / PDF — keng so'z ro'yxati
+        if (Str::contains($q, ['kutubxona', 'kitob', 'darslik', 'nima oqish', 'pdf', 'elektron kitob', 'e-kitob', 'online kitob', 'kitoblar', 'adabiyot', 'roman', 'hikoya', 'matn', 'o\'qish', 'nima o\'qish'])) {
+            return "📚 **MAKTAB KUTUBXONASI**\n"
+                ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."**Mavjud kitob turlari:**\n"
+                ."  📖 Darsliklar (Matematika, Ona tili, Tarix, Fizika va boshqalar)\n"
+                ."  📗 Badiiy adabiyotlar (romanlar, hikoyalar, she'rlar)\n"
+                ."  📘 Fan kitobları (tabiatshunoslik, biologiya, kimyo)\n"
+                ."  📙 Ingliz tili kitoblari\n"
+                ."  📒 Qo'llanmalar va ensiklopediyalar\n\n"
+                ."**PDF kitoblar:**\n"
+                ."  • Hozircha saytda PDF kitoblar bazasi yo'q\n"
+                ."  • Kutubxonadan kitobni o'qish yoki nusxa olish mumkin\n"
+                ."  • Elektron format kerak bo'lsa, kutubxonachiga murojaat qiling\n\n"
+                ."**Ish vaqti:** 08:30 - 17:00\n"
+                ."**Manzil:** Maktab binosi, 1-qavat\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                ."💡 Batafsil ma'lumot uchun kutubxonachiga yoki ma'muriyatga murojaat qiling.";
         }
 
         // Fanlar
@@ -1105,15 +1132,39 @@ class AiService
             return "Maktabimizda barcha davlat standartidagi fanlar bilan birga IT, Matematika va Ingliz tili chuqurlashtirib o'tiladi. 📚";
         }
 
-        // Dars vaqtlari
-        if (Str::contains($q, ['dars vaqti', 'soat nechada boshlanadi', 'soat nechada tugaydi', 'dars jadvali', 'tanaffus'])) {
-            return "🏫 **Dars vaqtlari:**\n"
-                ."• 1-soat: 08:30 - 09:15\n"
-                ."• 2-soat: 09:20 - 10:05\n"
-                ."• 3-soat: 10:20 - 11:05 (Katta tanaffus)\n"
-                ."• 4-soat: 11:10 - 11:55\n"
-                ."• 5-soat: 12:00 - 12:45\n"
-                ."✨ Eslatma: Sinf darajasiga qarab o'zgarishi mumkin.";
+        // Dars vaqtlari / Maktab soatlari
+        // Maktab soatlari / dars vaqtlari — keng so'z ro'yxati (yagonalik va ko'plik)
+        if (Str::contains($q, ['dars vaqt', 'dars vaqti', 'dars vaqtlari', 'soat nechada boshlanadi', 'soat nechada tugaydi', 'dars jadvali', 'tanaffus', 'maktab soat', 'maktab soatlari', 'maktab soati', 'dars nechada', 'dars qachon', 'maktabda nechada', 'maktab qachon', 'boshlanadi', 'tugaydi', 'school hours', 'class time', 'dars nechada boshlanadi', 'dars qachon boshlanadi', 'nechada dars', 'soat necha', 'vaqt necha', 'qaysi soat', 'dars soati', 'dars soatlari', 'maktab vaqt', 'maktab vaqti', 'maktab vaqtlari', 'dars vaqtida', 'dars vohtlari', 'dars vohti', 'maktab dars', 'dars boshlanadi', 'dars tugaydi'])) {
+            return "🏫 **📚 81-IDUM — DARS VAQTLARI**\n"
+                ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."🌅 **I-SMENA (Ertalabki vaqt)**\n\n"
+                ."📋 ╔═══════════╦══════════════╦════════╗\n"
+                ."║ **Dars** ║ **Vaqt** ║ **Tanaffus** ║\n"
+                ."╠═══════════╬══════════════╬════════╣\n"
+                ."║ 1️⃣ 1-dars ║ 08:00-08:45 ║ 5 daq ║\n"
+                ."║ 2️⃣ 2-dars ║ 08:50-09:35 ║ 5 daq ║\n"
+                ."║ 3️⃣ 3-dars ║ 09:40-10:25 ║ 10 daq ║\n"
+                ."║ ║ ║ ☕ KATTA ║\n"
+                ."║ 4️⃣ 4-dars ║ 10:40-11:25 ║ 5 daq ║\n"
+                ."║ 5️⃣ 5-dars ║ 11:30-12:15 ║ 5 daq ║\n"
+                ."║ 6️⃣ 6-dars ║ 12:20-13:05 ║ — ║\n"
+                ."╚═══════════╩══════════════╩════════╝\n\n"
+                ."🌙 **II-SMENA (Tushdan keyin)**\n\n"
+                ."📋 ╔═══════════╦══════════════╦════════╗\n"
+                ."║ **Dars** ║ **Vaqt** ║ **Tanaffus** ║\n"
+                ."╠═══════════╬══════════════╬════════╣\n"
+                ."║ 1️⃣ 1-dars ║ 13:10-13:55 ║ 5 daq ║\n"
+                ."║ 2️⃣ 2-dars ║ 14:00-14:45 ║ 5 daq ║\n"
+                ."║ 3️⃣ 3-dars ║ 14:50-15:35 ║ 5 daq ║\n"
+                ."║ 4️⃣ 4-dars ║ 15:40-16:25 ║ 5 daq ║\n"
+                ."║ 5️⃣ 5-dars ║ 16:30-17:15 ║ 5 daq ║\n"
+                ."║ 6️⃣ 6-dars ║ 17:20-18:05 ║ — ║\n"
+                ."╚═══════════╩══════════════╩════════╝\n\n"
+                ."⏰ **Dars davomiyligi:** 45 daqiqa\n"
+                ."☕ **Katta tanaffus:** 10 daqiqa (10:25-10:35)\n"
+                ."📝 **Oddiy tanaffus:** 5 daqiqa\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                ."💡 **Eslatma:** Ayrim sinflarda darslar soni va vaqtlari farq qilishi mumkin.";
         }
 
         // To'garaklar
@@ -1915,21 +1966,38 @@ class AiService
         }
 
         // Donations and payments info
-        if (Str::contains($q, ['donatsiya', 'xayriya', 'to\'lov', 'pul yubor', 'maktabga pul', 'qo\'llash', 'qollash', 'kilit', 'activation'])) {
+        // Donatlar / Donor / Imtiyozlar — keng so'z ro'yxati
+        if (Str::contains($q, ['donat', 'donor', 'donatsiya', 'xayriya', 'to\'lov', 'pul yubor', 'maktabga pul', 'qo\'llash', 'qollash', 'kilit', 'activation', 'aktivatsiya', 'imtiyoz', 'afzallik', 'badge', 'rank', 'unvon', 'daraja', 'supporter', 'premium', 'vip', 'qo\'llab-quvvatlash'])) {
             $donationEnabled = SiteSetting::get('donation_enabled', '1') === '1';
 
             if (!$donationEnabled) {
                 return "Donatsiya xizmati hozircha mavjud emas. Keyinroq qo'shiladi! 💝";
             }
 
-            return "**Xayriya va Donatsiya:**\n\n"
-                ."81-IDUM maktabining rivojlanishiga hissa qoʻshmoqchi boʻlsangiz:\n"
-                ."- Saytda donatsiya sahifasi mavjud: ".route('donation.index')."\n"
-                ."- Aktivatsiya kaliti orqali xususi xizmatlarga kirish mumkin.\n"
-                ."- Qoʻllab-quvvatlovchilarimiz maktabni yanada yaxshi qilib boradi. 🙏\n\n"
-                ."**To'lov usullari**: Pul o'tkazish, onlayn pul, qoqon kabi turli usullar mavjud.\n"
-                ."- Donatsiya sahifasi: ".route('donation.index')."\n"
-                ."- Murojaat: ".route('contact');
+            return "🏆 **DONORLIK IMTIYOZLARI**\n"
+                ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."**Saytimiz 3 ta donorlik darajasini taklif etadi:**\n\n"
+                ."⭐ **Supporter (15,000 so'm/oy):**\n"
+                ."  • AI chat limiti: 100 ta so'rov/oy\n"
+                ."  • Avatar hajmi: 10 MB gacha\n"
+                ."  • Maxsus ko'k badge\n"
+                ."  • Murojaat prioriteti: 1-daraja\n\n"
+                ."💎 **Premium (35,000 so'm/oy):**\n"
+                ."  • AI chat limiti: 300 ta so'rov/oy\n"
+                ."  • Avatar hajmi: 25 MB gacha\n"
+                ."  • Maxsus binafsha badge\n"
+                ."  • Murojaat prioriteti: 2-daraja\n\n"
+                ."👑 **VIP (75,000 so'm/oy):**\n"
+                ."  • AI chat limiti: **Cheksiz** ♾️\n"
+                ."  • Avatar hajmi: 50 MB gacha\n"
+                ."  • Oltin badge\n"
+                ."  • Natijalarni export qilish\n"
+                ."  • Status emoji qo'yish\n"
+                ."  • Murojaat prioriteti: 3-daraja (eng yuqori)\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                ."🔗 **Sotib olish:** ".route('donation.index')."\n"
+                ."🔑 **Aktivatsiya:** ".route('donation.activate.form')."\n"
+                ."📞 **Murojaat:** ".route('contact');
         }
 
         return null;

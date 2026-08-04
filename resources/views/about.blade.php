@@ -12,16 +12,125 @@
     $stats = trans('public.about.stats');
   @endphp
 
-  <section class="news-hero" id="home">
+  <section class="news-hero about-hero-v2" id="home">
     <div class="container">
-      <div class="news-hero-content prime-reveal">
-        <span class="badge">{{ __('public.about.badge') }}</span>
-        <h1 class="js-split-text">{!! __('public.about.hero_title') !!}</h1>
-        <p>{{ __('public.about.hero_text') }}</p>
-        <a href="#overview" style="margin-top: 15px;" class="btn btn-prime">
-          {{ __('public.about.jump') }}
-          <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i>
-        </a>
+      <div class="about-hero-grid prime-reveal">
+        <div class="about-hero-text">
+          <span class="badge">{{ __('public.about.badge') }}</span>
+          <h1 class="js-split-text">{!! __('public.about.hero_title') !!}</h1>
+          <p>{{ __('public.about.hero_text') }}</p>
+          <a href="#overview" style="margin-top: 20px;" class="btn btn-prime about-hero-cta">
+            {{ __('public.about.jump') }}
+            <i class="fa-solid fa-arrow-right" style="margin-left: 8px"></i>
+          </a>
+        </div>
+        <div class="about-hero-visual">
+          <div class="about-hero-3d-scene">
+            <div class="school-building">
+              <svg viewBox="0 0 400 350" fill="none" xmlns="http://www.w3.org/2000/svg" class="school-svg">
+                <!-- Ground glow -->
+                <ellipse cx="200" cy="310" rx="160" ry="20" fill="url(#groundGlow)" opacity="0.6"/>
+                <!-- Building base -->
+                <rect x="60" y="120" width="280" height="190" rx="8" fill="url(#buildingGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1.5"/>
+                <!-- Building shadow overlay -->
+                <rect x="60" y="120" width="280" height="190" rx="8" fill="url(#buildingShadow)" opacity="0.4"/>
+                <!-- Roof -->
+                <polygon points="40,125 200,40 360,125" fill="url(#roofGrad)" stroke="rgba(120,200,255,0.4)" stroke-width="1.5"/>
+                <polygon points="40,125 200,40 360,125" fill="url(#roofGlow)" opacity="0.3"/>
+                <!-- Clock tower -->
+                <rect x="175" y="50" width="50" height="75" rx="4" fill="url(#towerGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1"/>
+                <circle cx="200" cy="78" r="16" fill="rgba(7,17,31,0.8)" stroke="rgba(100,200,255,0.5)" stroke-width="1.5"/>
+                <line x1="200" y1="78" x2="200" y2="68" stroke="rgba(100,220,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="200" y1="78" x2="208" y2="82" stroke="rgba(100,220,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Flag -->
+                <line x1="200" y1="38" x2="200" y2="18" stroke="rgba(200,220,255,0.6)" stroke-width="1.5"/>
+                <polygon points="200,18 220,24 200,30" fill="rgba(56,189,248,0.7)"/>
+                <!-- Windows row 1 -->
+                <rect x="85" y="145" width="35" height="35" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="140" y="145" width="35" height="35" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="225" y="145" width="35" height="35" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="280" y="145" width="35" height="35" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <!-- Windows row 2 -->
+                <rect x="85" y="200" width="35" height="35" rx="4" fill="url(#windowGrad2)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="140" y="200" width="35" height="35" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="225" y="200" width="35" height="35" rx="4" fill="url(#windowGrad2)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="280" y="200" width="35" height="35" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <!-- Windows row 3 -->
+                <rect x="85" y="255" width="35" height="30" rx="4" fill="url(#windowGrad2)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="140" y="255" width="35" height="30" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="225" y="255" width="35" height="30" rx="4" fill="url(#windowGrad2)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <rect x="280" y="255" width="35" height="30" rx="4" fill="url(#windowGrad)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+                <!-- Door -->
+                <rect x="180" y="260" width="40" height="50" rx="20" fill="url(#doorGrad)" stroke="rgba(100,200,255,0.4)" stroke-width="1.5"/>
+                <circle cx="212" cy="288" r="3" fill="rgba(200,220,255,0.7)"/>
+                <!-- Steps -->
+                <rect x="170" y="305" width="60" height="5" rx="2" fill="rgba(100,180,255,0.2)"/>
+                <rect x="165" y="310" width="70" height="5" rx="2" fill="rgba(100,180,255,0.15)"/>
+                <!-- Decorative columns -->
+                <rect x="168" y="130" width="6" height="180" rx="3" fill="rgba(100,180,255,0.15)"/>
+                <rect x="226" y="130" width="6" height="180" rx="3" fill="rgba(100,180,255,0.15)"/>
+                <!-- Glass reflections -->
+                <line x1="85" y1="145" x2="100" y2="160" stroke="rgba(200,230,255,0.15)" stroke-width="1"/>
+                <line x1="140" y1="145" x2="155" y2="160" stroke="rgba(200,230,255,0.15)" stroke-width="1"/>
+                <line x1="225" y1="145" x2="240" y2="160" stroke="rgba(200,230,255,0.15)" stroke-width="1"/>
+                <line x1="280" y1="145" x2="295" y2="160" stroke="rgba(200,230,255,0.15)" stroke-width="1"/>
+                <!-- Floating particles -->
+                <circle cx="80" cy="80" r="2" fill="rgba(56,189,248,0.6)">
+                  <animate attributeName="cy" values="80;60;80" dur="3s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="320" cy="100" r="1.5" fill="rgba(168,85,247,0.6)">
+                  <animate attributeName="cy" values="100;75;100" dur="4s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="50" cy="200" r="1.5" fill="rgba(56,189,248,0.4)">
+                  <animate attributeName="cy" values="200;180;200" dur="3.5s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="350" cy="220" r="2" fill="rgba(168,85,247,0.5)">
+                  <animate attributeName="cy" values="220;195;220" dur="2.8s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Gradients -->
+                <defs>
+                  <linearGradient id="buildingGrad" x1="60" y1="120" x2="340" y2="310">
+                    <stop offset="0%" stop-color="rgba(15,40,80,0.9)"/>
+                    <stop offset="100%" stop-color="rgba(10,25,55,0.95)"/>
+                  </linearGradient>
+                  <linearGradient id="buildingShadow" x1="200" y1="120" x2="200" y2="310">
+                    <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+                    <stop offset="100%" stop-color="rgba(0,0,0,0.3)"/>
+                  </linearGradient>
+                  <linearGradient id="roofGrad" x1="200" y1="40" x2="200" y2="125">
+                    <stop offset="0%" stop-color="rgba(30,80,160,0.8)"/>
+                    <stop offset="100%" stop-color="rgba(15,40,80,0.9)"/>
+                  </linearGradient>
+                  <linearGradient id="roofGlow" x1="200" y1="40" x2="200" y2="125">
+                    <stop offset="0%" stop-color="rgba(56,189,248,0.4)"/>
+                    <stop offset="100%" stop-color="rgba(168,85,247,0.2)"/>
+                  </linearGradient>
+                  <linearGradient id="towerGrad" x1="175" y1="50" x2="225" y2="125">
+                    <stop offset="0%" stop-color="rgba(20,50,100,0.9)"/>
+                    <stop offset="100%" stop-color="rgba(10,30,60,0.95)"/>
+                  </linearGradient>
+                  <linearGradient id="windowGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="rgba(56,189,248,0.15)"/>
+                    <stop offset="100%" stop-color="rgba(168,85,247,0.1)"/>
+                  </linearGradient>
+                  <linearGradient id="windowGrad2" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="rgba(168,85,247,0.15)"/>
+                    <stop offset="100%" stop-color="rgba(56,189,248,0.1)"/>
+                  </linearGradient>
+                  <linearGradient id="doorGrad" x1="200" y1="260" x2="200" y2="310">
+                    <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                    <stop offset="100%" stop-color="rgba(10,30,60,0.8)"/>
+                  </linearGradient>
+                  <radialGradient id="groundGlow" cx="0.5" cy="0.5" r="0.5">
+                    <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                    <stop offset="100%" stop-color="rgba(168,85,247,0)"/>
+                  </radialGradient>
+                </defs>
+              </svg>
+            </div>
+            <div class="about-hero-glow"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

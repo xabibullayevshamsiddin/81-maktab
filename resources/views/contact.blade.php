@@ -1,14 +1,62 @@
 <x-layouts.main :title="__('public.contact.page_title')">
-  <section class="news-hero" id="home">
+  <section class="news-hero news-hero-v2" id="home">
     <div class="container">
-      <div class="news-hero-content prime-reveal">
-        <span class="badge">{{ __('public.contact.badge') }}</span>
-        <h1 class="js-split-text">{!! __('public.contact.hero_title') !!}</h1>
-        <p>{{ __('public.contact.hero_text') }}</p>
-        <a href="#contact-main" class="btn btn-prime" style="margin-top:30px;">
-          {{ __('public.contact.hero_button') }}
-          <i class="fa-solid fa-arrow-down" style="margin-left: 6px"></i>
-        </a>
+      <div class="news-hero-grid prime-reveal">
+        <div class="news-hero-text">
+          <span class="badge">{{ __('public.contact.badge') }}</span>
+          <h1 class="js-split-text">{!! __('public.contact.hero_title') !!}</h1>
+          <p>{{ __('public.contact.hero_text') }}</p>
+          <a href="#contact-main" class="news-hero-cta">
+            {{ __('public.contact.hero_button') }}
+            <i class="fa-solid fa-arrow-down" style="margin-left: 8px"></i>
+          </a>
+        </div>
+        <div class="news-hero-visual">
+          <div class="news-hero-3d-scene">
+            <svg viewBox="0 0 350 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="175" cy="270" rx="130" ry="16" fill="url(#contactGroundGlow)" opacity="0.5"/>
+              <rect x="100" y="50" width="150" height="200" rx="16" fill="url(#phoneGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1.5"/>
+              <rect x="100" y="50" width="150" height="200" rx="16" fill="url(#phoneGlow)" opacity="0.3"/>
+              <rect x="115" y="70" width="120" height="150" rx="8" fill="rgba(7,17,31,0.8)" stroke="rgba(100,200,255,0.2)" stroke-width="1"/>
+              <circle cx="175" cy="240" r="10" fill="rgba(100,200,255,0.15)" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+              <rect x="125" y="80" width="100" height="8" rx="4" fill="rgba(56,189,248,0.4)"/>
+              <rect x="125" y="96" width="80" height="6" rx="3" fill="rgba(200,220,255,0.2)"/>
+              <rect x="125" y="110" width="90" height="6" rx="3" fill="rgba(200,220,255,0.15)"/>
+              <rect x="125" y="130" width="100" height="30" rx="6" fill="rgba(56,189,248,0.15)" stroke="rgba(100,200,255,0.2)" stroke-width="0.5"/>
+              <circle cx="140" cy="145" r="6" fill="rgba(56,189,248,0.25)"/>
+              <rect x="155" y="138" width="40" height="4" rx="2" fill="rgba(200,220,255,0.15)"/>
+              <rect x="155" y="147" width="30" height="3" rx="1.5" fill="rgba(200,220,255,0.1)"/>
+              <rect x="125" y="170" width="100" height="20" rx="4" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.2)" stroke-width="0.5"/>
+              <rect x="125" y="200" width="100" height="20" rx="4" fill="rgba(56,189,248,0.15)" stroke="rgba(56,189,248,0.2)" stroke-width="0.5"/>
+              <circle cx="280" cy="80" r="25" fill="url(#envelopeGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1"/>
+              <rect x="265" y="70" width="30" height="20" rx="4" fill="rgba(15,35,70,0.8)" stroke="rgba(100,200,255,0.2)" stroke-width="0.5"/>
+              <polygon points="265,70 280,82 295,70" fill="none" stroke="rgba(100,200,255,0.3)" stroke-width="0.5"/>
+              <circle cx="80" cy="100" r="1.5" fill="rgba(56,189,248,0.6)"><animate attributeName="cy" values="100;85;100" dur="3s" repeatCount="indefinite"/></circle>
+              <circle cx="300" cy="150" r="2" fill="rgba(168,85,247,0.5)"><animate attributeName="cy" values="150;130;150" dur="4s" repeatCount="indefinite"/></circle>
+              <circle cx="60" cy="200" r="1" fill="rgba(56,189,248,0.4)"><animate attributeName="cy" values="200;185;200" dur="3.5s" repeatCount="indefinite"/></circle>
+              <circle cx="310" cy="220" r="1.5" fill="rgba(168,85,247,0.4)"><animate attributeName="cy" values="220;200;220" dur="2.8s" repeatCount="indefinite"/></circle>
+              <defs>
+                <linearGradient id="phoneGrad" x1="100" y1="50" x2="250" y2="250">
+                  <stop offset="0%" stop-color="rgba(20,50,100,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(10,30,60,0.95)"/>
+                </linearGradient>
+                <linearGradient id="phoneGlow" x1="175" y1="50" x2="175" y2="250">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(168,85,247,0.1)"/>
+                </linearGradient>
+                <linearGradient id="envelopeGrad" x1="255" y1="55" x2="305" y2="105">
+                  <stop offset="0%" stop-color="rgba(25,60,120,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(15,35,70,0.95)"/>
+                </linearGradient>
+                <radialGradient id="contactGroundGlow" cx="0.5" cy="0.5" r="0.5">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(168,85,247,0)"/>
+                </radialGradient>
+              </defs>
+            </svg>
+            <div class="news-hero-glow"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

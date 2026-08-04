@@ -232,6 +232,174 @@
   width: 100px;
 }
 
+/* Full-width setting row */
+.ap-setting-row--full {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+/* Cursor Type Grid */
+.cursor-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.cursor-type-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.cursor-type-card:hover {
+  border-color: var(--cursor-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--cursor-color) 20%, transparent);
+}
+
+.cursor-type-card--active {
+  border-color: var(--cursor-color);
+  background: color-mix(in srgb, var(--cursor-color) 8%, var(--surface));
+  box-shadow: 0 0 0 2px var(--cursor-color), 0 4px 16px color-mix(in srgb, var(--cursor-color) 25%, transparent);
+}
+
+.cursor-type-radio {
+  display: none;
+}
+
+.cursor-type-icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+
+.cursor-type-icon > i {
+  font-size: 1.4rem;
+  color: var(--cursor-color);
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+
+.cursor-type-card:hover .cursor-type-icon > i {
+  transform: scale(1.15);
+}
+
+.cursor-type-preview {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cursor-type-card:hover .cursor-type-preview,
+.cursor-type-card--active .cursor-type-preview {
+  opacity: 1;
+}
+
+/* Cursor Preview Animations */
+.cursor-preview--orbit {
+  border: 2px solid var(--cursor-color);
+  animation: cursorOrbitSpin 3s linear infinite;
+}
+
+.cursor-preview--pulse {
+  background: var(--cursor-color);
+  animation: cursorPulsePulse 1.5s ease-in-out infinite;
+}
+
+.cursor-preview--glass {
+  background: radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%);
+  filter: blur(2px);
+}
+
+.cursor-preview--trailing {
+  background: radial-gradient(circle, var(--cursor-color) 0%, transparent 70%);
+  animation: cursorTrailingGlow 2s ease-in-out infinite;
+}
+
+.cursor-preview--arrow {
+  background: linear-gradient(135deg, var(--cursor-color) 0%, transparent 60%);
+  transform: rotate(45deg);
+  animation: cursorArrowRotate 4s ease-in-out infinite;
+}
+
+.cursor-preview--color_shifter {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899, #f59e0b);
+  background-size: 300% 300%;
+  animation: cursorColorShift 4s ease infinite;
+}
+
+@keyframes cursorOrbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes cursorPulsePulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+@keyframes cursorTrailingGlow {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+@keyframes cursorArrowRotate {
+  0%, 100% { transform: rotate(45deg); }
+  25% { transform: rotate(135deg); }
+  50% { transform: rotate(225deg); }
+  75% { transform: rotate(315deg); }
+}
+
+@keyframes cursorColorShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.cursor-type-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+.cursor-type-desc {
+  font-size: 0.6rem;
+  color: var(--muted);
+  display: block;
+  margin-top: 0.15rem;
+}
+
+/* Mobile cursor grid */
+@media (max-width: 768px) {
+  .cursor-type-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .cursor-type-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .cursor-type-icon > i {
+    font-size: 1.1rem;
+  }
+}
+
 /* Qulflangan (Non-Donor) sozlama satri */
 .ap-setting-row--locked {
   position: relative;
@@ -494,7 +662,7 @@
       @endif
     </div>
 
-    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+    <div class="ap-setting-row ap-setting-row--cursor {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
       <div>
         <div class="asr-label">
           {{ __('profile.appearance.cursor_label') }}
@@ -503,9 +671,16 @@
         <div class="asr-desc">{{ __('profile.appearance.cursor_desc') }}</div>
       </div>
       @if($donorIsActive)
-        <select name="donor_cursor_animation">
-          <option value="1" {{ $user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_on') }}</option>
-          <option value="0" {{ !$user->donor_cursor_animation ? "selected" : "" }}>{{ __('profile.appearance.cursor_off') }}</option>
+        @php $currentCursor = $user->donor_cursor_type ?? 'off'; @endphp
+        <input type="hidden" name="donor_cursor_animation" id="cursor-animation-hidden" value="{{ ($currentCursor !== 'off') ? '1' : '0' }}">
+        <select name="donor_cursor_type" id="cursor-type-select">
+          <option value="off" {{ $currentCursor === 'off' ? 'selected' : '' }}>O'chirilgan</option>
+          <option value="orbit" {{ $currentCursor === 'orbit' ? 'selected' : '' }}>Orbit</option>
+          <option value="pulse" {{ $currentCursor === 'pulse' ? 'selected' : '' }}>Pulse</option>
+          <option value="glass" {{ $currentCursor === 'glass' ? 'selected' : '' }}>Glass Lens</option>
+          <option value="trailing" {{ $currentCursor === 'trailing' ? 'selected' : '' }}>Trailing</option>
+          <option value="arrow" {{ $currentCursor === 'arrow' ? 'selected' : '' }}>Arrow</option>
+          <option value="color_shifter" {{ $currentCursor === 'color_shifter' ? 'selected' : '' }}>Color Shift</option>
         </select>
       @else
         <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
@@ -641,5 +816,21 @@
   });
 
   markSelected();
+})();
+
+// Kursor turini tanlash (select dropdown)
+(function () {
+  var cursorSelect = document.getElementById('cursor-type-select');
+  var hiddenAnimation = document.getElementById('cursor-animation-hidden');
+  if (!cursorSelect) return;
+
+  function toggleAnimation() {
+    if (hiddenAnimation) {
+      hiddenAnimation.value = cursorSelect.value === 'off' ? '0' : '1';
+    }
+  }
+
+  cursorSelect.addEventListener('change', toggleAnimation);
+  toggleAnimation();
 })();
 </script>

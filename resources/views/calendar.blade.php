@@ -1,10 +1,67 @@
 <x-layouts.main title="{{ __('public.calendar.page_title') }}">
-  <section class="news-hero profile-hero">
+  <section class="news-hero news-hero-v2 profile-hero">
     <div class="container">
-      <div class="news-hero-content prime-reveal">
-        <span class="badge">{{ __('public.calendar.badge') }}</span>
-        <h1 class="js-split-text"><strong>{{ __('public.calendar.hero_title') }}</strong></h1>
-        <p>{{ __('public.calendar.hero_text') }}</p>
+      <div class="news-hero-grid prime-reveal">
+        <div class="news-hero-text">
+          <span class="badge">{{ __('public.calendar.badge') }}</span>
+          <h1 class="js-split-text"><strong>{{ __('public.calendar.hero_title') }}</strong></h1>
+          <p>{{ __('public.calendar.hero_text') }}</p>
+        </div>
+        <div class="news-hero-visual">
+          <div class="news-hero-3d-scene">
+            <svg viewBox="0 0 350 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="175" cy="270" rx="130" ry="16" fill="url(#calGroundGlow)" opacity="0.5"/>
+              <rect x="70" y="40" width="210" height="220" rx="12" fill="url(#calGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1.5"/>
+              <rect x="70" y="40" width="210" height="220" rx="12" fill="url(#calGlow)" opacity="0.3"/>
+              <rect x="70" y="40" width="210" height="50" rx="12" fill="url(#calHeaderGrad)"/>
+              <rect x="70" y="78" width="210" height="12" rx="0" fill="url(#calHeaderGrad)"/>
+              <circle cx="105" cy="65" r="10" fill="rgba(56,189,248,0.4)"/>
+              <circle cx="175" cy="65" r="10" fill="rgba(168,85,247,0.4)"/>
+              <circle cx="245" cy="65" r="10" fill="rgba(56,189,248,0.3)"/>
+              <rect x="90" y="105" width="30" height="25" rx="4" fill="rgba(56,189,248,0.15)" stroke="rgba(100,200,255,0.15)" stroke-width="0.5"/>
+              <rect x="130" y="105" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="170" y="105" width="30" height="25" rx="4" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.15)" stroke-width="0.5"/>
+              <rect x="210" y="105" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="90" y="140" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="130" y="140" width="30" height="25" rx="4" fill="rgba(56,189,248,0.25)" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+              <circle cx="145" cy="152" r="4" fill="rgba(56,189,248,0.5)"/>
+              <rect x="170" y="140" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="210" y="140" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="90" y="175" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="130" y="175" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="170" y="175" width="30" height="25" rx="4" fill="rgba(168,85,247,0.25)" stroke="rgba(168,85,247,0.3)" stroke-width="1"/>
+              <circle cx="185" cy="187" r="4" fill="rgba(168,85,247,0.5)"/>
+              <rect x="210" y="175" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="90" y="210" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="130" y="210" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="170" y="210" width="30" height="25" rx="4" fill="rgba(200,220,255,0.1)" stroke="rgba(100,200,255,0.1)" stroke-width="0.5"/>
+              <rect x="210" y="210" width="30" height="25" rx="4" fill="rgba(56,189,248,0.15)" stroke="rgba(100,200,255,0.15)" stroke-width="0.5"/>
+              <circle cx="80" cy="30" r="1.5" fill="rgba(56,189,248,0.6)"><animate attributeName="cy" values="30;15;30" dur="3s" repeatCount="indefinite"/></circle>
+              <circle cx="290" cy="40" r="2" fill="rgba(168,85,247,0.5)"><animate attributeName="cy" values="40;20;40" dur="4s" repeatCount="indefinite"/></circle>
+              <circle cx="50" cy="150" r="1" fill="rgba(56,189,248,0.4)"><animate attributeName="cy" values="150;135;150" dur="3.5s" repeatCount="indefinite"/></circle>
+              <circle cx="310" cy="160" r="1.5" fill="rgba(168,85,247,0.4)"><animate attributeName="cy" values="160;140;160" dur="2.8s" repeatCount="indefinite"/></circle>
+              <defs>
+                <linearGradient id="calGrad" x1="70" y1="40" x2="280" y2="260">
+                  <stop offset="0%" stop-color="rgba(15,40,80,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(10,25,55,0.95)"/>
+                </linearGradient>
+                <linearGradient id="calGlow" x1="175" y1="40" x2="175" y2="260">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(168,85,247,0.1)"/>
+                </linearGradient>
+                <linearGradient id="calHeaderGrad" x1="70" y1="40" x2="280" y2="90">
+                  <stop offset="0%" stop-color="rgba(30,80,160,0.8)"/>
+                  <stop offset="100%" stop-color="rgba(20,50,100,0.9)"/>
+                </linearGradient>
+                <radialGradient id="calGroundGlow" cx="0.5" cy="0.5" r="0.5">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(168,85,247,0)"/>
+                </radialGradient>
+              </defs>
+            </svg>
+            <div class="news-hero-glow"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

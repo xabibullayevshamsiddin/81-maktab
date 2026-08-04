@@ -106,8 +106,8 @@ html {
   background: #EEF2F6;
 }
 
-:root[data-theme='dark'] html {
-  background: #07111f;
+html[data-theme='dark'] {
+  background: #07111f !important;
 }
 
 body {
@@ -118,6 +118,7 @@ body {
       var(--bg) 50%,
       #e4eef9 100%);
   line-height: 1.6;
+  min-height: 100vh;
   transition: background 0.25s ease, color 0.25s ease;
 }
 
@@ -383,6 +384,11 @@ a {
   color: #fff;
   background: transparent;
   cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
 }
 
 .ai-header-toggle {
@@ -5133,6 +5139,7 @@ section.teachers.reveal::before {
 @media (max-width: 980px) {
   .menu-toggle {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
@@ -7789,6 +7796,7 @@ body.modal-open {
 @media (max-width: 980px) {
   .menu-toggle {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
@@ -9191,6 +9199,7 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 @media (max-width: 980px) {
   .menu-toggle {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
@@ -19568,3 +19577,122 @@ body[data-theme='dark'] .theme-toggle.js-theme-toggle .theme-toggle-dark-icon {
 
 
 
+
+/* ====================================================================
+   DONOR CURSOR ANIMATIONS — Keyframes
+   ==================================================================== */
+
+@keyframes cursorOrbitSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes cursorPulsePulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+}
+
+@keyframes cursorColorShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes cursorTrailingGlow {
+  0%, 100% { box-shadow: 0 0 12px #f59e0b, 0 0 24px #f59e0b; }
+  50% { box-shadow: 0 0 20px #f59e0b, 0 0 40px #f59e0b; }
+}
+
+@keyframes cursorArrowRotate {
+  0%, 100% { transform: translate(-50%, -50%) rotate(45deg); }
+  25% { transform: translate(-50%, -50%) rotate(135deg); }
+  50% { transform: translate(-50%, -50%) rotate(225deg); }
+  75% { transform: translate(-50%, -50%) rotate(315deg); }
+}
+
+/* Glass lens special effect */
+body[data-cursor-animation="1"][data-cursor-type="glass"] #d-cursor-ring {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+body[data-cursor-animation="1"][data-cursor-type="glass"].cursor-hovering #d-cursor-ring {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Trailing particle effect */
+body[data-cursor-animation="1"][data-cursor-type="trailing"] #d-cursor-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4px; height: 4px;
+  background: #fbbf24;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: cursorTrailingGlow 1s ease-in-out infinite;
+}
+
+/* Color shifter animation */
+body[data-cursor-animation="1"][data-cursor-type="color_shifter"] #d-cursor-ring {
+  background-size: 300% 300%;
+  animation: cursorColorShift 4s ease infinite;
+}
+
+/* Arrow special styling */
+body[data-cursor-animation="1"][data-cursor-type="arrow"] #d-cursor-dot {
+  clip-path: polygon(50% 0%, 100% 100%, 50% 70%, 0% 100%);
+  border-radius: 0;
+  animation: cursorArrowRotate 4s ease-in-out infinite;
+}
+
+/* Mobile: disable custom cursor */
+@media (max-width: 768px) {
+  body[data-cursor-animation="1"],
+  body[data-cursor-animation="1"] * {
+    cursor: auto !important;
+  }
+  #d-cursor-dot, #d-cursor-ring {
+    display: none !important;
+  }
+}
+
+/* Arrow rotation animation */
+@keyframes cursorArrowRotate {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Color spinner animation */
+@keyframes cursorColorSpin {
+  from { filter: hue-rotate(0deg); }
+  to { filter: hue-rotate(360deg); }
+}
+
+/* Glass lens magnifier effect */
+body[data-cursor-animation="1"][data-cursor-type="glass"] #d-cursor-ring::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  border: 1.5px solid rgba(168,85,247,0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Trailing particles extra */
+body[data-cursor-animation="1"][data-cursor-type="trailing"] #d-cursor-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4px; height: 4px;
+  background: rgba(251,191,36,0.6);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: cursorTrailingParticle 0.8s ease-out infinite;
+}
+
+@keyframes cursorTrailingParticle {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-80%, -30%) scale(0.3); }
+}

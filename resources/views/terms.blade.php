@@ -1,10 +1,61 @@
 <x-layouts.main :title="__('public.layout.terms').' | 81-IDUM'">
-  <section class="news-hero" id="home">
+  <section class="news-hero news-hero-v2" id="home">
     <div class="container">
-      <div class="news-hero-content prime-reveal">
-        <span class="badge" style="background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2); padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; display: inline-block; margin-bottom: 1rem;"><i class="fas fa-file-contract"></i> {{ __('public.legal.terms.badge') }}</span>
-        <h1 class="js-split-text" style="font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin-bottom: 1rem; background: var(--text-gradient, linear-gradient(135deg, #fff, #a5b4fc)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ __('public.layout.terms') }}</h1>
-        <p style="font-size: 1.1rem; color: var(--text-secondary, #9ca3af); max-width: 600px; margin: 0 auto; line-height: 1.6;">{{ __('public.legal.terms.hero_text') }}</p>
+      <div class="news-hero-grid prime-reveal">
+        <div class="news-hero-text">
+          <span class="badge">{{ __('public.legal.terms.badge') }}</span>
+          <h1 class="js-split-text">{{ __('public.layout.terms') }}</h1>
+          <p>{{ __('public.legal.terms.hero_text') }}</p>
+        </div>
+        <div class="news-hero-visual">
+          <div class="news-hero-3d-scene">
+            <svg viewBox="0 0 350 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="175" cy="270" rx="130" ry="16" fill="url(#docGroundGlow)" opacity="0.5"/>
+              <rect x="80" y="40" width="190" height="230" rx="12" fill="url(#docGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1.5"/>
+              <rect x="80" y="40" width="190" height="230" rx="12" fill="url(#docGlow)" opacity="0.3"/>
+              <rect x="80" y="40" width="190" height="40" rx="12" fill="url(#docHeaderGrad)"/>
+              <rect x="80" y="68" width="190" height="12" rx="0" fill="url(#docHeaderGrad)"/>
+              <circle cx="110" cy="60" r="8" fill="rgba(168,85,247,0.4)"/>
+              <circle cx="135" cy="60" r="8" fill="rgba(56,189,248,0.3)"/>
+              <circle cx="160" cy="60" r="8" fill="rgba(168,85,247,0.2)"/>
+              <rect x="110" y="100" width="130" height="8" rx="4" fill="rgba(56,189,248,0.35)"/>
+              <rect x="110" y="118" width="110" height="6" rx="3" fill="rgba(200,220,255,0.18)"/>
+              <rect x="110" y="132" width="120" height="6" rx="3" fill="rgba(200,220,255,0.14)"/>
+              <rect x="110" y="146" width="100" height="6" rx="3" fill="rgba(200,220,255,0.1)"/>
+              <rect x="110" y="170" width="80" height="25" rx="6" fill="rgba(168,85,247,0.12)" stroke="rgba(168,85,247,0.2)" stroke-width="0.5"/>
+              <circle cx="125" cy="182" r="5" fill="rgba(168,85,247,0.25)"/>
+              <rect x="138" y="177" width="40" height="4" rx="2" fill="rgba(200,220,255,0.12)"/>
+              <rect x="138" y="185" width="30" height="3" rx="1.5" fill="rgba(200,220,255,0.08)"/>
+              <rect x="110" y="205" width="130" height="4" rx="2" fill="rgba(200,220,255,0.1)"/>
+              <rect x="110" y="217" width="120" height="4" rx="2" fill="rgba(200,220,255,0.08)"/>
+              <rect x="110" y="229" width="110" height="4" rx="2" fill="rgba(200,220,255,0.06)"/>
+              <rect x="110" y="241" width="100" height="4" rx="2" fill="rgba(200,220,255,0.05)"/>
+              <circle cx="80" cy="30" r="1.5" fill="rgba(56,189,248,0.6)"><animate attributeName="cy" values="30;15;30" dur="3s" repeatCount="indefinite"/></circle>
+              <circle cx="280" cy="40" r="2" fill="rgba(168,85,247,0.5)"><animate attributeName="cy" values="40;20;40" dur="4s" repeatCount="indefinite"/></circle>
+              <circle cx="60" cy="160" r="1" fill="rgba(56,189,248,0.4)"><animate attributeName="cy" values="160;145;160" dur="3.5s" repeatCount="indefinite"/></circle>
+              <circle cx="300" cy="170" r="1.5" fill="rgba(168,85,247,0.4)"><animate attributeName="cy" values="170;150;170" dur="2.8s" repeatCount="indefinite"/></circle>
+              <defs>
+                <linearGradient id="docGrad" x1="80" y1="40" x2="270" y2="270">
+                  <stop offset="0%" stop-color="rgba(15,40,80,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(10,25,55,0.95)"/>
+                </linearGradient>
+                <linearGradient id="docGlow" x1="175" y1="40" x2="175" y2="270">
+                  <stop offset="0%" stop-color="rgba(168,85,247,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(56,189,248,0.1)"/>
+                </linearGradient>
+                <linearGradient id="docHeaderGrad" x1="80" y1="40" x2="270" y2="80">
+                  <stop offset="0%" stop-color="rgba(100,60,180,0.7)"/>
+                  <stop offset="100%" stop-color="rgba(60,40,120,0.8)"/>
+                </linearGradient>
+                <radialGradient id="docGroundGlow" cx="0.5" cy="0.5" r="0.5">
+                  <stop offset="0%" stop-color="rgba(168,85,247,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(56,189,248,0)"/>
+                </radialGradient>
+              </defs>
+            </svg>
+            <div class="news-hero-glow"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

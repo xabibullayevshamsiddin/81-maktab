@@ -1,12 +1,59 @@
 <x-layouts.main title="{{ __('public.courses.page_title') }}">
   <div class="bomba-mesh"></div>
 
-  <section class="news-hero" id="home">
+  <section class="news-hero news-hero-v2" id="home">
     <div class="container">
-      <div class="news-hero-content prime-reveal">
-        <span class="badge">{{ __('public.courses.badge') }}</span>
-        <h1 class="js-split-text">{{ __('public.courses.hero_title') }}</h1>
-        <p>{{ __('public.courses.hero_text') }}</p>
+      <div class="news-hero-grid prime-reveal">
+        <div class="news-hero-text">
+          <span class="badge">{{ __('public.courses.badge') }}</span>
+          <h1 class="js-split-text">{{ __('public.courses.hero_title') }}</h1>
+          <p>{{ __('public.courses.hero_text') }}</p>
+        </div>
+        <div class="news-hero-visual">
+          <div class="news-hero-3d-scene">
+            <svg viewBox="0 0 350 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="175" cy="270" rx="130" ry="16" fill="url(#bookGroundGlow)" opacity="0.5"/>
+              <rect x="90" y="60" width="160" height="200" rx="8" fill="url(#bookGrad1)" stroke="rgba(120,200,255,0.3)" stroke-width="1.5"/>
+              <rect x="100" y="55" width="150" height="200" rx="8" fill="url(#bookGrad2)" stroke="rgba(120,200,255,0.25)" stroke-width="1"/>
+              <rect x="110" y="50" width="140" height="200" rx="8" fill="url(#bookGrad3)" stroke="rgba(120,200,255,0.2)" stroke-width="1"/>
+              <rect x="120" y="80" width="100" height="8" rx="4" fill="rgba(56,189,248,0.4)"/>
+              <rect x="120" y="100" width="80" height="6" rx="3" fill="rgba(200,220,255,0.2)"/>
+              <rect x="120" y="115" width="90" height="6" rx="3" fill="rgba(200,220,255,0.15)"/>
+              <rect x="120" y="130" width="70" height="6" rx="3" fill="rgba(200,220,255,0.12)"/>
+              <rect x="120" y="155" width="100" height="60" rx="8" fill="url(#bookImageGrad)" stroke="rgba(100,200,255,0.2)" stroke-width="1"/>
+              <circle cx="145" cy="175" r="12" fill="rgba(56,189,248,0.25)"/>
+              <polygon points="140,185 155,165 170,180 185,160 195,185" fill="rgba(168,85,247,0.25)"/>
+              <rect x="120" y="225" width="60" height="6" rx="3" fill="rgba(200,220,255,0.1)"/>
+              <circle cx="80" cy="40" r="1.5" fill="rgba(56,189,248,0.6)"><animate attributeName="cy" values="40;25;40" dur="3s" repeatCount="indefinite"/></circle>
+              <circle cx="290" cy="50" r="2" fill="rgba(168,85,247,0.5)"><animate attributeName="cy" values="50;30;50" dur="4s" repeatCount="indefinite"/></circle>
+              <circle cx="60" cy="150" r="1" fill="rgba(56,189,248,0.4)"><animate attributeName="cy" values="150;135;150" dur="3.5s" repeatCount="indefinite"/></circle>
+              <circle cx="300" cy="170" r="1.5" fill="rgba(168,85,247,0.4)"><animate attributeName="cy" values="170;150;170" dur="2.8s" repeatCount="indefinite"/></circle>
+              <defs>
+                <linearGradient id="bookGrad1" x1="90" y1="60" x2="250" y2="260">
+                  <stop offset="0%" stop-color="rgba(20,50,100,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(10,30,60,0.95)"/>
+                </linearGradient>
+                <linearGradient id="bookGrad2" x1="100" y1="55" x2="250" y2="255">
+                  <stop offset="0%" stop-color="rgba(25,60,120,0.85)"/>
+                  <stop offset="100%" stop-color="rgba(15,35,70,0.9)"/>
+                </linearGradient>
+                <linearGradient id="bookGrad3" x1="110" y1="50" x2="250" y2="250">
+                  <stop offset="0%" stop-color="rgba(30,70,140,0.8)"/>
+                  <stop offset="100%" stop-color="rgba(20,40,80,0.85)"/>
+                </linearGradient>
+                <linearGradient id="bookImageGrad" x1="120" y1="155" x2="220" y2="215">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.2)"/>
+                  <stop offset="100%" stop-color="rgba(168,85,247,0.15)"/>
+                </linearGradient>
+                <radialGradient id="bookGroundGlow" cx="0.5" cy="0.5" r="0.5">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(168,85,247,0)"/>
+                </radialGradient>
+              </defs>
+            </svg>
+            <div class="news-hero-glow"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

@@ -1128,6 +1128,7 @@
       siteNav.classList.remove('open');
       document.documentElement.classList.remove('mobile-menu-open');
       document.body.classList.remove('mobile-menu-open');
+      menuToggle.classList.remove('is-open');
       menuToggle.setAttribute('aria-expanded', 'false');
     };
 
@@ -1140,6 +1141,7 @@
         const isOpen = siteNav.classList.toggle('open');
         document.documentElement.classList.toggle('mobile-menu-open', isOpen);
         document.body.classList.toggle('mobile-menu-open', isOpen);
+        menuToggle.classList.toggle('is-open', isOpen);
         menuToggle.setAttribute('aria-expanded', String(isOpen));
       },
       true
@@ -3948,8 +3950,8 @@ function refreshChatAvailability() {
       heroSections.forEach((hero) => {
         const rect = hero.getBoundingClientRect();
         if (rect.bottom > 0 && rect.top < window.innerHeight) {
-          const heroContent = hero.querySelector('.news-hero-content, .bv-hero-inner');
-          const heroButtons = hero.querySelectorAll('.btn-prime, .btn');
+          const heroContent = hero.querySelector('.news-hero-content, .news-hero-text, .bv-hero-inner');
+          const heroButtons = hero.querySelectorAll('.btn-prime, .btn, .news-hero-cta');
           const donorBanner = hero.querySelector('.donor-banner');
           const heroHeight = hero.offsetHeight || 400;
 
@@ -3958,6 +3960,15 @@ function refreshChatAvailability() {
             const opacity = Math.max(0, 1 - (scrollY / (heroHeight * 1.3))).toFixed(2);
             heroContent.style.transform = `translate3d(0, ${translateY}px, 0)`;
             heroContent.style.opacity = opacity;
+          }
+
+          // 3D SVG visual parallax — counter-movement for depth effect
+          const heroVisual = hero.querySelector('.news-hero-visual, .about-hero-visual');
+          if (heroVisual) {
+            const visualTranslateY = (scrollY * -0.15).toFixed(2);
+            const visualScale = Math.max(0.92, 1 - (scrollY / (heroHeight * 5))).toFixed(3);
+            heroVisual.style.transform = `translate3d(0, ${visualTranslateY}px, 0) scale(${visualScale})`;
+            heroVisual.style.opacity = Math.max(0, 1 - (scrollY / (heroHeight * 1.6))).toFixed(2);
           }
 
           if (donorBanner) {

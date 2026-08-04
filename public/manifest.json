@@ -1,22 +1,58 @@
 {
   "name": "81-IDUM Smart Maktab",
   "short_name": "81-Maktab",
-  "description": "81-IDUM zamonaviy interaktiv o'quv platformasi.",
+  "description": "81-IDUM zamonaviy interaktiv o'quv platformasi. Yangiliklar, kurslar, imtihonlar va AI yordamchi.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "scope": "/",
+  "lang": "uz",
+  "categories": ["education", "school"],
   "icons": [
+    {
+      "src": "/temp/img/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
     {
       "src": "/temp/img/favicon-180.png",
       "sizes": "180x180",
       "type": "image/png"
     },
     {
+      "src": "/temp/img/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/temp/img/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Kurslar",
+      "short_name": "Kurslar",
+      "url": "/courses",
+      "description": "Mavjud kurslar ro'yxati"
+    },
+    {
+      "name": "Imtihonlar",
+      "short_name": "Imtihonlar",
+      "url": "/exam",
+      "description": "Imtihonlar sahifasi"
+    },
+    {
+      "name": "AI Yordamchi",
+      "short_name": "AI",
+      "url": "/",
+      "description": "AI yordamchi bilan suhbat"
     }
   ]
 }
