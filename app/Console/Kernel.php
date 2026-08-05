@@ -14,6 +14,12 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('grades:promote')->yearlyOn(9, 1, '06:00');
 
+        // Telegram verifikatsiya eskirgan yozuvlarini tozalash
+        $schedule->command('telegram:clean-expired')->hourly();
+
+        // Telegram getUpdates polling (webhook o'rniga, local uchun)
+        $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
+
         if (filter_var(env('BACKUP_SCHEDULE_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             $schedule->command('backup:clean')->daily()->at('01:00');
             $schedule->command('backup:run')->daily()->at('01:30');

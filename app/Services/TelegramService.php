@@ -1,0 +1,168 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class TelegramService
+{
+    private string $token;
+    private string $baseUrl;
+
+    public function __construct()
+    {
+        $this->token = (string) config('telegram.bot_token', '');
+        $this->baseUrl = (string) config('telegram.api_base', 'https://api.telegram.org');
+    }
+
+    /**
+     | Oddiy xabar yuborish.
+     */
+    public function sendMessage(int $chatId, string $text, ?array $replyMarkup = null): ?array
+    {
+        $payload = [
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+        ];
+
+        if ($replyMarkup !== null) {
+            $payload['reply_markup'] = $replyMarkup;
+        }
+
+        return $this->callApi('sendMessage', $payload);
+    }
+
+    /**
+     | Telefon raqamni ulashish tugmali klaviatura yuborish.
+     */
+    public function requestContact(int $chatId, string $text): ?array
+    {
+        $replyMarkup = [
+            'keyboard' => [
+                [
+                    [
+                        'text' => '📱 Telefon raqamni ulashish',
+                        'request_contact' => true,
+                    ],
+                ],
+            ],
+            'resize_keyboard' => true,
+            'one_time_keyboard' => true,
+        ];
+
+        return $this->sendMessage($chatId, $text, $replyMarkup);
+    }
+
+    /**
+     | Callback queryga javob berish (inline tugmalar uchun).
+     */
+    public function answerCallbackQuery(string $callbackQueryId, string $text = ''): ?array
+    {
+        return $this->callApi('answerCallbackQuery', [
+            'callback_query_id' => $callbackQueryId,
+            'text' => $text,
+            'show_alert' => false,
+        ]);
+    }
+
+    /**
+     | Telegram'ga webhook manzilini ro'yxatdan o'tkazish.
+     */
+    public function setWebhook(string $url, string $secretToken): ?array
+    {
+        return $this->callApi('setWebhook', [
+            'url' => $url,
+            'secret_token' => $secretToken,
+            'allowed_updates' => ['message', 'callback_query'],
+        ]);
+    }
+
+    /**
+     | Webhookni o'chirish.
+     */
+    public function deleteWebhook(): ?array
+    {
+        return $this->callApi('deleteWebhook');
+    }
+
+    /**
+     | Bot ma'lumotlarini olish (test uchun).
+     */
+    public function getMe(): ?array
+    {
+        return $this->callApi('getMe');
+    }
+
+    /**
+     | getUpdates — webhook o'rniga polling uchun.
+     */
+    public function getUpdates(int $timeout = 30): array
+    {
+        $result = $this->callApi('getUpdates', [
+            'timeout' => $timeout,
+        ]);
+
+        return is_array($result) ? $result : [];
+    }
+
+    /**
+     | Update ni qayta ishlash tugallanganini belgilash.
+     */
+    public function markUpdateProcessed(int $updateId): ?array
+    {
+        return $this->callApi('getUpdates', [
+            'offset' => $updateId + 1,
+            'limit' => 1,
+        ]);
+    }
+
+    /**
+     | Telegram API ga so'rov yuborish.
+     */
+    private function callApi(string $method, array $data = []): ?array
+    {
+        if ($this->token === '') {
+            Log::error('Telegram Bot Token is not configured.');
+
+            return null;
+        }
+
+        $url = rtrim($this->baseUrl, '/').'/bot'.$this->token.'/'.$method;
+
+        try {
+            $response = Http::timeout(10)->post($url, $data);
+
+            if ($response->successful()) {
+                $body = $response->json();
+
+                if (! ($body['ok'] ?? false)) {
+                    Log::warning('Telegram API returned ok=false', [
+                        'method' => $method,
+                        'description' => $body['description'] ?? 'Unknown error',
+                    ]);
+
+                    return null;
+                }
+
+                return $body['result'] ?? null;
+            }
+
+            Log::error('Telegram API HTTP error', [
+                'method' => $method,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('Telegram API exception', [
+                'method' => $method,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+}

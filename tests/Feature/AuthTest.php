@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\OneTimeCode;
 use App\Models\Role;
+use App\Models\TelegramVerification;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Hash;
@@ -21,15 +22,19 @@ class AuthTest extends TestCase
             'mail.enabled' => true,
             'mail.code_delivery_enabled' => true,
             'courses.require_email_verification' => true,
+            'telegram.bot_username' => 'test_bot',
         ]);
 
         Mail::fake();
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
         $this->createAuthTestTables();
     }
 
     protected function tearDown(): void
     {
         Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('user_activities');
+        Schema::dropIfExists('telegram_verifications');
         Schema::dropIfExists('one_time_codes');
         Schema::dropIfExists('roles_user');
         Schema::dropIfExists('users');
@@ -39,42 +44,65 @@ class AuthTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_registration_creates_user_and_logs_in_without_email_code(): void
+    public function test_registration_redirects_to_telegram_verification(): void
     {
         $response = $this->post(route('register.store'), $this->registrationPayload());
 
-        $response->assertRedirect(route('home'));
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
+        $response->assertRedirect();
+        // URL telegram-verify/{token} formatida bo'lishi kerak
+        $this->assertStringContainsString('telegram-verify/', $response->getTargetUrl());
+
+        // Foydalanuvchi hali yaratilmagan
+        $this->assertDatabaseMissing('users', [
             'email' => 'ali@example.com',
-            'first_name' => 'Ali',
-            'last_name' => 'Valiyev',
-            'grade' => '5-A',
-            'is_parent' => false,
         ]);
-        $this->assertDatabaseMissing('one_time_codes', [
-            'email' => 'ali@example.com',
-            'purpose' => OneTimeCode::PURPOSE_REGISTER,
+
+        // Telegram verification yozuvi yaratilgan
+        $this->assertDatabaseHas('telegram_verifications', [
+            'purpose' => TelegramVerification::PURPOSE_REGISTER,
+            'status' => TelegramVerification::STATUS_PENDING,
         ]);
     }
 
-    public function test_login_authenticates_with_email_and_password_without_code(): void
+    public function test_login_without_telegram_chat_id_redirects_to_verification(): void
     {
         $user = $this->createUser([
             'email' => 'test@example.com',
             'password' => 'password123',
+            'telegram_chat_id' => null,
         ]);
 
-        $this->post(route('authenticate'), [
+        $response = $this->post(route('authenticate'), [
             'email' => 'test@example.com',
             'password' => 'password123',
-        ])->assertRedirect(route('home'));
-
-        $this->assertAuthenticatedAs($user);
-        $this->assertDatabaseMissing('one_time_codes', [
-            'email' => 'test@example.com',
-            'purpose' => OneTimeCode::PURPOSE_LOGIN,
         ]);
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('telegram-verify/', $response->getTargetUrl());
+        $this->assertGuest();
+
+        // Telegram verification yaratilgan
+        $this->assertDatabaseHas('telegram_verifications', [
+            'purpose' => TelegramVerification::PURPOSE_LOGIN,
+            'status' => TelegramVerification::STATUS_PENDING,
+        ]);
+    }
+
+    public function test_login_with_telegram_chat_id_authenticates_directly(): void
+    {
+        $user = $this->createUser([
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'telegram_chat_id' => 123456789,
+        ]);
+
+        $response = $this->post(route('authenticate'), [
+            'email' => 'test@example.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('home'));
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_registration_rejects_invalid_payload(): void
@@ -110,39 +138,61 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_registration_completes_immediately_when_mail_delivery_is_disabled(): void
+    public function test_telegram_verification_status_returns_pending(): void
     {
-        config(['mail.enabled' => false]);
-
-        $this->post(route('register.store'), $this->registrationPayload())
-            ->assertRedirect(route('home'));
-
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
-            'email' => 'ali@example.com',
+        $verification = TelegramVerification::create([
+            'token' => 'test-token-123',
+            'purpose' => TelegramVerification::PURPOSE_REGISTER,
+            'email' => 'test@example.com',
+            'phone' => '+998901234567',
+            'status' => TelegramVerification::STATUS_PENDING,
+            'expires_at' => now()->addMinutes(10),
         ]);
+
+        $response = $this->get(route('telegram.status', ['token' => $verification->token]));
+
+        $response->assertJson(['status' => 'pending']);
     }
 
-    public function test_login_completes_immediately_when_mail_delivery_is_disabled(): void
+    public function test_telegram_verification_status_returns_expired(): void
     {
-        config(['mail.enabled' => false]);
-
-        $user = $this->createUser([
+        $verification = TelegramVerification::create([
+            'token' => 'test-token-expired',
+            'purpose' => TelegramVerification::PURPOSE_REGISTER,
             'email' => 'test@example.com',
-            'password' => 'password123',
+            'phone' => '+998901234567',
+            'status' => TelegramVerification::STATUS_PENDING,
+            'expires_at' => now()->subMinute(),
         ]);
 
-        $this->post(route('authenticate'), [
-            'email' => 'test@example.com',
-            'password' => 'password123',
-        ])->assertRedirect(route('home'));
+        $response = $this->get(route('telegram.status', ['token' => $verification->token]));
 
-        $this->assertAuthenticatedAs($user);
+        $response->assertJson(['status' => 'expired']);
+    }
+
+    public function test_telegram_verification_status_returns_verified(): void
+    {
+        $verification = TelegramVerification::create([
+            'token' => 'test-token-verified',
+            'purpose' => TelegramVerification::PURPOSE_REGISTER,
+            'email' => 'test@example.com',
+            'phone' => '+998901234567',
+            'status' => TelegramVerification::STATUS_VERIFIED,
+            'expires_at' => now()->addMinutes(10),
+            'verified_at' => now(),
+            'telegram_chat_id' => 123456789,
+        ]);
+
+        $response = $this->get(route('telegram.status', ['token' => $verification->token]));
+
+        $response->assertJson(['status' => 'verified']);
     }
 
     private function createAuthTestTables(): void
     {
         Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('user_activities');
+        Schema::dropIfExists('telegram_verifications');
         Schema::dropIfExists('one_time_codes');
         Schema::dropIfExists('roles_user');
         Schema::dropIfExists('users');
@@ -169,6 +219,7 @@ class AuthTest extends TestCase
             $table->string('grade')->nullable();
             $table->string('avatar')->nullable();
             $table->string('google_id')->nullable();
+            $table->bigInteger('telegram_chat_id')->nullable();
             $table->string('password');
             $table->unsignedBigInteger('role_id')->nullable();
             $table->boolean('is_active')->default(true);
@@ -188,6 +239,34 @@ class AuthTest extends TestCase
             $table->string('code_hash');
             $table->timestamp('expires_at')->index();
             $table->json('meta')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('telegram_verifications', static function (Blueprint $table): void {
+            $table->id();
+            $table->string('token', 40)->unique();
+            $table->string('purpose');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('email')->index();
+            $table->string('phone')->index();
+            $table->json('session_payload')->nullable();
+            $table->bigInteger('telegram_chat_id')->nullable();
+            $table->string('status')->default('pending');
+            $table->timestamp('expires_at')->index();
+            $table->timestamp('verified_at')->nullable();
+            $table->timestamps();
+        });
+
+        // UserActivityLogger uchun kerak
+        Schema::create('user_activities', static function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->string('type')->index();
+            $table->text('description')->nullable();
+            $table->string('ip_address')->nullable();
+            $table->string('user_agent')->nullable();
+            $table->string('device_type')->nullable();
+            $table->timestamp('occurred_at')->nullable();
             $table->timestamps();
         });
 

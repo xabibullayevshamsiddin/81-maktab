@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\OneTimeCode;
+use App\Models\TelegramVerification;
 use App\Models\User;
+use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -21,18 +22,6 @@ class AuthController extends Controller
     private const OTP_VERIFY_DECAY_SECONDS = 600;
 
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
-
-    /**
-     * Vaqtincha: false bo'lsa ro'yxatdan o'tish email kodisiz, darhol hisob ochiladi.
-     * Email OTP ni qayta yoqish uchun true qiling.
-     */
-    private const REGISTER_EMAIL_OTP_ENABLED = false;
-
-    /**
-     * Vaqtincha: false bo'lsa kirish email kodisiz - faqat email + parol.
-     * Kirish OTP ni qayta yoqish uchun true qiling.
-     */
-    private const LOGIN_EMAIL_OTP_ENABLED = false;
 
     public function login()
     {
@@ -59,10 +48,9 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        // Bloklangan (`! isActive()`) foydalanuvchilar ham tizimga kiritiladi,
-        // lekin faqat `active` middleware ruxsat bergan joylargagina yoza olishadi.
-
-        if (! $this->loginEmailOtpEnabled()) {
+        // Agar foydalanuvchida telegram_chat_id bor va tasdiqlangan bo'lsa
+        // — to'g'ridan-to'g'ri kirishga ruxsat berish
+        if ($user->telegram_chat_id) {
             Auth::login($user, true);
             $request->session()->regenerate();
 
@@ -71,30 +59,16 @@ class AuthController extends Controller
                 ->with('toast_type', 'success');
         }
 
-        if (! $this->canSendOtpNow($user->email, OneTimeCode::PURPOSE_LOGIN)) {
-            return back()
-                ->withErrors(['email' => "Kod yuborish limiti: {$this->otpResendCooldownSecondsLeft($user->email, OneTimeCode::PURPOSE_LOGIN)} soniya kuting."])
-                ->onlyInput('email');
-        }
+        // Telegram_chat_id yo'q — Telegram orqali tasdiqlash kerak
+        $token = $this->createTelegramVerification(
+            TelegramVerification::PURPOSE_LOGIN,
+            $user->email,
+            $user->phone ?? '',
+            ['user_id' => $user->id]
+        );
 
-        try {
-            $this->issueAndSendOtp($user->email, OneTimeCode::PURPOSE_LOGIN, [
-                'user_id' => $user->id,
-            ]);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('OTP login send failed', $e, [
-                'email' => $user->email,
-            ]);
-
-            return back()
-                ->withErrors(['email' => 'Emailga kod yuborilmadi. Sozlamalarni tekshiring.'])
-                ->onlyInput('email');
-        }
-
-        $request->session()->put('otp_login_email', $user->email);
-
-        return redirect()->route('login.verify.form')
-            ->with('success', 'Emailga tasdiqlash kodi yuborildi.')
+        return redirect()->route('telegram.verify', ['token' => $token])
+            ->with('success', 'Telegram orqali tasdiqlang.')
             ->with('toast_type', 'success');
     }
 
@@ -111,62 +85,169 @@ class AuthController extends Controller
         $fullName = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         $isParent = ! empty($validated['is_parent']);
 
-        if (! $this->registerEmailOtpEnabled()) {
-            $user = User::create([
+        // Telegram orqali tasdiqlash — foydalanuvchini hali yaratmaymiz
+        $token = $this->createTelegramVerification(
+            TelegramVerification::PURPOSE_REGISTER,
+            $validated['email'],
+            $validated['phone'],
+            [
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'name' => $fullName,
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
-                'grade' => $isParent ? null : $validated['grade'],
-                'is_parent' => $isParent,
-                'password' => $validated['password'],
-            ]);
-            $user->email_verified_at = now();
-            $user->save();
-
-            Auth::login($user, true);
-            $request->session()->regenerate();
-
-            return redirect()->route('home')
-                ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli.')
-                ->with('toast_type', 'success');
-        }
-
-        if (! $this->canSendOtpNow($validated['email'], OneTimeCode::PURPOSE_REGISTER)) {
-            return back()
-                ->withErrors(['email' => "Kod yuborish limiti: {$this->otpResendCooldownSecondsLeft($validated['email'], OneTimeCode::PURPOSE_REGISTER)} soniya kuting."])
-                ->onlyInput('email');
-        }
-
-        try {
-            $this->issueAndSendOtp($validated['email'], OneTimeCode::PURPOSE_REGISTER, [
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'name' => $fullName,
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'grade' => $isParent ? null : $validated['grade'],
+                'grade' => $isParent ? null : ($validated['grade'] ?? null),
                 'is_parent' => $isParent,
                 'password' => Hash::make($validated['password']),
-            ]);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('OTP register send failed', $e, [
-                'email' => $validated['email'],
-            ]);
+            ]
+        );
 
-            return back()
-                ->withErrors(['email' => 'Emailga kod yuborilmadi. Sozlamalarni tekshiring.'])
-                ->onlyInput('email');
-        }
-
-        $request->session()->put('otp_register_email', $validated['email']);
-
-        return redirect()->route('register.verify.form')
-            ->with('success', 'Ro\'yxatdan o\'tish kodi emailingizga yuborildi.')
+        return redirect()->route('telegram.verify', ['token' => $token])
+            ->with('success', 'Telegram orqali tasdiqlang.')
             ->with('toast_type', 'success');
     }
 
+    /**
+     | Telegram tasdiqlash sahifasini ko'rsatish (login va register uchun umumiy).
+     */
+    public function showTelegramVerify(Request $request, string $token)
+    {
+        $verification = TelegramVerification::query()
+            ->where('token', $token)
+            ->first();
+
+        if (! $verification) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Tasdiqlash havolasi topilmadi.'])
+                ->with('toast_type', 'error');
+        }
+
+        if ($verification->isExpired() && $verification->status === TelegramVerification::STATUS_PENDING) {
+            $verification->update(['status' => TelegramVerification::STATUS_EXPIRED]);
+
+            return redirect()->route($verification->purpose === 'register' ? 'register' : 'login')
+                ->withErrors(['email' => 'Tasdiqlash havolasi muddati tugagan. Qayta urinib ko\'ring.'])
+                ->with('toast_type', 'error');
+        }
+
+        if ($verification->isVerified()) {
+            // Tasdiqlangan — kerakli oqimga yo'naltirish
+            return $this->completeTelegramVerification($verification);
+        }
+
+        return view('login.verify-code', [
+            'mode' => $verification->purpose,
+            'token' => $token,
+            'bot_username' => config('telegram.bot_username', ''),
+        ]);
+    }
+
+    /**
+     | Telegram tasdiqlanganidan keyin oqimni yakunlash.
+     */
+    private function completeTelegramVerification(TelegramVerification $verification)
+    {
+        switch ($verification->purpose) {
+            case TelegramVerification::PURPOSE_REGISTER:
+                return $this->completeRegister($verification);
+
+            case TelegramVerification::PURPOSE_LOGIN:
+                return $this->completeLogin($verification);
+
+            case TelegramVerification::PURPOSE_PASSWORD_RESET:
+                // Parolni tiklash uchun redirect
+                return redirect()->route('password.reset.form', ['email' => $verification->session_payload['email'] ?? '']);
+
+            default:
+                return redirect()->route('login');
+        }
+    }
+
+    /**
+     | Register oqimini yakunlash — foydalanuvchini yaratish.
+     */
+    private function completeRegister(TelegramVerification $verification)
+    {
+        $meta = $verification->session_payload ?? [];
+
+        if (empty($meta['email']) || empty($meta['password']) || empty($meta['phone'])) {
+            return redirect()->route('register')
+                ->withErrors(['email' => "Ro'yxatdan o'tish ma'lumotlari topilmadi."]);
+        }
+
+        // Email allaqachon mavjudmi?
+        if (User::query()->where('email', $meta['email'])->exists()) {
+            return redirect()->route('login')
+                ->with('success', 'Bu email bilan hisob allaqachon mavjud. Tizimga kiring.')
+                ->with('toast_type', 'warning');
+        }
+
+        // Ism + familiya allaqachon mavjudmi?
+        $metaFirst = (string) ($meta['first_name'] ?? '');
+        $metaLast = (string) ($meta['last_name'] ?? '');
+        if (User::isFullNameTaken($metaFirst, $metaLast)) {
+            return redirect()->route('register')
+                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro\'yxatdan o\'tishni boshidan qayta boshlang.'])
+                ->with('toast_type', 'warning');
+        }
+
+        $isParent = ! empty($meta['is_parent']);
+
+        $user = User::create([
+            'first_name' => $meta['first_name'] ?? '',
+            'last_name' => $meta['last_name'] ?? '',
+            'name' => $meta['name'] ?? trim(($meta['first_name'] ?? '').' '.($meta['last_name'] ?? '')),
+            'email' => $meta['email'],
+            'phone' => $meta['phone'],
+            'grade' => $isParent ? null : ($meta['grade'] ?? null),
+            'is_parent' => $isParent,
+            'password' => $meta['password'],
+            'telegram_chat_id' => $verification->telegram_chat_id,
+            'email_verified_at' => now(),
+        ]);
+
+        $verification->delete();
+
+        Auth::login($user, true);
+        session()->regenerate();
+
+        return redirect()->route('home')
+            ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi.')
+            ->with('toast_type', 'success');
+    }
+
+    /**
+     | Login oqimini yakunlash.
+     */
+    private function completeLogin(TelegramVerification $verification)
+    {
+        $meta = $verification->session_payload ?? [];
+        $userId = (int) ($meta['user_id'] ?? 0);
+
+        $user = User::query()->find($userId);
+        if (! $user) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Foydalanuvchi topilmadi.']);
+        }
+
+        // Telegram chat_id ni saqlash (agar hali yo'q bo'lsa)
+        if (! $user->telegram_chat_id && $verification->telegram_chat_id) {
+            $user->update(['telegram_chat_id' => $verification->telegram_chat_id]);
+        }
+
+        $verification->delete();
+
+        Auth::login($user, true);
+        session()->regenerate();
+
+        return redirect()->intended(route('home'))
+            ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
+            ->with('toast_type', 'success');
+    }
+
+    /**
+     | Parolni tiklash — email kiritilganda.
+     */
     public function sendPasswordResetCode(Request $request)
     {
         $validated = $request->validate([
@@ -182,12 +263,27 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        if (! $this->mailDeliveryEnabled()) {
-            return back()
-                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
-                ->onlyInput('email');
+        // Telegram chat_id bor — Telegram orqali tasdiqlash
+        if ($user->telegram_chat_id) {
+            $token = $this->createTelegramVerification(
+                TelegramVerification::PURPOSE_PASSWORD_RESET,
+                $user->email,
+                $user->phone ?? '',
+                ['user_id' => $user->id, 'email' => $user->email]
+            );
+
+            // Telegram orqali xabar yuborish
+            \App\Http\Controllers\TelegramWebhookController::sendPasswordResetRequest(
+                (int) $user->telegram_chat_id,
+                $token
+            );
+
+            return redirect()->route('password.forgot.form', ['email' => $email])
+                ->with('success', 'Telegram orqali tasdiqlash xabari yuborildi.')
+                ->with('toast_type', 'success');
         }
 
+        // Telegram chat_id yo'q — email orqali davom etish (zaxira kanal)
         if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return back()
                 ->withErrors([
@@ -233,10 +329,7 @@ class AuthController extends Controller
             'email' => ['required', 'email:rfc', 'max:255'],
             'code' => ['required', 'digits:6'],
             'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
+                'required', 'string', 'min:8', 'confirmed',
             ],
         ], [
             'email.required' => 'Emailni kiriting.',
@@ -314,12 +407,26 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Bu email bilan hisob topilmadi.']);
         }
 
-        if (! $this->mailDeliveryEnabled()) {
-            return back()->withErrors([
-                'code' => $this->mailDeliveryDisabledMessage(),
-            ]);
+        // Agar foydalanuvchida telegram_chat_id bo'lsa — Telegram orqali qayta yuborish
+        if ($user->telegram_chat_id) {
+            $token = $this->createTelegramVerification(
+                TelegramVerification::PURPOSE_PASSWORD_RESET,
+                $user->email,
+                $user->phone ?? '',
+                ['user_id' => $user->id, 'email' => $user->email]
+            );
+
+            \App\Http\Controllers\TelegramWebhookController::sendPasswordResetRequest(
+                (int) $user->telegram_chat_id,
+                $token
+            );
+
+            return back()
+                ->with('success', 'Telegram orqali yangi tasdiqlash xabari yuborildi.')
+                ->with('toast_type', 'success');
         }
 
+        // Email orqali qayta yuborish
         if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
             return back()->withErrors([
                 'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
@@ -339,243 +446,6 @@ class AuthController extends Controller
 
         return redirect()
             ->route('password.reset.form', ['email' => $email])
-            ->with('success', 'Yangi kod yuborildi.')
-            ->with('toast_type', 'warning');
-    }
-
-    public function showLoginVerify(Request $request)
-    {
-        if (! $this->loginEmailOtpEnabled()) {
-            return redirect()->route('login');
-        }
-
-        $email = (string) $request->session()->get('otp_login_email', '');
-        if ($email === '') {
-            return redirect()->route('login');
-        }
-
-        return view('login.verify-code', [
-            'mode' => 'login',
-            'email' => $email,
-        ]);
-    }
-
-    public function verifyLoginCode(Request $request)
-    {
-        if (! $this->loginEmailOtpEnabled()) {
-            return redirect()->route('login');
-        }
-
-        $validated = $request->validate([
-            'code' => ['required', 'digits:6'],
-        ]);
-
-        $email = (string) $request->session()->get('otp_login_email', '');
-        if ($email === '') {
-            return redirect()->route('login');
-        }
-
-        if (RateLimiter::tooManyAttempts($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_LOGIN), self::OTP_VERIFY_MAX_ATTEMPTS)) {
-            return back()->withErrors([
-                'code' => "Juda ko'p xato urinish. {$this->otpVerifySecondsLeft($email, OneTimeCode::PURPOSE_LOGIN)} soniyadan keyin qayta urinib ko'ring.",
-            ]);
-        }
-
-        $otp = OneTimeCode::query()
-            ->where('email', $email)
-            ->where('purpose', OneTimeCode::PURPOSE_LOGIN)
-            ->latest('id')
-            ->first();
-
-        if (! $this->isValidOtp($otp, $validated['code'])) {
-            RateLimiter::hit($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_LOGIN), self::OTP_VERIFY_DECAY_SECONDS);
-
-            return back()->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."]);
-        }
-
-        $userId = (int) ($otp->meta['user_id'] ?? 0);
-        $user = User::query()->find($userId);
-        if (! $user) {
-            return redirect()->route('login')->withErrors(['email' => 'Foydalanuvchi topilmadi.']);
-        }
-
-        $otp->delete();
-        RateLimiter::clear($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_LOGIN));
-        $request->session()->forget('otp_login_email');
-        Auth::login($user, true);
-        $request->session()->regenerate();
-
-        return redirect()->route('home')
-            ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
-            ->with('toast_type', 'success');
-    }
-
-    public function resendLoginCode(Request $request)
-    {
-        if (! $this->loginEmailOtpEnabled()) {
-            return redirect()->route('login');
-        }
-
-        $email = (string) $request->session()->get('otp_login_email', '');
-        if ($email === '') {
-            return redirect()->route('login');
-        }
-
-        if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_LOGIN)) {
-            return back()->withErrors([
-                'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_LOGIN)} soniya kuting.",
-            ]);
-        }
-
-        $latest = OneTimeCode::query()
-            ->where('email', $email)
-            ->where('purpose', OneTimeCode::PURPOSE_LOGIN)
-            ->latest('id')
-            ->first();
-
-        $meta = $latest?->meta ?? [];
-        try {
-            $this->issueAndSendOtp($email, OneTimeCode::PURPOSE_LOGIN, $meta);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('OTP login resend failed', $e, [
-                'email' => $email,
-            ]);
-
-            return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
-        }
-
-        return back()
-            ->with('success', 'Yangi kod yuborildi.')
-            ->with('toast_type', 'warning');
-    }
-
-    public function showRegisterVerify(Request $request)
-    {
-        if (! $this->registerEmailOtpEnabled()) {
-            return redirect()->route('register');
-        }
-
-        $email = (string) $request->session()->get('otp_register_email', '');
-        if ($email === '') {
-            return redirect()->route('register');
-        }
-
-        return view('login.verify-code', [
-            'mode' => 'register',
-            'email' => $email,
-        ]);
-    }
-
-    public function verifyRegisterCode(Request $request)
-    {
-        if (! $this->registerEmailOtpEnabled()) {
-            return redirect()->route('register');
-        }
-
-        $validated = $request->validate([
-            'code' => ['required', 'digits:6'],
-        ]);
-
-        $email = (string) $request->session()->get('otp_register_email', '');
-        if ($email === '') {
-            return redirect()->route('register');
-        }
-
-        if (RateLimiter::tooManyAttempts($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_REGISTER), self::OTP_VERIFY_MAX_ATTEMPTS)) {
-            return back()->withErrors([
-                'code' => "Juda ko'p xato urinish. {$this->otpVerifySecondsLeft($email, OneTimeCode::PURPOSE_REGISTER)} soniyadan keyin qayta urinib ko'ring.",
-            ]);
-        }
-
-        $otp = OneTimeCode::query()
-            ->where('email', $email)
-            ->where('purpose', OneTimeCode::PURPOSE_REGISTER)
-            ->latest('id')
-            ->first();
-
-        if (! $this->isValidOtp($otp, $validated['code'])) {
-            RateLimiter::hit($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_REGISTER), self::OTP_VERIFY_DECAY_SECONDS);
-
-            return back()->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."]);
-        }
-
-        $meta = $otp->meta ?? [];
-        $metaIsParent = ! empty($meta['is_parent']);
-        if (empty($meta['email']) || empty($meta['password']) || (empty($meta['name']) && empty($meta['first_name'])) || empty($meta['phone']) || (! $metaIsParent && empty($meta['grade']))) {
-            return redirect()->route('register')->withErrors(['email' => "Ro'yxatdan o'tish ma'lumotlari topilmadi."]);
-        }
-
-        if (User::query()->where('email', $meta['email'])->exists()) {
-            return redirect()->route('login')
-                ->with('success', 'Bu email bilan hisob allaqachon mavjud. Tizimga kiring.')
-                ->with('toast_type', 'warning');
-        }
-
-        $metaFirst = (string) ($meta['first_name'] ?? '');
-        $metaLast = (string) ($meta['last_name'] ?? '');
-        if (User::isFullNameTaken($metaFirst, $metaLast)) {
-            return redirect()->route('register')
-                ->withErrors(['email' => 'Bu ism va familiya bilan hisob allaqachon mavjud. Ro\'yxatdan o\'tishni boshidan qayta boshlang.'])
-                ->with('toast_type', 'warning');
-        }
-
-        $user = User::create([
-            'first_name' => $meta['first_name'] ?? '',
-            'last_name' => $meta['last_name'] ?? '',
-            'name' => $meta['name'] ?? trim(($meta['first_name'] ?? '').' '.($meta['last_name'] ?? '')),
-            'email' => $meta['email'],
-            'phone' => $meta['phone'],
-            'grade' => $metaIsParent ? null : ($meta['grade'] ?? null),
-            'is_parent' => $metaIsParent,
-            'password' => $meta['password'],
-        ]);
-
-        $otp->delete();
-        RateLimiter::clear($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_REGISTER));
-        $request->session()->forget('otp_register_email');
-        Auth::login($user, true);
-        $request->session()->regenerate();
-
-        return redirect()->route('home')
-            ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi.')
-            ->with('toast_type', 'success');
-    }
-
-    public function resendRegisterCode(Request $request)
-    {
-        if (! $this->registerEmailOtpEnabled()) {
-            return redirect()->route('register');
-        }
-
-        $email = (string) $request->session()->get('otp_register_email', '');
-        if ($email === '') {
-            return redirect()->route('register');
-        }
-
-        if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_REGISTER)) {
-            return back()->withErrors([
-                'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_REGISTER)} soniya kuting.",
-            ]);
-        }
-
-        $latest = OneTimeCode::query()
-            ->where('email', $email)
-            ->where('purpose', OneTimeCode::PURPOSE_REGISTER)
-            ->latest('id')
-            ->first();
-
-        $meta = $latest?->meta ?? [];
-        try {
-            $this->issueAndSendOtp($email, OneTimeCode::PURPOSE_REGISTER, $meta);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('OTP register resend failed', $e, [
-                'email' => $email,
-            ]);
-
-            return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
-        }
-
-        return back()
             ->with('success', 'Yangi kod yuborildi.')
             ->with('toast_type', 'warning');
     }
@@ -602,6 +472,27 @@ class AuthController extends Controller
                 ->with('toast_type', 'error');
         }
 
+        // Telegram chat_id bor — Telegram orqali
+        if ($user->telegram_chat_id) {
+            $token = $this->createTelegramVerification(
+                TelegramVerification::PURPOSE_PASSWORD_RESET,
+                $user->email,
+                $user->phone ?? '',
+                ['user_id' => $user->id, 'email' => $user->email, 'issued_by_admin_id' => (int) $admin->id]
+            );
+
+            \App\Http\Controllers\TelegramWebhookController::sendPasswordResetRequest(
+                (int) $user->telegram_chat_id,
+                $token
+            );
+
+            return redirect()
+                ->route('user')
+                ->with('success', "{$user->name} uchun parolni tiklash xabari Telegram ga yuborildi.")
+                ->with('toast_type', 'success');
+        }
+
+        // Email orqali
         if (! $this->mailDeliveryEnabled()) {
             return redirect()
                 ->route('user')
@@ -639,6 +530,41 @@ class AuthController extends Controller
             ->with('toast_type', 'success');
     }
 
+    // =========================================================================
+    // Telegram verification yaratish
+    // =========================================================================
+
+    /**
+     | Telegram verification yozuvi yaratish.
+     */
+    private function createTelegramVerification(string $purpose, string $email, string $phone, array $payload = []): string
+    {
+        // Oldingi pending yozuvlarni expired qilish
+        TelegramVerification::query()
+            ->where('email', $email)
+            ->where('purpose', $purpose)
+            ->where('status', TelegramVerification::STATUS_PENDING)
+            ->update(['status' => TelegramVerification::STATUS_EXPIRED]);
+
+        $token = Str::random(config('telegram.token_length', 40));
+
+        TelegramVerification::create([
+            'token' => $token,
+            'purpose' => $purpose,
+            'email' => $email,
+            'phone' => $phone,
+            'session_payload' => $payload,
+            'status' => TelegramVerification::STATUS_PENDING,
+            'expires_at' => now()->addMinutes(config('telegram.expires_minutes', 10)),
+        ]);
+
+        return $token;
+    }
+
+    // =========================================================================
+    // Email OTP (faqat parolni tiklash uchun qoldirildi)
+    // =========================================================================
+
     private function issueAndSendOtp(string $email, string $purpose, array $meta = []): void
     {
         if (! $this->mailDeliveryEnabled()) {
@@ -660,33 +586,18 @@ class AuthController extends Controller
             'meta' => $meta,
         ]);
 
-        $subject = match ($purpose) {
-            OneTimeCode::PURPOSE_LOGIN => 'Kirish uchun tasdiqlash kodi',
-            OneTimeCode::PURPOSE_PASSWORD_RESET => 'Parolni tiklash kodi',
-            default => "Ro'yxatdan o'tish kodi",
-        };
+        $subject = 'Parolni tiklash kodi';
+        $title = 'Parolni yangilang';
+        $description = 'Parolni yangilash uchun quyidagi 6 xonali kodni kiriting. Agar kodni admin yuborgan bo\'lsa ham, shu kod ishlaydi.';
 
-        $title = match ($purpose) {
-            OneTimeCode::PURPOSE_LOGIN => 'Kirishni tasdiqlang',
-            OneTimeCode::PURPOSE_PASSWORD_RESET => 'Parolni yangilang',
-            default => "Ro'yxatdan o'tishni tasdiqlang",
-        };
-
-        $description = $purpose === OneTimeCode::PURPOSE_PASSWORD_RESET
-            ? 'Parolni yangilash uchun quyidagi 6 xonali kodni kiriting. Agar kodni admin yuborgan bo\'lsa ham, shu kod ishlaydi.'
-            : 'Assalomu alaykum. Quyidagi 6 xonali kodni saytdagi tasdiqlash oynasiga kiriting.';
-
-        $actionHtml = '';
-        if ($purpose === OneTimeCode::PURPOSE_PASSWORD_RESET) {
-            $resetUrl = route('password.reset.form', ['email' => $email]);
-            $actionHtml = '
-                  <p style="margin:16px 0 0;text-align:center;">
-                    <a href="'.$resetUrl.'" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;">
-                      Parolni yangilash oynasini ochish
-                    </a>
-                  </p>
-            ';
-        }
+        $resetUrl = route('password.reset.form', ['email' => $email]);
+        $actionHtml = '
+              <p style="margin:16px 0 0;text-align:center;">
+                <a href="'.$resetUrl.'" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;">
+                  Parolni yangilash oynasini ochish
+                </a>
+              </p>
+        ';
 
         $html = '
             <div style="background:#f3f6fb;padding:24px 12px;font-family:Arial,sans-serif;">
@@ -713,7 +624,7 @@ class AuthController extends Controller
             </div>
         ';
 
-        Mail::html((string) $html, static function ($message) use ($email, $subject) {
+        \Illuminate\Support\Facades\Mail::html((string) $html, static function ($message) use ($email, $subject) {
             $message->to($email)->subject($subject);
         });
 
@@ -763,16 +674,6 @@ class AuthController extends Controller
         $this->issueAndSendOtp((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET, array_merge([
             'user_id' => (int) $user->id,
         ], $extraMeta));
-    }
-
-    private function loginEmailOtpEnabled(): bool
-    {
-        return self::LOGIN_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
-    }
-
-    private function registerEmailOtpEnabled(): bool
-    {
-        return self::REGISTER_EMAIL_OTP_ENABLED && $this->mailDeliveryEnabled();
     }
 
     private function mailDeliveryEnabled(): bool
@@ -839,7 +740,6 @@ class AuthController extends Controller
             && ! str_contains($normalizedKey, 'your_key')
             && ! str_contains($normalizedKey, 'your-api-key');
     }
-
 
     private function normalizeEmail(string $email): string
     {

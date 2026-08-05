@@ -120,6 +120,7 @@ class User extends Authenticatable
         'name_font_weight',
         'show_expiry_badge',
         'custom_css',
+        'telegram_chat_id',
         'donor_cursor_animation',
         'donor_cursor_type',
         'profile_bg_style',
@@ -186,6 +187,7 @@ class User extends Authenticatable
         'course_open_requested_at' => 'datetime',
         'course_open_approved_at' => 'datetime',
         'donor_cursor_animation' => 'boolean',
+        'telegram_chat_id' => 'integer',
     ];
 
     protected static function booted(): void
@@ -435,7 +437,9 @@ class User extends Authenticatable
     public function hasReachedCourseOpenLimit(): bool
     {
         $limit = 1;
-        if ($this->isDonor()) {
+        if ($this->isAdmin()) {
+            $limit = 3; // Adminlar uchun VIP darajasida
+        } elseif ($this->isDonor()) {
             $limit = match ($this->donation_rank) {
                 'supporter' => 2,
                 'premium'   => 3,
