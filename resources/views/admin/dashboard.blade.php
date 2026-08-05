@@ -9,6 +9,7 @@
   $canManageInbox = $dashboardUser->canManageInbox();
   $canManageEducation = $dashboardUser->canManageEducation();
   $canManageSystem = $dashboardUser->canManageSystem();
+  $isSuperAdmin = $dashboardUser->isSuperAdmin();
 @endphp
 
 <style>
@@ -16,23 +17,28 @@
     padding: 20px 0 60px;
   }
   .dashboard-header {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
   }
   .dashboard-welcome h2 {
-    font-size: 2.5rem;
-    background: linear-gradient(135deg, var(--admin-text-main), var(--admin-prime));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 5px;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--admin-text-main);
+    margin-bottom: 4px;
   }
+  .dashboard-welcome p {
+    color: var(--admin-text-muted);
+    font-size: 0.9rem;
+  }
+
+  /* Stat Cards */
   .bento-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-bottom: 30px;
+    gap: 20px;
+    margin-bottom: 28px;
   }
   @media (max-width: 1200px) {
     .bento-grid { grid-template-columns: repeat(2, 1fr); }
@@ -40,334 +46,568 @@
   @media (max-width: 576px) {
     .bento-grid { grid-template-columns: 1fr; }
   }
-  
-  .glass-card {
+
+  .stat-card {
     background: var(--admin-card-bg);
-    backdrop-filter: blur(20px);
     border: 1px solid var(--admin-glass-border);
-    border-radius: var(--admin-card-radius);
-    padding: 30px;
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
   }
-  
-  .icon-box {
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .stat-card--users::before { background: linear-gradient(90deg, #6366f1, #818cf8); }
+  .stat-card--posts::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .stat-card--courses::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .stat-card--messages::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+
+  .stat-card .icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    margin-bottom: 20px;
-    background: white;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-  }
-  
-  .stat-card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+    font-size: 24px;
+    margin-bottom: 16px;
   }
   .stat-card .value {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 800;
-    font-family: var(--admin-font-heading);
-    margin-bottom: 5px;
     color: var(--admin-text-main);
+    line-height: 1;
+    margin-bottom: 4px;
   }
   .stat-card .label {
     color: var(--admin-text-muted);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
   }
   .stat-card .meta {
-    margin-top: auto;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--admin-text-muted);
-    padding-top: 15px;
+    padding-top: 12px;
     border-top: 1px solid var(--admin-border-subtle);
   }
+  .stat-card .meta strong {
+    color: var(--admin-text-main);
+  }
 
-  .premium-list-item {
+  /* KPI Card */
+  .kpi-card {
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .kpi-card h5 {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 15px;
-    border-radius: 20px;
-    transition: all 0.3s ease;
+    gap: 8px;
+  }
+  .kpi-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
     border: 1px solid transparent;
-    margin-bottom: 10px;
   }
-  .premium-list-item:hover {
-    background: white;
-    border-color: var(--admin-glass-border);
-    transform: translateX(5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-  }
-  .list-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
+  .kpi-row:hover {
     background: var(--admin-bg);
+    border-color: var(--admin-glass-border);
+  }
+  .kpi-row .kpi-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--admin-text-main);
+  }
+  .kpi-row .kpi-desc {
+    font-size: 0.8rem;
+    color: var(--admin-text-muted);
+  }
+  .kpi-badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .kpi-badge--success { background: rgba(16, 185, 129, 0.12); color: #059669; }
+  .kpi-badge--warning { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+  .kpi-badge--info { background: rgba(99, 102, 241, 0.12); color: #4f46e5; }
+  .kpi-badge--danger { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+  /* Chart Card */
+  .chart-card {
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .chart-card h5 {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* List Items */
+  .list-card {
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-glass-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .list-card h5 {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+  }
+  .list-item:hover {
+    background: var(--admin-bg);
+  }
+  .list-item-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
   }
-  
-  .dashboard-grid-main {
+  .list-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .list-item-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--admin-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-item-meta {
+    font-size: 0.8rem;
+    color: var(--admin-text-muted);
+  }
+  .list-item-time {
+    font-size: 0.75rem;
+    color: var(--admin-text-muted);
+    white-space: nowrap;
+  }
+
+  /* System Info Card */
+  .system-card {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 16px;
+    padding: 24px;
+    color: white;
+  }
+  .system-card h5 {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+  .system-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .system-info-row:not(:last-child) {
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .system-info-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .system-info-label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+  .system-info-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  /* Grid Layout */
+  .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 24px;
   }
   @media (max-width: 992px) {
-    .dashboard-grid-main { grid-template-columns: 1fr; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--admin-text-muted);
+  }
+  .empty-state i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  /* Quick Actions */
+  .quick-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .quick-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid var(--admin-glass-border);
+    background: var(--admin-card-bg);
+    color: var(--admin-text-main);
+  }
+  .quick-action-btn:hover {
+    background: var(--admin-bg);
+    transform: translateY(-1px);
+  }
+  .quick-action-btn i {
+    font-size: 16px;
   }
 </style>
 
 <section class="dashboard-section">
   <div class="container-fluid">
-    
+
     <!-- Header -->
     <div class="dashboard-header dashboard-card-item">
       <div class="dashboard-welcome">
         <h2>Salom, {{ $dashboardUser->name }}!</h2>
-        <p class="text-muted">Bugun: {{ now()->translatedFormat('j-F, l') }} | {{ now()->format('H:i') }}</p>
+        <p>Bugun: {{ now()->translatedFormat('j-F, l') }} | {{ now()->format('H:i') }}</p>
       </div>
       <div class="dashboard-actions">
         <span class="dashboard-badge info">{{ $dashboardUser->role_label }}</span>
       </div>
     </div>
 
+    <!-- Quick Actions -->
+    <div class="quick-actions mb-24 dashboard-card-item" style="animation-delay: 0.05s">
+      @if($canManageContent)
+        <a href="{{ route('posts.create') }}" class="quick-action-btn">
+          <i class="mdi mdi-plus-circle-outline"></i> Yangi yangilik
+        </a>
+      @endif
+      @if($canManageEducation)
+        <a href="{{ route('admin.courses.index') }}" class="quick-action-btn">
+          <i class="mdi mdi-book-plus-outline"></i> Kurs boshqarish
+        </a>
+      @endif
+      <a href="{{ route('user') }}" class="quick-action-btn">
+        <i class="mdi mdi-account-group-outline"></i> Foydalanuvchilar
+      </a>
+    </div>
+
     <!-- Stats Bento Grid -->
     <div class="bento-grid">
       <!-- Users -->
-      <div class="card-style dashboard-card-item">
-        <div class="stat-card">
-          <div class="icon-box" style="color: #6366f1; background: rgba(99, 102, 241, 0.1);">
-            <i class="mdi mdi-account-group-outline"></i>
-          </div>
-          <div class="value">{{ number_format($stats['users']) }}</div>
-          <div class="label">Foydalanuvchilar</div>
-          <div class="meta">
-            Ustozlar: <strong>{{ number_format($stats['teachers']) }}</strong>
-          </div>
+      <div class="stat-card stat-card--users dashboard-card-item" style="animation-delay: 0.1s">
+        <div class="icon-box" style="color: #6366f1; background: rgba(99, 102, 241, 0.1);">
+          <i class="mdi mdi-account-group-outline"></i>
+        </div>
+        <div class="value">{{ number_format($stats['users']) }}</div>
+        <div class="label">Foydalanuvchilar</div>
+        <div class="meta">
+          Ustozlar: <strong>{{ number_format($stats['teachers']) }}</strong>
+          @if($monthlyStats['new_users_this_month'] ?? 0)
+            • Bu oy: <strong>+{{ $monthlyStats['new_users_this_month'] }}</strong>
+          @endif
         </div>
       </div>
 
       <!-- News -->
       @if($canManageContent)
-      <div class="card-style dashboard-card-item" style="animation-delay: 0.1s">
-        <div class="stat-card">
-          <div class="icon-box" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
-            <i class="mdi mdi-newspaper-variant-outline"></i>
-          </div>
-          <div class="value">{{ number_format($stats['posts']) }}</div>
-          <div class="label">Yangiliklar</div>
-          <div class="meta">
-            Kategoriyalar: <strong>{{ number_format($stats['categories']) }}</strong>
-          </div>
+      <div class="stat-card stat-card--posts dashboard-card-item" style="animation-delay: 0.15s">
+        <div class="icon-box" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+          <i class="mdi mdi-newspaper-variant-outline"></i>
+        </div>
+        <div class="value">{{ number_format($stats['posts']) }}</div>
+        <div class="label">Yangiliklar</div>
+        <div class="meta">
+          Kategoriyalar: <strong>{{ number_format($stats['categories']) }}</strong>
+          @if($monthlyStats['new_posts_this_month'] ?? 0)
+            • Bu oy: <strong>+{{ $monthlyStats['new_posts_this_month'] }}</strong>
+          @endif
         </div>
       </div>
       @endif
 
       <!-- Education: Courses -->
       @if($canManageEducation)
-      <div class="card-style dashboard-card-item" style="animation-delay: 0.2s">
-        <div class="stat-card">
-          <div class="icon-box" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1);">
-            <i class="mdi mdi-book-open-page-variant-outline"></i>
-          </div>
-          <div class="value">{{ number_format($stats['courses']) }}</div>
-          <div class="label">Kurslar</div>
-          <div class="meta">
-            Nashrda: <strong>{{ number_format($stats['published_courses']) }}</strong>
-          </div>
+      <div class="stat-card stat-card--courses dashboard-card-item" style="animation-delay: 0.2s">
+        <div class="icon-box" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1);">
+          <i class="mdi mdi-book-open-page-variant-outline"></i>
+        </div>
+        <div class="value">{{ number_format($stats['courses']) }}</div>
+        <div class="label">Kurslar</div>
+        <div class="meta">
+          Nashrda: <strong>{{ number_format($stats['published_courses']) }}</strong>
+          • Kutilmoqda: <strong>{{ number_format($stats['pending_courses']) }}</strong>
         </div>
       </div>
       @endif
 
       <!-- Inbox: Messages/Comments -->
       @if($canManageInbox)
-      <div class="card-style dashboard-card-item" style="animation-delay: 0.3s">
-        <div class="stat-card">
-          <div class="icon-box" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
-            <i class="mdi mdi-comment-text-multiple-outline"></i>
-          </div>
-          <div class="value">{{ number_format($stats['comments'] + $stats['contact_messages']) }}</div>
-          <div class="label">Muloqotlar</div>
-          <div class="meta">
-            Yangi xabarlar: <strong>{{ number_format($stats['today_messages']) }}</strong>
-          </div>
+      <div class="stat-card stat-card--messages dashboard-card-item" style="animation-delay: 0.25s">
+        <div class="icon-box" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+          <i class="mdi mdi-comment-text-multiple-outline"></i>
+        </div>
+        <div class="value">{{ number_format($stats['comments'] + $stats['contact_messages']) }}</div>
+        <div class="label">Muloqotlar</div>
+        <div class="meta">
+          Yangi xabarlar: <strong>{{ number_format($stats['today_messages']) }}</strong>
         </div>
       </div>
       @endif
     </div>
 
     <!-- Main Content Layout -->
-    <div class="dashboard-grid-main">
-      
-      <!-- Left Column: Activity & KPI -->
+    <div class="dashboard-grid">
+
+      <!-- Left Column -->
       <div class="dashboard-left">
-        
+
         <!-- KPI Card -->
-        <div class="card-style mb-30 dashboard-card-item" style="animation-delay: 0.4s">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold">Tezkor Nazorat</h5>
-            <i class="mdi mdi-lightning-bolt text-warning fs-4"></i>
+        <div class="kpi-card dashboard-card-item" style="animation-delay: 0.3s">
+          <h5>
+            <i class="mdi mdi-lightning-bolt" style="color: #f59e0b;"></i>
+            Tezkor Nazorat
+          </h5>
+
+          @if($canManageInbox)
+          <div class="kpi-row">
+            <div>
+              <div class="kpi-label">Izohlar</div>
+              <div class="kpi-desc">Moderatsiya kutayotganlar</div>
+            </div>
+            <span class="kpi-badge {{ $stats['pending_comments'] > 0 ? 'kpi-badge--warning' : 'kpi-badge--success' }}">
+              {{ $stats['pending_comments'] }}
+            </span>
           </div>
-          
-          <div class="row g-3">
-            @if($canManageInbox)
-            <div class="col-md-6">
-              <div class="dashboard-kpi-row">
-                <div>
-                  <div class="fw-bold">Izohlar</div>
-                  <div class="text-muted small">Moderatsiya kutayotganlar</div>
-                </div>
-                <span class="dashboard-badge {{ $stats['pending_comments'] > 0 ? 'warning' : 'success' }}">
-                  {{ $stats['pending_comments'] }}
-                </span>
-              </div>
-            </div>
-            @endif
+          @endif
 
-            @if($canManageEducation)
-            <div class="col-md-6">
-              <div class="dashboard-kpi-row">
-                <div>
-                  <div class="fw-bold">Kurs arizalari</div>
-                  <div class="text-muted small">Yangi so'rovlar</div>
-                </div>
-                <span class="dashboard-badge {{ $stats['pending_enrollments'] > 0 ? 'warning' : 'success' }}">
-                  {{ $stats['pending_enrollments'] }}
-                </span>
-              </div>
+          @if($canManageEducation)
+          <div class="kpi-row">
+            <div>
+              <div class="kpi-label">Kurs arizalari</div>
+              <div class="kpi-desc">Yangi so'rovlar</div>
             </div>
-            @endif
-
-            @if($canManageEducation)
-            <div class="col-md-6">
-              <div class="dashboard-kpi-row">
-                <div>
-                  <div class="fw-bold">Imtihonlar</div>
-                  <div class="text-muted small">Faol testlar</div>
-                </div>
-                <span class="dashboard-badge info">{{ $stats['active_exams'] }}</span>
-              </div>
-            </div>
-            @endif
-
-            <div class="col-md-6">
-              <div class="dashboard-kpi-row">
-                <div>
-                  <div class="fw-bold">Tizim holati</div>
-                  <div class="text-muted small">Oxirgi 24 soatlik faollik</div>
-                </div>
-                <span class="dashboard-badge success">Stabil</span>
-              </div>
-            </div>
+            <span class="kpi-badge {{ $stats['pending_enrollments'] > 0 ? 'kpi-badge--warning' : 'kpi-badge--success' }}">
+              {{ $stats['pending_enrollments'] }}
+            </span>
           </div>
-        </div>
 
-        <!-- Animated Activity Chart -->
-        <div class="card-style mb-30 dashboard-card-item" style="animation-delay: 0.45s">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold">Haftalik Faollik (Kirishlar)</h5>
-            <div class="text-muted small">Oxirgi 7 kun</div>
-          </div>
-          <div style="position:relative;height:280px;">
-            <canvas id="dashboard-weekly-activity-chart" aria-label="Haftalik faollik grafigi"></canvas>
-          </div>
-        </div>
-
-        <!-- Recent Activity Tabs or Mixed List -->
-        <div class="row">
-          @if($canManageContent)
-          <div class="col-md-12 mb-30">
-            <div class="card-style h-100 dashboard-card-item" style="animation-delay: 0.5s">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold">So'nggi Yangiliklar</h5>
-                <a href="{{ route('posts.index') }}" class="btn btn-sm btn-light rounded-pill">Barchasi</a>
-              </div>
-              <div class="dashboard-list">
-                @forelse($recentPosts as $post)
-                <div class="premium-list-item">
-                  <div class="list-icon" style="color: #10b981;">
-                    <i class="mdi mdi-text-box-outline"></i>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="fw-bold text-dark">{{ \Illuminate\Support\Str::limit($post->title, 70) }}</div>
-                    <div class="text-muted small">
-                      {{ $post->category?->name ?? 'Kategoriyasiz' }} • {{ $post->views ?? 0 }} ko'rish
-                    </div>
-                  </div>
-                  <div class="text-end text-muted small">
-                    {{ $post->created_at?->diffForHumans() }}
-                  </div>
-                </div>
-                @empty
-                <div class="text-center py-5 text-muted">Hozircha ma'lumot yo'q</div>
-                @endforelse
-              </div>
+          <div class="kpi-row">
+            <div>
+              <div class="kpi-label">Imtihonlar</div>
+              <div class="kpi-desc">Faol testlar</div>
             </div>
+            <span class="kpi-badge kpi-badge--info">{{ $stats['active_exams'] }}</span>
+          </div>
+          @endif
+
+          @if($canManageSystem)
+          <div class="kpi-row">
+            <div>
+              <div class="kpi-label">Tizim holati</div>
+              <div class="kpi-desc">Oxirgi 24 soatlik faollik</div>
+            </div>
+            <span class="kpi-badge kpi-badge--success">Stabil</span>
           </div>
           @endif
         </div>
 
-      </div>
-
-      <!-- Right Column: Sidebar Panels -->
-      <div class="dashboard-right">
-        
-        <!-- Messaging/Inbox Sidebar -->
-        @if($canManageInbox)
-        <div class="card-style mb-30 dashboard-card-item" style="animation-delay: 0.6s">
-          <h5 class="fw-bold mb-4">Yangi Xabarlar</h5>
-          <div class="dashboard-list">
-            @forelse($recentMessages as $msg)
-            <div class="premium-list-item">
-              <div class="list-icon" style="color: #6366f1;">
-                <i class="mdi mdi-email-open-outline"></i>
-              </div>
-              <div class="overflow-hidden">
-                <div class="fw-bold text-truncate">{{ $msg->name }}</div>
-                <div class="text-muted small text-truncate">{{ $msg->message }}</div>
-              </div>
-            </div>
-            @empty
-            <div class="text-center py-4 text-muted">Xabarlar yo'q</div>
-            @endforelse
+        <!-- Activity Chart -->
+        <div class="chart-card dashboard-card-item" style="animation-delay: 0.35s">
+          <h5>
+            Haftalik Faollik
+            <span class="text-muted small" style="font-weight: 400;">Oxirgi 7 kun</span>
+          </h5>
+          <div style="position:relative; height:260px;">
+            <canvas id="dashboard-weekly-activity-chart" aria-label="Haftalik faollik grafigi"></canvas>
           </div>
-          <a href="{{ route('admin.contact-messages.index') }}" class="btn btn-primary w-100 mt-3 rounded-pill py-2">Inboxga o'tish</a>
+        </div>
+
+        <!-- Recent Posts -->
+        @if($canManageContent)
+        <div class="list-card dashboard-card-item" style="animation-delay: 0.4s">
+          <h5>
+            So'nggi Yangiliklar
+            <a href="{{ route('posts.index') }}" class="btn btn-sm btn-light rounded-pill">Barchasi</a>
+          </h5>
+          @forelse($recentPosts as $post)
+          <div class="list-item">
+            <div class="list-item-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+              <i class="mdi mdi-text-box-outline"></i>
+            </div>
+            <div class="list-item-content">
+              <div class="list-item-title">{{ \Illuminate\Support\Str::limit($post->title, 60) }}</div>
+              <div class="list-item-meta">{{ $post->category?->name ?? 'Kategoriyasiz' }} • {{ $post->views ?? 0 }} ko'rish</div>
+            </div>
+            <div class="list-item-time">{{ $post->created_at?->diffForHumans() }}</div>
+          </div>
+          @empty
+          <div class="empty-state">
+            <i class="mdi mdi-text-box-outline"></i>
+            <p>Hozircha yangiliklar yo'q</p>
+          </div>
+          @endforelse
         </div>
         @endif
 
-        <!-- Quick Stats/Info -->
-        <div class="card-style dashboard-card-item" style="animation-delay: 0.7s; background: linear-gradient(135deg, var(--admin-prime), var(--admin-secondary)); color: white;">
-          <h5 class="fw-bold mb-3">Tizim Ma'lumoti</h5>
-          <p class="small mb-4" style="opacity: 0.8;">Admin panelning barcha bo'limlari to'g'ri ishlamoqda. Server yuki: 12%</p>
-          
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <div class="rounded-circle bg-white/20 p-2">
-              <i class="mdi mdi-database-outline fs-5"></i>
+      </div>
+
+      <!-- Right Column -->
+      <div class="dashboard-right">
+
+        <!-- Messages -->
+        @if($canManageInbox)
+        <div class="list-card dashboard-card-item" style="animation-delay: 0.45s">
+          <h5>
+            Yangi Xabarlar
+            <a href="{{ route('admin.contact-messages.index') }}" class="btn btn-sm btn-primary rounded-pill">Inbox</a>
+          </h5>
+          @forelse($recentMessages as $msg)
+          <div class="list-item">
+            <div class="list-item-icon" style="color: #6366f1; background: rgba(99, 102, 241, 0.1);">
+              <i class="mdi mdi-email-open-outline"></i>
+            </div>
+            <div class="list-item-content">
+              <div class="list-item-title">{{ $msg->name }}</div>
+              <div class="list-item-meta">{{ \Illuminate\Support\Str::limit($msg->message, 50) }}</div>
+            </div>
+            <div class="list-item-time">{{ $msg->created_at?->diffForHumans() }}</div>
+          </div>
+          @empty
+          <div class="empty-state">
+            <i class="mdi mdi-email-outline"></i>
+            <p>Xabarlar yo'q</p>
+          </div>
+          @endforelse
+        </div>
+        @endif
+
+        <!-- System Info (Admin only) -->
+        @if($canManageSystem)
+        <div class="system-card dashboard-card-item" style="animation-delay: 0.5s">
+          <h5>Tizim Ma'lumoti</h5>
+
+          <div class="system-info-row">
+            <div class="system-info-icon">
+              <i class="mdi mdi-database-outline"></i>
             </div>
             <div>
-              <div class="fw-bold">Ma'lumotlar bazasi</div>
-              <div class="small opacity-70">Zaxira: Bugun 04:00</div>
+              <div class="system-info-label">Ma'lumotlar bazasi</div>
+              <div class="system-info-value">Zaxira: Bugun 04:00</div>
             </div>
           </div>
-          
-          <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-white/20 p-2">
-              <i class="mdi mdi-shield-check-outline fs-5"></i>
+
+          <div class="system-info-row">
+            <div class="system-info-icon">
+              <i class="mdi mdi-shield-check-outline"></i>
             </div>
             <div>
-              <div class="fw-bold">Xavfsizlik</div>
-              <div class="small opacity-70">SSL sertifikati faol</div>
+              <div class="system-info-label">Xavfsizlik</div>
+              <div class="system-info-value">SSL sertifikati faol</div>
             </div>
           </div>
+
+          @if($monthlyStats['server_uptime'] ?? null)
+          <div class="system-info-row">
+            <div class="system-info-icon">
+              <i class="mdi mdi-clock-outline"></i>
+            </div>
+            <div>
+              <div class="system-info-label">Server ishlash vaqti</div>
+              <div class="system-info-value">{{ $monthlyStats['server_uptime'] }}</div>
+            </div>
+          </div>
+          @endif
+        </div>
+        @endif
+
+        <!-- Recent Users -->
+        <div class="list-card dashboard-card-item" style="animation-delay: 0.55s">
+          <h5>
+            Yangi Foydalanuvchilar
+            <a href="{{ route('user') }}" class="btn btn-sm btn-light rounded-pill">Barchasi</a>
+          </h5>
+          @forelse($recentUsers as $user)
+          <div class="list-item">
+            <div class="list-item-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+              <i class="mdi mdi-account-outline"></i>
+            </div>
+            <div class="list-item-content">
+              <div class="list-item-title">{{ $user->name }}</div>
+              <div class="list-item-meta">{{ $user->roleRelation?->label ?? 'Foydalanuvchi' }}</div>
+            </div>
+            <div class="list-item-time">{{ $user->created_at?->diffForHumans() }}</div>
+          </div>
+          @empty
+          <div class="empty-state">
+            <i class="mdi mdi-account-outline"></i>
+            <p>Foydalanuvchilar yo'q</p>
+          </div>
+          @endforelse
         </div>
 
       </div>
@@ -386,8 +626,8 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  var labels = ['Dush', 'Sesh', 'Chor', 'Pay', 'Juma', 'Shan', 'Yakb'];
-  var values = [31, 40, 28, 51, 42, 109, 100];
+  var labels = @json(array_column($weeklyActivity, 'label'));
+  var values = @json(array_column($weeklyActivity, 'count'));
 
   new Chart(canvas.getContext('2d'), {
     type: 'line',
@@ -397,21 +637,47 @@ document.addEventListener('DOMContentLoaded', function () {
         label: 'Kirishlar',
         data: values,
         borderColor: '#6366f1',
-        backgroundColor: 'rgba(99, 102, 241, 0.12)',
-        borderWidth: 2,
-        pointRadius: 3,
-        pointBackgroundColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#6366f1',
+        pointBorderWidth: 2,
+        pointHoverRadius: 6,
         fill: true,
-        lineTension: 0.35,
+        tension: 0.4,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      legend: { display: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e293b',
+          titleColor: '#fff',
+          bodyColor: '#cbd5e1',
+          borderColor: '#334155',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 12,
+          displayColors: false,
+        },
+      },
       scales: {
-        xAxes: [{ gridLines: { display: false } }],
-        yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }],
+        x: {
+          grid: { display: false },
+          ticks: { color: '#94a3b8', font: { size: 12 } },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(148, 163, 184, 0.1)' },
+          ticks: { color: '#94a3b8', font: { size: 12 }, precision: 0 },
+        },
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index',
       },
     },
   });

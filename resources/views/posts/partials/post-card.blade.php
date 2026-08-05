@@ -38,7 +38,7 @@
   @endif
 
   <h3>{{ $postTitle }}</h3>
-  <p>{{ $postShort }}</p>
+  <p>{!! highlight_entities(e($postShort)) !!}</p>
 
   <div class="icon-links">
     <div class="icon-link">

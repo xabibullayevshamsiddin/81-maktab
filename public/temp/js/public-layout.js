@@ -3627,7 +3627,7 @@ function refreshChatAvailability() {
     }
 
     function renderLoading() {
-      resultsWrap.innerHTML = '<p class="global-search-empty">Qidirilmoqda...</p>';
+      resultsWrap.innerHTML = '<div class="global-search-loading"><div class="search-loading-dots"><span></span><span></span><span></span></div><span>Qidirilmoqda...</span></div>';
     }
 
     function renderEmpty(text) {
@@ -3659,6 +3659,17 @@ function refreshChatAvailability() {
       }).join('');
 
       resultsWrap.innerHTML = html;
+      // Staggered animation for each result
+      var resultItems = resultsWrap.querySelectorAll('.global-search-item');
+      resultItems.forEach(function(item, idx) {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(12px) scale(0.97)';
+        item.style.transition = 'opacity 0.35s cubic-bezier(0.23,1,0.32,1), transform 0.35s cubic-bezier(0.23,1,0.32,1)';
+        setTimeout(function() {
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0) scale(1)';
+        }, 40 + idx * 50);
+      });
       selectedIndex = -1;
       if (!primeAudioMuted) {
         playPrimeSuccess();

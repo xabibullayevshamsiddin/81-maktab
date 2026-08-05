@@ -102,6 +102,7 @@ return array_replace_recursive($fallback, [
         'to_top' => 'Наверх',
         'global_search_label' => 'Поиск по всему сайту',
         'global_search_placeholder' => 'Пост, учитель, курс, экзамен...',
+        'global_search_empty' => 'Введите слово для поиска.',
         'loading' => 'Загрузка...',
         'ai_disabled_default' => 'AI-помощник временно отключен. Попробуйте позже.',
         'ai_assistant' => 'AI-помощник',

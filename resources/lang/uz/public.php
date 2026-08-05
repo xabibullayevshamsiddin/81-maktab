@@ -100,6 +100,7 @@ return [
         'to_top' => 'Yuqoriga',
         'global_search_label' => 'Butun sayt bo‘yicha qidiruv',
         'global_search_placeholder' => 'Post, ustoz, kurs, imtihon...',
+        'global_search_empty' => 'Qidirishni boshlash uchun so\'z kiriting.',
         'loading' => 'Yuklanmoqda...',
         'ai_disabled_default' => 'AI yordamchi vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.',
         'ai_assistant' => 'AI yordamchi',

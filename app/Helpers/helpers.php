@@ -694,3 +694,77 @@ if (! function_exists('turnstile_enabled')) {
         return (bool) config('services.turnstile.enabled') && turnstile_site_key() !== null;
     }
 }
+
+if (! function_exists('highlight_entities')) {
+    /**
+     * Matndagi yillar, maktab nomlari, ko'cha nomlarini ajratib ko'rsatadi.
+     * 
+     * @param string $text
+     * @return string
+     */
+    function highlight_entities(?string $text): string
+    {
+        $text = (string) ($text ?? '');
+        
+        if ($text === '') {
+            return $text;
+        }
+        
+        // HTML tag'larni saqlab qolish
+        $placeholders = [];
+        $counter = 0;
+        
+        // Barcha HTML tag'larni vaqtinchalik olib tashlash
+        $text = preg_replace_callback('/<[^>]+>/', function ($matches) use (&$placeholders, &$counter) {
+            $key = '___PLACEHOLDER_' . $counter . '___';
+            $placeholders[$key] = $matches[0];
+            $counter++;
+            return $key;
+        }, $text);
+        
+        // 1. Yillarni ajratib ko'rsatish (1900-2099)
+        $text = preg_replace(
+            '/\b(19[0-9]{2}|20[0-9]{2})\b/',
+            '<span class="entity-highlight entity-year">$1</span>',
+            $text
+        );
+        
+        // 2. Maktab nomlarini ajratib ko'rsatish (masalan: 81-maktab, 81-IDUM, 12-maktab)
+        $text = preg_replace(
+            '/\b(\d{1,3}[\s-]*(?:maktab|IDUM|DTM|UMI|kollej|licey))\b/i',
+            '<span class="entity-highlight entity-school">$1</span>',
+            $text
+        );
+        
+        // 3. Ko'cha nomlarini ajratib ko'rsatish (masalan: Amir Temur ko'chasi, Mustaqillik prospekti)
+        $streetKeywords = ['ko'.'chasi', 'ko'.'cha', 'prospekti', 'prospekt', 'xiyoboni', 'xiyoban', "bog'i", 'bog', 'maydoni', 'maydon', 'tumani', 'tuman'];
+        foreach ($streetKeywords as $kw) {
+            $text = preg_replace(
+                '/(\w+(?:\s+\w+)*\s+' . preg_quote($kw, '/') . ')/u',
+                '<span class="entity-highlight entity-street">$1</span>',
+                $text
+            );
+        }
+        
+        // 4. Shahar nomlarini ajratib ko'rsatish (Toshkent, Samarqand, Buxoro)
+        $cities = ['Toshkent', 'Samarqand', 'Buxoro', 'Qarshi', 'Namangan', 'Andijon', 'Farg\'ona', 'Urganch', 'Nukus', 'Termez', 'Jizzax', 'Navoiy', 'Guliston', 'Marg\'ilon', 'Kokand', 'Denau', 'Chirchiq', 'Almalyk', 'Bekabad', 'Kogon'];
+        $cityPattern = '/\b(' . implode('|', $cities) . ')\b/';
+        $text = preg_replace(
+            $cityPattern,
+            '<span class="entity-highlight entity-city">$1</span>',
+            $text
+        );
+        
+        // 5. Telefon raqamlarini ajratib ko'rsatish
+        $text = preg_replace(
+            '/\b(\+998[\s-]?\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})\b/',
+            '<span class="entity-highlight entity-phone">$1</span>',
+            $text
+        );
+        
+        // Vaqtinchalik placeholder'larni qaytarish
+        $text = str_replace(array_keys($placeholders), array_values($placeholders), $text);
+        
+        return $text;
+    }
+}

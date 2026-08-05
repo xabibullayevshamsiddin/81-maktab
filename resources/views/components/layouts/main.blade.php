@@ -270,7 +270,6 @@
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
-              <li><a class="nav-link {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">{{ __('public.layout.nav.library') }}</a></li>
               @auth
               <li><a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">{{ __('public.layout.menu.profile') }}</a></li>
               @endauth
@@ -427,10 +426,9 @@
 	            <div class="nav-dropdown nav-dropdown--bomba-locale desktop-only">
                 <details class="nav-dropdown-details js-header-dropdown">
                   <summary class="nav-link nav-dropdown-toggle">
-                    <span class="locale-flags-row">
-                      @foreach($localeFlags as $flagKey => $flagEmoji)
-                        <span class="locale-flag{{ $currentLocale === $flagKey ? ' is-current' : '' }}">{{ $flagEmoji }}</span>
-                      @endforeach
+                    <span class="locale-current">
+                      <span class="locale-flag">{{ $localeFlags[$currentLocale] ?? '🌐' }}</span>
+                      <span class="locale-code">{{ strtoupper($currentLocale) }}</span>
                     </span>
                     <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
                   </summary>
@@ -519,7 +517,6 @@
           <h4 class="footer-title">{{ __('public.layout.resources') }}</h4>
           <ul class="footer-links">
             <li><a href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
-            <li><a href="{{ route('books.index') }}">{{ __('public.layout.nav.library') }}</a></li>
             <li><a href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
             <li><a href="{{ route('feature-requests.index') }}">{{ __('public.layout.feature_requests') }}</a></li>
             @auth
@@ -573,50 +570,6 @@
         $globalChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('global_chat_disabled_message', '')) ?: __('public.layout.chat_disabled_default');
         $chatText = [
           'global_chat' => __('public.layout.global_chat'),
-          'group_chat' => __('public.layout.group_chat'),
-          'select_group' => __('public.layout.select_group'),
-          'join_group' => __('public.layout.join_group'),
-          'group_requests' => __('public.layout.group_requests'),
-          'group_status_owner' => __('public.layout.group_status_owner'),
-          'group_status_member' => __('public.layout.group_status_member'),
-          'group_status_pending' => __('public.layout.group_status_pending'),
-          'group_status_join' => __('public.layout.group_status_join'),
-          'group_status_requested' => __('public.layout.group_status_requested'),
-          'group_status_you_own' => __('public.layout.group_status_you_own'),
-          'group_list_empty' => __('public.layout.group_list_empty'),
-          'group_requests_empty' => __('public.layout.group_requests_empty'),
-          'group_request_accept' => __('public.layout.group_request_accept'),
-          'group_request_reject' => __('public.layout.group_request_reject'),
-          'group_request_unknown' => __('public.layout.group_request_unknown'),
-          'group_leave' => __('public.layout.group_leave'),
-          'group_create' => __('public.layout.group_create'),
-          'group_settings' => __('public.layout.group_settings'),
-          'group_stab_info' => __('public.layout.group_stab_info'),
-          'group_stab_members' => __('public.layout.group_stab_members'),
-          'group_name' => __('public.layout.group_name'),
-          'group_description' => __('public.layout.group_description'),
-          'group_privacy' => __('public.layout.group_privacy'),
-          'group_privacy_closed' => __('public.layout.group_privacy_closed'),
-          'group_privacy_open' => __('public.layout.group_privacy_open'),
-          'group_image' => __('public.layout.group_image'),
-          'group_change_image' => __('public.layout.group_change_image'),
-          'group_remove_image' => __('public.layout.group_remove_image'),
-          'group_save' => __('public.layout.group_save'),
-          'group_delete' => __('public.layout.group_delete'),
-          'group_members' => __('public.layout.group_members'),
-          'group_role_member' => __('public.layout.group_role_member'),
-          'group_role_admin' => __('public.layout.group_role_admin'),
-          'group_promote' => __('public.layout.group_promote'),
-          'group_demote' => __('public.layout.group_demote'),
-          'group_kick' => __('public.layout.group_kick'),
-          'group_open' => __('public.layout.group_open'),
-          'group_closed' => __('public.layout.group_closed'),
-          'group_you' => __('public.layout.group_you'),
-          'group_load_failed' => __('public.layout.group_load_failed'),
-          'group_requests_failed' => __('public.layout.group_requests_failed'),
-          'group_join_failed' => __('public.layout.group_join_failed'),
-          'group_join_sent' => __('public.layout.group_join_sent'),
-          'group_select_prompt' => __('public.layout.group_select_prompt'),
           'chat_network_error' => __('public.layout.chat_network_error'),
           'chat_action_failed' => __('public.layout.chat_action_failed'),
           'chat_sending' => __('public.layout.send'),
@@ -754,7 +707,20 @@
             maxlength="120"
           >
         </div>
-        <div id="global-search-results" class="global-search-results"></div>
+        <div id="global-search-results" class="global-search-results">
+          <div class="global-search-empty">
+            <div class="global-search-empty-icon">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <p class="global-search-empty-text">{{ __('public.layout.global_search_empty') }}</p>
+            <div class="global-search-hints">
+              <span class="global-search-hint-tag"><i class="fa-solid fa-newspaper"></i> {{ __('public.layout.nav.posts') }}</span>
+              <span class="global-search-hint-tag"><i class="fa-solid fa-chalkboard-user"></i> {{ __('public.layout.nav.teachers') }}</span>
+              <span class="global-search-hint-tag"><i class="fa-solid fa-book-open"></i> {{ __('public.layout.nav.courses') }}</span>
+              <span class="global-search-hint-tag"><i class="fa-solid fa-file-lines"></i> {{ __('public.layout.menu.exams') }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     @auth

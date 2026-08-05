@@ -150,10 +150,10 @@
         </div>
 
         <h3>{{ $postTitle }}</h3>
-        <p>{{ $postShort }}</p>
+        <p>{!! highlight_entities(e($postShort)) !!}</p>
 
         <div class="post-content">
-          {!! nl2br(e($postContent)) !!}
+          {!! nl2br(highlight_entities(e($postContent))) !!}
         </div>
 
         @php

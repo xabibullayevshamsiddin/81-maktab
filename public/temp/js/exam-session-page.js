@@ -91,6 +91,7 @@
       'inset:0',
       'z-index:2147483647',   // max z-index
       'background:#050d1a',
+      'opacity:1',
       'display:none',
       'align-items:center',
       'justify-content:center',
@@ -98,8 +99,10 @@
       'gap:18px',
       'color:#e6eefb',
       'font-family:Inter,sans-serif',
-      'pointer-events:none',
+      'pointer-events:auto',
       'user-select:none',
+      'backdrop-filter:none !important',
+      '-webkit-backdrop-filter:none !important',
     ].join(';');
     shield.innerHTML = [
       '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#7db4ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">',
@@ -113,10 +116,31 @@
 
     function showShield() {
       shield.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      document.body.classList.add('shield-active');
+      document.documentElement.classList.add('shield-active');
+      // Scroll pozitsiyasini saqlab, keyin qaytarish uchun
+      shield._scrollY = window.scrollY;
+      shield._scrollX = window.scrollX;
     }
 
     function hideShield() {
       shield.style.display = 'none';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.body.classList.remove('shield-active');
+      document.documentElement.classList.remove('shield-active');
+      // Saqlangan scroll pozitsiyasiga qaytarish
+      if (shield._scrollY) {
+        window.scrollTo(shield._scrollX || 0, shield._scrollY);
+      }
     }
 
     document.addEventListener('visibilitychange', () => {
@@ -227,6 +251,22 @@
     });
 
     document.addEventListener('paste', (event) => event.preventDefault(), true);
+
+    // Scroll bloklash — himoya rejimda
+    function blockScroll(e) {
+      if (shield.style.display !== 'none') {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }
+    document.addEventListener('wheel', blockScroll, { passive: false, capture: true });
+    document.addEventListener('touchmove', blockScroll, { passive: false, capture: true });
+    window.addEventListener('scroll', function() {
+      if (shield.style.display !== 'none') {
+        window.scrollTo(0, 0);
+      }
+    }, { passive: false, capture: true });
   })();
 
   const timerEl = document.getElementById('timer');

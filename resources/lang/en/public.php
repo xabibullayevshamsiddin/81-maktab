@@ -100,6 +100,7 @@ return [
         'to_top' => 'Back to top',
         'global_search_label' => 'Search across the whole site',
         'global_search_placeholder' => 'Post, teacher, course, exam...',
+        'global_search_empty' => 'Type to start searching.',
         'loading' => 'Loading...',
         'ai_disabled_default' => 'AI assistant is temporarily disabled. Please try again later.',
         'ai_assistant' => 'AI Assistant',

@@ -71,6 +71,31 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
+        // Haftalik faollik (oxirgi 7 kun ro'yxatdan o'tganlar)
+        $weeklyActivity = cache()->remember('admin_weekly_activity', 300, function () {
+            $days = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $days[] = [
+                    'label' => $date->translatedFormat('D'),
+                    'count' => User::query()
+                        ->whereDate('created_at', $date)
+                        ->count(),
+                ];
+            }
+            return $days;
+        });
+
+        // Joriy oy statistikasi
+        $monthlyStats = cache()->remember('admin_monthly_stats', 300, function () {
+            return [
+                'new_users_this_month' => User::query()->whereMonth('created_at', now()->month)->count(),
+                'new_posts_this_month' => Post::query()->whereMonth('created_at', now()->month)->count(),
+                'new_courses_this_month' => Course::query()->whereMonth('created_at', now()->month)->count(),
+                'server_uptime' => $this->getServerUptime(),
+            ];
+        });
+
         return view('admin.dashboard', compact(
             'stats',
             'recentPosts',
@@ -78,6 +103,8 @@ class AdminController extends Controller
             'recentEnrollments',
             'recentResults',
             'recentUsers',
+            'weeklyActivity',
+            'monthlyStats',
         ));
     }
 
@@ -226,6 +253,22 @@ class AdminController extends Controller
         return redirect()->route('user')
             ->with('error', "Foydalanuvchi o'chirildi.")
             ->with('toast_type', 'error');
+    }
+
+    private function getServerUptime(): string
+    {
+        try {
+            $uptime = @file_get_contents('/proc/uptime');
+            if ($uptime !== false) {
+                $seconds = (float) explode(' ', $uptime)[0];
+                $days = floor($seconds / 86400);
+                $hours = floor(($seconds % 86400) / 3600);
+                return $days . ' kun ' . $hours . ' soat';
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        return 'Noma\'lum';
     }
 
     public function approveCourseOpenRequest(User $user)

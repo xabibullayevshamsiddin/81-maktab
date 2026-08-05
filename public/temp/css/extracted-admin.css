@@ -749,3 +749,230 @@ body::after {
     padding: 14px 16px;
   }
 }
+
+/* ============================================================
+   GRADE MATRIX — Sinflarni tanlash jadvali
+   ============================================================ */
+.grade-matrix-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(13, 63, 120, 0.06);
+}
+
+.grade-matrix-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(21, 101, 192, 0.06) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.grade-matrix-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 52ch;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.grade-matrix-hint i {
+  margin-top: 2px;
+  opacity: 0.75;
+  color: var(--primary-2, #1565c0);
+}
+
+.grade-matrix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.grade-matrix-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.grade-matrix-btn:hover {
+  border-color: var(--primary-2, #1565c0);
+  color: var(--primary-2, #1565c0);
+  background: rgba(21, 101, 192, 0.06);
+}
+
+.grade-matrix-btn--primary {
+  background: linear-gradient(135deg, var(--primary-2, #1565c0), #0d47a1);
+  color: #fff;
+  border-color: transparent;
+}
+
+.grade-matrix-btn--primary:hover {
+  color: #fff;
+  filter: brightness(1.05);
+  border-color: transparent;
+}
+
+.grade-matrix-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+}
+
+.grade-matrix {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.grade-matrix thead th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: var(--text);
+  padding: 8px 4px;
+}
+
+.grade-matrix th,
+.grade-matrix td {
+  border: 1px solid var(--border);
+  padding: 0;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.grade-matrix thead th.grade-matrix-corner {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  box-shadow: 4px 0 8px -4px rgba(13, 63, 120, 0.12);
+}
+
+.grade-matrix-corner {
+  width: 56px;
+  min-width: 56px;
+  background: #f1f5f9 !important;
+}
+
+.grade-matrix-corner-inner {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 10px 6px;
+}
+
+.grade-matrix tbody th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  box-shadow: 4px 0 8px -4px rgba(13, 63, 120, 0.12);
+}
+
+.grade-matrix-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 6px;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-2, #1565c0);
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.grade-matrix-row-head:hover {
+  background: rgba(21, 101, 192, 0.12);
+}
+
+.grade-matrix-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-2, #1565c0);
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.grade-matrix-col-head:hover {
+  background: rgba(21, 101, 192, 0.08);
+}
+
+.grade-matrix-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.grade-matrix-cell input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-2, #1565c0);
+  cursor: pointer;
+}
+
+.grade-matrix-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (max-width: 640px) {
+  .grade-matrix-toolbar {
+    flex-direction: column;
+  }
+  
+  .grade-matrix-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .grade-matrix-scroll {
+    padding: 4px;
+  }
+}
