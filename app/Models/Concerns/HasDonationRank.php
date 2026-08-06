@@ -158,6 +158,9 @@ trait HasDonationRank
 
     public function donorMaxAvatarSize(): int
     {
+        if ($this->isAdmin()) {
+            return 51200; // 50 MB — adminlar uchun (VIP darajasida)
+        }
         if (!$this->isDonor()) {
             return 4096; // 4 MB — oddiy foydalanuvchilar uchun
         }
@@ -166,6 +169,9 @@ trait HasDonationRank
 
     public function donorAiChatLimit(): int
     {
+        if ($this->isAdmin()) {
+            return PHP_INT_MAX; // Cheksiz — adminlar uchun (VIP darajasida)
+        }
         if (!$this->isDonor()) {
             return 30; // Kunlik
         }
@@ -214,11 +220,17 @@ trait HasDonationRank
 
     public function donorCanExport(): bool
     {
-        return $this->isDonor() && in_array($this->donation_rank, [Donation::RANK_VIP], true);
+        if ($this->isAdmin()) {
+            return true;
+        }
+        return $this->isDonor();
     }
 
     public function donorCanEmoji(): bool
     {
+        if ($this->isAdmin()) {
+            return true;
+        }
         return $this->isDonor() && in_array($this->donation_rank, [Donation::RANK_VIP], true);
     }
 
@@ -237,13 +249,40 @@ trait HasDonationRank
             "expires_at" => $expiresAt,
         ]);
 
-        $this->update([
-            "donation_rank" => $rank,
-            "donation_rank_expires_at" => $expiresAt,
-            "total_donated" => ($this->total_donated ?? 0) + $amount,
-            "username_color" => $config["badge_color"],
-            "profile_theme" => $rank,
-        ]);
+        // Joriy rankni saqlab qolish logikasi:
+        // Agar foydalanuvchining joriy ranki yangi rankdan yuqori bo'lsa, uni saqlab qolamiz
+        $currentRank = $this->donation_rank;
+        $currentRankConfig = $currentRank ? Donation::configForRank($currentRank) : null;
+        $newRankConfig = Donation::configForRank($rank);
+        
+        $shouldUpgrade = true;
+        if ($currentRank && $currentRankConfig && $newRankConfig) {
+            // Agar joriy rank yangi rankdan yuqori priorityga ega bo'lsa, upgrade qilmaymiz
+            if (($currentRankConfig["priority"] ?? 0) > ($newRankConfig["priority"] ?? 0)) {
+                $shouldUpgrade = false;
+                // Faqat expiration ni uzaytiramiz (agar yangi muddat uzunroq bo'lsa)
+                if ($this->donation_rank_expires_at && $expiresAt->isAfter($this->donation_rank_expires_at)) {
+                    $this->update([
+                        "donation_rank_expires_at" => $expiresAt,
+                        "total_donated" => ($this->total_donated ?? 0) + $amount,
+                    ]);
+                } else {
+                    $this->update([
+                        "total_donated" => ($this->total_donated ?? 0) + $amount,
+                    ]);
+                }
+            }
+        }
+        
+        if ($shouldUpgrade) {
+            $this->update([
+                "donation_rank" => $rank,
+                "donation_rank_expires_at" => $expiresAt,
+                "total_donated" => ($this->total_donated ?? 0) + $amount,
+                "username_color" => $config["badge_color"],
+                "profile_theme" => $rank,
+            ]);
+        }
 
         UserActivityLogger::log(
             $this,

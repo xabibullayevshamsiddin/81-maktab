@@ -546,7 +546,7 @@
           </ul>
           <div class="footer-map-action">
             <a href="https://maps.app.goo.gl/erCMfrDY42DCogHL6" target="_blank" rel="noopener" class="btn btn-sm btn-outline-footer btn-prime">
-              <i class="fa-solid fa-map-location-dot"></i> {{ __('public.layout.view_on_map') }}
+              <i class="fa-solid fa-map-location-dot"></i> <span>{{ __('public.layout.view_on_map') }}</span>
             </a>
           </div>
         </div>

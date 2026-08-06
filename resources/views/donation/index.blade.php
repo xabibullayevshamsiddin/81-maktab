@@ -12,76 +12,189 @@
 }
 .donation-hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
 .donation-hero p { font-size: 1.1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+
 .rank-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+
 .rank-card {
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
     padding: 2rem;
     text-align: center;
-    transition: transform 0.3s, box-shadow 0.3s, background 0.3s, border-color 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
     background: var(--surface);
     color: var(--text);
     box-sizing: border-box;
     position: relative;
+    border: 1px solid var(--border);
+    overflow: hidden;
 }
-.rank-card::after {
+.rank-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
     background: var(--card-color, #6366f1);
-    border-radius: 1.5rem 1.5rem 0 0;
-    pointer-events: none;
-    z-index: 2;
 }
-.rank-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    border: 2px solid var(--border);
-    pointer-events: none;
-    z-index: 0;
+.rank-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12); }
+
+.rank-card .rank-icon { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--card-color); }
+.rank-card .rank-label { font-size: 1.4rem; font-weight: 700; color: var(--card-color); margin-bottom: 0.25rem; }
+.rank-card .price-base { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
+
+/* Duration selector */
+.duration-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    justify-content: center;
 }
-.rank-card > * {
-    position: relative;
-    z-index: 1;
+.duration-btn {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
-.rank-card:hover { transform: translateY(-8px); box-shadow: 0 14px 40px rgba(13, 63, 120, 0.11); }
-.rank-card .rank-icon { font-size: 3rem; margin-bottom: 0.25rem; }
-.rank-card .rank-label { font-size: 1.5rem; font-weight: 700; }
-.rank-card .price-table { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
-.price-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; border-radius: 0.75rem; background: var(--bg); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
-.price-row:hover { border-color: var(--primary-2); }
-.price-row.popular { border-color: #f59e0b; background: #fef3c7; }
-.price-row .dur { font-weight: 600; font-size: 0.9rem; }
-.price-row .dur small { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
-.price-row .amt { font-weight: 700; font-size: 1rem; }
-.price-row .discount-badge { background: #22c55e20; color: #22c55e; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; margin-left: 0.5rem; }
-.price-row .old-price { text-decoration: line-through; color: var(--muted); font-size: 0.8rem; margin-right: 0.25rem; }
+.duration-btn:hover { border-color: var(--card-color); }
+.duration-btn.active {
+    background: var(--card-color);
+    color: #fff;
+    border-color: var(--card-color);
+}
+
+/* Price display */
+.price-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.price-display .price-main {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+}
+.price-display .price-old {
+    text-decoration: line-through;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+.price-display .discount-tag {
+    display: inline-block;
+    background: #22c55e20;
+    color: #22c55e;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+}
+
+/* Features */
 .rank-card .features { list-style: none; padding: 0; margin: 1rem 0; text-align: left; }
-.rank-card .features li { padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+.rank-card .features li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+}
+.rank-card .features li:last-child { border-bottom: none; }
 .rank-card .features li i { width: 1.2rem; font-size: 0.8rem; }
 .rank-card .features li .no { opacity: 0.35; }
-.btn-select { display: block; padding: 0.75rem; border-radius: 9999px; font-weight: 700; text-decoration: none; transition: all 0.3s; width: 100%; border: none; cursor: pointer; font-size: 0.95rem; text-align: center; color: #fff; }
-.btn-select:hover { opacity: 0.9; transform: scale(1.01); }
+
+/* Button */
+.btn-select {
+    display: block;
+    padding: 0.75rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-align: center;
+    color: #fff;
+}
+.btn-select:hover { opacity: 0.9; transform: scale(1.02); }
+
+/* Top donors */
 .top-donors { margin-top: 3rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; }
-.top-donors h3 { margin-bottom: 1rem; color: var(--text); }
-.donor-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0; color: var(--text); font-size: 0.9rem; }
-.donor-item .pos { font-weight: 700; color: var(--muted); min-width: 2rem; }
-.donor-item .amt { margin-left:auto; color: var(--muted); font-size:0.85rem; }
+.top-donors h3 { margin-bottom: 1rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+.top-donors h3 i { color: #f59e0b; }
+.donor-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 1rem; 
+    padding: 0.75rem 1rem; 
+    color: var(--text); 
+    font-size: 0.9rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.donor-item:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.donor-item.top-1 { border-color: #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, var(--surface) 100%); }
+.donor-item.top-1 .donor-meta { color: #92400e; }
+.donor-item.top-1 .donor-amount small { color: #92400e; }
+.donor-item.top-2 { border-color: #94a3b8; background: linear-gradient(135deg, #f1f5f9 0%, var(--surface) 100%); }
+.donor-item.top-3 { border-color: #cd7f32; background: linear-gradient(135deg, #fef2e2 0%, var(--surface) 100%); }
+:root[data-theme='dark'] .donor-item.top-1 .donor-meta { color: #fbbf24; }
+:root[data-theme='dark'] .donor-item.top-1 .donor-amount small { color: #fbbf24; }
+:root[data-theme='dark'] .donor-item.top-1 { background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%); }
+:root[data-theme='dark'] .donor-item.top-2 { background: linear-gradient(135deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.05) 100%); }
+:root[data-theme='dark'] .donor-item.top-3 { background: linear-gradient(135deg, rgba(205,127,50,0.15) 0%, rgba(205,127,50,0.05) 100%); }
+.donor-position {
+    font-weight: 800;
+    font-size: 1rem;
+    min-width: 2rem;
+    text-align: center;
+}
+.donor-position.gold { color: #f59e0b; }
+.donor-position.silver { color: #94a3b8; }
+.donor-position.bronze { color: #cd7f32; }
+.donor-avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+.donor-info { flex: 1; }
+.donor-name { font-weight: 600; color: var(--text); }
+.donor-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+.donor-amount {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    text-align: right;
+}
+.donor-amount small { display: block; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+
+/* Telegram */
 .telegram-section { max-width: 1100px; margin: 2rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 1.5rem; text-align: center; }
 .telegram-section h3 { color: var(--text); }
 .telegram-section p { color: var(--muted); }
 .telegram-section .btn-tg { display:inline-flex; align-items:center; gap:0.5rem; padding:0.7rem 2rem; background:#1e96e1; color:#fff; border-radius:9999px; text-decoration:none; font-weight:600; }
 .telegram-section .btn-tg:hover { opacity:0.9; }
 
-/* ===== DARK MODE ===== */
-:root[data-theme='dark'] .price-row.popular {
-    background: rgba(245, 158, 11, 0.12);
-    border-color: rgba(245, 158, 11, 0.4);
-}
+/* Dark mode */
 :root[data-theme='dark'] .rank-card:hover {
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
 @media (max-width: 768px) { .rank-grid { grid-template-columns: 1fr !important; } }
@@ -96,7 +209,7 @@
         ["check" => true, "text" => "AI chat: 100 ta so'rov/kun"],
         ["check" => true, "text" => "Profil yonida Supporter badge"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 2 ta kurs ochish"],
-        ["check" => false, "text" => "Sahifalar orasida tezkor o'tish ⚡"],
+        ["check" => false, "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => false, "text" => "Maxsus profil dizayni"],
     ];
     $premiumFeatures = [
@@ -104,7 +217,7 @@
         ["check" => true, "text" => "25 MB gacha avatar yuklash"],
         ["check" => true, "text" => "AI chat: 300 ta so'rov/kun"],
         ["check" => true, "text" => "Premium badge"],
-        ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish ⚡"],
+        ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
@@ -114,12 +227,26 @@
         ["check" => true, "text" => "50 MB gacha avatar yuklash"],
         ["check" => true, "text" => "AI chat: cheksiz so'rovlar"],
         ["check" => true, "text" => "VIP badge"],
-        ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish ⚡"],
+        ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "text" => "Prioritet support"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
     ];
+    
+    // Pre-calculate prices for all durations
+    $rankPrices = [];
+    foreach($ranks as $key => $config) {
+        $rankPrices[$key] = [];
+        foreach($durations as $durKey => $durCfg) {
+            $rankPrices[$key][$durKey] = [
+                'price' => \App\Models\Donation::priceForDuration($key, $durKey),
+                'discount' => \App\Models\Donation::rankDiscount($key, $durKey),
+                'old_price' => $config['price'] * ($durCfg['days'] / 30),
+                'label' => $durCfg['label'],
+            ];
+        }
+    }
 @endphp
 
 <div class="donation-hero">
@@ -144,30 +271,27 @@
             @endphp
 
             <div class="rank-card" style="--card-color: {{ $color }};">
-                <div class="rank-icon" style="color:{{ $color }};"><i class="{{ $iconClass }}"></i></div>
-                <div class="rank-label" style="color:{{ $color }};">{{ $label }}</div>
-                <div style="font-size:0.85rem; color:#5e7088; margin-bottom:0.5rem;">{{ number_format($basePrice, 0, ".", " ") }} som/oy</div>
+                <div class="rank-icon"><i class="{{ $iconClass }}"></i></div>
+                <div class="rank-label">{{ $label }}</div>
+                <div class="price-base">{{ number_format($basePrice, 0, ".", " ") }} som/oy</div>
 
-                <div class="price-table">
+                <!-- Duration selector -->
+                <div class="duration-selector" data-rank="{{ $key }}">
                     @foreach($durations as $durKey => $durCfg)
-                        @php
-                            $totalPrice = \App\Models\Donation::priceForDuration($key, $durKey);
-                            $discount = \App\Models\Donation::rankDiscount($key, $durKey);
-                            $oldTotal = $basePrice * ($durCfg["days"] / 30);
-                            $isPopular = $durKey === "3months";
-                        @endphp
-                        <div class="price-row {{ $isPopular ? "popular" : "" }}" onclick="document.getElementById('buy-{{ $key }}-{{ $durKey }}').click();">
-                            <div>
-                                <div class="dur">{{ $durCfg["label"] }} @if($discount > 0)<span class="discount-badge">-{{ $discount }}%</span>@endif</div>
-                            </div>
-                            <div>
-                                @if($discount > 0)
-                                    <span class="old-price">{{ number_format((int)$oldTotal, 0, ".", " ") }}</span>
-                                @endif
-                                <span class="amt">{{ number_format($totalPrice, 0, ".", " ") }} som</span>
-                            </div>
-                        </div>
+                        <button type="button" 
+                                class="duration-btn {{ $durKey === '1month' ? 'active' : '' }}"
+                                data-dur="{{ $durKey }}"
+                                onclick="switchDuration('{{ $key }}', '{{ $durKey }}')">
+                            {{ $durCfg['label'] }}
+                        </button>
                     @endforeach
+                </div>
+
+                <!-- Price display -->
+                <div class="price-display" id="price-{{ $key }}" data-prices='@json($rankPrices[$key])'>
+                    <div class="price-old" id="price-old-{{ $key }}"></div>
+                    <div class="price-main" id="price-main-{{ $key }}">{{ number_format($rankPrices[$key]['1month']['price'], 0, ".", " ") }} som</div>
+                    <div class="discount-tag" id="price-discount-{{ $key }}" style="display: none;"></div>
                 </div>
 
                 <ul class="features">
@@ -196,7 +320,7 @@
                         </div>
                     
                     @else
-                        <a href="{{ route("donation.checkout", $key) }}" class="btn-select" style="background: {{ $color }};">
+                        <a href="{{ route("donation.checkout", $key) }}" id="buy-btn-{{ $key }}" class="btn-select" style="background: {{ $color }};">
                             <i class="{{ $iconClass }}"></i> {{ __('public.donation.index_become', ['label' => $label]) }}
                         </a>
                     @endif
@@ -209,17 +333,38 @@
     </div>
 
     <div class="top-donors">
-        <h3>{{ __('public.donation.index_top_donors') }}</h3>
+        <h3><i class="fa-solid fa-trophy"></i> {{ __('public.donation.index_top_donors') }}</h3>
         @forelse($topDonors as $index => $donor)
-            <div class="donor-item">
-                <span class="pos">#{{ $index + 1 }}</span>
-                <img src="{{ $donor->avatar_url ?? app_public_asset("temp/img/default-avatar.png") }}" alt="" style="width:2.5rem; height:2.5rem; border-radius:50%; object-fit:cover;">
-                <span>{{ $donor->name ?: $donor->buildNameFromParts() }}</span>
-                {!! $donor->donorBadgeHtml() !!}
-                <span class="amt">{{ number_format($donor->total_donated, 0, ".", " ") }} som</span>
+            @php
+                $posClass = '';
+                $rankText = '';
+                if ($index === 0) { $posClass = 'top-1'; $rankText = 'gold'; }
+                elseif ($index === 1) { $posClass = 'top-2'; $rankText = 'silver'; }
+                elseif ($index === 2) { $posClass = 'top-3'; $rankText = 'bronze'; }
+                
+                // Hisoblangan hissa miqdori — controller'da hisoblangan calculated_donated va donation_count
+                $totalAmount = $donor->calculated_donated ?? $donor->total_donated ?? 0;
+                $donationCount = $donor->donation_count ?? 0;
+            @endphp
+            <div class="donor-item {{ $posClass }}">
+                <span class="donor-position {{ $rankText }}">#{{ $index + 1 }}</span>
+                <img src="{{ $donor->avatar_url ?? app_public_asset("temp/img/default-avatar.png") }}" alt="" class="donor-avatar">
+                <div class="donor-info">
+                    <div class="donor-name">{{ $donor->name ?: $donor->buildNameFromParts() }}</div>
+                    <div class="donor-meta">
+                        {!! $donor->donorBadgeHtml() !!}
+                        @if($donationCount > 0)
+                            <span style="margin-left: 0.5rem;">{{ $donationCount }} ta donat</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="donor-amount">
+                    {{ number_format($totalAmount, 0, ".", " ") }} som
+                    <small>Jami hissa</small>
+                </div>
             </div>
         @empty
-            <p style="color:#5e7088;">{{ __('public.donation.index_no_donors') }}</p>
+            <p style="color:#5e7088; text-align: center; padding: 2rem;">{{ __('public.donation.index_no_donors') }}</p>
         @endforelse
     </div>
 
@@ -235,5 +380,49 @@
         </p>
     </div>
 </div>
+
+@push('page_scripts')
+<script>
+function switchDuration(rank, dur) {
+    // Update active button
+    document.querySelectorAll(`[data-rank="${rank}"] .duration-btn`).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.dur === dur);
+    });
+    
+    // Get prices data
+    const priceEl = document.getElementById(`price-${rank}`);
+    const prices = JSON.parse(priceEl.dataset.prices);
+    const priceData = prices[dur];
+    
+    // Update price display
+    document.getElementById(`price-main-${rank}`).textContent = 
+        new Intl.NumberFormat('uz-UZ').format(priceData.price) + ' som';
+    
+    // Update old price
+    const oldPriceEl = document.getElementById(`price-old-${rank}`);
+    if (priceData.discount > 0) {
+        oldPriceEl.textContent = new Intl.NumberFormat('uz-UZ').format(priceData.old_price) + ' som';
+        oldPriceEl.style.display = 'block';
+    } else {
+        oldPriceEl.style.display = 'none';
+    }
+    
+    // Update discount tag
+    const discountEl = document.getElementById(`price-discount-${rank}`);
+    if (priceData.discount > 0) {
+        discountEl.textContent = `-${priceData.discount}% chegrima`;
+        discountEl.style.display = 'inline-block';
+    } else {
+        discountEl.style.display = 'none';
+    }
+    
+    // Update buy button link
+    const buyBtn = document.getElementById(`buy-btn-${rank}`);
+    if (buyBtn) {
+        buyBtn.href = `/donation/checkout/${rank}?duration=${dur}`;
+    }
+}
+</script>
+@endpush
 
 </x-loyouts.main>

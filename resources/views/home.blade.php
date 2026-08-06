@@ -122,7 +122,7 @@
       <div class="container teacher">
         <div class="teacher-content">
           <div class="home-teacher-eyebrow">
-            <i class="fa-solid fa-award"></i> Malakali va Tajribali Pedagoglar
+            <i class="fa-solid fa-award"></i> {{ __('public.home.teachers_eyebrow') }}
           </div>
           <h2 class="js-split-text">{{ __('public.home.teachers_title') }}</h2>
           <p>{{ __('public.home.teachers_text') }}</p>
@@ -131,29 +131,29 @@
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
               <div class="stat-info">
-                <span class="stat-num">50+</span>
-                <span class="stat-lbl">Malakali Ustozlar</span>
+                <span class="stat-num">{{ __('public.home.teachers_stat_1_num') }}</span>
+                <span class="stat-lbl">{{ __('public.home.teachers_stat_1_label') }}</span>
               </div>
             </div>
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-certificate"></i></div>
               <div class="stat-info">
-                <span class="stat-num">100%</span>
-                <span class="stat-lbl">Oliy Ma'lumotli</span>
+                <span class="stat-num">{{ __('public.home.teachers_stat_2_num') }}</span>
+                <span class="stat-lbl">{{ __('public.home.teachers_stat_2_label') }}</span>
               </div>
             </div>
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
               <div class="stat-info">
-                <span class="stat-num">20+ yil</span>
-                <span class="stat-lbl">O'rtacha Staj</span>
+                <span class="stat-num">{{ __('public.home.teachers_stat_3_num') }}</span>
+                <span class="stat-lbl">{{ __('public.home.teachers_stat_3_label') }}</span>
               </div>
             </div>
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-earth-americas"></i></div>
               <div class="stat-info">
-                <span class="stat-num">Oliy</span>
-                <span class="stat-lbl">Toifali Ustozlar</span>
+                <span class="stat-num">{{ __('public.home.teachers_stat_4_num') }}</span>
+                <span class="stat-lbl">{{ __('public.home.teachers_stat_4_label') }}</span>
               </div>
             </div>
           </div>

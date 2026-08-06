@@ -858,6 +858,7 @@
   padding: 32px !important;
   margin-bottom: 24px !important;
   box-shadow: 0 10px 40px rgba(0,0,0,0.04) !important;
+  align-self: start !important;
 }
 
 :root[data-theme='dark'] .profile-activity-block {

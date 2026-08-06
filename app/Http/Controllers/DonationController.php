@@ -10,11 +10,18 @@ class DonationController extends Controller
     {
         $ranks = Donation::RANK_CONFIG();
 
+        // Top donatchilar — completed donatlarning summasi bo'yicha
         $topDonors = \App\Models\User::query()
-            ->select(['id','name','first_name','last_name','avatar','donation_rank','donation_rank_expires_at','total_donated','profile_theme','badge_style','show_expiry_badge','username_color'])
-            ->where("total_donated", ">", 0)
+            ->select([
+                'id', 'name', 'first_name', 'last_name', 'avatar',
+                'donation_rank', 'donation_rank_expires_at',
+                'profile_theme', 'badge_style', 'show_expiry_badge', 'username_color',
+            ])
+            ->selectRaw('(SELECT COALESCE(SUM(amount), 0) FROM donations WHERE donations.user_id = users.id AND donations.status = ?) as calculated_donated', [Donation::STATUS_COMPLETED])
+            ->selectRaw('(SELECT COUNT(*) FROM donations WHERE donations.user_id = users.id AND donations.status = ?) as donation_count', [Donation::STATUS_COMPLETED])
+            ->whereRaw('(SELECT SUM(amount) FROM donations WHERE donations.user_id = users.id AND donations.status = ?) > 0', [Donation::STATUS_COMPLETED])
             ->whereNotNull("donation_rank")
-            ->orderByDesc("total_donated")
+            ->orderByRaw('(SELECT SUM(amount) FROM donations WHERE donations.user_id = users.id AND donations.status = ?) DESC', [Donation::STATUS_COMPLETED])
             ->paginate(10);
 
         return view("donation.index", [

@@ -84,9 +84,14 @@ trait ManagesCourses
 
     /**
      * Donor reytingiga qarab nechta kurs ocha olishini qaytaradi.
+     * Adminlar uchun VIP darajasidagi limit qo'llaniladi.
      */
     public function donorCourseLimit(): int
     {
+        if ($this->isAdmin()) {
+            return 5; // Adminlar uchun VIP darajasida
+        }
+        
         if (!$this->isDonor()) {
             return 1;
         }
