@@ -353,6 +353,13 @@ class TelegramUpdateHandler
      */
     private function handleCourseOpenDecision(int $chatId, int $userId, bool $approved, string $callbackId, array $callbackQuery = []): void
     {
+        // Ruxsat tekshirish — faqat admin ruxsat bera oladi
+        $actingUser = \App\Models\User::where('telegram_chat_id', $chatId)->first();
+        if (! $actingUser || ! $actingUser->isAdmin()) {
+            $this->telegram->answerCallbackQuery($callbackId, "Sizda bu amalni bajarish huquqi yo'q.");
+            return;
+        }
+
         $user = \App\Models\User::find($userId);
         if (! $user || ! $user->course_open_request_pending) {
             $this->telegram->answerCallbackQuery($callbackId, 'So\'rov topilmadi.');
@@ -400,7 +407,16 @@ class TelegramUpdateHandler
      */
     private function handleEnrollmentDecision(int $chatId, int $enrollmentId, bool $approved, string $callbackId, array $callbackQuery = []): void
     {
+        // Ruxsat tekshirish — admin yoki kurs egasi (o'qituvchi)
+        $actingUser = \App\Models\User::where('telegram_chat_id', $chatId)->first();
         $enrollment = \App\Models\CourseEnrollment::with(['course', 'user'])->find($enrollmentId);
+        $course = $enrollment?->course;
+
+        if (! $actingUser || ! $course || ! ($actingUser->isAdmin() || ($actingUser->isTeacher() && $actingUser->ownsCourse($course)))) {
+            $this->telegram->answerCallbackQuery($callbackId, "Sizda bu amalni bajarish huquqi yo'q.");
+            return;
+        }
+
         if (! $enrollment || ! $enrollment->isPending()) {
             $this->telegram->answerCallbackQuery($callbackId, 'Ariza topilmadi.');
             return;

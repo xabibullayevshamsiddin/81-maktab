@@ -2,16 +2,20 @@
 
 @push('page_styles')
 <style>
-.lib-hero{position:relative;padding:140px 1.5rem 5rem;text-align:center;overflow:hidden;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f2744 100%);color:#fff;border-radius:0 0 3rem 3rem;margin-bottom:3rem}
+.lib-hero{position:relative;padding:140px 1.5rem 5rem;text-align:center;overflow:hidden;background:var(--lib-hero-bg,linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f2744 100%));color:var(--lib-hero-text,#fff);border-radius:0 0 3rem 3rem;margin-bottom:3rem}
 .lib-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 15% 30%,rgba(99,102,241,.3),transparent 50%),radial-gradient(ellipse at 85% 20%,rgba(14,165,233,.25),transparent 50%),radial-gradient(ellipse at 50% 90%,rgba(139,92,246,.2),transparent 50%);animation:libBgPulse 8s ease-in-out infinite alternate}
 @keyframes libBgPulse{from{opacity:.6}to{opacity:1}}
+:root[data-theme='light'] .lib-hero{--lib-hero-bg:linear-gradient(135deg,#e0e7ff 0%,#c7d2fe 50%,#bae6fd 100%);--lib-hero-text:#1e293b}
+:root[data-theme='light'] .lib-hero::before{background:radial-gradient(ellipse at 15% 30%,rgba(99,102,241,.2),transparent 50%),radial-gradient(ellipse at 85% 20%,rgba(14,165,233,.15),transparent 50%),radial-gradient(ellipse at 50% 90%,rgba(139,92,246,.12),transparent 50%)}
 .lib-hero-inner{position:relative;z-index:2}
-.lib-hero-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .9rem;border-radius:999px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);font-size:.75rem;font-weight:700;margin-bottom:1rem;animation:fadeSlideDown .6s ease both}
+.lib-hero-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .9rem;border-radius:999px;background:var(--lib-badge-bg,rgba(255,255,255,.1));backdrop-filter:blur(8px);border:1px solid var(--lib-badge-border,rgba(255,255,255,.2));font-size:.75rem;font-weight:700;margin-bottom:1rem;animation:fadeSlideDown .6s ease both}
+:root[data-theme='light'] .lib-hero-badge{--lib-badge-bg:rgba(0,0,0,.08);--lib-badge-border:rgba(0,0,0,.12);color:#1e293b}
 .lib-hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;margin-bottom:.75rem;background:linear-gradient(90deg,#a5b4fc,#38bdf8,#c4b5fd,#a5b4fc);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:libGradShift 5s linear infinite,fadeSlideDown .7s ease both}
 @keyframes libGradShift{to{background-position:200% center}}
 .lib-hero p{font-size:1.05rem;opacity:.85;max-width:560px;margin:0 auto 1.5rem;line-height:1.6;animation:fadeSlideDown .8s ease both}
 .lib-stats{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;animation:fadeSlideDown .9s ease both}
-.lib-stat{display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.08);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:1rem;padding:.75rem 1.5rem}
+.lib-stat{display:flex;flex-direction:column;align-items:center;background:var(--lib-stat-bg,rgba(255,255,255,.08));backdrop-filter:blur(8px);border:1px solid var(--lib-stat-border,rgba(255,255,255,.15));border-radius:1rem;padding:.75rem 1.5rem}
+:root[data-theme='light'] .lib-stat{--lib-stat-bg:rgba(255,255,255,.6);--lib-stat-border:rgba(0,0,0,.1);color:#1e293b}
 .lib-stat strong{font-size:1.5rem;font-weight:800}
 .lib-stat span{font-size:.75rem;opacity:.75}
 .lib-filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:1.25rem;padding:1.25rem 1.5rem;margin-bottom:2rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
@@ -29,7 +33,7 @@
 .lib-sort-tab{padding:.4rem .9rem;border-radius:999px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:.8rem;font-weight:600;text-decoration:none;transition:all .2s}
 .lib-sort-tab:hover,.lib-sort-tab.active{border-color:var(--primary);color:var(--primary);background:color-mix(in srgb,var(--primary) 8%,transparent)}
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.5rem}
-.book-card{position:relative;border-radius:1.25rem;overflow:hidden;background:var(--surface);border:1px solid var(--border);transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;cursor:pointer;animation:bookCardIn .5s ease both}
+.book-card{position:relative;border-radius:1.25rem;overflow:hidden;background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;cursor:pointer;animation:bookCardIn .5s ease both}
 .book-card:hover{transform:translateY(-8px) scale(1.02);box-shadow:0 20px 50px rgba(0,0,0,.15)}
 @keyframes bookCardIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
 .book-card-cover{position:relative;aspect-ratio:3/4;overflow:hidden;background:linear-gradient(135deg,#1e1b4b,#312e81)}
@@ -48,13 +52,14 @@
 .book-card-badge{position:absolute;top:.6rem;left:.6rem;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:.18rem .55rem;border-radius:999px;background:var(--primary);color:#fff;z-index:2}
 .book-card-body{padding:.85rem}
 .book-card-cat{font-size:.65rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem}
-.book-card-title{font-size:.88rem;font-weight:700;color:var(--text);line-height:1.35;margin-bottom:.3rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.book-card-author{font-size:.72rem;color:var(--muted);margin-bottom:.5rem}
-.book-card-meta{display:flex;align-items:center;gap:.5rem;font-size:.65rem;color:var(--muted);flex-wrap:wrap}
+.book-card-title{font-size:.88rem;font-weight:700;color:var(--text,#1e293b);line-height:1.35;margin-bottom:.3rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-card-author{font-size:.72rem;color:var(--muted,#6b7280);margin-bottom:.5rem}
+.book-card-meta{display:flex;align-items:center;gap:.5rem;font-size:.65rem;color:var(--muted,#6b7280);flex-wrap:wrap}
 .book-card-meta span{display:flex;align-items:center;gap:.2rem}
 .lib-empty{text-align:center;padding:4rem 1rem;color:var(--muted)}
 .lib-empty i{font-size:3rem;opacity:.3;display:block;margin-bottom:1rem}
 :root[data-theme='dark'] .book-card:hover{box-shadow:0 20px 50px rgba(0,0,0,.4)}
+:root[data-theme='light'] .book-card:hover{box-shadow:0 16px 40px rgba(0,0,0,.12)}
 @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
 .book-card:nth-child(1){animation-delay:.05s}.book-card:nth-child(2){animation-delay:.10s}.book-card:nth-child(3){animation-delay:.15s}.book-card:nth-child(4){animation-delay:.20s}.book-card:nth-child(5){animation-delay:.25s}.book-card:nth-child(6){animation-delay:.30s}.book-card:nth-child(7){animation-delay:.35s}.book-card:nth-child(8){animation-delay:.40s}.book-card:nth-child(9){animation-delay:.45s}.book-card:nth-child(10){animation-delay:.50s}.book-card:nth-child(11){animation-delay:.55s}.book-card:nth-child(12){animation-delay:.60s}
 @media(max-width:640px){.lib-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem}.lib-hero{padding:120px 1rem 3rem}.lib-stats{gap:1rem}}
@@ -200,4 +205,4 @@
   @endif
 </div>
 
-</x-loyouts.main>
+</x-layouts.main>

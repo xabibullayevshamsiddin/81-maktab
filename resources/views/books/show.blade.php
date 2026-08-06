@@ -72,10 +72,8 @@
         <p class="bv-author">{{ $book->author }}</p>
       @endif
 
-      @if($book->description)
-        <p style="font-size:.88rem;opacity:.75;line-height:1.65;margin-bottom:1.25rem;max-width:560px;">
-          {{ $book->description }}
-        </p>
+      @if($book->localized_description)
+        <p class="bv-description">{{ $book->localized_description }}</p>
       @endif
 
       <div class="bv-actions">
