@@ -56,6 +56,23 @@ class TelegramService
     }
 
     /**
+     | Inline tugmalar bilan xabar yuborish (tasdiqlash uchun).
+     */
+    public function sendInlineConfirm(int $chatId, string $text, string $confirmData, string $cancelData): ?array
+    {
+        $replyMarkup = [
+            'inline_keyboard' => [
+                [
+                    ['text' => '✅ Tasdiqlayman', 'callback_data' => $confirmData],
+                    ['text' => '❌ Bekor qilish', 'callback_data' => $cancelData],
+                ],
+            ],
+        ];
+
+        return $this->sendMessage($chatId, $text, $replyMarkup);
+    }
+
+    /**
      | Callback queryga javob berish (inline tugmalar uchun).
      */
     public function answerCallbackQuery(string $callbackQueryId, string $text = ''): ?array
@@ -65,6 +82,42 @@ class TelegramService
             'text' => $text,
             'show_alert' => false,
         ]);
+    }
+
+    /**
+     | Xabarni tahrirlash (inline tugmalarni o'chirish uchun).
+     */
+    public function editMessageText(int $chatId, int $messageId, string $text, ?array $replyMarkup = null): ?array
+    {
+        $payload = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+        ];
+
+        if ($replyMarkup !== null) {
+            $payload['reply_markup'] = $replyMarkup;
+        }
+
+        return $this->callApi('editMessageText', $payload);
+    }
+
+    /**
+     | Inline tugmalarni o'chirish (xabarni tahrirlamasdan).
+     */
+    public function editMessageReplyMarkup(int $chatId, int $messageId, ?array $replyMarkup = null): ?array
+    {
+        $payload = [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+        ];
+
+        if ($replyMarkup !== null) {
+            $payload['reply_markup'] = $replyMarkup;
+        }
+
+        return $this->callApi('editMessageReplyMarkup', $payload);
     }
 
     /**
@@ -146,7 +199,9 @@ class TelegramService
                     return null;
                 }
 
-                return $body['result'] ?? null;
+                $result = $body['result'] ?? null;
+                // Telegram ba'zi metodlarda (masalan, answerCallbackQuery) true qaytaradi
+                return is_array($result) ? $result : ($result === true ? [] : null);
             }
 
             Log::error('Telegram API HTTP error', [

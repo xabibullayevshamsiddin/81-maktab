@@ -83,8 +83,8 @@
 
                 <form action="{{ route('authenticate') }}" method="POST" class="signin-form" id="signin-form-server">
                     @csrf
-                    <label for="signin-email">{{ __('auth_pages.login.email') }}</label>
-                    <input type="email" id="signin-email" name="email" placeholder="{{ __('auth_pages.login.email_placeholder') }}" required autocomplete="email" />
+                    <label for="signin-phone">{{ __('auth_pages.login.phone') }}</label>
+                    <input type="tel" id="signin-phone" name="phone" placeholder="{{ __('auth_pages.login.phone_placeholder') }}" required autocomplete="tel" inputmode="tel" pattern="[+0-9\s\-]+" />
                     <label for="signin-password">{{ __('auth_pages.login.password') }}</label>
                     <div class="pw-wrap">
                         <input type="password" id="signin-password" name="password" placeholder="{{ __('auth_pages.login.password_placeholder') }}" required autocomplete="current-password" />
@@ -92,7 +92,7 @@
                             <i class="fa-regular fa-eye"></i>
                         </button>
                     </div>
-                    @error('email')
+                    @error('phone')
                         <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
                     @enderror
                     <div class="signin-forgot-wrap">

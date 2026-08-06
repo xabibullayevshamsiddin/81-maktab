@@ -173,9 +173,9 @@ class AiKnowledgeSeeder extends Seeder
             [
                 'question' => 'Parolni unutdim, nima qilaman?',
                 'question_en' => 'I forgot my password. What should I do?',
-                'answer' => "Kirish sahifasidagi \"Parolni unutdingizmi?\" bo'limiga o'ting. Email manzilingizni kiriting, tasdiqlash kodini oling va yangi parol qo'ying.",
-                'answer_en' => 'Use the forgot password page, enter your email, verify the code, and set a new password.',
-                'keywords' => 'parol, unutdim, forgot password, reset password, kod',
+                'answer' => "Kirish sahifasidagi \"Parolni unutdingizmi?\" bo'limiga o'ting. Telefon raqamingizni kiriting, Telegram orqali 6 xonali tasdiqlash kodini oling va yangi parol qo'ying.",
+                'answer_en' => 'Use the forgot password page, enter your phone number, receive a 6-digit code via Telegram, and set a new password.',
+                'keywords' => 'parol, unutdim, forgot password, reset password, kod, telefon',
                 'category' => 'Akkaunt',
             ],
             [

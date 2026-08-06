@@ -105,10 +105,10 @@
                       <span class="text-muted small">Huquq yo‘q</span>
                     @endif
                     @if($comment->user && auth()->user()->canManageSystem() && auth()->user()->canManage($comment->user) && (int)$comment->user->id !== (int)auth()->id())
-                      <form action="{{ route('admin.comments.block-user', $comment->user) }}" method="POST" class="d-inline" data-confirm="Bu foydalanuvchini bloklaysizmi?" data-confirm-title="Bloklash" data-confirm-variant="danger" data-confirm-ok="Bloklash">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-dark">Bloklash</button>
-                      </form>
+                      <button type="button" class="btn btn-sm btn-dark"
+                        onclick="openBlockModal('{{ $comment->user->name }}', '{{ route('admin.comments.block-user', $comment->user) }}')">
+                        Bloklash
+                      </button>
                     @endif
                   </div>
                 </td>

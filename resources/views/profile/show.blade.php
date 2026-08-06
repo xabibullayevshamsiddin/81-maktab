@@ -295,7 +295,7 @@
           @elseif($profilePanel === 'appearance')
             @include('profile.partials.appearance-card')
           @elseif($profilePanel === 'security')
-            @include('profile.partials.email-card')
+            @include('profile.partials.phone-card')
             @include('profile.partials.password-card')
             @include('profile.partials.app-settings-card')
           @endif
@@ -376,11 +376,11 @@
 
                 <div class="profile-form-grid">
                   <div class="profile-field">
-                    <label for="profile-phone">{{ __('profile.main_card.phone_label') }}</label>
-                    <span class="profile-field-hint">{{ __('profile.main_card.phone_hint') }}</span>
-                    <input style="margin-top:25px;" type="text" id="profile-phone" name="phone"
-                      value="{{ old('phone', $user->phone) }}" maxlength="40" placeholder="+998..." autocomplete="tel" />
-                    @error('phone')
+                    <label for="profile-email">{{ __('profile.main_card.email_label') }}</label>
+                    <span class="profile-field-hint">{{ __('profile.main_card.email_hint') }}</span>
+                    <input style="margin-top:25px;" type="email" id="profile-email" name="email"
+                      value="{{ old('email', $user->email) }}" required autocomplete="email" />
+                    @error('email')
                       <p class="form-message profile-form-error">{{ $message }}</p>
                     @enderror
                   </div>

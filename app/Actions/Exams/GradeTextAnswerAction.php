@@ -4,6 +4,7 @@ namespace App\Actions\Exams;
 
 use App\Models\Answer;
 use App\Models\Result;
+use App\Services\TelegramService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +13,7 @@ class GradeTextAnswerAction
     public function handle(Result $result, Answer $answer, bool $isCorrect): Result
     {
         return DB::transaction(function () use ($result, $answer, $isCorrect): Result {
-            $result->loadMissing('exam:id,passing_points');
+            $result->loadMissing('exam:id,passing_points,title');
 
             $answer->update([
                 'is_correct_override' => $isCorrect,
@@ -57,9 +58,57 @@ class GradeTextAnswerAction
                 'answer_id' => (int) $answer->id,
                 'is_correct' => $isCorrect,
                 'points_earned' => $pointsEarned,
+                'has_pending_review' => $hasPendingManualReview,
             ]);
+
+            // Barcha yozma javoblar baholangan bo'lsa — talabaga Telegram xabar yuborish
+            if (! $hasPendingManualReview) {
+                $this->sendGradingNotification($result);
+            }
 
             return $result->refresh();
         });
+    }
+
+    /**
+     * Baholash tugagandan keyin talabaga Telegram xabar yuborish.
+     */
+    private function sendGradingNotification(Result $result): void
+    {
+        try {
+            $user = $result->user ?? \App\Models\User::find($result->user_id);
+            if (! $user || ! $user->telegram_chat_id) {
+                return;
+            }
+
+            $exam = $result->exam ?? \App\Models\Exam::find($result->exam_id);
+            $examTitle = $exam?->title ?? 'Noma\'lum imtihon';
+            $score = $result->points_earned ?? 0;
+            $maxScore = $result->points_max ?? 0;
+            $passed = $result->passed;
+            $correctCount = $result->score ?? 0;
+            $totalQuestions = $result->total_questions ?? 0;
+
+            $statusEmoji = $passed === true ? '✅' : ($passed === false ? '❌' : '⏳');
+            $statusText = $passed === true ? 'O\'tdi' : ($passed === false ? 'Yiqildi' : 'Kutilmoqda');
+
+            $text = "📝 <b>Yozma imtihon baholandi!</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."📚 <b>Imtihon:</b> ".htmlspecialchars($examTitle)."\n"
+                ."{$statusEmoji} <b>Natija:</b> {$statusText}\n"
+                ."📈 <b>Ball:</b> {$score} / {$maxScore}\n"
+                ."✅ <b>To'g'ri:</b> {$correctCount} / {$totalQuestions}\n"
+                ."\n━━━━━━━━━━━━━━━━━━━━\n"
+                ."Baholash tugadi. Saytda natijangizni ko'rishingiz mumkin.";
+
+            $telegram = app(TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+
+        } catch (\Throwable $e) {
+            Log::error('Telegram exam grading notification failed', [
+                'result_id' => $result->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

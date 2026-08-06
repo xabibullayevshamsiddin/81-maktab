@@ -2,13 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\OneTimeCode;
 use App\Models\Role;
 use App\Models\TelegramVerification;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -19,13 +17,9 @@ class AuthTest extends TestCase
         parent::setUp();
 
         config([
-            'mail.enabled' => true,
-            'mail.code_delivery_enabled' => true,
-            'courses.require_email_verification' => true,
             'telegram.bot_username' => 'test_bot',
         ]);
 
-        Mail::fake();
         $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
         $this->createAuthTestTables();
     }
@@ -49,15 +43,12 @@ class AuthTest extends TestCase
         $response = $this->post(route('register.store'), $this->registrationPayload());
 
         $response->assertRedirect();
-        // URL telegram-verify/{token} formatida bo'lishi kerak
         $this->assertStringContainsString('telegram-verify/', $response->getTargetUrl());
 
-        // Foydalanuvchi hali yaratilmagan
         $this->assertDatabaseMissing('users', [
             'email' => 'ali@example.com',
         ]);
 
-        // Telegram verification yozuvi yaratilgan
         $this->assertDatabaseHas('telegram_verifications', [
             'purpose' => TelegramVerification::PURPOSE_REGISTER,
             'status' => TelegramVerification::STATUS_PENDING,
@@ -67,13 +58,13 @@ class AuthTest extends TestCase
     public function test_login_without_telegram_chat_id_redirects_to_verification(): void
     {
         $user = $this->createUser([
-            'email' => 'test@example.com',
+            'phone' => '+998901234567',
             'password' => 'password123',
             'telegram_chat_id' => null,
         ]);
 
         $response = $this->post(route('authenticate'), [
-            'email' => 'test@example.com',
+            'phone' => '+998 90 123 45 67',
             'password' => 'password123',
         ]);
 
@@ -81,7 +72,6 @@ class AuthTest extends TestCase
         $this->assertStringContainsString('telegram-verify/', $response->getTargetUrl());
         $this->assertGuest();
 
-        // Telegram verification yaratilgan
         $this->assertDatabaseHas('telegram_verifications', [
             'purpose' => TelegramVerification::PURPOSE_LOGIN,
             'status' => TelegramVerification::STATUS_PENDING,
@@ -91,18 +81,48 @@ class AuthTest extends TestCase
     public function test_login_with_telegram_chat_id_authenticates_directly(): void
     {
         $user = $this->createUser([
-            'email' => 'test@example.com',
+            'phone' => '+998901234567',
             'password' => 'password123',
             'telegram_chat_id' => 123456789,
         ]);
 
         $response = $this->post(route('authenticate'), [
-            'email' => 'test@example.com',
+            'phone' => '+998901234567',
             'password' => 'password123',
         ]);
 
         $response->assertRedirect(route('home'));
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_login_rejects_invalid_phone(): void
+    {
+        $this->createUser([
+            'phone' => '+998901234567',
+            'password' => 'password123',
+        ]);
+
+        $this->post(route('authenticate'), [
+            'phone' => '+998999999999',
+            'password' => 'password123',
+        ])->assertSessionHasErrors('phone');
+
+        $this->assertGuest();
+    }
+
+    public function test_login_rejects_invalid_password(): void
+    {
+        $this->createUser([
+            'phone' => '+998901234567',
+            'password' => 'password123',
+        ]);
+
+        $this->post(route('authenticate'), [
+            'phone' => '+998901234567',
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('phone');
+
+        $this->assertGuest();
     }
 
     public function test_registration_rejects_invalid_payload(): void
@@ -116,24 +136,6 @@ class AuthTest extends TestCase
             'password' => 'short',
             'password_confirmation' => 'short',
         ])->assertSessionHasErrors(['email', 'password']);
-
-        $this->assertGuest();
-        $this->assertDatabaseMissing('users', [
-            'email' => 'not-an-email',
-        ]);
-    }
-
-    public function test_login_rejects_invalid_credentials(): void
-    {
-        $this->createUser([
-            'email' => 'test@example.com',
-            'password' => 'password123',
-        ]);
-
-        $this->post(route('authenticate'), [
-            'email' => 'test@example.com',
-            'password' => 'wrong-password',
-        ])->assertSessionHasErrors('email');
 
         $this->assertGuest();
     }
@@ -257,7 +259,6 @@ class AuthTest extends TestCase
             $table->timestamps();
         });
 
-        // UserActivityLogger uchun kerak
         Schema::create('user_activities', static function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('user_id');

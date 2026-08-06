@@ -184,7 +184,7 @@ class TelegramWebhookController extends Controller
     }
 
     /**
-     | Parolni tiklash uchun Telegram xabar yuborish.
+     | Parolni tiklash uchun Telegram'ga 6 xonali kod yuborish.
      */
     public static function sendPasswordResetRequest(int $chatId, string $token): void
     {
@@ -194,27 +194,21 @@ class TelegramWebhookController extends Controller
             return;
         }
 
+        $code = $verification->verification_code;
+        if (! $code) {
+            return;
+        }
+
         $telegram = new TelegramService();
         $telegram->sendMessage($chatId,
-            "🔐 Parolni tiklash so'rovi\n\n"
-            ."Saytda parolni tiklash so'rovi yuborildi.\n"
-            ."Tasdiqlaysizmi?",
-            [
-                'inline_keyboard' => [
-                    [
-                        [
-                            'text' => '✅ Ha, tasdiqlayman',
-                            'callback_data' => 'confirm_password_reset:'.$token,
-                        ],
-                    ],
-                    [
-                        [
-                            'text' => '❌ Bekor qilish',
-                            'callback_data' => 'cancel_password_reset:'.$token,
-                        ],
-                    ],
-                ],
-            ]
+            "🔐 <b>Parolni tiklash kodi</b>\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."Saytda parolni tiklash so'rovi yuborildi.\n\n"
+            ."🔑 <b>Sizning tasdiqlash kodingiz:</b>\n"
+            ."<tg-spoiler>{$code}</tg-spoiler>\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."⏳ Kod 10 daqiqa amal qiladi.\n"
+            ."📌 Saytda shu kodni kiriting."
         );
     }
 }

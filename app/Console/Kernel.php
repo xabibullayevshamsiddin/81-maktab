@@ -22,6 +22,9 @@ class Kernel extends ConsoleKernel
             $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
         }
 
+        // Kurs boshlanishi haqida eslatma — kuniga 1 marta (ertalab 8:00)
+        $schedule->command('telegram:course-reminders')->dailyAt('08:00');
+
         if (filter_var(env('BACKUP_SCHEDULE_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             $schedule->command('backup:clean')->daily()->at('01:00');
             $schedule->command('backup:run')->daily()->at('01:30');

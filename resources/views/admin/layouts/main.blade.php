@@ -432,5 +432,59 @@
     @include('components.confirm-modal')
     <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
 
+    {{-- Foydalanuvchini bloklash modali (hamma admin sahifalarda) --}}
+    <div id="blockModal" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header" style="background: linear-gradient(135deg, #dc3545, #a71d2a); color: white;">
+            <h5 class="modal-title">
+              <i class="lni lni-lock me-2"></i> Foydalanuvchini bloklash
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <form id="blockForm" method="POST">
+            @csrf
+            <div class="modal-body">
+              <p class="mb-3">
+                <strong>Kim bloklayapti:</strong> <span id="blockRecipient"></span>
+              </p>
+              <div class="mb-3">
+                <label for="blockDuration" class="form-label">Blok muddati</label>
+                <select name="duration" id="blockDuration" class="form-select" required>
+                  <option value="1h">1 soat</option>
+                  <option value="1d" selected>1 kun</option>
+                  <option value="1w">1 hafta</option>
+                  <option value="1m">1 oy</option>
+                  <option value="forever">Butun umr</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="blockReason" class="form-label">Blok sababi</label>
+                <textarea name="reason" id="blockReason" class="form-control" rows="3"
+                  placeholder="Nima uchun bloklayapsiz?" required maxlength="500"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+              <button type="submit" class="btn btn-danger">
+                <i class="lni lni-lock me-1"></i> Bloklash
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    function openBlockModal(userName, actionUrl) {
+      document.getElementById('blockRecipient').textContent = userName;
+      document.getElementById('blockForm').action = actionUrl;
+      document.getElementById('blockReason').value = '';
+      document.getElementById('blockDuration').value = '1d';
+      var modal = new bootstrap.Modal(document.getElementById('blockModal'));
+      modal.show();
+    }
+    </script>
+
   </body>
 </html>

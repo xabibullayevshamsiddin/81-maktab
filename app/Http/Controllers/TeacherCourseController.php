@@ -54,6 +54,7 @@ class TeacherCourseController extends Controller
             'description' => ['required', 'string'],
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
+            'max_enrollments' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
             'title.required' => 'Kurs sarlavhasini yozing.',
@@ -63,6 +64,7 @@ class TeacherCourseController extends Controller
             'start_date.date' => 'Boshlanish sanasi noto‘g‘ri formatda.',
             'teacher_id.required' => 'Ustozni tanlang.',
             'teacher_id.exists' => 'Tanlangan ustoz mavjud emas.',
+            'max_enrollments.integer' => 'Limit raqam bo‘lishi kerak.',
             'image.image' => 'Fayl rasm bo‘lishi kerak.',
             'image.max' => 'Rasm hajmi 5 MB dan oshmasligi kerak.',
             'image.mimes' => 'Rasm JPG, PNG yoki WebP formatida bo‘lishi kerak.',
@@ -87,6 +89,7 @@ class TeacherCourseController extends Controller
             'description' => $validated['description'],
             'description_en' => $validated['description_en'] ?? null,
             'start_date' => $validated['start_date'],
+            'max_enrollments' => !empty($validated['max_enrollments']) ? (int) $validated['max_enrollments'] : null,
             'status' => Course::STATUS_PUBLISHED,
         ];
 
@@ -142,6 +145,9 @@ class TeacherCourseController extends Controller
             'course_open_approved_at' => null,
         ]);
 
+        // Adminlarga Telegram xabar yuborish
+        $this->notifyAdminsCourseOpenRequest($user, $reason);
+
         $message = "Kurs ochish uchun ruxsat so'rovi adminga yuborildi.";
 
         return response()->json(['ok' => true, 'message' => $message, 'toast_type' => 'success']);
@@ -188,6 +194,7 @@ class TeacherCourseController extends Controller
             'description' => ['required', 'string'],
             'description_en' => ['nullable', 'string'],
             'start_date' => ['required', 'date'],
+            'max_enrollments' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
             'title.required' => 'Kurs sarlavhasini yozing.',
@@ -195,6 +202,7 @@ class TeacherCourseController extends Controller
             'description.required' => 'Kurs haqida qisqacha yozing.',
             'start_date.required' => 'Kurs qachon boshlanishini kiriting.',
             'start_date.date' => 'Boshlanish sanasi noto‘g‘ri formatda.',
+            'max_enrollments.integer' => 'Limit raqam bo‘lishi kerak.',
             'image.image' => 'Fayl rasm bo‘lishi kerak.',
             'image.max' => 'Rasm hajmi 5 MB dan oshmasligi kerak.',
             'image.mimes' => 'Rasm JPG, PNG yoki WebP formatida bo‘lishi kerak.',
@@ -223,6 +231,7 @@ class TeacherCourseController extends Controller
             'description' => $validated['description'],
             'description_en' => $validated['description_en'] ?? null,
             'start_date' => $validated['start_date'],
+            'max_enrollments' => !empty($validated['max_enrollments']) ? (int) $validated['max_enrollments'] : null,
         ];
 
         if ($request->hasFile('image')) {
@@ -333,5 +342,33 @@ class TeacherCourseController extends Controller
             'course_open_approved' => false,
             'course_open_request_pending' => false,
         ]);
+    }
+
+    private function notifyAdminsCourseOpenRequest(User $teacher, string $reason): void
+    {
+        $telegram = app(\App\Services\TelegramService::class);
+        $admins = \App\Models\User::query()->where('is_active', true)->get();
+
+        foreach ($admins as $admin) {
+            if (! $admin->telegram_chat_id || ! $admin->isAdmin()) {
+                continue;
+            }
+
+            $message = "📚 <b>Kurs ochish so'rovi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👨‍🏫 <b>O'qituvchi:</b> ".htmlspecialchars($teacher->name)."\n"
+                ."📧 <b>Email:</b> ".htmlspecialchars($teacher->email)."\n"
+                ."📞 <b>Telefon:</b> ".htmlspecialchars($teacher->phone ?? 'Ko\'rsatilmagan')."\n"
+                ."💼 <b>Sabab:</b> ".htmlspecialchars($reason ?: 'Ko\'rsatilmagan')."\n"
+                ."\n━━━━━━━━━━━━━━━━━━━━\n"
+                ."Ruxsat berasizmi?";
+
+            $telegram->sendInlineConfirm(
+                (int) $admin->telegram_chat_id,
+                $message,
+                'approve_course_open:'.$teacher->id,
+                'reject_course_open:'.$teacher->id
+            );
+        }
     }
 }

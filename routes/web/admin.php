@@ -31,6 +31,10 @@ Route::middleware(['auth', 'active', 'role:super_admin,admin'])->group(function 
     Route::delete('user/{user}', [AdminController::class, 'destroyUser'])->name('user.destroy');
     Route::post('feature-requests/{featureRequest}/status', [FeatureRequestController::class, 'updateStatus'])->name('feature-requests.status');
     Route::post('user/{user}/password-reset', [AuthController::class, 'adminSendPasswordReset'])->name('user.password-reset.send');
+    Route::post('user/{user}/temp-password', [AuthController::class, 'adminGenerateTempPassword'])->name('user.temp-password.generate');
+    Route::post('user/{user}/send-telegram', [AdminController::class, 'sendTelegramMessage'])->name('user.send-telegram');
+    Route::post('user/{user}/block', [AdminController::class, 'blockUser'])->name('user.block');
+    Route::post('user/{user}/unblock', [AdminController::class, 'unblockUser'])->name('user.unblock');
     Route::post('user/{user}/course-open/approve', [AdminController::class, 'approveCourseOpenRequest'])->name('user.course-open.approve');
     Route::post('user/{user}/course-open/reject', [AdminController::class, 'rejectCourseOpenRequest'])->name('user.course-open.reject');
     Route::get('admin/school-classes', [AdminSchoolClassController::class, 'index'])->name('admin.school-classes.index');

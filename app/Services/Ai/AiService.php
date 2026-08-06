@@ -1382,9 +1382,9 @@ class AiService
         if (Str::contains($q, ['parolim', 'parolni', 'parol', 'password', 'esdan chiq', 'unutdim', 'tiklasam', 'tiklash', 'reset'])) {
             return "**Parolni tiklash tartibi**\n"
                 ."- Login sahifasidagi **Parolni unutdingizmi?** havolasini oching: ".route('password.forgot.form')."\n"
-                ."- Emailingizni kiriting, tizim tasdiqlash kodini yuboradi.\n"
+                ."- Telefon raqamingizni kiriting, tizim Telegram orqali 6 xonali tasdiqlash kodini yuboradi.\n"
                 ."- Kodni va yangi parolni kiritib parolni yangilaysiz.\n"
-                ."- Agar emailga kod kelmasa, spam papkani tekshiring yoki **Aloqa** orqali murojaat qiling: ".route('contact');
+                ."- Agar Telegram ga kod kelmasa, **Aloqa** orqali murojaat qiling: ".route('contact');
         }
 
         if (Str::contains($q, ['profilimga rasm', 'avatar', 'rasm yukla', 'rasmni yuk', 'profil rasm', 'profilga rasm', 'surat yuk', 'yukla rasm'])) {

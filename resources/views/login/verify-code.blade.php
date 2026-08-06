@@ -19,6 +19,35 @@
       .tg-verify-card h2 { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
       .tg-verify-card .tg-subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
 
+      /* Telegram ochish tugmasi */
+      .tg-open-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 14px 24px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #2AABEE, #229ED9);
+        color: #fff !important;
+        font-size: 1rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 6px 20px rgba(42, 171, 238, 0.35);
+        border: none;
+      }
+      .tg-open-btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 10px 28px rgba(42, 171, 238, 0.45);
+        color: #fff;
+      }
+      .tg-open-btn:active { transform: translateY(-1px) scale(0.98); }
+      .tg-open-btn i { font-size: 1.15em; }
+
+      /* QR kod — mobil qurilmalarda yashirin */
+      .tg-qr-section { margin-top: 1.25rem; }
       .tg-qr-wrap {
         display: inline-flex; justify-content: center;
         background: #fff; border-radius: 12px; padding: 16px;
@@ -73,6 +102,11 @@
         0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
         40% { opacity: 1; transform: scale(1); }
       }
+
+      /* Mobil: tugma birinchi, QR yashirin. Kompyuter: QR ko'rinadi */
+      @media (max-width: 768px) {
+        .tg-qr-section { display: none; }
+      }
     </style>
   @endpush
 
@@ -90,13 +124,20 @@
           <i class="fa-brands fa-telegram"></i>
         </div>
         <h2>Tasdiqlash kerak</h2>
-        <p class="tg-subtitle">Telegram avtomatik ochilmoqda...</p>
+        <p class="tg-subtitle">Quyidagi tugmani bosib, Telegram'da tasdiqlang</p>
 
-        {{-- QR kod --}}
-        <div class="tg-qr-wrap" id="tg-qr"></div>
-        <div class="tg-qr-note">
-          <i class="fa-solid fa-circle-info"></i>
-          Telegram ilovasidagi <strong>Menu → Skaner</strong> bilan skanerlang
+        {{-- Telegram ochish tugmasi — mobil qurilmalarda birinchi --}}
+        <a href="https://t.me/{{ $bot_username ?: 'maktab81_verify_bot' }}?start={{ $token }}" target="_blank" class="tg-open-btn">
+          <i class="fa-brands fa-telegram"></i> Telegram'da ochish
+        </a>
+
+        {{-- QR kod — faqat kompyuterda ko'rinadi --}}
+        <div class="tg-qr-section">
+          <div class="tg-qr-wrap" id="tg-qr"></div>
+          <div class="tg-qr-note">
+            <i class="fa-solid fa-circle-info"></i>
+            Telegram ilovasidagi <strong>Menu → Skaner</strong> bilan skanerlang
+          </div>
         </div>
 
         {{-- Status --}}
@@ -107,7 +148,7 @@
 
         {{-- Qo'llanma --}}
         <ol class="tg-steps">
-          <li><span class="step-num">1</span><span>Telegram ochiladi yoki QR kodni skanerlang</span></li>
+          <li><span class="step-num">1</span><span>Telegram'da ochish tugmasini bosing</span></li>
           <li><span class="step-num">2</span><span>Botga <strong>/start</strong> yuboring</span></li>
           <li><span class="step-num">3</span><span><strong>"📱 Telefon raqamni ulashish"</strong> tugmasini bosing</span></li>
           <li><span class="step-num">4</span><span>Raqamingizni ulang</span></li>
@@ -129,7 +170,7 @@
       var completeUrl = '{{ route("telegram.complete", ["token" => $token]) }}';
       var deepLink = 'https://t.me/' + botUsername + '?start=' + token;
 
-      // ========== QR KOD ==========
+      // ========== QR KOD (faqat kompyuterda) ==========
       var qrContainer = document.getElementById('tg-qr');
       if (qrContainer && typeof QRCode !== 'undefined') {
         new QRCode(qrContainer, {
@@ -141,12 +182,6 @@
           correctLevel: QRCode.CorrectLevel.M
         });
       }
-
-      // ========== AVTOMATIK TELEGRAM'GA JO'NATISH ==========
-      // 2 soniyadan keyin Telegram sahifasini YANGI TABDA ochish
-      setTimeout(function() {
-        window.open(deepLink, '_blank');
-      }, 2000);
 
       // ========== POLLING ==========
       var statusEl = document.getElementById('tg-status');

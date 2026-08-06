@@ -125,7 +125,7 @@ class AdminCommentController extends Controller
             ->with('toast_type', 'success');
     }
 
-    public function blockUser(User $user)
+    public function blockUser(Request $request, User $user)
     {
         $this->authorizeBlocker();
         $current = auth()->user();
@@ -144,11 +144,58 @@ class AdminCommentController extends Controller
                 ->with('toast_type', 'error');
         }
 
-        $user->update(['is_active' => false]);
+        $validated = $request->validate([
+            'duration' => ['required', 'in:1h,1d,1w,1m,forever'],
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $blockedUntil = match ($validated['duration']) {
+            '1h' => now()->addHour(),
+            '1d' => now()->addDay(),
+            '1w' => now()->addWeek(),
+            '1m' => now()->addMonth(),
+            'forever' => null,
+        };
+
+        $durationText = match ($validated['duration']) {
+            '1h' => '1 soat',
+            '1d' => '1 kun',
+            '1w' => '1 hafta',
+            '1m' => '1 oy',
+            'forever' => 'Butun umr',
+        };
+
+        $user->update([
+            'is_blocked' => true,
+            'is_active' => false,
+            'blocked_until' => $blockedUntil,
+            'blocked_reason' => $validated['reason'],
+            'blocked_by' => $current->id,
+        ]);
+
+        // Telegram xabar
+        if ($user->telegram_chat_id) {
+            $adminName = htmlspecialchars($current->buildNameFromParts() ?: $current->name);
+            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+            $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz';
+
+            $text = "\ud83d\udeab <b>Hisobingiz bloklandi</b>\n"
+                ."\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n"
+                ."\ud83d\udc64 <b>Foydalanuvchi:</b> {$userName}\n"
+                ."\ud83d\udc68\u200d\ud83d\udcbb <b>Bloklagan:</b> {$adminName}\n"
+                ."\u23f0 <b>Muddat:</b> {$durationText}\n"
+                ."\ud83d\udcc5 <b>Qachon gacha:</b> {$unblockTime}\n\n"
+                ."\ud83d\udcdd <b>Sabab:</b>\n"
+                .htmlspecialchars($validated['reason']) . "\n\n"
+                ."\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        }
 
         return redirect()
             ->back()
-            ->with('success', $user->name.' bloklandi.')
+            ->with('success', $user->name.' '.$durationText.' muddatga bloklandi.')
             ->with('toast_type', 'warning');
     }
 

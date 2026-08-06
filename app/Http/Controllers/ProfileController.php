@@ -150,6 +150,7 @@ class ProfileController extends Controller
             ->get();
 
         $pendingEmail = (string) $request->session()->get('profile_email_change_pending', '');
+        $pendingPhone = (string) $request->session()->get('profile_phone_change_pending', '');
         $passwordChangeUnlocked = $this->hasConfirmedPasswordChange($request, (int) $user->id);
 
         return view('profile.show', compact(
@@ -169,6 +170,7 @@ class ProfileController extends Controller
             'createdExamsCount',
             'examResultsCount',
             'pendingEmail',
+            'pendingPhone',
             'passwordChangeUnlocked',
             'panel',
             'activities'
@@ -204,26 +206,26 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'first_name' => User::nameValidationRules(),
             'last_name' => User::nameValidationRules(),
-            'phone' => uz_phone_rules(false),
+            'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . $request->user()->donorMaxAvatarSize()],
             'remove_avatar' => ['nullable', 'boolean'],
         ], [
-            'phone.regex' => uz_phone_validation_message(),
-                        'first_name.required' => 'Ism kiritilishi shart.',
+            'email.required' => 'Email kiritilishi shart.',
+            'email.email' => 'To\'g\'ri email manzil kiriting.',
+            'first_name.required' => 'Ism kiritilishi shart.',
             'first_name.regex' => $nameMsg,
             'last_name.required' => 'Familiya kiritilishi shart.',
             'last_name.regex' => $nameMsg,
-'avatar.image' => 'Profil rasmi rasm bo‘lishi kerak.',
-            'avatar.mimes' => 'Profil rasmi JPG, PNG yoki WebP formatda bo‘lishi kerak.',
-            'avatar.max' => 'Rasm hajmi ' . round($request->user()->donorMaxAvatarSize() / 1024) . ' MB dan oshmasin. Donor bo‘lish orqali kattaroq rasm yuklashingiz mumkin.',
+            'avatar.image' => 'Profil rasmi rasm bo\'lishi kerak.',
+            'avatar.mimes' => 'Profil rasmi JPG, PNG yoki WebP formatda bo\'lishi kerak.',
+            'avatar.max' => 'Rasm hajmi ' . round($request->user()->donorMaxAvatarSize() / 1024) . ' MB dan oshmasin.',
         ]);
-        $validated['phone'] = uz_phone_format($validated['phone'] ?? null);
 
         $payload = [
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
             'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
-            'phone' => $validated['phone'] ?? null,
+            'email' => strtolower(trim($validated['email'])),
         ];
 
         $previousAvatar = $user->avatar;
@@ -369,6 +371,9 @@ class ProfileController extends Controller
             'Parol o\'zgartirildi'
         );
 
+        // Telegram'ga xavfsizlik xabarini yuborish
+        $this->sendPasswordChangeNotification($user);
+
         $this->clearPasswordChangeConfirmation($request);
         $request->session()->regenerate();
         $request->session()->regenerateToken();
@@ -383,21 +388,9 @@ class ProfileController extends Controller
             ->with('toast_type', 'success');
     }
 
-    public function requestEmailChange(Request $request)
+    public function updateEmail(Request $request)
     {
         $user = $request->user();
-
-        if (! $this->mailDeliveryEnabled()) {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
-                    'email' => [$this->mailDeliveryDisabledMessage()],
-                ]);
-            }
-
-            return back()
-                ->withErrors(['email' => $this->mailDeliveryDisabledMessage()])
-                ->withInput();
-        }
 
         $validated = $request->validate([
             'email' => [
@@ -409,11 +402,11 @@ class ProfileController extends Controller
         ]);
 
         $newEmail = strtolower(trim($validated['email']));
-        if ($newEmail === strtolower((string) $user->email)) {
+        $oldEmail = (string) $user->email;
+
+        if ($newEmail === $oldEmail) {
             if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Yangi email joriy manzildan farq qilishi kerak.', [
-                    'email' => ['Yangi email joriy manzildan farq qilishi kerak.'],
-                ]);
+                return $this->sectionErrorResponse('email', 'Yangi email joriy manzildan farq qilishi kerak.');
             }
 
             return back()
@@ -421,131 +414,8 @@ class ProfileController extends Controller
                 ->withInput();
         }
 
-        if (! $this->canSendEmailChangeOtp($newEmail)) {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', "Kod yuborishdan oldin {$this->emailChangeResendSecondsLeft($newEmail)} soniya kuting.", [
-                    'email' => ["Kod yuborishdan oldin {$this->emailChangeResendSecondsLeft($newEmail)} soniya kuting."],
-                ]);
-            }
-
-            return back()
-                ->withErrors([
-                    'email' => "Kod yuborishdan oldin {$this->emailChangeResendSecondsLeft($newEmail)} soniya kuting.",
-                ])
-                ->withInput();
-        }
-
-        try {
-            $this->issueEmailChangeOtp($newEmail, (int) $user->id);
-        } catch (\Throwable $e) {
-            Log::error('Profile email change OTP send failed', [
-                'email' => $newEmail,
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Yangi emailga kod yuborilmadi. Keyinroq urinib ko\'ring.', [
-                    'email' => ['Yangi emailga kod yuborilmadi. Keyinroq urinib ko\'ring.'],
-                ], 500);
-            }
-
-            return back()
-                ->withErrors(['email' => 'Yangi emailga kod yuborilmadi. Keyinroq urinib ko‘ring.'])
-                ->withInput();
-        }
-
-        $request->session()->put('profile_email_change_pending', $newEmail);
-        if ($this->wantsJson($request)) {
-            return $this->sectionSuccessResponse($request, 'email', "Tasdiqlash kodi {$newEmail} manziliga yuborildi.");
-        }
-
-        return redirect()
-            ->route('profile.show', ['panel' => 'security'])
-            ->with('success', "Tasdiqlash kodi {$newEmail} manziliga yuborildi.")
-            ->with('toast_type', 'success');
-    }
-
-    public function verifyEmailChange(Request $request)
-    {
-        $validated = $request->validate([
-            'code' => ['required', 'digits:6'],
-        ]);
-
-        $pending = (string) $request->session()->get('profile_email_change_pending', '');
-        if ($pending === '') {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Avval yangi email kiriting va kod oling.');
-            }
-
-            return redirect()
-                ->route('profile.show', ['panel' => 'security'])
-                ->with('error', 'Avval yangi email kiriting va kod oling.')
-                ->with('toast_type', 'error');
-        }
-
-        $user = $request->user();
-
-        if (RateLimiter::tooManyAttempts($this->emailChangeVerifyKey($pending), self::OTP_VERIFY_MAX_ATTEMPTS)) {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', "Juda ko'p xato urinish. {$this->emailChangeVerifySecondsLeft($pending)} soniyadan keyin qayta urinib ko'ring.", [
-                    'code' => ["Juda ko'p xato urinish. {$this->emailChangeVerifySecondsLeft($pending)} soniyadan keyin qayta urinib ko'ring."],
-                ]);
-            }
-
-            return back()->withErrors([
-                'code' => "Juda ko'p xato urinish. {$this->emailChangeVerifySecondsLeft($pending)} soniyadan keyin qayta urinib ko'ring.",
-            ]);
-        }
-
-        $otp = OneTimeCode::query()
-            ->where('email', $pending)
-            ->where('purpose', OneTimeCode::PURPOSE_EMAIL_CHANGE)
-            ->latest('id')
-            ->first();
-
-        if (! $this->isValidOtp($otp, $validated['code'])) {
-            RateLimiter::hit($this->emailChangeVerifyKey($pending), self::OTP_VERIFY_DECAY_SECONDS);
-
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', "Kod noto'g'ri yoki muddati tugagan.", [
-                    'code' => ["Kod noto'g'ri yoki muddati tugagan."],
-                ]);
-            }
-
-            return back()->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."]);
-        }
-
-        $meta = $otp->meta ?? [];
-        if ((int) ($meta['user_id'] ?? 0) !== (int) $user->id) {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Tasdiqlash sessiyasi yaroqsiz. Qaytadan urinib ko\'ring.');
-            }
-
-            return redirect()
-                ->route('profile.show', ['panel' => 'security'])
-                ->with('error', 'Tasdiqlash sessiyasi yaroqsiz. Qaytadan urinib ko‘ring.')
-                ->with('toast_type', 'error');
-        }
-
-        if (User::query()->where('email', $pending)->where('id', '!=', $user->id)->exists()) {
-            $request->session()->forget('profile_email_change_pending');
-            $otp->delete();
-
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Bu email allaqachon boshqa hisobda ishlatilgan.', [
-                    'email' => ['Bu email allaqachon boshqa hisobda ishlatilgan.'],
-                ]);
-            }
-
-            return redirect()
-                ->route('profile.show', ['panel' => 'security'])
-                ->with('error', 'Bu email allaqachon boshqa hisobda ishlatilgan.')
-                ->with('toast_type', 'error');
-        }
-
-        $oldEmail = $user->email;
         $user->update([
-            'email' => $pending,
+            'email' => $newEmail,
             'email_verified_at' => now(),
         ]);
 
@@ -554,12 +424,8 @@ class ProfileController extends Controller
             \App\Models\UserActivity::TYPE_EMAIL_CHANGED,
             'Email manzili o\'zgartirildi',
             ['old_email' => $oldEmail],
-            ['new_email' => $pending]
+            ['new_email' => $newEmail]
         );
-
-        $otp->delete();
-        RateLimiter::clear($this->emailChangeVerifyKey($pending));
-        $request->session()->forget('profile_email_change_pending');
 
         if ($this->wantsJson($request)) {
             return $this->sectionSuccessResponse($request, 'email', 'Email manzili yangilandi.');
@@ -569,6 +435,262 @@ class ProfileController extends Controller
             ->route('profile.show', ['panel' => 'security'])
             ->with('success', 'Email manzili yangilandi.')
             ->with('toast_type', 'success');
+    }
+
+    public function requestPhoneChange(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'phone' => uz_phone_rules(true),
+        ], [
+            'phone.required' => 'Telefon raqami kiritilishi shart.',
+            'phone.regex' => uz_phone_validation_message(),
+        ]);
+
+        $newPhone = uz_phone_format($validated['phone']);
+        if ($newPhone === $user->phone) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('phone', 'Yangi telefon joriy raqamdan farq qilishi kerak.', [
+                    'phone' => ['Yangi telefon joriy raqamdan farq qilishi kerak.'],
+                ]);
+            }
+
+            return back()
+                ->withErrors(['phone' => 'Yangi telefon joriy raqamdan farq qilishi kerak.'])
+                ->withInput();
+        }
+
+        // Telegram chat_id borligini tekshirish
+        if (! $user->telegram_chat_id) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('phone', 'Telefon o\'zgartirish uchun Telegram bot bilan bog\'lanish kerak.', [
+                    'phone' => ['Telefon o\'zgartirish uchun Telegram bot bilan bog\'lanish kerak.'],
+                ]);
+            }
+
+            return back()
+                ->withErrors(['phone' => 'Telefon o\'zgartirish uchun Telegram bot bilan bog\'lanish kerak.'])
+                ->withInput();
+        }
+
+        // Telegram orqali tasdiqlash xabarini yuborish
+        $token = \Illuminate\Support\Str::random(40);
+        \App\Models\TelegramVerification::create([
+            'token' => $token,
+            'purpose' => \App\Models\TelegramVerification::PURPOSE_PHONE_CHANGE,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone ?? '',
+            'session_payload' => ['user_id' => $user->id, 'new_phone' => $newPhone],
+            'status' => \App\Models\TelegramVerification::STATUS_PENDING,
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $telegram = app(\App\Services\TelegramService::class);
+        $telegram->sendInlineConfirm(
+            (int) $user->telegram_chat_id,
+            "📱 Telefon raqamni o'zgartirish so'rovi\n\n"
+            .'Joriy raqam: <b>'.htmlspecialchars((string) $user->phone).'</b>'
+            .'\nYangi raqam: <b>'.htmlspecialchars($newPhone).'</b>'
+            .'\n\nTelefon raqamingizni o\'zgartirmoqchimisiz?',
+            'confirm_phone_change:'.$token,
+            'cancel_phone_change:'.$token
+        );
+
+        $request->session()->put('profile_phone_change_pending', $newPhone);
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'phone', "Telegram orqali tasdiqlash xabari yuborildi.");
+        }
+
+        return redirect()
+            ->route('profile.show', ['panel' => 'security'])
+            ->with('success', 'Telegram orqali tasdiqlash xabari yuborildi.')
+            ->with('toast_type', 'success');
+    }
+
+    public function verifyPhoneChange(Request $request)
+    {
+        $pending = (string) $request->session()->get('profile_phone_change_pending', '');
+        if ($pending === '') {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('phone', 'Avval yangi telefon kiriting.');
+            }
+
+            return redirect()
+                ->route('profile.show', ['panel' => 'security'])
+                ->with('error', 'Avval yangi telefon kiriting.')
+                ->with('toast_type', 'error');
+        }
+
+        $user = $request->user();
+
+        // Telegram orqali tasdiqlanganini tekshirish
+        $verification = \App\Models\TelegramVerification::query()
+            ->where('user_id', $user->id)
+            ->where('purpose', \App\Models\TelegramVerification::PURPOSE_PHONE_CHANGE)
+            ->where('status', \App\Models\TelegramVerification::STATUS_COMPLETED)
+            ->latest('id')
+            ->first();
+
+        if ($verification) {
+            $newPhone = $verification->session_payload['new_phone'] ?? $pending;
+            $user->update(['phone' => $newPhone]);
+            $request->session()->forget('profile_phone_change_pending');
+            $verification->delete();
+
+            if ($this->wantsJson($request)) {
+                return $this->sectionSuccessResponse($request, 'phone', 'Telefon raqami yangilandi.');
+            }
+
+            return redirect()
+                ->route('profile.show', ['panel' => 'security'])
+                ->with('success', 'Telefon raqami yangilandi.')
+                ->with('toast_type', 'success');
+        }
+
+        // Hali tasdiqlanmagan
+        if ($this->wantsJson($request)) {
+            return $this->sectionErrorResponse('phone', 'Telegram orqali tasdiqlanmagan. Telegramdagini tekshiring.');
+        }
+
+        return back()
+            ->withErrors(['phone' => 'Telegram orqali tasdiqlanmagan. Telegramdagini tekshiring.'])
+            ->with('toast_type', 'warning');
+    }
+
+    public function resendPhoneChange(Request $request)
+    {
+        $pending = (string) $request->session()->get('profile_phone_change_pending', '');
+        if ($pending === '') {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('phone', 'Avval yangi telefon kiriting.');
+            }
+
+            return redirect()
+                ->route('profile.show', ['panel' => 'security'])
+                ->with('error', 'Avval yangi telefon kiriting.')
+                ->with('toast_type', 'error');
+        }
+
+        $user = $request->user();
+
+        if (! $user->telegram_chat_id) {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('phone', 'Telegram bot bilan bog\'lanish kerak.');
+            }
+
+            return back()->withErrors(['phone' => 'Telegram bot bilan bog\'lanish kerak.']);
+        }
+
+        // Eski pending yozuvlarni expired qilish
+        \App\Models\TelegramVerification::query()
+            ->where('user_id', $user->id)
+            ->where('purpose', \App\Models\TelegramVerification::PURPOSE_PHONE_CHANGE)
+            ->where('status', \App\Models\TelegramVerification::STATUS_PENDING)
+            ->update(['status' => \App\Models\TelegramVerification::STATUS_EXPIRED]);
+
+        // Yangi token yaratish
+        $token = \Illuminate\Support\Str::random(40);
+        \App\Models\TelegramVerification::create([
+            'token' => $token,
+            'purpose' => \App\Models\TelegramVerification::PURPOSE_PHONE_CHANGE,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone ?? '',
+            'session_payload' => ['user_id' => $user->id, 'new_phone' => $pending],
+            'status' => \App\Models\TelegramVerification::STATUS_PENDING,
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $telegram = app(\App\Services\TelegramService::class);
+        $telegram->sendInlineConfirm(
+            (int) $user->telegram_chat_id,
+            "📱 Telefon raqamni o'zgartirish so'rovi\n\n"
+            .'Yangi raqam: <b>'.htmlspecialchars($pending).'</b>'
+            .'\n\nTelefon raqamingizni o\'zgartirmoqchimisiz?',
+            'confirm_phone_change:'.$token,
+            'cancel_phone_change:'.$token
+        );
+
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'phone', 'Yangi tasdiqlash xabari Telegram\'ga yuborildi.', 'warning');
+        }
+
+        return back()
+            ->with('success', 'Yangi tasdiqlash xabari Telegram\'ga yuborildi.')
+            ->with('toast_type', 'warning');
+    }
+
+    public function cancelPhoneChange(Request $request)
+    {
+        $pending = (string) $request->session()->get('profile_phone_change_pending', '');
+        if ($pending !== '') {
+            \App\Models\TelegramVerification::query()
+                ->where('user_id', $request->user()->id)
+                ->where('purpose', \App\Models\TelegramVerification::PURPOSE_PHONE_CHANGE)
+                ->where('status', \App\Models\TelegramVerification::STATUS_PENDING)
+                ->update(['status' => \App\Models\TelegramVerification::STATUS_EXPIRED]);
+        }
+
+        $request->session()->forget('profile_phone_change_pending');
+
+        if ($this->wantsJson($request)) {
+            return $this->sectionSuccessResponse($request, 'phone', 'Telefon almashtirish bekor qilindi.', 'warning');
+        }
+
+        return redirect()
+            ->route('profile.show', ['panel' => 'security'])
+            ->with('success', 'Telefon almashtirish bekor qilindi.')
+            ->with('toast_type', 'warning');
+    }
+
+    public function verifyEmailChange(Request $request)
+    {
+        $pending = (string) $request->session()->get('profile_email_change_pending', '');
+        if ($pending === '') {
+            if ($this->wantsJson($request)) {
+                return $this->sectionErrorResponse('email', 'Avval yangi email kiriting.');
+            }
+
+            return redirect()
+                ->route('profile.show', ['panel' => 'security'])
+                ->with('error', 'Avval yangi email kiriting.')
+                ->with('toast_type', 'error');
+        }
+
+        $user = $request->user();
+
+        // Telegram orqali tasdiqlanganini tekshirish
+        $verification = TelegramVerification::query()
+            ->where('user_id', $user->id)
+            ->where('purpose', TelegramVerification::PURPOSE_EMAIL_CHANGE)
+            ->where('status', TelegramVerification::STATUS_COMPLETED)
+            ->latest('id')
+            ->first();
+
+        if ($verification) {
+            $request->session()->forget('profile_email_change_pending');
+            $verification->delete();
+
+            if ($this->wantsJson($request)) {
+                return $this->sectionSuccessResponse($request, 'email', 'Email manzili yangilandi.');
+            }
+
+            return redirect()
+                ->route('profile.show', ['panel' => 'security'])
+                ->with('success', 'Email manzili yangilandi.')
+                ->with('toast_type', 'success');
+        }
+
+        // Hali tasdiqlanmagan
+        if ($this->wantsJson($request)) {
+            return $this->sectionErrorResponse('email', 'Telegram orqali tasdiqlanmagan. Telegramdagini tekshiring.');
+        }
+
+        return back()
+            ->withErrors(['email' => 'Telegram orqali tasdiqlanmagan. Telegramdagini tekshiring.'])
+            ->with('toast_type', 'warning');
     }
 
     public function resendEmailChange(Request $request)
@@ -587,70 +709,50 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (! $this->mailDeliveryEnabled()) {
+        if (! $user->telegram_chat_id) {
             if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', $this->mailDeliveryDisabledMessage(), [
-                    'code' => [$this->mailDeliveryDisabledMessage()],
-                ]);
+                return $this->sectionErrorResponse('email', 'Telegram bot bilan bog\'lanish kerak.');
             }
 
-            return back()->withErrors([
-                'code' => $this->mailDeliveryDisabledMessage(),
-            ]);
+            return back()->withErrors(['email' => 'Telegram bot bilan bog\'lanish kerak.']);
         }
 
-        if (! $this->canSendEmailChangeOtp($pending)) {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', "Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting.", [
-                    'code' => ["Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting."],
-                ]);
-            }
+        // Eski pending yozuvlarni expired qilish
+        TelegramVerification::query()
+            ->where('user_id', $user->id)
+            ->where('purpose', TelegramVerification::PURPOSE_EMAIL_CHANGE)
+            ->where('status', TelegramVerification::STATUS_PENDING)
+            ->update(['status' => TelegramVerification::STATUS_EXPIRED]);
 
-            return back()->withErrors([
-                'code' => "Qayta yuborishdan oldin {$this->emailChangeResendSecondsLeft($pending)} soniya kuting.",
-            ]);
-        }
+        // Yangi token yaratish
+        $token = \Illuminate\Support\Str::random(40);
+        TelegramVerification::create([
+            'token' => $token,
+            'purpose' => TelegramVerification::PURPOSE_EMAIL_CHANGE,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone ?? '',
+            'session_payload' => ['user_id' => $user->id, 'new_email' => $pending],
+            'status' => TelegramVerification::STATUS_PENDING,
+            'expires_at' => now()->addMinutes(10),
+        ]);
 
-        $latest = OneTimeCode::query()
-            ->where('email', $pending)
-            ->where('purpose', OneTimeCode::PURPOSE_EMAIL_CHANGE)
-            ->latest('id')
-            ->first();
-
-        if (! $latest || (int) ($latest->meta['user_id'] ?? 0) !== (int) $user->id) {
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Kodni qayta yuborish mumkin emas. Emailni qayta kiriting.');
-            }
-
-            return redirect()
-                ->route('profile.show', ['panel' => 'security'])
-                ->with('error', 'Kodni qayta yuborish mumkin emas. Emailni qayta kiriting.')
-                ->with('toast_type', 'error');
-        }
-
-        try {
-            $this->issueEmailChangeOtp($pending, (int) $user->id);
-        } catch (\Throwable $e) {
-            Log::error('Profile email change OTP resend failed', [
-                'email' => $pending,
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-            if ($this->wantsJson($request)) {
-                return $this->sectionErrorResponse('email', 'Kodni qayta yuborib bo\'lmadi.', [
-                    'code' => ['Kodni qayta yuborib bo\'lmadi.'],
-                ], 500);
-            }
-
-            return back()->withErrors(['code' => 'Kodni qayta yuborib bo‘lmadi.']);
-        }
+        $telegram = app(\App\Services\TelegramService::class);
+        $telegram->sendInlineConfirm(
+            (int) $user->telegram_chat_id,
+            "📧 Email o'zgartirish so'rovi\n\n"
+            .'Yangi email: <b>'.htmlspecialchars($pending).'</b>'
+            .'\n\nEmail manzilingizni o\'zgartirmoqchimisiz?',
+            'confirm_email_change:'.$token,
+            'cancel_email_change:'.$token
+        );
 
         if ($this->wantsJson($request)) {
-            return $this->sectionSuccessResponse($request, 'email', 'Yangi kod yuborildi.', 'warning');
+            return $this->sectionSuccessResponse($request, 'email', 'Yangi tasdiqlash xabari Telegram\'ga yuborildi.', 'warning');
         }
 
         return back()
-            ->with('success', 'Yangi kod yuborildi.')
+            ->with('success', 'Yangi tasdiqlash xabari Telegram\'ga yuborildi.')
             ->with('toast_type', 'warning');
     }
 
@@ -930,6 +1032,37 @@ class ProfileController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * Parol o'zgarganda Telegram'ga xavfsizlik xabarini yuborish.
+     */
+    private function sendPasswordChangeNotification(User $user): void
+    {
+        try {
+            if (! $user->telegram_chat_id) {
+                return;
+            }
+
+            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+            $date = now()->format('d.m.Y H:i');
+            $ip = request()->ip();
+
+            $text = "🔒 Xavfsizlik xabari\n\n"
+                ."Salom, <b>{$userName}</b>!\n\n"
+                ."✅ Parolingiz muvaffaqiyatli o'zgartirildi.\n\n"
+                ."⏰ Sana: <b>{$date}</b>\n"
+                ."🌐 IP manzili: <b>{$ip}</b>\n\n"
+                ."⚠️ Agar siz parolni o'zgartirmagan bo'lsangiz, darhol biz bilan bog'laning!";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        } catch (\Throwable $e) {
+            Log::error('Telegram password change notification failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function wantsJson(Request $request): bool

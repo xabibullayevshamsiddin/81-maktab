@@ -14,7 +14,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
+            'phone' => ['required', 'string', 'min:9'],
             'password' => ['required'],
         ];
     }
@@ -22,8 +22,8 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email kiritilishi shart.',
-            'email.email' => 'To\'g\'ri email manzil kiriting.',
+            'phone.required' => 'Telefon raqami kiritilishi shart.',
+            'phone.min' => "Telefon raqami to'g'ri formatda kiriting.",
             'password.required' => 'Parol kiritilishi shart.',
         ];
     }

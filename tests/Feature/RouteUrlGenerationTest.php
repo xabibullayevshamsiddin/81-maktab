@@ -33,6 +33,6 @@ class RouteUrlGenerationTest extends TestCase
             ->assertInvalid(['first_name', 'last_name', 'email', 'phone', 'password']);
 
         $this->post(route('authenticate'), [])
-            ->assertInvalid(['email', 'password']);
+            ->assertInvalid(['phone', 'password']);
     }
 }

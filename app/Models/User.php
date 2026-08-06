@@ -132,6 +132,11 @@ class User extends Authenticatable
         'course_open_requested_at',
         'course_open_request_reason',
         'course_open_approved_at',
+        'force_password_change',
+        'is_blocked',
+        'blocked_until',
+        'blocked_reason',
+        'blocked_by',
     ];
 
     public static function nameValidationRules(bool $required = true): array
@@ -188,6 +193,9 @@ class User extends Authenticatable
         'course_open_approved_at' => 'datetime',
         'donor_cursor_animation' => 'boolean',
         'telegram_chat_id' => 'integer',
+        'force_password_change' => 'boolean',
+        'is_blocked' => 'boolean',
+        'blocked_until' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -304,6 +312,29 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->isSuperAdmin() || $this->hasRole(self::ROLE_ADMIN);
+    }
+
+    /**
+     * Foydalanuvchi hozir bloklanganmi tekshirish.
+     */
+    public function isCurrentlyBlocked(): bool
+    {
+        if (! $this->is_blocked) {
+            return false;
+        }
+
+        // Agar blocked_until yo'q — doimiy bloklangan
+        if (! $this->blocked_until) {
+            return true;
+        }
+
+        // Vaqt o'tgan — blok yechiladi
+        if ($this->blocked_until->isPast()) {
+            $this->update(['is_blocked' => false, 'blocked_until' => null, 'blocked_reason' => null]);
+            return false;
+        }
+
+        return true;
     }
 
     public function isEditor(): bool

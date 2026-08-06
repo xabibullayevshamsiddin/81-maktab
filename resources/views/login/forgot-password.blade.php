@@ -22,17 +22,17 @@
 
         <form action="{{ route('password.forgot.send') }}" method="POST" class="signin-form">
           @csrf
-          <label for="forgot-email">{{ __('auth_pages.forgot.email') }}</label>
+          <label for="forgot-phone">{{ __('auth_pages.forgot.phone') }}</label>
           <input
-            type="email"
-            id="forgot-email"
-            name="email"
-            value="{{ old('email', $email ?? '') }}"
-            placeholder="{{ __('auth_pages.forgot.email_placeholder') }}"
+            type="tel"
+            id="forgot-phone"
+            name="phone"
+            value="{{ old('phone', $phone ?? '') }}"
+            placeholder="{{ __('auth_pages.forgot.phone_placeholder') }}"
             required
-            autocomplete="email"
+            autocomplete="tel"
           />
-          @error('email')
+          @error('phone')
             <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
           @enderror
 

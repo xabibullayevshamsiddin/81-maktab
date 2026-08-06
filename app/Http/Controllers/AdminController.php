@@ -145,7 +145,13 @@ class AdminController extends Controller
         }
 
         if ($selectedStatus !== '') {
-            $query->where('is_active', $selectedStatus === 'active');
+            if ($selectedStatus === 'blocked') {
+                $query->where('is_blocked', true);
+            } else {
+                $query->where(function ($q) {
+                    $q->where('is_blocked', false)->orWhereNull('is_blocked');
+                });
+            }
         }
 
         if ($selectedGrade !== '') {
@@ -255,6 +261,167 @@ class AdminController extends Controller
             ->with('toast_type', 'error');
     }
 
+    /**
+     * Admin foydalanuvchiga Telegram xabar yuboradi.
+     */
+    public function sendTelegramMessage(Request $request, User $user)
+    {
+        $admin = $request->user();
+
+        if (! $admin || ! $admin->canManage($user)) {
+            return redirect()->route('user')
+                ->with('error', 'Siz bu foydalanuvchiga xabar yubora olmaysiz.')
+                ->with('toast_type', 'error');
+        }
+
+        if (! $user->telegram_chat_id) {
+            return redirect()->route('user')
+                ->with('error', "{$user->name} Telegram bilan bog'lanmagan.")
+                ->with('toast_type', 'warning');
+        }
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:4000'],
+        ], [
+            'message.required' => 'Xabar matnini kiriting.',
+            'message.max' => 'Xabar 4000 belgidan oshmasligi kerak.',
+        ]);
+
+        $adminName = htmlspecialchars($admin->buildNameFromParts() ?: $admin->name);
+        $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+
+        $text = "📩 <b>Admin xabari</b>\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."👤 <b>Kimdan:</b> {$adminName}\n"
+            ."🎯 <b>Kim uchun:</b> {$userName}\n\n"
+            ."💬 <b>Xabar:</b>\n"
+            .nl2br(htmlspecialchars($validated['message']));
+
+        $telegram = app(\App\Services\TelegramService::class);
+        $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+
+        return redirect()->route('user')
+            ->with('success', "Xabar {$user->name} ga muvaffaqiyatli yuborildi.")
+            ->with('toast_type', 'success');
+    }
+
+    /**
+     * Foydalanuvchini bloklash.
+     */
+    public function blockUser(Request $request, User $user)
+    {
+        $admin = $request->user();
+
+        if (! $admin || ! $admin->canManage($user)) {
+            return redirect()->route('user')
+                ->with('error', 'Siz bu foydalanuvchini bloklay olmaysiz.')
+                ->with('toast_type', 'error');
+        }
+
+        if ($user->isAdmin()) {
+            return redirect()->route('user')
+                ->with('error', 'Admin foydalanuvchilarini bloklay olmaysiz.')
+                ->with('toast_type', 'error');
+        }
+
+        $validated = $request->validate([
+            'duration' => ['required', 'in:1h,1d,1w,1m,forever'],
+            'reason' => ['required', 'string', 'max:500'],
+        ], [
+            'duration.required' => 'Blok muddatini tanlang.',
+            'reason.required' => 'Blok sababini kiriting.',
+        ]);
+
+        $blockedUntil = match ($validated['duration']) {
+            '1h' => now()->addHour(),
+            '1d' => now()->addDay(),
+            '1w' => now()->addWeek(),
+            '1m' => now()->addMonth(),
+            'forever' => null,
+        };
+
+        $durationText = match ($validated['duration']) {
+            '1h' => '1 soat',
+            '1d' => '1 kun',
+            '1w' => '1 hafta',
+            '1m' => '1 oy',
+            'forever' => 'Butun umr',
+        };
+
+        $user->update([
+            'is_blocked' => true,
+            'is_active' => false,
+            'blocked_until' => $blockedUntil,
+            'blocked_reason' => $validated['reason'],
+            'blocked_by' => $admin->id,
+        ]);
+
+        // Telegram xabar yuborish
+        if ($user->telegram_chat_id) {
+            $adminName = htmlspecialchars($admin->buildNameFromParts() ?: $admin->name);
+            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+            $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz';
+
+            $text = "🚫 <b>Hisobingiz bloklandi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
+                ."👨‍💼 <b>Bloklagan:</b> {$adminName}\n"
+                ."⏰ <b>Muddat:</b> {$durationText}\n"
+                ."📅 <b>Qachon gacha:</b> {$unblockTime}\n\n"
+                ."📝 <b>Sabab:</b>\n"
+                .htmlspecialchars($validated['reason']) . "\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."⚠️ Blok muddati tugagandan keyin avtomatik yechiladi.";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        }
+
+        return redirect()->route('user')
+            ->with('success', "{$user->name} {$durationText} muddatga bloklandi.")
+            ->with('toast_type', 'success');
+    }
+
+    /**
+     * Foydalanuvchini blokdan chiqarish.
+     */
+    public function unblockUser(User $user)
+    {
+        $admin = auth()->user();
+
+        if (! $admin || ! $admin->canManage($user)) {
+            return redirect()->route('user')
+                ->with('error', 'Siz bu foydalanuvchini blokdan chiqa olmaysiz.')
+                ->with('toast_type', 'error');
+        }
+
+        $user->update([
+            'is_blocked' => false,
+            'is_active' => true,
+            'blocked_until' => null,
+            'blocked_reason' => null,
+            'blocked_by' => null,
+        ]);
+
+        // Telegram xabar yuborish
+        if ($user->telegram_chat_id) {
+            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+
+            $text = "✅ <b>Hisobingiz blokdan chiqarildi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
+                ."👨‍💼 <b>Chiqargan:</b> " . htmlspecialchars($admin->buildNameFromParts() ?: $admin->name) . "\n\n"
+                ."Endi tizimga kirishingiz mumkin.";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        }
+
+        return redirect()->route('user')
+            ->with('success', "{$user->name} blokdan chiqarildi.")
+            ->with('toast_type', 'success');
+    }
+
     private function getServerUptime(): string
     {
         try {
@@ -292,6 +459,9 @@ class AdminController extends Controller
             ]);
         });
 
+        // Teacherga Telegram xabar yuborish
+        $this->notifyTeacherCourseOpenDecision($user, true);
+
         return redirect()
             ->route('admin.courses.requests')
             ->with('success', "Kurs ochish ruxsati berildi ({$user->email}).")
@@ -319,9 +489,38 @@ class AdminController extends Controller
             ]);
         });
 
+        // Teacherga Telegram xabar yuborish
+        $this->notifyTeacherCourseOpenDecision($user, false);
+
         return redirect()
             ->route('admin.courses.requests')
             ->with('success', "Kurs ochish so'rovi rad etildi ({$user->email}).")
             ->with('toast_type', 'warning');
+    }
+
+    private function notifyTeacherCourseOpenDecision(User $teacher, bool $approved): void
+    {
+        if (! $teacher->telegram_chat_id) {
+            return;
+        }
+
+        $telegram = app(\App\Services\TelegramService::class);
+        
+        if ($approved) {
+            $text = "✅ <b>Kurs ochish so'rovi tasdiqlandi!</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Hurmatli <b>".htmlspecialchars($teacher->name)."</b>,\n\n"
+                ."Sizning kurs ochish so'rovingiz admin tomonidan tasdiqlandi.\n\n"
+                ."🎓 Endi kurs yaratishingiz mumkin!\n"
+                ."🔗 Kurs yaratish: ".route('teacher.courses.create');
+        } else {
+            $text = "❌ <b>Kurs ochish so'rovi rad etildi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Hurmatli <b>".htmlspecialchars($teacher->name)."</b>,\n\n"
+                ."Sizning kurs ochish so'rovingiz admin tomonidan rad etildi.\n\n"
+                ."💬 Sababini bilish uchun admin bilan bog'laning.";
+        }
+
+        $telegram->sendMessage((int) $teacher->telegram_chat_id, $text);
     }
 }

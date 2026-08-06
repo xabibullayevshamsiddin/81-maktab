@@ -139,11 +139,35 @@ class TelegramUpdateHandler
     {
         $callbackId = (string) ($callbackQuery['id'] ?? '');
         $data = (string) ($callbackQuery['data'] ?? '');
-        $chatId = (int) ($callbackQuery['chat']['id'] ?? ($callbackQuery['message']['chat']['id'] ?? 0));
+        $chatId = (int) ($callbackQuery['message']['chat']['id'] ?? $callbackQuery['chat']['id'] ?? 0);
 
         if (str_starts_with($data, 'confirm_password_reset:')) {
             $token = substr($data, strlen('confirm_password_reset:'));
-            $this->handlePasswordResetConfirm($chatId, $token, $callbackId);
+            $this->handlePasswordResetConfirm($chatId, $token, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'confirm_email_change:')) {
+            $token = substr($data, strlen('confirm_email_change:'));
+            $this->handleEmailChangeConfirm($chatId, $token, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'cancel_email_change:')) {
+            $token = substr($data, strlen('cancel_email_change:'));
+            $this->handleEmailChangeCancel($chatId, $token, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'confirm_phone_change:')) {
+            $token = substr($data, strlen('confirm_phone_change:'));
+            $this->handlePhoneChangeConfirm($chatId, $token, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'cancel_phone_change:')) {
+            $token = substr($data, strlen('cancel_phone_change:'));
+            $this->handlePhoneChangeCancel($chatId, $token, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'approve_course_open:')) {
+            $userId = (int) substr($data, strlen('approve_course_open:'));
+            $this->handleCourseOpenDecision($chatId, $userId, true, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'reject_course_open:')) {
+            $userId = (int) substr($data, strlen('reject_course_open:'));
+            $this->handleCourseOpenDecision($chatId, $userId, false, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'approve_enrollment:')) {
+            $enrollmentId = (int) substr($data, strlen('approve_enrollment:'));
+            $this->handleEnrollmentDecision($chatId, $enrollmentId, true, $callbackId, $callbackQuery);
+        } elseif (str_starts_with($data, 'reject_enrollment:')) {
+            $enrollmentId = (int) substr($data, strlen('reject_enrollment:'));
+            $this->handleEnrollmentDecision($chatId, $enrollmentId, false, $callbackId, $callbackQuery);
         }
     }
 
@@ -177,6 +201,257 @@ class TelegramUpdateHandler
         $this->telegram->sendMessage($chatId,
             "✅ Parolni tiklash tasdiqlandi!\n\nSaytga qaytib, yangi parol kiriting."
         );
+    }
+
+    /**
+     | Email o'zgartirishni Telegram orqali tasdiqlash.
+     */
+    private function handleEmailChangeConfirm(int $chatId, string $token, string $callbackId): void
+    {
+        $verification = TelegramVerification::query()
+            ->where('token', $token)
+            ->where('purpose', TelegramVerification::PURPOSE_EMAIL_CHANGE)
+            ->where('status', TelegramVerification::STATUS_PENDING)
+            ->first();
+
+        if (! $verification || $verification->isExpired()) {
+            $this->telegram->answerCallbackQuery($callbackId, 'Havola eskirgan.');
+            $this->telegram->sendMessage($chatId,
+                "⚠️ Havola eskirgan. Saytga qaytib, qayta urinib ko'ring."
+            );
+
+            return;
+        }
+
+        // Email o'zgartirish
+        $userId = $verification->session_payload['user_id'] ?? 0;
+        $newEmail = $verification->session_payload['new_email'] ?? '';
+
+        if ($userId && $newEmail) {
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $user->update([
+                    'email' => $newEmail,
+                    'email_verified_at' => now(),
+                ]);
+
+                \App\Services\UserActivityLogger::log(
+                    $user,
+                    \App\Models\UserActivity::TYPE_EMAIL_CHANGED,
+                    'Email manzili o\'zgartirildi',
+                    ['old_email' => $user->email],
+                    ['new_email' => $newEmail]
+                );
+            }
+        }
+
+        $verification->update([
+            'status' => TelegramVerification::STATUS_COMPLETED,
+        ]);
+
+        $this->telegram->answerCallbackQuery($callbackId, 'Email o\'zgartirildi!');
+        $this->telegram->sendMessage($chatId,
+            "✅ Email manzili muvaffaqiyatli o'zgartirildi!\n\n"
+            .'Yangi email: <b>' . htmlspecialchars($newEmail) . '</b>'
+        );
+    }
+
+    /**
+     | Email o'zgartirishni bekor qilish.
+     */
+    private function handleEmailChangeCancel(int $chatId, string $token, string $callbackId): void
+    {
+        $verification = TelegramVerification::query()
+            ->where('token', $token)
+            ->where('purpose', TelegramVerification::PURPOSE_EMAIL_CHANGE)
+            ->where('status', TelegramVerification::STATUS_PENDING)
+            ->first();
+
+        if ($verification) {
+            $verification->update(['status' => TelegramVerification::STATUS_EXPIRED]);
+        }
+
+        $this->telegram->answerCallbackQuery($callbackId, 'Bekor qilindi.');
+        $this->telegram->sendMessage($chatId,
+            "❌ Email o'zgartirish bekor qilindi."
+        );
+    }
+
+    /**
+     | Telefon raqamni o'zgartirishni Telegram orqali tasdiqlash.
+     */
+    private function handlePhoneChangeConfirm(int $chatId, string $token, string $callbackId): void
+    {
+        $verification = TelegramVerification::query()
+            ->where('token', $token)
+            ->where('purpose', TelegramVerification::PURPOSE_PHONE_CHANGE)
+            ->where('status', TelegramVerification::STATUS_PENDING)
+            ->first();
+
+        if (! $verification || $verification->isExpired()) {
+            $this->telegram->answerCallbackQuery($callbackId, 'Havola eskirgan.');
+            $this->telegram->sendMessage($chatId,
+                "⚠️ Havola eskirgan. Saytga qaytib, qayta urinib ko'ring."
+            );
+
+            return;
+        }
+
+        // Telefon o'zgartirish
+        $userId = $verification->session_payload['user_id'] ?? 0;
+        $newPhone = $verification->session_payload['new_phone'] ?? '';
+
+        if ($userId && $newPhone) {
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $user->update(['phone' => $newPhone]);
+
+                \App\Services\UserActivityLogger::log(
+                    $user,
+                    \App\Models\UserActivity::TYPE_PROFILE_UPDATED,
+                    'Telefon raqami o\'zgartirildi',
+                    ['old_phone' => $user->phone],
+                    ['new_phone' => $newPhone]
+                );
+            }
+        }
+
+        $verification->update([
+            'status' => TelegramVerification::STATUS_COMPLETED,
+        ]);
+
+        $this->telegram->answerCallbackQuery($callbackId, 'Telefon o\'zgartirildi!');
+        $this->telegram->sendMessage($chatId,
+            "✅ Telefon raqami muvaffaqiyatli o'zgartirildi!\n\n"
+            .'Yangi raqam: <b>' . htmlspecialchars($newPhone) . '</b>'
+        );
+    }
+
+    /**
+     | Telefon o'zgartirishni bekor qilish.
+     */
+    private function handlePhoneChangeCancel(int $chatId, string $token, string $callbackId): void
+    {
+        $verification = TelegramVerification::query()
+            ->where('token', $token)
+            ->where('purpose', TelegramVerification::PURPOSE_PHONE_CHANGE)
+            ->where('status', TelegramVerification::STATUS_PENDING)
+            ->first();
+
+        if ($verification) {
+            $verification->update(['status' => TelegramVerification::STATUS_EXPIRED]);
+        }
+
+        $this->telegram->answerCallbackQuery($callbackId, 'Bekor qilindi.');
+        $this->telegram->sendMessage($chatId,
+            "❌ Telefon o'zgartirish bekor qilindi."
+        );
+    }
+
+    /**
+     | Kurs ochish so'rovi — ruxsat yoki rad etish.
+     */
+    private function handleCourseOpenDecision(int $chatId, int $userId, bool $approved, string $callbackId, array $callbackQuery = []): void
+    {
+        $user = \App\Models\User::find($userId);
+        if (! $user || ! $user->course_open_request_pending) {
+            $this->telegram->answerCallbackQuery($callbackId, 'So\'rov topilmadi.');
+            return;
+        }
+
+        $user->update([
+            'course_open_approved' => $approved,
+            'course_open_request_pending' => false,
+            'course_open_approved_at' => $approved ? now() : null,
+        ]);
+
+        // Teacherga xabar yuborish
+        if ($user->telegram_chat_id) {
+            $text = $approved
+                ? "📚 Kurs ochish so'rovingiz tasdiqlandi!\n\nEndi kurs yaratishingiz mumkin."
+                : "📚 Kurs ochish so'rovingiz rad etildi.";
+            $this->telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        }
+
+        $decisionText = $approved ? 'Ruxsat berildi' : 'Rad etildi';
+        $decisionEmoji = $approved ? '✅' : '❌';
+        $this->telegram->answerCallbackQuery($callbackId, $decisionText);
+        
+        // Asl xabarni tahrirlash — tugmalarni o'chirish
+        $messageId = (int) ($callbackQuery['message']['message_id'] ?? 0);
+        \Illuminate\Support\Facades\Log::info('Telegram editMessage attempt', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'callback_query_id' => $callbackId,
+        ]);
+        if ($messageId) {
+            $editedText = "📚 <b>Kurs ochish so'rovi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👨‍🏫 <b>O'qituvchi:</b> ".htmlspecialchars($user->name)."\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."{$decisionEmoji} <b>{$decisionText}</b>";
+            $result = $this->telegram->editMessageText($chatId, $messageId, $editedText);
+            \Illuminate\Support\Facades\Log::info('Telegram editMessage result', ['result' => $result]);
+        }
+    }
+
+    /**
+     | Kursga yozilish — ruxsat yoki rad etish.
+     */
+    private function handleEnrollmentDecision(int $chatId, int $enrollmentId, bool $approved, string $callbackId, array $callbackQuery = []): void
+    {
+        $enrollment = \App\Models\CourseEnrollment::with(['course', 'user'])->find($enrollmentId);
+        if (! $enrollment || ! $enrollment->isPending()) {
+            $this->telegram->answerCallbackQuery($callbackId, 'Ariza topilmadi.');
+            return;
+        }
+
+        $enrollment->update([
+            'status' => $approved ? \App\Models\CourseEnrollment::STATUS_APPROVED : \App\Models\CourseEnrollment::STATUS_REJECTED,
+            'reviewed_at' => now(),
+            'reviewed_by' => $this->getUserIdFromChatId($chatId),
+        ]);
+
+        // Studentga xabar yuborish
+        $student = $enrollment->user;
+        if ($student && $student->telegram_chat_id) {
+            $courseTitle = $enrollment->course ? $enrollment->course->title : 'Kurs';
+            $text = $approved
+                ? "✅ Kursga yozilish tasdiqlandi!\n\n<b>Kurs:</b> ".htmlspecialchars($courseTitle)."\nKurs boshlanishini kuting."
+                : "❌ Kursga yozilish rad etildi.\n\n<b>Kurs:</b> ".htmlspecialchars($courseTitle);
+            $this->telegram->sendMessage((int) $student->telegram_chat_id, $text);
+        }
+
+        $decisionText = $approved ? 'Tasdiqlandi' : 'Rad etildi';
+        $decisionEmoji = $approved ? '✅' : '❌';
+        $this->telegram->answerCallbackQuery($callbackId, $decisionText);
+        
+        // Asl xabarni tahrirlash — tugmalarni o'chirish
+        $messageId = (int) ($callbackQuery['message']['message_id'] ?? 0);
+        \Illuminate\Support\Facades\Log::info('Telegram enrollment editMessage attempt', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'enrollment_id' => $enrollmentId,
+        ]);
+        if ($messageId) {
+            $editedText = "📝 <b>Yangi kursga yozilish arizasi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."📚 <b>Kurs:</b> ".htmlspecialchars($enrollment->course?->title ?? 'Kurs')."\n"
+                ."👤 <b>O'quvchi:</b> ".htmlspecialchars($student?->name ?? 'Noma\'lum')."\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."{$decisionEmoji} <b>Ariza {$decisionText}</b>";
+            $result = $this->telegram->editMessageText($chatId, $messageId, $editedText);
+            \Illuminate\Support\Facades\Log::info('Telegram enrollment editMessage result', ['result' => $result]);
+        }
+    }
+
+    /**
+     | Chat ID dan user ID ni olish.
+     */
+    private function getUserIdFromChatId(int $chatId): ?int
+    {
+        $user = \App\Models\User::where('telegram_chat_id', $chatId)->first();
+        return $user?->id;
     }
 
     /**

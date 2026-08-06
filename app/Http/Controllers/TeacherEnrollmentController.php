@@ -42,6 +42,9 @@ class TeacherEnrollmentController extends Controller
             'reviewed_by' => auth()->id(),
         ]);
 
+        // Studentga Telegram xabar yuborish
+        $this->notifyStudentEnrollmentDecision($enrollment, true);
+
         return $this->successRedirect('Yozilish tasdiqlandi.', 'success');
     }
 
@@ -57,7 +60,43 @@ class TeacherEnrollmentController extends Controller
             'reviewed_by' => auth()->id(),
         ]);
 
+        // Studentga Telegram xabar yuborish
+        $this->notifyStudentEnrollmentDecision($enrollment, false);
+
         return $this->successRedirect('Yozilish rad etildi.', 'warning');
+    }
+
+    private function notifyStudentEnrollmentDecision(CourseEnrollment $enrollment, bool $approved): void
+    {
+        $enrollment->loadMissing('course', 'user');
+        $student = $enrollment->user;
+
+        if (! $student || ! $student->telegram_chat_id) {
+            return;
+        }
+
+        $telegram = app(\App\Services\TelegramService::class);
+        $courseTitle = $enrollment->course ? $enrollment->course->title : 'Noma\'lum kurs';
+
+        $studentName = htmlspecialchars($student->buildNameFromParts() ?: $student->name);
+        
+        if ($approved) {
+            $text = "✅ <b>Kursga yozilish tasdiqlandi!</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Hurmatli <b>{$studentName}</b>,\n\n"
+                ."<b>Kurs:</b> {$courseTitle}\n"
+                ."🎓 Siz kursga muvaffaqiyatli qabul qilindingiz!\n\n"
+                ."⏰ Kurs boshlanishini kuting.";
+        } else {
+            $text = "❌ <b>Kursga yozilish rad etildi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Hurmatli <b>{$studentName}</b>,\n\n"
+                ."<b>Kurs:</b> {$courseTitle}\n"
+                ."😔 Afsuski, sizning arizangiz rad etildi.\n\n"
+                ."💡 Boshqa kurslarga yozilishni sinab ko'ring.";
+        }
+
+        $telegram->sendMessage((int) $student->telegram_chat_id, $text);
     }
 
     public function destroy(Request $request, CourseEnrollment $enrollment)

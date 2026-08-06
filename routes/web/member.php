@@ -49,10 +49,11 @@ Route::middleware('auth')->group(function () {
             ->name('profile.results.single.export');
         Route::get('profile/results/{result}/export', [ProfileController::class, 'exportSingleResult'])
             ->whereNumber('result');
-        Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->middleware('active')->name('profile.email.request');
-        Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->middleware('active')->name('profile.email.verify');
-        Route::post('profile/email/resend', [ProfileController::class, 'resendEmailChange'])->middleware('active')->name('profile.email.resend');
-        Route::post('profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->middleware('active')->name('profile.email.cancel');
+        Route::put('profile/email', [ProfileController::class, 'updateEmail'])->middleware('active')->name('profile.email.update');
+        Route::post('profile/phone/request', [ProfileController::class, 'requestPhoneChange'])->middleware('active')->name('profile.phone.request');
+        Route::post('profile/phone/verify', [ProfileController::class, 'verifyPhoneChange'])->middleware('active')->name('profile.phone.verify');
+        Route::post('profile/phone/resend', [ProfileController::class, 'resendPhoneChange'])->middleware('active')->name('profile.phone.resend');
+        Route::post('profile/phone/cancel', [ProfileController::class, 'cancelPhoneChange'])->middleware('active')->name('profile.phone.cancel');
         Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->middleware('active')->name('profile.password.confirm');
         Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->middleware('active')->name('profile.password.update');
 

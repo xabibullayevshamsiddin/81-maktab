@@ -2,7 +2,7 @@
   <section class="signin-hero">
     <div class="container">
       <h1>{{ __('auth_pages.reset.hero_title') }}</h1>
-      <p>{{ __('auth_pages.reset.hero_text', ['email' => $email]) }}</p>
+      <p>{{ __('auth_pages.reset.hero_text', ['phone' => $phone]) }}</p>
     </div>
   </section>
 
@@ -15,14 +15,20 @@
         <h2>{{ __('auth_pages.reset.card_title') }}</h2>
         <p class="signin-subtitle">{{ __('auth_pages.reset.subtitle') }}</p>
 
-        <div class="signin-helper-box">
-          <strong>{{ __('auth_pages.reset.selected_email') }}</strong>
-          <span class="signin-email-pill">{{ $email }}</span>
+        <div class="signin-helper-box" style="text-align:center;margin-bottom:24px;">
+          <strong style="font-size:14px;color:var(--muted);display:block;margin-bottom:8px;">{{ __('auth_pages.reset.selected_phone') }}</strong>
+          <input
+            type="tel"
+            value="{{ $phone }}"
+            disabled
+            readonly
+            style="width:100%;border:1px solid var(--border);border-radius:14px;padding:16px 20px;background:var(--surface);color:var(--text);font-size:15px;text-align:center;font-weight:600;cursor:not-allowed;opacity:0.8;"
+          />
         </div>
 
         <form action="{{ route('password.reset') }}" method="POST" class="signin-form">
           @csrf
-          <input type="hidden" name="email" value="{{ old('email', $email) }}">
+          <input type="hidden" name="phone" value="{{ old('phone', $phone) }}">
 
           <label for="reset-code">{{ __('auth_pages.reset.code') }}</label>
           <input
@@ -78,17 +84,15 @@
           @enderror
 
           <button class="btn" type="submit">{{ __('auth_pages.reset.submit') }}</button>
-        </form>
+        </form>          <div class="signin-inline-actions" style="display:flex;gap:12px;margin-top:16px;">
+            <form action="{{ route('password.reset.resend') }}" method="POST" class="signin-secondary-form" style="flex:1;">
+              @csrf
+              <input type="hidden" name="phone" value="{{ $phone }}">
+              <button class="btn btn-outline" type="submit" style="width:100%;height:48px;border-radius:14px;font-size:14px;font-weight:600;">{{ __('auth_pages.reset.resend') }}</button>
+            </form>
 
-        <div class="signin-inline-actions">
-          <form action="{{ route('password.reset.resend') }}" method="POST" class="signin-secondary-form">
-            @csrf
-            <input type="hidden" name="email" value="{{ $email }}">
-            <button class="btn btn-outline" type="submit">{{ __('auth_pages.reset.resend') }}</button>
-          </form>
-
-          <a href="{{ route('password.forgot.form', ['email' => $email]) }}" class="btn btn-outline">{{ __('auth_pages.reset.change_email') }}</a>
-        </div>
+            <a href="{{ route('password.forgot.form', ['phone' => $phone]) }}" class="btn btn-outline" style="flex:1;height:48px;border-radius:14px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;text-decoration:none;">{{ __('auth_pages.reset.change_phone') }}</a>
+          </div>
       </div>
     </div>
   </main>

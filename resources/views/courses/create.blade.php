@@ -186,6 +186,14 @@
           @error('start_date')
             <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
           @enderror
+
+          <label class="comment-label" for="course-max-enrollments">{{ __('public.course_create.max_enrollments') }}</label>
+          <input type="number" id="course-max-enrollments" name="max_enrollments" class="comment-input" placeholder="{{ __('public.course_create.max_enrollments_placeholder') }}" value="{{ old('max_enrollments') }}" min="1" max="10000">
+          <p class="comment-hint" style="margin:0 0 16px;font-size:13px;color:var(--muted, #6b7280);">{{ __('public.course_create.max_enrollments_hint') }}</p>
+          @error('max_enrollments')
+            <p class="form-message" style="color:#b91c1c;">{{ $message }}</p>
+          @enderror
+
           <textarea name="description" rows="5" class="comment-input" placeholder="{{ __('public.course_create.description_placeholder') }}" required>{{ old('description') }}</textarea>
           <textarea name="description_en" rows="5" class="comment-input" placeholder="{{ __('public.course_create.description_en_placeholder') }}">{{ old('description_en') }}</textarea>
 

@@ -12,6 +12,8 @@ class TelegramVerification extends Model
     public const PURPOSE_LOGIN = 'login';
     public const PURPOSE_REGISTER = 'register';
     public const PURPOSE_PASSWORD_RESET = 'password_reset';
+    public const PURPOSE_EMAIL_CHANGE = 'email_change';
+    public const PURPOSE_PHONE_CHANGE = 'phone_change';
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_VERIFIED = 'verified';
@@ -20,6 +22,7 @@ class TelegramVerification extends Model
 
     protected $fillable = [
         'token',
+        'verification_code',
         'purpose',
         'user_id',
         'email',

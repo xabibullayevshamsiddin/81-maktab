@@ -36,8 +36,8 @@
             <h6 class="mb-10">Barcha foydalanuvchilar</h6>
             <p class="text-sm mb-20">Ro'yxatda bazadagi barcha userlar ko'rsatiladi.</p>
             <p class="text-sm mb-20" style="color:#64748b;">
-              <i class="lni lni-key me-1"></i>
-              Kalit tugmasi foydalanuvchining emailiga parolni tiklash kodini yuboradi.
+              <i class="lni lni-shield me-1"></i>
+              Qalqon tugmasi foydalanuvchiga vaqtincha parol yaratadi va Telegram ga yuboradi.
             </p>
             
             @php
@@ -170,18 +170,24 @@
                       </td>
                       <td>
                         @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
-                          <form action="{{ route('user.update', $user) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="role_id" value="{{ $user->role_id }}">
-                            <select name="is_active" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
-                              <option value="1" {{ $user->is_active ? 'selected' : '' }}>Active</option>
-                              <option value="0" {{ ! $user->is_active ? 'selected' : '' }}>Block</option>
-                            </select>
-                          </form>
+                          @if($user->isCurrentlyBlocked())
+                            <span class="badge bg-danger" style="cursor:pointer;" onclick="openBlockModal('{{ $user->name }}', '{{ route('user.block', $user) }}')" title="Bloklangan: {{ $user->blocked_reason ?? 'Sababsiz' }} ({{ $user->blocked_until ? $user->blocked_until->diffForHumans() : 'Butun umr' }} gacha)">
+                              <i class="lni lni-lock me-1"></i> Block
+                            </span>
+                          @else
+                            <form action="{{ route('user.update', $user) }}" method="POST" class="d-inline">
+                              @csrf
+                              @method('PUT')
+                              <input type="hidden" name="role_id" value="{{ $user->role_id }}">
+                              <select name="status_action" onchange="handleStatusChange(this, '{{ $user->name }}', '{{ route('user.block', $user) }}', '{{ route('user.unblock', $user) }}')" class="form-select form-select-sm" style="width: auto;">
+                                <option value="active" selected>Active</option>
+                                <option value="block">Block</option>
+                              </select>
+                            </form>
+                          @endif
                         @else
-                          <span class="badge {{ $user->is_active ? 'bg-success' : 'bg-danger' }}">
-                            {{ $user->is_active ? 'Active' : 'Block' }}
+                          <span class="badge {{ $user->isCurrentlyBlocked() ? 'bg-danger' : 'bg-success' }}">
+                            {{ $user->isCurrentlyBlocked() ? 'Block' : 'Active' }}
                           </span>
                         @endif
                       </td>
@@ -189,27 +195,45 @@
                       <td><p>{{ $user->created_at?->format('Y-m-d H:i') }}</p></td>
                       <td>
                         <div class="action">
-                          <a
-                            href="{{ gmail_compose_url($user->email, '81-IDUM xabari') }}"
-                            class="text-primary me-2"
-                            title="Gmail orqali xabar yuborish"
-                            target="_blank"
-                            rel="noopener"
-                          >
-                            <i class="lni lni-envelope"></i>
-                          </a>
+                          @if($user->telegram_chat_id)
+                            <button type="button" class="text-primary me-2" style="background:none;border:none;padding:0;cursor:pointer;"
+                              title="Telegram orqali xabar yuborish"
+                              onclick="openTelegramModal('{{ $user->name }}', '{{ route('user.send-telegram', $user) }}')">
+                              <i class="lni lni-telegram"></i>
+                            </button>
+                          @else
+                            <span class="text-muted me-2" title="Telegram bog'lanmagan" style="cursor:not-allowed;">
+                              <i class="lni lni-telegram"></i>
+                            </span>
+                          @endif                          @if (auth()->id() !== $user->id && auth()->user()->canManage($user) && $user->telegram_chat_id)
+                            <form action="{{ route('user.temp-password.generate', $user) }}" method="POST" style="display:inline;"
+                              data-confirm="{{ $user->name }} uchun vaqtincha parol yaratilsinmi? Barcha qurilmalar logout bo'ladi. Telegram ga yuboriladi."
+                              data-confirm-title="Vaqtincha parol yaratish"
+                              data-confirm-variant="warning"
+                              data-confirm-ok="Yaratish">
+                                @csrf
+                                <button type="submit" class="text-warning me-2" style="background:none;border:none;padding:0;"
+                                  title="Vaqtincha parol yaratish va Telegram ga yuborish">
+                                  <i class="lni lni-shield"></i>
+                                </button>
+                              </form>
+                          @endif
                           @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
-                            <form action="{{ route('user.password-reset.send', $user) }}" method="POST" style="display:inline;"
-                              data-confirm="{{ $user->name }} uchun parolni tiklash kodini emailga yuborilsinmi?"
-                              data-confirm-title="Parol reset kodi yuborish"
-                              data-confirm-variant="primary"
-                              data-confirm-ok="Yuborish">
-                              @csrf
-                              <button type="submit" class="text-warning me-2" style="background:none;border:none;padding:0;"
-                                title="Parolni tiklash kodini yuborish">
-                                <i class="lni lni-key"></i>
+                            @if($user->isCurrentlyBlocked())
+                              <form action="{{ route('user.unblock', $user) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="text-success me-2" style="background:none;border:none;padding:0;cursor:pointer;"
+                                  title="Blokdarn chiqarish">
+                                  <i class="lni lni-unlock"></i>
+                                </button>
+                              </form>
+                            @else
+                              <button type="button" class="text-danger me-2" style="background:none;border:none;padding:0;cursor:pointer;"
+                                title="Bloklash"
+                                onclick="openBlockModal('{{ $user->name }}', '{{ route('user.block', $user) }}')">
+                                <i class="lni lni-lock"></i>
                               </button>
-                            </form>
+                            @endif
                           @endif
                           @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
                             <form action="{{ route('user.destroy', $user->id) }}" method="POST" style="display:inline;" data-confirm="Foydalanuvchini o'chirishni xohlaysizmi?" data-confirm-title="Foydalanuvchini o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
@@ -242,4 +266,57 @@
     </div>
   </div>
 </section>
+{{-- Telegram xabar yuborish modali --}}
+<div id="telegramModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0088cc, #005f8f); color: white;">
+        <h5 class="modal-title">
+          <i class="fa-brands fa-telegram me-2"></i> Telegram xabar
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="telegramForm" method="POST">
+        @csrf
+        <div class="modal-body">
+          <p class="mb-3">
+            <strong>Kim uchun:</strong> <span id="telegramRecipient"></span>
+          </p>
+          <div class="mb-3">
+            <label for="telegramMessage" class="form-label">Xabar matni</label>
+            <textarea name="message" id="telegramMessage" class="form-control" rows="5"
+              placeholder="Xabaringizni yozing..." required maxlength="4000"></textarea>
+            <small class="text-muted">Maksimal 4000 belgi</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-brands fa-telegram me-1"></i> Yuborish
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openTelegramModal(userName, actionUrl) {
+  document.getElementById('telegramRecipient').textContent = userName;
+  document.getElementById('telegramForm').action = actionUrl;
+  document.getElementById('telegramMessage').value = '';
+  var modal = new bootstrap.Modal(document.getElementById('telegramModal'));
+  modal.show();
+}
+
+function handleStatusChange(select, userName, blockUrl, unblockUrl) {
+  var value = select.value;
+  if (value === 'block') {
+    openBlockModal(userName, blockUrl);
+  }
+  // active tanlanganda hech narsa qilmaymiz — dropdown form submit bo'lmaydi
+}
+
+</script>
+
 @endsection

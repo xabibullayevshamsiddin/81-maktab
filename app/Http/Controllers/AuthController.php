@@ -31,21 +31,22 @@ class AuthController extends Controller
     public function showForgotPassword(Request $request)
     {
         return view('login.forgot-password', [
-            'email' => $this->normalizeEmail((string) $request->query('email', '')),
+            'phone' => (string) $request->query('phone', ''),
         ]);
     }
 
     public function authenticate(LoginRequest $request)
     {
         $credentials = $request->validated();
+        $phone = $this->normalizePhone($credentials['phone']);
 
-        $user = User::query()->where('email', $credentials['email'])->first();
+        $user = User::query()->where('phone', $phone)->first();
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return back()
                 ->withErrors([
-                    'email' => "Email yoki parol noto'g'ri.",
+                    'phone' => "Telefon raqami yoki parol noto'g'ri.",
                 ])
-                ->onlyInput('email');
+                ->onlyInput('phone');
         }
 
         // Agar foydalanuvchida telegram_chat_id bor va tasdiqlangan bo'lsa
@@ -155,8 +156,8 @@ class AuthController extends Controller
                 return $this->completeLogin($verification);
 
             case TelegramVerification::PURPOSE_PASSWORD_RESET:
-                // Parolni tiklash uchun redirect
-                return redirect()->route('password.reset.form', ['email' => $verification->session_payload['email'] ?? '']);
+                // Parolni tiklash uchun redirect — telefon raqam bilan
+                return redirect()->route('password.reset.form', ['phone' => $verification->phone ?? '']);
 
             default:
                 return redirect()->route('login');
@@ -179,6 +180,14 @@ class AuthController extends Controller
         if (User::query()->where('email', $meta['email'])->exists()) {
             return redirect()->route('login')
                 ->with('success', 'Bu email bilan hisob allaqachon mavjud. Tizimga kiring.')
+                ->with('toast_type', 'warning');
+        }
+
+        // Telefon allaqachon mavjudmi?
+        $normalizedPhone = uz_phone_format($meta['phone'] ?? '');
+        if ($normalizedPhone && User::query()->where('phone', $normalizedPhone)->exists()) {
+            return redirect()->route('register')
+                ->withErrors(['phone' => 'Bu telefon raqami allaqachon ro\'yxatdan o\'tgan.'])
                 ->with('toast_type', 'warning');
         }
 
@@ -246,93 +255,73 @@ class AuthController extends Controller
     }
 
     /**
-     | Parolni tiklash — email kiritilganda.
+     | Parolni tiklash — telefon raqam kiritilganda.
      */
     public function sendPasswordResetCode(Request $request)
     {
         $validated = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
         ]);
 
-        $email = $this->normalizeEmail($validated['email']);
-        $user = User::query()->where('email', $email)->first();
+        $phone = $this->normalizePhone($validated['phone']);
+        $user = User::query()->where('phone', $phone)->first();
 
         if (! $user) {
             return back()
-                ->withErrors(['email' => 'Bu email bilan hisob topilmadi.'])
-                ->onlyInput('email');
+                ->withErrors(['phone' => 'Bu telefon raqami bilan hisob topilmadi.'])
+                ->onlyInput('phone');
         }
 
-        // Telegram chat_id bor — Telegram orqali tasdiqlash
+        // Telegram chat_id bor — Telegram orqali 6 xonali kod yuborish
         if ($user->telegram_chat_id) {
             $token = $this->createTelegramVerification(
                 TelegramVerification::PURPOSE_PASSWORD_RESET,
                 $user->email,
                 $user->phone ?? '',
-                ['user_id' => $user->id, 'email' => $user->email]
+                ['user_id' => $user->id, 'phone' => $user->phone]
             );
 
-            // Telegram orqali xabar yuborish
+            // Telegram orqali 6 xonali kod yuborish
             \App\Http\Controllers\TelegramWebhookController::sendPasswordResetRequest(
                 (int) $user->telegram_chat_id,
                 $token
             );
 
-            return redirect()->route('password.forgot.form', ['email' => $email])
-                ->with('success', 'Telegram orqali tasdiqlash xabari yuborildi.')
+            return redirect()->route('password.reset.form', ['phone' => $phone])
+                ->with('success', 'Telegram orqali 6 xonali tasdiqlash kodi yuborildi.')
                 ->with('toast_type', 'success');
         }
 
-        // Telegram chat_id yo'q — email orqali davom etish (zaxira kanal)
-        if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
-            return back()
-                ->withErrors([
-                    'email' => "Kod yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
-                ])
-                ->onlyInput('email');
-        }
-
-        try {
-            $this->issuePasswordResetOtp($user);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('OTP password reset send failed', $e, [
-                'email' => $email,
-                'user_id' => $user->id,
-            ]);
-
-            return back()
-                ->withErrors(['email' => 'Parolni tiklash kodi yuborilmadi. Keyinroq qayta urinib ko\'ring.'])
-                ->onlyInput('email');
-        }
-
-        return redirect()
-            ->route('password.reset.form', ['email' => $email])
-            ->with('success', "Tasdiqlash kodi {$email} manziliga yuborildi.")
-            ->with('toast_type', 'success');
+        // Telegram chat_id yo'q — xato berish
+        return back()
+            ->withErrors(['phone' => 'Bu foydalanuvchi Telegram bilan bog\'lanmagan. Admin bilan bog\'laning.'])
+            ->onlyInput('phone');
     }
 
     public function showPasswordResetForm(Request $request)
     {
-        $email = $this->normalizeEmail((string) $request->query('email', ''));
-        if ($email === '') {
+        $phone = (string) $request->query('phone', '');
+        if ($phone === '') {
             return redirect()->route('password.forgot.form');
         }
 
+        $phone = $this->normalizePhone($phone);
+
         return view('login.reset-password', [
-            'email' => $email,
+            'phone' => $phone,
         ]);
     }
 
     public function resetPassword(Request $request)
     {
         $validated = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
             'code' => ['required', 'digits:6'],
             'password' => [
                 'required', 'string', 'min:8', 'confirmed',
             ],
         ], [
-            'email.required' => 'Emailni kiriting.',
+            'phone.required' => 'Telefon raqamni kiriting.',
             'code.required' => 'Tasdiqlash kodini kiriting.',
             'code.digits' => 'Kod 6 xonali bo\'lishi kerak.',
             'password.required' => 'Yangi parolni kiriting.',
@@ -340,51 +329,50 @@ class AuthController extends Controller
             'password.confirmed' => 'Yangi parol tasdiqlanmadi.',
         ]);
 
-        $email = $this->normalizeEmail($validated['email']);
+        $phone = $this->normalizePhone($validated['phone']);
+        $code = $validated['code'];
 
-        if (RateLimiter::tooManyAttempts($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_PASSWORD_RESET), self::OTP_VERIFY_MAX_ATTEMPTS)) {
-            return back()
-                ->withErrors([
-                    'code' => "Juda ko'p xato urinish. {$this->otpVerifySecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniyadan keyin qayta urinib ko'ring.",
-                ])
-                ->withInput($request->except(['password', 'password_confirmation']));
-        }
-
-        $user = User::query()->where('email', $email)->first();
-        if (! $user) {
-            return back()
-                ->withErrors(['email' => 'Bu email bilan hisob topilmadi.'])
-                ->withInput($request->except(['password', 'password_confirmation']));
-        }
-
-        $otp = OneTimeCode::query()
-            ->where('email', $email)
-            ->where('purpose', OneTimeCode::PURPOSE_PASSWORD_RESET)
+        // TelegramVerification orqali tasdiqlash — kodni tekshirish
+        $verification = TelegramVerification::query()
+            ->where('phone', $phone)
+            ->where('purpose', TelegramVerification::PURPOSE_PASSWORD_RESET)
+            ->where('verification_code', $code)
+            ->where('status', TelegramVerification::STATUS_PENDING)
             ->latest('id')
             ->first();
 
-        if (! $this->isValidOtp($otp, $validated['code'])) {
-            RateLimiter::hit($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_PASSWORD_RESET), self::OTP_VERIFY_DECAY_SECONDS);
-
+        if (! $verification) {
             return back()
-                ->withErrors(['code' => "Kod noto'g'ri yoki muddati tugagan."])
+                ->withErrors(['code' => 'Kod noto\'g\'ri yoki muddati tugagan.'])
                 ->withInput($request->except(['password', 'password_confirmation']));
         }
 
-        $meta = $otp->meta ?? [];
-        if ((int) ($meta['user_id'] ?? 0) !== (int) $user->id) {
+        // Muddati tugaganini tekshirish
+        if ($verification->isExpired()) {
+            $verification->update(['status' => TelegramVerification::STATUS_EXPIRED]);
             return back()
-                ->withErrors(['email' => 'Parolni tiklash sessiyasi yaroqsiz. Kodni qayta yuboring.'])
+                ->withErrors(['code' => 'Kod muddati tugagan. Yangi kod oling.'])
                 ->withInput($request->except(['password', 'password_confirmation']));
         }
 
+        $meta = $verification->session_payload ?? [];
+        $userId = (int) ($meta['user_id'] ?? 0);
+
+        $user = User::query()->find($userId);
+        if (! $user) {
+            return back()
+                ->withErrors(['phone' => 'Foydalanuvchi topilmadi.'])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        // Parolni yangilash
         $user->forceFill([
             'password' => Hash::make($validated['password']),
             'remember_token' => Str::random(60),
         ])->save();
 
-        $otp->delete();
-        RateLimiter::clear($this->otpVerifyLimiterKey($email, OneTimeCode::PURPOSE_PASSWORD_RESET));
+        // Tasdiqlash yozuvini o'chirish
+        $verification->update(['status' => TelegramVerification::STATUS_COMPLETED]);
 
         return redirect()
             ->route('login')
@@ -395,25 +383,25 @@ class AuthController extends Controller
     public function resendPasswordResetCode(Request $request)
     {
         $validated = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
         ]);
 
-        $email = $this->normalizeEmail($validated['email']);
-        $user = User::query()->where('email', $email)->first();
+        $phone = $this->normalizePhone($validated['phone']);
+        $user = User::query()->where('phone', $phone)->first();
 
         if (! $user) {
             return redirect()
-                ->route('password.forgot.form', ['email' => $email])
-                ->withErrors(['email' => 'Bu email bilan hisob topilmadi.']);
+                ->route('password.forgot.form', ['phone' => $phone])
+                ->withErrors(['phone' => 'Bu telefon raqami bilan hisob topilmadi.']);
         }
 
-        // Agar foydalanuvchida telegram_chat_id bo'lsa — Telegram orqali qayta yuborish
+        // Telegram orqali qayta yuborish — yangi kod bilan
         if ($user->telegram_chat_id) {
             $token = $this->createTelegramVerification(
                 TelegramVerification::PURPOSE_PASSWORD_RESET,
                 $user->email,
                 $user->phone ?? '',
-                ['user_id' => $user->id, 'email' => $user->email]
+                ['user_id' => $user->id, 'phone' => $user->phone]
             );
 
             \App\Http\Controllers\TelegramWebhookController::sendPasswordResetRequest(
@@ -422,32 +410,13 @@ class AuthController extends Controller
             );
 
             return back()
-                ->with('success', 'Telegram orqali yangi tasdiqlash xabari yuborildi.')
+                ->with('success', 'Telegram orqali yangi 6 xonali kod yuborildi.')
                 ->with('toast_type', 'success');
         }
 
-        // Email orqali qayta yuborish
-        if (! $this->canSendOtpNow($email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
-            return back()->withErrors([
-                'code' => "Qayta yuborishdan oldin {$this->otpResendCooldownSecondsLeft($email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.",
-            ]);
-        }
-
-        try {
-            $this->issuePasswordResetOtp($user);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('OTP password reset resend failed', $e, [
-                'email' => $email,
-                'user_id' => $user->id,
-            ]);
-
-            return back()->withErrors(['code' => 'Kodni qayta yuborib bo\'lmadi.']);
-        }
-
-        return redirect()
-            ->route('password.reset.form', ['email' => $email])
-            ->with('success', 'Yangi kod yuborildi.')
-            ->with('toast_type', 'warning');
+        // Telegram chat_id yo'q
+        return back()
+            ->withErrors(['phone' => 'Bu foydalanuvchi Telegram bilan bog\'lanmagan. Admin bilan bog\'laning.']);
     }
 
     public function logout(Request $request)
@@ -478,7 +447,7 @@ class AuthController extends Controller
                 TelegramVerification::PURPOSE_PASSWORD_RESET,
                 $user->email,
                 $user->phone ?? '',
-                ['user_id' => $user->id, 'email' => $user->email, 'issued_by_admin_id' => (int) $admin->id]
+                ['user_id' => $user->id, 'phone' => $user->phone, 'issued_by_admin_id' => (int) $admin->id]
             );
 
             \App\Http\Controllers\TelegramWebhookController::sendPasswordResetRequest(
@@ -488,45 +457,86 @@ class AuthController extends Controller
 
             return redirect()
                 ->route('user')
-                ->with('success', "{$user->name} uchun parolni tiklash xabari Telegram ga yuborildi.")
+                ->with('success', "{$user->name} uchun parolni tiklash kodi Telegram ga yuborildi.")
                 ->with('toast_type', 'success');
         }
 
-        // Email orqali
-        if (! $this->mailDeliveryEnabled()) {
+        // Telegram chat_id yo'q
+        return redirect()
+            ->route('user')
+            ->with('error', "{$user->name} Telegram bilan bog'lanmagan. Avval Telegram tasdiqlashini so'rang.")
+            ->with('toast_type', 'warning');
+    }
+
+    /**
+     * Admin tomonidan foydalanuvchiga vaqtincha parol yaratish va Telegram ga yuborish.
+     */
+    public function adminGenerateTempPassword(Request $request, User $user)
+    {
+        $admin = $request->user();
+
+        if (! $admin || ! $admin->canManage($user)) {
             return redirect()
                 ->route('user')
-                ->with('error', $this->mailDeliveryDisabledMessage())
+                ->with('error', 'Siz bu foydalanuvchi uchun vaqtincha parol yarata olmaysiz.')
+                ->with('toast_type', 'error');
+        }
+
+        // Telegram chat_id yo'q — xabar berish
+        if (! $user->telegram_chat_id) {
+            return redirect()
+                ->route('user')
+                ->with('error', "{$user->name} Telegram bilan bog'lanmagan. Avval Telegram tasdiqlashini so'rang.")
                 ->with('toast_type', 'warning');
         }
 
-        if (! $this->canSendOtpNow((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET)) {
-            return redirect()
-                ->route('user')
-                ->with('error', "Kod yuborish limiti: {$this->otpResendCooldownSecondsLeft((string) $user->email, OneTimeCode::PURPOSE_PASSWORD_RESET)} soniya kuting.")
-                ->with('toast_type', 'error');
+        // Vaqtincha parol yaratish (8 ta belgi: harflar va raqamlar)
+        $tempPassword = strtoupper(Str::random(2)) . Str::random(4) . rand(10, 99);
+
+        // Parolni yangilash + barcha sessiyalarni bekor qilish
+        $user->forceFill([
+            'password' => Hash::make($tempPassword),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        // Fayl sessiyalarini ham tozalash — barcha qurilmalardan chiqarish
+        // Sessiya formati: login_web_{hash}";i:{user_id};
+        $sessionPath = storage_path('framework/sessions');
+        if (is_dir($sessionPath)) {
+            $files = glob($sessionPath . '/*');
+            foreach ($files as $file) {
+                $content = file_get_contents($file);
+                // PHP serialize formatida user_id ni qidirish
+                if (is_string($content) && preg_match('/login_web_[a-f0-9]+";i:' . $user->id . ';/', $content)) {
+                    unlink($file);
+                }
+            }
         }
 
-        try {
-            $this->issuePasswordResetOtp($user, [
-                'issued_by_admin_id' => (int) $admin->id,
-            ]);
-        } catch (\Throwable $e) {
-            $this->logOtpSendFailure('Admin password reset send failed', $e, [
-                'email' => $user->email,
-                'target_user_id' => $user->id,
-                'admin_user_id' => $admin->id,
-            ]);
+        // Telegram ga yuborish
+        $telegram = app(\App\Services\TelegramService::class);
+        $adminName = htmlspecialchars($admin->buildNameFromParts() ?: $admin->name);
+        $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
 
-            return redirect()
-                ->route('user')
-                ->with('error', 'Parolni tiklash kodi yuborilmadi. Mail sozlamalarini tekshiring.')
-                ->with('toast_type', 'error');
-        }
+        $text = "🔐 <b>Himoya paroli yaratildi</b>\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
+            ."👨‍💼 <b>Admin:</b> {$adminName}\n"
+            ."⏰ <b>Sana:</b> ".now()->format('d.m.Y H:i')."\n\n"
+            ."🔑 <b>Sizning yangi parolingiz:</b>\n"
+            ."<tg-spoiler>{$tempPassword}</tg-spoiler>\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."⚠️ <b>Muhim!</b>\n"
+            ."• Kirgandan keyin parolni o'zgartiring\n"
+            ."• Parolni hech kimga bermang\n"
+            ."• Faqat o'zingiz ishlating";
 
+        $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+
+        // Admin ga xabar
         return redirect()
             ->route('user')
-            ->with('success', "{$user->name} uchun parolni tiklash kodi {$user->email} manziliga yuborildi.")
+            ->with('success', "{$user->name} uchun vaqtincha parol yaratildi va Telegram ga yuborildi.")
             ->with('toast_type', 'success');
     }
 
@@ -548,8 +558,15 @@ class AuthController extends Controller
 
         $token = Str::random(config('telegram.token_length', 40));
 
+        // PASSWORD_RESET uchun 6 xonali kod yaratish
+        $verificationCode = null;
+        if ($purpose === TelegramVerification::PURPOSE_PASSWORD_RESET) {
+            $verificationCode = (string) random_int(100000, 999999);
+        }
+
         TelegramVerification::create([
             'token' => $token,
+            'verification_code' => $verificationCode,
             'purpose' => $purpose,
             'email' => $email,
             'phone' => $phone,
@@ -744,5 +761,20 @@ class AuthController extends Controller
     private function normalizeEmail(string $email): string
     {
         return strtolower(trim($email));
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        $phone = preg_replace('/[\s\-\(\)\.]/', '', $phone);
+
+        if (! str_starts_with($phone, '+')) {
+            if (str_starts_with($phone, '998')) {
+                $phone = '+'.$phone;
+            } elseif (str_starts_with($phone, '8') && strlen($phone) === 9) {
+                $phone = '+998'.substr($phone, 1);
+            }
+        }
+
+        return $phone;
     }
 }

@@ -113,17 +113,22 @@ class CourseEnrollmentController extends Controller
 
     public function destroy(Request $request, Course $course)
     {
-        $deleted = CourseEnrollment::query()
+        $enrollment = CourseEnrollment::query()
             ->where('course_id', $course->id)
             ->where('user_id', (int) $request->user()->id)
-            ->delete();
+            ->first();
 
-        if (! $deleted) {
+        if (! $enrollment) {
             return redirect()
                 ->route('courses')
                 ->with('error', 'Yozilish topilmadi.')
                 ->with('toast_type', 'error');
         }
+
+        // Kurs egasiga Telegram xabar yuborish
+        $this->notifyCreatorEnrollmentCancelled($course, $enrollment, $request->user()->name);
+
+        $enrollment->delete();
 
         return redirect()
             ->route('courses')
@@ -135,6 +140,45 @@ class CourseEnrollmentController extends Controller
     {
         $course->loadMissing('creator');
         $creator = $course->creator;
+
+        // Telegram xabar yuborish
+        if ($creator && $creator->telegram_chat_id) {
+            $telegram = app(\App\Services\TelegramService::class);
+            
+            $enrollmentCount = $course->totalEnrollmentCount();
+            $limitText = $course->enrollmentLimitText();
+            
+            $message = "📝 <b>Yangi kursga yozilish arizasi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."📚 <b>Kurs:</b> ".htmlspecialchars($course->title)."\n"
+                ."👤 <b>O'quvchi:</b> ".htmlspecialchars($applicantName)."\n"
+                ."📞 <b>Telefon:</b> ".htmlspecialchars($enrollment->contact_phone)."\n"
+                ."🏫 <b>Sinf:</b> ".htmlspecialchars($enrollment->grade)."\n"
+                ."📊 <b>Fan darajasi:</b> ".htmlspecialchars($enrollment->subject_level)."\n";
+            
+            if (!empty($enrollment->note)) {
+                $message .= "💬 <b>Izoh:</b> ".htmlspecialchars($enrollment->note)."\n";
+            }
+            
+            $message .= "\n━━━━━━━━━━━━━━━━━━━━\n";
+            
+            if ($limitText) {
+                $message .= "👥 <b>Yozilganlar:</b> {$limitText}\n";
+            } else {
+                $message .= "👥 <b>Jami yozilganlar:</b> {$enrollmentCount} ta\n";
+            }
+            
+            $message .= "\nArizani ko'rib chiqasizmi?";
+
+            $telegram->sendInlineConfirm(
+                (int) $creator->telegram_chat_id,
+                $message,
+                'approve_enrollment:'.$enrollment->id,
+                'reject_enrollment:'.$enrollment->id
+            );
+        }
+
+        // Email xabar yuborish
         if (! $creator?->email || ! config('mail.enabled', true)) {
             return;
         }
@@ -182,5 +226,37 @@ class CourseEnrollmentController extends Controller
 
         abort_unless($course->status === Course::STATUS_PUBLISHED, 404);
         abort_unless(! $course->teacher_id || ($course->teacher && $course->teacher->is_active), 404);
+    }
+
+    /**
+     * O'quvchi yozilishni bekor qilganda kurs egasiga xabar.
+     */
+    private function notifyCreatorEnrollmentCancelled(Course $course, CourseEnrollment $enrollment, string $studentName): void
+    {
+        $course->loadMissing('creator');
+        $creator = $course->creator;
+
+        if (! $creator || ! $creator->telegram_chat_id) {
+            return;
+        }
+
+        $telegram = app(\App\Services\TelegramService::class);
+        
+        $enrollmentCount = $course->totalEnrollmentCount();
+        $limitText = $course->enrollmentLimitText();
+        
+        $message = "🚫 <b>Yozilish bekor qilindi</b>\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."📚 <b>Kurs:</b> ".htmlspecialchars($course->title)."\n"
+            ."👤 <b>O'quvchi:</b> ".htmlspecialchars($studentName)."\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n";
+        
+        if ($limitText) {
+            $message .= "👥 <b>Yozilganlar:</b> {$limitText}\n";
+        } else {
+            $message .= "👥 <b>Jami yozilganlar:</b> {$enrollmentCount} ta\n";
+        }
+
+        $telegram->sendMessage((int) $creator->telegram_chat_id, $message);
     }
 }

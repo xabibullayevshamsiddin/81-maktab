@@ -30,6 +30,7 @@ class Course extends Model
         'description_en',
         'image',
         'start_date',
+        'max_enrollments',
         'status',
         'rejection_reason',
         'publish_code',
@@ -154,5 +155,50 @@ class Course extends Model
         }
 
         return $this->instructorImageUrl();
+    }
+
+    /**
+     * Tasdiqlangan yozilishlar soni.
+     */
+    public function approvedEnrollmentCount(): int
+    {
+        return $this->enrollments()
+            ->where('status', CourseEnrollment::STATUS_APPROVED)
+            ->count();
+    }
+
+    /**
+     * Jami pending + approved yozilishlar soni.
+     */
+    public function totalEnrollmentCount(): int
+    {
+        return $this->enrollments()
+            ->whereIn('status', [CourseEnrollment::STATUS_PENDING, CourseEnrollment::STATUS_APPROVED])
+            ->count();
+    }
+
+    /**
+     * Limit to'lganmi?
+     */
+    public function isEnrollmentLimitReached(): bool
+    {
+        if (! $this->max_enrollments) {
+            return false;
+        }
+
+        return $this->approvedEnrollmentCount() >= $this->max_enrollments;
+    }
+
+    /**
+     * Limit haqida matn.
+     */
+    public function enrollmentLimitText(): ?string
+    {
+        if (! $this->max_enrollments) {
+            return null;
+        }
+
+        $approved = $this->approvedEnrollmentCount();
+        return "{$approved} / {$this->max_enrollments} o'quvchi";
     }
 }

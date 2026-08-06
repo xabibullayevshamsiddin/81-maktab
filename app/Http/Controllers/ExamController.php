@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use App\Services\TelegramService;
 
 class ExamController extends Controller
 {
@@ -434,9 +435,50 @@ class ExamController extends Controller
             ]);
         }
 
+        // Telegram'ga natija xabarini yuborish
+        $this->sendExamResultNotification($fresh);
+
         // 303: POST → GET; brauzer tarixida imtihon sessiyasiga "qayta yuborish" chalkashmasin
         return redirect()->route('exam.result.show', $fresh, 303)
             ->with('success', 'Imtihon yakunlandi.');
+    }
+
+    /**
+     * Imtihon natijasini Telegram'ga xabar qilish.
+     */
+    private function sendExamResultNotification(Result $result): void
+    {
+        try {
+            $user = \App\Models\User::find($result->user_id);
+            if (! $user || ! $user->telegram_chat_id) {
+                return;
+            }
+
+            $exam = Exam::find($result->exam_id);
+            $examTitle = $exam?->title ?? 'Noma\'lum imtihon';
+            $score = $result->points_earned ?? 0;
+            $maxScore = $result->points_max ?? 0;
+            $passed = $result->passed;
+            $correctCount = $result->score ?? 0;
+            $totalQuestions = $result->total_questions ?? 0;
+            $statusEmoji = $passed === true ? '✅' : ($passed === false ? '❌' : '⏳');
+            $statusText = $passed === true ? 'O\'tdi' : ($passed === false ? 'Yiqildi' : 'Kutilmoqda');
+
+            $text = "📊 <b>Imtihon natijasi</b>\n\n"
+                ."📝 Imtihon: <b>".htmlspecialchars($examTitle)."</b>\n"
+                ."{$statusEmoji} Natija: <b>{$statusText}</b>\n"
+                ."📈 Ball: <b>{$score}</b> / {$maxScore}\n"
+                ."✅ To\'g\'ri: <b>{$correctCount}</b> / {$totalQuestions}\n"
+                ."\n📅 Sana: <b>".($result->submitted_at?->format('d.m.Y H:i') ?? now()->format('d.m.Y H:i'))."</b>";
+
+            $telegram = app(TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        } catch (\Throwable $e) {
+            Log::error('Telegram exam result notification failed', [
+                'result_id' => $result->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function finalizeResult(Result $result, bool $expired): void

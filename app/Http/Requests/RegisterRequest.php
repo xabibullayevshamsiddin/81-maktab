@@ -20,7 +20,14 @@ class RegisterRequest extends FormRequest
             'first_name' => User::nameValidationRules(),
             'last_name' => User::nameValidationRules(),
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => uz_phone_rules(),
+            'phone' => array_merge(uz_phone_rules(), [
+                function ($attribute, $value, $fail) {
+                    $normalized = uz_phone_format($value);
+                    if ($normalized && User::query()->where('phone', $normalized)->exists()) {
+                        $fail('Bu telefon raqami allaqachon ro\'yxatdan o\'tgan.');
+                    }
+                },
+            ]),
             'is_parent' => ['nullable', 'in:1'],
             'grade' => ['required_unless:is_parent,1', 'nullable', 'string', Rule::in(school_student_grade_options())],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -67,6 +74,7 @@ class RegisterRequest extends FormRequest
             'email.unique' => 'Bu email allaqachon ro\'yxatdan o\'tgan.',
             'phone.required' => 'Telefon raqam kiritilishi shart.',
             'phone.regex' => uz_phone_validation_message(),
+            'phone.unique' => 'Bu telefon raqami allaqachon ro\'yxatdan o\'tgan.',
             'grade.required' => 'Sinfni tanlash shart.',
             'grade.in' => school_grade_validation_message(),
             'password.required' => 'Parol kiritilishi shart.',
