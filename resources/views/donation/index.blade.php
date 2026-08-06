@@ -173,6 +173,21 @@
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--border);
+    flex-shrink: 0;
+}
+.donor-avatar-initial {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    text-transform: uppercase;
 }
 .donor-info { flex: 1; }
 .donor-name { font-weight: 600; color: var(--text); }
@@ -208,30 +223,39 @@
         ["check" => true, "text" => "10 MB gacha avatar yuklash"],
         ["check" => true, "text" => "AI chat: 100 ta so'rov/kun"],
         ["check" => true, "text" => "Profil yonida Supporter badge"],
+        ["check" => true, "icon" => "fa-solid fa-face-smile", "text" => "Global chatda Telegram-style stikerlar"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 2 ta kurs ochish"],
+        ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => false, "text" => "Sahifalar orasida tezkor o'tish"],
-        ["check" => false, "text" => "Maxsus profil dizayni"],
+        ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
+        ["check" => false, "text" => "Maxsus emoji ishlatish"],
     ];
     $premiumFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (binafsha)"],
         ["check" => true, "text" => "25 MB gacha avatar yuklash"],
         ["check" => true, "text" => "AI chat: 300 ta so'rov/kun"],
         ["check" => true, "text" => "Premium badge"],
+        ["check" => true, "icon" => "fa-solid fa-face-smile", "text" => "Global chatda Telegram-style stikerlar"],
         ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
+        ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
+        ["check" => false, "text" => "Maxsus emoji ishlatish"],
     ];
     $vipFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (oltin)"],
         ["check" => true, "text" => "50 MB gacha avatar yuklash"],
         ["check" => true, "text" => "AI chat: cheksiz so'rovlar"],
         ["check" => true, "text" => "VIP badge"],
+        ["check" => true, "icon" => "fa-solid fa-face-smile", "text" => "Global chatda Telegram-style stikerlar"],
         ["check" => true, "icon" => "fa-solid fa-bolt", "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "text" => "Prioritet support"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
+        ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
+        ["check" => true, "icon" => "fa-solid fa-icons", "text" => "Maxsus emoji ishlatish"],
     ];
     
     // Pre-calculate prices for all durations
@@ -342,13 +366,26 @@
                 elseif ($index === 1) { $posClass = 'top-2'; $rankText = 'silver'; }
                 elseif ($index === 2) { $posClass = 'top-3'; $rankText = 'bronze'; }
                 
-                // Hisoblangan hissa miqdori — controller'da hisoblangan calculated_donated va donation_count
+                // Hisoblangan hissa miqdori — controller'da hisoblangan calculated_donated
+                // Controller activation key donatlari uchun ham to'g'ri narxni hisoblaydi
                 $totalAmount = $donor->calculated_donated ?? $donor->total_donated ?? 0;
                 $donationCount = $donor->donation_count ?? 0;
             @endphp
+            @php
+                // Ismning birinchi harfi (initial) uchun
+                $donorName = $donor->name ?: $donor->buildNameFromParts();
+                $initial = strtoupper(mb_substr($donorName, 0, 1));
+                // Rank rangiga qarab avatar fon rangi
+                $avatarBg = $donor->donation_rank === 'vip' ? '#f59e0b' : ($donor->donation_rank === 'premium' ? '#8b5cf6' : '#3b82f6');
+            @endphp
             <div class="donor-item {{ $posClass }}">
                 <span class="donor-position {{ $rankText }}">#{{ $index + 1 }}</span>
-                <img src="{{ $donor->avatar_url ?? app_public_asset("temp/img/default-avatar.png") }}" alt="" class="donor-avatar">
+                @if($donor->avatar_url)
+                    <img src="{{ $donor->avatar_url }}" alt="" class="donor-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="donor-avatar-initial" style="background: {{ $avatarBg }}; display: none;">{{ $initial }}</div>
+                @else
+                    <div class="donor-avatar-initial" style="background: {{ $avatarBg }};">{{ $initial }}</div>
+                @endif
                 <div class="donor-info">
                     <div class="donor-name">{{ $donor->name ?: $donor->buildNameFromParts() }}</div>
                     <div class="donor-meta">

@@ -15,6 +15,26 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
+/**
+ * AuthController — Tizimga kirish, ro'yxatdan o'tish, parolni tiklash.
+ * 
+ * // ═══════════════════════════════════════════════════════════════
+ * // TELEGRAM XABAR FORMATI — ESLOMA
+ * // ═══════════════════════════════════════════════════════════════
+ * // Yashirin kodlar (parollar) uchun:
+ * //   <tg-spoiler>matn</tg-spoiler>  — bosganda ochiladi
+ * // 
+ * // Tasdiqlash kodlari uchun:
+ * //   <code>123456</code>  — monospace formatda ko'rinadi
+ * // 
+ * // Qalin harflar:
+ * //   <b>matn</b>  — qalin ko'rinadi
+ * // 
+ * // Misol:
+ * //   $text = "🔑 <b>Kod:</b>\n" . "<code>{$code}</code>";
+ * //   $text = "🔐 <b>Parol:</b>\n" . "<tg-spoiler>{$password}</tg-spoiler>";
+ * // ═══════════════════════════════════════════════════════════════
+ */
 class AuthController extends Controller
 {
     private const OTP_VERIFY_MAX_ATTEMPTS = 5;
@@ -49,27 +69,180 @@ class AuthController extends Controller
                 ->onlyInput('phone');
         }
 
-        // Agar foydalanuvchida telegram_chat_id bor va tasdiqlangan bo'lsa
-        // — to'g'ridan-to'g'ri kirishga ruxsat berish
+        // Telegram chat_id bor — 2FA: Telegramga 6 xonali kod yuborish
         if ($user->telegram_chat_id) {
-            Auth::login($user, true);
-            $request->session()->regenerate();
-
-            return redirect()->intended(route('home'))
-                ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
+            $loginCode = (string) random_int(100000, 999999);
+            
+            // Kodni session'ga saqlash
+            $request->session()->put('login_verification', [
+                'user_id' => $user->id,
+                'code' => $loginCode,
+                'expires_at' => now()->addMinutes(5)->timestamp,
+            ]);
+            
+            // Telegramga kod yuborish
+            // // YASHIRIN KODLAR FORMATI:
+            // // <tg-spoiler>matn</tg-spoiler> — Telegramda yashirin (bosganda ko'rinadi)
+            // // <code>matn</code> — monospace formatda ko'rinadi (kodlar uchun)
+            // // <b>matn</b> — qalin harflar
+            $telegram = app(\App\Services\TelegramService::class);
+            $text = "🔐 <b>Tizimga kirish tasdiqlash kodi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👤 <b>Foydalanuvchi:</b> ".htmlspecialchars($user->name)."\n"
+                ."⏰ <b>Sana:</b> ".now()->format('d.m.Y H:i')."\n\n"
+                ."🔑 <b>Tasdiqlash kodi:</b>\n"
+                ."<code>{$loginCode}</code>\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."⚠️ <b>Muhim!</b>\n"
+                ."• Kod 5 daqiqa amal qiladi\n"
+                ."• Kodni hech kimga bermang\n"
+                ."• Agar siz bu so'rovni yubormagan bo'lsangiz, e'tiborsiz qoldiring";
+            
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+            
+            // Kod kiritish sahifasiga yo'naltirish
+            return redirect()->route('login.verify.form')
+                ->with('success', 'Telegramga tasdiqlash kodi yuborildi.')
                 ->with('toast_type', 'success');
         }
 
-        // Telegram_chat_id yo'q — Telegram orqali tasdiqlash kerak
-        $token = $this->createTelegramVerification(
-            TelegramVerification::PURPOSE_LOGIN,
-            $user->email,
-            $user->phone ?? '',
-            ['user_id' => $user->id]
-        );
+        // Telegram chat_id yo'q — to'g'ridan-to'g'ri kirishga ruxsat berish
+        Auth::login($user, true);
+        $request->session()->regenerate();
 
-        return redirect()->route('telegram.verify', ['token' => $token])
-            ->with('success', 'Telegram orqali tasdiqlang.')
+        return redirect()->intended(route('home'))
+            ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
+            ->with('toast_type', 'success');
+    }
+
+    /**
+     | Login uchun 2FA tasdiqlash sahifasini ko'rsatish.
+     */
+    public function showLoginVerifyForm(Request $request)
+    {
+        $verification = $request->session()->get('login_verification');
+        
+        if (! $verification || ! isset($verification['user_id'])) {
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Sessiya muddati tugagan. Qayta kiring.'])
+                ->with('toast_type', 'error');
+        }
+        
+        // Kod muddati tugaganini tekshirish
+        if (now()->timestamp > ($verification['expires_at'] ?? 0)) {
+            $request->session()->forget('login_verification');
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Tasdiqlash kodi muddati tugagan. Qayta kiring.'])
+                ->with('toast_type', 'error');
+        }
+        
+        return view('login.login-verify-code');
+    }
+
+    /**
+     | Login uchun 2FA kodini tekshirish.
+     */
+    public function verifyLoginCode(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'digits:6'],
+        ], [
+            'code.required' => 'Tasdiqlash kodini kiriting.',
+            'code.digits' => 'Kod 6 xonali bo\'lishi kerak.',
+        ]);
+        
+        $verification = $request->session()->get('login_verification');
+        
+        if (! $verification || ! isset($verification['user_id'])) {
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Sessiya muddati tugagan. Qayta kiring.'])
+                ->with('toast_type', 'error');
+        }
+        
+        // Kod muddati tugaganini tekshirish
+        if (now()->timestamp > ($verification['expires_at'] ?? 0)) {
+            $request->session()->forget('login_verification');
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Tasdiqlash kodi muddati tugagan. Qayta kiring.'])
+                ->with('toast_type', 'error');
+        }
+        
+        // Kodni tekshirish
+        if ($validated['code'] !== $verification['code']) {
+            return back()
+                ->withErrors(['code' => 'Kod noto\'g\'ri.'])
+                ->onlyInput('code');
+        }
+        
+        // Foydalanuvchini topish va kirishni yakunlash
+        $user = User::find($verification['user_id']);
+        if (! $user) {
+            $request->session()->forget('login_verification');
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Foydalanuvchi topilmadi.'])
+                ->with('toast_type', 'error');
+        }
+        
+        // Sessiyani tozalash
+        $request->session()->forget('login_verification');
+        
+        // Kirishni yakunlash
+        Auth::login($user, true);
+        $request->session()->regenerate();
+        
+        return redirect()->intended(route('home'))
+            ->with('success', 'Tizimga muvaffaqiyatli kirdingiz.')
+            ->with('toast_type', 'success');
+    }
+
+    /**
+     | Login uchun 2FA kodini qayta yuborish.
+     */
+    public function resendLoginCode(Request $request)
+    {
+        $verification = $request->session()->get('login_verification');
+        
+        if (! $verification || ! isset($verification['user_id'])) {
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Sessiya muddati tugagan. Qayta kiring.'])
+                ->with('toast_type', 'error');
+        }
+        
+        $user = User::find($verification['user_id']);
+        if (! $user || ! $user->telegram_chat_id) {
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Foydalanuvchi topilmadi.'])
+                ->with('toast_type', 'error');
+        }
+        
+        // Yangi kod yaratish
+        $loginCode = (string) random_int(100000, 999999);
+        
+        // Session'ni yangilash
+        $request->session()->put('login_verification', [
+            'user_id' => $user->id,
+            'code' => $loginCode,
+            'expires_at' => now()->addMinutes(5)->timestamp,
+        ]);
+        
+        // Telegramga yangi kod yuborish
+        $telegram = app(\App\Services\TelegramService::class);
+        $text = "🔐 <b>Tizimga kirish tasdiqlash kodi (yangi)</b>\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."👤 <b>Foydalanuvchi:</b> ".htmlspecialchars($user->name)."\n"
+            ."⏰ <b>Sana:</b> ".now()->format('d.m.Y H:i')."\n\n"
+            ."🔑 <b>Tasdiqlash kodi:</b>\n"
+            ."<code>{$loginCode}</code>\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."⚠️ <b>Muhim!</b>\n"
+            ."• Kod 5 daqiqa amal qiladi\n"
+            ."• Kodni hech kimga bermang\n"
+            ."• Agar siz bu so'rovni yubormagan bo'lsangiz, e'tiborsiz qoldiring";
+        
+        $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        
+        return back()
+            ->with('success', 'Telegramga yangi tasdiqlash kodi yuborildi.')
             ->with('toast_type', 'success');
     }
 
@@ -514,6 +687,12 @@ class AuthController extends Controller
         }
 
         // Telegram ga yuborish
+        // // YASHIRIN KOD FORMATI:
+        // // <tg-spoiler>matn</tg-spoiler> — Telegramda yashirin ko'rinadi
+        // // Foydalanuvchi bosganda matn ochiladi (parollar uchun ishlatiladi)
+        // // Boshqa formatlar:
+        // // <code>matn</code> — monospace (tasdiqlash kodlari uchun)
+        // // <b>matn</b> — qalin harflar
         $telegram = app(\App\Services\TelegramService::class);
         $adminName = htmlspecialchars($admin->buildNameFromParts() ?: $admin->name);
         $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);

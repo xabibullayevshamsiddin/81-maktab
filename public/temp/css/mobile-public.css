@@ -137,16 +137,34 @@
     right: auto;
     top: auto;
     transform: none;
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    grid-auto-flow: column;
-    justify-content: flex-start;
-    margin-top: 8px;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    width: 100%;
+    padding: 0;
   }
 
   .home-btn a {
     width: 44px;
     height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    transition: all 0.3s ease;
+  }
+
+  .home-btn a:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
   }
 }
 
@@ -261,9 +279,24 @@
   }
 
   .icon-links {
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
     padding-bottom: 14px;
+  }
+
+  .icon-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .icon-link .meta {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .icon-link-actions {
@@ -277,7 +310,7 @@
     text-align: center;
     justify-content: center;
     font-size: 13px;
-    padding: 8px 10px;
+    padding: 10px 12px;
   }
 }
 
@@ -745,14 +778,20 @@
   .btn1,
   .menu-toggle,
   .scroll-top,
-  .social-link,
-  .like-btn {
+  .social-link {
     min-height: 44px;
   }
 
-  /* Like tugmasi */
+  /* Like tugmasi — kichik va ixcham */
   .like-btn {
-    padding: 10px 16px;
+    padding: 6px 10px;
+    min-height: 32px;
+    font-size: 12px;
+    border-radius: 999px;
+    gap: 5px;
+  }
+
+  .like-btn i {
     font-size: 14px;
   }
 
@@ -761,6 +800,31 @@
     min-height: 38px;
     padding: 8px 14px;
     font-size: 13px;
+  }
+
+  /* News card dagi tugmalarni bir xil qilish */
+  .news-card .icon-link-actions .btn,
+  .news-card .btn-prime {
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 16px;
+    min-height: 40px;
+    width: 100%;
+  }
+
+  /* Batafsil tugmasi — outline emas, filled */
+  .news-card .btn-prime {
+    background: linear-gradient(135deg, var(--primary-2), var(--primary));
+    color: #fff;
+    border: none;
+  }
+
+  /* Ulashish tugmasi — ham filled */
+  .news-card .icon-link-actions .btn-outline {
+    background: linear-gradient(135deg, var(--primary-2), var(--primary));
+    color: #fff;
+    border: none;
   }
 }
 
@@ -780,16 +844,16 @@
    ==================================================================== */
 @media (max-width: 480px) {
   .chat-widget {
-    right: max(10px, env(safe-area-inset-right));
+    right: var(--dock-edge, 8px);
     left: auto !important;
-    bottom: max(10px, env(safe-area-inset-bottom));
+    bottom: var(--dock-bottom, 6px);
   }
 
   .chat-panel:not(.is-fullscreen) {
     left: 8px !important;
     right: 8px !important;
     top: auto !important;
-    bottom: calc(72px + max(8px, env(safe-area-inset-bottom))) !important;
+    bottom: calc(var(--dock-chat-bubble, 52px) + var(--dock-bottom, 6px) + 8px) !important;
     width: auto !important;
     height: min(68vh, 520px) !important;
     border-radius: 16px;
@@ -871,10 +935,10 @@
    ==================================================================== */
 @media (max-width: 580px) {
   .scroll-top {
-    right: 14px;
-    bottom: 14px;
-    width: 42px;
-    height: 42px;
+    right: var(--dock-edge, 8px);
+    bottom: calc(var(--dock-bottom, 6px) + var(--dock-audio-lift) + 8px);
+    width: 40px;
+    height: 40px;
   }
 }
 

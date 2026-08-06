@@ -7,6 +7,19 @@ use App\Models\TelegramVerification;
 /**
  * Telegram xabarlarni qayta ishlash logikasi.
  * TelegramWebhookController va TelegramPollUpdates ikkalasi ham shu klassni ishlatadi.
+ * 
+ * // ═══════════════════════════════════════════════════════════════
+ * // TELEGRAM XABAR FORMATI — ESLOMA
+ * // ═══════════════════════════════════════════════════════════════
+ * // Yashirin kodlar (parollar) uchun:
+ * //   <tg-spoiler>matn</tg-spoiler>  — bosganda ochiladi
+ * // 
+ * // Tasdiqlash kodlari uchun:
+ * //   <code>123456</code>  — monospace formatda ko'rinadi
+ * // 
+ * // Qalin harflar:
+ * //   <b>matn</b>  — qalin ko'rinadi
+ * // ═══════════════════════════════════════════════════════════════
  */
 class TelegramUpdateHandler
 {

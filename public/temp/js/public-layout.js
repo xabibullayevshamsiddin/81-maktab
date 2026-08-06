@@ -4285,3 +4285,106 @@ function refreshChatAvailability() {
     init3DHeroTitleAnimation();
   }
 })();
+
+// =====================================================================
+// STICKER PANEL — Telegram-style (DONORLAR uchun)
+// data-sticker atributini ishlatadi — data-chat-sticker EMAS
+// =====================================================================
+(function() {
+  function initStickerPanel() {
+    var toggle = document.getElementById('chat-sticker-toggle');
+    var popup = document.getElementById('chat-sticker-popup');
+    var input = document.getElementById('chat-input');
+    var panel = document.getElementById('chat-panel');
+
+    if (!toggle || !popup) return;
+
+    // Toggle popup — ochish/yopish
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isHidden = popup.hidden;
+      popup.hidden = !isHidden;
+      if (isHidden) {
+        popup.style.animation = 'none';
+        popup.offsetHeight; // trigger reflow
+        popup.style.animation = '';
+      }
+    });
+
+    // Tab switching — kategoriyalar (toggle: birinchi bosish → shu kategoriya, ikkinchi → barchasi)
+    var tabs = popup.querySelectorAll('.sticker-tab');
+    var grids = popup.querySelectorAll('.sticker-grid');
+    var activeTab = null; // faol tab (null = barchasi ko'rinadi)
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var target = this.getAttribute('data-tab');
+
+        // Agar shu tab allaqachon faol bo'lsa — toggle qil (barchasini ko'rsat)
+        if (activeTab === target) {
+          activeTab = null;
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          grids.forEach(function(g) { g.hidden = false; });
+          return;
+        }
+
+        // Yangi tabni faollashtir — faqat shu kategoriyani ko'rsat
+        activeTab = target;
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        this.classList.add('active');
+        grids.forEach(function(g) {
+          g.hidden = g.getAttribute('data-category') !== target;
+        });
+      });
+    });
+
+    // Sticker click → append to input (PANEL YOPILMAYDI)
+    var stickerItems = popup.querySelectorAll('.sticker-item');
+    stickerItems.forEach(function(item) {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var sticker = this.getAttribute('data-sticker');
+        if (!sticker || !input) return;
+        input.value += sticker;
+        input.focus();
+        // Panel YOPILMAYDI — foydalanuvchi ko'proq stiker tanlay olishi uchun
+        // Trigger input event for other listeners
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+
+    // Close popup when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!popup.hidden && !popup.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
+        popup.hidden = true;
+      }
+    });
+
+    // Close popup when chat panel closes
+    if (panel) {
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+          if (m.attributeName === 'hidden') {
+            if (panel.hidden) popup.hidden = true;
+          }
+        });
+      });
+      observer.observe(panel, { attributes: true });
+    }
+
+    // Close popup on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !popup.hidden) {
+        popup.hidden = true;
+      }
+    });
+  }
+
+  // DOMContentLoaded da ishga tushirish yoki allaqachon yuklangan bo'lsa darhol
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStickerPanel);
+  } else {
+    initStickerPanel();
+  }
+})();

@@ -9,6 +9,22 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * TelegramWebhookController — Telegram webhook va tasdiqlash.
+ * 
+ * // ═══════════════════════════════════════════════════════════════
+ * // TELEGRAM XABAR FORMATI — ESLOMA
+ * // ═══════════════════════════════════════════════════════════════
+ * // Yashirin kodlar (parollar) uchun:
+ * //   <tg-spoiler>matn</tg-spoiler>  — bosganda ochiladi
+ * // 
+ * // Tasdiqlash kodlari uchun:
+ * //   <code>123456</code>  — monospace formatda ko'rinadi
+ * // 
+ * // Qalin harflar:
+ * //   <b>matn</b>  — qalin ko'rinadi
+ * // ═══════════════════════════════════════════════════════════════
+ */
 class TelegramWebhookController extends Controller
 {
     public function __construct(

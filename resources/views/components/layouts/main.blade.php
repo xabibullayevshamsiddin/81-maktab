@@ -22,7 +22,7 @@
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
-    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=10" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=11" />
     @unless(request()->routeIs('exam.session'))
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
     {{-- Three.js — 3D loader animatsiyasi uchun --}}
@@ -288,17 +288,7 @@
                     aria-label="{{ __('public.layout.ai_assistant') }}"
                     title="{{ __('public.layout.ai_assistant') }}"
                   >
-                    <svg class="ai-icon-svg" viewBox="0 0 32 32" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-right:6px;vertical-align:middle;">
-                      <defs><linearGradient id="aiBrainGradM" x1="4" y1="4" x2="28" y2="28"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
-                      <circle cx="16" cy="16" r="14" fill="url(#aiBrainGradM)" opacity="0.15"/>
-                      <circle cx="16" cy="16" r="14" stroke="url(#aiBrainGradM)" stroke-width="1.5" fill="none"/>
-                      <circle cx="11" cy="12" r="2.5" fill="#38bdf8"/>
-                      <circle cx="21" cy="12" r="2.5" fill="#a855f7"/>
-                      <circle cx="16" cy="20" r="2.5" fill="#6366f1"/>
-                      <line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
-                      <line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/>
-                      <line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/>
-                    </svg>
+                    <i class="fa-solid fa-brain" style="background: linear-gradient(135deg, #38bdf8, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-right:6px; vertical-align:middle;"></i>
                     <span>{{ __('public.layout.ai_assistant') }}</span>
                   </button>
                 </li>
@@ -649,22 +639,130 @@
               data-size="invisible"
             ></div>
             @endif
-            <div class="chat-sticker-row" aria-label="{{ __('public.layout.stickers_label') }}">
+            {{-- ═══════════════════════════════════════════════════════ --}}
+            {{-- STIKERLAR: Oddiy foydalanuvchilar — eski format (6 ta) --}}
+            {{-- ═══════════════════════════════════════════════════════ --}}
+            @php
+              $chatStickerUser = auth()->user();
+              $isChatDonor = $chatStickerUser && $chatStickerUser->isDonor();
+            @endphp
+            <div class="chat-sticker-row chat-sticker-row--simple{{ $isChatDonor ? ' is-donor-hidden' : '' }}" id="chat-sticker-row-simple">
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="😄" title="Smile">😄</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="👍" title="Like">👍</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
               <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
-              @auth
-                @if($authUser && $authUser->isDonor())
-                <span class="chat-sticker-divider" aria-hidden="true"></span>
-                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="💎" title="Gem">💎</button>
-                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🚀" title="Rocket">🚀</button>
-                <button type="button" class="chat-sticker-btn chat-sticker-btn--donor" data-chat-sticker="🌟" title="Star">🌟</button>
-                @endif
-              @endauth
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="😢" title="Sad">😢</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🙏" title="Thanks">🙏</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="💯" title="Score">💯</button>
             </div>
+            {{-- ═══════════════════════════════════════════════════════ --}}
+            {{-- STIKERLAR: Donorlar — Telegram-style panel (60+ ta)   --}}
+            {{-- ═══════════════════════════════════════════════════════ --}}
+            @if($isChatDonor)
+              <div class="chat-sticker-panel" id="chat-sticker-panel">
+                <button type="button" class="chat-sticker-toggle" id="chat-sticker-toggle" title="Stikerlar">
+                  <i class="fa-regular fa-face-smile"></i>
+                </button>
+                <div class="chat-sticker-popup" id="chat-sticker-popup" hidden>
+                  <div class="sticker-popup-tabs">
+                    <button type="button" class="sticker-tab" data-tab="feelings">😊</button>
+                    <button type="button" class="sticker-tab" data-tab="hands">👍</button>
+                    <button type="button" class="sticker-tab" data-tab="nature">🔥</button>
+                    <button type="button" class="sticker-tab" data-tab="food">🍕</button>
+                    <button type="button" class="sticker-tab" data-tab="objects">💡</button>
+                    <button type="button" class="sticker-tab" data-tab="school">📚</button>
+                  </div>
+                  <div class="sticker-popup-content">
+                    <div class="sticker-grid" data-category="feelings">
+                      <button type="button" class="sticker-item" data-sticker="😊">😊</button>
+                      <button type="button" class="sticker-item" data-sticker="😂">😂</button>
+                      <button type="button" class="sticker-item" data-sticker="🥺">🥺</button>
+                      <button type="button" class="sticker-item" data-sticker="😍">😍</button>
+                      <button type="button" class="sticker-item" data-sticker="🤔">🤔</button>
+                      <button type="button" class="sticker-item" data-sticker="😎">😎</button>
+                      <button type="button" class="sticker-item" data-sticker="🤩">🤩</button>
+                      <button type="button" class="sticker-item" data-sticker="😴">😴</button>
+                      <button type="button" class="sticker-item" data-sticker="🤗">🤗</button>
+                      <button type="button" class="sticker-item" data-sticker="😇">😇</button>
+                      <button type="button" class="sticker-item" data-sticker="🥳">🥳</button>
+                      <button type="button" class="sticker-item" data-sticker="😏">😏</button>
+                    </div>
+                    <div class="sticker-grid" data-category="hands">
+                      <button type="button" class="sticker-item" data-sticker="👍">👍</button>
+                      <button type="button" class="sticker-item" data-sticker="👏">👏</button>
+                      <button type="button" class="sticker-item" data-sticker="👋">👋</button>
+                      <button type="button" class="sticker-item" data-sticker="✌️">✌️</button>
+                      <button type="button" class="sticker-item" data-sticker="🤝">🤝</button>
+                      <button type="button" class="sticker-item" data-sticker="💪">💪</button>
+                      <button type="button" class="sticker-item" data-sticker="🙏">🙏</button>
+                      <button type="button" class="sticker-item" data-sticker="👌">👌</button>
+                      <button type="button" class="sticker-item" data-sticker="✊">✊</button>
+                      <button type="button" class="sticker-item" data-sticker="🤟">🤟</button>
+                      <button type="button" class="sticker-item" data-sticker="👆">👆</button>
+                      <button type="button" class="sticker-item" data-sticker="🫶">🫶</button>
+                    </div>
+                    <div class="sticker-grid" data-category="nature">
+                      <button type="button" class="sticker-item" data-sticker="🔥">🔥</button>
+                      <button type="button" class="sticker-item" data-sticker="💎">💎</button>
+                      <button type="button" class="sticker-item" data-sticker="🚀">🚀</button>
+                      <button type="button" class="sticker-item" data-sticker="🌟">🌟</button>
+                      <button type="button" class="sticker-item" data-sticker="⚡">⚡</button>
+                      <button type="button" class="sticker-item" data-sticker="💫">💫</button>
+                      <button type="button" class="sticker-item" data-sticker="🎉">🎉</button>
+                      <button type="button" class="sticker-item" data-sticker="🎊">🎊</button>
+                      <button type="button" class="sticker-item" data-sticker="💝">💝</button>
+                      <button type="button" class="sticker-item" data-sticker="🏆">🏆</button>
+                      <button type="button" class="sticker-item" data-sticker="❤️">❤️</button>
+                      <button type="button" class="sticker-item" data-sticker="🧡">🧡</button>
+                    </div>
+                    <div class="sticker-grid" data-category="food">
+                      <button type="button" class="sticker-item" data-sticker="🍕">🍕</button>
+                      <button type="button" class="sticker-item" data-sticker="🍔">🍔</button>
+                      <button type="button" class="sticker-item" data-sticker="🍟">🍟</button>
+                      <button type="button" class="sticker-item" data-sticker="🌮">🌮</button>
+                      <button type="button" class="sticker-item" data-sticker="🍦">🍦</button>
+                      <button type="button" class="sticker-item" data-sticker="🎂">🎂</button>
+                      <button type="button" class="sticker-item" data-sticker="☕">☕</button>
+                      <button type="button" class="sticker-item" data-sticker="🧃">🧃</button>
+                      <button type="button" class="sticker-item" data-sticker="🍰">🍰</button>
+                      <button type="button" class="sticker-item" data-sticker="🍩">🍩</button>
+                      <button type="button" class="sticker-item" data-sticker="🍪">🍪</button>
+                      <button type="button" class="sticker-item" data-sticker="🍫">🍫</button>
+                    </div>
+                    <div class="sticker-grid" data-category="objects">
+                      <button type="button" class="sticker-item" data-sticker="💡">💡</button>
+                      <button type="button" class="sticker-item" data-sticker="📚">📚</button>
+                      <button type="button" class="sticker-item" data-sticker="✏️">✏️</button>
+                      <button type="button" class="sticker-item" data-sticker="🎯">🎯</button>
+                      <button type="button" class="sticker-item" data-sticker="🎮">🎮</button>
+                      <button type="button" class="sticker-item" data-sticker="🎵">🎵</button>
+                      <button type="button" class="sticker-item" data-sticker="📱">📱</button>
+                      <button type="button" class="sticker-item" data-sticker="💻">💻</button>
+                      <button type="button" class="sticker-item" data-sticker="🎬">🎬</button>
+                      <button type="button" class="sticker-item" data-sticker="📸">📸</button>
+                      <button type="button" class="sticker-item" data-sticker="🎨">🎨</button>
+                      <button type="button" class="sticker-item" data-sticker="🎪">🎪</button>
+                    </div>
+                    <div class="sticker-grid" data-category="school">
+                      <button type="button" class="sticker-item" data-sticker="📚">📚</button>
+                      <button type="button" class="sticker-item" data-sticker="✏️">✏️</button>
+                      <button type="button" class="sticker-item" data-sticker="🎒">🎒</button>
+                      <button type="button" class="sticker-item" data-sticker="🏫">🏫</button>
+                      <button type="button" class="sticker-item" data-sticker="👨‍🏫">👨‍🏫</button>
+                      <button type="button" class="sticker-item" data-sticker="📝">📝</button>
+                      <button type="button" class="sticker-item" data-sticker="📖">📖</button>
+                      <button type="button" class="sticker-item" data-sticker="🔬">🔬</button>
+                      <button type="button" class="sticker-item" data-sticker="🧮">🧮</button>
+                      <button type="button" class="sticker-item" data-sticker="📐">📐</button>
+                      <button type="button" class="sticker-item" data-sticker="🎒">🎒</button>
+                      <button type="button" class="sticker-item" data-sticker="🏅">🏅</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              @endif
             <input type="text" id="chat-input" class="chat-input" placeholder="{{ __('public.layout.write_message') }}" maxlength="1000" autocomplete="off" />
             <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="{{ __('public.layout.send') }}">
               <i class="fa-solid fa-paper-plane"></i>
@@ -763,7 +861,7 @@
       @endunless
     @endauth
 <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
-	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=9"></script>
+	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=10"></script>
       <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
 	    <script>
       (function() {
@@ -977,59 +1075,12 @@
       data-ai-disabled-message="{{ e($aiChatDisabledMsg) }}"
     >
       <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="{{ __('public.layout.ai_assistant') }}" title="{{ __('public.layout.ai_assistant') }}">
-        <svg class="ai-icon-svg" viewBox="0 0 32 32" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="aiBrainGrad" x1="4" y1="4" x2="28" y2="28">
-              <stop offset="0%" stop-color="#38bdf8"/>
-              <stop offset="100%" stop-color="#a855f7"/>
-            </linearGradient>
-          </defs>
-          <circle cx="16" cy="16" r="14" fill="url(#aiBrainGrad)" opacity="0.15"/>
-          <circle cx="16" cy="16" r="14" stroke="url(#aiBrainGrad)" stroke-width="1.5" fill="none"/>
-          <circle cx="11" cy="12" r="2.5" fill="#38bdf8"/>
-          <circle cx="21" cy="12" r="2.5" fill="#a855f7"/>
-          <circle cx="16" cy="20" r="2.5" fill="#6366f1"/>
-          <circle cx="8" cy="18" r="1.5" fill="#38bdf8" opacity="0.6"/>
-          <circle cx="24" cy="18" r="1.5" fill="#a855f7" opacity="0.6"/>
-          <line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
-          <line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/>
-          <line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/>
-          <line x1="8" y1="18" x2="11" y2="12" stroke="#38bdf8" stroke-width="0.6" opacity="0.3"/>
-          <line x1="24" y1="18" x2="21" y2="12" stroke="#a855f7" stroke-width="0.6" opacity="0.3"/>
-          <circle cx="16" cy="6" r="1" fill="#38bdf8" opacity="0.8">
-            <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="26" cy="10" r="0.8" fill="#a855f7" opacity="0.6">
-            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2.5s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="6" cy="10" r="0.8" fill="#6366f1" opacity="0.6">
-            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="3s" repeatCount="indefinite"/>
-          </circle>
-        </svg>
+        <i class="fa-solid fa-brain ai-icon-fa"></i>
       </button>
       <div class="chat-panel ai-panel" id="ai-panel">
         <div class="chat-panel-header">
           <div class="chat-panel-title">
-            <svg class="ai-icon-svg" viewBox="0 0 32 32" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <linearGradient id="aiBrainGradH" x1="4" y1="4" x2="28" y2="28">
-                  <stop offset="0%" stop-color="#38bdf8"/>
-                  <stop offset="100%" stop-color="#a855f7"/>
-                </linearGradient>
-              </defs>
-              <circle cx="16" cy="16" r="14" fill="url(#aiBrainGradH)" opacity="0.15"/>
-              <circle cx="16" cy="16" r="14" stroke="url(#aiBrainGradH)" stroke-width="1.5" fill="none"/>
-              <circle cx="11" cy="12" r="2.5" fill="#38bdf8"/>
-              <circle cx="21" cy="12" r="2.5" fill="#a855f7"/>
-              <circle cx="16" cy="20" r="2.5" fill="#6366f1"/>
-              <circle cx="8" cy="18" r="1.5" fill="#38bdf8" opacity="0.6"/>
-              <circle cx="24" cy="18" r="1.5" fill="#a855f7" opacity="0.6"/>
-              <line x1="11" y1="12" x2="21" y2="12" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
-              <line x1="11" y1="12" x2="16" y2="20" stroke="#6366f1" stroke-width="0.8" opacity="0.5"/>
-              <line x1="21" y1="12" x2="16" y2="20" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/>
-              <line x1="8" y1="18" x2="11" y2="12" stroke="#38bdf8" stroke-width="0.6" opacity="0.3"/>
-              <line x1="24" y1="18" x2="21" y2="12" stroke="#a855f7" stroke-width="0.6" opacity="0.3"/>
-            </svg>
+            <i class="fa-solid fa-brain ai-icon-fa-panel"></i>
             <span>{{ __('public.layout.ai_assistant_brand') }}</span>
           </div>
           <div class="chat-panel-actions">

@@ -112,4 +112,4 @@
         </div>
     </main>
 
-</x-loyouts.main>
+</x-layouts.main>

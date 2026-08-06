@@ -190,9 +190,13 @@
   color: var(--bv-text);
   margin: 0 0 1.25rem 0;
   max-width:560px;
+  width: 100%;
+  display: block;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  word-break: break-word;
   white-space: normal;
+  hyphens: auto;
 }
 .bv-actions { display:flex; gap:.75rem; flex-wrap:wrap; }
 .bv-btn {
@@ -745,7 +749,7 @@
   .bv-toolbar { border-radius: var(--bv-radius) var(--bv-radius) 0 0; }
   .bv-toolbar-controls { gap: .3rem; }
   .bv-ctrl-btn span { display: none; }
-  .bv-description { max-width: 100%; padding: 0 0.5rem; }
+  .bv-description { max-width: 100%; width: 100%; padding: 0 0.5rem; }
 }
 
 /* ── Fullscreen ── */

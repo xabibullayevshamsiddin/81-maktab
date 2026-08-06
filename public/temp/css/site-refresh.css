@@ -1878,6 +1878,10 @@ body {
     width: 38px !important;
     height: 38px !important;
     flex: 0 0 38px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .footer-container {

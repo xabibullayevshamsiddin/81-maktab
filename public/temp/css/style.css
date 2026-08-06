@@ -1228,11 +1228,11 @@ a.bookmark-btn--guest:hover {
 
 /* ===== Global Chat Widget + AI + ovoz (o‘ng past — vertikal «dock») ===== */
 :root {
-  --dock-edge: max(12px, env(safe-area-inset-right));
-  --dock-bottom: max(12px, env(safe-area-inset-bottom));
-  --dock-chat-bubble: 56px;
-  --dock-ai-bubble: 56px;
-  --dock-gap: 12px;
+  --dock-edge: max(8px, env(safe-area-inset-right));
+  --dock-bottom: max(6px, env(safe-area-inset-bottom));
+  --dock-chat-bubble: 52px;
+  --dock-ai-bubble: 52px;
+  --dock-gap: 8px;
   /* chat + gap + ai + gap → ovoz tugmasi balandligi */
   --dock-audio-lift: calc(var(--dock-chat-bubble) + var(--dock-gap) + var(--dock-ai-bubble) + var(--dock-gap));
   --dock-ai-lift: calc(var(--dock-chat-bubble) + var(--dock-gap));
@@ -1273,7 +1273,7 @@ a.bookmark-btn--guest:hover {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 998;
+  z-index: 10300;
 }
 
 .prime-audio-slot .prime-audio-toggle {
@@ -1282,8 +1282,8 @@ a.bookmark-btn--guest:hover {
 
 /* Global chat tugmasi bilan bir xil o‘lcham va dumaloq */
 .ai-bubble {
-  width: 56px;
-  height: 56px;
+  width: var(--dock-ai-bubble);
+  height: var(--dock-ai-bubble);
   border-radius: 50%;
   border: none;
   padding: 0;
@@ -1311,12 +1311,37 @@ a.bookmark-btn--guest:hover {
   transform: scale(0.95);
 }
 
+/* AI Icon — Font Awesome Brain */
+.ai-icon-fa {
+  font-size: 24px;
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.ai-bubble:hover .ai-icon-fa {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.6));
+}
+
+.ai-icon-fa-panel {
+  font-size: 20px;
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 6px rgba(168, 85, 247, 0.3));
+}
+
 .ai-panel {
   display: flex !important;
   flex-direction: column !important;
   position: fixed !important;
   right: var(--dock-edge, max(12px, env(safe-area-inset-right))) !important;
-  bottom: calc(var(--dock-bottom, max(12px, env(safe-area-inset-bottom))) + var(--dock-ai-bubble, 56px) + 12px) !important;
+  bottom: calc(var(--dock-bottom, max(6px, env(safe-area-inset-bottom))) + var(--dock-ai-bubble, 52px) + 8px) !important;
   z-index: 10100 !important;
   opacity: 0 !important;
   pointer-events: none !important;
@@ -1413,8 +1438,8 @@ a.bookmark-btn--guest:hover {
 }
 
 .chat-bubble {
-  width: 56px;
-  height: 56px;
+  width: var(--dock-chat-bubble);
+  height: var(--dock-chat-bubble);
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, var(--primary-2), var(--primary));
@@ -4161,7 +4186,178 @@ button.chat-msg-avatar-btn:focus-visible {
   box-shadow: inset 0 1px 0 rgba(21, 101, 192, 0.06);
 }
 
-.chat-sticker-row {
+/* ===== Telegram-style Sticker Panel ===== */
+.chat-sticker-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-sticker-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chat-sticker-toggle:hover {
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.1);
+  transform: scale(1.1);
+}
+
+.chat-sticker-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Sticker popup panel */
+.chat-sticker-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  max-height: 280px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  overflow: hidden;
+  animation: stickerPopupIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: bottom left;
+}
+
+.chat-sticker-popup[hidden] {
+  display: none !important;
+}
+
+@keyframes stickerPopupIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Tabs */
+.sticker-popup-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 8px 0;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.sticker-tab {
+  flex: 1;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 8px 8px 0 0;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sticker-tab:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.sticker-tab.active {
+  background: var(--surface, #fff);
+}
+
+.sticker-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  width: 60%;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* Sticker grid */
+.sticker-popup-content {
+  padding: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sticker-grid[hidden] {
+  display: none !important;
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.sticker-item {
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+}
+
+.sticker-item:hover {
+  background: rgba(59, 130, 246, 0.1);
+  transform: scale(1.2);
+}
+
+.sticker-item:active {
+  transform: scale(0.9);
+}
+
+/* Dark mode */
+:root[data-theme='dark'] .chat-sticker-popup {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .sticker-popup-tabs {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #334155;
+}
+
+:root[data-theme='dark'] .sticker-tab.active {
+  background: #1e293b;
+}
+
+:root[data-theme='dark'] .sticker-tab:hover {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+:root[data-theme='dark'] .sticker-item:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+/* Oddiy stikerlar (donor bo'lmaganlar uchun) */
+.chat-sticker-row--simple {
   width: 100%;
   display: flex;
   gap: 6px;
@@ -4170,7 +4366,7 @@ button.chat-msg-avatar-btn:focus-visible {
   z-index: 3;
 }
 
-.chat-sticker-btn {
+.chat-sticker-row--simple .chat-sticker-btn {
   width: 34px;
   height: 30px;
   border-radius: 10px;
@@ -4189,32 +4385,28 @@ button.chat-msg-avatar-btn:focus-visible {
   color: inherit;
 }
 
-.chat-sticker-btn:hover {
+.chat-sticker-row--simple .chat-sticker-btn:hover {
   transform: translateY(-2px) scale(1.05);
   border-color: var(--primary-2);
   box-shadow: 0 6px 16px rgba(21, 101, 192, 0.18);
 }
 
-.chat-sticker-btn:active {
+.chat-sticker-row--simple .chat-sticker-btn:active {
   transform: scale(0.94);
 }
 
-.chat-sticker-btn.is-fired {
+.chat-sticker-row--simple .chat-sticker-btn.is-fired {
   animation: chatStickerBurst 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes chatStickerBurst {
-  0% {
-    transform: scale(0.92);
-  }
+/* Donor foydalanuvchi: oddiy stikerlarni yashiramiz */
+.chat-sticker-row--simple.is-donor-hidden {
+  display: none !important;
+}
 
-  50% {
-    transform: translateY(-4px) scale(1.12);
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-  }
+/* Oddiy foydalanuvchi: panel yo'q, oddiy stikerlar ko'rinadi */
+.chat-sticker-row--simple:not(.is-donor-hidden) + .chat-sticker-panel {
+  display: none;
 }
 
 .chat-input {
@@ -4735,12 +4927,14 @@ body:has(#ai-panel.is-open) #ai-widget .ai-bubble {
   color: #c4b5fd;
 }
 
-:root[data-theme='dark'] .chat-sticker-btn {
+:root[data-theme='dark'] .chat-sticker-btn,
+:root[data-theme='dark'] .chat-sticker-row--simple .chat-sticker-btn {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(139, 92, 246, 0.26);
 }
 
-:root[data-theme='dark'] .chat-sticker-btn:hover {
+:root[data-theme='dark'] .chat-sticker-btn:hover,
+:root[data-theme='dark'] .chat-sticker-row--simple .chat-sticker-btn:hover {
   border-color: rgba(167, 139, 250, 0.75);
   box-shadow: 0 8px 18px rgba(139, 92, 246, 0.24);
 }
@@ -4798,18 +4992,21 @@ body:has(#ai-panel.is-open) #ai-widget .ai-bubble {
     gap: 6px;
   }
 
-  .chat-sticker-row {
+  .chat-sticker-row,
+  .chat-sticker-row--simple {
     gap: 5px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
 
-  .chat-sticker-row::-webkit-scrollbar {
+  .chat-sticker-row::-webkit-scrollbar,
+  .chat-sticker-row--simple::-webkit-scrollbar {
     display: none;
   }
 
-  .chat-sticker-btn {
+  .chat-sticker-btn,
+  .chat-sticker-row--simple .chat-sticker-btn {
     width: 32px;
     height: 28px;
     flex: 0 0 auto;

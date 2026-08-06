@@ -931,10 +931,10 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // CSV export — faqat VIP donor uchun (donorCanExport imtiyozlari)
+        // CSV export — barcha donorlar uchun
         if (! $user->donorCanExport()) {
             return redirect()->route('profile.results.index')
-                ->with('error', 'CSV export faqat VIP donorlar uchun mavjud. VIP darajaga ko\'tarilib, barcha natijalaringizni eksport qiling!')
+                ->with('error', 'CSV export donorlar uchun mavjud. Donat sotib olib, barcha natijalaringizni eksport qiling!')
                 ->with('toast_type', 'error');
         }
 
@@ -952,10 +952,10 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // CSV export — faqat VIP donor uchun
+        // CSV export — barcha donorlar uchun
         if (! $user->donorCanExport()) {
             return redirect()->route('profile.results.index')
-                ->with('error', 'CSV export faqat VIP donorlar uchun mavjud.')
+                ->with('error', 'CSV export donorlar uchun mavjud.')
                 ->with('toast_type', 'error');
         }
 

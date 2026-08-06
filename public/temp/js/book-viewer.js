@@ -339,7 +339,7 @@
     }
   }
 
-  /* ── Web Audio: Ultra-Soft Silky Book Paper Glide Audio ── */
+  /* ── Web Audio: Realistic Book Page Turn Sound ── */
   var audioCtx = null;
   function playPageSound() {
     try {
@@ -350,31 +350,125 @@
       var sr  = audioCtx.sampleRate;
       var now = audioCtx.currentTime;
 
-      /* Soft organic paper glide: low-pass filtered brownian noise sweep, 140ms */
-      var len = Math.floor(sr * 0.14);
-      var buf = audioCtx.createBuffer(1, len, sr);
-      var data = buf.getChannelData(0);
-      var lastOut = 0.0;
-      for (var i = 0; i < len; i++) {
-        var white = (Math.random() * 2 - 1);
-        var brown = (lastOut + (0.02 * white)) / 1.02;
-        lastOut = brown;
-        var env = Math.sin((i / len) * Math.PI); // smooth bell curve
-        data[i] = brown * env * 0.14;
+      /* ═══ Layer 1: Paper Crinkle/Rustle (高频纸张摩擦声) ═══ */
+      var crinkleLen = Math.floor(sr * 0.18);
+      var crinkleBuf = audioCtx.createBuffer(1, crinkleLen, sr);
+      var crinkleData = crinkleBuf.getChannelData(0);
+      var prev = 0;
+      for (var i = 0; i < crinkleLen; i++) {
+        var white = Math.random() * 2 - 1;
+        var t = i / crinkleLen;
+        /* Pink-ish noise for paper texture */
+        var pink = (prev + (0.05 * white)) / 1.05;
+        prev = pink;
+        /* Sharp attack, quick decay envelope */
+        var env = Math.pow(Math.sin(t * Math.PI), 0.3) * (1 - t * 0.6);
+        /* Add micro-crinkle bursts */
+        var crinkle = Math.sin(t * 47) * Math.sin(t * 23) * 0.3;
+        crinkleData[i] = (pink + crinkle * 0.15) * env * 0.12;
       }
 
-      var src = audioCtx.createBufferSource();
-      src.buffer = buf;
+      var crinkleSrc = audioCtx.createBufferSource();
+      crinkleSrc.buffer = crinkleBuf;
 
-      // Lowpass filter sweep at 1100Hz -> 450Hz for smooth paper texture
-      var lpf = audioCtx.createBiquadFilter();
-      lpf.type = 'lowpass';
-      lpf.frequency.setValueAtTime(1100, now);
-      lpf.frequency.exponentialRampToValueAtTime(450, now + 0.14);
+      /* Highpass to keep it airy */
+      var crinkleHPF = audioCtx.createBiquadFilter();
+      crinkleHPF.type = 'highpass';
+      crinkleHPF.frequency.setValueAtTime(2500, now);
+      crinkleHPF.frequency.exponentialRampToValueAtTime(1800, now + 0.18);
 
-      src.connect(lpf);
-      lpf.connect(audioCtx.destination);
-      src.start(now);
+      /* Soft lowpass to tame harshness */
+      crinkleSrc.connect(crinkleHPF);
+
+      /* ═══ Layer 2: Page Flip Whoosh (翻页气流声) ═══ */
+      var whooshLen = Math.floor(sr * 0.22);
+      var whooshBuf = audioCtx.createBuffer(1, whooshLen, sr);
+      var whooshData = whooshBuf.getChannelData(0);
+      var lastBrown = 0;
+      for (var i = 0; i < whooshLen; i++) {
+        var w = Math.random() * 2 - 1;
+        var brown = (lastBrown + (0.03 * w)) / 1.03;
+        lastBrown = brown;
+        var t = i / whooshLen;
+        /* Bell curve with slight tail */
+        var env = Math.sin(t * Math.PI * 0.9) * Math.pow(1 - t, 0.2);
+        whooshData[i] = brown * env * 0.18;
+      }
+
+      var whooshSrc = audioCtx.createBufferSource();
+      whooshSrc.buffer = whooshBuf;
+
+      /* Bandpass for airy whoosh */
+      var whooshBPF = audioCtx.createBiquadFilter();
+      whooshBPF.type = 'bandpass';
+      whooshBPF.frequency.setValueAtTime(1200, now);
+      whooshBPF.frequency.exponentialRampToValueAtTime(800, now + 0.22);
+      whooshBPF.Q.setValueAtTime(0.7, now);
+
+      whooshSrc.connect(whooshBPF);
+
+      /* ═══ Layer 3: Soft Snap/Catch (纸张落点声) ═══ */
+      var snapLen = Math.floor(sr * 0.04);
+      var snapBuf = audioCtx.createBuffer(1, snapLen, sr);
+      var snapData = snapBuf.getChannelData(0);
+      for (var i = 0; i < snapLen; i++) {
+        var t = i / snapLen;
+        /* Very soft thud */
+        snapData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 18) * 0.06;
+      }
+
+      var snapSrc = audioCtx.createBufferSource();
+      snapSrc.buffer = snapBuf;
+
+      /* Lowpass for soft thud */
+      var snapLPF = audioCtx.createBiquadFilter();
+      snapLPF.type = 'lowpass';
+      snapLPF.frequency.setValueAtTime(600, now);
+
+      snapSrc.connect(snapLPF);
+
+      /* ═══ Layer 4: Subtle Page Stiffness (纸张硬度声) ═══ */
+      var stiffLen = Math.floor(sr * 0.08);
+      var stiffBuf = audioCtx.createBuffer(1, stiffLen, sr);
+      var stiffData = stiffBuf.getChannelData(0);
+      var stiffPrev = 0;
+      for (var i = 0; i < stiffLen; i++) {
+        var w = Math.random() * 2 - 1;
+        var b = (stiffPrev + (0.04 * w)) / 1.04;
+        stiffPrev = b;
+        var t = i / stiffLen;
+        /* Quick snap with resonance */
+        var env = Math.exp(-t * 8) * (1 + Math.sin(t * 120) * 0.3);
+        stiffData[i] = b * env * 0.08;
+      }
+
+      var stiffSrc = audioCtx.createBufferSource();
+      stiffSrc.buffer = stiffBuf;
+
+      var stiffBPF = audioCtx.createBiquadFilter();
+      stiffBPF.type = 'bandpass';
+      stiffBPF.frequency.setValueAtTime(1600, now);
+      stiffBPF.Q.setValueAtTime(1.2, now);
+
+      stiffSrc.connect(stiffBPF);
+
+      /* ═══ Master Mix ═══ */
+      var masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.8, now);
+      masterGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+      /* Connect all layers */
+      crinkleHPF.connect(masterGain);
+      whooshBPF.connect(masterGain);
+      snapLPF.connect(masterGain);
+      stiffBPF.connect(masterGain);
+      masterGain.connect(audioCtx.destination);
+
+      /* Start all with slight offsets for realism */
+      crinkleSrc.start(now);
+      whooshSrc.start(now + 0.01);
+      snapSrc.start(now + 0.08);
+      stiffSrc.start(now + 0.02);
 
     } catch (e) {}
   }

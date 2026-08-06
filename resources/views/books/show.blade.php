@@ -73,7 +73,7 @@
       @endif
 
       @if($book->localized_description)
-        <p class="bv-description">{{ $book->localized_description }}</p>
+        <div class="bv-description">{{ $book->localized_description }}</div>
       @endif
 
       <div class="bv-actions">
