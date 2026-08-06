@@ -17,8 +17,10 @@ class Kernel extends ConsoleKernel
         // Telegram verifikatsiya eskirgan yozuvlarini tozalash
         $schedule->command('telegram:clean-expired')->hourly();
 
-        // Telegram getUpdates polling (webhook o'rniga, local uchun)
-        $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
+        // Telegram getUpdates polling — faqat local environment'da (webhook bilan to'qnashmaslik uchun)
+        if (app()->environment('local')) {
+            $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
+        }
 
         if (filter_var(env('BACKUP_SCHEDULE_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             $schedule->command('backup:clean')->daily()->at('01:00');

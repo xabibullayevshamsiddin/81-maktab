@@ -1,9 +1,9 @@
 <x-layouts.main :title="__('auth_pages.verify.page_title')">
   @push('page_styles')
     <style>
-      .tg-verify-hero { text-align: center; padding: 3rem 1rem 1rem; }
-      .tg-verify-hero h1 { font-size: 2rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
-      .tg-verify-hero p { color: var(--muted); font-size: 1rem; max-width: 500px; margin: 0 auto; }
+      .tg-verify-hero { text-align: center; padding: 130px 1rem 48px; background: linear-gradient(135deg, #0a2f5e 0%, #14559b 50%, #1a6bb5 100%); color: #fff; }
+      .tg-verify-hero h1 { font-size: clamp(28px, 4vw, 36px); font-weight: 700; color: #fff; margin-bottom: 8px; }
+      .tg-verify-hero p { color: #d8e7ff; font-size: 1rem; max-width: 500px; margin: 0 auto; }
       .tg-verify-card {
         max-width: 420px; margin: 2rem auto 4rem;
         background: var(--surface); border: 1px solid var(--border);
