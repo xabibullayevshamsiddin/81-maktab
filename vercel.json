@@ -14,10 +14,17 @@
     ],
     "env": {
         "APP_ENV": "production",
-        "APP_DEBUG": "false",
+        "APP_DEBUG": "true",
+        "APP_KEY": "base64:6ifkn35kxFh+IFTLwReF1tWp9UMWNKX3MW9o/cj6L7Q=",
         "SESSION_DRIVER": "cookie",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "VERCEL_SUPPORT_LARGE_FUNCTIONS": "1"
+        "VERCEL_SUPPORT_LARGE_FUNCTIONS": "1",
+        "DB_CONNECTION": "pgsql",
+        "DB_HOST": "dpg-d9qtncks728c73ahqgpg-a",
+        "DB_PORT": "5432",
+        "DB_DATABASE": "maktab_db_bxzy",
+        "DB_USERNAME": "shamsiddin",
+        "DB_PASSWORD": "KUaHCl3sX5MoOOyedRgd2clJiPVpCW6c"
     }
 }
