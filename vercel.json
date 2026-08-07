@@ -2,10 +2,13 @@
     "version": 2,
     "functions": {
         "api/index.php": {
-            "runtime": "vercel-php@0.7.2"
+            "runtime": "vercel-php@0.7.2",
+            "memory": 1024,
+            "maxDuration": 10
         }
     },
     "outputDirectory": "public",
+    "ignoreCommand": "rm -rf storage/framework/* storage/logs/* tests/ .git/ docs/",
     "routes": [
         {
             "src": "/(.*)",
