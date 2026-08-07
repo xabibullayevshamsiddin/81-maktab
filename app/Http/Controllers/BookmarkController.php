@@ -14,6 +14,7 @@ class BookmarkController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $bookmarks */
         $bookmarks = Bookmark::query()
             ->where('user_id', $request->user()->id)
             ->with(['bookmarkable' => function (MorphTo $morphTo): void {
@@ -182,7 +183,7 @@ class BookmarkController extends Controller
     private function ensureCanBookmark(Request $request)
     {
         if (! $request->user()) {
-            return $this->denyBookmark($request, __("Like bosish va izoh yozish uchun avval ro'yxatdan o'ting."), 401);
+            return $this->denyBookmark($request, "Saqlash uchun avval ro'yxatdan o'ting.", 401);
         }
 
         if (! $request->user()->isActive()) {

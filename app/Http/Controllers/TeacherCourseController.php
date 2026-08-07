@@ -294,7 +294,7 @@ class TeacherCourseController extends Controller
         return $user;
     }
 
-    private function ensureCanManageCourse($user, Course $course): void
+    private function ensureCanManageCourse(User $user, Course $course): void
     {
         if ($user->isAdmin()) {
             return;

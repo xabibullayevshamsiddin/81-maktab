@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -83,7 +84,9 @@ class ImageService
 
         $filename = 'thumb_'.pathinfo($originalPath, PATHINFO_FILENAME).'.'.$extension;
         $thumbnailPath = trim($directory, '/').'/'.$filename;
-        $absolutePath = Storage::disk('public')->path($originalPath);
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+        $absolutePath = $disk->path($originalPath);
 
         [$source, $sourceWidth, $sourceHeight, $mime] = $this->createImageResource($absolutePath);
         $source = $this->normalizeOrientation($absolutePath, $mime, $source, $sourceWidth, $sourceHeight);
@@ -178,6 +181,7 @@ class ImageService
         return $path;
     }
 
+    /** @return array{\GdImage, int, int, string} */
     private function createImageResource(string $path): array
     {
         $contents = @file_get_contents($path);
@@ -204,6 +208,10 @@ class ImageService
         return [$image, (int) $dimensions[0], (int) $dimensions[1], $mime];
     }
 
+    /**
+     * @param \GdImage $image
+     * @return \GdImage
+     */
     private function normalizeOrientation(string $path, string $mime, $image, int &$width, int &$height)
     {
         if (! function_exists('exif_read_data')) {
@@ -236,6 +244,7 @@ class ImageService
         return $image;
     }
 
+    /** @param \GdImage $canvas */
     private function prepareCanvas($canvas): void
     {
         imagealphablending($canvas, false);
@@ -245,6 +254,7 @@ class ImageService
         imagefill($canvas, 0, 0, $transparent);
     }
 
+    /** @param \GdImage $image */
     private function encodeImageBinary($image, string $extension, int $quality): string
     {
         $extension = strtolower($extension);

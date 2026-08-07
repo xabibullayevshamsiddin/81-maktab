@@ -8,6 +8,7 @@ use App\Models\CourseEnrollment;
 use App\Models\Exam;
 use App\Models\OneTimeCode;
 use App\Models\Result;
+use App\Models\TelegramVerification;
 use App\Models\TeacherComment;
 use App\Models\User;
 use App\Models\UserActivity;
@@ -968,6 +969,7 @@ class ProfileController extends Controller
         return $this->streamResultsCsv(collect([$result]), $filename);
     }
 
+    /** @param \Illuminate\Support\Collection<int, Result> $results */
     private function streamResultsCsv($results, string $filename): StreamedResponse
     {
         $headers = [

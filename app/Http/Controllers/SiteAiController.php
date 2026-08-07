@@ -224,7 +224,7 @@ class SiteAiController extends Controller
         ]))->response();
     }
 
-    private function handleSupportWizardFlow(GenerateAiMessageRequest $request, string $message, $user): ?JsonResponse
+    private function handleSupportWizardFlow(GenerateAiMessageRequest $request, string $message, ?\App\Models\User $user): ?JsonResponse
     {
         $wizard = $request->session()->get(self::SUPPORT_WIZARD_SESSION_KEY);
 
@@ -266,7 +266,7 @@ class SiteAiController extends Controller
         return $this->respondWithInteraction($user, $message, $payload);
     }
 
-    private function continueSupportWizard(GenerateAiMessageRequest $request, string $message, $user, array $wizard): ?JsonResponse
+    private function continueSupportWizard(GenerateAiMessageRequest $request, string $message, ?\App\Models\User $user, array $wizard): ?JsonResponse
     {
         $normalized = mb_strtolower(trim($message));
 
@@ -459,7 +459,7 @@ class SiteAiController extends Controller
         return Str::limit(sanitize_plain_text($value), 120, '');
     }
 
-    private function buildStructuredSupportMessage(array $draft, $user): string
+    private function buildStructuredSupportMessage(array $draft, ?\App\Models\User $user): string
     {
         $lines = [
             'AI wizard orqali yig\'ilgan rasmiy murojaat.',
@@ -473,7 +473,7 @@ class SiteAiController extends Controller
         return implode("\n", $lines);
     }
 
-    private function respondWithInteraction($user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): JsonResponse
+    private function respondWithInteraction(?\App\Models\User $user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): JsonResponse
     {
         $interaction = $this->storeInteraction($user, $question, $payload, $contactMessage, $extraMeta);
         $this->rememberConversationTurn((int) $user->id, $question, $payload);
@@ -494,7 +494,7 @@ class SiteAiController extends Controller
         $this->conversationHistoryStore->rememberTurn($userId, $question, $payload);
     }
 
-    private function storeInteraction($user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): ?AiInteraction
+    private function storeInteraction(?\App\Models\User $user, string $question, array $payload, ?ContactMessage $contactMessage = null, array $extraMeta = []): ?AiInteraction
     {
         if (! $this->hasAiInteractionsTable()) {
             return null;
@@ -536,7 +536,7 @@ class SiteAiController extends Controller
      *
      * @return JsonResponse|null — null=OK, JsonResponse=limit oshdi
      */
-    private function enforceAiChatLimit($user): ?JsonResponse
+    private function enforceAiChatLimit(?\App\Models\User $user): ?JsonResponse
     {
         if (! $this->hasAiInteractionsTable()) {
             return null;

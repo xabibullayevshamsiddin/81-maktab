@@ -57,6 +57,7 @@ class TelegramVerification extends Model
         return $this->status === self::STATUS_VERIFIED;
     }
 
+    /** @param \Illuminate\Database\Eloquent\Builder $query */
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING)

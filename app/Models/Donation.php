@@ -43,7 +43,8 @@ class Donation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }    public function scopeCompleted($query)
+    }    /** @param \Illuminate\Database\Eloquent\Builder $query */
+    public function scopeCompleted($query)
     {
         return $query->where("status", self::STATUS_COMPLETED);
     }
@@ -214,6 +215,7 @@ class Donation extends Model
     /**
      * Ruxsat etilgan barcha temalar (ruxsat mantiqiga ko'ra).
      */
+    /** @param User|null $user */
     public static function themesForUser($user): array
     {
         $allowed = [];
@@ -256,6 +258,7 @@ class Donation extends Model
      *  - Donor temalari: FAQAT foydalanuvchining o'z ranki (VIP=VIP, Premium=Premium).
      *    Super admin donor bo'lmasa — donor temalari QULFLANGAN (faqat admin temalari).
      */
+    /** @param User|null $user */
     public static function themeAllowedForUser(string $theme, $user): bool
     {
         $cfg = self::themeConfig($theme);

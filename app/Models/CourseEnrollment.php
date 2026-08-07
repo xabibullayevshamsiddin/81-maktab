@@ -59,11 +59,13 @@ class CourseEnrollment extends Model
         return $this->status === self::STATUS_REJECTED;
     }
 
+    /** @param \Illuminate\Database\Eloquent\Builder $query */
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING);
     }
 
+    /** @param \Illuminate\Database\Eloquent\Builder $query */
     public function scopeApproved($query)
     {
         return $query->where('status', self::STATUS_APPROVED);

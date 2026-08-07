@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 
 class Book extends Model
@@ -44,8 +45,10 @@ class Book extends Model
 
     public function coverImageUrl(): string
     {
-        if ($this->cover_image && Storage::disk('public')->exists($this->cover_image)) {
-            return Storage::disk('public')->url($this->cover_image);
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+        if ($this->cover_image && $disk->exists($this->cover_image)) {
+            return $disk->url($this->cover_image);
         }
         return app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg');
     }
@@ -58,6 +61,7 @@ class Book extends Model
         return $bytes . ' B';
     }
 
+    /** @param \Illuminate\Database\Eloquent\Builder $query */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

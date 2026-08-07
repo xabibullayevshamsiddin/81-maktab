@@ -67,24 +67,26 @@ class PublicBookController extends Controller
     public function download(Book $book)
     {
         abort_unless($book->is_active && $book->allow_download, 403);
-        abort_unless(Storage::disk('public')->exists($book->file_path), 404);
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($book->file_path), 404);
 
         $book->incrementDownload();
 
         $filename = \Illuminate\Support\Str::slug($book->title) . '.pdf';
 
-        return Storage::disk('public')->download($book->file_path, $filename);
+        return $disk->download($book->file_path, $filename);
     }
 
     public function stream(Book $book)
     {
         abort_unless($book->is_active, 404);
-        abort_unless(Storage::disk('public')->exists($book->file_path), 404);
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($book->file_path), 404);
 
         // incrementView() faqat show() da chaqiriladi — stream() har byte-range
         // so'rovida chaqirilgani uchun bu yerda olib tashlandi.
 
-        $path = Storage::disk('public')->path($book->file_path);
+        $path = $disk->path($book->file_path);
 
         return response()->file($path, [
             'Content-Type'        => 'application/pdf',
