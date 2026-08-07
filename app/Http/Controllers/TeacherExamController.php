@@ -57,7 +57,7 @@ class TeacherExamController extends Controller
             $query->where('title', 'like', '%'.$q.'%');
         }
 
-        $exams = $query->paginate(10)->withQueryString();
+        $exams = $query->paginate(10)->appends(request()->query());
 
         return view('profile.exams.index', compact('exams'));
     }
@@ -143,7 +143,7 @@ class TeacherExamController extends Controller
             $questionsQuery->where('body', 'like', '%'.$q.'%');
         }
 
-        $questions = $questionsQuery->paginate(10)->withQueryString();
+        $questions = $questionsQuery->paginate(10)->appends(request()->query());
         $totalQuestionCount = (int) $exam->questions()->count();
         $pointsSum = (int) $exam->questions()->sum('points');
 
@@ -454,7 +454,7 @@ class TeacherExamController extends Controller
         $results = $query
             ->latest('id')
             ->paginate(40)
-            ->withQueryString();
+            ->appends(request()->query());
 
         return view('profile.exams.results.index', compact('results', 'exams', 'selectedExamId'));
     }

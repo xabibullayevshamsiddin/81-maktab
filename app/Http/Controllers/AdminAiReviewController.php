@@ -87,7 +87,7 @@ class AdminAiReviewController extends Controller
         $reviews = $query
             ->latest('id')
             ->paginate(20, $selectColumns)
-            ->withQueryString();
+            ->appends(request()->query());
 
         return view('admin.ai_reviews.index', compact('reviews', 'q', 'kind'));
     }

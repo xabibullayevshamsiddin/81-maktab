@@ -27,7 +27,7 @@ class AdminBookController extends Controller
         }
         if ($catId) $query->where('book_category_id', $catId);
 
-        $books = $query->paginate(20)->withQueryString();
+        $books = $query->paginate(20)->appends(request()->query());
         $categories = BookCategory::orderBy('sort_order')->orderBy('name')->get();
 
         return view('admin.books.index', compact('books', 'categories', 'q', 'catId'));

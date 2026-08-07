@@ -70,7 +70,7 @@ class CalendarController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->paginate(9)
-                ->withQueryString();
+                ->appends(request()->query());
         });
 
         $grouped = $events->getCollection()->groupBy(fn (CalendarEvent $e) => $e->event_date->format('Y-m-d'));

@@ -42,7 +42,7 @@ class PostController extends Controller
             });
         }
 
-        $posts = $query->paginate(10)->withQueryString();
+        $posts = $query->paginate(10)->appends(request()->query());
 
         return view('admin.posts.index', compact('posts'));
     }

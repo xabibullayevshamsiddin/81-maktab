@@ -36,7 +36,7 @@ class TeacherController extends Controller
             });
         }
 
-        $teachers = $query->paginate(10)->withQueryString();
+        $teachers = $query->paginate(10)->appends($request->query());
 
         return view('admin.teachers.index', compact('teachers'));
     }

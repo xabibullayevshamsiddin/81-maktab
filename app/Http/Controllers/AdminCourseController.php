@@ -43,7 +43,7 @@ class AdminCourseController extends Controller
             });
         }
 
-        $courses = $query->paginate(10)->withQueryString();
+        $courses = $query->paginate(10)->appends(request()->query());
 
         return view('admin.courses.index', compact('courses'));
     }
@@ -60,7 +60,7 @@ class AdminCourseController extends Controller
             ->where('course_open_approved', false)
             ->orderByDesc('course_open_requested_at')
             ->paginate(15, ['*'], 'open_page')
-            ->withQueryString();
+            ->appends(request()->query());
 
         return view('admin.courses.requests', compact('courseOpenRequestUsers'));
     }

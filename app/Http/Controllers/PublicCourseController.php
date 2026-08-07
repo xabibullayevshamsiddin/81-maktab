@@ -19,10 +19,10 @@ class PublicCourseController extends Controller
         $isFiltered = ($q !== '' || $selectedSubject !== '');
 
         if ($isFiltered) {
-            $courses = $this->getCoursesQuery($q, $selectedSubject)->paginate(9)->withQueryString();
+            $courses = $this->getCoursesQuery($q, $selectedSubject)->paginate(9)->appends(request()->query());
         } else {
             $courses = Cache::remember(cache_key_public_courses_page($page), now()->addMinutes(10), function () {
-                return $this->getCoursesQuery()->paginate(9)->withQueryString();
+                return $this->getCoursesQuery()->paginate(9)->appends(request()->query());
             });
         }
 

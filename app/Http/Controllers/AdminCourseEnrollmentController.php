@@ -38,7 +38,7 @@ class AdminCourseEnrollmentController extends Controller
             });
         }
 
-        $enrollments = $query->paginate(30)->withQueryString();
+        $enrollments = $query->paginate(30)->appends(request()->query());
 
         $pendingCount = CourseEnrollment::query()
             ->where('status', CourseEnrollment::STATUS_PENDING)
@@ -67,7 +67,7 @@ class AdminCourseEnrollmentController extends Controller
             });
         }
 
-        $enrollments = $enrollmentQuery->paginate(10)->withQueryString();
+        $enrollments = $enrollmentQuery->paginate(10)->appends(request()->query());
 
         return view('admin.courses.enrollments', compact('course', 'enrollments'));
     }

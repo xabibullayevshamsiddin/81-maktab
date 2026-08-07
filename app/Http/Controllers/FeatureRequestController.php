@@ -35,7 +35,7 @@ class FeatureRequestController extends Controller
             ->orderByDesc('votes_count')
             ->latest('id')
             ->paginate(20)
-            ->withQueryString();
+            ->appends(request()->query());
 
         $votedRequestIds = [];
         if ($request->user()) {

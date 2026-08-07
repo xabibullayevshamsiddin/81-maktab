@@ -41,7 +41,7 @@ class AdminExamController extends Controller
             $query->where('title', 'like', '%'.$q.'%');
         }
 
-        $exams = $query->paginate(10)->withQueryString();
+        $exams = $query->paginate(10)->appends(request()->query());
 
         return view('admin.exams.index', compact('exams'));
     }
@@ -136,7 +136,7 @@ class AdminExamController extends Controller
         $results = $query
             ->latest('id')
             ->paginate(40)
-            ->withQueryString();
+            ->appends(request()->query());
 
         return view('admin.exams.results', compact('results', 'exams', 'selectedExamId'));
     }

@@ -82,7 +82,7 @@ class BookmarkController extends Controller
             }])
             ->latest()
             ->paginate(12)
-            ->withQueryString();
+            ->appends(request()->query());
 
         $pageBookmarks = $bookmarks->getCollection();
 

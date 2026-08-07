@@ -39,7 +39,7 @@ class AdminCommentController extends Controller
                 });
             }
 
-            $comments = $query->paginate(25)->withQueryString();
+            $comments = $query->paginate(25)->appends(request()->query());
         } else {
             $query = Comment::query()
                 ->with(['post', 'user', 'parent'])
@@ -59,7 +59,7 @@ class AdminCommentController extends Controller
                 });
             }
 
-            $comments = $query->paginate(25)->withQueryString();
+            $comments = $query->paginate(25)->appends(request()->query());
         }
 
         return view('admin.comments.index', compact('comments', 'type'));

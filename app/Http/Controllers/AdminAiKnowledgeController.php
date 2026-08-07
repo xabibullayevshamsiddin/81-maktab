@@ -37,7 +37,7 @@ class AdminAiKnowledgeController extends Controller
             ->when(AiKnowledge::hasDatabaseColumn('sort_order'), fn ($query) => $query->orderBy('sort_order'))
             ->latest('id')
             ->paginate(20)
-            ->withQueryString();
+            ->appends(request()->query());
 
         $analytics = [
             'total_questions' => 0,

@@ -43,7 +43,7 @@ class PublicBookController extends Controller
             default     => $query->latest(),
         };
 
-        $books      = $query->paginate(12)->withQueryString();
+        $books      = $query->paginate(12)->appends(request()->query());
         $categories = BookCategory::orderBy('sort_order')->orderBy('name')->get();
 
         // Filter options

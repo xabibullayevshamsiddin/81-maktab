@@ -28,7 +28,7 @@ class AdminQuestionController extends Controller
             $questionsQuery->where('body', 'like', '%'.$q.'%');
         }
 
-        $questions = $questionsQuery->paginate(10)->withQueryString();
+        $questions = $questionsQuery->paginate(10)->appends(request()->query());
         $totalQuestionCount = (int) $exam->questions()->count();
 
         $pointsSum = (int) $exam->questions()->sum('points');

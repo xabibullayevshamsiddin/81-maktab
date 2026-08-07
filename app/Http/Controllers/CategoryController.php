@@ -23,7 +23,7 @@ class CategoryController extends Controller
             });
         }
 
-        $categories = $query->paginate(10)->withQueryString();
+        $categories = $query->paginate(10)->appends(request()->query());
 
         return view('admin.categories.index', compact('categories'));
     }

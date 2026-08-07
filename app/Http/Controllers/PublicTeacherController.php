@@ -65,7 +65,7 @@ class PublicTeacherController extends Controller
             ->orderBy('sort_order')
             ->orderBy('full_name')
             ->paginate(12)
-            ->withQueryString();
+            ->appends(request()->query());
 
         // Collect all unique subjects for the filter dropdown (cached)
         $allSubjects = Cache::remember('teacher_all_subjects', now()->addMinutes(30), function () {

@@ -162,7 +162,7 @@ class AdminController extends Controller
                 });
         }
 
-        $users = $query->paginate(10)->withQueryString();
+        $users = $query->paginate(10)->appends(request()->query());
 
         $filterRoles = Role::query()
             ->orderByDesc('level')
