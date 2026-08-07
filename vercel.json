@@ -17,6 +17,7 @@
         "APP_DEBUG": "false",
         "SESSION_DRIVER": "cookie",
         "CACHE_DRIVER": "array",
-        "LOG_CHANNEL": "stderr"
+        "LOG_CHANNEL": "stderr",
+        "VERCEL_SUPPORT_LARGE_FUNCTIONS": "1"
     }
 }
