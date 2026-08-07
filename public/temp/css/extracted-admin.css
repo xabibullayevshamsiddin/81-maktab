@@ -570,12 +570,24 @@ body::after {
   color: #fff;
   font-weight: 800;
   font-size: 14px;
+  position: relative;
 }
 
 .admin-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.admin-user-avatar-fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ======== Breadcrumbs ======== */

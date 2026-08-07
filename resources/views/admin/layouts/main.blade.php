@@ -306,15 +306,7 @@
                     data-bs-toggle="dropdown" aria-expanded="false">
 		                    <div class="profile-info">
 		                      <div class="info">
-					                        <div class="image admin-avatar-frame admin-avatar-frame--header {{ $adminAvatarUrl ? 'has-image' : '' }}">
-		                              @if($adminAvatarUrl)
-				                            <img
-				                              src="{{ $adminAvatarUrl }}"
-				                              alt=""
-				                              class="admin-avatar-img"
-				                              onerror="this.parentElement.classList.add('is-broken')"
-				                            />
-		                              @endif
+					                        <div class="image admin-avatar-frame admin-avatar-frame--header">
 		                              <span class="admin-user-avatar-fallback">{{ $adminAvatarInitial }}</span>
 					                        </div>
 	                        <div>
@@ -324,19 +316,10 @@
 	                      </div>
 	                    </div>
                   </button>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile">
-		                    <li>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile">                    <li>
 		                      <div class="author-info flex items-center !p-1">
-			                        <div class="image admin-avatar-frame {{ $adminAvatarUrl ? 'has-image' : '' }}">
-	                                @if($adminAvatarUrl)
-			                            <img
-			                              src="{{ $adminAvatarUrl }}"
-			                              alt=""
-			                              class="admin-avatar-img"
-			                              onerror="this.parentElement.classList.add('is-broken')"
-			                            >
-	                                @endif
-	                                <span class="admin-user-avatar-fallback">{{ $adminAvatarInitial }}</span>
+			                        <div class="image admin-avatar-frame">
+                                <span class="admin-user-avatar-fallback">{{ $adminAvatarInitial }}</span>
 			                        </div>
                         <div class="content">
                           <h4 class="text-sm">{{ auth()->user()->name }}</h4>
