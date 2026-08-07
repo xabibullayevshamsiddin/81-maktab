@@ -210,11 +210,15 @@ class AdminCommentController extends Controller
 
     private function authorizeModerator(): void
     {
-        abort_unless(auth()->check() && auth()->user()->isModerator(), 403);
+        /** @var User|null $user */
+        $user = auth()->user();
+        abort_unless($user && $user->isModerator(), 403);
     }
 
     private function authorizeBlocker(): void
     {
-        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
+        /** @var User|null $user */
+        $user = auth()->user();
+        abort_unless($user && $user->isAdmin(), 403);
     }
 }

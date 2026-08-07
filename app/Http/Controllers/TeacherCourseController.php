@@ -111,8 +111,9 @@ class TeacherCourseController extends Controller
     {
         abort_unless(auth()->check(), 403);
 
+        /** @var User|null $user */
         $user = auth()->user();
-        abort_unless($user->isTeacher(), 403);
+        abort_unless($user && $user->isTeacher(), 403);
 
         if ($user->hasReachedCourseOpenLimit()) {
             $message = $user->isDonor()
@@ -282,11 +283,13 @@ class TeacherCourseController extends Controller
             ->with('toast_type', 'warning');
     }
 
-    private function authorizeCreator()
+    private function authorizeCreator(): User
     {
         abort_unless(auth()->check(), 403);
+
+        /** @var User|null $user */
         $user = auth()->user();
-        abort_unless($user->isTeacher() || $user->isAdmin(), 403);
+        abort_unless($user && ($user->isTeacher() || $user->isAdmin()), 403);
 
         return $user;
     }

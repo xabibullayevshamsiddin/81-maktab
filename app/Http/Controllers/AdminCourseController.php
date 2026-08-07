@@ -10,6 +10,7 @@ class AdminCourseController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var User|null $user */
         $user = auth()->user();
         abort_unless($user && ($user->isAdmin() || $user->isTeacher()), 403);
 
@@ -50,6 +51,7 @@ class AdminCourseController extends Controller
 
     public function requests(Request $request)
     {
+        /** @var User|null $user */
         $user = auth()->user();
         abort_unless($user && $user->isAdmin(), 403);
 
@@ -67,6 +69,7 @@ class AdminCourseController extends Controller
 
     public function updateStatus(Request $request, Course $course)
     {
+        /** @var User|null $user */
         $user = auth()->user();
         abort_unless($user && ($user->isAdmin() || ($user->isTeacher() && $user->ownsCourse($course))), 403);
 

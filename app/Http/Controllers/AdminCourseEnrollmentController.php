@@ -11,7 +11,9 @@ class AdminCourseEnrollmentController extends Controller
 {
     public function indexAll(Request $request)
     {
-        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
+        /** @var User|null $user */
+        $user = auth()->user();
+        abort_unless($user && $user->isAdmin(), 403);
 
         $status = $request->query('status');
         $query = CourseEnrollment::query()
