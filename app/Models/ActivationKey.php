@@ -90,11 +90,14 @@ class ActivationKey extends Model
             "used_at" => now(),
         ]);
 
+        $durationDays = $this->duration_days ?? (self::DURATIONS[$this->duration]["days"] ?? 30);
+
         $user->activateDonationRank(
             $this->rank,
             0,
             "activation_key",
-            $this->code
+            $this->code,
+            $durationDays
         );
 
         return true;

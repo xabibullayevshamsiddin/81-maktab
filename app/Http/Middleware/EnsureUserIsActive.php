@@ -17,18 +17,33 @@ class EnsureUserIsActive
     {
         $user = $request->user();
 
-        if ($user && !$user->isActive()) {
-            if ($request->expectsJson() || $request->isXmlHttpRequest() || $request->is('chat/*') || $request->is('ai-chat')) {
-                return response()->json([
-                    'message' => "Kechirasiz, sizning hisobingiz vaqtincha bloklangan. Iltimos, sababini bilish uchun 'Aloqa' bo'limi orqali bizga xabar yo'llang.",
-                    'error' => 'Account blocked'
-                ], 403);
+        if ($user) {
+            // 1. Avval vaqtincha blokni tekshirish (blocked_until gaqarab avtomatik ochilishi kerak)
+            if ($user->isCurrentlyBlocked()) {
+                return $this->blockedResponse($request);
             }
 
-            return back()->with('error', "Kechirasiz, sizning hisobingiz vaqtincha bloklangan. Iltimos, sababini bilish uchun 'Aloqa' bo'limi orqali bizga xabar yo'llang.")
-                ->with('toast_type', 'error');
+            // 2. Keyin faollik holatini tekshirish
+            if (! $user->isActive()) {
+                return $this->blockedResponse($request);
+            }
         }
 
         return $next($request);
+    }
+
+    private function blockedResponse(Request $request): Response
+    {
+        $message = "Kechirasiz, sizning hisobingiz vaqtincha bloklangan. Iltimos, sababini bilish uchun 'Aloqa' bo'limi orqali bizga xabar yo'llang.";
+
+        if ($request->expectsJson() || $request->isXmlHttpRequest() || $request->is('chat/*') || $request->is('ai-chat')) {
+            return response()->json([
+                'message' => $message,
+                'error' => 'Account blocked'
+            ], 403);
+        }
+
+        return back()->with('error', $message)
+            ->with('toast_type', 'error');
     }
 }

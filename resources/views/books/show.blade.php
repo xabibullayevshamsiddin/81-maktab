@@ -103,7 +103,7 @@
 <div class="bv-section">
 
   {{-- Root element — JS reads data-pdf-url --}}
-  <div id="bv-root" data-pdf-url="{{ route('books.stream', $book) }}">
+  <div id="bv-root" data-pdf-url="{{ route('books.stream', $book) }}" data-base-url="{{ app_public_base_url() }}">
 
     {{-- ── Toolbar ── --}}
     <div class="bv-toolbar">

@@ -116,6 +116,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('profile/appearance', [ProfileController::class, 'updateAppearance'])->name('profile.update-appearance');
     Route::get('profile/natijalar/export', [ProfileController::class, 'exportResults'])->name('profile.results.export');
     Route::post('profile/email/request', [ProfileController::class, 'requestEmailChange'])->name('profile.email.request');
     Route::post('profile/email/verify', [ProfileController::class, 'verifyEmailChange'])->name('profile.email.verify');

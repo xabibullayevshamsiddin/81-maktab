@@ -122,5 +122,58 @@
       </form>
     </div>
   </div>
+
+  {{-- Telegram broadcast section --}}
+  <div class="col-lg-4">
+    <div class="card-style mb-30">
+      <h6 class="mb-10" style="display:flex;align-items:center;gap:8px;">
+        <i class="mdi mdi-send-outline" style="font-size:18px;color:#0088cc;"></i>
+        Telegram elon yuborish
+      </h6>
+      <p class="text-sm" style="color:#64748b;margin-bottom:20px;">
+        Barcha Telegram botiga ulangan foydalanuvchilarga xabar yuboring.
+      </p>
+
+      @php
+        $tgUserCount = \App\Models\User::whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '>', 0)
+            ->count();
+      @endphp
+
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i class="mdi mdi-account-multiple-outline" style="font-size:16px;color:#0284c7;"></i>
+          <span style="font-size:13px;color:#0369a1;font-weight:500;">{{ $tgUserCount }} ta foydalanuvchi ulangan</span>
+        </div>
+      </div>
+
+      <form action="{{ route('admin.settings.broadcast-telegram') }}" method="POST"
+            onsubmit="return confirm('Barcha ulangan foydalanuvchilarga xabar yuborilsinmi?');">
+        @csrf
+
+        <div class="input-style-1 mb-20">
+          <label>Xabar matni</label>
+          <textarea
+            name="message"
+            rows="5"
+            maxlength="4000"
+            required
+            class="form-control"
+            style="padding:10px 12px;border-radius:8px;width:100%;resize:vertical;"
+            placeholder="Elon matnini yozing... (HTML formatida: <b>qalin</b>, <i>egri</i>)"
+          >{{ old('message') }}</textarea>
+          <p class="text-sm" style="color:#94a3b8;margin-top:4px;font-size:12px;">
+            HTML formatida yozish mumkin: &lt;b&gt;qalin&lt;/b&gt;, &lt;i&gt;egri&lt;/i&gt;, &lt;a href="..."&gt;havola&lt;/a&gt;
+          </p>
+          @error('message') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
+        </div>
+
+        <button type="submit" class="main-btn primary-btn btn-hover" style="background:#0088cc;border-color:#0088cc;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <i class="mdi mdi-send" style="font-size:16px;"></i>
+          Yuborish
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
 @endsection

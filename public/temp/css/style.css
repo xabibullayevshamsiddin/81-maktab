@@ -6124,7 +6124,8 @@ section.teachers.reveal::before {
 
 .course-card-media {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
+  min-height: 220px;
   background: linear-gradient(135deg, #0d3f78 0%, #1565c0 100%);
   overflow: hidden;
 }
@@ -8325,9 +8326,42 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
 }
 
 .comment-item-reply {
-  margin-left: 22px;
-  padding-left: 14px;
+  margin-left: 48px;
+  padding: 10px 12px;
   border-left: 3px solid rgba(21, 101, 192, 0.35);
+  background: transparent !important;
+  border: none !important;
+  border-left: 3px solid rgba(21, 101, 192, 0.35) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.comment-item-reply .comment-meta {
+  font-size: 0.85em;
+}
+
+.comment-item-reply .comment-meta strong {
+  font-size: 0.9em;
+}
+
+.comment-item-reply .comment-body p {
+  font-size: 0.9em;
+  margin-bottom: 4px;
+}
+
+.comment-item-reply .comment-actions {
+  gap: 6px;
+}
+
+.comment-item-reply .comment-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.comment-item-reply .comment-avatar-image {
+  width: 28px;
+  height: 28px;
 }
 
 .comment-replies-toggle {

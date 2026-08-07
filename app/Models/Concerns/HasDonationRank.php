@@ -95,6 +95,9 @@ trait HasDonationRank
         return $this->_donorCache['effectiveTheme'];
     }
 
+    /**
+     * Donor badge HTML
+     */
     public function donorBadgeHtml(bool $locked = false): string
     {
         $cacheKey = 'donorBadgeHtml_' . ($locked ? '1' : '0');
@@ -128,7 +131,7 @@ trait HasDonationRank
             $diff = (int) $this->donation_rank_expires_at->diffInDays(now(), false);
             $daysLeft = $diff > 0 ? $diff : 0;
         }
-        $expiryTitle = $daysLeft > 0 ? " title=\"" . e($daysLeft . " kun qoldi") . "\"" : "";
+        $expiryTitle = $daysLeft > 0 ? " title=\"" . e($this->formatRemainingTime()) . "\"" : "";
         $expirySuffix = $daysLeft > 0 && $badgeStyle !== "icon"
             ? " <span class=\"donor-badge-days\">{$daysLeft}k</span>" : "";
         $badgeKey = $theme ?? $this->donation_rank;
@@ -234,10 +237,15 @@ trait HasDonationRank
         return $this->isDonor() && in_array($this->donation_rank, [Donation::RANK_VIP], true);
     }
 
-    public function activateDonationRank(string $rank, int $amount = 0, string $paymentSystem = "manual", ?string $paymentId = null): Donation
+    public function activateDonationRank(string $rank, int $amount = 0, string $paymentSystem = "manual", ?string $paymentId = null, int $durationDays = 30): Donation
     {
         $config = Donation::configForRank($rank);
-        $expiresAt = now()->addDays($config["duration_days"] ?? 30);
+
+        // Qolgan muddatni hisoblash: agar joriy obuna hali tugamagan bo'lsa, yangi muddat qo'shiladi
+        $baseDate = ($this->donation_rank_expires_at && $this->donation_rank_expires_at->isFuture())
+            ? $this->donation_rank_expires_at
+            : now();
+        $expiresAt = $baseDate->copy()->addDays($durationDays);
 
         $donation = $this->donations()->create([
             "rank" => $rank,
@@ -293,5 +301,37 @@ trait HasDonationRank
         );
 
         return $donation;
+    }
+
+    /**
+     * Qolgan vaqtni kun/soat/daqiqa formatida qaytarish.
+     * Misol: "12 kun 5 soat 30 daqiqa"
+     */
+    public function formatRemainingTime(): string
+    {
+        if (! $this->donation_rank_expires_at) {
+            return '';
+        }
+
+        $now = now();
+        if ($this->donation_rank_expires_at->isPast()) {
+            return 'Muddati tugagan';
+        }
+
+        $diff = $now->diff($this->donation_rank_expires_at);
+        $parts = [];
+
+        if ($diff->days > 0) {
+            $parts[] = $diff->days . ' kun';
+        }
+        if ($diff->h > 0) {
+            $parts[] = $diff->h . ' soat';
+        }
+        if ($diff->i > 0 && empty($parts)) {
+            // Faqat daqiqa qoldi
+            $parts[] = $diff->i . ' daqiqa';
+        }
+
+        return implode(' ', $parts) ?: 'Kamroq 1 daqiqa';
     }
 }

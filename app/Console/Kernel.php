@@ -17,6 +17,9 @@ class Kernel extends ConsoleKernel
         // Telegram verifikatsiya eskirgan yozuvlarini tozalash
         $schedule->command('telegram:clean-expired')->hourly();
 
+        // Muddati tugagan bloklangan foydalanuvchilarni avtomatik ochish — har 5 daqiqada
+        $schedule->command('users:unblock-expired')->everyFiveMinutes();
+
         // Telegram getUpdates polling — faqat local environment'da (webhook bilan to'qnashmaslik uchun)
         if (app()->environment('local')) {
             $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();

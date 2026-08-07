@@ -330,11 +330,45 @@ class User extends Authenticatable
 
         // Vaqt o'tgan — blok yechiladi
         if ($this->blocked_until->isPast()) {
-            $this->update(['is_blocked' => false, 'blocked_until' => null, 'blocked_reason' => null]);
+            $wasBlocked = true;
+            $this->update(['is_blocked' => false, 'is_active' => true, 'blocked_until' => null, 'blocked_reason' => null]);
+
+            // Telegram'ga xabar yuborish
+            $this->sendUnblockNotification();
+
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Blok ochilganda Telegram'ga xabar yuborish.
+     */
+    private function sendUnblockNotification(): void
+    {
+        if (! $this->telegram_chat_id) {
+            return;
+        }
+
+        try {
+            $telegram = app(\App\Services\TelegramService::class);
+            $text = "✅ <b>Hisobingiz blokdan ochildi!</b>"
+                ."\n\n"
+                ."Hurmatli {$this->name}, sizning vaqtincha bloklangan hisobingiz muddati tugadi va avtomatik ravishda ochildi."
+                ."\n\n"
+                ."🌐 Endi saytdan to'liq foydalanishingiz mumkin."
+                ."\n\n"
+                ."⏰ ochilgan vaqt: ".now()->format('d.m.Y H:i');
+
+            $telegram->sendMessage((int) $this->telegram_chat_id, $text);
+        } catch (\Throwable $e) {
+            // Xatolik yuz bersa ham blok ochilishi kerak
+            \Illuminate\Support\Facades\Log::error('Telegram unblock notification failed', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function isEditor(): bool

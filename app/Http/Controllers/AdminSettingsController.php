@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendTelegramBroadcast;
 use App\Models\SiteSetting;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminSettingsController extends Controller
@@ -134,5 +136,35 @@ class AdminSettingsController extends Controller
         return redirect()
             ->route('admin.settings.index')
             ->with('success', 'Sozlamalar saqlandi.');
+    }
+
+    /**
+     * Telegram orqali barcha foydalanuvchilarga xabar yuborish.
+     */
+    public function broadcastTelegram(Request $request)
+    {
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'min:1', 'max:4000'],
+        ], [
+            'message.required' => 'Xabar matni kiritilishi shart.',
+            'message.min' => 'Xabar matni kamida 1 ta belgi bo\'lishi kerak.',
+            'message.max' => 'Xabar matni 4000 ta belgidan oshmasligi kerak.',
+        ]);
+
+        $message = $validated['message'];
+
+        // Telegram chat_id si mavjud foydalanuvchilar sonini tekshirish
+        $userCount = User::whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '>', 0)
+            ->count();
+
+        if ($userCount === 0) {
+            return back()->with('error', 'Telegram botiga ulangan foydalanuvchilar topilmadi.');
+        }
+
+        // Xabarni queue ga yuborish (async)
+        SendTelegramBroadcast::dispatch($message);
+
+        return back()->with('success', "Elon xabari {$userCount} ta foydalanuvchiga yuborish uchun navbatga qo'shildi. Xabarlar birma-bir yuborilmoqda.");
     }
 }

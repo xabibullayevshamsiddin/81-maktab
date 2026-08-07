@@ -91,12 +91,32 @@
       @if ($showReplyForm && auth()->check() && $canReplyMore)
         <button
           type="button"
-          class="btn btn-sm js-reply-trigger"
-          data-comment-id="{{ $comment->id }}"
-          data-post-id="{{ $post->id }}"
+          class="btn btn-sm comment-reply js-comment-reply-toggle"
+          aria-label="{{ __('public.comments.reply') }}"
+          data-reply-parent-id="{{ $comment->id }}"
         >
-          <i class="fa-solid fa-reply"></i> {{ __("public.comments.reply") }}
+          <i class="fa-solid fa-reply"></i> {{ __('public.comments.reply') }}
         </button>
+
+        <div class="js-comment-reply-form-wrapper comment-reply-form-wrapper" hidden>
+          <form
+            class="comment-form comment-form-inline js-comment-form js-comment-reply-form"
+            action="{{ route('post.comments.store', $post) }}"
+            method="POST"
+          >
+            @csrf
+            <input type="hidden" name="parent_id" value="{{ $comment->id }}" />
+            <input
+              type="text"
+              class="comment-input"
+              name="body"
+              placeholder="Javobingizni yozing"
+              maxlength="50"
+              required
+            />
+            <button class="btn btn-sm" type="submit">Javob yuborish</button>
+          </form>
+        </div>
       @endif
 
       @if($canManageComment)

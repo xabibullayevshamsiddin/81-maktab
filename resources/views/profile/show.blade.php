@@ -79,7 +79,7 @@
         ? $user->donorRankLabel() . ' ' . $user->donorBadgeHtml()
         : __('profile.facts.donor_rank.value_none'),
       'hint' => $user->isDonor() && $user->donation_rank_expires_at
-        ? __('profile.facts.donor_rank.hint_expires', ['time' => $user->donation_rank_expires_at->diffForHumans()])
+        ? __('profile.facts.donor_rank.hint_expires', ['time' => $user->formatRemainingTime()])
         : __('profile.facts.donor_rank.hint_none'),
     ],
   ];
