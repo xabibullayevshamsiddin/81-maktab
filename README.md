@@ -360,4 +360,18 @@ Muallif: xabibullayevshamsiddin
 
 ---
 
+## Changelog
+
+### 2026-08-07
+
+- Intelephense xatolari tuzatildi (type hint'lar qo'shildi)
+- `EnsureEmailIsVerified` middleware o'chirildi (kerak emas edi)
+- `config/resend.php` fayli yaratildi
+- `TelegramVerification` import qo'shildi
+- `HasOne` import qo'shildi
+- GD image type hint'lari yangilandi (`\GdImage`)
+- Storage disk type hint'lari qo'shildi (`FilesystemAdapter`)
+
+---
+
 *Oxirgi yangilanish: 2026-yil, 7-avgust*
