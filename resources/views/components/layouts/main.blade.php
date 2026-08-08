@@ -212,7 +212,6 @@
 	      $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
 	      $accountMenuActive = $authUser && (
 	        request()->routeIs('exam.*')
-	        || request()->routeIs('profile.*')
 	        || request()->routeIs('teacher.courses.*')
 	        || request()->routeIs('dashboard')
 	      );
