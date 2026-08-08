@@ -227,7 +227,7 @@
                 </a>
               </li>
 
-              <li class="nav-item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+              <li class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
                 <a href="{{ route('admin.settings.index') }}">
                   <span class="icon"><i class="mdi mdi-cog-outline"></i></span>
                   <span class="text">Sozlamalar</span>
