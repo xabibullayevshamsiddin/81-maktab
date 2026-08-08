@@ -188,9 +188,11 @@ return [
         'avatar_ready' => 'Tayyor: WebP, :size, :dimensions.',
         'avatar_fallback' => 'Brauzer optimallashtira olmadi. Server yuklash paytida rasmni o\'zi WebPga moslaydi.',
         'avatar_too_big' => 'Rasm hajmi :max MB dan oshmasin. Sizning rasm: :size. Donor bo‘lish orqali kattaroq rasm yuklang.',
+        'avatar_removed' => 'Rasm olib tashlanadi. Saqlasangiz bosh harf ko\'rinadi.',
         'save_error' => 'Saqlashda xatolik yuz berdi.',
         'saved' => 'Saqlandi.',
         'server_error' => 'Server bilan bog\'lanishda xatolik yuz berdi.',
+        'validate_fields' => 'Maydonlarni tekshiring.',
     ],
     'course_open' => [
         'title' => 'Kurs ochish ruxsati',
@@ -201,8 +203,10 @@ return [
         'pending' => 'So\'rovingiz adminga yuborilgan. Admin javobini kuting.',
         'reason_sent' => 'Yuborgan sababingiz: :reason',
         'reason_label' => 'Nima uchun kurs ochmoqchisiz?',
+        'reason_min_length' => 'Sabab kamida 10 ta belgidan iborat bo\'lishi kerak.',
         'reason_placeholder' => "Masalan: 7-sinf o'quvchilari uchun matematika bo'yicha qo'shimcha tayyorlov kursi ochmoqchiman.",
         'request_button' => 'Kurs ochish uchun admin ruxsatini so\'rash',
+        'request_sent_pending' => "So\'rovingiz adminga yuborildi. Javob kutilmoqda.",
         'shortcut' => 'Kurs — ruxsat',
     ],
     'bookmarks' => [
@@ -214,6 +218,12 @@ return [
         'empty' => 'Hozircha hech narsa saqlanmagan. Yangiliklar, ustozlar yoki kurslar sahifasidagi «Saqlash» tugmasidan foydalaning.',
     ],
 
+    'exams' => [
+        'status_active' => 'Faol',
+        'status_inactive' => 'Nofaol',
+        'questions_count' => 'savol',
+    ],
+    'open_activity' => 'Faollikni ochish',
     'appearance_tab' => 'Donat ko\'rinishi',
     'show_more' => 'Yana ko\'rsatish',
     'manage' => 'Boshqarish',

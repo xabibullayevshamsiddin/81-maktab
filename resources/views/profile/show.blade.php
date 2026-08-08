@@ -90,7 +90,7 @@
     'preparingAvatar' => __('profile.js.preparing_avatar'),
     'avatarReady' => __('profile.js.avatar_ready'),
     'avatarFallback' => __('profile.js.avatar_fallback'),
-    'avatarRemoved' => 'Rasm olib tashlanadi. Saqlasangiz bosh harf ko‘rinadi.',
+    'avatarRemoved' => __('profile.js.avatar_removed'),
     'avatarTooBig' => __('profile.js.avatar_too_big'),
     'saveError' => __('profile.js.save_error'),
     'saved' => __('profile.js.saved'),
@@ -413,10 +413,10 @@
                       <li>
                         <span class="profile-activity-title">{{ $exm->title }}</span>
                         @if($exm->is_active)
-                          <span class="profile-tag profile-tag--approved">Faol</span>
+                          <span class="profile-tag profile-tag--approved">{{ __('profile.exams.status_active') }}</span>
                         @else
-                          <span class="profile-tag profile-tag--rejected">Nofaol
-                            ({{ $exm->questions_count }}/{{ $exm->required_questions }} savol)</span>
+                          <span class="profile-tag profile-tag--rejected">{{ __('profile.exams.status_inactive') }}
+                            ({{ $exm->questions_count }}/{{ $exm->required_questions }} {{ __('profile.exams.questions_count') }})</span>
                         @endif
 
                         <span class="profile-activity-date">{{ $exm->created_at?->diffForHumans() }}</span>
@@ -765,7 +765,7 @@
                 </div>
               </div>
               <div class="profile-actions-row">
-                <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="btn btn-sm">Faollikni ochish</a>
+                <a href="{{ route('profile.show', ['panel' => 'activity']) }}" class="btn btn-sm">{{ __('profile.open_activity') }}</a>
                 <a href="{{ route('profile.results.index') }}" class="btn btn-outline btn-sm">{{ __('public.profile_hub.tab_results') }}</a>
               </div>
             </section>
@@ -790,7 +790,7 @@
 
       /* Client-side validation */
       if (textarea && textarea.value.trim().length < 10) {
-        if (errorEl) { errorEl.textContent = 'Sabab kamida 10 ta belgidan iborat bo\'lishi kerak.'; errorEl.style.display = 'block'; }
+        if (errorEl) { errorEl.textContent = '{{ __('profile.course_open.reason_min_length') }}'; errorEl.style.display = 'block'; }
         textarea.focus();
         return;
       }
@@ -815,7 +815,7 @@
             if (data.errors && data.errors.reason) {
               msg = data.errors.reason[0];
             } else {
-              msg = data.message || 'Maydonlarni tekshiring.';
+              msg = data.message || '{{ __('profile.js.validate_fields') }}';
             }
             if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
             return { ok: false, _handled: true };
@@ -840,7 +840,7 @@
         if (section) {
           var body = section.querySelector('.profile-block-head') ? section : null;
           var pendingHtml = '<div class="course-req-sent" style="margin-top:8px;">'
-            + '<p class="profile-empty" style="margin:0;"><i class="fa-solid fa-clock" style="color:var(--primary-2);"></i> So\'rovingiz adminga yuborildi. Javob kutilmoqda.</p>'
+            + '<p class="profile-empty" style="margin:0;"><i class="fa-solid fa-clock" style="color:var(--primary-2);"></i> {{ __('profile.course_open.request_sent_pending') }}</p>'
             + '</div>';
           form.outerHTML = pendingHtml;
         }
@@ -850,7 +850,7 @@
         }
       })
       .catch(function(e) {
-        if (window.showToast) window.showToast('Server xatosi: ' + e.message, 'error');
+        if (window.showToast) window.showToast('{{ __('profile.js.server_error') }}: ' + e.message, 'error');
       })
       .finally(function() {
         btn.disabled = false;

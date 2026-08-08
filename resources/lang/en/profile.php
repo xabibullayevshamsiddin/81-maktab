@@ -176,9 +176,11 @@ return [
         'avatar_ready' => 'Ready: WebP, :size, :dimensions.',
         'avatar_fallback' => 'The browser could not optimize the image. The server will convert it to WebP during upload.',
         'avatar_too_big' => 'File size must not exceed :max MB. Your file: :size. Become a donor to upload larger images.',
+        'avatar_removed' => 'Photo will be removed. Your initial will be shown after saving.',
         'save_error' => 'An error occurred while saving.',
         'saved' => 'Saved.',
         'server_error' => 'A connection error occurred while talking to the server.',
+        'validate_fields' => 'Please check the fields.',
     ],
     'course_open' => [
         'title' => 'Permission to open a course',
@@ -189,8 +191,10 @@ return [
         'pending' => 'Your request was sent to the admin. Please wait for a response.',
         'reason_sent' => 'Your reason: :reason',
         'reason_label' => 'Why do you want to open a course?',
+        'reason_min_length' => 'The reason must be at least 10 characters.',
         'reason_placeholder' => 'For example: I want to open an extra math preparation course for grade 7 students.',
         'request_button' => 'Request admin approval to open a course',
+        'request_sent_pending' => 'Your request has been sent. Waiting for response.',
         'shortcut' => 'Course — request',
     ],
     'bookmarks' => [
@@ -202,6 +206,12 @@ return [
         'empty' => 'Nothing saved yet. Use Save on news, teachers, or courses pages.',
     ],
 
+    'exams' => [
+        'status_active' => 'Active',
+        'status_inactive' => 'Inactive',
+        'questions_count' => 'questions',
+    ],
+    'open_activity' => 'Open activity',
     'appearance_tab' => 'Donor appearance',
     'show_more' => 'Show more',
     'manage' => 'Manage',
