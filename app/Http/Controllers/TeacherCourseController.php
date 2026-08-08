@@ -97,6 +97,9 @@ class TeacherCourseController extends Controller
         if ($request->hasFile('image')) {
             StorageHelper::ensureStoragePath('courses');
             $payload['image'] = $request->file('image')->store('courses', 'public');
+        } else {
+            // Rasm yuklanmasa, null qoldiramiz — coverImageUrl() SVG placeholder qaytaradi
+            $payload['image'] = null;
         }
 
         Course::create($payload);

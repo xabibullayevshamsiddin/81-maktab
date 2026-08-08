@@ -146,15 +146,56 @@ class Course extends Model
     }
 
     /**
-     * Karta uchun rasm: avval kurs rasmi, bo'lmasa ustoz rasmi, bo'lmasa umumiy placeholder.
+     * Karta uchun rasm: avval kurs rasmi, bo'lmasa kurs nomi bilan SVG placeholder.
      */
     public function coverImageUrl(): string
     {
         if (! empty($this->image)) {
-            return app_storage_asset($this->image) ?? app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png');
+            return app_storage_asset($this->image) ?? $this->generateCoursePlaceholder();
         }
 
-        return $this->instructorImageUrl();
+        return $this->generateCoursePlaceholder();
+    }
+
+    /**
+     * Kurs nomi bilan SVG placeholder yaratish.
+     */
+    private function generateCoursePlaceholder(): string
+    {
+        $title = trim((string) ($this->title ?: 'Kurs'));
+        $locale = app()->getLocale();
+
+        // Sarlavhani qisqartirish (maksimal 40 belgi)
+        if (mb_strlen($title) > 40) {
+            $title = mb_substr($title, 0, 37) . '...';
+        }
+
+        // SVG shablon
+        $svg = <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f"/>
+      <stop offset="100%" style="stop-color:#0d1b2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <rect x="50" y="50" width="700" height="350" rx="20" fill="rgba(255,255,255,0.05)"/>
+  <text x="400" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white">📚</text>
+  <text x="400" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white">{$this->escapeXml($title)}</text>
+  <text x="400" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.6)">81-IDUM Kurs</text>
+</svg>
+SVG;
+
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
+    /**
+     * XML uchun maxsus belgilarni escape qilish.
+     */
+    private function escapeXml(string $text): string
+    {
+        return htmlspecialchars($text, ENT_XML1, 'UTF-8');
     }
 
     /**
