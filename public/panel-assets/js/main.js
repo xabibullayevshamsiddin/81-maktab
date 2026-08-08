@@ -1,12 +1,18 @@
 (function () {
   /* ========= Preloader ======== */
-  const preloader = document.querySelectorAll('#preloader')
-
-  window.addEventListener('load', function () {
-    if (preloader.length) {
-      this.document.getElementById('preloader').style.display = 'none'
+  function hideAdminPreloader() {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+      preloader.style.display = 'none';
     }
-  })
+  }
+
+  if (document.readyState === 'complete') {
+    hideAdminPreloader();
+  } else {
+    window.addEventListener('load', hideAdminPreloader);
+  }
+  window.addEventListener('pageshow', hideAdminPreloader);
 
   /* ========= Add Box Shadow in Header on Scroll ======== */
   window.addEventListener('scroll', function () {

@@ -1007,8 +1007,22 @@
         var loader = document.getElementById('site-boot-loader');
         if (!loader) return;
         var isDonorUser = document.body.getAttribute('data-donor-theme') !== '';
+        var safetyTimer = null;
+
+        function hideFullScreenLoader() {
+          if (safetyTimer) {
+            clearTimeout(safetyTimer);
+            safetyTimer = null;
+          }
+          loader.classList.add('site-boot-loader--done');
+          document.body.classList.remove('site-boot-loading');
+          loader.setAttribute('aria-busy', 'false');
+          if (window.hideSiteBootLoader) {
+            window.hideSiteBootLoader();
+          }
+        }
+
         function showFullScreenLoader() {
-          // Donor foydalanuvchilar uchun loader ko'rsatilmaydi
           if (isDonorUser) return;
           loader.classList.remove('site-boot-loader--done');
           document.body.classList.add('site-boot-loading');
@@ -1016,7 +1030,26 @@
           if (!loader.parentNode) {
             document.body.appendChild(loader);
           }
+
+          // Safety auto-hide timer: automatically hide loader after 4 seconds
+          // so the user NEVER gets stuck if navigation is canceled, slow, or fails
+          if (safetyTimer) clearTimeout(safetyTimer);
+          safetyTimer = setTimeout(function() {
+            hideFullScreenLoader();
+          }, 4000);
         }
+
+        window.showFullScreenLoader = showFullScreenLoader;
+        window.hideFullScreenLoader = hideFullScreenLoader;
+
+        // Hide loader when navigating via browser Back/Forward (BFCache)
+        window.addEventListener('pageshow', function() {
+          hideFullScreenLoader();
+        });
+        window.addEventListener('popstate', function() {
+          hideFullScreenLoader();
+        });
+
         document.addEventListener('click', function(e) {
           var link = e.target.closest('a[href]');
           if (!link) return;
@@ -1025,10 +1058,13 @@
           if (
             link.target === '_blank' ||
             link.hasAttribute('download') ||
+            link.hasAttribute('data-confirm') ||
+            link.hasAttribute('data-no-loader') ||
             href.startsWith('#') ||
             href.startsWith('javascript:') ||
             href.startsWith('mailto:') ||
             href.startsWith('tel:') ||
+            href.match(/\.(pdf|csv|xlsx|xls|doc|docx|zip|rar|png|jpg|jpeg|gif|svg)$/i) ||
             (href.startsWith('http') && !href.startsWith(window.location.origin))
           ) return;
           try {
@@ -1040,7 +1076,7 @@
         document.addEventListener('submit', function(e) {
           var form = e.target;
           if (!form || form.method === 'dialog') return;
-          // AJAX formalarni o'tkazib yuborish — ular sahifani yangilamaydi
+          // AJAX formalarni o'tkazib yuborish
           if (
             form.classList.contains('js-like-form') ||
             form.classList.contains('js-bookmark-form') ||

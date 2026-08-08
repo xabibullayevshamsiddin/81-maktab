@@ -230,31 +230,22 @@
   function initPageTransitions() {
     const loader = document.getElementById('prime-page-loader');
 
-    // Page load fade in
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        if (loader) loader.classList.add('fade-out');
-        document.body.classList.add('page-ready');
-      }, 300);
-    });
+    function setPageReady() {
+      if (loader) loader.classList.add('fade-out');
+      document.body.classList.add('page-ready');
+    }
 
-    // Page leave fade out on link click
-    document.addEventListener('click', (e) => {
-      const link = e.target.closest('a');
-      if (!link) return;
+    if (document.readyState === 'complete') {
+      setPageReady();
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(setPageReady, 100);
+      });
+    }
 
-      const href = link.getAttribute('href');
-      const target = link.getAttribute('target');
-
-      if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !href.startsWith('tel:') && !href.startsWith('mailto:') && target !== '_blank' && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        document.body.classList.remove('page-ready');
-        if (loader) loader.classList.remove('fade-out');
-
-        setTimeout(() => {
-          window.location.href = href;
-        }, 400);
-      }
+    // Always restore page-ready state when navigating back/forward via BFCache
+    window.addEventListener('pageshow', () => {
+      setPageReady();
     });
   }
 
