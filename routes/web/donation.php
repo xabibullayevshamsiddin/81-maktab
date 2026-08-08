@@ -33,6 +33,11 @@ Route::middleware(["auth", "active", "role:super_admin"])->group(function () {
         ->name("admin.donation-settings");
     Route::post("admin/donation-settings", [AdminDonationSettingsController::class, "update"])
         ->name("admin.donation-settings.update");
+
+    Route::get("admin/donors", [AdminDonationSettingsController::class, "donors"])
+        ->name("admin.donors.index");
+    Route::post("admin/donors/{user}/revoke", [AdminDonationSettingsController::class, "revoke"])
+        ->name("admin.donors.revoke");
 });
 
 // Admin: aktivatsiya kalitlarini boshqarish

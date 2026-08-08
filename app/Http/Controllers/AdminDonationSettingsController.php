@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SiteSetting;
+use App\Models\User;
+use App\Models\UserActivity;
 use Illuminate\Http\Request;
 
 class AdminDonationSettingsController extends Controller
@@ -45,5 +47,43 @@ class AdminDonationSettingsController extends Controller
         return redirect()->route("admin.donation-settings")
             ->with("success", "Narxlar va chegirmalar saqlandi!")
             ->with("toast_type", "success");
+    }
+
+    public function donors()
+    {
+        $donors = User::whereNotNull('donation_rank')
+            ->with(['donations' => function ($q) {
+                $q->where('status', 'completed')->latest('paid_at')->limit(1);
+            }])
+            ->orderByDesc('donation_rank_expires_at')
+            ->paginate(30);
+
+        return view('admin.donors', compact('donors'));
+    }
+
+    public function revoke(User $user)
+    {
+        if (! $user->donation_rank) {
+            return back()->with('error', 'Bu foydalanuvchida faol donor holati yo\'q.');
+        }
+
+        $oldRank = $user->donation_rank;
+        $oldExpiresAt = $user->donation_rank_expires_at;
+
+        $user->update([
+            'donation_rank' => null,
+            'donation_rank_expires_at' => null,
+        ]);
+
+        UserActivity::create([
+            'user_id' => $user->id,
+            'type' => UserActivity::TYPE_DONATION_REVOKED,
+            'description' => "Admin tomonidan donor holati bekor qilindi (avvalgi: {$oldRank})",
+            'old_value' => ['rank' => $oldRank, 'expires_at' => $oldExpiresAt?->toIso8601String()],
+            'new_value' => null,
+            'occurred_at' => now(),
+        ]);
+
+        return back()->with('success', "{$user->name} uchun donor holati bekor qilindi.");
     }
 }

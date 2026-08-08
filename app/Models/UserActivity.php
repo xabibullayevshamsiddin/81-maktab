@@ -40,6 +40,7 @@ class UserActivity extends Model
     public const TYPE_COMMENT_POSTED = 'comment_posted';
     public const TYPE_POST_LIKED = 'post_liked';
     public const TYPE_ACTIVATION_KEY_USED = 'activation_key_used';
+    public const TYPE_DONATION_REVOKED = 'donation_revoked';
 
     public const TYPES = [
         self::TYPE_LOGIN => '🔐 Tizimga kirish',
@@ -57,6 +58,7 @@ class UserActivity extends Model
         self::TYPE_COMMENT_POSTED => '💬 Izoh qoldirdi',
         self::TYPE_POST_LIKED => '❤️ Post yoqdi',
         self::TYPE_ACTIVATION_KEY_USED => '🎫 Aktivatsiya kaliti',
+        self::TYPE_DONATION_REVOKED => '🚫 Donor holati bekor qilindi',
     ];
 
     public function user(): BelongsTo
@@ -87,6 +89,7 @@ class UserActivity extends Model
             self::TYPE_COMMENT_POSTED => 'fa-solid fa-comment',
             self::TYPE_POST_LIKED => 'fa-solid fa-heart',
             self::TYPE_ACTIVATION_KEY_USED => 'fa-solid fa-ticket',
+            self::TYPE_DONATION_REVOKED => 'fa-solid fa-ban',
             default => 'fa-solid fa-circle-info',
         };
     }
@@ -109,6 +112,7 @@ class UserActivity extends Model
             self::TYPE_COMMENT_POSTED => '#6366f1',
             self::TYPE_POST_LIKED => '#ef4444',
             self::TYPE_ACTIVATION_KEY_USED => '#f59e0b',
+            self::TYPE_DONATION_REVOKED => '#ef4444',
             default => '#6b7280',
         };
     }

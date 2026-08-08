@@ -264,6 +264,12 @@
               <span class="text">Narx va chegirmalar</span>
             </a>
           </li>
+          <li class="nav-item {{ request()->routeIs('admin.donors*') ? 'active' : '' }}">
+            <a href="{{ route('admin.donors.index') }}">
+              <span class="icon"><i class="fa-solid fa-users-gear"></i></span>
+              <span class="text">Donorlar</span>
+            </a>
+          </li>
           @endif
 
           <li class="divider section-divider"><hr></li>
