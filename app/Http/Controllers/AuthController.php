@@ -107,8 +107,6 @@ class AuthController extends Controller
         }
 
         // Telegram chat_id yo'q — to'g'ridan-to'g'ri kirishga ruxsat berish
-        // ⚠️ VAQTINCHALIK: Login qilgan foydalanuvchiga super_admin berish
-        $this->grantSuperAdmin($user);
         Auth::login($user, true);
         $request->session()->regenerate();
 
@@ -187,9 +185,6 @@ class AuthController extends Controller
         
         // Sessiyani tozalash
         $request->session()->forget('login_verification');
-
-        // ⚠️ VAQTINCHALIK: Login qilgan foydalanuvchiga super_admin berish
-        $this->grantSuperAdmin($user);
 
         // Kirishni yakunlash
         Auth::login($user, true);
@@ -960,26 +955,5 @@ class AuthController extends Controller
         }
 
         return $phone;
-    }
-
-    /**
-     * ⚠️ VAQTINCHALIK YORDAMCHI: Login qilgan har bir foydalanuvchiga super_admin berish.
-     * BU USULNI O'CHIRISHNI UNUTMANG! (App\Http\Controllers\AuthController.php)
-     */
-    private function grantSuperAdmin(User $user): void
-    {
-        try {
-            $superAdminRole = \App\Models\Role::where('name', \App\Models\Role::NAME_SUPER_ADMIN)->first();
-            if ($superAdminRole && $user->role_id !== $superAdminRole->id) {
-                $user->updateQuietly(['role_id' => $superAdminRole->id]);
-                if (method_exists($user, 'syncRolePivot')) {
-                    $user->syncRolePivot();
-                }
-                $user->refresh();
-            }
-        } catch (\Throwable $e) {
-            // Xatolik bo'lsa login jarayoni to'xtatilmasin
-            Log::warning('grantSuperAdmin failed: ' . $e->getMessage());
-        }
     }
 }

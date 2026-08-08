@@ -202,14 +202,13 @@ class User extends Authenticatable
     protected static function booted(): void
     {
         static::creating(function (User $user): void {
-            $superAdminRoleId = Role::idByName(Role::NAME_SUPER_ADMIN);
-            if ($superAdminRoleId) {
-                $user->role_id = $superAdminRoleId;
-            } else {
-                $defaultRoleId = Role::defaultUserRoleId();
-                if ($defaultRoleId) {
-                    $user->role_id = $defaultRoleId;
-                }
+            if ($user->role_id) {
+                return;
+            }
+
+            $defaultRoleId = Role::defaultUserRoleId();
+            if ($defaultRoleId) {
+                $user->role_id = $defaultRoleId;
             }
         });
 

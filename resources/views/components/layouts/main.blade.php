@@ -191,7 +191,13 @@
 	      $canAccessDashboard = $authUser && $authUser->canAccessDashboard();
       $currentLocale = current_locale();
       $supportedLocales = supported_locales();
-      $localeFlags = ['uz' => '🇺🇿', 'ru' => '🇷🇺', 'en' => '🇬🇧'];
+      // SVG bayroqlar — Windows da emoji ishlamaydi, shuning uchun CDN rasmlar
+      $localeFlags = [
+        'uz' => '<img src="https://flagcdn.com/24x18/uz.png" srcset="https://flagcdn.com/48x36/uz.png 2x" width="24" height="18" alt="UZ" style="display:inline-block;vertical-align:middle;border-radius:2px;object-fit:cover;">',
+        'ru' => '<img src="https://flagcdn.com/24x18/ru.png" srcset="https://flagcdn.com/48x36/ru.png 2x" width="24" height="18" alt="RU" style="display:inline-block;vertical-align:middle;border-radius:2px;object-fit:cover;">',
+        'en' => '<img src="https://flagcdn.com/24x18/gb.png" srcset="https://flagcdn.com/48x36/gb.png 2x" width="24" height="18" alt="EN" style="display:inline-block;vertical-align:middle;border-radius:2px;object-fit:cover;">',
+      ];
+      $localeFlagDefault = '<img src="https://flagcdn.com/24x18/un.png" width="24" height="18" alt="" style="display:inline-block;vertical-align:middle;border-radius:2px;">';
 	      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
 	      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
 	      $isExamSessionRoute = request()->routeIs('exam.session');
@@ -225,7 +231,7 @@
             <details class="nav-dropdown-details js-header-dropdown">
               <summary class="nav-link nav-dropdown-toggle">
                 <span class="locale-current">
-                  <span class="locale-flag">{{ $localeFlags[$currentLocale] ?? '🌐' }}</span>
+                  <span class="locale-flag">{!! $localeFlags[$currentLocale] ?? $localeFlagDefault !!}</span>
                   <span class="locale-code">{{ strtoupper($currentLocale) }}</span>
                 </span>
               </summary>
@@ -238,7 +244,7 @@
                       data-locale-switch
                     >
                       @if(isset($localeFlags[$localeKey]))
-                        <span class="locale-flag">{{ $localeFlags[$localeKey] }}</span>
+                        <span class="locale-flag">{!! $localeFlags[$localeKey] !!}</span>
                       @endif
                       <span class="locale-name">{{ $localeLabel }}</span>
                       @if($currentLocale === $localeKey)
@@ -417,7 +423,7 @@
                 <details class="nav-dropdown-details js-header-dropdown">
                   <summary class="nav-link nav-dropdown-toggle">
                     <span class="locale-current">
-                      <span class="locale-flag">{{ $localeFlags[$currentLocale] ?? '🌐' }}</span>
+                      <span class="locale-flag">{!! $localeFlags[$currentLocale] ?? $localeFlagDefault !!}</span>
                       <span class="locale-code">{{ strtoupper($currentLocale) }}</span>
                     </span>
                     <i class="fa-solid fa-chevron-down nav-dd-chevron"></i>
@@ -431,7 +437,7 @@
                           data-locale-switch
                         >
                           @if(isset($localeFlags[$localeKey]))
-                            <span class="locale-flag">{{ $localeFlags[$localeKey] }}</span>
+                            <span class="locale-flag">{!! $localeFlags[$localeKey] !!}</span>
                           @endif
                           <span class="locale-name">{{ $localeLabel }}</span>
                           @if($currentLocale === $localeKey)
