@@ -570,17 +570,13 @@ class User extends Authenticatable
 
     public function canManage(User $user): bool
     {
-        if ($this->isSuperAdmin()) {
-            return true;
-        }
-
         return $this->roleLevel() > $user->roleLevel();
     }
 
     public function canAssignRole(Role $role): bool
     {
-        if ($this->isSuperAdmin()) {
-            return true;
+        if ($role->name === self::ROLE_SUPER_ADMIN) {
+            return $this->isSuperAdmin();
         }
 
         return $this->roleLevel() > (int) $role->level;
