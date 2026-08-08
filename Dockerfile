@@ -65,5 +65,6 @@ CMD ["/bin/sh", "-c", "\
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
+    php artisan telegram:set-webhook 2>/dev/null || true && \
     sed -i \"s/\\${PORT:-8080}/${PORT:-8080}/g\" /etc/nginx/sites-available/default && \
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
