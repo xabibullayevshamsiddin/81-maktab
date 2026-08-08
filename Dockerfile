@@ -40,9 +40,26 @@ RUN echo '[supervisord]\nnodaemon=true\n\n\
 [program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true\n' \
     > /etc/supervisor/conf.d/supervisord.conf
 
+RUN mkdir -p storage/app/public \
+    && mkdir -p storage/framework/cache/data \
+    && mkdir -p storage/framework/sessions \
+    && mkdir -p storage/framework/views \
+    && mkdir -p storage/logs \
+    && mkdir -p bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
 EXPOSE 8080
 
 CMD ["/bin/sh", "-c", "\
+    mkdir -p storage/app/public && \
+    mkdir -p storage/framework/cache/data && \
+    mkdir -p storage/framework/sessions && \
+    mkdir -p storage/framework/views && \
+    mkdir -p storage/logs && \
+    mkdir -p bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
     php artisan storage:link --force 2>/dev/null || true && \
     php artisan migrate --force && \
     php artisan config:cache && \
