@@ -40,7 +40,11 @@ RUN echo '[supervisord]\nnodaemon=true\n\n\
 [program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true\n' \
     > /etc/supervisor/conf.d/supervisord.conf
 
-RUN mkdir -p storage/app/public \
+RUN mkdir -p storage/app/public/posts \
+    && mkdir -p storage/app/public/books \
+    && mkdir -p storage/app/public/courses \
+    && mkdir -p storage/app/public/avatars \
+    && mkdir -p storage/app/public/temp \
     && mkdir -p storage/framework/cache/data \
     && mkdir -p storage/framework/sessions \
     && mkdir -p storage/framework/views \
@@ -52,7 +56,11 @@ RUN mkdir -p storage/app/public \
 EXPOSE 8080
 
 CMD ["/bin/sh", "-c", "\
-    mkdir -p storage/app/public && \
+    mkdir -p storage/app/public/posts && \
+    mkdir -p storage/app/public/books && \
+    mkdir -p storage/app/public/courses && \
+    mkdir -p storage/app/public/avatars && \
+    mkdir -p storage/app/public/temp && \
     mkdir -p storage/framework/cache/data && \
     mkdir -p storage/framework/sessions && \
     mkdir -p storage/framework/views && \
