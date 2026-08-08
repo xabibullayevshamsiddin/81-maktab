@@ -206,7 +206,7 @@ return [
         'teachers_eyebrow' => 'Qualified and Experienced Teachers',
         'teachers_stat_1_num' => '90',
         'teachers_stat_1_label' => 'Qualified Teachers',
-        'teachers_stat_2_num' => '100%',
+        'teachers_stat_2_num' => '60%',
         'teachers_stat_2_label' => 'Higher Education',
         'teachers_stat_3_num' => '26',
         'teachers_stat_3_label' => 'Certified Teachers',

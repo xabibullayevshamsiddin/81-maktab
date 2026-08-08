@@ -208,7 +208,7 @@ return array_replace_recursive($fallback, [
         'teachers_eyebrow' => 'Квалифицированные и опытные педагоги',
         'teachers_stat_1_num' => '90',
         'teachers_stat_1_label' => 'Квалифицированных учителей',
-        'teachers_stat_2_num' => '100%',
+        'teachers_stat_2_num' => '60%',
         'teachers_stat_2_label' => 'Высшее образование',
         'teachers_stat_3_num' => '26',
         'teachers_stat_3_label' => 'Сертифицированных педагогов',
