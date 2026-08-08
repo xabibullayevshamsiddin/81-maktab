@@ -15,13 +15,27 @@ class TelegramSetWebhook extends Command
         $url = $this->option('url');
         
         if (empty($url)) {
-            $url = config('app.url');
+            // Render.com o'z-o me'yorida RENDER_EXTERNAL_URL beradi
+            $url = env('RENDER_EXTERNAL_URL');
         }
 
-        if (empty($url)) {
-            $this->error('APP_URL environment variable topilmadi!');
-            $this->line('Iltimos, --url parametrini kiriting yoki APP_URL ni o\'rnating.');
+        if (empty($url) || str_contains($url, 'localhost')) {
+            $appUrl = config('app.url');
+            if (! empty($appUrl) && ! str_contains($appUrl, 'localhost')) {
+                $url = $appUrl;
+            }
+        }
+
+        if (empty($url) || str_contains($url, 'localhost')) {
+            $this->warn('⚠️ Webhook URL "localhost" ko\'rsatilgan yoki topilmadi!');
+            $this->line('Telegram localhost (http://localhost) webhooks qabul qilmaydi.');
+            $this->line('Render Environment variables qismida APP_URL=https://eight1-maktab.onrender.com ni kiriting.');
             return 1;
+        }
+
+        // Telegram faqat HTTPS larni qabul qiladi
+        if (str_starts_with($url, 'http://')) {
+            $url = 'https://' . substr($url, 7);
         }
 
         $secret = config('telegram.webhook_secret', '');
