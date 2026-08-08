@@ -32,6 +32,29 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| VAQTINCHALIK — SUPER_ADMIN QILISH (ISHLATGACH O'CHIRING!)
+|--------------------------------------------------------------------------
+*/
+Route::get('super-admin-setup-q8w2e5r1', function () {
+    $email = 'xabibullayevshamsiddinmllb1809@gmail.com';
+    $user = \App\Models\User::where('email', $email)->first();
+
+    if (! $user) {
+        return response()->html('<h1 style="color:red;">Xato: \"' . $email . '\" emailli foydalanuvchi topilmadi!</h1>');
+    }
+
+    $superAdminRoleId = \App\Models\Role::idByName('super_admin');
+    if (! $superAdminRoleId) {
+        return response()->html('<h1 style="color:red;">Xato: \"super_admin\" roli topilmadi!</h1>');
+    }
+
+    $user->update(['role_id' => $superAdminRoleId]);
+    $user->syncRolePivot();
+
+    return response()->html('<h1 style="color:green;">Muvaffaqiyatli: ' . htmlspecialchars($user->name) . ' foydalanuvchisi \"super_admin\" qilindi!</h1><p>Endi saytga kiring.</p>');
+});
+/*
+|--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 |
