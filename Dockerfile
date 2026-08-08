@@ -17,12 +17,25 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-
     && php artisan vendor:publish --tag=laravel-assets --ansi --force || true \
     && rm .env
 
-# Nginx config
+# Supervisor config
+RUN echo '[supervisord]\nnodaemon=true\n\n\
+[program:php-fpm]\ncommand=php-fpm\nautostart=true\nautorestart=true\n\n\
+[program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true\n' \
+    > /etc/supervisor/conf.d/supervisord.conf
+
+
 RUN echo 'server { \n\
     listen ${PORT:-8080}; \n\
     root /app/public; \n\
     index index.php; \n\
     client_max_body_size 64M; \n\
+    location /storage/ { \n\
+        alias /app/storage/app/public/; \n\
+        add_header Cache-Control "public, max-age=2592000"; \n\
+        expires 30d; \n\
+        access_log off; \n\
+        try_files $uri $uri/ =404; \n\
+    } \n\
     location / { try_files $uri $uri/ /index.php?$query_string; } \n\
     location ~ \.php$ { \n\
         fastcgi_pass 127.0.0.1:9000; \n\
@@ -33,12 +46,6 @@ RUN echo 'server { \n\
     } \n\
     location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { expires 30d; add_header Cache-Control "public"; } \n\
 }' > /etc/nginx/sites-available/default
-
-# Supervisor config
-RUN echo '[supervisord]\nnodaemon=true\n\n\
-[program:php-fpm]\ncommand=php-fpm\nautostart=true\nautorestart=true\n\n\
-[program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true\n' \
-    > /etc/supervisor/conf.d/supervisord.conf
 
 RUN mkdir -p storage/app/public/posts \
     && mkdir -p storage/app/public/books \
