@@ -232,6 +232,73 @@
     100% { transform: translateX(250%); }
 }
 
+/* ── SLOW LOADING ACTIONS (7+ SONIYA) ─────────────────────────────────────── */
+.site-boot-loader__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: loaderActionsFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes loaderActionsFade {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.site-boot-loader__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: none;
+    outline: none;
+    white-space: nowrap;
+}
+
+.site-boot-loader__btn--reload {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.site-boot-loader__btn--reload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    color: #ffffff !important;
+}
+
+.site-boot-loader__btn--home {
+    background: rgba(255, 255, 255, 0.85);
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='dark'] .site-boot-loader__btn--home {
+    background: rgba(30, 41, 59, 0.85);
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.site-boot-loader__btn--home:hover {
+    transform: translateY(-2px);
+    color: var(--loader-accent, #14b8a6) !important;
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .site-boot-loader__visual {
@@ -251,5 +318,16 @@
     }
     .site-boot-loader__bar {
         width: 160px;
+    }
+    .site-boot-loader__actions {
+        flex-direction: column;
+        width: 100%;
+        max-width: 220px;
+        gap: 8px;
+    }
+    .site-boot-loader__btn {
+        width: 100%;
+        padding: 9px 14px;
+        font-size: 12px;
     }
 }

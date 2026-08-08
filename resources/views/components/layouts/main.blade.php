@@ -133,9 +133,17 @@
           </div>
         </div>
         <div class="site-boot-loader__info">
-          <p class="site-boot-loader__hint">Tizim tayyorlanmoqda...</p>
+          <p class="site-boot-loader__hint" id="site-boot-loader-hint">Tizim tayyorlanmoqda...</p>
           <div class="site-boot-loader__bar">
             <div class="site-boot-loader__bar-fill"></div>
+          </div>
+          <div class="site-boot-loader__actions" id="site-boot-loader-actions" style="display: none;">
+            <button type="button" class="site-boot-loader__btn site-boot-loader__btn--reload" onclick="window.location.reload()">
+              <i class="fa-solid fa-rotate-right"></i> Sahifani yangilash
+            </button>
+            <a href="{{ route('home') }}" class="site-boot-loader__btn site-boot-loader__btn--home">
+              <i class="fa-solid fa-house"></i> Bosh sahifa
+            </a>
           </div>
         </div>
       </div>
@@ -1013,13 +1021,21 @@
         var loader = document.getElementById('site-boot-loader');
         if (!loader) return;
         var isDonorUser = document.body.getAttribute('data-donor-theme') !== '';
-        var safetyTimer = null;
+        var slowTimer = null;
+
+        function resetSlowState() {
+          if (slowTimer) {
+            clearTimeout(slowTimer);
+            slowTimer = null;
+          }
+          var hint = document.getElementById('site-boot-loader-hint');
+          var actions = document.getElementById('site-boot-loader-actions');
+          if (hint) hint.innerText = "Tizim tayyorlanmoqda...";
+          if (actions) actions.style.display = 'none';
+        }
 
         function hideFullScreenLoader() {
-          if (safetyTimer) {
-            clearTimeout(safetyTimer);
-            safetyTimer = null;
-          }
+          resetSlowState();
           loader.classList.add('site-boot-loader--done');
           document.body.classList.remove('site-boot-loading');
           loader.setAttribute('aria-busy', 'false');
@@ -1030,6 +1046,7 @@
 
         function showFullScreenLoader() {
           if (isDonorUser) return;
+          resetSlowState();
           loader.classList.remove('site-boot-loader--done');
           document.body.classList.add('site-boot-loading');
           loader.setAttribute('aria-busy', 'true');
@@ -1037,12 +1054,14 @@
             document.body.appendChild(loader);
           }
 
-          // Safety auto-hide timer: automatically hide loader after 4 seconds
-          // so the user NEVER gets stuck if navigation is canceled, slow, or fails
-          if (safetyTimer) clearTimeout(safetyTimer);
-          safetyTimer = setTimeout(function() {
-            hideFullScreenLoader();
-          }, 4000);
+          // 7 soniyadan keyin agar sahifa hali yuklanmagan bo'lsa:
+          // yangilash va bosh sahifaga o'tish tugmalarini ko'rsatish
+          slowTimer = setTimeout(function() {
+            var hint = document.getElementById('site-boot-loader-hint');
+            var actions = document.getElementById('site-boot-loader-actions');
+            if (hint) hint.innerText = "Yuklanish odatdagidan sekinroq kechmoqda...";
+            if (actions) actions.style.display = 'flex';
+          }, 7000);
         }
 
         window.showFullScreenLoader = showFullScreenLoader;
