@@ -81,6 +81,8 @@
       'hint' => $user->isDonor() && $user->donation_rank_expires_at
         ? __('profile.facts.donor_rank.hint_expires', ['time' => $user->formatRemainingTime()])
         : __('profile.facts.donor_rank.hint_none'),
+      'donor_countdown' => $user->isDonor() && $user->donation_rank_expires_at,
+      'donor_expires_at' => $user->donation_rank_expires_at?->toIso8601String(),
     ],
   ];
 
@@ -276,7 +278,13 @@
                     <span class="profile-fact-label">{{ $fact['label'] }}</span>
                     <strong class="profile-fact-value" @if($fact['track_email'] ?? false) data-profile-user-email
                       @endif>{!! $fact['value'] !!}</strong>
-                    <span class="profile-fact-hint">{{ $fact['hint'] }}</span>
+                    <span class="profile-fact-hint"
+                      @if($fact['donor_countdown'] ?? false)
+                        id="donor-expiry-text"
+                        data-donor-expires-at="{{ $fact['donor_expires_at'] }}"
+                        data-donor-expired-text="{{ __('profile.facts.donor_rank.hint_expired') }}"
+                      @endif
+                    >{{ $fact['hint'] }}</span>
                   </div>
                 @endforeach
               </div>
@@ -778,6 +786,9 @@
 
   @push('page_scripts')
     <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v=2025062802"></script>
+    @if($user->isDonor() && $user->donation_rank_expires_at)
+      <script src="{{ app_public_asset('temp/js/donor-countdown.js') }}?v={{ app_asset_version('temp/js/donor-countdown.js') }}"></script>
+    @endif
     <script>
     window.submitCourseRequest = function(btn) {
       if (!btn || btn.disabled) return;

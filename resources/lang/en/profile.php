@@ -233,6 +233,7 @@ return [
             'value_none' => 'None',
             'hint_none' => 'Become a donor to get benefits',
             'hint_expires' => 'Expires: :time',
+            'hint_expired' => 'Expired',
         ],
     ],
     'main_card' => [

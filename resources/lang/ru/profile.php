@@ -227,6 +227,7 @@ return array_replace_recursive($fallback, [
             'value_none' => 'Нет',
             'hint_none' => 'Станьте донором и получите привилегии',
             'hint_expires' => 'Истекает: :time',
+            'hint_expired' => 'Срок истёк',
         ],
     ],
     'main_card' => [

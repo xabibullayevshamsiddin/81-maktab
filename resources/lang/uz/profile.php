@@ -54,6 +54,7 @@ return [
             'value_none' => 'Mavjud emas',
             'hint_none' => 'Donor bo\'lish orqali imtiyozlarga ega bo\'ling',
             'hint_expires' => 'Tugash vaqti: :time',
+            'hint_expired' => 'Muddati tugagan',
         ],
     ],
     'main_card' => [
