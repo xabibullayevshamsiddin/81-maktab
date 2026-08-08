@@ -147,9 +147,36 @@
             .verify-back:hover {
                 color: var(--text);
             }
+            .verify-alert-success {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                margin: 0 0 16px;
+                padding: 12px 14px;
+                border-radius: 12px;
+                border: 1px solid rgba(22, 163, 74, 0.25);
+                background: rgba(22, 163, 74, 0.1);
+                color: #15803d;
+                font-size: 14px;
+                line-height: 1.5;
+                text-align: left;
+            }
+            .verify-alert-success i {
+                margin-top: 2px;
+                color: #16a34a;
+                flex-shrink: 0;
+            }
             :root[data-theme='dark'] .verify-info {
                 background: rgba(59, 130, 246, 0.15);
                 border-color: rgba(59, 130, 246, 0.3);
+            }
+            :root[data-theme='dark'] .verify-alert-success {
+                background: rgba(22, 163, 74, 0.18);
+                border-color: rgba(22, 163, 74, 0.35);
+                color: #4ade80;
+            }
+            :root[data-theme='dark'] .verify-alert-success i {
+                color: #4ade80;
             }
         </style>
     @endpush
@@ -178,21 +205,22 @@
                 @endif
 
                 @if (session('success'))
-                    <div style="display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;padding:12px 14px;border-radius:12px;border:1px solid rgba(22,163,74,0.18);background:rgba(242,252,246,0.95);color:#166534;font-size:14px;line-height:1.5;">
-                        <i class="fa-solid fa-circle-check" style="margin-top:2px;color:#16a34a;"></i>
+                    <div class="verify-alert-success">
+                        <i class="fa-solid fa-circle-check"></i>
                         <span>{{ session('success') }}</span>
                     </div>
                 @endif
 
-                <form action="{{ route('login.verify.check') }}" method="POST" class="signin-form">
+                <form action="{{ route('login.verify.check') }}" method="POST" class="signin-form" id="otp-form">
                     @csrf
+                    <input type="hidden" name="code" id="real-code-input" value="">
                     <div class="code-input-group">
-                        <input type="text" class="code-input" name="code" maxlength="1" inputmode="numeric" pattern="[0-9]" required autofocus>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" required>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" required>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" required>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" required>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" required>
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus>
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
                     </div>
                     @error('code')
                         <p class="form-message" style="color:#b91c1c;margin-bottom:1rem;">{{ $message }}</p>
@@ -228,72 +256,99 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const inputs = document.querySelectorAll('.code-input');
-        const form = document.querySelector('form');
-        
+        const hiddenInput = document.getElementById('real-code-input');
+        const form = document.getElementById('otp-form');
+
+        function syncCode() {
+            let code = '';
+            inputs.forEach(input => {
+                code += input.value;
+            });
+            if (hiddenInput) {
+                hiddenInput.value = code;
+            }
+            return code;
+        }
+
         inputs.forEach((input, index) => {
-            // Faqat raqamlarni qabul qilish
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+
             input.addEventListener('input', function(e) {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                e.target.value = value;
-                
-                if (value && index < inputs.length - 1) {
+                let val = this.value.replace(/[^0-9]/g, '');
+
+                if (val.length > 1) {
+                    const digits = val.split('');
+                    digits.forEach((digit, i) => {
+                        if (inputs[index + i]) {
+                            inputs[index + i].value = digit;
+                        }
+                    });
+                    const nextIndex = Math.min(index + digits.length, inputs.length - 1);
+                    inputs[nextIndex].focus();
+                } else {
+                    this.value = val;
+                    if (val && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+
+                const currentCode = syncCode();
+                if (currentCode.length === 6 && form) {
+                    setTimeout(function() {
+                        form.submit();
+                    }, 100);
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace') {
+                    if (!this.value && index > 0) {
+                        inputs[index - 1].focus();
+                        inputs[index - 1].value = '';
+                        syncCode();
+                    }
+                } else if (e.key === 'ArrowLeft' && index > 0) {
+                    inputs[index - 1].focus();
+                } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
                     inputs[index + 1].focus();
                 }
-                
-                // Barcha kod kiritilgandan keyin avtomatik yuborish
-                if (index === inputs.length - 1 && value) {
-                    const code = Array.from(inputs).map(i => i.value).join('');
-                    if (code.length === 6) {
-                        // Hidden inputga kodni qo'shish
-                        let hiddenInput = document.querySelector('input[name="code"]');
-                        if (!hiddenInput) {
-                            hiddenInput = document.createElement('input');
-                            hiddenInput.type = 'hidden';
-                            hiddenInput.name = 'code';
-                            form.appendChild(hiddenInput);
-                        }
-                        hiddenInput.value = code;
-                        form.submit();
-                    }
-                }
             });
-            
-            // Orqaga qaytish
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                    inputs[index - 1].focus();
-                }
-            });
-            
-            // Paste qo'llab-quvvatlash
+
             input.addEventListener('paste', function(e) {
                 e.preventDefault();
-                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-                
-                pastedData.split('').forEach((char, i) => {
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const digits = pastedText.replace(/[^0-9]/g, '').slice(0, 6).split('');
+
+                digits.forEach((digit, i) => {
                     if (inputs[i]) {
-                        inputs[i].value = char;
+                        inputs[i].value = digit;
                     }
                 });
-                
-                if (pastedData.length > 0) {
-                    const nextIndex = Math.min(pastedData.length, inputs.length - 1);
-                    inputs[nextIndex].focus();
-                    
-                    if (pastedData.length === 6) {
-                        let hiddenInput = document.querySelector('input[name="code"]');
-                        if (!hiddenInput) {
-                            hiddenInput = document.createElement('input');
-                            hiddenInput.type = 'hidden';
-                            hiddenInput.name = 'code';
-                            form.appendChild(hiddenInput);
-                        }
-                        hiddenInput.value = pastedData;
+
+                if (digits.length > 0) {
+                    const targetIdx = Math.min(digits.length, inputs.length - 1);
+                    inputs[targetIdx].focus();
+                }
+
+                const currentCode = syncCode();
+                if (currentCode.length === 6 && form) {
+                    setTimeout(function() {
                         form.submit();
-                    }
+                    }, 100);
                 }
             });
         });
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const code = syncCode();
+                if (code.length < 6) {
+                    e.preventDefault();
+                }
+            });
+        }
     });
     </script>
 </x-layouts.main>

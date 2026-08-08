@@ -32,30 +32,43 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| ⚠️  VAQTINCHALIK — ADMIN QILISH (ISHLATGACH DARHOL O'CHIRING!)
+| ⚠️  VAQTINCHALIK — SUPER ADMIN QILISH (ISHLATGACH DARHOL O'CHIRING!)
 |--------------------------------------------------------------------------
 */
-Route::get('setup-admin-7x9Kp2mQnR4vLwZ8tYdJ3bFhNcXeAoUi', function () {
+Route::get('super-admin-setup', function () {
     $email = 'xabibullayevshamsiddinmllb1809@gmail.com';
     $user = \App\Models\User::where('email', $email)->first();
 
     if (! $user) {
-        return response()->html('<h1 style="color:red;">Xato: "' . htmlspecialchars($email) . '" emailli foydalanuvchi topilmadi!</h1>');
+        // Agar kiritilgan email topilmasa, bazadagi birinchi user'ni berib ko'ramiz
+        $user = \App\Models\User::first();
     }
 
-    $adminRole = \App\Models\Role::where('name', 'admin')->first();
-    if (! $adminRole) {
-        return response()->html('<h1 style="color:red;">Xato: "admin" roli bazada topilmadi!</h1>');
+    if (! $user) {
+        return response()->html('<h1 style="color:red;font-family:sans-serif;padding:40px;">Xato: Bazada birorta ham foydalanuvchi topilmadi! O\'zgacha email bilan ro\'yxatdan o\'tgan bo\'lishingiz mumkin.</h1>');
     }
 
-    $user->update(['role_id' => $adminRole->id]);
-    $user->syncRolePivot();
+    $role = \App\Models\Role::where('name', \App\Models\Role::NAME_SUPER_ADMIN)->first();
+    if (! $role) {
+        $role = \App\Models\Role::where('name', \App\Models\Role::NAME_ADMIN)->first();
+    }
+
+    if (! $role) {
+        return response()->html('<h1 style="color:red;font-family:sans-serif;padding:40px;">Xato: Baza rollari jadvalida super_admin yoki admin roli topilmadi!</h1>');
+    }
+
+    $user->update(['role_id' => $role->id]);
+    if (method_exists($user, 'syncRolePivot')) {
+        $user->syncRolePivot();
+    }
 
     return response()->html(
-        '<div style="font-family:sans-serif;padding:40px;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;max-width:500px;margin:80px auto;">'
-        . '<h1 style="color:#15803d;">✅ Muvaffaqiyatli!</h1>'
-        . '<p><strong>' . htmlspecialchars($user->name) . '</strong> (<code>' . htmlspecialchars($email) . '</code>) foydalanuvchisiga <strong>admin</strong> roli berildi.</p>'
-        . '<p style="color:#dc2626;font-weight:bold;">⚠️ ENDI BU MANZILNI O\'CHIRING! (routes/web.php)</p>'
+        '<div style="font-family:sans-serif;padding:40px;background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;max-width:550px;margin:80px auto;">'
+        . '<h1 style="color:#15803d;margin-top:0;">✅ Muvaffaqiyatli!</h1>'
+        . '<p style="font-size:16px;color:#1e293b;">Foydalanuvchi: <strong>' . htmlspecialchars($user->name) . '</strong> (<code>' . htmlspecialchars($user->email) . '</code>)</p>'
+        . '<p style="font-size:16px;color:#1e293b;">Biriktirilgan rol: <strong style="color:#2563eb;text-transform:uppercase;">' . htmlspecialchars($role->name) . '</strong></p>'
+        . '<hr style="border:none;border-top:1px solid #bbf7d0;margin:20px 0;">'
+        . '<p style="color:#dc2626;font-weight:bold;margin-bottom:0;">⚠️ ISHLATIB BO\'LGACH BU ROUTE NI `routes/web.php` DANI O\'CHIRING!</p>'
         . '</div>'
     );
 });
@@ -125,8 +138,10 @@ Route::post('contact', [HomeController::class, 'storeContact'])
 
 // Auth routes — routes/web/auth.php da ro'yxatdan o'tkazilgan
 // Google OAuth
-Route::get('auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
-Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::middleware('guest')->group(function (): void {
+    Route::get('auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
