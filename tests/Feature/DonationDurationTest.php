@@ -177,4 +177,96 @@ class DonationDurationTest extends TestCase
         $daysDiff = $initialTime->diffInDays($user->donation_rank_expires_at);
         $this->assertEqualsWithDelta(30, $daysDiff, 2);
     }
+
+    /**
+     * Test: Muddati tugagan donor — effectiveTheme null qaytarishi kerak
+     */
+    public function test_expired_donor_effective_theme_returns_null(): void
+    {
+        $user = $this->createUserWithRole();
+
+        $user->activateDonationRank(Donation::RANK_VIP, 75000, 'manual', null, 30);
+        $user->refresh();
+        $this->assertNotNull($user->effectiveTheme());
+
+        // 31 kun o'tdi — muddat tugadi
+        $this->travel(31)->days();
+
+        // Yangi instance olish kerak (cache tozalanishi uchun)
+        $expiredUser = User::find($user->id);
+        $this->assertFalse($expiredUser->isDonor());
+        $this->assertNull($expiredUser->effectiveTheme());
+    }
+
+    /**
+     * Test: Muddati tugagan donor — donorBadgeHtml bo'sh qaytarishi kerak
+     */
+    public function test_expired_donor_badge_html_returns_empty(): void
+    {
+        $user = $this->createUserWithRole();
+
+        $user->activateDonationRank(Donation::RANK_VIP, 75000, 'manual', null, 30);
+        $user->refresh();
+        $this->assertNotEmpty($user->donorBadgeHtml());
+
+        // 31 kun o'tdi — muddat tugadi
+        $this->travel(31)->days();
+
+        $expiredUser = User::find($user->id);
+        $this->assertEmpty($expiredUser->donorBadgeHtml());
+    }
+
+    /**
+     * Test: Muddati tugagan donor — donorCommentColor null qaytarishi kerak
+     */
+    public function test_expired_donor_comment_color_returns_null(): void
+    {
+        $user = $this->createUserWithRole();
+
+        $user->activateDonationRank(Donation::RANK_VIP, 75000, 'manual', null, 30);
+        $user->refresh();
+        $this->assertNotNull($user->donorCommentColor());
+
+        // 31 kun o'tdi — muddat tugadi
+        $this->travel(31)->days();
+
+        $expiredUser = User::find($user->id);
+        $this->assertNull($expiredUser->donorCommentColor());
+    }
+
+    /**
+     * Test: Muddati tugagan donor — donorUsernameColor null qaytarishi kerak
+     */
+    public function test_expired_donor_username_color_returns_null(): void
+    {
+        $user = $this->createUserWithRole();
+
+        $user->activateDonationRank(Donation::RANK_VIP, 75000, 'manual', null, 30);
+        $user->refresh();
+        $this->assertNotNull($user->donorUsernameColor());
+
+        // 31 kun o'tdi — muddat tugadi
+        $this->travel(31)->days();
+
+        $expiredUser = User::find($user->id);
+        $this->assertNull($expiredUser->donorUsernameColor());
+    }
+
+    /**
+     * Test: Muddati tugagan donor — donorThemeClass bo'sh qaytarishi kerak
+     */
+    public function test_expired_donor_theme_class_returns_empty(): void
+    {
+        $user = $this->createUserWithRole();
+
+        $user->activateDonationRank(Donation::RANK_VIP, 75000, 'manual', null, 30);
+        $user->refresh();
+        $this->assertNotEmpty($user->donorThemeClass());
+
+        // 31 kun o'tdi — muddat tugadi
+        $this->travel(31)->days();
+
+        $expiredUser = User::find($user->id);
+        $this->assertEmpty($expiredUser->donorThemeClass());
+    }
 }

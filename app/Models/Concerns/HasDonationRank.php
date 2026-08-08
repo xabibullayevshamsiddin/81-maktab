@@ -80,6 +80,11 @@ trait HasDonationRank
     public function effectiveTheme(): ?string
     {
         if (!array_key_exists('effectiveTheme', $this->_donorCache)) {
+            if (!$this->isDonor()) {
+                $this->_donorCache['effectiveTheme'] = null;
+                return $this->_donorCache['effectiveTheme'];
+            }
+
             $theme = $this->profile_theme ?: $this->donation_rank;
             if ($theme && Donation::themeAllowedForUser($theme, $this)) {
                 $this->_donorCache['effectiveTheme'] = $theme;
@@ -103,6 +108,10 @@ trait HasDonationRank
         $cacheKey = 'donorBadgeHtml_' . ($locked ? '1' : '0');
         if (array_key_exists($cacheKey, $this->_donorCache)) {
             return $this->_donorCache[$cacheKey];
+        }
+
+        if (!$locked && !$this->isDonor()) {
+            return $this->_donorCache[$cacheKey] = "";
         }
 
         $theme = $this->effectiveTheme() ?? $this->donation_rank;
@@ -146,14 +155,18 @@ trait HasDonationRank
     public function donorCommentColor(): ?string
     {
         if (!array_key_exists('donorCommentColor', $this->_donorCache)) {
-            $theme = $this->effectiveTheme();
-            if (!$theme) {
+            if (!$this->isDonor()) {
                 $this->_donorCache['donorCommentColor'] = null;
             } else {
-                $cfg = Donation::themeConfig($theme);
-                $this->_donorCache['donorCommentColor'] = $cfg
-                    ? ($cfg["badge_color"] ?? null)
-                    : (Donation::configForRank($this->donation_rank)["comment_color"] ?? null);
+                $theme = $this->effectiveTheme();
+                if (!$theme) {
+                    $this->_donorCache['donorCommentColor'] = null;
+                } else {
+                    $cfg = Donation::themeConfig($theme);
+                    $this->_donorCache['donorCommentColor'] = $cfg
+                        ? ($cfg["badge_color"] ?? null)
+                        : (Donation::configForRank($this->donation_rank)["comment_color"] ?? null);
+                }
             }
         }
         return $this->_donorCache['donorCommentColor'];
