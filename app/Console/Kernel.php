@@ -20,6 +20,9 @@ class Kernel extends ConsoleKernel
         // Muddati tugagan bloklangan foydalanuvchilarni avtomatik ochish — har 5 daqiqada
         $schedule->command('users:unblock-expired')->everyFiveMinutes();
 
+        // Muddati tugagan donorlarni oddiy foydalanuvchiga tushirish — har daqiqada
+        $schedule->command('donations:expire')->everyMinute();
+
         // Telegram getUpdates polling — faqat local environment'da (webhook bilan to'qnashmaslik uchun)
         if (app()->environment('local')) {
             $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();

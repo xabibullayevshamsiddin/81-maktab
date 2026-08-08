@@ -1,6 +1,6 @@
 /**
  * Donor expiry countdown — real vaqtda yangilanadi.
- * Har daqiqada qoldiq vaqtni kamaytiradi, muddati tugasa "Muddati tugagan" deb ko'rsatadi.
+ * Har daqiqada qoldiq vaqtni kamaytiradi, muddati tugasa sahifani qayta yuklaydi.
  */
 (function () {
   const el = document.getElementById('donor-expiry-text');
@@ -8,6 +8,7 @@
 
   const expiresAt = new Date(el.dataset.donorExpiresAt).getTime();
   const expiredText = el.dataset.donorExpiredText || 'Muddati tugagan';
+  let hasReloaded = false;
 
   function formatRemaining(ms) {
     if (ms <= 0) return expiredText;
@@ -29,8 +30,13 @@
     const remaining = expiresAt - Date.now();
     el.textContent = formatRemaining(remaining);
 
-    if (remaining <= 0) {
+    if (remaining <= 0 && !hasReloaded) {
+      hasReloaded = true;
       clearInterval(timer);
+      // 3 soniya kutib, sahifani qayta yuklaydi (backend tizimni tushiradi)
+      setTimeout(function () {
+        window.location.reload();
+      }, 3000);
     }
   }
 
