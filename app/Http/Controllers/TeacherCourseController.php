@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use App\Http\Requests\RequestCourseOpenAccessRequest;
 use App\Models\Course;
 use App\Models\Teacher;
@@ -94,6 +95,7 @@ class TeacherCourseController extends Controller
         ];
 
         if ($request->hasFile('image')) {
+            StorageHelper::ensureStoragePath('courses');
             $payload['image'] = $request->file('image')->store('courses', 'public');
         }
 
@@ -239,6 +241,7 @@ class TeacherCourseController extends Controller
             if (! empty($course->image)) {
                 Storage::disk('public')->delete($course->image);
             }
+            StorageHelper::ensureStoragePath('courses');
             $payload['image'] = $request->file('image')->store('courses', 'public');
         }
 

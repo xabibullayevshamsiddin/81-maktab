@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +76,7 @@ class TeacherController extends Controller
         if (! $request->hasFile('image')) {
             unset($validated['image']);
         } else {
+            StorageHelper::ensureStoragePath('teachers');
             $validated['image'] = $request->file('image')->store('teachers', 'public');
         }
 
@@ -130,6 +132,7 @@ class TeacherController extends Controller
             if (! empty($teacher->image)) {
                 Storage::disk('public')->delete($teacher->image);
             }
+            StorageHelper::ensureStoragePath('teachers');
             $validated['image'] = $request->file('image')->store('teachers', 'public');
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use App\Models\Book;
 use App\Models\BookCategory;
 use Illuminate\Http\Request;
@@ -57,12 +58,14 @@ class AdminBookController extends Controller
             'cover_image'      => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
+        StorageHelper::ensureStoragePath('books');
         $file = $request->file('pdf_file');
         $path = $file->store('books', 'public');
         $validated['file_path'] = $path;
         $validated['file_size'] = $file->getSize();
 
         if ($request->hasFile('cover_image')) {
+            StorageHelper::ensureStoragePath('books/covers');
             $validated['cover_image'] = $request->file('cover_image')->store('books/covers', 'public');
         }
 
@@ -102,12 +105,14 @@ class AdminBookController extends Controller
         if ($request->hasFile('pdf_file')) {
             Storage::disk('public')->delete($book->file_path);
             $file = $request->file('pdf_file');
+            StorageHelper::ensureStoragePath('books');
             $validated['file_path'] = $file->store('books', 'public');
             $validated['file_size'] = $file->getSize();
         }
 
         if ($request->hasFile('cover_image')) {
             if ($book->cover_image) Storage::disk('public')->delete($book->cover_image);
+            StorageHelper::ensureStoragePath('books/covers');
             $validated['cover_image'] = $request->file('cover_image')->store('books/covers', 'public');
         }
 

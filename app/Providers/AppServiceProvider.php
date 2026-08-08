@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\StorageHelper;
 use App\Services\ImageService;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\SEOMeta;
@@ -22,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        StorageHelper::ensureDirectories();
         $this->forceLocalPublicRootUrl();
         $this->applyRuntimeMailConfiguration();
 

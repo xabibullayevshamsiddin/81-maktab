@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Post;
+use App\Helpers\StorageHelper;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -82,6 +83,7 @@ class PostController extends Controller
             ),
         ]);
 
+        StorageHelper::ensureStoragePath('posts');
         $validated['image'] = $request->file('image')->store('posts', 'public');
         $validated['slug'] = $this->makeUniqueSlug($validated['title']);
         $validated['video_url'] = $this->normalizeVideoUrl($request->input('video_url'));
@@ -89,6 +91,7 @@ class PostController extends Controller
 
         $validated['video_path'] = null;
         if ($request->hasFile('video_file')) {
+            StorageHelper::ensureStoragePath('posts/videos');
             $validated['video_path'] = $request->file('video_file')->store('posts/videos', 'public');
         }
 
@@ -147,6 +150,7 @@ class PostController extends Controller
                 Storage::disk('public')->delete($post->image);
             }
 
+            StorageHelper::ensureStoragePath('posts');
             $validated['image'] = $request->file('image')->store('posts', 'public');
         }
 
@@ -168,6 +172,7 @@ class PostController extends Controller
             if (! empty($post->video_path)) {
                 Storage::disk('public')->delete($post->video_path);
             }
+            StorageHelper::ensureStoragePath('posts/videos');
             $validated['video_path'] = $request->file('video_file')->store('posts/videos', 'public');
         }
 

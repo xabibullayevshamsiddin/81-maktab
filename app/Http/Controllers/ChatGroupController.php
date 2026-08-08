@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use App\Models\ChatGroup;
 use App\Models\ChatGroupJoinRequest;
 use App\Models\ChatGroupMember;
@@ -178,6 +179,7 @@ class ChatGroupController extends Controller
             Storage::disk('public')->delete($group->image);
         }
 
+        StorageHelper::ensureStoragePath('chat-groups');
         $path = $request->file('image')->store('chat-groups', 'public');
         $group->image = $path;
         $group->save();

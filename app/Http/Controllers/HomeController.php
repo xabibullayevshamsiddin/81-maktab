@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\Bookmark;
 use App\Models\ContactMessage;
@@ -224,6 +225,7 @@ class HomeController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
+            StorageHelper::ensureStoragePath('contacts');
             $imagePath = $request->file('image')->store('contacts', 'public');
         }
 
