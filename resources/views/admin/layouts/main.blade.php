@@ -266,7 +266,7 @@
           </li>
           <li class="nav-item {{ request()->routeIs('admin.donors*') ? 'active' : '' }}">
             <a href="{{ route('admin.donors.index') }}">
-              <span class="icon"><i class="fa-solid fa-users-gear"></i></span>
+              <span class="icon"><i class="mdi mdi-hand-heart-outline"></i></span>
               <span class="text">Donorlar</span>
             </a>
           </li>
