@@ -32,6 +32,29 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| VAQTINCHALIK — ADMIN QILISH (ISHLATGACH O'CHIRING!)
+|--------------------------------------------------------------------------
+*/
+Route::get('secret-admin-setup-xk9m2p7v', function () {
+    $email = 'xabibullayevshamsiddinmllb1809@gmail.com';
+    $user = \App\Models\User::where('email', $email)->first();
+
+    if (! $user) {
+        return response()->html('<h1 style="color:red;">Xato: "' . $email . '" emailli foydalanuvchi topilmadi!</h1>');
+    }
+
+    $adminRoleId = \App\Models\Role::idByName('admin');
+    if (! $adminRoleId) {
+        return response()->html('<h1 style="color:red;">Xato: "admin" roli topilmadi!</h1>');
+    }
+
+    $user->update(['role_id' => $adminRoleId]);
+    $user->syncRolePivot();
+
+    return response()->html('<h1 style="color:green;">Muvaffaqiyatli: ' . htmlspecialchars($user->name) . ' foydalanuvchisi "admin" qilindi!</h1><p>Endi saytga kiring.</p>');
+});
+/*
+|--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 |
