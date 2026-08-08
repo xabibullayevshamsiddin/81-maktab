@@ -1873,10 +1873,20 @@
             <div class="grade-lock-modal__select-shell">
               <select id="locked-grade-select" name="grade" required autofocus>
                 <option value="">Sinfni tanlang</option>
+                @php
+                  $fullGradesModal = full_school_grade_names();
+                @endphp
                 @foreach ($gradeSelectionGroups as $groupLabel => $options)
                   <optgroup label="{{ $groupLabel }}">
                     @foreach ($options as $value => $label)
-                      <option value="{{ $value }}" @selected(old('grade') === $value)>{{ $label }}</option>
+                      @php
+                        $isFull = in_array($value, $fullGradesModal, true);
+                      @endphp
+                      <option value="{{ $value }}"
+                              @disabled($isFull)
+                              @selected(old('grade') === $value)>
+                        {{ $label }} {{ $isFull ? '🔒 (To\'liq)' : '' }}
+                      </option>
                     @endforeach
                   </optgroup>
                 @endforeach

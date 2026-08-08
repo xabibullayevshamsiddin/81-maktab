@@ -120,6 +120,9 @@
                     <i class="fa-solid fa-chevron-down reg-cs-arrow"></i>
                   </div>
                   <div class="reg-cs-dropdown" id="reg-cs-dropdown" role="listbox">
+                    @php
+                      $fullGrades = full_school_grade_names();
+                    @endphp
                     @foreach (school_grade_grouped_options() as $groupLabel => $options)
                       @php
                         $localizedGroupLabel = app()->getLocale() === 'en'
@@ -129,11 +132,21 @@
                       <div class="reg-cs-group">
                         <div class="reg-cs-group-label">{{ $localizedGroupLabel }}</div>
                         @foreach ($options as $value => $label)
-                          <div class="reg-cs-option {{ old('grade') === $value ? 'is-selected' : '' }}"
+                          @php
+                            $isFull = in_array($value, $fullGrades, true);
+                          @endphp
+                          <div class="reg-cs-option {{ old('grade') === $value ? 'is-selected' : '' }} {{ $isFull ? 'is-full' : '' }}"
                                role="option"
                                data-value="{{ $value }}"
+                               data-is-full="{{ $isFull ? '1' : '0' }}"
+                               aria-disabled="{{ $isFull ? 'true' : 'false' }}"
                                aria-selected="{{ old('grade') === $value ? 'true' : 'false' }}">
-                            {{ $label }}
+                            <span class="reg-cs-option-label">{{ $label }}</span>
+                            @if ($isFull)
+                              <span class="reg-cs-full-badge" title="Sinf to'liq (limitga yetgan)">
+                                <i class="fa-solid fa-lock"></i> {{ __('To\'liq') }}
+                              </span>
+                            @endif
                           </div>
                         @endforeach
                       </div>
@@ -174,7 +187,7 @@
                   allOpts.forEach(function(o) {
                     if (o.dataset.value === pre) {
                       o.classList.add('is-selected');
-                      valueEl.textContent = o.textContent.trim();
+                      valueEl.textContent = o.querySelector('.reg-cs-option-label') ? o.querySelector('.reg-cs-option-label').textContent.trim() : o.textContent.trim();
                       valueEl.classList.remove('is-placeholder');
                     }
                   });
@@ -183,10 +196,12 @@
                 }
 
                 function selectOption(el) {
+                  if (el.dataset.isFull === '1') return; // Locked / full class
                   allOpts.forEach(function(o) { o.classList.remove('is-selected'); o.setAttribute('aria-selected','false'); });
                   el.classList.add('is-selected');
                   el.setAttribute('aria-selected','true');
-                  valueEl.textContent = el.textContent.trim();
+                  var labelText = el.querySelector('.reg-cs-option-label') ? el.querySelector('.reg-cs-option-label').textContent.trim() : el.textContent.trim();
+                  valueEl.textContent = labelText;
                   valueEl.classList.remove('is-placeholder');
                   if (gradeHidden) gradeHidden.value = el.dataset.value;
                   closeDD();

@@ -41,12 +41,12 @@
       <div class="col-lg-5">
         <div class="card-style mb-30">
           <h6 class="mb-10">Yangi sinf qo'shish</h6>
-          <p class="text-sm mb-20">Masalan: `1-F`, `10-E`, `11-A`. O'chirilgan sinf qayta kiritilsa, u yana faollashadi.</p>
+          <p class="text-sm mb-20">Masalan: `1-F`, `10-E`, `11-A`. O'chirilgan sinf qayta kiritilsa, u yana faollashadi. Limit bo'sh qoldirilsa — cheksiz.</p>
 
           <form action="{{ route('admin.school-classes.store') }}" method="POST">
             @csrf
             <div class="row">
-              <div class="col-sm-5 mb-20">
+              <div class="col-sm-4 mb-20">
                 <label class="form-label">Sinf raqami</label>
                 <select name="grade_number" class="form-select" required>
                   @for ($grade = 1; $grade <= 11; $grade++)
@@ -54,9 +54,13 @@
                   @endfor
                 </select>
               </div>
-              <div class="col-sm-7 mb-20">
+              <div class="col-sm-4 mb-20">
                 <label class="form-label">Bo'lim harfi</label>
-                <input type="text" name="section" value="{{ old('section') }}" class="form-control" maxlength="10" placeholder="F" required>
+                <input type="text" name="section" value="{{ old('section') }}" class="form-control" maxlength="10" placeholder="A" required>
+              </div>
+              <div class="col-sm-4 mb-20">
+                <label class="form-label">Limit <span class="text-muted text-sm">(ixtiyoriy)</span></label>
+                <input type="number" name="max_students" value="{{ old('max_students') }}" class="form-control" min="1" max="9999" placeholder="∞">
               </div>
             </div>
             <button type="submit" class="main-btn primary-btn btn-hover">Sinfni saqlash</button>
@@ -104,7 +108,11 @@
       <div class="col-lg-7">
         <div class="card-style mb-30">
           <h6 class="mb-10">Faol va o'chirilgan sinflar</h6>
-          <p class="text-sm mb-20">Sinf o'chirilsa, unga ulangan o'quvchilar keyingi kirishda majburiy yangi sinf tanlaydi.</p>
+          <p class="text-sm mb-20">
+            Sinf o'chirilsa, unga ulangan o'quvchilar keyingi kirishda majburiy yangi sinf tanlaydi.
+            <strong>Limit</strong> ustuniga raqam kiritib <kbd>Enter</kbd> bosing — sinf uchun o'quvchi soni cheklanadi.
+            Bo'sh qoldirsangiz — cheksiz.
+          </p>
 
           @foreach ($classes as $gradeNumber => $gradeClasses)
             <div class="mb-25">
@@ -116,19 +124,61 @@
                       <th><h6>Sinf</h6></th>
                       <th><h6>Status</h6></th>
                       <th><h6>O'quvchi</h6></th>
+                      <th><h6>Limit</h6></th>
                       <th><h6>Amal</h6></th>
                     </tr>
                   </thead>
                   <tbody>
                     @foreach ($gradeClasses as $schoolClass)
-                      <tr>
+                      @php
+                        $count = $studentCounts[$schoolClass->display_name] ?? 0;
+                        $limit = $schoolClass->max_students;
+                        $isFull = $limit !== null && $count >= $limit;
+                      @endphp
+                      <tr @class(['table-danger' => $isFull])>
                         <td><p><strong>{{ $schoolClass->display_name }}</strong></p></td>
                         <td>
                           <span class="badge {{ $schoolClass->is_active ? 'bg-success' : 'bg-secondary' }}">
                             {{ $schoolClass->is_active ? 'Faol' : "O'chirilgan" }}
                           </span>
                         </td>
-                        <td><p>{{ $studentCounts[$schoolClass->display_name] ?? 0 }}</p></td>
+                        <td>
+                          <p>
+                            {{ $count }}
+                            @if ($limit !== null)
+                              / <span class="{{ $isFull ? 'text-danger fw-bold' : 'text-muted' }}">{{ $limit }}</span>
+                              @if ($isFull)
+                                <span class="badge bg-danger ms-1" title="To'liq">To'liq</span>
+                              @endif
+                            @endif
+                          </p>
+                        </td>
+                        <td>
+                          {{-- Inline capacity edit form --}}
+                          <form
+                            action="{{ route('admin.school-classes.update-capacity', $schoolClass) }}"
+                            method="POST"
+                            class="d-flex align-items-center gap-1"
+                            title="Limitni o'zgartirish"
+                          >
+                            @csrf
+                            @method('PATCH')
+                            <input
+                              type="number"
+                              name="max_students"
+                              value="{{ $limit ?? '' }}"
+                              min="1"
+                              max="9999"
+                              placeholder="∞"
+                              class="form-control form-control-sm"
+                              style="width:70px;"
+                              title="Bo'sh = cheksiz"
+                            >
+                            <button type="submit" class="main-btn primary-btn btn-hover btn-sm py-1 px-2" title="Saqlash">
+                              <i class="lni lni-save"></i>
+                            </button>
+                          </form>
+                        </td>
                         <td>
                           @if ($schoolClass->is_active)
                             <form action="{{ route('admin.school-classes.destroy', $schoolClass) }}" method="POST" data-confirm="{{ $schoolClass->display_name }} sinfini o'chirasizmi? Unga ulangan foydalanuvchilar sinfni qayta tanlashga majbur bo'ladi." data-confirm-title="Sinfni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">

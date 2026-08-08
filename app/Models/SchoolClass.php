@@ -17,13 +17,48 @@ class SchoolClass extends Model
         'name',
         'is_active',
         'sort_order',
+        'max_students',
     ];
 
     protected $casts = [
-        'grade_number' => 'integer',
-        'is_active' => 'boolean',
-        'sort_order' => 'integer',
+        'grade_number'  => 'integer',
+        'is_active'     => 'boolean',
+        'sort_order'    => 'integer',
+        'max_students'  => 'integer',
     ];
+
+    /**
+     * Current enrolled student count for this class.
+     * Counts non-parent users with role USER whose grade matches this class's display_name.
+     */
+    public function currentStudentCount(): int
+    {
+        return \App\Models\User::query()
+            ->where('grade', $this->display_name)
+            ->where('is_parent', false)
+            ->whereHas('roleRelation', fn ($q) => $q->where('name', \App\Models\User::ROLE_USER))
+            ->count();
+    }
+
+    /** Returns true when the class has a capacity limit and it is reached or exceeded. */
+    public function isFull(): bool
+    {
+        if ($this->max_students === null || $this->max_students <= 0) {
+            return false;
+        }
+
+        return $this->currentStudentCount() >= $this->max_students;
+    }
+
+    /** Remaining free slots, or null if unlimited. */
+    public function availableSlots(): ?int
+    {
+        if ($this->max_students === null || $this->max_students <= 0) {
+            return null;
+        }
+
+        return max(0, $this->max_students - $this->currentStudentCount());
+    }
 
     public function scopeActive(Builder $query): Builder
     {

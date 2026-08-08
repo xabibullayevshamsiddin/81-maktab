@@ -924,7 +924,7 @@ return [
         'facts_title' => 'Ma\'lumotlar',
         'facts_subtitle' => 'Sizning asosiy profil ma\'lumotlaringiz.',
         'help' => 'Yordam',
-        'help_text' => 'Ism va telefonni o\'ng tarafdagi forma orqali o\'zgartirishingiz mumkin.',
+        'help_text' => 'Ism va email o\'ng tarafdagi forma orqali o\'zgartirishingiz mumkin.',
         'exams_manage_title' => 'Imtihonlar boshqaruvi',
         'exams_manage_text' => 'Siz yaratgan imtihonlar va o\'quvchilar natijalarini boshqaring.',
         'panel_hint' => 'Profil endi engilroq ishlaydi: sozlamalar va xavfsizlik shu panelda, izohlar va kurslar esa alohida “Faollik” ichida ochiladi.',

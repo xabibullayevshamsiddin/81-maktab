@@ -924,7 +924,7 @@ return [
         'facts_title' => 'Details',
         'facts_subtitle' => 'Your main profile information.',
         'help' => 'Help',
-        'help_text' => 'You can change name and phone in the form on the right.',
+        'help_text' => 'You can change name and email in the form on the right.',
         'exams_manage_title' => 'Exam management',
         'exams_manage_text' => 'Manage exams you created and student results.',
         'panel_hint' => 'Settings and security are here; comments and courses open under Activity.',

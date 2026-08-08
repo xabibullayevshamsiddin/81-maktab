@@ -41,6 +41,7 @@ Route::middleware(['auth', 'active', 'role:super_admin,admin'])->group(function 
     Route::post('admin/school-classes', [AdminSchoolClassController::class, 'store'])->name('admin.school-classes.store');
     Route::delete('admin/school-classes/{schoolClass}', [AdminSchoolClassController::class, 'destroy'])->name('admin.school-classes.destroy');
     Route::post('admin/school-classes/promote', [AdminSchoolClassController::class, 'promote'])->name('admin.school-classes.promote');
+    Route::patch('admin/school-classes/{schoolClass}/capacity', [AdminSchoolClassController::class, 'updateCapacity'])->name('admin.school-classes.update-capacity');
 });
 
 Route::prefix('admin')->middleware(['auth', 'active', 'role:super_admin,admin,editor,moderator'])->group(function () {

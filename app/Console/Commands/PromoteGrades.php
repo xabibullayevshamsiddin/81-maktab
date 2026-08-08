@@ -48,11 +48,13 @@ class PromoteGrades extends Command
 
         $this->newLine();
         $this->info("{$fromYear}-{$toYear} o'quv yili promotion natijasi:");
-        $this->line("Jami ko'rilgan foydalanuvchilar: {$summary['total']}");
-        $this->line("Ko'tarildi: {$summary['promoted']}");
-        $this->line("Bitiruvchi -> ota-ona: {$summary['graduated']}");
-        $this->line("Majburiy sinf tanlashga yuborildi: {$summary['selection_required']}");
-        $this->line("O'tkazib yuborildi: {$summary['skipped']}");
+        $this->line("Ko'tarilgan sinflar: {$summary['promoted_classes']}");
+        $this->line("Bitiruvchi sinflar:  {$summary['graduated_classes']}");
+        $this->line("Yangi 1-sinf:        {$summary['new_first_grade_classes']}");
+        $this->line("Ko'tarilgan o'quvchilar: {$summary['promoted_students']}");
+        $this->line("Bitiruvchi o'quvchilar:  {$summary['graduated_students']}");
+        $this->line("Majburiy sinf tanlashga: {$summary['selection_required']}");
+        $this->line("O'tkazib yuborildi:      {$summary['skipped']}");
 
         if ($dryRun) {
             $this->warn('Bu DRY RUN edi — hech narsa saqlanmadi.');

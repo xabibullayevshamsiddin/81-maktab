@@ -3570,6 +3570,14 @@ function refreshChatAvailability() {
   }
 
   function initPrimeAudioControl() {
+    if (document.getElementById('chat-widget')) {
+      document.body.classList.add('has-chat-widget');
+    }
+    var aiW = document.getElementById('ai-widget');
+    if (aiW && !aiW.hidden && aiW.style.display !== 'none') {
+      document.body.classList.add('has-ai-widget');
+    }
+
     const toggle = document.createElement('div');
     toggle.className = 'prime-audio-toggle' + (primeAudioMuted ? ' is-muted' : '');
     toggle.id = 'prime-audio-control';

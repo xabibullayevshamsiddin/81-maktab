@@ -38,10 +38,10 @@ return [
 
         'public' => [
             'driver'     => env('PUBLIC_FILESYSTEM_DRIVER', env('AWS_BUCKET') ? 's3' : 'local'),
-            // Render da public/storage symlink ishonchsiz bo'lgani uchun
-            // to'g'ridan-to'g'ri storage/app/public papkasiga yozamiz.
-            // Nginx esa /storage/* URL so'rovlarini shu papkadan xizmat qiladi.
-            'root'       => env('AWS_BUCKET') ? '' : storage_path('app/public'),
+            // Local va Render uchun moslashuvchan:
+            // Agar public/storage oddiy papka bo'lsa (Local OSPanel), o'sha joyga yozadi.
+            // Agar Render muhiti bo'lsa (symlink bo'lmasa), storage/app/public ga yozadi.
+            'root'       => env('AWS_BUCKET') ? '' : (file_exists(public_path('storage')) && !is_link(public_path('storage')) ? public_path('storage') : storage_path('app/public')),
             'url'        => env('PUBLIC_FILESYSTEM_URL', env('AWS_URL') ?: (env('APP_URL') ? rtrim((string) env('APP_URL'), '/').'/storage' : null)),
             'visibility' => 'public',
             'key'        => env('AWS_ACCESS_KEY_ID'),

@@ -557,6 +557,45 @@ if (! function_exists('forget_school_grade_cache')) {
     {
         \Illuminate\Support\Facades\Cache::forget('school_classes.active_map.v1');
         \Illuminate\Support\Facades\Cache::forget('school_classes.active_names.v1');
+        \Illuminate\Support\Facades\Cache::forget('school_classes.full_names.v1');
+    }
+}
+
+if (! function_exists('full_school_grade_names')) {
+    function full_school_grade_names(): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('school_classes')) {
+            return [];
+        }
+
+        return \Illuminate\Support\Facades\Cache::remember('school_classes.full_names.v1', now()->addMinutes(5), function (): array {
+            $studentCounts = \App\Models\User::query()
+                ->selectRaw('grade, COUNT(*) as aggregate')
+                ->whereNotNull('grade')
+                ->where('grade', '!=', '')
+                ->where('is_parent', false)
+                ->whereHas('roleRelation', fn ($q) => $q->where('name', \App\Models\User::ROLE_USER))
+                ->groupBy('grade')
+                ->pluck('aggregate', 'grade')
+                ->all();
+
+            $fullClasses = [];
+            $classes = \App\Models\SchoolClass::query()
+                ->active()
+                ->whereNotNull('max_students')
+                ->where('max_students', '>', 0)
+                ->get();
+
+            foreach ($classes as $schoolClass) {
+                $name = $schoolClass->display_name;
+                $count = (int) ($studentCounts[$name] ?? 0);
+                if ($count >= (int) $schoolClass->max_students) {
+                    $fullClasses[] = $name;
+                }
+            }
+
+            return $fullClasses;
+        });
     }
 }
 

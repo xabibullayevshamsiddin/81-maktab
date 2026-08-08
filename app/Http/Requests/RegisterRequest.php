@@ -55,6 +55,24 @@ class RegisterRequest extends FormRequest
                     'Bu ism va familiya bilan foydalanuvchi allaqachon ro‘yxatdan o‘tgan. Boshqa ism yoki familiya kiriting.'
                 );
             }
+
+            $grade = $this->input('grade');
+            if ($grade && ! $this->input('is_parent')) {
+                if (preg_match('/^(\d{1,2})-([A-Z0-9]+)$/i', $grade, $m) === 1) {
+                    $schoolClass = \App\Models\SchoolClass::query()
+                        ->active()
+                        ->where('grade_number', (int) $m[1])
+                        ->where('section', strtoupper($m[2]))
+                        ->first();
+
+                    if ($schoolClass && $schoolClass->isFull()) {
+                        $v->errors()->add(
+                            'grade',
+                            "{$schoolClass->display_name} sinfi to'liq ({$schoolClass->max_students} ta limit). Boshqa sinf tanlang."
+                        );
+                    }
+                }
+            }
         });
     }
 

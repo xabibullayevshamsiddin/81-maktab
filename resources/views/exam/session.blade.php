@@ -258,26 +258,63 @@
         if (secureStack) secureStack.style.display = 'none';
       }
 
-      document.body.classList.add('exam-session-print-lock');
+      var finishConfirmModalEl = document.getElementById('exam-finish-confirm-modal');
 
-      function syncBodyLock() {
+      // Modallarni body ga to'g'ridan-to'g'ri ko'chirish (parent container transform lar ta'sir qilmasligi uchun)
+      if (focusGuard && focusGuard.parentNode !== document.body) {
+        document.body.appendChild(focusGuard);
+      }
+      if (modal && modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+      }
+      if (finishConfirmModalEl && finishConfirmModalEl.parentNode !== document.body) {
+        document.body.appendChild(finishConfirmModalEl);
+      }
+
+      function preventScrollHandler(e) {
+        var finishConfirmModal = document.getElementById('exam-finish-confirm-modal');
         var shouldLock = (modal && !modal.hidden)
           || (focusGuard && !focusGuard.hidden)
-          || (typeof finishConfirmModal !== 'undefined' && finishConfirmModal && !finishConfirmModal.hidden);
+          || (finishConfirmModal && !finishConfirmModal.hidden);
         if (shouldLock) {
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.position = 'fixed';
-          document.body.style.top = '-' + window.scrollY + 'px';
-          document.body.style.width = '100%';
+          if (e.target.closest('.exam-focus-guard-box, .exam-rule-modal-box, .exam-finish-confirm-box')) {
+            return;
+          }
+          e.preventDefault();
+        }
+      }
+
+      function preventKeyScrollHandler(e) {
+        var finishConfirmModal = document.getElementById('exam-finish-confirm-modal');
+        var shouldLock = (modal && !modal.hidden)
+          || (focusGuard && !focusGuard.hidden)
+          || (finishConfirmModal && !finishConfirmModal.hidden);
+        if (shouldLock) {
+          var keys = ['Space', 'PageUp', 'PageDown', 'End', 'Home', 'ArrowUp', 'ArrowDown'];
+          if (keys.indexOf(e.code) !== -1 || keys.indexOf(e.key) !== -1) {
+            e.preventDefault();
+          }
+        }
+      }
+
+      function syncBodyLock() {
+        var finishConfirmModal = document.getElementById('exam-finish-confirm-modal');
+        var shouldLock = (modal && !modal.hidden)
+          || (focusGuard && !focusGuard.hidden)
+          || (finishConfirmModal && !finishConfirmModal.hidden);
+
+        if (shouldLock) {
+          document.documentElement.classList.add('exam-modal-open-lock');
+          document.body.classList.add('exam-modal-open-lock');
+          window.addEventListener('wheel', preventScrollHandler, { passive: false });
+          window.addEventListener('touchmove', preventScrollHandler, { passive: false });
+          window.addEventListener('keydown', preventKeyScrollHandler, { passive: false });
         } else {
-          var scrollY = Math.abs(parseInt(document.body.style.top || '0', 10) || 0);
-          document.body.style.overflow = '';
-          document.documentElement.style.overflow = '';
-          document.body.style.position = '';
-          document.body.style.top = '';
-          document.body.style.width = '';
-          window.scrollTo(0, scrollY);
+          document.documentElement.classList.remove('exam-modal-open-lock');
+          document.body.classList.remove('exam-modal-open-lock');
+          window.removeEventListener('wheel', preventScrollHandler);
+          window.removeEventListener('touchmove', preventScrollHandler);
+          window.removeEventListener('keydown', preventKeyScrollHandler);
         }
       }
 

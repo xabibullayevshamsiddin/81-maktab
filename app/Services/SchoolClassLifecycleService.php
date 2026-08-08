@@ -16,7 +16,7 @@ class SchoolClassLifecycleService
     /**
      * @return array{class: SchoolClass, created: bool, reactivated: bool}
      */
-    public function upsertClass(int $gradeNumber, string $section): array
+    public function upsertClass(int $gradeNumber, string $section, ?int $maxStudents = null): array
     {
         $this->assertGradeNumber($gradeNumber);
         $section = SchoolClass::normalizeSection($section);
@@ -24,7 +24,7 @@ class SchoolClassLifecycleService
             throw new LogicException('Sinf harfi kiritilishi kerak.');
         }
 
-        return DB::transaction(function () use ($gradeNumber, $section): array {
+        return DB::transaction(function () use ($gradeNumber, $section, $maxStudents): array {
             $schoolClass = SchoolClass::query()
                 ->where('grade_number', $gradeNumber)
                 ->where('section', $section)
@@ -36,23 +36,32 @@ class SchoolClassLifecycleService
             if (! $schoolClass) {
                 $schoolClass = SchoolClass::query()->create([
                     'grade_number' => $gradeNumber,
-                    'section' => $section,
-                    'name' => SchoolClass::buildName($gradeNumber, $section),
-                    'is_active' => true,
-                    'sort_order' => ($gradeNumber * 100) + SchoolClass::query()->where('grade_number', $gradeNumber)->count(),
+                    'section'      => $section,
+                    'name'         => SchoolClass::buildName($gradeNumber, $section),
+                    'is_active'    => true,
+                    'sort_order'   => ($gradeNumber * 100) + SchoolClass::query()->where('grade_number', $gradeNumber)->count(),
+                    'max_students' => $maxStudents,
                 ]);
                 $created = true;
-            } elseif (! $schoolClass->is_active) {
-                $schoolClass->update(['is_active' => true]);
-                $reactivated = true;
+            } else {
+                $updateData = ['is_active' => true];
+                if ($maxStudents !== null) {
+                    $updateData['max_students'] = $maxStudents;
+                }
+                if (! $schoolClass->is_active) {
+                    $schoolClass->update($updateData);
+                    $reactivated = true;
+                } elseif ($maxStudents !== null) {
+                    $schoolClass->update(['max_students' => $maxStudents]);
+                }
             }
 
             forget_school_grade_cache();
 
             return [
-                'class' => $schoolClass->refresh(),
-                'created' => $created,
-                'reactivated' => $reactivated,
+                'class'        => $schoolClass->refresh(),
+                'created'      => $created,
+                'reactivated'  => $reactivated,
             ];
         });
     }
@@ -122,6 +131,7 @@ class SchoolClassLifecycleService
             'total_classes' => 0,
             'promoted_classes' => 0,
             'graduated_classes' => 0,
+            'new_first_grade_classes' => 0,
             'total_students' => 0,
             'promoted_students' => 0,
             'graduated_students' => 0,
@@ -135,44 +145,76 @@ class SchoolClassLifecycleService
 
         $runner = function () use (&$summary, $dryRun): void {
             /* 1. Promote active SchoolClass entities (even if 0 students) */
-            $activeClasses = SchoolClass::query()
-                ->active()
-                ->orderByDesc('grade_number')
-                ->orderBy('sort_order')
-                ->get();
+            $activeClasses = SchoolClass::query()->active()->get();
+            $sections = $activeClasses->pluck('section')->unique()->values();
 
-            foreach ($activeClasses as $schoolClass) {
-                $summary['total_classes']++;
-                $gn = (int) $schoolClass->grade_number;
-                $sec = (string) $schoolClass->section;
+            foreach ($sections as $sec) {
+                $classesInSec = $activeClasses->where('section', $sec)->keyBy('grade_number');
 
-                if ($gn >= 11) {
+                // Map of old limits for active classes in this section
+                $oldLimits = [];
+                foreach ($classesInSec as $gn => $sc) {
+                    $oldLimits[$gn] = $sc->max_students;
+                }
+
+                // A) Grade 11:
+                if (isset($classesInSec[11])) {
                     $summary['graduated_classes']++;
-                    if (! $dryRun) {
-                        $schoolClass->update(['is_active' => false]);
-                    }
-                } else {
-                    $newGn = $gn + 1;
-                    $newName = SchoolClass::buildName($newGn, $sec);
+                }
+
+                if (isset($classesInSec[10])) {
                     $summary['promoted_classes']++;
                     if (! $dryRun) {
-                        $targetExisting = SchoolClass::query()
-                            ->where('grade_number', $newGn)
-                            ->where('section', $sec)
-                            ->where('id', '!=', $schoolClass->id)
-                            ->first();
+                        $c11 = SchoolClass::query()->firstOrCreate(
+                            ['grade_number' => 11, 'section' => $sec],
+                            ['name' => SchoolClass::buildName(11, $sec), 'sort_order' => 1100]
+                        );
+                        $c11->update([
+                            'is_active' => true,
+                            'max_students' => $oldLimits[10] ?? null,
+                        ]);
+                    }
+                } else {
+                    // No 10th grade promoting into 11th grade -> deactivate 11th grade if it existed
+                    if (isset($classesInSec[11]) && ! $dryRun) {
+                        $classesInSec[11]->update(['is_active' => false]);
+                    }
+                }
 
-                        if ($targetExisting) {
-                            $targetExisting->update(['is_active' => true]);
-                            $schoolClass->update(['is_active' => false]);
-                        } else {
-                            $schoolClass->update([
-                                'grade_number' => $newGn,
-                                'name' => $newName,
-                                'sort_order' => ($newGn * 100) + (int) $schoolClass->id,
+                // B) Grades 2..10:
+                for ($g = 10; $g >= 2; $g--) {
+                    $prev = $g - 1; // e.g. 9 for 10
+                    if (isset($classesInSec[$prev])) {
+                        $summary['promoted_classes']++;
+                        if (! $dryRun) {
+                            $cg = SchoolClass::query()->firstOrCreate(
+                                ['grade_number' => $g, 'section' => $sec],
+                                ['name' => SchoolClass::buildName($g, $sec), 'sort_order' => ($g * 100)]
+                            );
+                            $cg->update([
+                                'is_active' => true,
+                                'max_students' => $oldLimits[$prev] ?? null,
                             ]);
                         }
+                    } else {
+                        // No class promoting into grade $g -> deactivate grade $g if it existed
+                        if (isset($classesInSec[$g]) && ! $dryRun) {
+                            $classesInSec[$g]->update(['is_active' => false]);
+                        }
                     }
+                }
+
+                // C) Grade 1:
+                $summary['new_first_grade_classes']++;
+                if (! $dryRun) {
+                    $c1 = SchoolClass::query()->firstOrCreate(
+                        ['grade_number' => 1, 'section' => $sec],
+                        ['name' => SchoolClass::buildName(1, $sec), 'sort_order' => 100]
+                    );
+                    $c1->update([
+                        'is_active' => true,
+                        'max_students' => null, // New 1st grade class starts unlimited for new intake
+                    ]);
                 }
             }
 
