@@ -33,6 +33,7 @@
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ app_asset_version('temp/css/site-refresh.css') }}" />
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/light-mode-fixes.css') }}?v={{ app_asset_version('temp/css/light-mode-fixes.css') }}" />
     @if(turnstile_enabled())
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     @endif

@@ -1,10 +1,10 @@
 :root {
-  --site-panel: rgba(255, 255, 255, 0.74);
-  --site-panel-strong: rgba(255, 255, 255, 0.9);
-  --site-stroke: rgba(17, 36, 61, 0.12);
-  --site-muted-surface: rgba(13, 63, 120, 0.06);
-  --site-shadow-lg: 0 24px 60px rgba(13, 63, 120, 0.14);
-  --site-shadow-md: 0 16px 40px rgba(13, 63, 120, 0.1);
+  --site-panel: rgba(238, 241, 247, 0.78);
+  --site-panel-strong: rgba(241, 244, 249, 0.9);
+  --site-stroke: rgba(120, 140, 170, 0.14);
+  --site-muted-surface: rgba(59, 130, 246, 0.05);
+  --site-shadow-lg: 0 24px 60px rgba(50, 70, 100, 0.08);
+  --site-shadow-md: 0 16px 40px rgba(50, 70, 100, 0.06);
 }
 
 :root[data-theme='dark'] {
@@ -1285,12 +1285,12 @@ body {
 
 .signin-card, .register-card {
   max-width: 480px !important;
-  background: rgba(255, 255, 255, 0.7) !important;
+  background: var(--surface-strong) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid var(--card-border) !important;
   border-radius: 32px !important;
   padding: 50px !important;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: var(--shadow) !important;
   animation: authFadeIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) both !important;
 }
 
@@ -1325,7 +1325,8 @@ body {
 .signin-form input:focus, .register-form input:focus {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15) !important;
-  background: #fff !important;
+  background: var(--input-bg) !important;
+  color: var(--text) !important;
 }
 
 :root[data-theme='dark'] .signin-form input:focus,
@@ -2040,9 +2041,9 @@ button.is-loading::after {
   bottom: 8px;
   z-index: 990;
   padding: 6px 4px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--surface-strong);
   backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--card-border);
   border-radius: 22px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
   justify-content: space-around;
@@ -2972,7 +2973,7 @@ button.is-loading::after {
 
 /* ===== Light-mode hero-v2 overrides ===== */
 :root:not([data-theme='dark']) .news-hero-v2 {
-  background: linear-gradient(135deg, #c8d6e5 0%, #b8c8d8 30%, #a8bdd0 60%, #c0d0e0 100%);
+  background: linear-gradient(135deg, #c5cdd8 0%, #b8c2d0 30%, #a8b5c6 60%, #bcc8d6 100%);
   background-size: 400% 400%;
   animation: heroBgMove 8s ease infinite;
 }

@@ -1,31 +1,60 @@
 /* ===== Source: style.css ===== */
 :root {
-  /* Aurora Glassmorphism Light Theme */
-  --bg: #EEF2F6;
-  --surface: rgba(255, 255, 255, 0.72);
-  --text: #0f172a;
+  /* Soft Warm Light Theme — ko'zni xonlamaydigan yumshoq rejim */
+  --bg: #dfe4ec;
+  --surface: rgba(238, 241, 247, 0.78);
+  --surface-strong: rgba(241, 244, 249, 0.9);
+  --text: #1e293b;
+  --text-secondary: #3f4f65;
   --muted: #64748b;
   --primary: #3b82f6;
   --primary-2: #60a5fa;
-  --accent: #fbbf24;
-  --danger: #ef4444;
-  --border: rgba(148, 163, 184, 0.3);
+  --accent: #d97706;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+  --info: #0891b2;
+  --border: rgba(120, 140, 170, 0.28);
 
-  --border-soft: rgba(148, 163, 184, 0.15);
-  --border-strong: rgba(148, 163, 184, 0.4);
-  --shadow: 0 10px 30px rgba(59, 130, 246, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
-
-  --scrollbar-track: rgba(59, 130, 246, 0.05);
-  --scrollbar-thumb: rgba(59, 130, 246, 0.2);
-  --scrollbar-thumb-hover: rgba(59, 130, 246, 0.4);
-  --scrollbar-glow: rgba(59, 130, 246, 0.1);
+  --border-soft: rgba(120, 140, 170, 0.14);
+  --border-strong: rgba(120, 140, 170, 0.35);
+  --shadow: 0 10px 30px rgba(50, 70, 100, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --card-bg: rgba(238, 241, 247, 0.78);
+  --card-border: rgba(120, 140, 170, 0.16);
+  --card-hover-bg: rgba(244, 247, 252, 0.9);
+  --input-bg: rgba(245, 248, 252, 0.85);
+  --input-border: rgba(120, 140, 170, 0.3);
+  --input-focus: #3b82f6;
+  --badge-bg: rgba(59, 130, 246, 0.08);
+  --badge-text: #1d4ed8;
+  --success-bg: rgba(22, 163, 74, 0.08);
+  --success-text: #15803d;
+  --danger-bg: rgba(220, 38, 38, 0.08);
+  --danger-text: #991b1b;
+  --warning-bg: rgba(217, 119, 6, 0.08);
+  --warning-text: #78350f;
+  --header-bg: rgba(235, 239, 246, 0.92);
+  --header-nav-text: #1e293b;
+  --header-nav-hover: rgba(59, 130, 246, 0.06);
+  --table-stripe: rgba(226, 232, 240, 0.35);
+  --table-hover: rgba(226, 232, 240, 0.55);
+  --table-border: rgba(180, 195, 215, 0.5);
+  --scrollbar-track: rgba(59, 130, 246, 0.04);
+  --scrollbar-thumb: rgba(59, 130, 246, 0.15);
+  --scrollbar-thumb-hover: rgba(59, 130, 246, 0.3);
+  --scrollbar-glow: rgba(59, 130, 246, 0.08);
   --scrollbar-duration: 0.45s;
+  --sidebar-bg: #e8ecf2;
+  --sidebar-text: #3f4f65;
+  --sidebar-border: rgba(120, 140, 170, 0.18);
 }
 
 :root[data-theme='dark'] {
   --bg: #07111f;
   --surface: #0f1b2d;
+  --surface-strong: rgba(9, 17, 29, 0.92);
   --text: #e6eefb;
+  --text-secondary: #9cb1cb;
   --muted: #9cb1cb;
   --primary: #7db4ff;
   --primary-2: #4d94ff;
@@ -34,11 +63,37 @@
   --border-soft: rgba(156, 177, 203, 0.14);
   --border-strong: rgba(156, 177, 203, 0.24);
   --shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --info: #22d3ee;
+  --card-bg: rgba(12, 22, 37, 0.84);
+  --card-border: rgba(148, 163, 184, 0.12);
+  --card-hover-bg: rgba(15, 27, 46, 0.95);
+  --input-bg: rgba(15, 27, 46, 0.8);
+  --input-border: rgba(148, 163, 184, 0.2);
+  --input-focus: #7db4ff;
+  --badge-bg: rgba(125, 180, 255, 0.15);
+  --badge-text: #7db4ff;
+  --success-bg: rgba(74, 222, 128, 0.15);
+  --success-text: #4ade80;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --danger-text: #f87171;
+  --warning-bg: rgba(251, 191, 36, 0.15);
+  --warning-text: #fbbf24;
+  --header-bg: rgba(7, 17, 31, 0.92);
+  --header-nav-text: #e6eefb;
+  --header-nav-hover: rgba(125, 180, 255, 0.1);
+  --table-stripe: rgba(15, 27, 46, 0.4);
+  --table-hover: rgba(15, 27, 46, 0.6);
+  --table-border: rgba(34, 51, 74, 0.6);
   /* Scrollbar — tungi rejim (asosiy va accent bilan uyg‘un) */
   --scrollbar-track: rgba(15, 27, 46, 0.85);
   --scrollbar-thumb: rgba(125, 180, 255, 0.38);
   --scrollbar-thumb-hover: rgba(45, 212, 191, 0.55);
   --scrollbar-glow: rgba(125, 180, 255, 0.22);
+  --sidebar-bg: #0a1628;
+  --sidebar-text: #c8d6e5;
+  --sidebar-border: rgba(148, 163, 184, 0.12);
 }
 
 * {
@@ -103,7 +158,7 @@ canvas {
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
-  background: #EEF2F6;
+  background: #dfe4ec;
 }
 
 html[data-theme='dark'] {
@@ -114,9 +169,9 @@ body {
   font-family: 'Inter', sans-serif;
   color: var(--text);
   background: radial-gradient(ellipse at 18% -5%,
-      #c8ddf7 0%,
+      #cdd5e0 0%,
       var(--bg) 50%,
-      #e4eef9 100%);
+      #d8dde6 100%);
   line-height: 1.6;
   min-height: 100vh;
   transition: background 0.25s ease, color 0.25s ease;
@@ -570,12 +625,12 @@ section {
   display: flex;
   flex-direction: column;
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
   backdrop-filter: blur(15px);
   padding: 30px;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow);
 }
 
 .about-card .btn {
@@ -585,8 +640,8 @@ section {
 
 .about-card:hover {
   transform: translateY(-8px);
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 20px 45px rgba(13, 63, 120, 0.1);
+  background: var(--card-hover-bg);
+  box-shadow: 0 20px 45px rgba(50, 70, 100, 0.08);
   border-color: var(--accent);
 }
 
@@ -653,10 +708,10 @@ section {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #fff;
+  color: var(--text);
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--badge-bg);
 }
 
 .news-container {
@@ -683,21 +738,21 @@ section {
 }
 
 .news-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--card-bg);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--card-border);
   border-radius: 24px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow);
 }
 
 .news-card:hover {
   transform: translateY(-12px);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 30px 60px rgba(13, 63, 120, 0.15);
+  background: var(--card-hover-bg);
+  box-shadow: 0 30px 60px rgba(50, 70, 100, 0.1);
   border-color: var(--accent);
 }
 
@@ -6939,14 +6994,14 @@ body.modal-open {
   100% { transform: translate(-120px, -100px) scale(1.6); filter: hue-rotate(-180deg) blur(80px); opacity: 1; }
 }
 
-.news-page .header-main {
+:root[data-theme='dark'] .news-page .header-main {
   position: fixed;
   top: 10px;
   background: rgba(6, 31, 58, 0.9);
   border-color: rgba(255, 255, 255, 0.18);
 }
 
-.news-page .nav-link {
+:root[data-theme='dark'] .news-page .nav-link {
   color: #ecf4ff;
 }
 
@@ -6978,7 +7033,7 @@ body.modal-open {
 
 /* ===== Light-mode hero overrides ===== */
 :root:not([data-theme='dark']) .news-hero {
-  background: linear-gradient(135deg, #c8d6e5 0%, #b8c8d8 30%, #a8bdd0 60%, #c0d0e0 100%);
+  background: linear-gradient(135deg, #c5cdd8 0%, #b8c2d0 30%, #a8b5c6 60%, #bcc8d6 100%);
   background-size: 400% 400%;
   animation: heroBgMove 8s ease infinite;
 }
@@ -15590,7 +15645,7 @@ body:has(#chat-widget):has(#ai-widget:not([hidden])) .prime-audio-toggle {
 }
 
 /* --- INNER PAGE NAVBAR PREMIUM DESIGN --- */
-.page-inner .header-main:not(.scrolled) {
+:root[data-theme='dark'] .page-inner .header-main:not(.scrolled) {
   background: rgba(5, 24, 48, 0.92) !important;
   border-color: rgba(255, 255, 255, 0.16) !important;
   box-shadow: 0 8px 30px rgba(0, 5, 16, 0.25);

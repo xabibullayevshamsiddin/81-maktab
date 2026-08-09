@@ -147,9 +147,9 @@
 
   {{-- Yon panel: yordam --}}
   <div class="col-lg-3">
-    <div class="card-style mb-30" style="background:#fffbeb;border:1px solid #fde68a;">
-      <h6 class="mb-10" style="color:#92400e;"><i class="mdi mdi-information-outline me-1"></i> Qanday ishlaydi?</h6>
-      <ul style="font-size:13px;color:#78350f;line-height:1.8;padding-left:16px;">
+    <div class="card-style mb-30" style="background: var(--warning-bg); border: 1px solid var(--warning); border-radius:8px;">
+      <h6 class="mb-10" style="color: var(--warning-text);"><i class="mdi mdi-information-outline me-1"></i> Qanday ishlaydi?</h6>
+      <ul style="font-size:13px;color: var(--text-secondary); line-height:1.8;padding-left:16px;">
         <li>Bloklangan sahifaga oddiy foydalanuvchilar kira olmaydi</li>
         <li>Admin, editor va moderatorlar sahifani ko'ra oladi</li>
         <li>Muddat tugagach sahifa avtomatik ochiladi</li>
@@ -157,9 +157,9 @@
       </ul>
     </div>
 
-    <div class="card-style mb-30" style="background:#eff6ff;border:1px solid #bfdbfe;">
-      <h6 class="mb-10" style="color:#1e40af;"><i class="mdi mdi-clock-outline me-1"></i> Tezkor muddatlar</h6>
-      <ul style="font-size:13px;color:#1e3a8a;line-height:2;padding-left:0;list-style:none;">
+    <div class="card-style mb-30" style="background: var(--badge-bg); border: 1px solid var(--primary); border-radius:8px;">
+      <h6 class="mb-10" style="color: var(--primary);"><i class="mdi mdi-clock-outline me-1"></i> Tezkor muddatlar</h6>
+      <ul style="font-size:13px;color: var(--text-secondary); line-height:2;padding-left:0;list-style:none;">
         <li>15 daqiqa — qisqa texnik ish</li>
         <li>30 daqiqa — standart</li>
         <li>1 soat — uzoqroq ish</li>

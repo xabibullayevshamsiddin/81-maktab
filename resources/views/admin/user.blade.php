@@ -35,7 +35,7 @@
           <div class="card-style mb-30">
             <h6 class="mb-10">Barcha foydalanuvchilar</h6>
             <p class="text-sm mb-20">Ro'yxatda bazadagi barcha userlar ko'rsatiladi.</p>
-            <p class="text-sm mb-20" style="color:#64748b;">
+            <p class="text-sm mb-20" style="color: var(--muted);">
               <i class="lni lni-shield me-1"></i>
               Qalqon tugmasi foydalanuvchiga vaqtincha parol yaratadi va Telegram ga yuboradi.
             </p>

@@ -1,0 +1,144 @@
+/* ===== LIGHT MODE GLOBAL FIXES ===== */
+/* Soft, eye-friendly light mode — not too bright */
+
+/* === Admin dashboard icon-boxes === */
+:root:not([data-theme='dark']) .icon-box {
+  background: var(--badge-bg) !important;
+}
+
+/* === Common inline-styled elements === */
+:root:not([data-theme='dark']) .form-message {
+  color: var(--danger) !important;
+}
+
+/* === Admin cards === */
+:root:not([data-theme='dark']) .card-style {
+  background: var(--surface-strong) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .card-style {
+  background: var(--surface) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text) !important;
+}
+
+:root:not([data-theme='dark']) .card-style h6,
+:root:not([data-theme='dark']) .card-style h3 {
+  color: var(--text) !important;
+}
+
+/* === Feature request elements === */
+:root:not([data-theme='dark']) .feature-item-title {
+  color: var(--text) !important;
+}
+
+:root:not([data-theme='dark']) .feature-item-meta {
+  color: var(--muted) !important;
+}
+
+:root:not([data-theme='dark']) .feature-item-body {
+  color: var(--text-secondary) !important;
+}
+
+/* === Admin common fixes === */
+:root:not([data-theme='dark']) .text-sm {
+  color: var(--muted) !important;
+}
+
+/* === Admin tables === */
+:root:not([data-theme='dark']) .table tbody tr:nth-child(even) {
+  background: var(--table-stripe) !important;
+}
+
+:root:not([data-theme='dark']) .table tbody tr:hover {
+  background: var(--table-hover) !important;
+}
+
+:root:not([data-theme='dark']) .table th {
+  background: var(--badge-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--table-border) !important;
+}
+
+:root:not([data-theme='dark']) .table td {
+  border-color: var(--table-border) !important;
+  color: var(--text) !important;
+}
+
+/* === Admin form elements === */
+:root:not([data-theme='dark']) .input-style-1 input,
+:root:not([data-theme='dark']) .input-style-1 textarea,
+:root:not([data-theme='dark']) .input-style-1 select {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text) !important;
+}
+
+:root:not([data-theme='dark']) .input-style-1 input:focus,
+:root:not([data-theme='dark']) .input-style-1 textarea:focus {
+  border-color: var(--input-focus) !important;
+}
+
+/* === HR and labels === */
+:root:not([data-theme='dark']) hr {
+  border-color: var(--table-border) !important;
+}
+
+:root:not([data-theme='dark']) label {
+  color: var(--text) !important;
+}
+
+/* === Alert boxes === */
+:root:not([data-theme='dark']) .alert-box.success-alert {
+  background: var(--success-bg) !important;
+  border-color: var(--success) !important;
+  color: var(--success-text) !important;
+}
+
+/* === Post filter dropdown === */
+:root:not([data-theme='dark']) .post-filter-dropdown-menu {
+  background: rgba(238, 241, 247, 0.95) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text) !important;
+}
+
+/* === KPI rows === */
+:root:not([data-theme='dark']) .dashboard-kpi-row {
+  background: var(--surface-strong) !important;
+  border-color: var(--card-border) !important;
+}
+
+:root:not([data-theme='dark']) .dashboard-kpi-row:hover {
+  background: var(--card-hover-bg) !important;
+}
+
+/* === Small text === */
+:root:not([data-theme='dark']) small {
+  color: var(--muted) !important;
+}
+
+/* === Form controls === */
+:root:not([data-theme='dark']) .form-control {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text) !important;
+}
+
+/* === Dark mode admin KPI === */
+:root[data-theme='dark'] .dashboard-kpi-row {
+  background: rgba(15, 27, 46, 0.4) !important;
+  border-color: var(--card-border) !important;
+}
+
+/* === Confirm modal === */
+:root:not([data-theme='dark']) .confirm-modal-content {
+  background: var(--surface-strong) !important;
+  color: var(--text) !important;
+}
+
+/* === Skeleton loader === */
+:root:not([data-theme='dark']) .skeleton-loader {
+  background: linear-gradient(90deg, var(--border-soft) 25%, var(--surface) 50%, var(--border-soft) 75%) !important;
+}

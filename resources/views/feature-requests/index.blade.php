@@ -274,14 +274,14 @@
                     {{ __('public.feature_requests.author', ['name' => $authorName]) }} · {{ $requestItem->created_at?->format('d.m.Y H:i') }}
                   </p>
                 </div>
-                <span class="badge" style="background: rgba(245, 158, 11, 0.12); color:#b45309;">
+                <span class="badge" style="background: var(--warning-bg); color: var(--warning-text);">
                   <i class="fa-solid fa-arrow-up"></i> {{ __('public.feature_requests.votes', ['count' => (int) $requestItem->votes_count]) }}
                 </span>
               </div>
               <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
                 <span class="badge" style="{{ $statusStyle }}">{{ $statusLabel }}</span>
                 @if($requestItem->announced_at)
-                  <span class="badge" style="background:rgba(15,23,42,.08); color:#334155;">
+                  <span class="badge" style="background: var(--badge-bg); color: var(--badge-text);">
                     {{ __('public.feature_requests.announced', ['date' => $requestItem->announced_at->format('d.m.Y H:i')]) }}
                   </span>
                 @endif
@@ -291,7 +291,7 @@
                 <p class="feature-item-body">{{ $requestItem->description }}</p>
               @endif
               @if($requestItem->admin_note)
-                <p style="margin:10px 0 0; color:#334155; background:rgba(15,23,42,.04); border-radius:10px; padding:10px;">
+                <p style="margin:10px 0 0; color: var(--text-secondary); background: var(--badge-bg); border-radius:10px; padding:10px;">
                   <strong>{{ __('public.feature_requests.admin_note') }}</strong> {{ $requestItem->admin_note }}
                 </p>
               @endif

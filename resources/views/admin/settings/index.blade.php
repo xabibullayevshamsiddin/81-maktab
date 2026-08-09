@@ -7,7 +7,7 @@
   <div class="col-lg-8">
     <div class="card-style mb-30">
       <h6 class="mb-10">Sayt sozlamalari</h6>
-      <p class="text-sm" style="color:#64748b;margin-bottom:20px;">Maktab ma'lumotlari va ijtimoiy tarmoq havolalari.</p>
+      <p class="text-sm" style="color: var(--muted); margin-bottom:20px;">Maktab ma'lumotlari va ijtimoiy tarmoq havolalari.</p>
 
       @if(session('success'))
         <div class="alert-box success-alert mb-20">
@@ -24,7 +24,7 @@
         <hr style="margin:28px 0;border-color:#e2e8f0;">
 
         <h6 class="mb-10" style="font-size:14px;margin-top:20px;">Global chat va AI (sayt vidjetlari)</h6>
-        <p class="text-sm" style="color:#64748b;margin-bottom:16px;">O‘chirilganida foydalanuvchilar xabar yozolmaydi; ochilganda faqat siz yozgan matn ko‘rinadi.</p>
+        <p class="text-sm" style="color: var(--muted); margin-bottom:16px;">O‘chirilganida foydalanuvchilar xabar yozolmaydi; ochilganda faqat siz yozgan matn ko‘rinadi.</p>
 
         <div class="input-style-1 mb-20">
           <label>Global chat</label>
@@ -130,7 +130,7 @@
         <i class="mdi mdi-send-outline" style="font-size:18px;color:#0088cc;"></i>
         Telegram elon yuborish
       </h6>
-      <p class="text-sm" style="color:#64748b;margin-bottom:20px;">
+      <p class="text-sm" style="color: var(--muted); margin-bottom:20px;">
         Barcha Telegram botiga ulangan foydalanuvchilarga xabar yuboring.
       </p>
 
@@ -140,10 +140,10 @@
             ->count();
       @endphp
 
-      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;margin-bottom:20px;">
+      <div style="background: var(--badge-bg); border:1px solid var(--primary); border-radius:8px; padding:12px 16px; margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <i class="mdi mdi-account-multiple-outline" style="font-size:16px;color:#0284c7;"></i>
-          <span style="font-size:13px;color:#0369a1;font-weight:500;">{{ $tgUserCount }} ta foydalanuvchi ulangan</span>
+          <i class="mdi mdi-account-multiple-outline" style="font-size:16px; color: var(--primary);"></i>
+          <span style="font-size:13px; color: var(--primary); font-weight:500;">{{ $tgUserCount }} ta foydalanuvchi ulangan</span>
         </div>
       </div>
 
@@ -162,13 +162,13 @@
             style="padding:10px 12px;border-radius:8px;width:100%;resize:vertical;"
             placeholder="Elon matnini yozing... (HTML formatida: <b>qalin</b>, <i>egri</i>)"
           >{{ old('message') }}</textarea>
-          <p class="text-sm" style="color:#94a3b8;margin-top:4px;font-size:12px;">
+          <p class="text-sm" style="color: var(--muted); margin-top:4px; font-size:12px;">
             HTML formatida yozish mumkin: &lt;b&gt;qalin&lt;/b&gt;, &lt;i&gt;egri&lt;/i&gt;, &lt;a href="..."&gt;havola&lt;/a&gt;
           </p>
           @error('message') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
         </div>
 
-        <button type="submit" class="main-btn primary-btn btn-hover" style="background:#0088cc;border-color:#0088cc;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <button type="submit" class="main-btn primary-btn btn-hover" style="background: var(--primary); border-color: var(--primary); width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
           <i class="mdi mdi-send" style="font-size:16px;"></i>
           Yuborish
         </button>

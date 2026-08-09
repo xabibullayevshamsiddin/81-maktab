@@ -23,6 +23,7 @@
       <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-admin.css') }}?v={{ app_asset_version('temp/css/extracted-admin.css') }}" />
       <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
       <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
+      <link rel="stylesheet" href="{{ app_public_asset('temp/css/light-mode-fixes.css') }}?v={{ app_asset_version('temp/css/light-mode-fixes.css') }}" />
       @stack('admin_styles')
   </head>
 	  <body
