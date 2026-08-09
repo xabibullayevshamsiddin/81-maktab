@@ -1,4 +1,7 @@
 <x-layouts.main :title="__('public.layout.privacy_policy').' | 81-IDUM'">
+  @push('page_styles')
+    <link rel="stylesheet" href="{{ app_public_asset('temp/css/legal-pages.css') }}?v={{ app_asset_version('temp/css/legal-pages.css') }}">
+  @endpush
   <section class="news-hero news-hero-v2" id="home">
     <div class="container">
       <div class="news-hero-grid prime-reveal">

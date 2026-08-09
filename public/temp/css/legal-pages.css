@@ -1,0 +1,71 @@
+/* ===== Legal Pages (Terms / Privacy) — Light Mode ===== */
+
+/* Glass section wrapper */
+:root:not([data-theme='dark']) .glass-section {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Document header */
+:root:not([data-theme='dark']) .document-header {
+  border-bottom-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+:root:not([data-theme='dark']) .document-header h2 {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme='dark']) .document-header p {
+  color: #64748b !important;
+}
+
+/* Bento cards */
+:root:not([data-theme='dark']) .bento-item {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(148, 163, 184, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+}
+
+:root:not([data-theme='dark']) .bento-item:hover {
+  background: rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
+}
+
+:root:not([data-theme='dark']) .bento-item h3 {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme='dark']) .bento-item p {
+  color: #475569 !important;
+}
+
+/* Document content */
+:root:not([data-theme='dark']) .document-content .bento-item {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(148, 163, 184, 0.15) !important;
+}
+
+/* Button override */
+:root:not([data-theme='dark']) .btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #fff !important;
+}
+
+:root:not([data-theme='dark']) .btn-primary:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+/* Dark mode keeps original styles */
+:root[data-theme='dark'] .glass-section {
+  background: rgba(30, 30, 35, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme='dark'] .bento-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
