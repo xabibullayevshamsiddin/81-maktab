@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>81-IDUM Brand Kit Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --canvas:#0c0e14;
+    --panel:#12151e;
+    --panel-border:rgba(59,130,246,0.12);
+    --text-primary:#e8edf5;
+    --text-secondary:#b0bec5;
+    --text-muted:#8a94a6;
+    --blue:#3b82f6;
+    --blue-light:#60a5fa;
+    --amber:#fbbf24;
+    --teal:#2dd4bf;
+    --danger:#ef4444;
+    --surface:#1a1f2e;
+    --surface-2:#0f1219;
+    --gutter:24px;
+    --radius:20px;
+  }
+  html{font-size:14px}
+  body{
+    background:var(--canvas);
+    color:var(--text-primary);
+    font-family:'Inter',sans-serif;
+    padding:40px;
+    min-height:100vh;
+    background-image:
+      radial-gradient(ellipse 600px 400px at 15% 20%, rgba(59,130,246,0.06), transparent),
+      radial-gradient(ellipse 500px 300px at 85% 80%, rgba(45,212,191,0.04), transparent);
+  }
+
+  /* Header */
+  .kit-header{
+    text-align:center;
+    margin-bottom:48px;
+    padding:32px 0;
+  }
+  .kit-header h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:2.4rem;
+    font-weight:700;
+    letter-spacing:-0.04em;
+    color:var(--text-primary);
+    margin-bottom:8px;
+  }
+  .kit-header h1 span{color:var(--blue-light)}
+  .kit-header p{
+    color:#b0bec5;
+    font-size:0.95rem;
+    font-weight:400;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+
+  /* Grid */
+  .kit-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(3,auto);
+    gap:var(--gutter);
+    max-width:1400px;
+    margin:0 auto;
+  }
+
+  /* Panel */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    position:relative;
+  }
+  .panel-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.65rem;
+    font-weight:500;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#b0bec5;
+    padding:16px 20px 0;
+  }
+  .panel-num{
+    position:absolute;
+    top:16px;right:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    color:#b0bec5;
+    opacity:0.6;
+  }
+
+  /* ===== Panel 1: Logo Cover ===== */
+  .logo-cover{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:420px;
+    padding:40px;
+    background:
+      radial-gradient(circle 200px at 50% 40%, rgba(59,130,246,0.1), transparent),
+      var(--panel);
+  }
+  .logo-mark{
+    width:120px;height:120px;
+    margin-bottom:28px;
+  }
+  .logo-wordmark{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:2.8rem;
+    font-weight:700;
+    letter-spacing:-0.05em;
+    color:var(--text-primary);
+    text-align:center;
+    line-height:1;
+    margin-bottom:8px;
+  }
+  .logo-wordmark em{
+    font-style:normal;
+    color:var(--blue-light);
+  }
+  .logo-tagline{
+    font-family:'Inter',sans-serif;
+    font-size:0.8rem;
+    font-weight:400;
+    color:var(--text-secondary);
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+  }
+
+  /* ===== Panel 2: Logo Construction ===== */
+  .logo-construction{
+    min-height:420px;
+    padding:32px 28px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .construction-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-top:20px;
+  }
+  .construction-variant{
+    background:var(--surface);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .construction-variant svg{width:56px;height:56px}
+  .construction-variant span{
+    font-size:0.72rem;
+    color:#c8d0da;
+    font-family:'JetBrains Mono',monospace;
+    letter-spacing:0.06em;
+    font-weight:600;
+  }
+  .construction-variant.on-blue span{
+    color:#ffffff;
+  }
+  .construction-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1rem;
+    font-weight:600;
+    color:var(--text-primary);
+    margin-bottom:4px;
+  }
+
+  /* ===== Panel 3: Color System ===== */
+  .color-system{
+    min-height:420px;
+    padding:32px 28px;
+  }
+  .color-swatches{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+    margin-top:20px;
+  }
+  .swatch{
+    border-radius:12px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .swatch-fill{height:52px}
+  .swatch-info{
+    padding:10px 12px;
+    background:var(--surface);
+  }
+  .swatch-name{
+    font-size:0.72rem;
+    font-weight:600;
+    color:var(--text-primary);
+    margin-bottom:2px;
+  }
+  .swatch-hex{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.65rem;
+    color:#b0bec5;
+    font-weight:500;
+  }
+  .color-accents{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+  }
+  .accent-chip{
+    flex:1;
+    height:32px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ===== Panel 4: Digital Application ===== */
+  .digital-app{
+    min-height:420px;
+    padding:32px 24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+  }
+  .browser-chrome{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .browser-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--panel-border);
+  }
+  .browser-dot{width:8px;height:8px;border-radius:50%}
+  .browser-dot.r{background:#ef4444}
+  .browser-dot.y{background:#fbbf24}
+  .browser-dot.g{background:#22c55e}
+  .browser-url{
+    flex:1;
+    margin-left:8px;
+    background:rgba(255,255,255,0.05);
+    border-radius:6px;
+    padding:5px 10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    color:#b0bec5;
+    font-weight:500;
+  }
+  .browser-content{
+    padding:16px;
+    min-height:200px;
+    background:var(--panel);
+  }
+  .browser-nav{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .browser-nav-logo{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:0.9rem;
+    color:#60a5fa;
+  }
+  .browser-nav-links{display:flex;gap:12px;margin-left:auto}
+  .browser-nav-links span{
+    font-size:0.65rem;
+    color:#b0bec5;
+  }
+  .browser-hero-text{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.2rem;
+    font-weight:700;
+    color:#e8edf5;
+    margin-bottom:8px;
+    line-height:1.2;
+  }
+  .browser-hero-sub{
+    font-size:0.72rem;
+    color:#b0bec5;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+  .browser-cta{
+    display:inline-block;
+    background:#3b82f6;
+    color:#fff;
+    font-size:0.7rem;
+    font-weight:600;
+    padding:8px 18px;
+    border-radius:8px;
+    text-decoration:none;
+  }
+
+  /* ===== Panel 5: Brand Essence ===== */
+  .brand-essence{
+    min-height:420px;
+    padding:40px 32px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    background:
+      radial-gradient(ellipse 300px 200px at 50% 50%, rgba(59,130,246,0.08), transparent),
+      var(--panel);
+  }
+  .essence-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    font-weight:500;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--blue-light);
+    margin-bottom:20px;
+  }
+  .essence-quote{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.7rem;
+    font-weight:700;
+    line-height:1.25;
+    color:var(--text-primary);
+    max-width:320px;
+    margin-bottom:16px;
+    letter-spacing:-0.03em;
+  }
+  .essence-sub{
+    font-size:0.82rem;
+    color:#b0bec5;
+    line-height:1.6;
+    max-width:280px;
+  }
+
+  /* ===== Panel 6: Typography ===== */
+  .typography{
+    min-height:420px;
+    padding:32px 28px;
+  }
+  .type-display{
+    margin-top:20px;
+    margin-bottom:20px;
+  }
+  .type-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .type-row:last-child{border-bottom:none}
+  .type-sample-display{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:1.5rem;
+    color:var(--text-primary);
+    letter-spacing:-0.03em;
+  }
+  .type-sample-body{
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:0.85rem;
+    color:#b0bec5;
+    line-height:1.5;
+  }
+  .type-sample-mono{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:500;
+    font-size:0.75rem;
+    color:var(--teal);
+    letter-spacing:0.04em;
+  }
+  .type-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.58rem;
+    color:#b0bec5;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    font-weight:500;
+  }
+  .type-weights{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
+  .weight-chip{
+    padding:6px 12px;
+    background:var(--surface);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    font-size:0.65rem;
+    color:#b0bec5;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:500;
+  }
+  .weight-chip.active{
+    border-color:var(--blue);
+    color:var(--blue-light);
+    background:rgba(59,130,246,0.08);
+  }
+
+  /* ===== Panel 7: Physical Application ===== */
+  .physical-app{
+    min-height:420px;
+    padding:32px 28px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+  }
+  .card-mockup{
+    width:100%;
+    max-width:280px;
+    background:linear-gradient(145deg, #1a2332, #0f1620);
+    border:1px solid rgba(59,130,246,0.2);
+    border-radius:16px;
+    padding:28px 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card-mockup::before{
+    content:'';
+    position:absolute;
+    top:-40px;right:-40px;
+    width:120px;height:120px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(59,130,246,0.15), transparent);
+  }
+  .card-mockup-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.55rem;
+    color:#b0bec5;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    margin-bottom:16px;
+    font-weight:500;
+  }
+  .card-mockup-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.1rem;
+    font-weight:700;
+    color:var(--text-primary);
+    margin-bottom:4px;
+  }
+  .card-mockup-role{
+    font-size:0.72rem;
+    color:#60a5fa;
+    margin-bottom:20px;
+    font-weight:600;
+  }
+  .card-mockup-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-top:1px solid rgba(255,255,255,0.06);
+    padding-top:14px;
+  }
+  .card-mockup-id{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    color:#b0bec5;
+    font-weight:500;
+  }
+  .card-mockup-qr{
+    width:36px;height:36px;
+    background:rgba(255,255,255,0.08);
+    border-radius:6px;
+    display:grid;
+    place-items:center;
+  }
+  .card-mockup-qr svg{width:22px;height:22px;opacity:0.6}
+
+  .badge-mockup{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:10px 16px;
+    width:100%;
+    max-width:280px;
+  }
+  .badge-mockup-icon{
+    width:32px;height:32px;
+    border-radius:8px;
+    background:rgba(59,130,246,0.12);
+    display:grid;
+    place-items:center;
+    flex-shrink:0;
+  }
+  .badge-mockup-text{
+    font-size:0.72rem;
+    color:#b0bec5;
+  }
+  .badge-mockup-text strong{
+    color:var(--text-primary);
+    font-weight:600;
+  }
+
+  /* ===== Panel 8: Image Direction ===== */
+  .image-direction{
+    min-height:420px;
+    position:relative;
+    overflow:hidden;
+  }
+  .imgdir-bg{
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(180deg, transparent 30%, var(--panel) 100%),
+      linear-gradient(135deg, #0f1a2e 0%, #1a1030 40%, #0a1628 100%);
+  }
+  .imgdir-overlay{
+    position:relative;
+    z-index:1;
+    padding:32px 28px;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+  }
+  .imgdir-gradient-strip{
+    position:absolute;
+    top:0;left:0;right:0;
+    height:60%;
+    background:
+      radial-gradient(ellipse 300px 200px at 70% 20%, rgba(59,130,246,0.12), transparent),
+      radial-gradient(ellipse 200px 200px at 30% 40%, rgba(251,191,36,0.06), transparent),
+      radial-gradient(ellipse 250px 150px at 80% 60%, rgba(45,212,191,0.06), transparent);
+  }
+  .imgdir-text{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.1rem;
+    font-weight:700;
+    color:var(--text-primary);
+    margin-bottom:8px;
+    position:relative;
+    z-index:1;
+  }
+  .imgdir-sub{
+    font-size:0.75rem;
+    color:#b0bec5;
+    line-height:1.5;
+    position:relative;
+    z-index:1;
+    max-width:300px;
+  }
+  .imgdir-palette-dots{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+    position:relative;
+    z-index:1;
+  }
+  .imgdir-dot{
+    width:24px;height:24px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.08);
+  }
+
+  /* ===== Panel 9: System Detail ===== */
+  .system-detail{
+    min-height:420px;
+    padding:32px 28px;
+  }
+  .system-items{
+    margin-top:20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .system-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 14px;
+    background:var(--surface);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+  }
+  .system-icon{
+    width:32px;height:32px;
+    border-radius:8px;
+    display:grid;
+    place-items:center;
+    flex-shrink:0;
+  }
+  .system-icon svg{width:16px;height:16px}
+  .system-item-text{
+    font-size:0.72rem;
+    color:var(--text-primary);
+    font-weight:500;
+  }
+  .system-item-meta{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    color:#b0bec5;
+    margin-left:auto;
+    font-weight:500;
+  }
+  .system-chips{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
+  .system-chip{
+    padding:5px 10px;
+    border-radius:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    border:1px solid var(--panel-border);
+    color:#b0bec5;
+    background:var(--surface);
+    font-weight:500;
+  }
+
+  /* Footer */
+  .kit-footer{
+    text-align:center;
+    margin-top:48px;
+    padding:24px 0;
+    border-top:1px solid rgba(255,255,255,0.04);
+  }
+  .kit-footer p{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.6rem;
+    color:#b0bec5;
+    letter-spacing:0.1em;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="kit-header">
+  <h1><span>81</span>-IDUM Brand Kit</h1>
+  <p>Identity System Overview &mdash; 2026</p>
+</header>
+
+<!-- 3x3 Grid -->
+<div class="kit-grid">
+
+  <!-- 1. Logo Cover -->
+  <div class="panel">
+    <span class="panel-num">01</span>
+    <div class="logo-cover">
+      <svg class="logo-mark" viewBox="0 0 120 120" fill="none">
+        <rect x="4" y="4" width="112" height="112" rx="28" fill="#12151e" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+        <rect x="12" y="12" width="96" height="96" rx="22" fill="#3b82f6" opacity="0.1"/>
+        <!-- Book shape -->
+        <path d="M35 85V42c0-3 2-5 5-5h15c3 0 5 2 5 5v43" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M85 85V42c0-3-2-5-5-5H65c-3 0-5 2-5 5v43" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M60 37v48" stroke="#3b82f6" stroke-width="1.5" opacity="0.5"/>
+        <!-- 81 number -->
+        <text x="60" y="68" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="22" fill="#e8edf5" letter-spacing="-1">81</text>
+      </svg>
+      <div class="logo-wordmark"><em>81</em>-IDUM</div>
+      <div class="logo-tagline">Ixtisoslashgan Davlat Maktabi</div>
+    </div>
+  </div>
+
+  <!-- 2. Logo Construction -->
+  <div class="panel">
+    <span class="panel-num">02</span>
+    <div class="logo-construction">
+      <div class="panel-label">Logo Construction</div>
+      <div class="construction-grid">
+        <div class="construction-variant" style="background:#0c0e14">
+          <svg viewBox="0 0 56 56" fill="none">
+            <rect width="56" height="56" rx="14" fill="#12151e" stroke="#3b82f6" stroke-width="1"/>
+            <text x="28" y="34" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="16" fill="#60a5fa">81</text>
+          </svg>
+          <span>Dark / Primary</span>
+        </div>
+        <div class="construction-variant" style="background:#ffffff">
+          <svg viewBox="0 0 56 56" fill="none">
+            <rect width="56" height="56" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+            <text x="28" y="34" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="16" fill="#3b82f6">81</text>
+          </svg>
+          <span>Light / Inverted</span>
+        </div>
+        <div class="construction-variant on-blue" style="background:#3b82f6">
+          <svg viewBox="0 0 56 56" fill="none">
+            <rect width="56" height="56" rx="14" fill="#3b82f6"/>
+            <text x="28" y="34" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="16" fill="#ffffff">81</text>
+          </svg>
+          <span>Accent / Fill</span>
+        </div>
+        <div class="construction-variant" style="background:linear-gradient(135deg,#0f1a2e,#1a1030)">
+          <svg viewBox="0 0 56 56" fill="none">
+            <rect width="56" height="56" rx="14" fill="none"/>
+            <circle cx="28" cy="28" r="20" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="0.8"/>
+            <text x="28" y="34" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="14" fill="#fbbf24">81</text>
+          </svg>
+          <span>Icon / Favicon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Color System -->
+  <div class="panel">
+    <span class="panel-num">03</span>
+    <div class="color-system">
+      <div class="panel-label">Color System</div>
+      <div class="color-swatches">
+        <div class="swatch">
+          <div class="swatch-fill" style="background:#3b82f6"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Primary Blue</div>
+            <div class="swatch-hex">#3B82F6</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-fill" style="background:#60a5fa"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Light Blue</div>
+            <div class="swatch-hex">#60A5FA</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-fill" style="background:#fbbf24"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Amber Accent</div>
+            <div class="swatch-hex">#FBBF24</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-fill" style="background:#2dd4bf"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Teal Accent</div>
+            <div class="swatch-hex">#2DD4BF</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-fill" style="background:#0f172a"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Dark Base</div>
+            <div class="swatch-hex">#0F172A</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-fill" style="background:#e8edf5"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Light Text</div>
+            <div class="swatch-hex">#E8EDF5</div>
+          </div>
+        </div>
+      </div>
+      <div class="color-accents">
+        <div class="accent-chip" style="background:#ef4444" title="Danger"></div>
+        <div class="accent-chip" style="background:linear-gradient(90deg,#3b82f6,#60a5fa)" title="Primary Gradient"></div>
+        <div class="accent-chip" style="background:linear-gradient(90deg,#3b82f6,#2dd4bf)" title="Blue-Teal Gradient"></div>
+        <div class="accent-chip" style="background:linear-gradient(90deg,#60a5fa,#fbbf24)" title="Blue-Amber Gradient"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Digital Application -->
+  <div class="panel">
+    <span class="panel-num">04</span>
+    <div class="digital-app">
+      <div class="panel-label" style="align-self:flex-start">Digital Application</div>
+      <div class="browser-chrome">
+        <div class="browser-bar">
+          <div class="browser-dot r"></div>
+          <div class="browser-dot y"></div>
+          <div class="browser-dot g"></div>
+          <div class="browser-url">81-idum.uz</div>
+        </div>
+        <div class="browser-content">
+          <div class="browser-nav">
+            <div class="browser-nav-logo">81-IDUM</div>
+            <div class="browser-nav-links">
+              <span>Bosh sahifa</span>
+              <span>Yangiliklar</span>
+              <span>Kurslar</span>
+              <span>O'qituvchilar</span>
+            </div>
+          </div>
+          <div class="browser-hero-text">Har doim<br>YUQORI NATIJA</div>
+          <div class="browser-hero-sub">O'quvchilar, o'qituvchilar va ota-onalar uchun zamonaviy ta'lim platformasi.</div>
+          <a class="browser-cta" href="#">Kurslarni ko'rish</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Brand Essence -->
+  <div class="panel">
+    <span class="panel-num">05</span>
+    <div class="brand-essence">
+      <div class="essence-eyebrow">Brand Essence</div>
+      <div class="essence-quote">O'quvchilarga yuqori natija erishishda yordam beramiz</div>
+      <div class="essence-sub">81-IDUM — zamonaviy ta'lim texnologiyalari, tajribali o'qituvchilar va ilg'or o'quv dasturlari orqali har bir o'quvchining muvaffaqiyatiga qaratilgan platforma.</div>
+    </div>
+  </div>
+
+  <!-- 6. Typography -->
+  <div class="panel">
+    <span class="panel-num">06</span>
+    <div class="typography">
+      <div class="panel-label">Typography</div>
+      <div class="type-display">
+        <div class="type-row">
+          <span class="type-sample-display">Aa Bb Cc</span>
+          <span class="type-label">Display</span>
+        </div>
+        <div class="type-row">
+          <span class="type-sample-body">The quick brown fox jumps over the lazy dog.</span>
+          <span class="type-label">Body</span>
+        </div>
+        <div class="type-row">
+          <span class="type-sample-mono">font-size: 14px;</span>
+          <span class="type-label">Mono</span>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="type-label" style="margin-bottom:8px">Type Families</div>
+        <div class="type-weights">
+          <div class="weight-chip active">Space Grotesk</div>
+          <div class="weight-chip">Inter</div>
+          <div class="weight-chip">JetBrains Mono</div>
+        </div>
+      </div>
+      <div>
+        <div class="type-label" style="margin-bottom:8px">Weights</div>
+        <div class="type-weights">
+          <div class="weight-chip">300</div>
+          <div class="weight-chip">400</div>
+          <div class="weight-chip active">500</div>
+          <div class="weight-chip active">600</div>
+          <div class="weight-chip active">700</div>
+          <div class="weight-chip">800</div>
+          <div class="weight-chip">900</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Physical Application -->
+  <div class="panel">
+    <span class="panel-num">07</span>
+    <div class="physical-app">
+      <div class="panel-label" style="align-self:flex-start">Physical Application</div>
+      <div class="card-mockup">
+        <div class="card-mockup-label">Student ID Card</div>
+        <div class="card-mockup-name">Abdullayev Sardor</div>
+        <div class="card-mockup-role">10-B sinf o'quvchisi</div>
+        <div class="card-mockup-footer">
+          <div class="card-mockup-id">ID: 81-2026-0471</div>
+          <div class="card-mockup-qr">
+            <svg viewBox="0 0 22 22" fill="currentColor" style="color:var(--text-muted)">
+              <rect x="0" y="0" width="8" height="8" rx="1"/>
+              <rect x="14" y="0" width="8" height="8" rx="1"/>
+              <rect x="0" y="14" width="8" height="8" rx="1"/>
+              <rect x="14" y="14" width="4" height="4" rx="0.5"/>
+              <rect x="14" y="0" width="4" height="4" rx="0.5" opacity="0.3"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="badge-mockup">
+        <div class="badge-mockup-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z" fill="#fbbf24"/>
+          </svg>
+        </div>
+        <div class="badge-mockup-text"><strong>A'lochi</strong> o'quvchi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Image Direction -->
+  <div class="panel">
+    <span class="panel-num">08</span>
+    <div class="image-direction">
+      <div class="imgdir-bg"></div>
+      <div class="imgdir-overlay">
+        <div class="imgdir-gradient-strip"></div>
+        <div class="panel-label" style="position:relative;z-index:1">Image Direction</div>
+        <div class="imgdir-text" style="margin-top:auto">Cinematic &amp; Editorial</div>
+        <div class="imgdir-sub">Deep blue atmosphere with warm amber accents. Moody gradients, clean overlays, and restrained visual density for premium editorial feel.</div>
+        <div class="imgdir-palette-dots">
+          <div class="imgdir-dot" style="background:#0f172a"></div>
+          <div class="imgdir-dot" style="background:#1e3a5f"></div>
+          <div class="imgdir-dot" style="background:#3b82f6"></div>
+          <div class="imgdir-dot" style="background:#60a5fa"></div>
+          <div class="imgdir-dot" style="background:#fbbf24"></div>
+          <div class="imgdir-dot" style="background:#2dd4bf"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. System Detail -->
+  <div class="panel">
+    <span class="panel-num">09</span>
+    <div class="system-detail">
+      <div class="panel-label">System Detail</div>
+      <div class="system-items">
+        <div class="system-item">
+          <div class="system-icon" style="background:rgba(59,130,246,0.1)">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="system-item-text">Navigation</span>
+          <span class="system-item-meta">Glass / Blur</span>
+        </div>
+        <div class="system-item">
+          <div class="system-icon" style="background:rgba(251,191,36,0.1)">
+            <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="3" stroke="#fbbf24" stroke-width="1.5"/><path d="M5 8h6" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="system-item-text">Cards</span>
+          <span class="system-item-meta">Rounded / Subtle</span>
+        </div>
+        <div class="system-item">
+          <div class="system-icon" style="background:rgba(45,212,191,0.1)">
+            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#2dd4bf" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="system-item-text">Animations</span>
+          <span class="system-item-meta">Spring / Blur</span>
+        </div>
+        <div class="system-item">
+          <div class="system-icon" style="background:rgba(99,102,241,0.1)">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M4 12V4h4l4 4-4 4z" stroke="#818cf8" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="system-item-text">Shadows</span>
+          <span class="system-item-meta">Tinted / Diffused</span>
+        </div>
+      </div>
+      <div class="system-chips">
+        <div class="system-chip">radius: 12-20px</div>
+        <div class="system-chip">gap: 8-24px</div>
+        <div class="system-chip">border: 1px</div>
+        <div class="system-chip">opacity: 0.06-0.15</div>
+        <div class="system-chip">blur: 12-24px</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="kit-footer">
+  <p>81-IDUM Brand Identity System &mdash; Confidential &mdash; 2026</p>
+</footer>
+
+</body>
+</html>

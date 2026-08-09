@@ -23,10 +23,11 @@ class Kernel extends ConsoleKernel
         // Muddati tugagan donorlarni oddiy foydalanuvchiga tushirish — har daqiqada
         $schedule->command('donations:expire')->everyMinute();
 
-        // Telegram getUpdates polling — faqat local environment'da (webhook bilan to'qnashmaslik uchun)
-        if (app()->environment('local')) {
-            $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
-        }
+        // Telegram getUpdates polling — webhook faol bo'lsa ishlamaydi
+        // Agar webhook o'chirilgan bo'lsa, quyidagini yoqing:
+        // if (app()->environment('local')) {
+        //     $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
+        // }
 
         // Kurs boshlanishi haqida eslatma — kuniga 1 marta (ertalab 8:00)
         $schedule->command('telegram:course-reminders')->dailyAt('08:00');

@@ -3368,31 +3368,31 @@ function refreshChatAvailability() {
       var blockBtn = e.target.closest('[data-chat-block]');
       if (blockBtn) {
         var userId = blockBtn.getAttribute('data-chat-block');
-        function doBlock() {
-        fetch(blockUrl + '/' + userId, {
-          method: 'POST',
-          headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-          credentials: 'same-origin',
-        }).then(function (r) {
-          if (r.ok) {
-            messagesEl.querySelectorAll('[data-msg-id]').forEach(function (el) {
-              var btn = el.querySelector('[data-chat-block="' + userId + '"]');
-              if (btn) btn.remove();
-            });
-          }
-        });
+        var userName = '';
+        var msgRow = blockBtn.closest('[data-msg-id]');
+        if (msgRow) {
+          var nameEl = msgRow.querySelector('.chat-msg-name');
+          if (nameEl) userName = nameEl.textContent.trim();
         }
-        var bp = window.primeConfirm && window.primeConfirm({
-          message: 'Bu foydalanuvchini bloklaysizmi?',
-          title: 'Bloklash',
-          variant: 'danger',
-          okText: 'Bloklash',
+        showChatBlockModal(userName, function(duration, reason) {
+          fetch(blockUrl + '/' + userId, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrf,
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ duration: duration, reason: reason }),
+          }).then(function (r) { return r.json(); }).then(function (data) {
+            if (data.ok) {
+              messagesEl.querySelectorAll('[data-msg-id]').forEach(function (el) {
+                var btn = el.querySelector('[data-chat-block="' + userId + '"]');
+                if (btn) btn.remove();
+              });
+            }
+          }).catch(function () {});
         });
-        if (bp && typeof bp.then === 'function') {
-          bp.then(function (ok) { if (ok) doBlock(); });
-        } else if (window.confirm('Bu foydalanuvchini bloklaysizmi?')) {
-          doBlock();
-        }
       }
     });
 
@@ -4298,15 +4298,27 @@ function refreshChatAvailability() {
 
     if (!toggle || !popup) return;
 
-    // Toggle popup — ochish/yopish
+    // Toggle popup — ochish/yopish (animatsiya bilan)
     toggle.addEventListener('click', function(e) {
       e.stopPropagation();
       var isHidden = popup.hidden;
-      popup.hidden = !isHidden;
+      
       if (isHidden) {
+        // Ochish — animatsiya bilan
+        popup.hidden = false;
+        popup.classList.remove('is-closing');
         popup.style.animation = 'none';
         popup.offsetHeight; // trigger reflow
         popup.style.animation = '';
+      } else {
+        // Yopish — animatsiya bilan
+        popup.classList.add('is-closing');
+        // Animatsiya tugagach hidden qilish
+        popup.addEventListener('animationend', function onClose() {
+          popup.removeEventListener('animationend', onClose);
+          popup.hidden = true;
+          popup.classList.remove('is-closing');
+        }, { once: true });
       }
     });
 
@@ -4353,29 +4365,46 @@ function refreshChatAvailability() {
       });
     });
 
-    // Close popup when clicking outside
+    // Close popup when clicking outside (animatsiya bilan)
     document.addEventListener('click', function(e) {
       if (!popup.hidden && !popup.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
-        popup.hidden = true;
+        popup.classList.add('is-closing');
+        popup.addEventListener('animationend', function onClose() {
+          popup.removeEventListener('animationend', onClose);
+          popup.hidden = true;
+          popup.classList.remove('is-closing');
+        }, { once: true });
       }
     });
 
-    // Close popup when chat panel closes
+    // Close popup when chat panel closes (animatsiya bilan)
     if (panel) {
       var observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(m) {
           if (m.attributeName === 'hidden') {
-            if (panel.hidden) popup.hidden = true;
+            if (panel.hidden && !popup.hidden) {
+              popup.classList.add('is-closing');
+              popup.addEventListener('animationend', function onClose() {
+                popup.removeEventListener('animationend', onClose);
+                popup.hidden = true;
+                popup.classList.remove('is-closing');
+              }, { once: true });
+            }
           }
         });
       });
       observer.observe(panel, { attributes: true });
     }
 
-    // Close popup on Escape
+    // Close popup on Escape (animatsiya bilan)
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && !popup.hidden) {
-        popup.hidden = true;
+        popup.classList.add('is-closing');
+        popup.addEventListener('animationend', function onClose() {
+          popup.removeEventListener('animationend', onClose);
+          popup.hidden = true;
+          popup.classList.remove('is-closing');
+        }, { once: true });
       }
     });
   }
@@ -4387,3 +4416,118 @@ function refreshChatAvailability() {
     initStickerPanel();
   }
 })();
+
+/* ── Chat block modal (admin/moderator: bloklash muddati + sabab) ── */
+function showChatBlockModal(userName, onConfirm) {
+  var existing = document.getElementById('chat-block-modal');
+  if (existing) existing.remove();
+
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    || document.documentElement.classList.contains('dark');
+
+  var c = isDark ? {
+    dialogBg: '#1e293b',
+    dialogShadow: '0 24px 64px rgba(0,0,0,.5)',
+    headingColor: '#e2e8f0',
+    subColor: '#94a3b8',
+    labelColor: '#94a3b8',
+    inputBg: 'rgba(15,23,42,.6)',
+    inputBorder: 'rgba(255,255,255,.1)',
+    inputColor: '#e2e8f0',
+    cancelBg: 'rgba(255,255,255,.06)',
+    cancelBorder: 'rgba(255,255,255,.1)',
+    cancelColor: '#94a3b8',
+    iconBg: 'linear-gradient(135deg,rgba(239,68,68,.15),rgba(239,68,68,.25))',
+  } : {
+    dialogBg: '#fff',
+    dialogShadow: '0 24px 64px rgba(0,0,0,.2)',
+    headingColor: '#1e293b',
+    subColor: '#64748b',
+    labelColor: '#64748b',
+    inputBg: '#f8fafc',
+    inputBorder: '#e2e8f0',
+    inputColor: '#334155',
+    cancelBg: '#f8fafc',
+    cancelBorder: '#e2e8f0',
+    cancelColor: '#475569',
+    iconBg: 'linear-gradient(135deg,#fef2f2,#fee2e2)',
+  };
+
+  var modal = document.createElement('div');
+  modal.id = 'chat-block-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var nameHtml = userName ? '<strong style="color:' + c.headingColor + ';">' + userName + '</strong> bloklanadi' : 'Bu foydalanuvchini bloklaysizmi?';
+  modal.innerHTML = [
+    '<div class="cbm-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:opacity .3s;"></div>',
+    '<div class="cbm-dialog" style="position:relative;z-index:1;width:min(420px,100%);background:' + c.dialogBg + ';border-radius:20px;padding:32px 28px 24px;box-shadow:' + c.dialogShadow + ';transform:scale(.9) translateY(20px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);">',
+    '  <div style="text-align:center;margin-bottom:20px;">',
+    '    <div style="width:56px;height:56px;border-radius:16px;background:' + c.iconBg + ';display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;">',
+    '      <i class="fa-solid fa-ban" style="font-size:22px;color:#dc2626;"></i>',
+    '    </div>',
+    '    <h3 style="margin:0 0 6px;font-size:1.2rem;font-weight:800;color:' + c.headingColor + ';">Foydalanuvchini bloklash</h3>',
+    '    <p style="margin:0;font-size:.85rem;color:' + c.subColor + ';">' + nameHtml + '</p>',
+    '  </div>',
+    '  <div style="margin-bottom:16px;">',
+    '    <label style="display:block;font-size:.75rem;font-weight:700;color:' + c.labelColor + ';text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Blok muddati</label>',
+    '    <select id="cbm-duration" style="width:100%;padding:10px 12px;border:1.5px solid ' + c.inputBorder + ';border-radius:10px;font-size:.85rem;color:' + c.inputColor + ';background:' + c.inputBg + ';outline:none;transition:border .2s;">',
+    '      <option value="1h">1 soat</option>',
+    '      <option value="1d" selected>1 kun</option>',
+    '      <option value="1w">1 hafta</option>',
+    '      <option value="1m">1 oy</option>',
+    '      <option value="forever">Butun umr</option>',
+    '    </select>',
+    '  </div>',
+    '  <div style="margin-bottom:24px;">',
+    '    <label style="display:block;font-size:.75rem;font-weight:700;color:' + c.labelColor + ';text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Blok sababi</label>',
+    '    <textarea id="cbm-reason" rows="3" maxlength="500" placeholder="Sababni kiriting..." style="width:100%;padding:10px 12px;border:1.5px solid ' + c.inputBorder + ';border-radius:10px;font-size:.85rem;color:' + c.inputColor + ';background:' + c.inputBg + ';outline:none;resize:none;transition:border .2s;box-sizing:border-box;"></textarea>',
+    '  </div>',
+    '  <div style="display:flex;gap:10px;">',
+    '    <button type="button" class="cbm-cancel" style="flex:1;padding:11px;border-radius:12px;font-weight:700;font-size:.9rem;border:1.5px solid ' + c.cancelBorder + ';background:' + c.cancelBg + ';color:' + c.cancelColor + ';cursor:pointer;transition:all .2s;">Bekor qilish</button>',
+    '    <button type="button" class="cbm-ok" style="flex:1;padding:11px;border-radius:12px;font-weight:700;font-size:.9rem;border:none;background:linear-gradient(135deg,#f87171,#ef4444);color:#fff;cursor:pointer;box-shadow:0 6px 16px rgba(239,68,68,.3);transition:all .2s;">Bloklash</button>',
+    '  </div>',
+    '</div>'
+  ].join('\n');
+
+  document.body.appendChild(modal);
+
+  var backdrop = modal.querySelector('.cbm-backdrop');
+  var dialog = modal.querySelector('.cbm-dialog');
+  var btnCancel = modal.querySelector('.cbm-cancel');
+  var btnOk = modal.querySelector('.cbm-ok');
+  var durationSelect = modal.querySelector('#cbm-duration');
+  var reasonInput = modal.querySelector('#cbm-reason');
+
+  function close() {
+    dialog.style.transform = 'scale(.9) translateY(20px)';
+    dialog.style.opacity = '0';
+    backdrop.style.opacity = '0';
+    setTimeout(function () { modal.remove(); }, 350);
+  }
+
+  function submit() {
+    var duration = durationSelect.value;
+    var reason = reasonInput.value.trim();
+    if (!reason) {
+      reasonInput.style.borderColor = '#ef4444';
+      reasonInput.focus();
+      return;
+    }
+    close();
+    if (onConfirm) onConfirm(duration, reason);
+  }
+
+  backdrop.addEventListener('click', close);
+  btnCancel.addEventListener('click', close);
+  btnOk.addEventListener('click', submit);
+  reasonInput.addEventListener('input', function () { reasonInput.style.borderColor = c.inputBorder; });
+  reasonInput.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit(); });
+
+  setTimeout(function () {
+    backdrop.style.opacity = '1';
+    dialog.style.transform = 'scale(1) translateY(0)';
+    dialog.style.opacity = '1';
+    durationSelect.focus();
+  }, 30);
+}
+

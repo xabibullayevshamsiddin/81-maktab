@@ -116,17 +116,7 @@
                         <button type="submit" class="btn btn-sm btn-outline-success w-100">O‘qilgan qilib belgilash</button>
                       </form>
                     @endif
-                    @if(!$row->is_blocked)
-                      <form method="POST" action="{{ route('admin.contact-messages.block', $row) }}" class="d-inline" data-confirm="Bloklaysizmi?" data-confirm-title="Bloklash" data-confirm-variant="danger" data-confirm-ok="Bloklash">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-warning w-100">Bloklash</button>
-                      </form>
-                    @else
-                      <form method="POST" action="{{ route('admin.contact-messages.unblock', $row) }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Blokdan chiqarish</button>
-                      </form>
-                    @endif
+                   
                     @if($canInbox)
                       <form method="POST" action="{{ route('admin.contact-messages.destroy', $row) }}" class="d-inline" data-confirm="O‘chirilsinmi?" data-confirm-title="Xabarni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                         @csrf

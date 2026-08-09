@@ -244,6 +244,14 @@
                               </button>
                             </form>
                           @endif
+                          @if (auth()->id() !== $user->id && auth()->user()->isSuperAdmin() && ! $user->hasRole(\App\Models\User::ROLE_USER))
+                            <form action="{{ route('user.demote', $user) }}" method="POST" style="display:inline;" data-confirm="{{ $user->name }} ni oddiy foydalanuvchiga tushirasizmi? Barcha maxfiy huquqlari bekor qilinadi." data-confirm-title="Darajani tushirish" data-confirm-variant="warning" data-confirm-ok="Tushirish">
+                              @csrf
+                              <button type="submit" class="text-warning" style="background:none;border:none;padding:0;cursor:pointer;" title="Oddiy foydalanuvchiga tushirish">
+                                <i class="lni lni-arrow-down"></i>
+                              </button>
+                            </form>
+                          @endif
                         </div>
                       </td>
                     </tr>

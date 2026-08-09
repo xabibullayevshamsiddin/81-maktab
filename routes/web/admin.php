@@ -37,6 +37,7 @@ Route::middleware(['auth', 'active', 'role:super_admin,admin'])->group(function 
     Route::post('user/{user}/unblock', [AdminController::class, 'unblockUser'])->name('user.unblock');
     Route::post('user/{user}/course-open/approve', [AdminController::class, 'approveCourseOpenRequest'])->name('user.course-open.approve');
     Route::post('user/{user}/course-open/reject', [AdminController::class, 'rejectCourseOpenRequest'])->name('user.course-open.reject');
+    Route::post('user/{user}/demote', [AdminController::class, 'demoteUser'])->name('user.demote');
     Route::get('admin/school-classes', [AdminSchoolClassController::class, 'index'])->name('admin.school-classes.index');
     Route::post('admin/school-classes', [AdminSchoolClassController::class, 'store'])->name('admin.school-classes.store');
     Route::delete('admin/school-classes/{schoolClass}', [AdminSchoolClassController::class, 'destroy'])->name('admin.school-classes.destroy');

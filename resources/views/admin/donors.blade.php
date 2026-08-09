@@ -310,8 +310,8 @@
                                         <span class="user-avatar-fallback">{{ strtoupper(substr($donor->name, 0, 1)) }}</span>
                                     @endif
                                     <div class="user-info">
-                                        <a href="{{ route('profile.show') }}" class="user-name">{{ $donor->name }}</a>
-                                        <div class="user-email" title="{{ $donor->email }}">{{ $donor->email }}</div>
+                                        <span class="user-name">{{ $donor->name }}</span>
+                                        <div class="user-email" title="{{ $donor->phone }}">{{ $donor->phone }}</div>
                                     </div>
                                 </div>
                             </td>

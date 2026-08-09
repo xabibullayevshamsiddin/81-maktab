@@ -557,9 +557,64 @@ class ChatController extends Controller
             return response()->json(['ok' => false, 'error' => 'Bu foydalanuvchini bloklab bo\'lmaydi.'], 422);
         }
 
-        $user->update(['is_active' => false]);
+        $validated = $request->validate([
+            'duration' => ['required', 'in:1h,1d,1w,1m,forever'],
+            'reason'   => ['required', 'string', 'max:500'],
+        ], [
+            'duration.required' => 'Blok muddatini tanlang.',
+            'reason.required'   => 'Blok sababini kiriting.',
+        ]);
 
-        return response()->json(['ok' => true]);
+        $blockedUntil = match ($validated['duration']) {
+            '1h'      => now()->addHour(),
+            '1d'      => now()->addDay(),
+            '1w'      => now()->addWeek(),
+            '1m'      => now()->addMonth(),
+            'forever' => null,
+        };
+
+        $durationText = match ($validated['duration']) {
+            '1h'      => '1 soat',
+            '1d'      => '1 kun',
+            '1w'      => '1 hafta',
+            '1m'      => '1 oy',
+            'forever' => 'Butun umr',
+        };
+
+        $user->update([
+            'is_blocked'      => true,
+            'is_active'       => false,
+            'blocked_until'   => $blockedUntil,
+            'blocked_reason'  => $validated['reason'],
+            'blocked_by'      => $current->id,
+        ]);
+
+        // Telegram xabar yuborish
+        if ($user->telegram_chat_id) {
+            $adminName = htmlspecialchars($current->buildNameFromParts() ?: $current->name);
+            $userName  = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+            $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz';
+
+            $text = "Hisobingiz bloklandi\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Foydalanuvchi: {$userName}\n"
+                ."Bloklagan: {$adminName}\n"
+                ."Muddat: {$durationText}\n"
+                ."Qachon gacha: {$unblockTime}\n\n"
+                ."Sabab:\n"
+                .htmlspecialchars($validated['reason']) . "\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Blok muddati tugagandan keyin avtomatik yechiladi.";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        }
+
+        return response()->json([
+            'ok'             => true,
+            'duration_text'  => $durationText,
+            'blocked_until'  => $blockedUntil?->format('d.m.Y H:i'),
+        ]);
     }
 
     private function cleanOldMessages(): void

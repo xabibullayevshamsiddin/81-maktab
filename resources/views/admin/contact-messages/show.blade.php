@@ -97,14 +97,19 @@
 
           <div class="mt-4 d-flex flex-wrap gap-2">
             @if(!$message->is_blocked)
-              <form method="POST" action="{{ route('admin.contact-messages.block', $message) }}" class="d-inline"
-                data-confirm="Bu xabarni bloklaysizmi? (spam yoki arxaiv)" data-confirm-title="Bloklash"
-                data-confirm-variant="danger" data-confirm-ok="Bloklash">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-warning">Bloklash</button>
-              </form>
+              @if($message->senderUser)
+                <button type="button" class="btn btn-sm btn-warning"
+                  onclick="openBlockModal('{{ addslashes($message->senderUser->name) }}', '{{ route('admin.contact-messages.block', $message) }}')">Bloklash</button>
+              @else
+                <form method="POST" action="{{ route('admin.contact-messages.block', $message) }}" class="d-inline"
+                  data-confirm="Bu xabarni bloklaysizmi? (spam yoki arxaiv)" data-confirm-title="Bloklash"
+                  data-confirm-variant="danger" data-confirm-ok="Bloklash">
+                  @csrf
+                  <button type="submit" class="btn btn-sm btn-warning">Bloklash</button>
+                </form>
+              @endif
             @else
-              <form method="POST" action="{{ route('admin.contact-messages.unblock', $message) }}" class="d-inline">
+              <form method="POST" action="{{ route('admin.contact-messages.unblock', $message) }}" class="d-inline" data-confirm="Bu foydalanuvchi blokdan chiqarilsinmi?" data-confirm-title="Blokdan chiqarish" data-confirm-variant="primary" data-confirm-ok="Ha, chiqarish">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-outline-secondary">Blokdan chiqarish</button>
               </form>

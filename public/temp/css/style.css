@@ -4259,6 +4259,22 @@ button.chat-msg-avatar-btn:focus-visible {
   }
 }
 
+@keyframes stickerPopupOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+}
+
+.chat-sticker-popup.is-closing {
+  animation: stickerPopupOut 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
 /* Tabs */
 .sticker-popup-tabs {
   display: flex;
