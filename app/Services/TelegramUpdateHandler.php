@@ -399,19 +399,13 @@ class TelegramUpdateHandler
         
         // Asl xabarni tahrirlash — tugmalarni o'chirish
         $messageId = (int) ($callbackQuery['message']['message_id'] ?? 0);
-        \Illuminate\Support\Facades\Log::info('Telegram editMessage attempt', [
-            'chat_id' => $chatId,
-            'message_id' => $messageId,
-            'callback_query_id' => $callbackId,
-        ]);
         if ($messageId) {
             $editedText = "📚 <b>Kurs ochish so'rovi</b>\n"
                 ."━━━━━━━━━━━━━━━━━━━━\n\n"
                 ."👨‍🏫 <b>O'qituvchi:</b> ".htmlspecialchars($user->name)."\n"
                 ."━━━━━━━━━━━━━━━━━━━━\n\n"
                 ."{$decisionEmoji} <b>{$decisionText}</b>";
-            $result = $this->telegram->editMessageText($chatId, $messageId, $editedText);
-            \Illuminate\Support\Facades\Log::info('Telegram editMessage result', ['result' => $result]);
+            $this->telegram->editMessageText($chatId, $messageId, $editedText, ['inline_keyboard' => []]);
         }
     }
 
@@ -457,11 +451,6 @@ class TelegramUpdateHandler
         
         // Asl xabarni tahrirlash — tugmalarni o'chirish
         $messageId = (int) ($callbackQuery['message']['message_id'] ?? 0);
-        \Illuminate\Support\Facades\Log::info('Telegram enrollment editMessage attempt', [
-            'chat_id' => $chatId,
-            'message_id' => $messageId,
-            'enrollment_id' => $enrollmentId,
-        ]);
         if ($messageId) {
             $editedText = "📝 <b>Yangi kursga yozilish arizasi</b>\n"
                 ."━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -469,8 +458,7 @@ class TelegramUpdateHandler
                 ."👤 <b>O'quvchi:</b> ".htmlspecialchars($student?->name ?? 'Noma\'lum')."\n"
                 ."━━━━━━━━━━━━━━━━━━━━\n\n"
                 ."{$decisionEmoji} <b>Ariza {$decisionText}</b>";
-            $result = $this->telegram->editMessageText($chatId, $messageId, $editedText);
-            \Illuminate\Support\Facades\Log::info('Telegram enrollment editMessage result', ['result' => $result]);
+            $this->telegram->editMessageText($chatId, $messageId, $editedText, ['inline_keyboard' => []]);
         }
     }
 
