@@ -50,6 +50,36 @@ class AiService
             return ['success' => true, 'text' => $analytics, 'source' => 'analytics_data'];
         }
 
+        // 0.02 Fan bo'yicha ustoz qidirish ("Matematikadan kim dars beradi?")
+        if ($subjectTeacher = $this->matchSubjectTeacherQuery($message)) {
+            return ['success' => true, 'text' => $subjectTeacher, 'source' => 'subject_teacher'];
+        }
+
+        // 0.025 Maktab qoidalari va tartibi
+        if ($schoolRules = $this->matchSchoolRulesQuery($message)) {
+            return ['success' => true, 'text' => $schoolRules, 'source' => 'school_rules'];
+        }
+
+        // 0.03 Baholash tizimi
+        if ($grading = $this->matchGradingSystemQuery($message)) {
+            return ['success' => true, 'text' => $grading, 'source' => 'grading_system'];
+        }
+
+        // 0.035 O'quvchilar yutuqlari va natijalari
+        if ($achievements = $this->matchAchievementsQuery($message)) {
+            return ['success' => true, 'text' => $achievements, 'source' => 'achievements'];
+        }
+
+        // 0.038 Sinfdagi dars jadvali
+        if ($classSchedule = $this->matchClassScheduleQuery($message)) {
+            return ['success' => true, 'text' => $classSchedule, 'source' => 'class_schedule'];
+        }
+
+        // 0.04 Sinf rahbari haqida savol
+        if ($classTeacher = $this->matchClassTeacherQuery($message)) {
+            return ['success' => true, 'text' => $classTeacher, 'source' => 'class_teacher'];
+        }
+
         // 0.05 Taqvim / sanaga bog'liq tadbirlar (DB: calendar_events)
         if ($calendar = $this->matchCalendarAndEvents($message)) {
             return ['success' => true, 'text' => $calendar, 'source' => 'calendar_data'];
@@ -640,6 +670,298 @@ class AiService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // YANGI MATCH METODLAR — ko'proq savollarga javob berish uchun
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Fan bo'yicha ustoz qidirish: "Matematikadan kim dars beradi?", "Fizika o'qituvchisi kim?"
+     */
+    private function matchSubjectTeacherQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasSubjectIntent = Str::contains($q, [
+            'fandan', 'fani', 'fan o\'qituvchi', 'dars ber', 'dars ol', 'o\'qitadi',
+            'kim o\'qit', 'kim dars', 'qaysi ustoz', 'o\'qituvchisi',
+            'matematik', 'fizika', 'kimyo', 'biologiya', 'tarix', 'geografiya',
+            'ingliz', 'rus tili', 'onatili', 'adabiyot', 'jismoniy', 'musiqa',
+            'tasviriy', 'informatsiya', 'texnologiya', 'psixologiya',
+        ]);
+
+        if (! $hasSubjectIntent) {
+            return null;
+        }
+
+        if (! Schema::hasTable('teachers')) {
+            return null;
+        }
+
+        $subjects = [
+            'matematik' => ['matematika', 'matematik', 'algebra', 'geometriya'],
+            'fizika' => ['fizika', 'fizik'],
+            'kimyo' => ['kimyo', 'kimyo fan'],
+            'biologiya' => ['biologiya', 'biologik'],
+            'tarix' => ['tarix', 'tarixchi'],
+            'geografiya' => ['geografiya', 'geografik'],
+            'ingliz' => ['ingliz', 'ingliz tili', 'english'],
+            'rus tili' => ['rus tili', 'ruscha'],
+            'onatili' => ['ona tili', 'onatili', 'o\'zbek tili', 'o\'zbekcha'],
+            'adabiyot' => ['adabiyot', 'adabiy'],
+            'jismoniy' => ['jismoniy tarbiya', 'sport', 'futbol'],
+            'musiqa' => ['musiqa', 'musiqa fani'],
+            'tasviriy' => ['tasviriy', 'rasm', 'chizmachilik'],
+            'informatsiya' => ['informatsiya', 'ikt', 'dasturlash', 'kompyuter'],
+            'psixologiya' => ['psixologiya', 'psixolog'],
+        ];
+
+        $matchedSubject = null;
+        foreach ($subjects as $subject => $keywords) {
+            foreach ($keywords as $kw) {
+                if (Str::contains($q, $kw)) {
+                    $matchedSubject = $subject;
+                    break 2;
+                }
+            }
+        }
+
+        if ($matchedSubject === null) {
+            return null;
+        }
+
+        $subjectKeywords = $subjects[$matchedSubject];
+
+        $teachers = Teacher::query()
+            ->where('is_active', true)
+            ->where(function ($query) use ($subjectKeywords) {
+                foreach ($subjectKeywords as $kw) {
+                    $query->orWhere('subject', 'like', "%{$kw}%");
+                }
+            })
+            ->select(['full_name', 'subject', 'experience_years', 'lavozim'])
+            ->orderByDesc('experience_years')
+            ->get();
+
+        if ($teachers->isEmpty()) {
+            return "**{$matchedSubject}** fani bo'yicha hozircha faol ustoz topilmadi.\n"
+                ."Barcha ustozlar: ".route('teacher');
+        }
+
+        $lines = $teachers->map(function ($t) {
+            $staj = (int) ($t->experience_years ?? 0);
+            $detail = $staj > 0 ? " ({$staj} yil staj)" : '';
+            $lavozim = trim((string) $t->lavozim);
+            $lavozimText = $lavozim !== '' ? " — {$lavozim}" : '';
+
+            return "👨‍🏫 **{$t->full_name}**{$detail}{$lavozimText}";
+        })->implode("\n");
+
+        return "📖 **{$matchedSubject}** fani bo'yicha ustozlar:\n\n{$lines}\n\n"
+            ."👨‍🏫 Barcha ustozlar: ".route('teacher');
+    }
+
+    /**
+     * Maktab qoidalari va tartibi
+     */
+    private function matchSchoolRulesQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasRulesIntent = Str::contains($q, [
+            'qoida', 'qoidalar', 'qonun', 'nizom', 'intizom', 'tartib',
+            'odob', 'odob-axloq', 'axloq', 'qoidalar toplami',
+            'maktab nizomi', 'maktab qoidalari', 'ichki tartib',
+        ]);
+
+        if (! $hasRulesIntent) {
+            return null;
+        }
+
+        return "📋 **MAKTAB ICHKI TARTIB-QOIDALARI**\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."⏰ **Dars vaqtlari:**\n"
+            ."- Darsga kechikmaslik kerak.\n"
+            ."- Kechikish sababini sinf rahbariga aytish shart.\n\n"
+            ."📱 **Telefon qoidalari:**\n"
+            ."- Dars vaqtida telefon ishlatish mumkin emas.\n"
+            ."- Zarur holatda oldindan ruxsat olish kerak.\n\n"
+            ."👗 **Kiyinish qoidalari:**\n"
+            ."- Maktab formasida kelish shart.\n"
+            ."- Ozoda va tartibli bo'lish kerak.\n\n"
+            ."📚 **O'quv jarayoni:**\n"
+            ."- Uy vazifasini vaqtida bajarish.\n"
+            ."- Darsda faol ishtirok etish.\n"
+            ."- O'qituvchilarga hurmat bilan munosabatda bo'lish.\n\n"
+            ."🏫 **Maktab hududi:**\n"
+            ."- Dars vaqtida ruxsatsiz maktabdan chiqish mumkin emas.\n"
+            ."- Maktab mulkiga g'amxo'rlik qilish.\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            ."💡 Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling.";
+    }
+
+    /**
+     * Baholash tizimi haqida savol
+     */
+    private function matchGradingSystemQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasGradingIntent = Str::contains($q, [
+            'baho', 'baholash', 'ball', 'reyting', 'ortacha baho',
+            'yaxshi', 'yomon', 'qoniqarli', 'alohida', 'bali',
+            'qanday baholaydi', 'baholar', 'imtihon bali',
+            'ortacha ball', 'reyting tizimi', 'grad',
+        ]);
+
+        if (! $hasGradingIntent) {
+            return null;
+        }
+
+        if (Str::contains($q, ['imtihon', 'test', 'exam'])) {
+            return null; // Bu matchExamAssistantQuery hal qiladi
+        }
+
+        return "📊 **BAHOLASH TIZIMI**\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."Davlat ta'lim standartlari bo'yicha baholash:\n\n"
+            ."- **A'lo (5)** — 90-100%\n"
+            ."- **Yaxshi (4)** — 75-89%\n"
+            ."- **Qoniqarli (3)** — 55-74%\n"
+            ."- **Yomon (2)** — 0-54%\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            ."📝 **Baholash usullari:**\n"
+            ."- Kunlik baholar\n"
+            ."- Oraliq nazorat\n"
+            ."- Yakuniy nazorat\n"
+            ."- Imtihon natijalari\n\n"
+            ."📊 O'rtacha baho profilingizda ko'rinadi: ".route('profile.show');
+    }
+
+    /**
+     * O'quvchilar yutuqlari va muvaffaqiyatlari
+     */
+    private function matchAchievementsQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasAchievementIntent = Str::contains($q, [
+            'yutuq', 'yutuqlar', 'muvaffaqiyat', 'galaba', 'mukofot',
+            'olimpiada', 'musobaqa', 'tanlov', 'konkurs',
+            'eng yaxshi', 'chempion', 'sovrindor', 'munosib',
+        ]);
+
+        if (! $hasAchievementIntent) {
+            return null;
+        }
+
+        return "🏆 **O'QUVCHILAR YUTUQLARI**\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."Maktabimiz o'quvchilari turli tanlov va olimpiadalarda faol ishtirok etadi:\n\n"
+            ."🥇 **Fan olimpiadalari:**\n"
+            ."- Matematika, Fizika, Kimyo, Biologiya fanlari bo'yicha\n"
+            ."- Davlat va xalqaro darajadagi olimpiadalar\n\n"
+            ."🏅 **Sport musobaqalari:**\n"
+            ."- Futbol, shaxmat, voleybol\n"
+            ."- Maktablararo musobaqalar\n\n"
+            ."🎨 **Ijodiy tanlovlar:**\n"
+            ."- Rasmlar tanlovi, adabiy tanlovlar\n"
+            ."- Musiqa va raqs tanlovlari\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            ."📊 Natijalar: ".route('post')."\n"
+            ."📅 Taqvim: ".route('calendar');
+    }
+
+    /**
+     * Sinfdagi dars jadvali
+     */
+    private function matchClassScheduleQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasScheduleIntent = Str::contains($q, [
+            'jadval', 'dars jadvali', 'qaysi kun', 'qanday dars',
+            'ertalabki dars', 'tushdan keyin', 'smena',
+            'sinfdagi', 'nechanchi dars', 'dars raqami',
+        ]);
+
+        if (! $hasScheduleIntent) {
+            return null;
+        }
+
+        if (Str::contains($q, ['taqvim', 'tadbir', 'sanada'])) {
+            return null; // Bu matchCalendarAndEvents hal qiladi
+        }
+
+        return "📋 **DARS JADVALI**\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."🌅 **I-SMENA (08:00-13:05)**\n"
+            ."1-dars: 08:00-08:45\n"
+            ."2-dars: 08:50-09:35\n"
+            ."3-dars: 09:40-10:25\n"
+            ."☕ Katta tanaffus: 10:25-10:40\n"
+            ."4-dars: 10:40-11:25\n"
+            ."5-dars: 11:30-12:15\n"
+            ."6-dars: 12:20-13:05\n\n"
+            ."🌙 **II-SMENA (13:10-18:05)**\n"
+            ."1-dars: 13:10-13:55\n"
+            ."2-dars: 14:00-14:45\n"
+            ."3-dars: 14:50-15:35\n"
+            ."4-dars: 15:40-16:25\n"
+            ."5-dars: 16:30-17:15\n"
+            ."6-dars: 17:20-18:05\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            ."⏰ Dars davomiyligi: 45 daqiqa\n"
+            ."📝 Aniq jadval sinf rahbaridan olish mumkin.";
+    }
+
+    /**
+     * Sinf rahbari haqida savol
+     */
+    private function matchClassTeacherQuery(string $message): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+
+        $hasClassTeacherIntent = Str::contains($q, [
+            'sinf rahbari', 'sinf raxbari', 'rahbar kim', 'sinf mudiri',
+            'sinf oqituvchisi', 'sinfdagi rahbar', 'klass rahbari',
+        ]);
+
+        if (! $hasClassTeacherIntent) {
+            return null;
+        }
+
+        if (! Schema::hasTable('teachers')) {
+            return null;
+        }
+
+        $classTeachers = Teacher::query()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->orWhere('lavozim', 'like', '%sinf rahbari%')
+                    ->orWhere('lavozim', 'like', '%sinf raxbari%')
+                    ->orWhere('lavozim', 'like', '%rahbar%')
+                    ->orWhere('lavozim', 'like', '%sinf mudiri%');
+            })
+            ->select(['full_name', 'lavozim', 'subject'])
+            ->get();
+
+        if ($classTeachers->isEmpty()) {
+            return "Hozircha sinf rahbarlari haqida ma'lumot kiritilmagan.\n"
+                ."Barcha ustozlar: ".route('teacher');
+        }
+
+        $lines = $classTeachers->map(function ($t) {
+            $fan = trim((string) $t->subject);
+            $lavozim = trim((string) $t->lavozim);
+            $detail = $fan !== '' ? " ({$fan})" : '';
+
+            return "👤 **{$t->full_name}**{$detail}\n   💼 {$lavozim}";
+        })->implode("\n\n");
+
+        return "📋 **SINF RAHBARLARI:**\n\n{$lines}\n\n"
+            ."👨‍🏫 Barcha ustozlar: ".route('teacher');
     }
 
     private function matchLocalUtility(string $message): ?string
@@ -4510,96 +4832,81 @@ class AiService
     /**
      * Gemini API call with retry and fallback logic.
      */
+    /**
+     * AI API call: Groq → local fallback chain.
+     */
     private function callGemini(string $message, ?object $user, array $conversationContext = []): array
     {
         $conversationContext = $this->finalizeConversationContext($message, $conversationContext);
         $resolvedMessage = (string) ($conversationContext['resolved_message'] ?? $message);
-        $apiKey = (string) config('services.gemini.key');
-        $model = (string) config('services.gemini.model', 'gemini-1.5-flash');
+        $apiKey = (string) config('services.groq.key');
+        $model = (string) config('services.groq.model', 'llama-3.3-70b-versatile');
 
-        if ($apiKey === '') {
-            return [
-                'success' => true,
-                'text' => "Men asosan maktab saytining ichki yordamchisiman.\n\n"
-                    ."Quyidagi mavzularda yordam bera olaman:\n"
-                    ."- Maktab, ustozlar, kurslar va aloqa bo'limlari\n"
-                    ."- Imtihonlar, natijalar va taqvim\n"
-                    ."- Saytdan foydalanish bo'yicha yo'l-yo'riq\n"
-                    ."- Oddiy hisob-kitoblar\n\n"
-                    ."Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
-                'source' => 'no_gemini_key',
-            ];
-            $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
-                ."• Maktab haqida ma'lumotlar 🏫\n"
-                ."• Eng so'nggi yangiliklar va tadbirlar 📅\n"
-                ."• Kurslar va ustozlar haqida 👨‍🏫\n"
-                ."• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
-                ."GEMINI_API_KEY sozlanmagani uchun tashqi AI o‘chiq. Admin bilim bazasi va sayt ichki ma’lumotlari ishlaydi.\n"
-                ."Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
+        // 1. Groq API kaliti bo'lsa — so'rov yuborish
+        if ($apiKey !== '') {
+            $systemInstruction = $this->buildSystemInstruction($user);
+            $messages = [['role' => 'system', 'content' => $systemInstruction]];
 
-            return ['success' => true, 'text' => $fallbackText, 'source' => 'no_gemini_key'];
-        }
-
-        $systemInstruction = $this->buildSystemInstruction($user);
-        $contents = [];
-
-        foreach (array_slice($conversationContext['history'] ?? [], -6) as $item) {
-            $text = trim((string) ($item['text'] ?? ''));
-            if ($text === '') {
-                continue;
+            foreach (array_slice($conversationContext['history'] ?? [], -6) as $item) {
+                $text = trim((string) ($item['text'] ?? ''));
+                if ($text !== '') {
+                    $messages[] = [
+                        'role' => ($item['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user',
+                        'content' => $text,
+                    ];
+                }
             }
 
-            $contents[] = [
-                'role' => ($item['role'] ?? 'user') === 'assistant' ? 'model' : 'user',
-                'parts' => [['text' => $text]],
-            ];
-        }
+            $currentPrompt = $message;
+            if (($conversationContext['context_applied'] ?? false) && $resolvedMessage !== trim($message)) {
+                $currentPrompt = "Joriy savol: {$message}\nKontekst bo'yicha izohlangan savol: {$resolvedMessage}";
+            }
+            $messages[] = ['role' => 'user', 'content' => $currentPrompt];
 
-        $currentPrompt = $message;
-        if (($conversationContext['context_applied'] ?? false) && $resolvedMessage !== trim($message)) {
-            $currentPrompt = "Joriy savol: {$message}\nKontekst bo'yicha izohlangan savol: {$resolvedMessage}";
-        }
+            $maxRetries = 2;
+            $retryCount = 0;
 
-        $contents[] = ['role' => 'user', 'parts' => [['text' => $currentPrompt]]];
+            while ($retryCount <= $maxRetries) {
+                try {
+                    $response = Http::timeout(30)
+                        ->withHeaders([
+                            'Authorization' => 'Bearer '.$apiKey,
+                            'Content-Type' => 'application/json',
+                        ])
+                        ->post('https://api.groq.com/openai/v1/chat/completions', [
+                            'model' => $model,
+                            'messages' => $messages,
+                            'temperature' => 0.7,
+                            'max_tokens' => 1024,
+                        ]);
 
-        $maxRetries = 2;
-        $retryCount = 0;
-
-        while ($retryCount <= $maxRetries) {
-            try {
-                $response = Http::timeout(45)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
-                    'system_instruction' => ['parts' => [['text' => $systemInstruction]]],
-                    'contents' => $contents,
-                    'generationConfig' => ['temperature' => 0.7, 'maxOutputTokens' => 1024],
-                ]);
-
-                if ($response->successful()) {
-                    $aiText = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? null;
-                    if ($aiText) {
-                        return ['success' => true, 'text' => $this->handleTicketCreation($aiText), 'source' => 'gemini'];
+                    if ($response->successful()) {
+                        $aiText = $response->json('choices.0.message.content') ?? null;
+                        if ($aiText && mb_strlen($aiText) > 5) {
+                            return ['success' => true, 'text' => $this->handleTicketCreation($aiText), 'source' => 'groq'];
+                        }
                     }
-                }
 
-                if ($response->status() === 429) {
+                    if ($response->status() === 429) {
+                        $retryCount++;
+                        sleep(2 * $retryCount);
+                        continue;
+                    }
+                    break;
+                } catch (\Exception $e) {
                     $retryCount++;
-                    sleep(2 * $retryCount); // Linear backoff
-
-                    continue;
+                    sleep(1);
                 }
-                break;
-            } catch (\Exception $e) {
-                $retryCount++;
-                sleep(1);
             }
         }
 
-        // Ultimate Fallback: Smart local response if Gemini fails
+        // 2. Groq ishlamadi yoki kalit yo'q — local fallback
         $localFallback = $this->matchDynamicData($resolvedMessage, $user);
-
         if ($localFallback) {
             return ['success' => true, 'text' => $localFallback, 'source' => 'local_fallback'];
         }
 
+        // 3. Yakuniy fallback
         return [
             'success' => true,
             'text' => "Men asosan maktab saytining ichki yordamchisiman.\n\n"
@@ -4611,15 +4918,6 @@ class AiService
                 ."Maktabdan tashqari keng va global mavzular uchun mo'ljallanmaganman.",
             'source' => 'ultimate_fallback',
         ];
-
-        $fallbackText = "Kechirasiz, hozircha bu savolga aniq javob bera olmayman. ✨\n\nLekin men quyidagi mavzularda yordam bera olaman:\n"
-            ."• Maktab haqida ma'lumotlar 🏫\n"
-            ."• Eng so'nggi yangiliklar va tadbirlar 📅\n"
-            ."• Kurslar va ustozlar haqida 👨‍🏫\n"
-            ."• Imtihon natijalaringizni ko'rsatish 🎓\n\n"
-            ."Iltimos, savolingizni aniqroq yozing yoki kerakli bo'limga o'ting! 😊";
-
-        return ['success' => true, 'text' => $fallbackText, 'source' => 'ultimate_fallback'];
     }
 
     private function buildSystemInstruction(?object $user): string
