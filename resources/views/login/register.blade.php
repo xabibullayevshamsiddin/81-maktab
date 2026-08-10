@@ -266,6 +266,7 @@
                   required
                   autocomplete="new-password"
                   minlength="8"
+                  maxlength="32"
                 />
                 <button
                   type="button"
@@ -291,6 +292,7 @@
                   required
                   autocomplete="new-password"
                   minlength="8"
+                  maxlength="32"
                 />
                 <button
                   type="button"

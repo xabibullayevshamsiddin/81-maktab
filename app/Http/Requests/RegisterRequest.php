@@ -30,7 +30,7 @@ class RegisterRequest extends FormRequest
             ]),
             'is_parent' => ['nullable', 'in:1'],
             'grade' => ['required_unless:is_parent,1', 'nullable', 'string', Rule::in(school_student_grade_options())],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'max:32', 'confirmed'],
         ];
     }
 
@@ -97,6 +97,7 @@ class RegisterRequest extends FormRequest
             'grade.in' => school_grade_validation_message(),
             'password.required' => 'Parol kiritilishi shart.',
             'password.min' => 'Parol kamida 8 belgidan iborat bo\'lishi kerak.',
+            'password.max' => 'Parol 32 belgidan oshmasligi kerak.',
             'password.confirmed' => 'Parol tasdiqlanmadi.',
         ];
     }
