@@ -23,6 +23,9 @@ class Kernel extends ConsoleKernel
         // Muddati tugagan donorlarni oddiy foydalanuvchiga tushirish — har daqiqada
         $schedule->command('donations:expire')->everyMinute();
 
+        // Donor muddati tugashidan oldin ogohlantirish — kuniga 1 marta (ertalab 9:00)
+        $schedule->command('donors:warn-expiring')->dailyAt('09:00');
+
         // Telegram getUpdates polling — webhook faol bo'lsa ishlamaydi
         // Agar webhook o'chirilgan bo'lsa, quyidagini yoqing:
         // if (app()->environment('local')) {

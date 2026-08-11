@@ -6,6 +6,7 @@ use App\Jobs\SendTelegramBroadcast;
 use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminSettingsController extends Controller
 {
@@ -139,32 +140,77 @@ class AdminSettingsController extends Controller
     }
 
     /**
-     * Telegram orqali barcha foydalanuvchilarga xabar yuborish.
+     * Telegram orqali auditoriyaga e'lon yuborish.
      */
     public function broadcastTelegram(Request $request)
     {
         $validated = $request->validate([
-            'message' => ['required', 'string', 'min:1', 'max:4000'],
+            'message'  => ['required', 'string', 'min:1', 'max:4000'],
+            'audience' => ['required', 'string', 'in:all,teachers,donors,students'],
         ], [
-            'message.required' => 'Xabar matni kiritilishi shart.',
-            'message.min' => 'Xabar matni kamida 1 ta belgi bo\'lishi kerak.',
-            'message.max' => 'Xabar matni 4000 ta belgidan oshmasligi kerak.',
+            'message.required'  => 'Xabar matni kiritilishi shart.',
+            'message.min'       => 'Xabar matni kamida 1 ta belgi bo\'lishi kerak.',
+            'message.max'       => 'Xabar matni 4000 ta belgidan oshmasligi kerak.',
+            'audience.required' => 'Auditoriyani tanlash shart.',
+            'audience.in'       => 'Noto\'g\'ri auditoriya tanlandi.',
         ]);
 
-        $message = $validated['message'];
+        $message  = $validated['message'];
+        $audience = $validated['audience'];
 
-        // Telegram chat_id si mavjud foydalanuvchilar sonini tekshirish
-        $userCount = User::whereNotNull('telegram_chat_id')
-            ->where('telegram_chat_id', '>', 0)
-            ->count();
+        // Tanlangan auditoriyaga mos Telegram foydalanuvchilar sonini hisoblash
+        $query = User::whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '>', 0);
+
+        $query = match ($audience) {
+            'teachers' => $query->where('role', 'teacher'),
+            'donors'   => $query->whereNotNull('donation_rank'),
+            'students' => $query->where('role', 'student'),
+            default    => $query,
+        };
+
+        $userCount = $query->count();
 
         if ($userCount === 0) {
-            return back()->with('error', 'Telegram botiga ulangan foydalanuvchilar topilmadi.');
+            return back()->with('error', 'Tanlangan auditoriyada Telegram botiga ulangan foydalanuvchilar topilmadi.');
         }
 
-        // Xabarni queue ga yuborish (async)
-        SendTelegramBroadcast::dispatch($message);
+        // Broadcast log ga yozish
+        $broadcastId = DB::table('telegram_broadcasts')->insertGetId([
+            'admin_id'         => auth()->id(),
+            'message'          => $message,
+            'audience'         => $audience,
+            'total_recipients' => $userCount,
+            'status'           => 'pending',
+            'created_at'       => now(),
+            'updated_at'       => now(),
+        ]);
 
-        return back()->with('success', "Elon xabari {$userCount} ta foydalanuvchiga yuborish uchun navbatga qo'shildi. Xabarlar birma-bir yuborilmoqda.");
+        // Xabarni queue ga yuborish (async) — audience parametri bilan
+        SendTelegramBroadcast::dispatch($message, $audience, $broadcastId);
+
+        $audienceLabel = match ($audience) {
+            'teachers' => 'o\'qituvchilar',
+            'donors'   => 'donorlar',
+            'students' => 'o\'quvchilar',
+            default    => 'hamma',
+        };
+
+        return back()->with('success', "Elon xabari ({$audienceLabel}) {$userCount} ta foydalanuvchiga yuborish uchun navbatga qo'shildi. Xabarlar birma-bir yuborilmoqda.");
+    }
+
+    /**
+     * Telegram e'lonlar tarixini ko'rish.
+     */
+    public function broadcastHistory()
+    {
+        $broadcasts = DB::table('telegram_broadcasts')
+            ->join('users', 'users.id', '=', 'telegram_broadcasts.admin_id')
+            ->select('telegram_broadcasts.*', 'users.name as admin_name')
+            ->orderByDesc('telegram_broadcasts.created_at')
+            ->limit(50)
+            ->get();
+
+        return view('admin.settings.broadcast-history', compact('broadcasts'));
     }
 }

@@ -271,6 +271,8 @@ Route::prefix('admin')->middleware(['auth', 'role:super_admin,admin,editor,moder
     Route::middleware('role:super_admin')->group(function () {
         Route::get('settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
         Route::put('settings', [AdminSettingsController::class, 'update'])->name('admin.settings.update');
+        Route::post('settings/broadcast-telegram', [AdminSettingsController::class, 'broadcastTelegram'])->name('admin.settings.broadcast-telegram');
+        Route::get('settings/broadcast-history', [AdminSettingsController::class, 'broadcastHistory'])->name('admin.settings.broadcast-history');
     });
 });
 

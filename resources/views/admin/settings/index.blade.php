@@ -148,8 +148,19 @@
       </div>
 
       <form action="{{ route('admin.settings.broadcast-telegram') }}" method="POST"
-            onsubmit="return confirm('Barcha ulangan foydalanuvchilarga xabar yuborilsinmi?');">
+            onsubmit="return confirm('Tanlangan auditoriyaga xabar yuborilsinmi?');">
         @csrf
+
+        <div class="input-style-1 mb-20">
+          <label>Auditoriya</label>
+          <select name="audience" class="form-control" style="padding:10px 12px;border-radius:8px;width:100%;">
+            <option value="all">🌐 Hammaga</option>
+            <option value="teachers">👨‍🏫 Faqat o'qituvchilarga</option>
+            <option value="donors">⭐ Faqat donorlarga</option>
+            <option value="students">🎓 Faqat o'quvchilarga</option>
+          </select>
+          @error('audience') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
+        </div>
 
         <div class="input-style-1 mb-20">
           <label>Xabar matni</label>
@@ -173,6 +184,13 @@
           Yuborish
         </button>
       </form>
+
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+        <a href="{{ route('admin.settings.broadcast-history') }}" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--primary);text-decoration:none;">
+          <i class="mdi mdi-history" style="font-size:15px;"></i>
+          E'lonlar tarixi
+        </a>
+      </div>
     </div>
   </div>
 </div>
