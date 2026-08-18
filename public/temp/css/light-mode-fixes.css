@@ -286,3 +286,39 @@
   color: #64748b !important;
   opacity: 0.75 !important;
 }
+
+/* === About Highlight Card — Light Mode Styling === */
+:root:not([data-theme='dark']) .about-highlight {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%) !important;
+  border: 1.5px solid rgba(191, 219, 254, 0.85) !important;
+  box-shadow: 0 14px 35px -8px rgba(37, 99, 235, 0.12), 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root:not([data-theme='dark']) .about-highlight::after {
+  background: radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.18) 0%, transparent 65%) !important;
+}
+
+:root:not([data-theme='dark']) .about-highlight:hover {
+  border-color: rgba(37, 99, 235, 0.5) !important;
+  box-shadow: 0 20px 45px -8px rgba(37, 99, 235, 0.22), 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+  transform: translateY(-6px) scale(1.01) !important;
+}
+
+:root:not([data-theme='dark']) .about-highlight h3 {
+  color: #0f172a !important;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+:root:not([data-theme='dark']) .about-highlight p {
+  color: #334155 !important;
+}
+
+:root:not([data-theme='dark']) .about-highlight .badge {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border: 1px solid rgba(37, 99, 235, 0.28) !important;
+  color: #1d4ed8 !important;
+}
+

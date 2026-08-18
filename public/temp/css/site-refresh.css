@@ -2851,18 +2851,90 @@ button.is-loading::after {
 }
 
 /* 3D Scene */
+/* 3D Visual Container */
 .about-hero-visual {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1;
+  perspective: 1200px;
+  padding: 10px;
 }
 
 .about-hero-3d-scene {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
+  transform-style: preserve-3d;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* 3D Orbiting Neon Rings */
+.hero-3d-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  transform-style: preserve-3d;
+}
+
+.hero-3d-orbit--1 {
+  width: 360px;
+  height: 360px;
+  margin-top: -180px;
+  margin-left: -180px;
+  border: 1.5px dashed rgba(56, 189, 248, 0.35);
+  animation: orbitRotate1 20s linear infinite;
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.1), inset 0 0 30px rgba(56, 189, 248, 0.05);
+}
+
+.hero-3d-orbit--2 {
+  width: 440px;
+  height: 440px;
+  margin-top: -220px;
+  margin-left: -220px;
+  border: 1px dashed rgba(168, 85, 247, 0.3);
+  animation: orbitRotate2 28s linear infinite reverse;
+}
+
+@keyframes orbitRotate1 {
+  0% { transform: rotateX(65deg) rotateZ(0deg); }
+  100% { transform: rotateX(65deg) rotateZ(360deg); }
+}
+
+@keyframes orbitRotate2 {
+  0% { transform: rotateX(55deg) rotateY(20deg) rotateZ(0deg); }
+  100% { transform: rotateX(55deg) rotateY(20deg) rotateZ(360deg); }
+}
+
+/* Holographic Laser Beam Scanner */
+.hero-laser-beam {
+  position: absolute;
+  top: 0;
+  left: -10%;
+  width: 120%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.8) 50%, transparent 100%);
+  box-shadow: 0 0 15px #38bdf8, 0 0 30px #38bdf8;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.7;
+  animation: laserScan 4s ease-in-out infinite;
+}
+
+@keyframes laserScan {
+  0% { top: 10%; opacity: 0; }
+  15% { opacity: 0.85; }
+  85% { opacity: 0.85; }
+  100% { top: 90%; opacity: 0; }
+}
+
+.school-building {
+  position: relative;
+  filter: drop-shadow(0 20px 60px rgba(56, 189, 248, 0.25));
   animation: floatBuilding 6s ease-in-out infinite;
 }
 
@@ -2871,14 +2943,128 @@ button.is-loading::after {
   50% { transform: translateY(-12px); }
 }
 
-.school-building {
-  position: relative;
-  filter: drop-shadow(0 20px 60px rgba(56, 189, 248, 0.2));
-}
-
 .school-svg {
   width: 100%;
   height: auto;
+}
+
+/* Floating Glass Badges */
+.hero-glass-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(56, 189, 248, 0.15);
+  z-index: 6;
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.3s;
+  pointer-events: auto;
+}
+
+.hero-glass-badge:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(56, 189, 248, 0.3);
+}
+
+.hero-glass-badge--top-left {
+  top: -12px;
+  left: -24px;
+  animation: badgeFloat1 5s ease-in-out infinite;
+}
+
+.hero-glass-badge--top-right {
+  top: 25px;
+  right: -28px;
+  animation: badgeFloat2 6s ease-in-out infinite 1s;
+}
+
+.hero-glass-badge--bottom-right {
+  bottom: 8px;
+  right: -18px;
+  animation: badgeFloat3 5.5s ease-in-out infinite 0.5s;
+}
+
+@keyframes badgeFloat1 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes badgeFloat2 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes badgeFloat3 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+.hgb-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.hgb-icon--gold {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.hgb-icon--cyan {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2));
+  border-color: rgba(6, 182, 212, 0.35);
+  color: #22d3ee;
+}
+
+.hgb-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.hgb-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.hgb-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+.hgb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
 }
 
 .about-hero-glow {
@@ -2887,10 +3073,34 @@ button.is-loading::after {
   left: 10%;
   width: 80%;
   height: 60%;
-  background: radial-gradient(ellipse, rgba(56, 189, 248, 0.15) 0%, rgba(168, 85, 247, 0.08) 40%, transparent 70%);
-  filter: blur(40px);
+  background: radial-gradient(ellipse, rgba(56, 189, 248, 0.18) 0%, rgba(168, 85, 247, 0.1) 40%, transparent 70%);
+  filter: blur(45px);
   z-index: -1;
   pointer-events: none;
+}
+
+/* Light Mode Overrides for 3D badges */
+:root:not([data-theme='dark']) .hero-glass-badge {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(203, 213, 225, 0.8);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(37, 99, 235, 0.12);
+}
+
+:root:not([data-theme='dark']) .hgb-title {
+  color: #0f172a;
+}
+
+:root:not([data-theme='dark']) .hgb-sub {
+  color: #64748b;
+}
+
+:root:not([data-theme='dark']) .hero-3d-orbit--1 {
+  border-color: rgba(37, 99, 235, 0.25);
+  box-shadow: 0 0 30px rgba(37, 99, 235, 0.08);
+}
+
+:root:not([data-theme='dark']) .hero-3d-orbit--2 {
+  border-color: rgba(124, 58, 237, 0.2);
 }
 
 /* Mobile responsive */

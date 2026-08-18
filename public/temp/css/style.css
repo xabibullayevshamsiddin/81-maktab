@@ -230,31 +230,68 @@ a {
 }
 
 
+/* ===== GLOBAL ELEGANT FLOATING FIXED NAVBAR ===== */
+.page-header {
+  position: relative !important;
+  z-index: 999999 !important;
+  padding-top: 0 !important;
+  margin: 0 !important;
+}
+
+.page-header .container {
+  transform: none !important;
+  perspective: none !important;
+  filter: none !important;
+  contain: none !important;
+}
+
 .header-main {
-  position: fixed;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 20px);
-  max-width: 1180px;
-  z-index: 9999;
+  position: fixed !important;
+  top: 26px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: calc(100% - 32px) !important;
+  max-width: 1180px !important;
+  margin-top: 0 !important;
+  z-index: 999999 !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  transition: all 0.25s ease;
+  padding: 10px 18px;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+  transition: top 0.3s cubic-bezier(0.2, 0, 0.2, 1), background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
 }
 
 .header-main.scrolled {
-  top: 10px;
-  background: var(--surface);
-  border-color: var(--border-soft);
-  box-shadow: var(--shadow);
+  top: 18px !important;
+  background: rgba(15, 23, 42, 0.94) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(56, 189, 248, 0.15) !important;
+}
+
+:root:not([data-theme='dark']) .header-main {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.08) !important;
+}
+
+:root:not([data-theme='dark']) .header-main.scrolled {
+  top: 18px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-color: rgba(37, 99, 235, 0.28) !important;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.14), 0 0 18px rgba(37, 99, 235, 0.08) !important;
 }
 
 .page-header .logo {
@@ -10612,9 +10649,12 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   padding-top: 0 !important;
 }
 
-.page-header .header-main,
+.page-header .header-main {
+  top: 26px !important;
+}
+
 .page-header .header-main.scrolled {
-  top: 0 !important;
+  top: 18px !important;
 }
 
 html,

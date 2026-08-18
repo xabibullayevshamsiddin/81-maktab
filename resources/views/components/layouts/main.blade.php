@@ -249,10 +249,6 @@
 	        || request()->routeIs('dashboard')
 	      );
 	    @endphp
-	    <div class="site-shell" data-locale-shell>
-      <div class="prime-progress-container" aria-hidden="true">
-        <div class="prime-progress-bar" id="prime-scroll-bar"></div>
-      </div>
 	    @unless($isExamSessionRoute)
 	    <header class="page-header">
 	      <div class="container">
@@ -506,7 +502,26 @@
 	        </div>
 	      </div>
 	    </header>
+	    <script>
+	      (function() {
+	        var nav = document.getElementById('navbar');
+	        if (!nav) return;
+	        function updateFixedNav() {
+	          if (window.scrollY > 20) {
+	            nav.classList.add('scrolled');
+	          } else {
+	            nav.classList.remove('scrolled');
+	          }
+	        }
+	        updateFixedNav();
+	        window.addEventListener('scroll', updateFixedNav, { passive: true });
+	      })();
+	    </script>
 	    @endunless
+	    <div class="site-shell" data-locale-shell>
+      <div class="prime-progress-container" aria-hidden="true">
+        <div class="prime-progress-bar" id="prime-scroll-bar"></div>
+      </div>
 	    {{ $slot }}
 	    @unless($isExamSessionRoute)
     <div id="image-lightbox" class="image-lightbox" aria-hidden="true">

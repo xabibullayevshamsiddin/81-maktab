@@ -24,9 +24,17 @@
             <i class="fa-solid fa-arrow-right" style="margin-left: 8px"></i>
           </a>
         </div>
-        <div class="about-hero-visual">
+        <div class="about-hero-visual" id="aboutHeroTilt">
           <div class="about-hero-3d-scene">
+            <!-- 3D Glowing Orbit Rings -->
+            <div class="hero-3d-orbit hero-3d-orbit--1"></div>
+            <div class="hero-3d-orbit hero-3d-orbit--2"></div>
+
+            <!-- School Building SVG Container -->
             <div class="school-building">
+              <!-- Holographic Laser Scanner -->
+              <div class="hero-laser-beam"></div>
+
               <svg viewBox="0 0 400 350" fill="none" xmlns="http://www.w3.org/2000/svg" class="school-svg">
                 <!-- Ground glow -->
                 <ellipse cx="200" cy="310" rx="160" ry="20" fill="url(#groundGlow)" opacity="0.6"/>
@@ -40,7 +48,9 @@
                 <!-- Clock tower -->
                 <rect x="175" y="50" width="50" height="75" rx="4" fill="url(#towerGrad)" stroke="rgba(120,200,255,0.3)" stroke-width="1"/>
                 <circle cx="200" cy="78" r="16" fill="rgba(7,17,31,0.8)" stroke="rgba(100,200,255,0.5)" stroke-width="1.5"/>
-                <line x1="200" y1="78" x2="200" y2="68" stroke="rgba(100,220,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="200" y1="78" x2="200" y2="68" stroke="rgba(100,220,255,0.8)" stroke-width="1.5" stroke-linecap="round">
+                  <animateTransform attributeName="transform" type="rotate" from="0 200 78" to="360 200 78" dur="12s" repeatCount="indefinite"/>
+                </line>
                 <line x1="200" y1="78" x2="208" y2="82" stroke="rgba(100,220,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
                 <!-- Flag -->
                 <line x1="200" y1="38" x2="200" y2="18" stroke="rgba(200,220,255,0.6)" stroke-width="1.5"/>
@@ -128,6 +138,33 @@
                 </defs>
               </svg>
             </div>
+
+            <!-- Floating 3D Glass Badges -->
+            <div class="hero-glass-badge hero-glass-badge--top-left">
+              <div class="hgb-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+              <div class="hgb-content">
+                <span class="hgb-title">81-IDUM</span>
+                <span class="hgb-sub"><span class="hgb-dot"></span> Davlat Maktabi</span>
+              </div>
+            </div>
+
+            <div class="hero-glass-badge hero-glass-badge--top-right">
+              <div class="hgb-icon hgb-icon--gold"><i class="fa-solid fa-trophy"></i></div>
+              <div class="hgb-content">
+                <span class="hgb-title">Top 100</span>
+                <span class="hgb-sub">Nufuzli Maktablar</span>
+              </div>
+            </div>
+
+            <div class="hero-glass-badge hero-glass-badge--bottom-right">
+              <div class="hgb-icon hgb-icon--cyan"><i class="fa-solid fa-bolt"></i></div>
+              <div class="hgb-content">
+                <span class="hgb-title">1963-yildan</span>
+                <span class="hgb-sub">Sifatli Ta'lim</span>
+              </div>
+            </div>
+
+            <!-- Ambient Glow -->
             <div class="about-hero-glow"></div>
           </div>
         </div>
@@ -298,4 +335,41 @@
     </section>
   </main>
 
-</x-loyouts.main>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var tiltContainer = document.getElementById('aboutHeroTilt');
+    if (!tiltContainer) return;
+
+    var scene = tiltContainer.querySelector('.about-hero-3d-scene');
+    var badges = tiltContainer.querySelectorAll('.hero-glass-badge');
+
+    tiltContainer.addEventListener('mousemove', function (e) {
+      var rect = tiltContainer.getBoundingClientRect();
+      var x = e.clientX - rect.left - rect.width / 2;
+      var y = e.clientY - rect.top - rect.height / 2;
+
+      var rotateX = (-y / (rect.height / 2)) * 14;
+      var rotateY = (x / (rect.width / 2)) * 14;
+
+      if (scene) {
+        scene.style.transform = 'rotateX(' + rotateX.toFixed(2) + 'deg) rotateY(' + rotateY.toFixed(2) + 'deg)';
+      }
+
+      badges.forEach(function (badge, idx) {
+        var depth = (idx + 1) * 12;
+        badge.style.transform = 'translateZ(' + depth + 'px) translateY(' + (rotateX * 0.4) + 'px)';
+      });
+    });
+
+    tiltContainer.addEventListener('mouseleave', function () {
+      if (scene) {
+        scene.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      }
+      badges.forEach(function (badge) {
+        badge.style.transform = 'translateZ(0px) translateY(0px)';
+      });
+    });
+  });
+  </script>
+
+</x-layouts.main>
