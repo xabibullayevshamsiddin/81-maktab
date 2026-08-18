@@ -962,6 +962,38 @@ body {
     white-space: nowrap;
   }
 
+  .hero-title.hero-title-3d {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 0 0 0 22px !important;
+    margin-bottom: 20px !important;
+    text-align: left !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .hero-title.hero-title-3d .hero-title-top {
+    font-size: 0.92rem !important;
+    letter-spacing: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-title.hero-title-3d .hero-title-main {
+    font-size: 4.2rem !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+  }
+
+  .hero-title.hero-title-3d .word-3d,
+  .hero-title.hero-title-3d .char-3d {
+    font-size: inherit !important;
+  }
+
   .home-btn {
     position: absolute;
     right: 0;
@@ -1841,6 +1873,38 @@ body {
     white-space: nowrap !important;
   }
 
+  .hero-title.hero-title-3d {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 0 0 0 22px !important;
+    margin-bottom: 18px !important;
+    text-align: left !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .hero-title.hero-title-3d .hero-title-top {
+    font-size: 0.92rem !important;
+    letter-spacing: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-title.hero-title-3d .hero-title-main {
+    font-size: 4rem !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+  }
+
+  .hero-title.hero-title-3d .word-3d,
+  .hero-title.hero-title-3d .char-3d {
+    font-size: inherit !important;
+  }
+
   .home-content p {
     max-width: 52ch !important;
     margin-left: 0 !important;
@@ -1936,6 +2000,38 @@ body {
 
   .hero-title strong {
     font-size: clamp(36px, 5vw, 46px) !important;
+  }
+
+  .hero-title.hero-title-3d {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 0 0 0 18px !important;
+    margin-bottom: 16px !important;
+    text-align: left !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .hero-title.hero-title-3d .hero-title-top {
+    font-size: 0.86rem !important;
+    letter-spacing: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-title.hero-title-3d .hero-title-main {
+    font-size: 2.8rem !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+  }
+
+  .hero-title.hero-title-3d .word-3d,
+  .hero-title.hero-title-3d .char-3d {
+    font-size: inherit !important;
   }
 
   .home-content p {

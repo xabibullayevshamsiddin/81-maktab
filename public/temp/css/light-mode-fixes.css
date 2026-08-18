@@ -142,3 +142,147 @@
 :root:not([data-theme='dark']) .skeleton-loader {
   background: linear-gradient(90deg, var(--border-soft) 25%, var(--surface) 50%, var(--border-soft) 75%) !important;
 }
+
+/* ======================================================================
+   FOOTER — Light Mode Fixes
+   ====================================================================== */
+
+/* Main footer — light mode: override hardcoded dark colors */
+:root:not([data-theme='dark']) .footer {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-top: 1px solid var(--border-soft) !important;
+}
+
+/* Social links — light mode */
+:root:not([data-theme='dark']) .social-link {
+  background: rgba(15, 23, 42, 0.06) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  color: var(--muted) !important;
+}
+
+:root:not([data-theme='dark']) .social-link:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Footer links — light mode */
+:root:not([data-theme='dark']) .footer-links a {
+  color: var(--text-secondary) !important;
+}
+
+:root:not([data-theme='dark']) .footer-links a:hover {
+  color: var(--primary) !important;
+}
+
+/* Footer title — light mode */
+:root:not([data-theme='dark']) .footer-title {
+  color: var(--text) !important;
+}
+
+/* Footer description — light mode */
+:root:not([data-theme='dark']) .footer-desc {
+  color: var(--muted) !important;
+}
+
+/* Footer contact list — light mode */
+:root:not([data-theme='dark']) .footer-contact-list li {
+  color: var(--text-secondary) !important;
+}
+
+:root:not([data-theme='dark']) .footer-contact-list i {
+  color: var(--primary) !important;
+}
+
+/* Footer bottom — light mode */
+:root:not([data-theme='dark']) .footer-bottom {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-top: 1px solid var(--border-soft) !important;
+}
+
+:root:not([data-theme='dark']) .footer-bottom p,
+:root:not([data-theme='dark']) .footer-bottom-inner {
+  color: var(--muted) !important;
+}
+
+:root:not([data-theme='dark']) .footer-bottom-links a {
+  color: var(--muted) !important;
+}
+
+:root:not([data-theme='dark']) .footer-bottom-links a:hover {
+  color: var(--primary) !important;
+}
+
+/* Footer logo text — light mode */
+:root:not([data-theme='dark']) .footer-logo span {
+  color: var(--text) !important;
+}
+
+/* Footer map button — light mode */
+:root:not([data-theme='dark']) .footer-map-action .btn-outline-footer {
+  background: transparent !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+:root:not([data-theme='dark']) .footer-map-action .btn-outline-footer:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+/* Dark mode footer — keep dark colors */
+:root[data-theme='dark'] .social-link {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+:root[data-theme='dark'] .social-link:hover {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+/* === Sound Toggle Button (Light Mode & Dark Mode Fixes) === */
+:root:not([data-theme='dark']) .prime-audio-toggle {
+  background: #ffffff !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #2563eb !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+}
+
+:root:not([data-theme='dark']) .prime-audio-toggle:hover {
+  background: #ffffff !important;
+  border-color: #2563eb !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.3) !important;
+  transform: scale(1.1) rotate(12deg) !important;
+}
+
+:root:not([data-theme='dark']) .prime-audio-toggle.is-muted {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+  opacity: 0.85 !important;
+}
+
+:root[data-theme='dark'] .prime-audio-toggle {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #60a5fa !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+}
+
+:root[data-theme='dark'] .prime-audio-toggle:hover {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: #3b82f6 !important;
+  color: #93c5fd !important;
+  box-shadow: 0 12px 35px rgba(59, 130, 246, 0.35) !important;
+}
+
+:root[data-theme='dark'] .prime-audio-toggle.is-muted {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #64748b !important;
+  opacity: 0.75 !important;
+}

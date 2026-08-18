@@ -13,6 +13,10 @@ use App\Models\Result;
 use App\Models\SiteSetting;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Services\Ai\Concerns\CalendarMatch;
+use App\Services\Ai\Concerns\MathCalculator;
+use App\Services\Ai\Concerns\SchoolInfoMatch;
+use App\Services\Ai\Concerns\SubjectMatch;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -21,6 +25,10 @@ use Illuminate\Support\Str;
 
 class AiService
 {
+    use CalendarMatch;
+    use MathCalculator;
+    use SchoolInfoMatch;
+    use SubjectMatch;
     private const GEMINI_CALLS_PER_MINUTE_SOFT_LIMIT = 14;
     private const COURSE_PREVIEW_LIMIT = 3;
     private const RESULT_PREVIEW_LIMIT = 3;

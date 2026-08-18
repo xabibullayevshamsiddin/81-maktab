@@ -54,6 +54,38 @@
 .donor-badge i { font-size: 0.75rem; }
 .comment-donor { border-left: 4px solid; padding-left: 0.75rem; border-radius: 4px; }
 </style>
+@if(auth()->check() && auth()->user()->isDonor() && ($__selectionStyle = auth()->user()->donor_text_selection ?? 'off') !== 'off')
+@php
+    /* Only text color — no background. Colors are vivid so they're visible without highlight */
+    $__selMap = [
+        'blue'    => ['light_tx' => '#2563eb', 'dark_tx' => '#60a5fa'],
+        'purple'  => ['light_tx' => '#7c3aed', 'dark_tx' => '#a78bfa'],
+        'cyan'    => ['light_tx' => '#0891b2', 'dark_tx' => '#22d3ee'],
+        'gold'    => ['light_tx' => '#d97706', 'dark_tx' => '#fbbf24'],
+        'rose'    => ['light_tx' => '#e11d48', 'dark_tx' => '#fb7185'],
+        'emerald' => ['light_tx' => '#059669', 'dark_tx' => '#34d399'],
+    ];
+    $__sel = $__selMap[$__selectionStyle] ?? $__selMap['blue'];
+@endphp
+<style>
+/* ── Donor Text Selection (text color only, no background) ── */
+[data-theme="light"] ::selection,
+[data-theme="light"] ::-moz-selection {
+    background-color: transparent;
+    color: {{ $__sel['light_tx'] }};
+    text-shadow: none;
+}
+[data-theme="dark"] ::selection,
+[data-theme="dark"] ::-moz-selection {
+    background-color: transparent;
+    color: {{ $__sel['dark_tx'] }};
+    text-shadow: none;
+}
+/* Fallback */
+::selection     { background-color: transparent; color: {{ $__sel['light_tx'] }}; text-shadow: none; }
+::-moz-selection{ background-color: transparent; color: {{ $__sel['light_tx'] }}; text-shadow: none; }
+</style>
+@endif
     <script>
       // ═══════════════════════════════════════════════════════════════
       // SERVICE WORKER — PWA / Offline Mode

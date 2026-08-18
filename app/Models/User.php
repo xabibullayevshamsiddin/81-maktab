@@ -128,6 +128,7 @@ class User extends Authenticatable
         'badge_position',
         'banner_animation',
         'status_emoji',
+        'donor_text_selection',
         'course_open_approved',
         'course_open_request_pending',
         'course_open_requested_at',

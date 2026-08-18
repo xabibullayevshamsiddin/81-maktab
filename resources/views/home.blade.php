@@ -6,54 +6,120 @@
         type="video/mp4"
       />
     </video>
-    <div class="overlay"></div>
+    <div class="hero-overlay"></div>
 
-	    <div class="container">
-	      <div class="card-home">
-	        <div class="home-content">
-	          <h1 class="hero-title hero-title-3d" id="animated-hero">
-	            <span class="js-hero-3d-top">{{ __('public.home.hero_top') }}</span>
-	            <strong class="js-hero-3d-main">{{ __('public.home.hero_main') }}</strong>
-	          </h1>
-          <p class="hero-text-fade prime-reveal prime-reveal--blur" style="transition-delay: 0.8s;">{{ __('public.home.hero_text') }}</p>
-            <div class="home-primary-actions prime-reveal" style="transition-delay: 1s;">
-              <a href="{{ route('courses') }}" class="btn">{{ __('public.home.hero_courses_action') }}</a>
-              <a href="#news" class="btn btn-outline btn-outline-light">{{ __('public.home.hero_news_action') }}</a>
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge prime-reveal">
+            <span class="hero-badge-pulse"></span>
+            <span>81-IDUM · Toshkent shahar</span>
+          </div>
+
+          <h1 class="hero-title hero-title-3d" id="animated-hero">
+            <em class="hero-title-top js-hero-3d-top">{{ __('public.home.hero_top') }}</em>
+            <strong class="hero-title-main js-hero-3d-main">{{ __('public.home.hero_main') }}</strong>
+          </h1>
+
+          <p class="hero-description prime-reveal prime-reveal--blur" style="transition-delay: 0.3s;">
+            {{ __('public.home.hero_text') }}
+          </p>
+
+          <div class="hero-actions prime-reveal" style="transition-delay: 0.5s;">
+            <a href="{{ route('courses') }}" class="btn-hero-primary">
+              <span>{{ __('public.home.hero_courses_action') }}</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="#news" class="btn-hero-secondary">
+              <i class="fa-regular fa-newspaper"></i>
+              <span>{{ __('public.home.hero_news_action') }}</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-side-card prime-reveal" style="transition-delay: 0.6s;">
+          <div class="hero-glass-panel">
+            <div class="hero-panel-head">
+              <div class="hero-panel-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+              <div>
+                <div class="hero-panel-title">81-sonli IDUM</div>
+                <div class="hero-panel-sub">Zamonaviy ta'lim maktabi</div>
+              </div>
             </div>
-	        </div>
-	        <div class="home-btn">
-          <a
-            href="https://www.instagram.com/81_idum/"
-            target="_blank"
-            aria-label="Instagram"
-          >
-            <i class="fa-brands fa-instagram"></i>
-          </a>
-          <a
-            href="https://www.facebook.com/groups/751099325082714"
-            target="_blank"
-            aria-label="Facebook"
-          >
-            <i class="fa-brands fa-facebook"></i>
-          </a>
-          <a
-            href="https://t.me/tashabbus81IDUM"
-            target="_blank"
-            aria-label="Telegram"
-          >
-            <i class="fa-brands fa-telegram"></i>
-          </a>
-          <a
-            href="https://www.youtube.com/@81-idum"
-            target="_blank"
-            aria-label="YouTube"
-          >
-            <i class="fa-brands fa-youtube"></i>
-          </a>
+
+            <div class="hero-panel-stats">
+              <div class="hero-mini-stat">
+                <span class="stat-val js-counter" data-counter="2097" data-suffix="+">0</span>
+                <span class="stat-lbl">O'quvchi</span>
+              </div>
+              <div class="hero-mini-stat">
+                <span class="stat-val js-counter" data-counter="90" data-suffix="+">0</span>
+                <span class="stat-lbl">Pedagog</span>
+              </div>
+              <div class="hero-mini-stat">
+                <span class="stat-val js-counter" data-counter="1963">0</span>
+                <span class="stat-lbl">Yildan buyon</span>
+              </div>
+            </div>
+
+            <div class="hero-social-strip">
+              <span class="hero-social-lbl">Ijtimoiy tarmoqlar:</span>
+              <div class="hero-social-links">
+                <a href="https://www.instagram.com/81_idum/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://www.facebook.com/groups/751099325082714" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://t.me/tashabbus81IDUM" target="_blank" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+                <a href="https://www.youtube.com/@81-idum" target="_blank" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-	    </div>
-	  </section>
+    </div>
+
+    <script>
+      (function() {
+        function initCounters() {
+          var counters = document.querySelectorAll('.js-counter');
+          if (!counters.length) return;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                var el = entry.target;
+                var target = parseInt(el.getAttribute('data-counter'), 10) || 0;
+                var suffix = el.getAttribute('data-suffix') || '';
+                var duration = 1800;
+                var startTime = null;
+
+                function animateCount(timestamp) {
+                  if (!startTime) startTime = timestamp;
+                  var progress = Math.min((timestamp - startTime) / duration, 1);
+                  var easeProgress = 1 - Math.pow(1 - progress, 3);
+                  var current = Math.floor(easeProgress * target);
+                  el.textContent = current.toLocaleString() + suffix;
+                  if (progress < 1) {
+                    requestAnimationFrame(animateCount);
+                  } else {
+                    el.textContent = target.toLocaleString() + suffix;
+                  }
+                }
+                requestAnimationFrame(animateCount);
+                observer.unobserve(el);
+              }
+            });
+          }, { threshold: 0.2 });
+
+          counters.forEach(function(c) { observer.observe(c); });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initCounters);
+        } else {
+          initCounters();
+        }
+      })();
+    </script>
+  </section>
 
     <div class="site-section-nav-wrap">
       <div class="container">

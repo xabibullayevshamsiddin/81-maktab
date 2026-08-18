@@ -22,3 +22,19 @@ services:
         generateValue: true
       # Quyidagilarni Render.com dashboard da qo'lda kiriting:
       # GROQ_API_KEY, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, APP_URL
+
+  # Cron job — scheduler (har 5 daqiqada ishlaydi)
+  - type: cron
+    name: 81-maktab-scheduler
+    env: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "*/5 * * * *"
+    command: "php artisan schedule:run >> /dev/null 2>&1"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: mysql
+      # Render dashboard da qo'lda kiriting: DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD

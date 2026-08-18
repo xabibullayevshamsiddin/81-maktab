@@ -203,34 +203,90 @@
 .ap-chat-name { font-size: 0.72rem; font-weight: 700; color: var(--prev-color); }
 .ap-chat-text { font-size: 0.65rem; color: var(--muted); }
 
-/* Sozlamalar */
+/* Sozlamalar grid */
 .ap-settings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
 }
+
 .ap-setting-row {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.6rem;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
 }
-.ap-setting-row .asr-label { font-size: 0.75rem; font-weight: 600; }
-.ap-setting-row .asr-desc { font-size: 0.62rem; color: var(--muted); }
+
+.ap-setting-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99,102,241,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.ap-setting-row:hover {
+  border-color: rgba(99,102,241,0.35);
+  box-shadow: 0 4px 16px rgba(99,102,241,0.08);
+  transform: translateY(-1px);
+}
+
+.ap-setting-row .asr-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.ap-setting-row .asr-desc {
+  font-size: 0.6rem;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 0.15rem;
+}
+
+/* Select dropdown — premium styled */
 .ap-setting-row select {
-  padding: 0.3rem 0.45rem;
-  border: 2px solid var(--border);
-  border-radius: 7px;
+  width: 100%;
+  padding: 0.4rem 2rem 0.4rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
   background: var(--bg);
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   outline: none;
-  width: 100px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
+
+.ap-setting-row select:focus {
+  border-color: rgba(99,102,241,0.6);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+.ap-setting-row select:hover {
+  border-color: rgba(99,102,241,0.45);
+}
+
 
 /* Full-width setting row */
 .ap-setting-row--full {
@@ -403,15 +459,19 @@
 /* Qulflangan (Non-Donor) sozlama satri */
 .ap-setting-row--locked {
   position: relative;
-  opacity: 0.75;
-  background: color-mix(in srgb, var(--surface) 95%, #f59e0b 5%);
-  border: 1px dashed rgba(245, 158, 11, 0.35);
+  opacity: 0.72;
+  background: color-mix(in srgb, var(--surface) 93%, #f59e0b 7%);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
   transition: all 0.25s ease;
+}
+.ap-setting-row--locked::before {
+  background: linear-gradient(135deg, rgba(245,158,11,0.04) 0%, transparent 60%);
 }
 .ap-setting-row--locked:hover {
   opacity: 1;
-  border-color: rgba(245, 158, 11, 0.75);
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.7);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);
+  transform: translateY(-1px);
 }
 .ap-setting-row--locked select,
 .ap-setting-row--locked input {
@@ -422,57 +482,88 @@
 .ap-lock-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.58rem;
+  gap: 0.2rem;
+  font-size: 0.56rem;
   font-weight: 700;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.25));
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.22));
   color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  margin-left: 0.3rem;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 .ap-lock-unlock-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
   font-size: 0.65rem;
   font-weight: 700;
   color: #f59e0b;
   text-decoration: none;
-  padding: 0.25rem 0.6rem;
-  border-radius: 7px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 0.38rem 0.6rem;
+  border-radius: 9px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
   transition: all 0.2s;
   white-space: nowrap;
 }
 .ap-lock-unlock-btn:hover {
-  background: #f59e0b;
-  color: #000;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.7);
+  color: #fbbf24;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.2);
+}
+
+/* Emoji input full width */
+.ap-setting-row input[type="text"] {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.1rem;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ap-setting-row input[type="text"]:focus {
+  border-color: rgba(99,102,241,0.6);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
 
 .ap-btn-save {
   width: 100%;
-  padding: 0.7rem;
-  background: var(--primary);
+  padding: 0.8rem;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  transition: opacity 0.2s;
+  gap: 0.45rem;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.3);
 }
-.ap-btn-save:hover { opacity: 0.9; }
+.ap-btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(99,102,241,0.4);
+}
+.ap-btn-save:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(99,102,241,0.25);
+}
 
-/* Mobile */
-@media (max-width:768px) {
+/* Responsive */
+@media (max-width: 1024px) {
+  .ap-settings-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
   .ap-theme-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
   .ap-settings-grid { grid-template-columns: 1fr; }
 }
@@ -765,8 +856,33 @@
         <input type="text" name="status_emoji"
           value="{{ $user->status_emoji }}"
           maxlength="2"
-          placeholder="🔥"
-          style="width:60px; padding:0.3rem 0.45rem; border:2px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text); font-size:1rem; outline:none; text-align:center;">
+          placeholder="🔥">
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
+    </div>
+
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          <i class="fa-solid fa-i-cursor" style="font-size:0.75rem; opacity:0.7;"></i>
+          Matn tanlash effekti
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">Saytdagi matnni belgilaganda rang effektini tanlang</div>
+      </div>
+      @if($donorIsActive)
+        <select name="donor_text_selection">
+          <option value="off"     {{ ($user->donor_text_selection ?? 'off') === 'off'     ? 'selected' : '' }}>O'chirilgan</option>
+          <option value="blue"    {{ ($user->donor_text_selection ?? '') === 'blue'    ? 'selected' : '' }}>Ko'k (Blue)</option>
+          <option value="purple"  {{ ($user->donor_text_selection ?? '') === 'purple'  ? 'selected' : '' }}>Binafsha (Purple)</option>
+          <option value="cyan"    {{ ($user->donor_text_selection ?? '') === 'cyan'    ? 'selected' : '' }}>Moviy (Cyan)</option>
+          <option value="gold"    {{ ($user->donor_text_selection ?? '') === 'gold'    ? 'selected' : '' }}>Oltin (Gold)</option>
+          <option value="rose"    {{ ($user->donor_text_selection ?? '') === 'rose'    ? 'selected' : '' }}>Qizil-pushti (Rose)</option>
+          <option value="emerald" {{ ($user->donor_text_selection ?? '') === 'emerald' ? 'selected' : '' }}>Yashil (Emerald)</option>
+        </select>
       @else
         <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
           <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}

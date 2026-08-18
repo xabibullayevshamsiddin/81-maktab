@@ -175,7 +175,7 @@ return [
     ],
     'home' => [
         'hero_top' => 'Har doim',
-        'hero_main' => 'YUQORI NATIJA',
+        'hero_main' => 'Yuqori natija',
         'hero_text' => 'Toshkent shahar Uchtepa tumani, Paxtakor MFY, Ali Qushchi ko\'chasi 3-uyda joylashgan 81-maktab 1963-yildan buyon faoliyat yuritadi. Bugun maktabda o\'zbek va rus tillarida 2097 nafar o\'quvchi 90 nafar pedagog rahbarligida ta\'lim olmoqda.',
         'hero_courses_action' => 'Kurslarni ko‘rish',
         'hero_news_action' => 'So‘nggi yangiliklar',

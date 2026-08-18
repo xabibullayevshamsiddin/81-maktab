@@ -1137,6 +1137,7 @@ class ProfileController extends Controller
             "badge_position"        => "nullable|in:before,after",
             "banner_animation"      => "nullable|in:none,pulse,wave,slide",
             "status_emoji"          => "nullable|string|max:8",
+            "donor_text_selection"  => "nullable|in:off,blue,purple,cyan,gold,rose,emerald",
         ]);
 
         // Tema tanlash — server-side ruxsat tekshiruvi.
@@ -1172,6 +1173,11 @@ class ProfileController extends Controller
             "badge_position"         => $data["badge_position"] ?? $user->badge_position ?? 'after',
             "banner_animation"       => $data["banner_animation"] ?? $user->banner_animation ?? 'none',
             "status_emoji"           => $emoji,
+            "donor_text_selection"   => (function() use ($request, $user) {
+                $val = $request->input('donor_text_selection', 'off');
+                $allowed = ['off', 'blue', 'purple', 'cyan', 'gold', 'rose', 'emerald'];
+                return ($user->isDonor() && in_array($val, $allowed)) ? $val : 'off';
+            })(),
         ]);
 
         return redirect()->route("profile.show", ["panel" => "appearance"])
