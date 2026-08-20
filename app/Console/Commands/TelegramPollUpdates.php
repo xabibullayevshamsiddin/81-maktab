@@ -69,6 +69,24 @@ class TelegramPollUpdates extends Command
             return;
         }
 
+        if (str_starts_with($text, '/natijalarim')) {
+            $handler->handleResultsCommand($chatId);
+
+            return;
+        }
+
+        if (str_starts_with($text, '/profilim')) {
+            $handler->handleProfileCommand($chatId);
+
+            return;
+        }
+
+        if (str_starts_with($text, '/help')) {
+            $handler->handleHelpCommand($chatId);
+
+            return;
+        }
+
         if (isset($message['contact'])) {
             $handler->handleContact($message);
         }

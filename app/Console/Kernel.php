@@ -26,6 +26,12 @@ class Kernel extends ConsoleKernel
         // Donor muddati tugashidan oldin ogohlantirish — kuniga 1 marta (ertalab 9:00)
         $schedule->command('donors:warn-expiring')->dailyAt('09:00');
 
+        // Kunlik statistika hisoboti — har kuni ertalab 8:00
+        $schedule->command('stats:send-report --period=daily')->dailyAt('08:00');
+
+        // Haftalik statistika hisoboti — har dushanba ertalab 8:00
+        $schedule->command('stats:send-report --period=weekly')->weeklyOn(1, '08:00');
+
         // Telegram getUpdates polling — webhook faol bo'lsa ishlamaydi
         // Agar webhook o'chirilgan bo'lsa, quyidagini yoqing:
         // if (app()->environment('local')) {

@@ -328,9 +328,9 @@ return [
         'site_credits_title' => 'Website credits',
         'site_credits_intro' => 'The following students contributed to the development and improvement of this website:',
         'site_credits_members' => [
-            ['name' => 'Shamsiddin Khabibullayev', 'date' => '2025–2026 academic year · 11 April 2026'],
-            ['name' => 'E\'zoza Abdukodirova', 'date' => '2025–2026 academic year · 11 April 2026'],
-            ['name' => 'Xadicha Mirzakosimova', 'date' => '2025–2026 academic year · 11 April 2026'],
+            ['name' => 'Shamsiddin Khabibullayev', 'date' => '2025–2026 academic year'],
+            ['name' => 'E\'zoza Abdukodirova', 'date' => '2025–2026 academic year'],
+            ['name' => 'Xadicha Mirzakosimova', 'date' => '2025–2026 academic year'],
         ],
         'site_credits_contributors_title' => 'Additional contributors',
         'site_credits_contributors' => [

@@ -1,6 +1,6 @@
 /* Premium Exam Results Styles */
 .exam-public-container {
-    padding-top: 140px; /* Prevent fixed header overlap */
+    padding-top: 24px;
     padding-bottom: 60px;
 }
 

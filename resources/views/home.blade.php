@@ -302,7 +302,7 @@
           @endphp
           <article class="teacher-img prime-reveal prime-reveal--scale">
             <img
-              src="{{ app_storage_asset($featuredTeacher->image) }}"
+              src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
               alt="{{ $featuredTeacher->full_name }} profil rasmi"
               loading="lazy"
               decoding="async"

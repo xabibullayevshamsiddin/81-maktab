@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Result;
 use App\Models\TelegramVerification;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Telegram xabarlarni qayta ishlash logikasi.
@@ -143,6 +146,163 @@ class TelegramUpdateHandler
             .$purposeLabel." muvaffaqiyatli tasdiqlandi.\n"
             ."Saytga qaytishingiz mumkin."
         );
+    }
+
+    /**
+     | /natijalarim — foydalanuvchining imtihon natijalarini ko'rsatish.
+     */
+    public function handleResultsCommand(int $chatId): void
+    {
+        try {
+            $user = User::where('telegram_chat_id', $chatId)->first();
+
+            if (! $user) {
+                $this->telegram->sendMessage($chatId,
+                    "⚠️ Hisobingiz ulanmagan.\n\n"
+                    ."Saytda profil sozlamalaridan Telegram'ni ulang."
+                );
+
+                return;
+            }
+
+            $results = Result::where('user_id', $user->id)
+                ->where('status', 'submitted')
+                ->latest('submitted_at')
+                ->take(5)
+                ->with('exam:id,title')
+                ->get();
+
+            if ($results->isEmpty()) {
+                $this->telegram->sendMessage($chatId,
+                    "📭 Hali imtihon natijalaringiz yo'q."
+                );
+
+                return;
+            }
+
+            $lines = [];
+            foreach ($results as $result) {
+                $examTitle = $result->exam?->title ?? 'Noma\'lum imtihon';
+                $score = $result->points_earned ?? 0;
+                $maxScore = $result->points_max ?? 0;
+                $passed = $result->passed;
+                $correctCount = $result->score ?? 0;
+                $totalQuestions = $result->total_questions ?? 0;
+                $statusEmoji = $passed === true ? '✅' : ($passed === false ? '❌' : '⏳');
+                $statusText = $passed === true ? "O'tdi" : ($passed === false ? 'Yiqildi' : 'Kutilmoqda');
+                $date = $result->submitted_at?->format('d.m.Y H:i') ?? '';
+
+                $lines[] = "{$statusEmoji} <b>".htmlspecialchars($examTitle)."</b>\n"
+                    ."   📈 Ball: <b>{$score}</b>/{$maxScore}  ✅ To'g'ri: <b>{$correctCount}</b>/{$totalQuestions}\n"
+                    ."   📅 {$date}";
+            }
+
+            $text = "📊 <b>So'nggi imtihon natijalaringiz</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                .implode("\n\n", $lines);
+
+            $this->telegram->sendMessage($chatId, $text);
+        } catch (\Throwable $e) {
+            Log::error('Telegram handleResultsCommand failed', [
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     | /profilim — foydalanuvchi profilini ko'rsatish.
+     */
+    public function handleProfileCommand(int $chatId): void
+    {
+        try {
+            $user = User::where('telegram_chat_id', $chatId)->first();
+
+            if (! $user) {
+                $this->telegram->sendMessage($chatId,
+                    "⚠️ Hisobingiz ulanmagan.\n\n"
+                    ."Saytda profil sozlamalaridan Telegram'ni ulang."
+                );
+
+                return;
+            }
+
+            $user->load('roleRelation');
+
+            $roleLabel = $user->role_label;
+
+            // Donor holati
+            if ($user->isDonor()) {
+                $donorRank = $user->donorRankLabel() ?? $user->donation_rank;
+                $donorExpiry = $user->donation_rank_expires_at?->format('d.m.Y') ?? '';
+                $donorLine = "💎 <b>Donor:</b> {$donorRank}";
+                if ($donorExpiry) {
+                    $donorLine .= " (muddati: {$donorExpiry})";
+                }
+            } else {
+                $donorLine = "💎 <b>Donor:</b> Donor emas";
+            }
+
+            // Kurslar
+            $enrolledCount = $user->courseEnrollments()->count();
+            $enrolledCourses = $user->courseEnrollments()
+                ->with('course:id,title')
+                ->get()
+                ->pluck('course.title')
+                ->filter()
+                ->values();
+
+            $coursesLine = "📚 <b>Kurslar:</b> {$enrolledCount} ta";
+            if ($enrolledCourses->isNotEmpty()) {
+                $coursesLine .= "\n" . $enrolledCourses->map(fn ($t) => "   • ".htmlspecialchars($t))->implode("\n");
+            }
+
+            // Teacher bo'lsa — yaratgan kurslari
+            $teacherLine = '';
+            if ($user->isTeacher()) {
+                $createdCount = $user->createdCourses()->count();
+                $teacherLine = "\n\n👨‍🏫 <b>O'qituvchi:</b> {$createdCount} ta kurs yaratgan";
+            }
+
+            $text = "👤 <b>Profil</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."📝 <b>Ism:</b> ".htmlspecialchars($user->name)."\n"
+                ."🛡 <b>Rol:</b> {$roleLabel}\n\n"
+                ."{$donorLine}\n\n"
+                ."{$coursesLine}"
+                ."{$teacherLine}";
+
+            $this->telegram->sendMessage($chatId, $text);
+        } catch (\Throwable $e) {
+            Log::error('Telegram handleProfileCommand failed', [
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     | /help — mavjud buyruqlar ro'yxati.
+     */
+    public function handleHelpCommand(int $chatId): void
+    {
+        try {
+            $text = "ℹ️ <b>Mavjud buyruqlar</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."/start — Botni ishga tushirish\n"
+                ."/help — Shu xabarni ko'rsatish\n"
+                ."/natijalarim — Imtihon natijalaringiz\n"
+                ."/profilim — Profil ma'lumotlaringiz\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."💡 Buyruqni guruh chatida yuborishingiz mumkin.";
+
+            $this->telegram->sendMessage($chatId, $text);
+        } catch (\Throwable $e) {
+            Log::error('Telegram handleHelpCommand failed', [
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

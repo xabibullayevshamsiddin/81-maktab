@@ -5,17 +5,17 @@
 :root {
   --profile-font-primary: 'Plus Jakarta Sans', sans-serif;
   --profile-font-heading: 'Outfit', sans-serif;
-  
+
   --profile-prime: #6366f1;
   --profile-secondary: #a855f7;
   --profile-accent: #14b8a6;
-  
+
   --profile-bg: #f8fafc;
   --profile-card-bg: rgba(255, 255, 255, 0.7);
   --profile-glass-border: rgba(255, 255, 255, 0.8);
   --profile-text-main: #1e293b;
   --profile-text-muted: #64748b;
-  
+
   --profile-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
   --profile-radius: 28px;
 }
@@ -28,8 +28,31 @@
   --profile-text-muted: #94a3b8;
 }
 
+.profile-hero {
+  background: var(--profile-bg) !important;
+  animation: none !important;
+  padding-top: 150px !important;
+  padding-bottom: 20px !important;
+}
+
+.profile-hero::before,
+.profile-hero::after {
+  display: none !important;
+}
+
+.profile-hero .news-hero-content h1 {
+  background: linear-gradient(135deg, var(--profile-text-main) 0%, var(--profile-text-muted) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: none !important;
+}
+
+.profile-hero .news-hero-content p {
+  color: var(--profile-text-muted) !important;
+}
+
 .profile-main {
-  padding: 60px 0 100px !important;
+  padding: 40px 0 100px !important;
   font-family: var(--profile-font-primary);
   background: var(--profile-bg);
   min-height: 100vh;
@@ -71,7 +94,7 @@
 .profile-overview-panel {
   display: grid !important;
   gap: 40px !important;
-  margin-top: 0 !important;
+  margin-top: 50 !important;
   margin-bottom: 30px !important;
   padding: 44px !important;
   border-radius: 36px !important;
@@ -83,6 +106,139 @@
   transition: all 0.4s ease !important;
   position: relative !important;
   z-index: 5 !important;
+}
+
+/* Panel Switcher - Unified Glassmorphism & Purple Theme */
+.profile-panel-switcher {
+  display: grid !important;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 18px !important;
+  margin-top: 0 !important;
+  margin-bottom: 30px !important;
+  padding: 18px 24px !important;
+  border-radius: 28px !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  background: var(--profile-card-bg) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: var(--profile-shadow) !important;
+  transition: all 0.4s ease !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+:root[data-theme='dark'] .profile-panel-switcher {
+  background: var(--profile-card-bg) !important;
+  border-color: var(--profile-glass-border) !important;
+  box-shadow: var(--profile-shadow) !important;
+}
+
+.profile-panel-switcher-head {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.profile-panel-switcher-head p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  color: var(--profile-text-muted) !important;
+}
+
+.profile-panel-switcher-kicker {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: fit-content !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: var(--profile-prime) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+:root[data-theme='dark'] .profile-panel-switcher-kicker {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #a5b4fc !important;
+}
+
+.profile-panel-switcher-kicker::before {
+  content: '' !important;
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 999px !important;
+  background: currentColor !important;
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.15) !important;
+}
+
+.profile-panel-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+  gap: 10px !important;
+  margin: 0 !important;
+}
+
+.profile-panel-tab {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 48px !important;
+  width: 100% !important;
+  padding: 10px 14px !important;
+  border-radius: 18px !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  color: var(--profile-text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:root[data-theme='dark'] .profile-panel-tab {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  color: #cbd5e1 !important;
+}
+
+.profile-panel-tab:hover {
+  transform: translateY(-2px) !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  color: var(--profile-prime) !important;
+}
+
+:root[data-theme='dark'] .profile-panel-tab:hover {
+  background: rgba(99, 102, 241, 0.18) !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
+  color: #f1f5f9 !important;
+}
+
+.profile-panel-tab.is-active {
+  background: linear-gradient(135deg, var(--profile-prime), var(--profile-secondary)) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+:root[data-theme='dark'] .profile-panel-tab.is-active {
+  background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 28px rgba(168, 85, 247, 0.38) !important;
+}
+
+@media (max-width: 991px) {
+  .profile-panel-switcher {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+    gap: 14px !important;
+  }
 }
 
 .profile-overview-main {
@@ -518,11 +674,11 @@
   .profile-facts {
     gap: 12px !important;
   }
-  
+
   .profile-fact-card {
     padding: 20px !important;
   }
-  
+
   .profile-fact-value {
     font-size: 1.15rem !important;
   }

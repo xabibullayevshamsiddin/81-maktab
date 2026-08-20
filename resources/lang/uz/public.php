@@ -328,9 +328,9 @@ return [
         'site_credits_title' => 'Veb-sayt mualliflari',
         'site_credits_intro' => 'Ushbu saytni ishlab chiqish va takomillashtirishda quyidagi o\'quvchilar ishtirok etgan:',
         'site_credits_members' => [
-            ['name' => 'Xabibullayev Shamsiddin', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
-            ['name' => 'Abduqodirova E\'zoza', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
-            ['name' => 'Mirzaqosimova Xadicha', 'date' => '2025–2026 o\'quv yili · 2026-yil 11-aprel'],
+            ['name' => 'Xabibullayev Shamsiddin', 'date' => '2025–2026 o\'quv yili'],
+            ['name' => 'Abduqodirova E\'zoza', 'date' => '2025–2026 o\'quv yili'],
+            ['name' => 'Mirzaqosimova Xadicha', 'date' => '2025–2026 o\'quv yili'],
         ],
         'site_credits_contributors_title' => 'Qo\'shimcha hissa qo\'shganlar',
         'site_credits_contributors' => [

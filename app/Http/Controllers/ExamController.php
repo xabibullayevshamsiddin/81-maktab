@@ -426,6 +426,9 @@ class ExamController extends Controller
         $this->finalizeResult($result, $this->isExpired($result));
         $fresh = $result->fresh();
 
+        // Telegram'ga natija xabarini yuborish — JSON yoki redirect har ikkala holatda ham
+        $this->sendExamResultNotification($fresh);
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'ok' => true,
@@ -434,9 +437,6 @@ class ExamController extends Controller
                 'score_raw' => $fresh->points_earned
             ]);
         }
-
-        // Telegram'ga natija xabarini yuborish
-        $this->sendExamResultNotification($fresh);
 
         // 303: POST → GET; brauzer tarixida imtihon sessiyasiga "qayta yuborish" chalkashmasin
         return redirect()->route('exam.result.show', $fresh, 303)

@@ -826,27 +826,93 @@ nav.d-flex .small.text-muted {
 .site-credits-item {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px 16px;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #f7fbff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.site-credits-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.site-credits-item--lead {
+  position: relative;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(168, 85, 247, 0.08) 100%) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.12), inset 0 0 16px rgba(56, 189, 248, 0.04);
 }
 
 .site-credits-name {
   font-weight: 600;
   color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.site-credits-name--lead {
+  font-weight: 800 !important;
+  font-size: 1.02rem;
+  background: linear-gradient(135deg, #0284c7 0%, #6366f1 50%, #9333ea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme='dark'] .site-credits-name--lead {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.site-credits-exponent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(99, 102, 241, 0.22));
+  color: #0284c7;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  position: relative;
+  top: -0.65em;
+  line-height: 1.2;
+  margin-left: 4px;
+  vertical-align: baseline;
+  box-shadow: 0 2px 6px rgba(56, 189, 248, 0.15);
+}
+
+:root[data-theme='dark'] .site-credits-exponent {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(168, 85, 247, 0.28));
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.22);
 }
 
 .site-credits-date {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--muted);
+  font-weight: 500;
 }
 
 :root[data-theme='dark'] .site-credits-item {
   background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme='dark'] .site-credits-item--lead {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.1) 50%, rgba(168, 85, 247, 0.12) 100%) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 4px 24px rgba(56, 189, 248, 0.18), inset 0 0 20px rgba(56, 189, 248, 0.08);
 }
 
 /* Turnstile */

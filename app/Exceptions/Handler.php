@@ -65,6 +65,22 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $e)
     {
+        if ($e instanceof \Illuminate\Session\TokenMismatchException) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Sessiya vaqti tugadi (419). Qayta urinib ko‘ring.'], 419);
+            }
+
+            if ($request->is('login/verify*')) {
+                return redirect()->route('login')
+                    ->withErrors(['phone' => 'Sessiya vaqti tugadi. Qayta kiring.'])
+                    ->with('toast_type', 'error');
+            }
+
+            return redirect()->back()
+                ->withInput($request->except(['_token', 'password', 'code']))
+                ->withErrors(['error' => 'Sessiya vaqti tugadi (419). Qayta urinib ko‘ring.']);
+        }
+
         if ($e instanceof PostTooLargeException) {
             $hint = 'OSPanel: «PHP» → loyiha uchun PHP versiyasi → «Sozlamalar» (yoki php.ini): '
                 .'upload_max_filesize va post_max_size ni oshiring (masalan 512M). '

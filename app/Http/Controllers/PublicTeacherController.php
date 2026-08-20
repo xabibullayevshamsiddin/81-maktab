@@ -40,9 +40,7 @@ class PublicTeacherController extends Controller
                 'is_active',
             ])
             ->withCount('likes')
-            ->where('is_active', true)
-            ->whereNotNull('image')
-            ->where('image', '!=', '');
+            ->where('is_active', true);
 
         if ($q !== '') {
             $query->where(function ($sub) use ($q): void {
@@ -71,8 +69,6 @@ class PublicTeacherController extends Controller
         $allSubjects = Cache::remember('teacher_all_subjects', now()->addMinutes(30), function () {
             return Teacher::query()
                 ->where('is_active', true)
-                ->whereNotNull('image')
-                ->where('image', '!=', '')
                 ->whereNotNull('subject')
                 ->where('subject', '!=', '')
                 ->orderBy('subject')
@@ -107,9 +103,7 @@ class PublicTeacherController extends Controller
     private function teacherPageStats(): array
     {
         $activeTeachers = Teacher::query()
-            ->where('is_active', true)
-            ->whereNotNull('image')
-            ->where('image', '!=', '');
+            ->where('is_active', true);
 
         $experienced = (clone $activeTeachers)->where('experience_years', '>=', 3)->count();
         if ($experienced === 0) {
@@ -248,8 +242,6 @@ class PublicTeacherController extends Controller
             ])
             ->withCount('likes')
             ->where('is_active', true)
-            ->whereNotNull('image')
-            ->where('image', '!=', '')
             ->where('id', '!=', $teacher->id);
 
         if (filled($teacher->subject)) {

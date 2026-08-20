@@ -9,13 +9,12 @@
   $bookmarkedCourseIds = $bookmarkedCourseIds ?? collect();
 @endphp
 <x-layouts.main :title="__('profile.bookmarks.page_title')">
-  <main class="news">
-    <section class="container news glass-section prime-reveal" style="padding-top: 120px; padding-bottom: 48px;">
+  @include('profile.partials.header', ['activePanel' => 'bookmarks'])
+
+  <main class="news profile-main" style="padding-top: 0;">
+    <section class="container news glass-section prime-reveal" style="padding-top: 24px; padding-bottom: 48px; margin-top: 0;">
       <div class="section-head" style="margin-bottom: 24px;">
         <div>
-          <p class="comment-hint" style="margin: 0 0 8px;">
-            <a href="{{ route('profile.show') }}" class="btn btn-sm btn-outline">{{ __('profile.bookmarks.back') }}</a>
-          </p>
           <h1 class="js-split-text" style="margin: 0 0 8px;">{{ __('profile.bookmarks.title') }}</h1>
           <p style="margin: 0; color: var(--muted); max-width: 640px;">{{ __('profile.bookmarks.intro') }}</p>
         </div>

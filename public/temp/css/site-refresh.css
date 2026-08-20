@@ -792,38 +792,40 @@ body {
 }
 
 :root[data-theme='dark'] .profile-panel-switcher {
-  background:
-    linear-gradient(135deg, rgba(8, 47, 73, 0.22), rgba(37, 99, 235, 0.1)),
-    rgba(9, 17, 29, 0.96);
-  border-color: rgba(96, 165, 250, 0.16);
-  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.28);
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
 }
 
 :root[data-theme='dark'] .profile-panel-switcher-head p {
-  color: #b7c6d9;
+  color: #94a3b8;
 }
 
 :root[data-theme='dark'] .profile-panel-switcher-kicker {
-  background: rgba(56, 189, 248, 0.16);
-  color: #d7f0ff;
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
 }
 
 :root[data-theme='dark'] .profile-panel-switcher-kicker::before {
-  box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.16);
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.15);
 }
 
 :root[data-theme='dark'] .profile-panel-tab {
-  background: rgba(15, 23, 42, 0.82);
-  border-color: rgba(125, 180, 255, 0.2);
-  color: #dbeafe;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: #cbd5e1;
 }
 
-:root[data-theme='dark'] .profile-panel-tab:hover,
+:root[data-theme='dark'] .profile-panel-tab:hover {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #f1f5f9;
+}
+
 :root[data-theme='dark'] .profile-panel-tab.is-active {
-  background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+  background: linear-gradient(135deg, #6366f1, #a855f7);
   color: #fff;
-  box-shadow: 0 14px 24px rgba(14, 165, 233, 0.22);
+  box-shadow: 0 10px 28px rgba(168, 85, 247, 0.38);
 }
 
 .profile-panel-aside-note {
@@ -2208,7 +2210,25 @@ button.is-loading::after {
 
   #chat-widget,
   .chat-widget {
-    bottom: 86px !important;
+    bottom: 12px !important;
+  }
+
+  /* Audio tugmasi chat tugmasidan yetarli bo'shliq bilan yuqorida tursin */
+  .prime-audio-toggle {
+    bottom: 12px !important;
+    right: 14px !important;
+  }
+
+  body.has-chat-widget .prime-audio-toggle,
+  body:has(#chat-widget) .prime-audio-toggle {
+    bottom: 76px !important;
+    right: 14px !important;
+  }
+
+  body.has-chat-widget.has-ai-widget .prime-audio-toggle,
+  body:has(#chat-widget):has(#ai-widget:not([hidden])) .prime-audio-toggle {
+    bottom: 140px !important;
+    right: 14px !important;
   }
 }
 

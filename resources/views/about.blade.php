@@ -301,8 +301,16 @@
         <p class="site-credits-intro">{{ __('public.about.site_credits_intro') }}</p>
         <ul class="site-credits-list">
           @foreach($siteCreditsMembers as $member)
-            <li class="site-credits-item">
-              <span class="site-credits-name">{{ $member['name'] }}</span>
+            @php
+              $isLeadAuthor = str_contains($member['name'], 'Shamsiddin') || str_contains($member['name'], 'Шамсиддин');
+            @endphp
+            <li class="site-credits-item {{ $isLeadAuthor ? 'site-credits-item--lead' : '' }}">
+              <span class="site-credits-name">
+                <span class="{{ $isLeadAuthor ? 'site-credits-name--lead' : '' }}">{{ $member['name'] }}</span>
+                @if($isLeadAuthor)
+                  <sup class="site-credits-exponent"><i class="fa-solid fa-code"></i> Leader Developer</sup>
+                @endif
+              </span>
               <span class="site-credits-date">{{ $member['meta'] ?? $member['date'] ?? '' }}</span>
             </li>
           @endforeach

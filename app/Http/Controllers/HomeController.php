@@ -49,8 +49,6 @@ class HomeController extends Controller
         $featuredTeacherId = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
             return Teacher::query()
                 ->where('is_active', true)
-                ->whereNotNull('image')
-                ->where('image', '!=', '')
                 ->inRandomOrder()
                 ->value('id');
         });
@@ -74,8 +72,6 @@ class HomeController extends Controller
                 ])
                 ->where('id', $featuredTeacherId)
                 ->where('is_active', true)
-                ->whereNotNull('image')
-                ->where('image', '!=', '')
                 ->first();
         }
 
@@ -96,8 +92,6 @@ class HomeController extends Controller
                     'is_active',
                 ])
                 ->where('is_active', true)
-                ->whereNotNull('image')
-                ->where('image', '!=', '')
                 ->inRandomOrder()
                 ->first();
         }

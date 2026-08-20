@@ -3,6 +3,8 @@
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/profile-results.css') }}?v={{ app_asset_version('temp/css/profile-results.css') }}">
 @endpush
 
+@include('profile.partials.header', ['activePanel' => 'results'])
+
 @php
     $summaryTotal = (int) ($resultSummary->total ?? 0);
     $summaryPassed = (int) ($resultSummary->passed_count ?? 0);
@@ -13,13 +15,8 @@
     $summaryBest = $resultSummary->best_points !== null ? round((float) $resultSummary->best_points, 1) : null;
 @endphp
 
-<div class="container exam-public-container">
-    <div class="results-header">
-        <div class="results-breadcrumb">
-            <a href="{{ route('profile.show') }}">{{ __('public.profile_results.breadcrumb_profile') }}</a>
-            <i class="fa-solid fa-chevron-right" style="font-size: 10px; opacity: 0.5; align-self: center;"></i>
-            <span>{{ __('public.profile_results.my_page_title') }}</span>
-        </div>
+<div class="container exam-public-container" style="padding-top: 0;">
+    <div class="results-header" style="margin-top: 0;">
         <div class="results-header-actions">
             <div>
                 <h1 class="results-title">{{ __('public.profile_results.my_page_title') }}</h1>
