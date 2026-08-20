@@ -133,6 +133,16 @@ class TelegramService
     }
 
     /**
+     | Bot buyruqlarini Telegram Menu ga ro'yxatdan o'tkazish.
+     */
+    public function setMyCommands(array $commands): ?array
+    {
+        return $this->callApi('setMyCommands', [
+            'commands' => $commands,
+        ]);
+    }
+
+    /**
      | Webhookni o'chirish.
      */
     public function deleteWebhook(): ?array
