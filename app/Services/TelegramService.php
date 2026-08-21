@@ -16,6 +16,16 @@ class TelegramService
         $this->baseUrl = (string) config('telegram.api_base', 'https://api.telegram.org');
     }
 
+    public static function defaultCommands(): array
+    {
+        return [
+            ['command' => 'start', 'description' => 'Tasdiqlashni boshlash'],
+            ['command' => 'help', 'description' => 'Yordam va buyruqlar'],
+            ['command' => 'natijalarim', 'description' => 'Imtihon natijalarim'],
+            ['command' => 'profil', 'description' => 'Profil ma\'lumotlarim'],
+        ];
+    }
+
     /**
      | Oddiy xabar yuborish.
      */

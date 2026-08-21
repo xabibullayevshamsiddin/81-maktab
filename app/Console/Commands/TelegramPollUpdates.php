@@ -75,7 +75,7 @@ class TelegramPollUpdates extends Command
             return;
         }
 
-        if (str_starts_with($text, '/profilim')) {
+        if (str_starts_with($text, '/profil') || str_starts_with($text, '/profilim')) {
             $handler->handleProfileCommand($chatId);
 
             return;

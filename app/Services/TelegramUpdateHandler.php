@@ -100,10 +100,11 @@ class TelegramUpdateHandler
 
         $normalizedPhone = $this->normalizePhone($phoneNumber);
 
-        // Shu chat orqali oxirgi pending yozuvni topish
+        // Ulangan raqamga mos pending yozuvni topish (ikki odam bir vaqtda tasdiqlasa, xato olinmasin)
         $verification = TelegramVerification::query()
             ->where('status', TelegramVerification::STATUS_PENDING)
             ->where('expires_at', '>', now())
+            ->where('phone', $normalizedPhone)
             ->latest('id')
             ->first();
 
@@ -405,6 +406,7 @@ class TelegramUpdateHandler
         if ($userId && $newEmail) {
             $user = \App\Models\User::find($userId);
             if ($user) {
+                $oldEmail = $user->email;
                 $user->update([
                     'email' => $newEmail,
                     'email_verified_at' => now(),
@@ -414,7 +416,7 @@ class TelegramUpdateHandler
                     $user,
                     \App\Models\UserActivity::TYPE_EMAIL_CHANGED,
                     'Email manzili o\'zgartirildi',
-                    ['old_email' => $user->email],
+                    ['old_email' => $oldEmail],
                     ['new_email' => $newEmail]
                 );
             }
@@ -479,13 +481,14 @@ class TelegramUpdateHandler
         if ($userId && $newPhone) {
             $user = \App\Models\User::find($userId);
             if ($user) {
+                $oldPhone = $user->phone;
                 $user->update(['phone' => $newPhone]);
 
                 \App\Services\UserActivityLogger::log(
                     $user,
                     \App\Models\UserActivity::TYPE_PROFILE_UPDATED,
                     'Telefon raqami o\'zgartirildi',
-                    ['old_phone' => $user->phone],
+                    ['old_phone' => $oldPhone],
                     ['new_phone' => $newPhone]
                 );
             }

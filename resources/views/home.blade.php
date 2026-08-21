@@ -113,48 +113,17 @@
           counters.forEach(function(c) { observer.observe(c); });
         }
 
-        // ── 2. Home Hero 3D Parallax & Mouse Tilt ──
+        // ── 2. Home Hero Scroll Parallax ──
         function initHeroParallax() {
           var heroSection = document.getElementById('home');
           if (!heroSection) return;
 
-          var heroGrid = heroSection.querySelector('.hero-grid');
           var heroContent = heroSection.querySelector('.hero-content');
           var sideCard = heroSection.querySelector('.hero-side-card');
-          var miniStats = heroSection.querySelectorAll('.hero-mini-stat');
           var bgVideo = heroSection.querySelector('.bg-video');
 
-          // Mouse move 3D Tilt Parallax
-          heroSection.addEventListener('mousemove', function(e) {
-            var rect = heroSection.getBoundingClientRect();
-            var x = e.clientX - rect.left - rect.width / 2;
-            var y = e.clientY - rect.top - rect.height / 2;
 
-            var rotateX = (-y / (rect.height / 2)) * 12;
-            var rotateY = (x / (rect.width / 2)) * 12;
 
-            if (heroGrid) {
-              heroGrid.style.transform = 'rotateX(' + (rotateX * 0.7).toFixed(2) + 'deg) rotateY(' + (rotateY * 0.7).toFixed(2) + 'deg)';
-            }
-            if (heroContent) {
-              heroContent.style.transform = 'translateZ(20px) translateY(' + (-rotateX * 0.3) + 'px)';
-            }
-            if (sideCard) {
-              sideCard.style.transform = 'translateZ(40px) rotateX(' + (rotateX * 0.5).toFixed(2) + 'deg) rotateY(' + (rotateY * 0.5).toFixed(2) + 'deg)';
-            }
-            miniStats.forEach(function(stat, idx) {
-              stat.style.transform = 'translateZ(' + (30 + idx * 10) + 'px)';
-            });
-          });
-
-          heroSection.addEventListener('mouseleave', function() {
-            if (heroGrid) heroGrid.style.transform = 'rotateX(0deg) rotateY(0deg)';
-            if (heroContent) heroContent.style.transform = 'translateZ(0px) translateY(0px)';
-            if (sideCard) sideCard.style.transform = 'translateZ(0px) rotateX(0deg) rotateY(0deg)';
-            miniStats.forEach(function(stat) {
-              stat.style.transform = 'translateZ(0px)';
-            });
-          });
 
           // Scroll Parallax Depth
           window.addEventListener('scroll', function() {

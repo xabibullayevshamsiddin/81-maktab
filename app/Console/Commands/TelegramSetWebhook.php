@@ -56,13 +56,7 @@ class TelegramSetWebhook extends Command
             $this->info('✅ Webhook muvaffaqiyatli ro\'yxatdan o\'tkazildi!');
 
             // Bot buyruqlarini ham ro'yxatdan o'tkazish
-            $commands = [
-                ['command' => 'start', 'description' => 'Botni ishga tushirish'],
-                ['command' => 'help', 'description' => 'Mavjud buyruqlar ro\'yxati'],
-                ['command' => 'natijalarim', 'description' => 'Imtihon natijalaringiz'],
-                ['command' => 'profilim', 'description' => 'Profil ma\'lumotlaringiz'],
-            ];
-            $telegram->setMyCommands($commands);
+            $telegram->setMyCommands(TelegramService::defaultCommands());
             $this->info('📋 Bot buyruqlari Menu ga qo\'shildi.');
 
             return 0;

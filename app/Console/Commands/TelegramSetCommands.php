@@ -12,12 +12,7 @@ class TelegramSetCommands extends Command
 
     public function handle(TelegramService $telegram): int
     {
-        $commands = [
-            ['command' => 'start', 'description' => 'Botni ishga tushirish'],
-            ['command' => 'help', 'description' => 'Mavjud buyruqlar ro\'yxati'],
-            ['command' => 'natijalarim', 'description' => 'Imtihon natijalaringiz'],
-            ['command' => 'profilim', 'description' => 'Profil ma\'lumotlaringiz'],
-        ];
+        $commands = TelegramService::defaultCommands();
 
         $this->line("📋 Bot buyruqlari Telegram Menu ga ro'yxatdan o'tkazilmoqda...");
 
