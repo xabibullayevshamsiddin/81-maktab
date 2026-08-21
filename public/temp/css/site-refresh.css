@@ -840,6 +840,27 @@ body {
   margin-bottom: 10px;
 }
 
+/* ── Hero Grid (home) ── */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 24px;
+  padding-top: clamp(80px, 10vw, 120px);
+  padding-bottom: clamp(60px, 8vw, 100px);
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 100%;
+}
+
+.hero-side-card {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .container {
     padding-inline: 24px;
@@ -1828,21 +1849,17 @@ body {
 
 
 
-  .card-home {
-    min-height: 100svh !important;
-    height: auto !important;
-    position: relative !important;
-    display: flex !important;
+  .hero-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 300px !important;
     align-items: center !important;
-    justify-content: flex-start !important;
     gap: 24px !important;
     padding-top: 112px !important;
-    padding-right: 88px !important;
     padding-bottom: 96px !important;
     text-align: left !important;
   }
 
-  .home-content {
+  .hero-content {
     width: min(100%, 54ch) !important;
     max-width: 54ch !important;
   }
@@ -1982,11 +1999,12 @@ body {
     padding-inline: 8px !important;
   }
 
-  .card-home {
+  .hero-grid {
+    grid-template-columns: 1fr 260px !important;
     padding-right: 78px !important;
   }
 
-  .home-content {
+  .hero-content {
     width: min(100%, 48ch) !important;
     max-width: 48ch !important;
   }
