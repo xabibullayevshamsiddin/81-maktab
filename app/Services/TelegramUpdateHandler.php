@@ -67,7 +67,8 @@ class TelegramUpdateHandler
     public function handleStartGeneric(int $chatId): void
     {
         $this->telegram->sendMessage($chatId,
-            "Assalomu alaykum!\n\nSaytda ro'yxatdan o'tish yoki kirish uchun havolani bosing."
+            "Assalomu alaykum!\n\nSaytda ro'yxatdan o'tish yoki kirish uchun havolani bosing.",
+            ['remove_keyboard' => true]
         );
     }
 
@@ -144,7 +145,8 @@ class TelegramUpdateHandler
         $this->telegram->sendMessage($chatId,
             "✅ Tasdiqlandi!\n\n"
             .$purposeLabel." muvaffaqiyatli tasdiqlandi.\n"
-            ."Saytga qaytishingiz mumkin."
+            ."Saytga qaytishingiz mumkin.",
+            ['remove_keyboard' => true]
         );
     }
 
