@@ -59,7 +59,7 @@ class ChatController extends Controller
         $canClearAll = $currentUser->isAdmin();
 
         $query = ChatMessage::query()
-            ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color,profile_theme,chat_style,badge_style,show_expiry_badge,name_font_weight,status_emoji')
+            ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color,profile_theme,chat_style,badge_style,show_expiry_badge,name_font_weight,name_font_family,status_emoji')
             ->with('user.roleRelation:id,name');
 
         if ($groupId > 0) {
@@ -130,10 +130,11 @@ class ChatController extends Controller
                 'time' => $m->created_at?->format('H:i'),
                 'date' => $m->created_at?->format('d.m'),
                 'donor_rank' => $m->user?->donation_rank,
-                'donor_theme' => $m->user?->effectiveTheme() ?? '',
+                'donor_theme' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->effectiveTheme() ?? '') : '',
                 'donor_badge' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->donorBadgeHtml() ?? '') : '',
-                'donor_color' => $m->user?->donorUsernameColor() ?? '',
-                'name_font_weight' => $m->user?->name_font_weight ?? '700',
+                'donor_color' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->donorUsernameColor() ?? '') : '',
+                'name_font_weight' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->name_font_weight ?? '700') : '700',
+                'name_font_family' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->name_font_family ?? '') : '',
                 'status_emoji' => $m->user?->status_emoji ?? '',
             ];
         });
@@ -198,6 +199,8 @@ class ChatController extends Controller
             'donor_badge' => $user->donorBadgeHtml() ?? '',
             'donor_color' => $user->donorUsernameColor() ?? '',
             'name_font_weight' => $user->name_font_weight ?? '700',
+            'name_font_family' => $user->name_font_family ?? '',
+            'show_expiry_badge' => (string) ($user->show_expiry_badge ?? '1'),
             'donor_expires' => $user->donation_rank_expires_at?->diffForHumans(),
         ];
 
@@ -381,7 +384,10 @@ class ChatController extends Controller
             'is_parent' => (bool) $user->is_parent,
             'grade' => $user->displayGrade('Kiritilmagan'),
             'registered_at' => $user->created_at?->format('d.m.Y H:i'),
-            'email_verified_at' => $user->email_verified_at?->format('d.m.Y H:i'),
+            'donor_rank' => $user->donation_rank,
+            'donor_rank_label' => $user->donorRankLabel(),
+            'donor_expires_at' => $user->donation_rank_expires_at?->format('d.m.Y'),
+            'show_expiry_badge' => (string) ($user->show_expiry_badge ?? '1'),
             'course_open_approved' => (bool) ($user->course_open_approved ?? false),
             'course_open_request_pending' => (bool) ($user->course_open_request_pending ?? false),
         ];

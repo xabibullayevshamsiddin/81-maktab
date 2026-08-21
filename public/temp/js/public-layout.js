@@ -605,15 +605,14 @@
           if (previewNameEl) {
             var statusHtml = d.status_emoji ? ' <span class="user-status-emoji">' + escChatHtml(d.status_emoji) + '</span>' : '';
             var badgeInlineHtml = d.donor_badge ? ' ' + d.donor_badge : '';
-            previewNameEl.innerHTML = escChatHtml(d.display_name || '') + statusHtml + badgeInlineHtml;
-            var previewNameStyle = '';
-            if (d.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(d.donor_color))) {
-              previewNameStyle += 'color:' + d.donor_color + ';';
-            }
-            if (d.name_font_weight && /^(600|700|800)$/.test(String(d.name_font_weight))) {
-              previewNameStyle += 'font-weight:' + d.name_font_weight + ';';
-            }
-            previewNameEl.setAttribute('style', previewNameStyle);
+            var nameColorStyle = (d.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(d.donor_color))) ? 'color:' + d.donor_color + ';' : '';
+            var nameWeightStyle = (d.name_font_weight && /^(600|700|800)$/.test(String(d.name_font_weight))) ? 'font-weight:' + d.name_font_weight + ';' : '';
+            var nameCombinedStyle = nameColorStyle + nameWeightStyle;
+            previewNameEl.innerHTML = '<span style="' + nameCombinedStyle + '">' + escChatHtml(d.display_name || '') + '</span>' + statusHtml + badgeInlineHtml;
+            previewNameEl.removeAttribute("style");
+            var fontFam = d.name_font_family || '';
+            var validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];
+            if (validFonts.indexOf(fontFam) !== -1) { previewNameEl.classList.add('font-' + fontFam); }
           }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
@@ -667,7 +666,14 @@
               if (adminProfile.registered_at) {
                 rows.push('<li><span>Ro‘yxatdan o‘tgan</span> ' + escChatHtml(adminProfile.registered_at) + '</li>');
               }
-              rows.push('<li><span>Email tasdiqlangan</span> ' + escChatHtml(adminProfile.email_verified_at || 'Yo‘q') + '</li>');
+              if (adminProfile.donor_rank) {
+                rows.push('<li><span>Donorlik</span> ' + escChatHtml(adminProfile.donor_rank_label || adminProfile.donor_rank) + '</li>');
+                if (adminProfile.show_expiry_badge === '1' && adminProfile.donor_expires_at) {
+                  rows.push('<li><span>Tugash muddati</span> ' + escChatHtml(adminProfile.donor_expires_at) + '</li>');
+                }
+              } else {
+                rows.push('<li><span>Donorlik</span> Yo‘q</li>');
+              }
               rows.push('<li><span>Kurs ochish ruxsati</span> ' + (adminProfile.course_open_approved ? 'Bor' : 'Yo‘q') + '</li>');
               rows.push('<li><span>So‘rov holati</span> ' + (adminProfile.course_open_request_pending ? 'Kutilmoqda' : 'Yo‘q') + '</li>');
             } else {
@@ -679,7 +685,7 @@
               }
               if (d.donor_theme || d.donor_rank) {
                 rows.push('<li><span>Tema</span> ' + d.donor_badge + '</li>');
-                if (d.donor_expires) {
+                if (d.show_expiry_badge !== '0' && d.donor_expires) {
                   rows.push('<li><span>Tugash vaqti</span> ' + escChatHtml(d.donor_expires) + '</li>');
                 }
               }
@@ -1975,6 +1981,7 @@
           authorStyle += `font-weight:${comment.name_font_weight};`;
         }
         const authorStyleAttr = authorStyle ? ` style="${authorStyle}"` : '';
+        const authorFontClass = (comment.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(comment.name_font_family)) ? ' font-' + comment.name_font_family : '';
 
         function buildReplyLi() {
           return `
@@ -1982,7 +1989,7 @@
               ${buildCommentAvatarHtml(comment)}
               <div class="comment-body">
                 <div class="comment-meta">
-                  <strong${authorStyleAttr}>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                  <strong class="${authorFontClass}"${authorStyleAttr}>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
                   ${donorBadgeHtml}
                   ${roleBadgeHtml}
                   <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
@@ -2026,7 +2033,7 @@
               ${buildCommentAvatarHtml(comment)}
               <div class="comment-body">
                 <div class="comment-meta">
-                  <strong${authorStyleAttr}>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
+                  <strong class="${authorFontClass}"${authorStyleAttr}>${escapeHtml(comment.author_name || 'Mehmon')}</strong>
                   ${donorBadgeHtml}
                   ${roleBadgeHtml}
                   <span class="comment-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(comment.created_at || '')}</span>
@@ -2902,6 +2909,7 @@ function refreshChatAvailability() {
         actions += '<button type="button" class="chat-msg-action chat-msg-action--block" data-chat-block="' + m.user_id + '" title="Bloklash"><i class="fa-solid fa-ban"></i></button>';
       }
       var actionsHtml = actions ? '<div class="chat-msg-actions">' + actions + '</div>' : '';
+      var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(m.name_font_family)) ? ' font-' + m.name_font_family : '';
       var nameStyle = '';
       if (m.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(m.donor_color))) {
         nameStyle += 'color:' + m.donor_color + ';';
@@ -2915,7 +2923,7 @@ function refreshChatAvailability() {
         + '</button>'
         + '<div class="chat-msg-body">'
         + '<div class="chat-msg-meta">'
-        + '<span class="chat-msg-name"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escChatHtml(m.user_name) + (m.status_emoji ? ' ' + escChatHtml(m.status_emoji) : '') + '</span>'
+        + '<span class="chat-msg-name' + fontClass + '"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escChatHtml(m.user_name) + '</span>' + (m.status_emoji ? ' ' + escChatHtml(m.status_emoji) : '')
         + badge
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + actionsHtml

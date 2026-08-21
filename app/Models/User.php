@@ -119,6 +119,7 @@ class User extends Authenticatable
         'chat_style',
         'badge_style',
         'name_font_weight',
+        'name_font_family',
         'show_expiry_badge',
         'custom_css',
         'telegram_chat_id',

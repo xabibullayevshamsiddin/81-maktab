@@ -88,6 +88,7 @@ class TeacherCommentController extends Controller
                     'donor_badge' => $comment->user?->donorBadgeHtml() ?? '',
                     'donor_color' => $comment->user?->donorUsernameColor() ?? '',
                     'name_font_weight' => $comment->user?->name_font_weight ?? '700',
+                    'name_font_family' => $comment->user?->name_font_family ?? '',
                     'likes_count' => 0,
                     'is_approved' => $approved,
                 ],

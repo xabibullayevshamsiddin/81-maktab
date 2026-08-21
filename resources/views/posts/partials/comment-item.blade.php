@@ -60,15 +60,19 @@
     <div class="comment-meta">
       @php
         $authorStyle = '';
+        $authorFontClass = '';
         if ($effectTheme && $comment->user) {
           $c = $comment->user->donorUsernameColor();
           $w = $comment->user->name_font_weight ?? '700';
+          $ff = $comment->user->name_font_family ?? '';
           if ($c) { $authorStyle .= 'color:' . $c . ';'; }
           $authorStyle .= 'font-weight:' . $w . ';';
+          $validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];
+          if (in_array($ff, $validFonts)) { $authorFontClass = ' font-'.$ff; }
         }
       @endphp
       @if($donorBadge && $badgePos === 'before'){!! $donorBadge !!} @endif
-      <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? "Mehmon" }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}</strong>
+      <strong class="{{ $authorFontClass }}" style="{{ $authorStyle }}">{{ $comment->author_name ?? "Mehmon" }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}</strong>
       @if($donorBadge && $badgePos !== 'before') {!! $donorBadge !!}@endif
       <span class="comment-role-badge role-{{ $roleKey }}">{{ $roleLabel }}</span>
       <span class="comment-date">

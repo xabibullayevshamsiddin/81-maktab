@@ -258,15 +258,15 @@
   margin-top: 0.15rem;
 }
 
-/* Select dropdown — premium styled */
+/* Select dropdown — neon glassmorphism */
 .ap-setting-row select {
   width: 100%;
-  padding: 0.4rem 2rem 0.4rem 0.6rem;
+  padding: 0.5rem 2.2rem 0.5rem 0.7rem;
   border: 1.5px solid var(--border);
-  border-radius: 9px;
-  background: var(--bg);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bg) 0%, rgba(99,102,241,0.03) 100%);
   color: var(--text);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
   outline: none;
   cursor: pointer;
@@ -275,17 +275,54 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.ap-setting-row select:focus {
-  border-color: rgba(99,102,241,0.6);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  backdrop-filter: blur(8px);
 }
 
 .ap-setting-row select:hover {
   border-color: rgba(99,102,241,0.45);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.1);
+  transform: translateY(-2px) scale(1.01);
+  background: linear-gradient(135deg, var(--bg) 0%, rgba(99,102,241,0.06) 100%);
 }
+
+.ap-setting-row select:focus {
+  border-color: rgba(99,102,241,0.6);
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.12), 0 8px 24px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.15);
+  transform: translateY(-2px) scale(1.01);
+  background: linear-gradient(135deg, rgba(99,102,241,0.04) 0%, rgba(99,102,241,0.08) 100%);
+}
+
+.ap-setting-row select:active {
+  transform: scale(0.97) translateY(0);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.15);
+  transition-duration: 0.12s;
+}
+
+/* Neon border sweep — select o'zgarganda */
+@keyframes neonSweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes neonPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.04); }
+  60% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+@keyframes glowFade {
+  0% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4), 0 4px 20px rgba(99,102,241,0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(99,102,241,0), 0 4px 20px rgba(99,102,241,0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(99,102,241,0), 0 2px 8px rgba(99,102,241,0.05); }
+}
+.ap-setting-row select.is-changed {
+  animation: neonPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), glowFade 0.6s ease-out;
+  border-color: rgba(168,85,247,0.6);
+  box-shadow: 0 0 0 3px rgba(168,85,247,0.15), 0 4px 20px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+  background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.06) 100%);
+}
+
 
 
 /* Full-width setting row */
@@ -753,6 +790,32 @@
       @endif
     </div>
 
+    <div class="ap-setting-row {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
+      <div>
+        <div class="asr-label">
+          Shirft tanlash
+          @if(!$donorIsActive) <span class="ap-lock-tag"><i class="fa-solid fa-lock"></i> Donater</span> @endif
+        </div>
+        <div class="asr-desc">Chatda ismingiz qanday shirftda ko'rinishini tanlang</div>
+      </div>
+      @if($donorIsActive)
+        <select name="name_font_family">
+          <option value="" {{ empty($user->name_font_family)?"selected":"" }}>Standart</option>
+          <option value="orbitron" {{ ($user->name_font_family??"")=="orbitron"?"selected":"" }}> futuristic — Orbitron</option>
+          <option value="caveat" {{ ($user->name_font_family??"")=="caveat"?"selected":"" }}> qo'lyozma — Caveat</option>
+          <option value="press-start" {{ ($user->name_font_family??"")=="press-start"?"selected":"" }}> retro — Press Start 2P</option>
+          <option value="pacifico" {{ ($user->name_font_family??"")=="pacifico"?"selected":"" }}> zamonaviy — Pacifico</option>
+          <option value="righteous" {{ ($user->name_font_family??"")=="righteous"?"selected":"" }}> kuchli — Righteous</option>
+          <option value="bungee" {{ ($user->name_font_family??"")=="bungee"?"selected":"" }}> chiziqli — Bungee</option>
+          <option value="permanent-marker" {{ ($user->name_font_family??"")=="permanent-marker"?"selected":"" }}> marker — Permanent Marker</option>
+        </select>
+      @else
+        <a href="{{ route('donation.index') }}" class="ap-lock-unlock-btn" title="Donater bo'lish orqali oching">
+          <i class="fa-solid fa-crown"></i> {{ __('profile.appearance.preview_donate_btn') }}
+        </a>
+      @endif
+    </div>
+
     <div class="ap-setting-row ap-setting-row--cursor {{ !$donorIsActive ? 'ap-setting-row--locked' : '' }}">
       <div>
         <div class="asr-label">
@@ -948,5 +1011,19 @@
 
   cursorSelect.addEventListener('change', toggleAnimation);
   toggleAnimation();
+})();
+
+// Select dropdownlarga smooth animatsiya
+(function () {
+  var selects = document.querySelectorAll('.ap-setting-row select');
+  selects.forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      this.classList.remove('is-changed');
+      void this.offsetWidth;
+      this.classList.add('is-changed');
+      var self = this;
+      setTimeout(function () { self.classList.remove('is-changed'); }, 600);
+    });
+  });
 })();
 </script>

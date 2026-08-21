@@ -154,8 +154,13 @@
           @if($donorBadge && $badgePos === 'before')
             {!! $donorBadge !!}
           @endif
-          <h2 class="profile-overview-name" style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->donorIsActive ? ($user->name_font_weight ?? '700') : 'inherit' }};">
-            {{ $user->name }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}
+          @php
+            $fontFamily = $user->name_font_family ?? '';
+            $validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];
+            $fontClass = in_array($fontFamily, $validFonts) ? ' font-'.$fontFamily : '';
+          @endphp
+          <h2 class="profile-overview-name{{ $fontClass }}">
+            <span style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->donorIsActive ? ($user->name_font_weight ?? '700') : 'inherit' }};">{{ $user->name }}</span>{{ $statusEmoji ? ' '.$statusEmoji : '' }}
           </h2>
           @if($donorBadge && $badgePos !== 'before')
             {!! $donorBadge !!}

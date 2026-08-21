@@ -78,39 +78,88 @@
 
     <script>
       (function() {
-        // ── 1. Counter IntersectionObserver ──
+        // ── 1. Premium Counter Animation ──
         function initCounters() {
           var counters = document.querySelectorAll('.js-counter');
           if (!counters.length) return;
 
+          function animateCounter(el, delay) {
+            var target = parseInt(el.getAttribute('data-counter'), 10) || 0;
+            var suffix = el.getAttribute('data-suffix') || '';
+            var duration = 2200;
+            var startTime = null;
+
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px) scale(0.8)';
+            el.style.filter = 'blur(6px)';
+            el.style.transition = 'none';
+
+            setTimeout(function() {
+              el.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.5s ease';
+              el.style.opacity = '1';
+              el.style.transform = 'translateY(0) scale(1)';
+              el.style.filter = 'blur(0)';
+
+              function animateCount(timestamp) {
+                if (!startTime) startTime = timestamp;
+                var elapsed = timestamp - startTime;
+                var progress = Math.min(elapsed / duration, 1);
+
+                // Slot machine: fast random digits at start, settling to target
+                var value;
+                if (progress < 0.6) {
+                  // Rapid random flicker phase
+                  var flickerSpeed = 30 + Math.floor(progress * 60);
+                  value = Math.floor(Math.random() * target * 1.2);
+                } else if (progress < 0.85) {
+                  // Decelerating approach
+                  var ease = 1 - Math.pow(1 - (progress - 0.6) / 0.25, 3);
+                  value = Math.floor(ease * target + (1 - ease) * target * 0.85 * Math.random());
+                } else {
+                  // Final snap to target
+                  var snapEase = 1 - Math.pow(1 - (progress - 0.85) / 0.15, 4);
+                  value = Math.floor(target * 0.95 + snapEase * target * 0.05);
+                }
+
+                el.textContent = value.toLocaleString() + suffix;
+
+                if (progress < 1) {
+                  requestAnimationFrame(animateCount);
+                } else {
+                  // Land on final value with a satisfying pulse
+                  el.textContent = target.toLocaleString() + suffix;
+                  el.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.4s ease';
+                  el.style.transform = 'scale(1.15)';
+                  el.style.textShadow = '0 0 20px rgba(96, 165, 250, 0.8), 0 0 40px rgba(96, 165, 250, 0.4)';
+
+                  setTimeout(function() {
+                    el.style.transform = 'scale(1)';
+                    el.style.textShadow = 'none';
+                  }, 350);
+                }
+              }
+              requestAnimationFrame(animateCount);
+            }, delay);
+          }
+
           var observer = new IntersectionObserver(function(entries) {
             entries.forEach(function(entry) {
               if (entry.isIntersecting) {
-                var el = entry.target;
-                var target = parseInt(el.getAttribute('data-counter'), 10) || 0;
-                var suffix = el.getAttribute('data-suffix') || '';
-                var duration = 1800;
-                var startTime = null;
-
-                function animateCount(timestamp) {
-                  if (!startTime) startTime = timestamp;
-                  var progress = Math.min((timestamp - startTime) / duration, 1);
-                  var easeProgress = 1 - Math.pow(1 - progress, 3);
-                  var current = Math.floor(easeProgress * target);
-                  el.textContent = current.toLocaleString() + suffix;
-                  if (progress < 1) {
-                    requestAnimationFrame(animateCount);
-                  } else {
-                    el.textContent = target.toLocaleString() + suffix;
-                  }
-                }
-                requestAnimationFrame(animateCount);
-                observer.unobserve(el);
+                var allCounters = entry.target.querySelectorAll('.js-counter');
+                allCounters.forEach(function(c, i) {
+                  animateCounter(c, i * 250);
+                });
+                observer.unobserve(entry.target);
               }
             });
           }, { threshold: 0.2 });
 
-          counters.forEach(function(c) { observer.observe(c); });
+          var statsContainer = document.querySelector('.hero-panel-stats');
+          if (statsContainer) {
+            observer.observe(statsContainer);
+          } else {
+            counters.forEach(function(c, i) { animateCounter(c, i * 250); });
+          }
         }
 
         // ── 2. Home Hero Scroll Parallax ──

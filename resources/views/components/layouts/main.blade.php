@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Orbitron:wght@700;800;900&family=Caveat:wght@700&family=Press+Start+2P&family=Pacifico&family=Righteous&family=Bungee&family=Permanent+Marker&display=swap"
       rel="stylesheet"
     />
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>

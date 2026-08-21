@@ -285,6 +285,7 @@
     if (donorThemeClass) div.className += donorThemeClass;
 
     var nameStyle = '';
+var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(m.name_font_family)) ? ' font-' + m.name_font_family : '';
     if (m.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(m.donor_color))) {
       nameStyle += 'color:' + escAttr(m.donor_color) + ';';
     }
@@ -298,7 +299,7 @@
       + '<div class="chat-msg-avatar-wrap" data-user-id="' + m.user_id + '">' + avatarHtml + '</div>'
       + '<div class="chat-msg-body">'
       + '<div class="chat-msg-meta">'
-      + '<span class="chat-msg-name" data-user-id="' + m.user_id + '"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escHtml(m.user_name) + (m.status_emoji ? ' ' + escHtml(m.status_emoji) : '') + '</span>'
+      + '<span class="chat-msg-name' + fontClass + '"' + ' data-user-id="' + m.user_id + '"' + (nameStyle ? ' style="' + nameStyle + '"' : '') + '>' + escHtml(m.user_name) + (m.status_emoji ? ' ' + escHtml(m.status_emoji) : '') + '</span>'
       + donorBadgeHtml
       + '<span class="chat-msg-time">' + (m.date ? m.date + ' ' : '') + escHtml(m.time || '') + '</span>'
       + '</div>'

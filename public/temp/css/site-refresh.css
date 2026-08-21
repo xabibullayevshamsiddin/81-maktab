@@ -840,25 +840,68 @@ body {
   margin-bottom: 10px;
 }
 
-/* ── Hero Grid (home) ── */
+/* ── Chat Username Font Families ── */
+.chat-msg-name.font-orbitron { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 0.04em; }
+.chat-msg-name.font-caveat { font-family: 'Caveat', cursive; font-size: 16px; font-weight: 700; }
+.chat-msg-name.font-press-start { font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 0.02em; }
+.chat-msg-name.font-pacifico { font-family: 'Pacifico', cursive; font-size: 14px; }
+.chat-msg-name.font-righteous { font-family: 'Righteous', sans-serif; font-size: 13px; letter-spacing: 0.02em; }
+.chat-msg-name.font-bungee { font-family: 'Bungee', sans-serif; font-size: 12px; letter-spacing: 0.03em; }
+.chat-msg-name.font-permanent-marker { font-family: 'Permanent Marker', cursive; font-size: 14px; }
+
+/* Comment author font families */
+.comment-meta strong.font-orbitron { font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 0.04em; }
+.comment-meta strong.font-caveat { font-family: 'Caveat', cursive; font-size: 16px; font-weight: 700; }
+.comment-meta strong.font-press-start { font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 0.02em; }
+.comment-meta strong.font-pacifico { font-family: 'Pacifico', cursive; font-size: 14px; }
+.comment-meta strong.font-righteous { font-family: 'Righteous', sans-serif; font-size: 13px; letter-spacing: 0.02em; }
+.comment-meta strong.font-bungee { font-family: 'Bungee', sans-serif; font-size: 12px; letter-spacing: 0.03em; }
+.comment-meta strong.font-permanent-marker { font-family: 'Permanent Marker', cursive; font-size: 14px; }
+
+/* Profile header font families */
+.profile-overview-name.font-orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 0.04em; }
+.profile-overview-name.font-caveat { font-family: 'Caveat', cursive; font-size: 1.6em; font-weight: 700; }
+.profile-overview-name.font-press-start { font-family: 'Press Start 2P', monospace; font-size: 0.9em; letter-spacing: 0.02em; }
+.profile-overview-name.font-pacifico { font-family: 'Pacifico', cursive; font-size: 1.3em; }
+.profile-overview-name.font-righteous { font-family: 'Righteous', sans-serif; letter-spacing: 0.02em; }
+.profile-overview-name.font-bungee { font-family: 'Bungee', sans-serif; letter-spacing: 0.03em; }
+.profile-overview-name.font-permanent-marker { font-family: 'Permanent Marker', cursive; font-size: 1.2em; }
+
+/* Badge va emoji rangini tiklash — asl rangida qoldirish */
+.chat-user-preview-name .donor-badge { color: var(--db-color, #6366f1) !important; }
+.chat-user-preview-name .user-status-emoji { color: initial !important; }
+.chat-user-preview-name img { color: initial !important; }
+.chat-msg-name .donor-badge { color: var(--db-color, #6366f1) !important; }
+.chat-msg-name .user-status-emoji { color: initial !important; }
+.comment-meta strong .donor-badge { color: var(--db-color, #6366f1) !important; }
+
+/* Preview dialog font families */
+.chat-user-preview-name.font-orbitron { font-family: 'Orbitron', sans-serif; font-size: 20px !important; letter-spacing: 0.04em; }
+.chat-user-preview-name.font-caveat { font-family: 'Caveat', cursive; font-size: 28px !important; font-weight: 700; }
+.chat-user-preview-name.font-press-start { font-family: 'Press Start 2P', monospace; font-size: 14px !important; letter-spacing: 0.02em; }
+.chat-user-preview-name.font-pacifico { font-family: 'Pacifico', cursive; font-size: 24px !important; }
+.chat-user-preview-name.font-righteous { font-family: 'Righteous', sans-serif; font-size: 22px !important; letter-spacing: 0.02em; }
+.chat-user-preview-name.font-bungee { font-family: 'Bungee', sans-serif; font-size: 20px !important; letter-spacing: 0.03em; }
+.chat-user-preview-name.font-permanent-marker { font-family: 'Permanent Marker', cursive; font-size: 24px !important; }
+
+/* ── Hero Grid (home hero) ── */
 .hero-grid {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 48px;
   align-items: center;
-  gap: 24px;
-  padding-top: clamp(80px, 10vw, 120px);
-  padding-bottom: clamp(60px, 8vw, 100px);
+  width: 100%;
 }
 
 .hero-content {
-  width: 100%;
-  max-width: 100%;
+  min-width: 0;
 }
 
 .hero-side-card {
+  position: relative;
   width: 100%;
-  max-width: 360px;
-  margin: 0 auto;
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -937,18 +980,35 @@ body {
     display: none !important;
   }
 
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    align-items: center;
-    gap: 32px;
+  .card-home {
+    position: relative;
+    min-height: 100svh;
+    height: auto;
     padding-top: clamp(108px, 13vw, 136px);
     padding-bottom: clamp(88px, 12vw, 120px);
+    display: flex;
+    align-items: center;
+    align-content: center;
+    gap: 24px;
+    padding-right: 96px;
   }
 
+  .home-content,
   .hero-content {
     width: 100%;
     max-width: min(100%, 56ch);
+    align-self: center;
+  }
+
+  .hero-grid {
+    position: relative;
+    min-height: 100svh;
+    height: auto;
+    padding-top: clamp(108px, 13vw, 136px);
+    padding-bottom: clamp(88px, 12vw, 120px);
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-right: 96px;
   }
 
   .hero-title {
@@ -958,6 +1018,7 @@ body {
     gap: 6px;
   }
 
+  .home-content p,
   .hero-content p {
     max-width: 100%;
     font-size: clamp(17px, 2vw, 20px);
@@ -1105,12 +1166,14 @@ body {
     padding-inline: 12px;
   }
 
+  .card-home,
   .hero-grid {
     padding-top: 104px;
     padding-bottom: 96px;
-    grid-template-columns: 1fr 280px;
+    padding-right: 84px;
   }
 
+  .home-content,
   .hero-content {
     max-width: min(100%, 50ch);
   }
@@ -1849,16 +1912,20 @@ body {
 
 
 
+  .card-home,
   .hero-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 300px !important;
-    align-items: center !important;
-    gap: 24px !important;
+    min-height: 100svh !important;
+    height: auto !important;
+    position: relative !important;
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
     padding-top: 112px !important;
+    padding-right: 88px !important;
     padding-bottom: 96px !important;
     text-align: left !important;
   }
 
+  .home-content,
   .hero-content {
     width: min(100%, 54ch) !important;
     max-width: 54ch !important;
@@ -1919,7 +1986,8 @@ body {
     font-size: inherit !important;
   }
 
-  .home-content p {
+  .home-content p,
+  .hero-content p {
     max-width: 52ch !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
@@ -1999,11 +2067,12 @@ body {
     padding-inline: 8px !important;
   }
 
+  .card-home,
   .hero-grid {
-    grid-template-columns: 1fr 260px !important;
     padding-right: 78px !important;
   }
 
+  .home-content,
   .hero-content {
     width: min(100%, 48ch) !important;
     max-width: 48ch !important;
@@ -2049,7 +2118,8 @@ body {
     font-size: inherit !important;
   }
 
-  .home-content p {
+  .home-content p,
+  .hero-content p {
     max-width: 46ch !important;
     font-size: 15.5px !important;
   }
