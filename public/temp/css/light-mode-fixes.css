@@ -322,3 +322,175 @@
   color: #1d4ed8 !important;
 }
 
+/* === Mobile Menu Burger & Header Actions Light Mode === */
+:root:not([data-theme='dark']) .menu-toggle {
+  color: #1e293b !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+}
+
+:root:not([data-theme='dark']) .menu-toggle:hover {
+  background: rgba(148, 163, 184, 0.18) !important;
+  border-color: rgba(148, 163, 184, 0.5) !important;
+}
+
+:root:not([data-theme='dark']) .burger-bar {
+  background: #1e293b !important;
+}
+
+/* === Mobile Menu Navigation (#site-nav) Light Mode === */
+@media (max-width: 1180px) {
+  :root:not([data-theme='dark']) #site-nav {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.12), 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border-radius: 16px !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-link {
+    color: #1e293b !important;
+    background: transparent !important;
+    border: none !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-link::before {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(139, 92, 246, 0.08)) !important;
+    border: 1px solid rgba(59, 130, 246, 0.25) !important;
+    border-radius: 10px !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-link::after {
+    background: linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, transparent) !important;
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.5) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-link:hover,
+  :root:not([data-theme='dark']) #site-nav .nav-link.active {
+    color: #1d4ed8 !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-link:hover::before,
+  :root:not([data-theme='dark']) #site-nav .nav-link.active::before {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-link:hover::after,
+  :root:not([data-theme='dark']) #site-nav .nav-link.active::after {
+    width: 85% !important;
+    opacity: 1 !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .theme-toggle {
+    color: #334155 !important;
+    background: rgba(241, 245, 249, 0.85) !important;
+    border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .theme-toggle:hover {
+    background: rgba(224, 231, 255, 0.9) !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .ai-header-toggle {
+    color: #1e293b !important;
+    background: rgba(241, 245, 249, 0.85) !important;
+    border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-dropdown-menu {
+    background: rgba(248, 250, 252, 0.96) !important;
+    border: 1px solid rgba(203, 213, 225, 0.85) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-dropdown-item {
+    color: #334155 !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-dropdown-item:hover,
+  :root:not([data-theme='dark']) #site-nav .nav-dropdown-item.active {
+    background: rgba(224, 231, 255, 0.75) !important;
+    color: #1d4ed8 !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-dropdown-user-badge {
+    background: rgba(241, 245, 249, 0.95) !important;
+    border: 1px solid rgba(203, 213, 225, 0.85) !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-dd-name {
+    color: #0f172a !important;
+  }
+
+  :root:not([data-theme='dark']) #site-nav .nav-dd-role {
+    color: #2563eb !important;
+  }
+
+  /* Mobile Nav User Card & Extras */
+  :root:not([data-theme='dark']) .mobile-nav-user {
+    background: linear-gradient(135deg, rgba(241, 245, 249, 0.95), rgba(224, 231, 255, 0.6)) !important;
+    border: 1px solid rgba(148, 163, 184, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+  }
+
+  :root:not([data-theme='dark']) .mobile-nav-user-name {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+  }
+
+  :root:not([data-theme='dark']) .mobile-nav-user-role {
+    color: #2563eb !important;
+    font-weight: 700 !important;
+  }
+
+  :root:not([data-theme='dark']) .mobile-nav-note {
+    color: #64748b !important;
+  }
+
+  :root:not([data-theme='dark']) .mobile-nav-actions .btn-outline {
+    color: #1e293b !important;
+    border-color: rgba(148, 163, 184, 0.4) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  :root:not([data-theme='dark']) .mobile-nav-actions .btn-outline:hover {
+    background: rgba(224, 231, 255, 0.9) !important;
+    color: #1d4ed8 !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+  }
+}
+
+/* === Course card buttons — light mode === */
+:root:not([data-theme='dark']) .course-card-toolbar .btn-outline {
+  color: #1e40af !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+:root:not([data-theme='dark']) .course-card-toolbar .btn-outline:hover {
+  color: #1e40af !important;
+  background: rgba(219, 234, 254, 0.9) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+:root:not([data-theme='dark']) .course-card-manage-row .btn-outline {
+  color: #1e40af !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+:root:not([data-theme='dark']) .course-card-manage-row .btn-outline:hover {
+  color: #1e40af !important;
+  background: rgba(219, 234, 254, 0.9) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+

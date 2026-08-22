@@ -1464,14 +1464,14 @@ a.bookmark-btn--guest:hover {
 .teachers .btn-outline,
 .teachers .btn1 {
   border-color: rgba(255, 255, 255, 0.5);
-  color: #fff;
+  color: #fff !important;
 }
 
 .teachers .btn-outline:hover,
 .teachers .btn1:hover {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.7);
-  color: #fff;
+  color: #fff !important;
 }
 
 /* ── Home Teacher Section: Eyebrow ── */
@@ -10347,6 +10347,94 @@ button.comment-avatar.comment-avatar--btn:focus-visible {
   z-index: 10;
 }
 
+/* Ustozlar kartasidagi ulashish tugmasi — home sahifadagi ustozlar
+   sektsiyasidagi btn-outline hover bilan bir xil effekt */
+.teacher-card .teacher-actions .btn-outline,
+.teacher-card .teacher-actions .share-btn {
+  border-color: rgba(21, 101, 192, 0.3);
+  color: var(--primary, #1565c0);
+  background: transparent;
+}
+
+.teacher-card .teacher-actions .btn-outline:hover,
+.teacher-card .teacher-actions .share-btn:hover {
+  background: rgba(21, 101, 192, 0.12);
+  border-color: rgba(21, 101, 192, 0.5);
+  color: var(--primary, #1565c0);
+}
+
+:root[data-theme='dark'] .teacher-card .teacher-actions .btn-outline,
+:root[data-theme='dark'] .teacher-card .teacher-actions .share-btn {
+  border-color: rgba(125, 180, 255, 0.35);
+  color: #e6eefb;
+  background: rgba(125, 180, 255, 0.06);
+}
+
+:root[data-theme='dark'] .teacher-card .teacher-actions .btn-outline:hover,
+:root[data-theme='dark'] .teacher-card .teacher-actions .share-btn:hover {
+  background: rgba(125, 180, 255, 0.14);
+  border-color: rgba(125, 180, 255, 0.6);
+  color: #e6eefb;
+}
+
+/* Ustozlar show sahifasidagi ulashish tugmasi */
+.teacher-detail-actions .btn-outline,
+.teacher-detail-actions .share-btn {
+  border-color: rgba(21, 101, 192, 0.3);
+  color: var(--primary, #1565c0);
+  background: transparent;
+}
+
+.teacher-detail-actions .btn-outline:hover,
+.teacher-detail-actions .share-btn:hover {
+  background: rgba(21, 101, 192, 0.12);
+  border-color: rgba(21, 101, 192, 0.5);
+  color: var(--primary, #1565c0);
+}
+
+:root[data-theme='dark'] .teacher-detail-actions .btn-outline,
+:root[data-theme='dark'] .teacher-detail-actions .share-btn {
+  border-color: rgba(125, 180, 255, 0.35);
+  color: #e6eefb;
+  background: rgba(125, 180, 255, 0.06);
+}
+
+:root[data-theme='dark'] .teacher-detail-actions .btn-outline:hover,
+:root[data-theme='dark'] .teacher-detail-actions .share-btn:hover {
+  background: rgba(125, 180, 255, 0.14);
+  border-color: rgba(125, 180, 255, 0.6);
+  color: #e6eefb;
+}
+
+/* Yangiliklar show sahifasidagi ulashish tugmasi */
+.news-card .icon-link-actions .btn-outline,
+.news-card .icon-link-actions .share-btn {
+  border-color: rgba(21, 101, 192, 0.3);
+  color: var(--primary, #1565c0);
+  background: transparent;
+}
+
+.news-card .icon-link-actions .btn-outline:hover,
+.news-card .icon-link-actions .share-btn:hover {
+  background: rgba(21, 101, 192, 0.12);
+  border-color: rgba(21, 101, 192, 0.5);
+  color: var(--primary, #1565c0);
+}
+
+:root[data-theme='dark'] .news-card .icon-link-actions .btn-outline,
+:root[data-theme='dark'] .news-card .icon-link-actions .share-btn {
+  border-color: rgba(125, 180, 255, 0.35);
+  color: #e6eefb;
+  background: rgba(125, 180, 255, 0.06);
+}
+
+:root[data-theme='dark'] .news-card .icon-link-actions .btn-outline:hover,
+:root[data-theme='dark'] .news-card .icon-link-actions .share-btn:hover {
+  background: rgba(125, 180, 255, 0.14);
+  border-color: rgba(125, 180, 255, 0.6);
+  color: #e6eefb;
+}
+
 .teacher-top {
   display: flex;
   align-items: center;
@@ -14691,13 +14779,16 @@ body.exam-modal-open-lock {
 .site-rules-main-btn {
   flex-shrink: 0;
   gap: 8px;
-  border-color: rgba(21, 101, 192, 0.2);
+  border-color: rgba(21, 101, 192, 0.25);
   background: rgba(255, 255, 255, 0.75);
+  color: var(--primary, #1565c0);
   box-shadow: 0 10px 24px rgba(13, 63, 120, 0.08);
 }
 
 .site-rules-main-btn:hover {
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(21, 101, 192, 0.08);
+  border-color: rgba(21, 101, 192, 0.4);
+  color: var(--primary, #1565c0);
 }
 
 .site-rules-main-btn[data-area='contact'] {
@@ -14820,7 +14911,9 @@ body.exam-modal-open-lock {
 }
 
 :root[data-theme='dark'] .site-rules-main-btn:hover {
-  background: rgba(18, 35, 58, 0.98);
+  background: rgba(125, 180, 255, 0.12);
+  border-color: rgba(125, 180, 255, 0.4);
+  color: #bcd7ff;
 }
 
 :root[data-theme='dark'] .site-rules-main-btn[data-area='contact'] {

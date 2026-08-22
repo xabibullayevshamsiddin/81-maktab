@@ -174,7 +174,8 @@
 
 
 
-          // Scroll Parallax Depth
+          // Scroll Parallax Depth (desktop only — mobile'da ishlamaydi)
+          if (window.matchMedia('(max-width: 768px)').matches) return;
           window.addEventListener('scroll', function() {
             var scrollY = window.pageYOffset || document.documentElement.scrollTop;
             if (scrollY < heroSection.offsetHeight + 100) {

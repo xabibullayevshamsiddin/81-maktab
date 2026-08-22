@@ -104,32 +104,129 @@
    ==================================================================== */
 @media (max-width: 991.98px) {
   .hero {
-    min-height: 100svh;
+    min-height: 100svh !important;
+    min-height: 100dvh !important;
+    display: grid !important;
+    place-content: center !important;
+    padding: 80px 0 40px !important;
   }
 
-  .card-home {
-    padding-top: 110px;
-    padding-bottom: 50px;
+  .card-home,
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .hero-side-card {
+    display: none !important;
+  }
+
+  .hero-glass-panel {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .hero-panel-head {
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .hero-panel-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+
+  .hero-panel-title {
+    font-size: 15px;
+  }
+
+  .hero-panel-sub {
+    font-size: 12px;
+  }
+
+  .hero-panel-stats {
+    gap: 10px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .hero-mini-stat .stat-val {
+    font-size: 18px;
+  }
+
+  .hero-mini-stat .stat-lbl {
+    font-size: 11px;
+  }
+
+  .hero-social-strip {
     flex-direction: column;
+    gap: 8px;
     align-items: flex-start;
-    justify-content: center;
-    gap: 18px;
-    height: auto;
-    min-height: 100svh;
   }
 
-  .home-content {
+  .hero-social-links a {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .hero-actions {
+    gap: 12px;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    padding: 12px 22px;
+    font-size: 14px;
+  }
+
+  .home-content,
+  .hero-content {
     width: 100%;
   }
 
-  .home-content p {
-    font-size: clamp(15px, 2.2vw, 18px);
+  .hero-description,
+  .home-content p,
+  .hero-content p {
+    font-size: clamp(14px, 3.2vw, 17px);
     max-width: 100%;
+    line-height: 1.6;
+  }
+
+  .hero-badge {
+    font-size: 12px;
+    padding: 6px 14px;
+    margin-bottom: 16px;
   }
 
   .hero-title {
-    font-size: clamp(30px, 7vw, 52px);
-    margin-bottom: 16px;
+    font-size: clamp(28px, 8vw, 42px);
+    margin-bottom: 14px;
+    display: block !important;
+  }
+
+  .hero-title.hero-title-3d {
+    display: block !important;
+    gap: 8px;
+    padding: 0 0 0 14px;
+    border-left: 3px solid rgba(96, 165, 250, 0.5);
+  }
+
+  .hero-title.hero-title-3d .hero-title-top {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+
+  .hero-title.hero-title-3d .hero-title-main {
+    display: block;
+    font-size: clamp(2rem, 8vw, 2.6rem);
   }
 
   .home-btn {
@@ -169,20 +266,54 @@
 }
 
 @media (max-width: 580px) {
-  .card-home {
-    padding-top: 100px;
-    padding-bottom: 36px;
+  .hero {
+    padding: 60px 0 30px !important;
+  }
+
+  .card-home,
+  .hero-grid {
+    gap: 14px;
   }
 
   .hero-title {
-    font-size: clamp(28px, 8.5vw, 40px);
-    line-height: 1.18;
-    margin-bottom: 14px;
+    font-size: clamp(22px, 9vw, 32px);
+    line-height: 1.15;
+    margin-bottom: 10px;
   }
 
-  .home-content p {
-    font-size: 15px;
+  .hero-title.hero-title-3d {
+    padding: 0 0 0 12px;
+  }
+
+  .hero-title.hero-title-3d .hero-title-main {
+    font-size: 1.8rem;
+  }
+
+  .hero-description,
+  .home-content p,
+  .hero-content p {
+    font-size: 13.5px;
     line-height: 1.6;
+  }
+
+  .hero-badge {
+    font-size: 10.5px;
+    padding: 5px 11px;
+    margin-bottom: 12px;
+  }
+
+  .hero-actions {
+    gap: 8px;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    padding: 11px 18px;
+    font-size: 13px;
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -300,17 +431,21 @@
   }
 
   .icon-link-actions {
-    display: flex;
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    width: 100%;
+    margin-left: auto;
+    width: auto;
   }
 
   .icon-link-actions .btn {
-    flex: 1;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
-    font-size: 13px;
-    padding: 10px 12px;
+    font-size: 12.5px;
+    padding: 7px 12px;
+    min-height: 34px;
+    border-radius: 999px;
   }
 }
 
@@ -635,11 +770,78 @@
 
   .courses-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
   }
 
   .course-card {
     border-radius: 16px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .course-card-media {
+    height: 160px;
+  }
+
+  .course-body {
+    padding: 14px 16px;
+  }
+
+  .course-body h3 {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .course-card-summary {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .course-card-toolbar {
+    gap: 6px;
+  }
+
+  .course-info-trigger {
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 34px;
+    flex: 1 1 100px;
+  }
+
+  .course-info-trigger i {
+    display: none;
+  }
+
+  .course-card-toolbar .share-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 34px;
+    flex: 1 1 80px;
+  }
+
+  .course-card-toolbar .share-btn i {
+    display: none;
+  }
+
+  .bookmark-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 34px;
+  }
+
+  .bookmark-btn i {
+    display: none;
+  }
+
+  .course-card-manage-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .course-card-manage-row .btn {
+    font-size: 12px;
+    padding: 7px 14px;
   }
 
   .filter-bar {
@@ -802,29 +1004,92 @@
     font-size: 13px;
   }
 
-  /* News card dagi tugmalarni bir xil qilish */
-  .news-card .icon-link-actions .btn,
+  /* News card dagi tugmalar */
   .news-card .btn-prime {
     border-radius: 999px;
-    font-weight: 600;
-    font-size: 13px;
+    font-weight: 700;
+    font-size: 13.5px;
     padding: 10px 16px;
     min-height: 40px;
     width: 100%;
-  }
-
-  /* Batafsil tugmasi — outline emas, filled */
-  .news-card .btn-prime {
     background: linear-gradient(135deg, var(--primary-2), var(--primary));
     color: #fff;
     border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* Ulashish tugmasi — ham filled */
+  /* Ulashish tugmasi — ixcham outline chip */
+  .news-card .icon-link-actions .share-btn,
   .news-card .icon-link-actions .btn-outline {
-    background: linear-gradient(135deg, var(--primary-2), var(--primary));
-    color: #fff;
-    border: none;
+    width: auto !important;
+    min-height: 34px !important;
+    padding: 6px 14px !important;
+    font-size: 12.5px !important;
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  /* Light mode uchun Ulashish tugmasi */
+  :root:not([data-theme='dark']) .news-card .icon-link-actions .share-btn,
+  :root:not([data-theme='dark']) .news-card .icon-link-actions .btn-outline {
+    background: rgba(37, 99, 235, 0.08) !important;
+    color: #1d4ed8 !important;
+    border: 1px solid rgba(37, 99, 235, 0.28) !important;
+  }
+
+  :root:not([data-theme='dark']) .news-card .icon-link-actions .share-btn:hover,
+  :root:not([data-theme='dark']) .news-card .icon-link-actions .btn-outline:hover {
+    background: rgba(37, 99, 235, 0.16) !important;
+    border-color: rgba(37, 99, 235, 0.45) !important;
+  }
+
+  /* Dark mode uchun Ulashish tugmasi */
+  :root[data-theme='dark'] .news-card .icon-link-actions .share-btn,
+  :root[data-theme='dark'] .news-card .icon-link-actions .btn-outline {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* Ustozlar kartasidagi Ulashish va Ustoz haqida tugmalari */
+  .teacher-img-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+  }
+
+  .teacher-img-actions .btn1,
+  .teacher-img-actions .share-btn {
+    flex: 1 1 0 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    min-height: 40px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .teacher-img-actions .btn1 {
+    background: #fff !important;
+    color: var(--primary, #1565c0) !important;
+    border: none !important;
+  }
+
+  .teacher-img-actions .share-btn {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
   }
 }
 
@@ -1087,6 +1352,26 @@
 @media (max-width: 420px) {
   .container {
     padding-inline: 12px;
+  }
+
+  .hero-grid {
+    gap: 12px;
+  }
+
+  .hero-title.hero-title-3d .hero-title-main {
+    font-size: 1.6rem;
+  }
+
+  .hero-description,
+  .home-content p,
+  .hero-content p {
+    font-size: 13px;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    padding: 10px 16px;
+    font-size: 12.5px;
   }
 
   .glass-section {
