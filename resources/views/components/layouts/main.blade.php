@@ -416,9 +416,6 @@
                   </details>
                 </li>
               @endauth
-              @guest
-                <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
-              @endguest
             </ul>
             <div class="mobile-nav-extras">	              @guest
 	                <div class="mobile-nav-actions">
@@ -502,8 +499,80 @@
           </div>
 	        </div>
 	      </div>
+        @guest
+          <div class="guest-register-banner">
+            <div class="container">
+              <div class="guest-register-banner-inner">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Saytdan to'liq foydalanish uchun ro'yxatdan o'ting</span>
+                <a href="{{ route('register') }}" class="guest-register-banner-btn">Ro'yxatdan o'tish</a>
+              </div>
+            </div>
+          </div>
+        @endguest
 	    </header>
-	    <script>
+      <style>
+        .guest-register-banner {
+          background: linear-gradient(135deg, #dc2626, #b91c1c);
+          color: #fff;
+          padding: 10px 0;
+          text-align: center;
+          font-size: 13px;
+          font-weight: 600;
+          position: fixed;
+          top: 100px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: calc(100% - 40px);
+          max-width: 1150px;
+          z-index: 1001;
+          border-radius: 0 0 14px 14px;
+          box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+        }
+        .guest-register-banner-inner {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .guest-register-banner i {
+          font-size: 16px;
+          animation: guestBannerPulse 2s ease-in-out infinite;
+        }
+        @keyframes guestBannerPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .guest-register-banner .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 1rem;
+        }
+        .guest-register-banner-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 16px;
+          background: #fff;
+          color: #dc2626;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .guest-register-banner-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          background: #fef2f2;
+        }
+        :root[data-theme='dark'] .guest-register-banner {
+          background: linear-gradient(135deg, #991b1b, #7f1d1d);
+        }
+      </style>
+    <script>
 	      (function() {
 	        var nav = document.getElementById('navbar');
 	        if (!nav) return;

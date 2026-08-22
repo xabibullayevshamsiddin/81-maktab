@@ -9,7 +9,10 @@
           overflow: hidden;
           background: var(--surface, #fff);
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
-          height: 46px;
+          min-height: 52px;
+          height: auto;
+          width: 100%;
+          box-sizing: border-box;
         }
         .phone-input-wrap:focus-within {
           border-color: var(--primary, #3b82f6);
@@ -28,25 +31,36 @@
           user-select: none;
           white-space: nowrap;
           letter-spacing: 0.3px;
+          min-height: 52px;
+          box-sizing: border-box;
         }
         :root[data-theme='dark'] .phone-prefix {
           background: rgba(99, 102, 241, 0.15);
           color: #a5b4fc;
         }
-        .phone-input {
+        .phone-input-wrap .phone-input {
           flex: 1;
           border: none !important;
-          outline: none;
-          background: transparent;
-          padding: 0 14px;
-          font-size: 15px;
+          outline: none !important;
+          background: transparent !important;
+          border-radius: 0 !important;
+          padding: 14px !important;
+          box-shadow: none !important;
           color: var(--text, #1e293b);
           min-width: 0;
           height: 100%;
+          font-size: 15px;
+          min-height: 52px;
+          box-sizing: border-box;
         }
-        .phone-input::placeholder {
+        .phone-input-wrap .phone-input::placeholder {
           color: var(--muted, #94a3b8);
           opacity: 0.6;
+        }
+        .phone-input-wrap .phone-prefix {
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
         }
         :root[data-theme='dark'] .phone-input-wrap {
           background: rgba(30, 41, 59, 0.6);
