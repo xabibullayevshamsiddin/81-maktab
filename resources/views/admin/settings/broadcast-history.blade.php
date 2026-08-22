@@ -17,6 +17,40 @@
         </a>
       </div>
 
+      @if(isset($activeAnnouncement) && $activeAnnouncement)
+        <div style="background:var(--badge-bg);border:1px solid var(--primary);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:rgba(59,130,246,0.15);color:#3b82f6;">
+                  🌐 Sayt banneri FAOL
+                </span>
+                @if($activeAnnouncement->style === 'warning')
+                  <span style="font-size:12px;color:#f59e0b;font-weight:500;">🟡 Ogohlantirish</span>
+                @elseif($activeAnnouncement->style === 'urgent')
+                  <span style="font-size:12px;color:#ef4444;font-weight:500;">🔴 Shoshilinch</span>
+                @else
+                  <span style="font-size:12px;color:#3b82f6;font-weight:500;">🔵 Oddiy</span>
+                @endif
+              </div>
+              <p style="font-size:14px;margin:0 0 6px 0;">{{ \Illuminate\Support\Str::limit($activeAnnouncement->message, 120) }}</p>
+              <p style="font-size:12px;color:var(--muted);margin:0;">
+                Yaratilgan: {{ $activeAnnouncement->created_at->diffForHumans() }}
+                @if($activeAnnouncement->link_url) | Havola: <a href="{{ $activeAnnouncement->link_url }}" target="_blank" style="color:var(--primary);">{{ $activeAnnouncement->link_label ?: $activeAnnouncement->link_url }}</a> @endif
+              </p>
+            </div>
+            <form action="{{ route('admin.settings.announcement.deactivate') }}" method="POST"
+                  onsubmit="return confirm('Sayt e\'lonini o\'chirishni xohlaysizmi?');">
+              @csrf
+              <button type="submit" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:#ef4444;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                <i class="mdi mdi-close-circle" style="font-size:15px;"></i>
+                Saytdan olib tashlash
+              </button>
+            </form>
+          </div>
+        </div>
+      @endif
+
       @if($broadcasts->isEmpty())
         <div style="text-align:center;padding:40px 0;color:var(--muted);">
           <i class="mdi mdi-send-clock-outline" style="font-size:48px;display:block;margin-bottom:12px;opacity:0.4;"></i>

@@ -109,14 +109,17 @@ class SendTelegramBroadcast implements ShouldQueue
     {
         $query = User::whereNotNull('telegram_chat_id')
             ->where('telegram_chat_id', '>', 0)
-            ->select('id', 'name', 'telegram_chat_id', 'role', 'donation_rank');
+            ->with('roleRelation')
+            ->select('id', 'name', 'telegram_chat_id', 'role_id', 'donation_rank');
 
-        return match ($this->audience) {
-            'teachers' => $query->where('role', 'teacher')->get(),
-            'donors' => $query->whereNotNull('donation_rank')->get(),
-            'students' => $query->where('role', 'student')->get(),
-            default => $query->get(), // 'all' — hamma
+        $users = match ($this->audience) {
+            'teachers' => $query->get()->filter(fn($u) => $u->isTeacher()),
+            'donors' => $query->get()->filter(fn($u) => $u->donation_rank !== null),
+            'students' => $query->get()->filter(fn($u) => $u->hasRole('student')),
+            default => $query->get(),
         };
+
+        return $users->values();
     }
 
     /**

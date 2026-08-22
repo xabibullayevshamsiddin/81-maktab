@@ -148,18 +148,38 @@
       </div>
 
       <form action="{{ route('admin.settings.broadcast-telegram') }}" method="POST"
-            onsubmit="return confirm('Tanlangan auditoriyaga xabar yuborilsinmi?');">
+            onsubmit="return confirm('Elon yuborilsinmi?');">
         @csrf
 
-        <div class="input-style-1 mb-20">
-          <label>Auditoriya</label>
-          <select name="audience" class="form-control" style="padding:10px 12px;border-radius:8px;width:100%;">
-            <option value="all">🌐 Hammaga</option>
-            <option value="teachers">👨‍🏫 Faqat o'qituvchilarga</option>
-            <option value="donors">⭐ Faqat donorlarga</option>
-            <option value="students">🎓 Faqat o'quvchilarga</option>
-          </select>
-          @error('audience') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
+        <div style="background:var(--badge-bg);border-radius:8px;padding:14px 16px;margin-bottom:20px;">
+          <label style="font-size:13px;font-weight:600;margin-bottom:10px;display:block;">📤 Qayerga yuborish:</label>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="send_telegram" value="1" id="send_telegram_cb"
+                     {{ old('send_telegram', '1') ? 'checked' : '' }}
+                     style="width:18px;height:18px;accent-color:#0088cc;" />
+              <span style="font-size:14px;">📱 Telegramga yuborish</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="also_site" value="1" id="also_site_checkbox"
+                     {{ old('also_site') ? 'checked' : '' }}
+                     style="width:18px;height:18px;accent-color:var(--primary);" />
+              <span style="font-size:14px;">🌐 Saytda ko'rsatish</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="telegram-options" style="margin-bottom:20px;">
+          <div class="input-style-1 mb-20">
+            <label>Auditoriya (Telegram uchun)</label>
+            <select name="audience" class="form-control" style="padding:10px 12px;border-radius:8px;width:100%;">
+              <option value="all">🌐 Hammaga</option>
+              <option value="teachers">👨‍🏫 Faqat o'qituvchilarga</option>
+              <option value="donors">⭐ Faqat donorlarga</option>
+              <option value="students">🎓 Faqat o'quvchilarga</option>
+            </select>
+            @error('audience') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
+          </div>
         </div>
 
         <div class="input-style-1 mb-20">
@@ -171,13 +191,54 @@
             required
             class="form-control"
             style="padding:10px 12px;border-radius:8px;width:100%;resize:vertical;"
-            placeholder="Elon matnini yozing... (HTML formatida: <b>qalin</b>, <i>egri</i>)"
+            placeholder="Elon matnini yozing..."
           >{{ old('message') }}</textarea>
-          <p class="text-sm" style="color: var(--muted); margin-top:4px; font-size:12px;">
-            HTML formatida yozish mumkin: &lt;b&gt;qalin&lt;/b&gt;, &lt;i&gt;egri&lt;/i&gt;, &lt;a href="..."&gt;havola&lt;/a&gt;
-          </p>
           @error('message') <p class="text-danger" style="font-size:13px;">{{ $message }}</p> @enderror
         </div>
+n        <div id="site-style-options" style="display:none;margin-bottom:20px;">
+          <hr style="margin:0 0 16px 0;border-color:#e2e8f0;">
+          <label style="font-size:13px;font-weight:600;margin-bottom:10px;display:block;">🎨 Banner uslubi (sayt uchun):</label>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="site_style" value="info" {{ old('site_style', 'info') === 'info' ? 'checked' : '' }} />
+              <span style="font-size:13px;">🔵 Oddiy</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="site_style" value="warning" {{ old('site_style') === 'warning' ? 'checked' : '' }} />
+              <span style="font-size:13px;">🟡 Ogohlantirish</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="site_style" value="urgent" {{ old('site_style') === 'urgent' ? 'checked' : '' }} />
+              <span style="font-size:13px;">🔴 Shoshilinch</span>
+            </label>
+          </div>
+          <div class="input-style-1 mb-12">
+            <label style="font-size:12px;">Havola URL (ixtiyoriy)</label>
+            <input type="url" name="link_url" value="{{ old('link_url') }}" placeholder="https://..."
+                   style="padding:8px 12px;border-radius:8px;width:100%;" />
+          </div>
+          <div class="input-style-1 mb-0">
+            <label style="font-size:12px;">Havola matni (ixtiyoriy)</label>
+            <input type="text" name="link_label" value="{{ old('link_label') }}" placeholder="Batafsil"
+                   style="padding:8px 12px;border-radius:8px;width:100%;" />
+          </div>
+        </div>
+
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var tgCb = document.getElementById('send_telegram_cb');
+            var siteCb = document.getElementById('also_site_checkbox');
+            var tgOpts = document.getElementById('telegram-options');
+            var siteOpts = document.getElementById('site-style-options');
+            function toggleAll() {
+              tgOpts.style.display = tgCb && tgCb.checked ? 'block' : 'none';
+              siteOpts.style.display = siteCb && siteCb.checked ? 'block' : 'none';
+            }
+            if (tgCb) tgCb.addEventListener('change', toggleAll);
+            if (siteCb) siteCb.addEventListener('change', toggleAll);
+            toggleAll();
+          });
+        </script>
 
         <button type="submit" class="main-btn primary-btn btn-hover" style="background: var(--primary); border-color: var(--primary); width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
           <i class="mdi mdi-send" style="font-size:16px;"></i>

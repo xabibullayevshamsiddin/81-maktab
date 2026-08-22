@@ -239,10 +239,11 @@
         'en' => '<img src="https://flagcdn.com/24x18/gb.png" srcset="https://flagcdn.com/48x36/gb.png 2x" width="24" height="18" alt="EN" style="display:inline-block;vertical-align:middle;border-radius:2px;object-fit:cover;">',
       ];
       $localeFlagDefault = '<img src="https://flagcdn.com/24x18/un.png" width="24" height="18" alt="" style="display:inline-block;vertical-align:middle;border-radius:2px;">';
-	      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
-	      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
-	      $isExamSessionRoute = request()->routeIs('exam.session');
-	      $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
+      $gradeSelectionLocked = $authUser && $authUser->needsGradeSelection();
+      $gradeSelectionGroups = $gradeSelectionLocked ? school_grade_grouped_options() : [];
+      $isExamSessionRoute = request()->routeIs('exam.session');
+      $globalChatEnabled = \App\Models\SiteSetting::get('global_chat_enabled', '1') === '1';
+      $activeAnnouncement = \App\Models\SiteAnnouncement::getActive();
 	      $accountMenuActive = $authUser && (
 	        request()->routeIs('exam.*')
 	        || request()->routeIs('teacher.courses.*')
@@ -499,79 +500,175 @@
           </div>
 	        </div>
 	      </div>
-        @guest
-          <div class="guest-register-banner">
-            <div class="container">
-              <div class="guest-register-banner-inner">
-                <i class="fa-solid fa-circle-info"></i>
-                <span>Saytdan to'liq foydalanish uchun ro'yxatdan o'ting</span>
-                <a href="{{ route('register') }}" class="guest-register-banner-btn">Ro'yxatdan o'tish</a>
-              </div>
-            </div>
-          </div>
-        @endguest
-	    </header>
+    </header>
+    @php
+        $bannerToShow = $activeAnnouncement ? 'announcement' : (Auth::guest() ? 'register' : null);
+    @endphp
+    @if($bannerToShow)
+      <div class="top-banner top-banner--{{ $activeAnnouncement->style ?? 'info' }}" id="top-banner"
+           data-banner-id="{{ $activeAnnouncement->id ?? 'guest-register' }}">
+        <div class="top-banner-inner container" role="status" aria-live="polite">
+          <i class="fa-solid {{ $bannerToShow === 'announcement' ? 'fa-bullhorn' : 'fa-circle-info' }}"></i>
+          <span>{{ $activeAnnouncement->message ?? "Saytdan to'liq foydalanish uchun ro'yxatdan o'ting" }}</span>
+          @if($activeAnnouncement?->link_url)
+            <a href="{{ $activeAnnouncement->link_url }}" class="top-banner-btn">{{ $activeAnnouncement->link_label ?? "Batafsil" }}</a>
+          @elseif($bannerToShow === 'register')
+            <a href="{{ route('register') }}" class="top-banner-btn">Ro'yxatdan o'tish</a>
+          @endif
+          <button type="button" class="top-banner-close" id="top-banner-close" aria-label="Yopish">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+    @endif
       <style>
-        .guest-register-banner {
-          background: linear-gradient(135deg, #dc2626, #b91c1c);
-          color: #fff;
-          padding: 10px 0;
-          text-align: center;
-          font-size: 13px;
-          font-weight: 600;
+        .top-banner {
           position: fixed;
           top: 100px;
           left: 50%;
-          transform: translateX(-50%);
-          width: calc(100% - 40px);
-          max-width: 1150px;
-          z-index: 1001;
-          border-radius: 0 0 14px 14px;
-          box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+          transform: translateX(-50%) translateY(0);
+          width: calc(100% - 32px);
+          max-width: 1180px;
+          z-index: 999999;
+          border-radius: 18px;
+          padding: 10px 18px;
+          display: flex;
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+          opacity: 1;
         }
-        .guest-register-banner-inner {
+        .top-banner--info {
+          background: rgba(15, 23, 42, 0.85);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+        .top-banner--warning {
+          background: rgba(15, 23, 42, 0.85);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+        .top-banner--urgent {
+          background: rgba(15, 23, 42, 0.85);
+          border: 1px solid rgba(248, 113, 113, 0.45);
+        }
+        :root:not([data-theme='dark']) .top-banner {
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 8px 25px rgba(15, 23, 42, 0.1);
+        }
+        .top-banner-inner {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
           flex-wrap: wrap;
+          width: 100%;
+          color: var(--text, #1e293b);
         }
-        .guest-register-banner i {
-          font-size: 16px;
-          animation: guestBannerPulse 2s ease-in-out infinite;
-        }
-        @keyframes guestBannerPulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        .guest-register-banner .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 1rem;
-        }
-        .guest-register-banner-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
+        :root[data-theme='dark'] .top-banner-inner { color: #f1f5f9; }
+        .top-banner--info i:first-child { color: #38bdf8; }
+        .top-banner--warning i:first-child { color: #f59e0b; }
+        .top-banner--urgent i:first-child { color: #f87171; }
+        .top-banner-btn {
           padding: 6px 16px;
-          background: #fff;
-          color: #dc2626;
           border-radius: 999px;
+          background: var(--accent, #14b8a6);
+          color: #fff;
           font-size: 13px;
           font-weight: 700;
           text-decoration: none;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          transition: transform 0.2s ease;
         }
-        .guest-register-banner-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-          background: #fef2f2;
+        .top-banner-btn:hover { transform: translateY(-1px); }
+        .top-banner-close {
+          border: none;
+          background: rgba(148, 163, 184, 0.15);
+          color: inherit;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          margin-left: 4px;
+          transition: background 0.2s ease;
         }
-        :root[data-theme='dark'] .guest-register-banner {
-          background: linear-gradient(135deg, #991b1b, #7f1d1d);
+        .top-banner-close:hover { background: rgba(148, 163, 184, 0.3); }
+        .top-banner.is-hiding {
+          transform: translateX(-50%) translateY(-140%);
+          opacity: 0;
+        }
+        .top-banner.is-entering {
+          transform: translateX(-50%) translateY(-140%);
+          opacity: 0;
+          transition: none;
+        }
+        @media (max-width: 576px) {
+          .top-banner {
+            top: 75px !important;
+            left: 8px !important;
+            right: 8px !important;
+            transform: none !important;
+            width: auto !important;
+            max-width: none !important;
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+            font-size: 13px !important;
+            z-index: 9999999 !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
+          }
+          .top-banner.is-hiding {
+            transform: none !important;
+            opacity: 0 !important;
+            transition: opacity 0.3s ease !important;
+          }
+          .top-banner.is-entering {
+            transform: none !important;
+            opacity: 0 !important;
+          }
+          .top-banner-inner {
+            gap: 8px !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+          }
+          .top-banner-inner span {
+            font-size: 13px !important;
+            flex: 1 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .top-banner-btn {
+            padding: 6px 14px !important;
+            font-size: 12px !important;
+            flex-shrink: 0 !important;
+          }
+          .top-banner-close {
+            width: 28px !important;
+            height: 28px !important;
+            flex-shrink: 0 !important;
+          }
         }
       </style>
+    <script>
+      (function () {
+        var banner = document.getElementById('top-banner');
+        if (!banner) return;
+        banner.classList.add('is-entering');
+        requestAnimationFrame(function () {
+          setTimeout(function () {
+            banner.classList.remove('is-entering');
+          }, 400);
+        });
+        var closeBtn = document.getElementById('top-banner-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function () {
+            banner.classList.add('is-hiding');
+            setTimeout(function () { banner.remove(); }, 450);
+          });
+        }
+      })();
+    </script>
     <script>
 	      (function() {
 	        var nav = document.getElementById('navbar');

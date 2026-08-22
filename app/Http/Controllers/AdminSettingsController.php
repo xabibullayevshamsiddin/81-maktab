@@ -144,59 +144,87 @@ class AdminSettingsController extends Controller
      */
     public function broadcastTelegram(Request $request)
     {
+        $sendTelegram = $request->boolean('send_telegram');
+        $alsoSite     = $request->boolean('also_site');
+
+        // Kamida bittasi tanlangan bo'lishi kerak
+        if (! $sendTelegram && ! $alsoSite) {
+            return back()->with('error', 'Kamida bitta kanal tanlang: Telegram yoki Sayt.');
+        }
+
         $validated = $request->validate([
-            'message'  => ['required', 'string', 'min:1', 'max:4000'],
-            'audience' => ['required', 'string', 'in:all,teachers,donors,students'],
+            'message'    => ['required', 'string', 'min:1', 'max:4000'],
+            'audience'   => [$sendTelegram ? 'required' : 'nullable', 'string', 'in:all,teachers,donors,students'],
+            'site_style' => ['nullable', 'string', 'in:info,warning,urgent'],
+            'link_url'   => ['nullable', 'url', 'max:500'],
+            'link_label' => ['nullable', 'string', 'max:100'],
         ], [
             'message.required'  => 'Xabar matni kiritilishi shart.',
             'message.min'       => 'Xabar matni kamida 1 ta belgi bo\'lishi kerak.',
             'message.max'       => 'Xabar matni 4000 ta belgidan oshmasligi kerak.',
-            'audience.required' => 'Auditoriyani tanlash shart.',
+            'audience.required' => 'Telegram uchun auditoriyani tanlash shart.',
             'audience.in'       => 'Noto\'g\'ri auditoriya tanlandi.',
         ]);
 
-        $message  = $validated['message'];
-        $audience = $validated['audience'];
+        $message = $validated['message'];
+        $messages = [];
 
-        // Tanlangan auditoriyaga mos Telegram foydalanuvchilar sonini hisoblash
-        $query = User::whereNotNull('telegram_chat_id')
-            ->where('telegram_chat_id', '>', 0);
+        // === TELEGRAM YUBORISH ===
+        if ($sendTelegram) {
+            $audience = $validated['audience'];
 
-        $query = match ($audience) {
-            'teachers' => $query->where('role', 'teacher'),
-            'donors'   => $query->whereNotNull('donation_rank'),
-            'students' => $query->where('role', 'student'),
-            default    => $query,
-        };
+            $query = User::whereNotNull('telegram_chat_id')
+                ->where('telegram_chat_id', '>', 0);
 
-        $userCount = $query->count();
+            $query = match ($audience) {
+                'teachers' => $query->whereHas('roleRelation', fn($q) => $q->where('name', 'teacher')),
+                'donors'   => $query->whereNotNull('donation_rank'),
+                'students' => $query->whereHas('roleRelation', fn($q) => $q->where('name', 'student')),
+                default    => $query,
+            };
 
-        if ($userCount === 0) {
-            return back()->with('error', 'Tanlangan auditoriyada Telegram botiga ulangan foydalanuvchilar topilmadi.');
+            $userCount = $query->count();
+
+            if ($userCount > 0) {
+                $broadcastId = DB::table('telegram_broadcasts')->insertGetId([
+                    'admin_id'         => auth()->id(),
+                    'message'          => $message,
+                    'audience'         => $audience,
+                    'total_recipients' => $userCount,
+                    'status'           => 'pending',
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+
+                SendTelegramBroadcast::dispatch($message, $audience, $broadcastId);
+
+                $audienceLabel = match ($audience) {
+                    'teachers' => 'o\'qituvchilar',
+                    'donors'   => 'donorlar',
+                    'students' => 'o\'quvchilar',
+                    default    => 'hamma',
+                };
+                $messages[] = "Telegram: {$audienceLabel} ({$userCount} ta)";
+            } else {
+                $messages[] = 'Telegram: ulangan foydalanuvchilar topilmadi.';
+            }
         }
 
-        // Broadcast log ga yozish
-        $broadcastId = DB::table('telegram_broadcasts')->insertGetId([
-            'admin_id'         => auth()->id(),
-            'message'          => $message,
-            'audience'         => $audience,
-            'total_recipients' => $userCount,
-            'status'           => 'pending',
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ]);
+        // === SAYT BANNER ===
+        if ($alsoSite) {
+            \App\Models\SiteAnnouncement::deactivateAll();
+            \App\Models\SiteAnnouncement::create([
+                'admin_id'   => auth()->id(),
+                'message'    => $message,
+                'style'      => $validated['site_style'] ?? 'info',
+                'link_url'   => $validated['link_url'] ?? null,
+                'link_label' => $validated['link_label'] ?? null,
+                'is_active'  => true,
+            ]);
+            $messages[] = 'Sayt banneri faollashtirildi.';
+        }
 
-        // Xabarni queue ga yuborish (async) — audience parametri bilan
-        SendTelegramBroadcast::dispatch($message, $audience, $broadcastId);
-
-        $audienceLabel = match ($audience) {
-            'teachers' => 'o\'qituvchilar',
-            'donors'   => 'donorlar',
-            'students' => 'o\'quvchilar',
-            default    => 'hamma',
-        };
-
-        return back()->with('success', "Elon xabari ({$audienceLabel}) {$userCount} ta foydalanuvchiga yuborish uchun navbatga qo'shildi. Xabarlar birma-bir yuborilmoqda.");
+        return back()->with('success', 'Elon: ' . implode(' | ', $messages));
     }
 
     /**
@@ -211,6 +239,17 @@ class AdminSettingsController extends Controller
             ->limit(50)
             ->get();
 
-        return view('admin.settings.broadcast-history', compact('broadcasts'));
+        $activeAnnouncement = \App\Models\SiteAnnouncement::getActive();
+
+        return view('admin.settings.broadcast-history', compact('broadcasts', 'activeAnnouncement'));
+    }
+
+    /**
+     * Sayt e'lonini o'chirish (deactivate).
+     */
+    public function deactivateAnnouncement()
+    {
+        \App\Models\SiteAnnouncement::deactivateAll();
+        return back()->with('success', 'Sayt e\'loni o\'chirildi.');
     }
 }
