@@ -4556,6 +4556,25 @@ button.chat-msg-avatar-btn:focus-visible {
   border-radius: 14px 14px 14px 4px;
 }
 
+/* Stiker xabarlari — katta rasm, pufaksiz */
+.chat-msg-sticker {
+  background: transparent !important;
+  padding: 2px 0 !important;
+  border-radius: 0 !important;
+}
+
+.chat-sticker-image {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  display: block;
+  border-radius: 12px;
+}
+
+.chat-msg.is-mine .chat-msg-sticker {
+  background: transparent !important;
+}
+
 .chat-compose-status {
   display: flex;
   align-items: center;

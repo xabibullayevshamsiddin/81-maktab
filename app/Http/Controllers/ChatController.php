@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\ChatGroup;
 use App\Models\ChatGroupMember;
 use App\Models\ChatMessage;
+use App\Models\ChatSticker;
 use App\Models\SiteSetting;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
@@ -60,7 +61,8 @@ class ChatController extends Controller
 
         $query = ChatMessage::query()
             ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color,profile_theme,chat_style,badge_style,show_expiry_badge,name_font_weight,name_font_family,status_emoji')
-            ->with('user.roleRelation:id,name');
+            ->with('user.roleRelation:id,name')
+            ->with('sticker:id,code,image_path');
 
         if ($groupId > 0) {
             $group = ChatGroup::findOrFail($groupId);
@@ -136,6 +138,8 @@ class ChatController extends Controller
                 'name_font_weight' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->name_font_weight ?? '700') : '700',
                 'name_font_family' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->name_font_family ?? '') : '',
                 'status_emoji' => $m->user?->status_emoji ?? '',
+                'sticker_id' => $m->chat_sticker_id,
+                'sticker_url' => $m->sticker ? $m->sticker->imageUrl() : null,
             ];
         });
 
@@ -480,11 +484,34 @@ class ChatController extends Controller
         }
 
         $validated = $request->validate([
-            'body' => ['required', 'string', 'max:1000'],
+            'body' => ['nullable', 'string', 'max:1000'],
+            'chat_sticker_id' => ['nullable', 'integer', 'exists:chat_stickers,id'],
         ]);
 
-        $body = sanitize_plain_text($validated['body']);
-        if ($body === '') {
+        // Matn yoki stiker — kamida bittasi bo'lishi shart
+        if (empty($validated['body']) && empty($validated['chat_sticker_id'])) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Matn yoki stiker kerak.',
+            ], 422);
+        }
+
+        $stickerId = null;
+        if (! empty($validated['chat_sticker_id'])) {
+            $sticker = ChatSticker::find($validated['chat_sticker_id']);
+            if (! $sticker) {
+                return response()->json(['ok' => false, 'error' => 'Stiker topilmadi.'], 422);
+            }
+            if ($sticker->is_donor_only && ! $user->isDonor()) {
+                return response()->json(['ok' => false, 'error' => 'Bu stiker faqat donorlar uchun.'], 403);
+            }
+            $stickerId = $sticker->id;
+        }
+
+        $body = ! empty($validated['body']) ? sanitize_plain_text($validated['body']) : null;
+
+        // Agar body bo'sh lekin sticker ham yo'q (sanitize bo'sh qoldirgan)
+        if ($body === null && $stickerId === null) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Matn bo‘sh.',
@@ -495,6 +522,7 @@ class ChatController extends Controller
         $messagePayload = [
             'user_id' => $user->id,
             'body' => $body,
+            'chat_sticker_id' => $stickerId,
         ];
 
         if (isset($group) && $groupId > 0) {

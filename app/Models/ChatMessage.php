@@ -11,6 +11,7 @@ class ChatMessage extends Model
         'user_id',
         'chat_group_id',
         'body',
+        'chat_sticker_id',
     ];
 
     public function user(): BelongsTo
@@ -21,5 +22,10 @@ class ChatMessage extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(ChatGroup::class, 'chat_group_id');
+    }
+
+    public function sticker(): BelongsTo
+    {
+        return $this->belongsTo(ChatSticker::class, 'chat_sticker_id');
     }
 }

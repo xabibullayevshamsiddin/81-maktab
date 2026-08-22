@@ -303,7 +303,9 @@ var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|r
       + donorBadgeHtml
       + '<span class="chat-msg-time">' + (m.date ? m.date + ' ' : '') + escHtml(m.time || '') + '</span>'
       + '</div>'
-      + '<div class="chat-msg-text">' + escHtml(m.body) + '</div>'
+      + (m.sticker_url
+        ? '<div class="chat-msg-text chat-msg-sticker"><img src="' + escAttr(m.sticker_url) + '" alt="Stiker" class="chat-sticker-image" loading="lazy" decoding="async" /></div>'
+        : '<div class="chat-msg-text">' + escHtml(m.body) + '</div>')
       + '</div>'
       + (actionsHtml ? '<div class="chat-msg-actions">' + actionsHtml + '</div>' : '')
       + '</div>';
@@ -367,6 +369,38 @@ var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|r
   // =====================================================================
   //  SEND MESSAGE
   // =====================================================================
+  // Sticker yuborish (to'g'ridan-to'g'ri)
+  function sendChatMessage(payload) {
+    if (isSending) return;
+    isSending = true;
+    sendBtn.disabled = true;
+    sendBtn.setAttribute('aria-busy', 'true');
+
+    if (currentGroupId > 0) payload.chat_group_id = currentGroupId;
+
+    apiFetch(sendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(data) {
+      if (data && data.ok) {
+        if (window.playPrimeChatTick) window.playPrimeChatTick();
+        if (!data.duplicated) {
+          loadChatMessages(lastMessageId);
+        }
+      } else {
+        showChatToast(data && data.error ? data.error : 'Failed to send', 'error');
+      }
+    }).catch(function() {
+      showChatToast(text('chat_network_error', 'Network error'), 'error');
+    }).finally(function() {
+      isSending = false;
+      sendBtn.disabled = false;
+      sendBtn.removeAttribute('aria-busy');
+      input.focus();
+    });
+  }
+
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     if (isSending) return;
@@ -415,6 +449,12 @@ var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|r
   // Sticker buttons
   document.querySelectorAll('[data-chat-sticker]').forEach(function(btn) {
     btn.addEventListener('click', function() {
+      var stickerId = this.getAttribute('data-sticker-id');
+      if (stickerId) {
+        // Agar sticker_id mavjud — to'g'ridan-to'g'ri stiker sifatida yuborish
+        sendChatMessage({ chat_sticker_id: parseInt(stickerId, 10) });
+        return;
+      }
       input.value = input.value + this.getAttribute('data-chat-sticker');
       input.focus();
     });

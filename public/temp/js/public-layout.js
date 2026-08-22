@@ -2928,7 +2928,9 @@ function refreshChatAvailability() {
         + '<span class="chat-msg-time">' + m.date + ' ' + m.time + '</span>'
         + actionsHtml
         + '</div>'
-        + '<div class="chat-msg-text">' + m.body + '</div>'
+        + (m.sticker_url
+          ? '<div class="chat-msg-text chat-msg-sticker"><img src="' + escAttr(m.sticker_url) + '" alt="Stiker" class="chat-sticker-image" loading="lazy" decoding="async" /></div>'
+          : '<div class="chat-msg-text">' + m.body + '</div>')
         + '</div></div>';
     }
 
@@ -3027,6 +3029,97 @@ function refreshChatAvailability() {
 
     function stopPolling() {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    function sendSticker(stickerId) {
+      if (!chatEnabled || isSending) return Promise.resolve();
+
+      isSending = true;
+
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.setAttribute('aria-busy', 'true');
+      }
+      if (input) {
+        input.setAttribute('aria-busy', 'true');
+        input.disabled = true;
+      }
+      stickerButtons.forEach(function (btn) {
+        btn.disabled = true;
+      });
+
+      var turnstileHost = document.getElementById('chat-turnstile-host');
+
+      function doFetch(turnstileToken) {
+        setComposeState('sending');
+
+        var payload = { chat_sticker_id: stickerId };
+        if (turnstileToken) {
+          payload.turnstile_token = turnstileToken;
+        }
+
+        return fetch(sendUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrf,
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload),
+        })
+          .then(function (r) {
+            if (!r.ok) {
+              return r.text().then(function (t) {
+                var msg = 'Stiker yuborilmadi.';
+                if (r.status === 419) {
+                  msg = 'Sessiya tugagan — sahifani yangilang.';
+                } else if (r.status === 403) {
+                  msg = 'Bu stiker faqat donorlar uchun.';
+                } else {
+                  try {
+                    var d = JSON.parse(t);
+                    msg = (d && (d.error || d.message)) || msg;
+                  } catch (e) { /* ignore */ }
+                }
+                throw new Error(msg);
+              });
+            }
+            playPrimeSuccess();
+            return pollNew({ burst: true });
+          })
+          .catch(function (err) {
+            if (window.showToast) {
+              window.showToast(err && err.message ? err.message : 'Stiker yuborilmadi.', 'error');
+            }
+          })
+          .finally(function () {
+            isSending = false;
+            input.disabled = false;
+            input.removeAttribute('aria-busy');
+            stickerButtons.forEach(function (btn) {
+              btn.disabled = false;
+            });
+            if (sendBtn) {
+              sendBtn.disabled = false;
+              sendBtn.removeAttribute('aria-busy');
+            }
+            setComposeState('idle');
+            syncChatAdminActions();
+          });
+      }
+
+      if (turnstileHost) {
+        return turnstileHost.getAttribute('data-sitekey')
+          ? window.turnstile && window.turnstile.execute
+            ? window.turnstile.execute(turnstileHost).then(function (token) {
+              return doFetch(token);
+            })
+            : doFetch(null)
+          : doFetch(null);
+      }
+
+      return doFetch(null);
     }
 
     function sendMessage(text, options) {
@@ -3307,13 +3400,20 @@ function refreshChatAvailability() {
     stickerButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {
         var sticker = btn.getAttribute('data-chat-sticker');
-        if (!chatEnabled || !sticker || isSending) return;
+        var stickerId = btn.getAttribute('data-sticker-id');
+        if (!chatEnabled || (!sticker && !stickerId) || isSending) return;
         btn.classList.add('is-fired');
         setTimeout(function () {
           btn.classList.remove('is-fired');
         }, 420);
 
-        // Append sticker instead of sending immediately
+        // Agar sticker_id mavjud bo'lsa — to'g'ridan-to'g'ri stiker sifatida yuborish
+        if (stickerId) {
+          sendSticker(parseInt(stickerId, 10));
+          return;
+        }
+
+        // Oddiy emoji — inputga qo'shish (eski usul)
         input.value += sticker;
         input.focus();
 
@@ -4358,12 +4458,21 @@ function refreshChatAvailability() {
       });
     });
 
-    // Sticker click → append to input (PANEL YOPILMAYDI)
+    // Sticker click → send sticker_id or append emoji
     var stickerItems = popup.querySelectorAll('.sticker-item');
     stickerItems.forEach(function(item) {
       item.addEventListener('click', function(e) {
         e.stopPropagation();
         var sticker = this.getAttribute('data-sticker');
+        var stickerId = this.getAttribute('data-sticker-id');
+
+        // Agar sticker_id mavjud bo'lsa — to'g'ridan-to'g'ri yuborish
+        if (stickerId) {
+          sendSticker(parseInt(stickerId, 10));
+          return;
+        }
+
+        // Oddiy emoji — inputga qo'shish
         if (!sticker || !input) return;
         input.value += sticker;
         input.focus();
