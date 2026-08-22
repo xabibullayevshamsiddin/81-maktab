@@ -702,141 +702,154 @@
               data-size="invisible"
             ></div>
             @endif
-            {{-- ═══════════════════════════════════════════════════════ --}}
-            {{-- STIKERLAR: Oddiy foydalanuvchilar — eski format (6 ta) --}}
-            {{-- ═══════════════════════════════════════════════════════ --}}
             @php
               $chatStickerUser = auth()->user();
               $isChatDonor = $chatStickerUser && $chatStickerUser->isDonor();
-              $freeStickers = \App\Models\ChatSticker::where('is_donor_only', false)->orderBy('sort_order')->get();
-              $donorStickers = \App\Models\ChatSticker::where('is_donor_only', true)->orderBy('sort_order')->get();
             @endphp
             <div class="chat-sticker-row chat-sticker-row--simple{{ $isChatDonor ? ' is-donor-hidden' : '' }}" id="chat-sticker-row-simple">
-              @foreach($freeStickers as $s)
-                <button type="button" class="chat-sticker-btn" data-sticker-id="{{ $s->id }}" title="{{ $s->code }}">
-                  {{ $s->code }}
-                </button>
-              @endforeach
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🔥" title="Fire">🔥</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👏" title="Clap">👏</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="😄" title="Smile">😄</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="👍" title="Like">👍</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🎉" title="Party">🎉</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="❤️" title="Love">❤️</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="😢" title="Sad">😢</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="🙏" title="Thanks">🙏</button>
+              <button type="button" class="chat-sticker-btn" data-chat-sticker="💯" title="Score">💯</button>
             </div>
-            {{-- ═══════════════════════════════════════════════════════ --}}
-            {{-- STIKERLAR: Donorlar — Telegram-style panel (60+ ta)   --}}
-            {{-- ═══════════════════════════════════════════════════════ --}}
             @if($isChatDonor)
-              <div class="chat-sticker-panel" id="chat-sticker-panel">
-                <button type="button" class="chat-sticker-toggle" id="chat-sticker-toggle" title="Stikerlar">
-                  <i class="fa-regular fa-face-smile"></i>
-                </button>
-                <div class="chat-sticker-popup" id="chat-sticker-popup" hidden>
-                  <div class="sticker-popup-tabs">
-                    @if($donorStickers->isNotEmpty())
-                    <button type="button" class="sticker-tab" data-tab="donor-db">⭐</button>
-                    @endif
-                    <button type="button" class="sticker-tab" data-tab="feelings">😊</button>
-                    <button type="button" class="sticker-tab" data-tab="hands">👍</button>
-                    <button type="button" class="sticker-tab" data-tab="nature">🔥</button>
-                    <button type="button" class="sticker-tab" data-tab="food">🍕</button>
-                    <button type="button" class="sticker-tab" data-tab="objects">💡</button>
-                    <button type="button" class="sticker-tab" data-tab="school">📚</button>
+            <div class="chat-sticker-panel" id="chat-sticker-panel">
+              <button type="button" class="chat-sticker-toggle" id="chat-sticker-toggle" title="Stikerlar">
+                <i class="fa-regular fa-face-smile"></i>
+              </button>
+              <div class="chat-sticker-popup" id="chat-sticker-popup" hidden>
+                <div class="sticker-popup-tabs">
+                  <button type="button" class="sticker-tab" data-tab="feelings">😊</button>
+                  <button type="button" class="sticker-tab" data-tab="hands">👍</button>
+                  <button type="button" class="sticker-tab" data-tab="nature">🔥</button>
+                  <button type="button" class="sticker-tab" data-tab="food">🍕</button>
+                  <button type="button" class="sticker-tab" data-tab="objects">💡</button>
+                  <button type="button" class="sticker-tab" data-tab="school">📚</button>
+                </div>
+                <div class="sticker-popup-content">
+                  <div class="sticker-grid" data-category="feelings">
+                    <button type="button" class="sticker-item" data-sticker="😊">😊</button>
+                    <button type="button" class="sticker-item" data-sticker="😂">😂</button>
+                    <button type="button" class="sticker-item" data-sticker="🥺">🥺</button>
+                    <button type="button" class="sticker-item" data-sticker="😍">😍</button>
+                    <button type="button" class="sticker-item" data-sticker="🤔">🤔</button>
+                    <button type="button" class="sticker-item" data-sticker="😎">😎</button>
+                    <button type="button" class="sticker-item" data-sticker="🤩">🤩</button>
+                    <button type="button" class="sticker-item" data-sticker="😴">😴</button>
+                    <button type="button" class="sticker-item" data-sticker="🤗">🤗</button>
+                    <button type="button" class="sticker-item" data-sticker="😇">😇</button>
+                    <button type="button" class="sticker-item" data-sticker="🥳">🥳</button>
+                    <button type="button" class="sticker-item" data-sticker="😏">😏</button>
+                    <button type="button" class="sticker-item" data-sticker="😢">😢</button>
+                    <button type="button" class="sticker-item" data-sticker="😡">😡</button>
+                    <button type="button" class="sticker-item" data-sticker="🤯">🤯</button>
+                    <button type="button" class="sticker-item" data-sticker="🫡">🫡</button>
+                    <button type="button" class="sticker-item" data-sticker="😈">😈</button>
+                    <button type="button" class="sticker-item" data-sticker="🤠">🤠</button>
                   </div>
-                  <div class="sticker-popup-content">
-                    {{-- DB orqali boshqariladigan donor stikerlari (serverda tekshiriladi) --}}
-                    @if($donorStickers->isNotEmpty())
-                    <div class="sticker-grid" data-category="donor-db">
-                      @foreach($donorStickers as $ds)
-                        <button type="button" class="sticker-item" data-sticker-id="{{ $ds->id }}" title="{{ $ds->code }}">
-                          {{ $ds->code }}
-                        </button>
-                      @endforeach
-                    </div>
-                    @endif
-                    <div class="sticker-grid" data-category="feelings">
-                      <button type="button" class="sticker-item" data-sticker="😊">😊</button>
-                      <button type="button" class="sticker-item" data-sticker="😂">😂</button>
-                      <button type="button" class="sticker-item" data-sticker="🥺">🥺</button>
-                      <button type="button" class="sticker-item" data-sticker="😍">😍</button>
-                      <button type="button" class="sticker-item" data-sticker="🤔">🤔</button>
-                      <button type="button" class="sticker-item" data-sticker="😎">😎</button>
-                      <button type="button" class="sticker-item" data-sticker="🤩">🤩</button>
-                      <button type="button" class="sticker-item" data-sticker="😴">😴</button>
-                      <button type="button" class="sticker-item" data-sticker="🤗">🤗</button>
-                      <button type="button" class="sticker-item" data-sticker="😇">😇</button>
-                      <button type="button" class="sticker-item" data-sticker="🥳">🥳</button>
-                      <button type="button" class="sticker-item" data-sticker="😏">😏</button>
-                    </div>
-                    <div class="sticker-grid" data-category="hands">
-                      <button type="button" class="sticker-item" data-sticker="👍">👍</button>
-                      <button type="button" class="sticker-item" data-sticker="👏">👏</button>
-                      <button type="button" class="sticker-item" data-sticker="👋">👋</button>
-                      <button type="button" class="sticker-item" data-sticker="✌️">✌️</button>
-                      <button type="button" class="sticker-item" data-sticker="🤝">🤝</button>
-                      <button type="button" class="sticker-item" data-sticker="💪">💪</button>
-                      <button type="button" class="sticker-item" data-sticker="🙏">🙏</button>
-                      <button type="button" class="sticker-item" data-sticker="👌">👌</button>
-                      <button type="button" class="sticker-item" data-sticker="✊">✊</button>
-                      <button type="button" class="sticker-item" data-sticker="🤟">🤟</button>
-                      <button type="button" class="sticker-item" data-sticker="👆">👆</button>
-                      <button type="button" class="sticker-item" data-sticker="🫶">🫶</button>
-                    </div>
-                    <div class="sticker-grid" data-category="nature">
-                      <button type="button" class="sticker-item" data-sticker="🔥">🔥</button>
-                      <button type="button" class="sticker-item" data-sticker="💎">💎</button>
-                      <button type="button" class="sticker-item" data-sticker="🚀">🚀</button>
-                      <button type="button" class="sticker-item" data-sticker="🌟">🌟</button>
-                      <button type="button" class="sticker-item" data-sticker="⚡">⚡</button>
-                      <button type="button" class="sticker-item" data-sticker="💫">💫</button>
-                      <button type="button" class="sticker-item" data-sticker="🎉">🎉</button>
-                      <button type="button" class="sticker-item" data-sticker="🎊">🎊</button>
-                      <button type="button" class="sticker-item" data-sticker="💝">💝</button>
-                      <button type="button" class="sticker-item" data-sticker="🏆">🏆</button>
-                      <button type="button" class="sticker-item" data-sticker="❤️">❤️</button>
-                      <button type="button" class="sticker-item" data-sticker="🧡">🧡</button>
-                    </div>
-                    <div class="sticker-grid" data-category="food">
-                      <button type="button" class="sticker-item" data-sticker="🍕">🍕</button>
-                      <button type="button" class="sticker-item" data-sticker="🍔">🍔</button>
-                      <button type="button" class="sticker-item" data-sticker="🍟">🍟</button>
-                      <button type="button" class="sticker-item" data-sticker="🌮">🌮</button>
-                      <button type="button" class="sticker-item" data-sticker="🍦">🍦</button>
-                      <button type="button" class="sticker-item" data-sticker="🎂">🎂</button>
-                      <button type="button" class="sticker-item" data-sticker="☕">☕</button>
-                      <button type="button" class="sticker-item" data-sticker="🧃">🧃</button>
-                      <button type="button" class="sticker-item" data-sticker="🍰">🍰</button>
-                      <button type="button" class="sticker-item" data-sticker="🍩">🍩</button>
-                      <button type="button" class="sticker-item" data-sticker="🍪">🍪</button>
-                      <button type="button" class="sticker-item" data-sticker="🍫">🍫</button>
-                    </div>
-                    <div class="sticker-grid" data-category="objects">
-                      <button type="button" class="sticker-item" data-sticker="💡">💡</button>
-                      <button type="button" class="sticker-item" data-sticker="📚">📚</button>
-                      <button type="button" class="sticker-item" data-sticker="✏️">✏️</button>
-                      <button type="button" class="sticker-item" data-sticker="🎯">🎯</button>
-                      <button type="button" class="sticker-item" data-sticker="🎮">🎮</button>
-                      <button type="button" class="sticker-item" data-sticker="🎵">🎵</button>
-                      <button type="button" class="sticker-item" data-sticker="📱">📱</button>
-                      <button type="button" class="sticker-item" data-sticker="💻">💻</button>
-                      <button type="button" class="sticker-item" data-sticker="🎬">🎬</button>
-                      <button type="button" class="sticker-item" data-sticker="📸">📸</button>
-                      <button type="button" class="sticker-item" data-sticker="🎨">🎨</button>
-                      <button type="button" class="sticker-item" data-sticker="🎪">🎪</button>
-                    </div>
-                    <div class="sticker-grid" data-category="school">
-                      <button type="button" class="sticker-item" data-sticker="📚">📚</button>
-                      <button type="button" class="sticker-item" data-sticker="✏️">✏️</button>
-                      <button type="button" class="sticker-item" data-sticker="🎒">🎒</button>
-                      <button type="button" class="sticker-item" data-sticker="🏫">🏫</button>
-                      <button type="button" class="sticker-item" data-sticker="👨‍🏫">👨‍🏫</button>
-                      <button type="button" class="sticker-item" data-sticker="📝">📝</button>
-                      <button type="button" class="sticker-item" data-sticker="📖">📖</button>
-                      <button type="button" class="sticker-item" data-sticker="🔬">🔬</button>
-                      <button type="button" class="sticker-item" data-sticker="🧮">🧮</button>
-                      <button type="button" class="sticker-item" data-sticker="📐">📐</button>
-                      <button type="button" class="sticker-item" data-sticker="🎒">🎒</button>
-                      <button type="button" class="sticker-item" data-sticker="🏅">🏅</button>
-                    </div>
+                  <div class="sticker-grid" data-category="hands">
+                    <button type="button" class="sticker-item" data-sticker="👍">👍</button>
+                    <button type="button" class="sticker-item" data-sticker="👏">👏</button>
+                    <button type="button" class="sticker-item" data-sticker="👋">👋</button>
+                    <button type="button" class="sticker-item" data-sticker="✌️">✌️</button>
+                    <button type="button" class="sticker-item" data-sticker="🤝">🤝</button>
+                    <button type="button" class="sticker-item" data-sticker="💪">💪</button>
+                    <button type="button" class="sticker-item" data-sticker="🙏">🙏</button>
+                    <button type="button" class="sticker-item" data-sticker="👌">👌</button>
+                    <button type="button" class="sticker-item" data-sticker="✊">✊</button>
+                    <button type="button" class="sticker-item" data-sticker="🤟">🤟</button>
+                    <button type="button" class="sticker-item" data-sticker="👆">👆</button>
+                    <button type="button" class="sticker-item" data-sticker="🫶">🫶</button>
+                  </div>
+                  <div class="sticker-grid" data-category="nature">
+                    <button type="button" class="sticker-item" data-sticker="🔥">🔥</button>
+                    <button type="button" class="sticker-item" data-sticker="💎">💎</button>
+                    <button type="button" class="sticker-item" data-sticker="🚀">🚀</button>
+                    <button type="button" class="sticker-item" data-sticker="🌟">🌟</button>
+                    <button type="button" class="sticker-item" data-sticker="⚡">⚡</button>
+                    <button type="button" class="sticker-item" data-sticker="💫">💫</button>
+                    <button type="button" class="sticker-item" data-sticker="🎉">🎉</button>
+                    <button type="button" class="sticker-item" data-sticker="🎊">🎊</button>
+                    <button type="button" class="sticker-item" data-sticker="💝">💝</button>
+                    <button type="button" class="sticker-item" data-sticker="🏆">🏆</button>
+                    <button type="button" class="sticker-item" data-sticker="❤️">❤️</button>
+                    <button type="button" class="sticker-item" data-sticker="🧡">🧡</button>
+                    <button type="button" class="sticker-item" data-sticker="🌈">🌈</button>
+                    <button type="button" class="sticker-item" data-sticker="☀️">☀️</button>
+                    <button type="button" class="sticker-item" data-sticker="🌙">🌙</button>
+                    <button type="button" class="sticker-item" data-sticker="🍀">🍀</button>
+                    <button type="button" class="sticker-item" data-sticker="🌸">🌸</button>
+                    <button type="button" class="sticker-item" data-sticker="🌊">🌊</button>
+                  </div>
+                  <div class="sticker-grid" data-category="food">
+                    <button type="button" class="sticker-item" data-sticker="🍕">🍕</button>
+                    <button type="button" class="sticker-item" data-sticker="🍔">🍔</button>
+                    <button type="button" class="sticker-item" data-sticker="🍟">🍟</button>
+                    <button type="button" class="sticker-item" data-sticker="🌮">🌮</button>
+                    <button type="button" class="sticker-item" data-sticker="🍦">🍦</button>
+                    <button type="button" class="sticker-item" data-sticker="🎂">🎂</button>
+                    <button type="button" class="sticker-item" data-sticker="☕">☕</button>
+                    <button type="button" class="sticker-item" data-sticker="🧃">🧃</button>
+                    <button type="button" class="sticker-item" data-sticker="🍰">🍰</button>
+                    <button type="button" class="sticker-item" data-sticker="🍩">🍩</button>
+                    <button type="button" class="sticker-item" data-sticker="🍪">🍪</button>
+                    <button type="button" class="sticker-item" data-sticker="🍫">🍫</button>
+                    <button type="button" class="sticker-item" data-sticker="🍭">🍭</button>
+                    <button type="button" class="sticker-item" data-sticker="🧁">🧁</button>
+                    <button type="button" class="sticker-item" data-sticker="🍉">🍉</button>
+                    <button type="button" class="sticker-item" data-sticker="🍎">🍎</button>
+                    <button type="button" class="sticker-item" data-sticker="🥑">🥑</button>
+                    <button type="button" class="sticker-item" data-sticker="🌶️">🌶️</button>
+                  </div>
+                  <div class="sticker-grid" data-category="objects">
+                    <button type="button" class="sticker-item" data-sticker="💡">💡</button>
+                    <button type="button" class="sticker-item" data-sticker="📚">📚</button>
+                    <button type="button" class="sticker-item" data-sticker="✏️">✏️</button>
+                    <button type="button" class="sticker-item" data-sticker="🎯">🎯</button>
+                    <button type="button" class="sticker-item" data-sticker="🎮">🎮</button>
+                    <button type="button" class="sticker-item" data-sticker="🎵">🎵</button>
+                    <button type="button" class="sticker-item" data-sticker="📱">📱</button>
+                    <button type="button" class="sticker-item" data-sticker="💻">💻</button>
+                    <button type="button" class="sticker-item" data-sticker="🎬">🎬</button>
+                    <button type="button" class="sticker-item" data-sticker="📸">📸</button>
+                    <button type="button" class="sticker-item" data-sticker="🎨">🎨</button>
+                    <button type="button" class="sticker-item" data-sticker="🎪">🎪</button>
+                    <button type="button" class="sticker-item" data-sticker="🔮">🔮</button>
+                    <button type="button" class="sticker-item" data-sticker="🧲">🧲</button>
+                    <button type="button" class="sticker-item" data-sticker="🎸">🎸</button>
+                    <button type="button" class="sticker-item" data-sticker="🪘">🪘</button>
+                    <button type="button" class="sticker-item" data-sticker="🎲">🎲</button>
+                    <button type="button" class="sticker-item" data-sticker="🪄">🪄</button>
+                  </div>
+                  <div class="sticker-grid" data-category="school">
+                    <button type="button" class="sticker-item" data-sticker="📚">📚</button>
+                    <button type="button" class="sticker-item" data-sticker="✏️">✏️</button>
+                    <button type="button" class="sticker-item" data-sticker="🎒">🎒</button>
+                    <button type="button" class="sticker-item" data-sticker="🏫">🏫</button>
+                    <button type="button" class="sticker-item" data-sticker="👨‍🏫">👨‍🏫</button>
+                    <button type="button" class="sticker-item" data-sticker="📝">📝</button>
+                    <button type="button" class="sticker-item" data-sticker="📖">📖</button>
+                    <button type="button" class="sticker-item" data-sticker="🔬">🔬</button>
+                    <button type="button" class="sticker-item" data-sticker="🧮">🧮</button>
+                    <button type="button" class="sticker-item" data-sticker="📐">📐</button>
+                    <button type="button" class="sticker-item" data-sticker="🏅">🏅</button>
+                    <button type="button" class="sticker-item" data-sticker="🎓">🎓</button>
+                    <button type="button" class="sticker-item" data-sticker="🧪">🧪</button>
+                    <button type="button" class="sticker-item" data-sticker="🗺️">🗺️</button>
+                    <button type="button" class="sticker-item" data-sticker="🗓️">🗓️</button>
+                    <button type="button" class="sticker-item" data-sticker="🏆">🏆</button>
+                    <button type="button" class="sticker-item" data-sticker="🖊️">🖊️</button>
+                    <button type="button" class="sticker-item" data-sticker="🖍️">🖍️</button>
                   </div>
                 </div>
               </div>
-              @endif
+            </div>
+            @endif
             <input type="text" id="chat-input" class="chat-input" placeholder="{{ __('public.layout.write_message') }}" maxlength="1000" autocomplete="off" />
             <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="{{ __('public.layout.send') }}">
               <i class="fa-solid fa-paper-plane"></i>

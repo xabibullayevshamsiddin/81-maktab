@@ -2629,6 +2629,8 @@ body.chat-fullscreen-active::before {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chat-msg {
@@ -4544,6 +4546,8 @@ button.chat-msg-avatar-btn:focus-visible {
   background: rgba(0, 0, 0, 0.04);
   color: var(--text);
   word-break: break-word;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chat-msg.is-mine .chat-msg-text {

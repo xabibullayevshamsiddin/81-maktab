@@ -466,14 +466,15 @@ if (! function_exists('render_exam_rich_text')) {
 if (! function_exists('uz_phone_input_pattern')) {
     function uz_phone_input_pattern(): string
     {
-        return '\+998(?:[\s-]?\d{2})(?:[\s-]?\d{3})(?:[\s-]?\d{2})(?:[\s-]?\d{2})';
+        // +998 yozmasa ham qabul qiladi
+        return '(?:\+?998[\s-]?)?[\d\s\-]{9,12}';
     }
 }
 
 if (! function_exists('uz_phone_validation_message')) {
     function uz_phone_validation_message(): string
     {
-        return "Telefon raqam +998 90 123 45 67 ko'rinishida bo'lishi kerak.";
+        return "Telefon raqam 90 123 45 67 yoki +998 90 123 45 67 ko'rinishida bo'lishi kerak.";
     }
 }
 
@@ -508,7 +509,18 @@ if (! function_exists('uz_phone_normalize')) {
             return null;
         }
 
-        return preg_replace('/[^\d+]+/', '', $phone);
+        $phone = preg_replace('/[^\d+]+/', '', $phone);
+
+        // Agar +998 yo'q bo'lsa — avtomatik qo'sh
+        if (! str_starts_with($phone, '+')) {
+            if (strlen($phone) === 12 && str_starts_with($phone, '998')) {
+                $phone = '+' . $phone;
+            } elseif (strlen($phone) === 9 && preg_match('/^\d{9}$/', $phone)) {
+                $phone = '+998' . $phone;
+            }
+        }
+
+        return $phone;
     }
 }
 

@@ -951,6 +951,8 @@ class AuthController extends Controller
                 $phone = '+'.$phone;
             } elseif (str_starts_with($phone, '8') && strlen($phone) === 9) {
                 $phone = '+998'.substr($phone, 1);
+            } elseif (strlen($phone) === 9 && preg_match('/^\d{9}$/', $phone)) {
+                $phone = '+998'.$phone;
             }
         }
 

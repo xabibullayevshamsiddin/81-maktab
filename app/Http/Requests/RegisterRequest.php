@@ -36,8 +36,11 @@ class RegisterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $phone = $this->input('phone');
+        $normalized = uz_phone_normalize($phone);
         $this->merge([
             'grade' => $this->input('is_parent') ? null : normalize_school_grade($this->input('grade')),
+            'phone' => $normalized ?? $phone,
         ]);
     }
 
