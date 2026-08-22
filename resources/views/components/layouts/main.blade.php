@@ -420,10 +420,10 @@
                 <li><a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">{{ __('public.layout.nav.contact') }}</a></li>
               @endguest
             </ul>
-            <div class="mobile-nav-extras">
-	              @guest
+            <div class="mobile-nav-extras">	              @guest
 	                <div class="mobile-nav-actions">
                     <a href="{{ route('search') }}" class="btn btn-outline">{{ __('public.common.search') }}</a>
+                    <a href="{{ route('books.index') }}" class="btn btn-outline">{{ __('public.layout.nav.library') }}</a>
 	                  <a href="{{ route('login') }}" class="btn btn-outline">{{ __('public.common.login') }}</a>
 	                  <a href="{{ route('register') }}" class="btn">{{ __('public.common.register') }}</a>
 	                </div>
@@ -434,8 +434,9 @@
                 </div>
 			                <div class="mobile-nav-actions mobile-nav-actions--auth">
 			                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+	                    <a href="{{ route('books.index') }}" class="btn btn-outline">{{ __('public.layout.nav.library') }}</a>
 			                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
-		                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
+	                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
 	                  @if($canCreateCourse)
 	                    <a href="{{ route('teacher.courses.create') }}" class="btn btn-outline">{{ __('public.layout.menu.course_open') }}</a>
 	                  @elseif($teacherNeedsCourseOpenRequest)
