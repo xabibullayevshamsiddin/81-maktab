@@ -605,7 +605,7 @@
         }
         @media (max-width: 576px) {
           .top-banner {
-            top: 75px !important;
+            top: 120px !important;
             left: 8px !important;
             right: 8px !important;
             transform: none !important;
