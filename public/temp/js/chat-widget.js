@@ -305,7 +305,9 @@ var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|r
       + '</div>'
       + (m.sticker_url
         ? '<div class="chat-msg-text chat-msg-sticker"><img src="' + escAttr(m.sticker_url) + '" alt="Stiker" class="chat-sticker-image" loading="lazy" decoding="async" /></div>'
-        : '<div class="chat-msg-text">' + escHtml(m.body) + '</div>')
+        : m.sticker_code
+          ? '<div class="chat-msg-text chat-msg-sticker chat-msg-sticker--fallback">' + escHtml(m.sticker_code) + '</div>'
+          : '<div class="chat-msg-text">' + escHtml(m.body) + '</div>')
       + '</div>'
       + (actionsHtml ? '<div class="chat-msg-actions">' + actionsHtml + '</div>' : '')
       + '</div>';

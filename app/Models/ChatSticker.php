@@ -27,9 +27,15 @@ class ChatSticker extends Model
 
     /**
      * Stiker rasm URL'ini qaytaradi.
+     * Rasm fayli hali mavjud bo'lmasa null qaytaradi — frontend matn ko'rsatadi.
      */
-    public function imageUrl(): string
+    public function imageUrl(): ?string
     {
+        $path = storage_path('app/public/' . $this->image_path);
+        if (! file_exists($path)) {
+            return null;
+        }
+
         return app_storage_asset($this->image_path);
     }
 }

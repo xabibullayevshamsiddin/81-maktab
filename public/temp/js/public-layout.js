@@ -2930,7 +2930,9 @@ function refreshChatAvailability() {
         + '</div>'
         + (m.sticker_url
           ? '<div class="chat-msg-text chat-msg-sticker"><img src="' + escAttr(m.sticker_url) + '" alt="Stiker" class="chat-sticker-image" loading="lazy" decoding="async" /></div>'
-          : '<div class="chat-msg-text">' + m.body + '</div>')
+          : m.sticker_code
+            ? '<div class="chat-msg-text chat-msg-sticker chat-msg-sticker--fallback">' + escChatHtml(m.sticker_code) + '</div>'
+            : '<div class="chat-msg-text">' + m.body + '</div>')
         + '</div></div>';
     }
 

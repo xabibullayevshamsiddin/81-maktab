@@ -139,7 +139,8 @@ class ChatController extends Controller
                 'name_font_family' => ($m->user && ($m->user->chat_style ?? 'show') !== 'hide') ? ($m->user->name_font_family ?? '') : '',
                 'status_emoji' => $m->user?->status_emoji ?? '',
                 'sticker_id' => $m->chat_sticker_id,
-                'sticker_url' => $m->sticker ? $m->sticker->imageUrl() : null,
+                'sticker_url' => $m->sticker?->imageUrl(),
+                'sticker_code' => $m->sticker?->code,
             ];
         });
 

@@ -4575,6 +4575,22 @@ button.chat-msg-avatar-btn:focus-visible {
   background: transparent !important;
 }
 
+.chat-msg-sticker--fallback {
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  padding: 8px 14px !important;
+  background: rgba(21, 101, 192, 0.06) !important;
+  border-radius: 16px !important;
+  display: inline-block;
+}
+
+.chat-msg.is-mine .chat-msg-sticker--fallback {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff !important;
+}
+
 .chat-compose-status {
   display: flex;
   align-items: center;
