@@ -20964,3 +20964,12 @@ body[data-cursor-animation="1"][data-cursor-type="trailing"] #d-cursor-dot::afte
   0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-80%, -30%) scale(0.3); }
 }
+
+/* ═══ View Transition — tezkor sahifa o'tish animatsiyasi (Premium/VIP) ═══ */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.18s;
+}

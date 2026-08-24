@@ -20,24 +20,35 @@ class AdminContactMessageController extends Controller
         }
 
         $query = ContactMessage::query()
+            ->leftJoin('users', 'users.email', '=', 'contact_messages.email')
+            ->select('contact_messages.*')
+            ->selectRaw("
+                CASE
+                    WHEN users.donation_rank = 'vip' AND (users.donation_rank_expires_at IS NULL OR users.donation_rank_expires_at > NOW()) THEN 3
+                    WHEN users.donation_rank = 'premium' AND (users.donation_rank_expires_at IS NULL OR users.donation_rank_expires_at > NOW()) THEN 2
+                    WHEN users.donation_rank = 'supporter' AND (users.donation_rank_expires_at IS NULL OR users.donation_rank_expires_at > NOW()) THEN 1
+                    ELSE 0
+                END as donor_priority
+            ")
             ->with(['readBy:id,first_name,name', 'blockedBy:id,first_name,name', 'senderUser:id,name'])
-            ->latest();
+            ->orderByDesc('donor_priority')
+            ->orderByDesc('contact_messages.created_at');
 
         if ($status === 'unread') {
-            $query->whereNull('read_at');
+            $query->whereNull('contact_messages.read_at');
         } elseif ($status === 'read') {
-            $query->whereNotNull('read_at')->where('is_blocked', false);
+            $query->whereNotNull('contact_messages.read_at')->where('contact_messages.is_blocked', false);
         } elseif ($status === 'blocked') {
-            $query->where('is_blocked', true);
+            $query->where('contact_messages.is_blocked', true);
         }
 
         if ($q !== '') {
             $query->where(function ($w) use ($q): void {
-                $w->where('name', 'like', '%' . $q . '%')
-                    ->orWhere('email', 'like', '%' . $q . '%')
-                    ->orWhere('phone', 'like', '%' . $q . '%')
-                    ->orWhere('note', 'like', '%' . $q . '%')
-                    ->orWhere('message', 'like', '%' . $q . '%');
+                $w->where('contact_messages.name', 'like', '%' . $q . '%')
+                    ->orWhere('contact_messages.email', 'like', '%' . $q . '%')
+                    ->orWhere('contact_messages.phone', 'like', '%' . $q . '%')
+                    ->orWhere('contact_messages.note', 'like', '%' . $q . '%')
+                    ->orWhere('contact_messages.message', 'like', '%' . $q . '%');
             });
         }
 

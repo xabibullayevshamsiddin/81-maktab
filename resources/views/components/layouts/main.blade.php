@@ -133,6 +133,7 @@
         ])
         data-theme="light"
 	        data-donor-theme="{{ auth()->check() && auth()->user()->isDonor() ? (auth()->user()->donation_rank) : '' }}"
+	        data-fast-nav="{{ auth()->check() && auth()->user()->isDonor() && in_array(auth()->user()->donation_rank, ['premium','vip']) ? '1' : '0' }}"
 	        data-site-success="{{ session('success') }}"
 	        data-site-error="{{ session('error') }}"
 	        data-site-toast-type="{{ session('toast_type') }}"
@@ -1115,6 +1116,7 @@
     @endauth
 <script src="{{ app_public_asset('temp/js/confirm-modal.js') }}?v={{ app_asset_version('temp/js/confirm-modal.js') }}"></script>
 	    <script src="{{ app_public_asset('temp/js/public-layout.js') }}?v={{ app_asset_version('temp/js/public-layout.js') }}&cb=11"></script>
+	    <script src="{{ app_public_asset('temp/js/fast-nav.js') }}?v={{ app_asset_version('temp/js/fast-nav.js') }}" defer></script>
       <script src="{{ app_public_asset('temp/js/site-refresh.js') }}?v={{ app_asset_version('temp/js/site-refresh.js') }}"></script>
 	    <script>
       (function() {
