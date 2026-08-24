@@ -95,9 +95,9 @@ class Donation extends Model
     public static function DURATIONS(): array
     {
         return [
-            "1month" => ["label" => "1 oy", "days" => 30, "discount" => 0],
-            "3months" => ["label" => "3 oy", "days" => 90, "discount" => 0],
-            "1year" => ["label" => "1 yil", "days" => 365, "discount" => 0],
+            "1month" => ["label" => "1 oy", "days" => 30, "months" => 1, "discount" => 0],
+            "3months" => ["label" => "3 oy", "days" => 90, "months" => 3, "discount" => 0],
+            "1year" => ["label" => "1 yil", "days" => 365, "months" => 12, "discount" => 0],
         ];
     }
 
@@ -124,7 +124,7 @@ class Donation extends Model
         $durations = self::DURATIONS();
         $cfg = $durations[$duration] ?? $durations["1month"];
 
-        $months = $cfg["days"] / 30;
+        $months = $cfg["months"] ?? ($cfg["days"] / 30);
         $discountPercent = self::rankDiscount($rank, $duration);
 
         $total = (int) round($basePrice * $months);

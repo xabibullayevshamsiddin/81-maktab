@@ -34,6 +34,7 @@ class User extends Authenticatable
     use ManagesCourses;
     use HasUserRelationships;
     use HasDonationRank;
+    use \App\Models\Concerns\HasFamilyLinks;
 
     protected static ?bool $legacyRoleColumnExists = null;
 
@@ -107,6 +108,7 @@ class User extends Authenticatable
         'role_id',
         'is_active',
         'is_parent',
+        'family_link_code',
         'donation_rank',
         'donation_rank_expires_at',
         'total_donated',

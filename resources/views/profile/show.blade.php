@@ -322,6 +322,11 @@
               </div>
             </section>
 
+            {{-- Ota-ona ↔ Farzand bog'lash --}}
+            <section class="profile-activity-block reveal">
+              @include('profile.partials.family-link-card')
+            </section>
+
             @if($user->isTeacher())
               <section class="profile-activity-block reveal" id="course-open-request">
                 <div class="profile-block-head">

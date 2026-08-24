@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\FamilyLinkController;
 use App\Http\Controllers\FeatureRequestController;
 use App\Http\Controllers\GradeSelectionController;
 use App\Http\Controllers\ProfileController;
@@ -56,6 +57,11 @@ Route::middleware('auth')->group(function () {
         Route::post('profile/phone/cancel', [ProfileController::class, 'cancelPhoneChange'])->middleware('active')->name('profile.phone.cancel');
         Route::post('profile/password/confirm', [ProfileController::class, 'confirmPasswordChange'])->middleware('active')->name('profile.password.confirm');
         Route::post('profile/password/update', [ProfileController::class, 'updatePassword'])->middleware('active')->name('profile.password.update');
+
+        // Ota-ona ↔ Farzand bog'lash
+        Route::post('profile/family/generate-code', [FamilyLinkController::class, 'generateCode'])->middleware('active')->name('profile.family.generate-code');
+        Route::post('profile/family/link', [FamilyLinkController::class, 'linkByCode'])->middleware('active')->name('profile.family.link');
+        Route::delete('profile/family/{linkUserId}', [FamilyLinkController::class, 'unlink'])->middleware('active')->name('profile.family.unlink');
 
         Route::post('feature-requests', [FeatureRequestController::class, 'store'])->middleware('active')->name('feature-requests.store');
         Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->middleware('active')->name('feature-requests.vote');

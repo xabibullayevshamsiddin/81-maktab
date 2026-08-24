@@ -182,6 +182,33 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // Ota-ona akkaunti uchun — farzandlar natijalarini ko'rsatish
+        if ($user->isParentOnly()) {
+            $linkedStudents = $user->linkedStudents;
+            $selectedChildId = $request->query('child_id');
+            $selectedChild = $linkedStudents->firstWhere('id', $selectedChildId) ?? $linkedStudents->first();
+
+            $resultSummary = null;
+            $results = collect();
+
+            if ($selectedChild) {
+                $resultSummary = $this->userResultsBaseQuery($selectedChild)
+                    ->selectRaw('COUNT(*) as total')
+                    ->selectRaw('SUM(CASE WHEN passed = true THEN 1 ELSE 0 END) as passed_count')
+                    ->selectRaw('SUM(CASE WHEN passed = false THEN 1 ELSE 0 END) as failed_count')
+                    ->selectRaw('AVG(points_earned) as average_points')
+                    ->selectRaw('MAX(points_earned) as best_points')
+                    ->first();
+
+                $results = $this->userResultsBaseQuery($selectedChild)
+                    ->with('exam:id,title,total_points,passing_points')
+                    ->latest('submitted_at')
+                    ->paginate(12);
+            }
+
+            return view('profile.results.index', compact('results', 'resultSummary', 'linkedStudents', 'selectedChild'));
+        }
+
         $resultSummary = $this->userResultsBaseQuery($user)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw('SUM(CASE WHEN passed = true THEN 1 ELSE 0 END) as passed_count')

@@ -228,7 +228,6 @@
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => false, "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
-        ["check" => false, "text" => "Maxsus emoji ishlatish"],
     ];
     $premiumFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (binafsha)"],
@@ -241,7 +240,6 @@
         ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
         ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
-        ["check" => false, "text" => "Maxsus emoji ishlatish"],
     ];
     $vipFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (oltin)"],
@@ -255,7 +253,6 @@
         ["check" => true, "text" => "Prioritet support"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
         ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
-        ["check" => true, "icon" => "fa-solid fa-icons", "text" => "Maxsus emoji ishlatish"],
     ];
     
     // Pre-calculate prices for all durations

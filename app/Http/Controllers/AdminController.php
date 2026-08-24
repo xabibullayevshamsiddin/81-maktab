@@ -375,6 +375,9 @@ class AdminController extends Controller
 
             $telegram = app(\App\Services\TelegramService::class);
             $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+
+            // Ulangan ota-onalarga ham xabar yuborish
+            $user->notifyLinkedParents($text);
         }
 
         return redirect()->route('user')
