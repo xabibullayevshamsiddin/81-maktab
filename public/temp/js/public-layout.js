@@ -251,7 +251,7 @@
 
   /** Prime Pro Max: Cinematic Theme Toggle */
   function initCinematicThemeToggle() {
-    const toggle = document.querySelector('.theme-toggle') || document.querySelector('[data-theme-toggle]');
+    const toggle = document.querySelector('.js-theme-toggle') || document.querySelector('[data-theme-toggle]');
     if (!toggle) return;
 
     toggle.addEventListener('click', (e) => {

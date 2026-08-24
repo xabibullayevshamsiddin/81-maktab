@@ -108,6 +108,8 @@
                         <i class="fa-solid fa-book-open"></i>
                       @elseif($res['type'] === 'exam')
                         <i class="fa-solid fa-graduation-cap"></i>
+                      @elseif($res['type'] === 'book')
+                        <i class="fa-solid fa-book"></i>
                       @endif
                     </span>
                   @endif

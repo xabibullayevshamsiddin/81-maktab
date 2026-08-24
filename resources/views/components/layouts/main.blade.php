@@ -529,7 +529,7 @@
           transform: translateX(-50%) translateY(0);
           width: calc(100% - 32px);
           max-width: 1180px;
-          z-index: 999999;
+          z-index: 999998;
           border-radius: 18px;
           padding: 10px 18px;
           display: flex;
@@ -614,7 +614,7 @@
             padding: 12px 14px !important;
             border-radius: 14px !important;
             font-size: 13px !important;
-            z-index: 9999999 !important;
+            z-index: 999998 !important;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
           }
           .top-banner.is-hiding {

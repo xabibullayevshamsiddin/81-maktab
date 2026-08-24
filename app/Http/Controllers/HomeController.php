@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\ValidatesTurnstile;
 use App\Models\Bookmark;
 use App\Models\ContactMessage;
 use App\Models\Course;
+use App\Models\Book;
 use App\Models\Exam;
 use App\Models\Post;
 use App\Models\PostLike;
@@ -378,6 +379,38 @@ class HomeController extends Controller
                 'description' => strip_tags((string) $exam->description),
                 'url' => route('exam.start.page', $exam->id),
                 'image' => null,
+            ];
+        }
+
+        $books = Book::query()
+            ->where('is_active', true)
+            ->where(function ($query) use ($searchTerms): void {
+                foreach ($searchTerms as $term) {
+                    $query->orWhere('title', 'like', "%{$term}%")
+                        ->orWhere('title_en', 'like', "%{$term}%")
+                        ->orWhere('description', 'like', "%{$term}%")
+                        ->orWhere('author', 'like', "%{$term}%")
+                        ->orWhere('subject', 'like', "%{$term}%");
+                }
+            })
+            ->latest()
+            ->take(10)
+            ->get();
+
+        foreach ($books as $book) {
+            $desc = localized_model_value($book, 'description');
+            $descParts = [];
+            if ($book->author) $descParts[] = $book->author;
+            if ($book->subject) $descParts[] = $book->subject;
+            if ($book->year) $descParts[] = (string) $book->year;
+            if ($desc) $descParts[] = Str::limit(strip_tags($desc), 80);
+
+            $results[] = [
+                'type' => 'book',
+                'title' => localized_model_value($book, 'title'),
+                'description' => implode(' — ', $descParts),
+                'url' => route('books.show', $book->id),
+                'image' => $book->cover_image ? app_storage_asset($book->cover_image) : null,
             ];
         }
 
