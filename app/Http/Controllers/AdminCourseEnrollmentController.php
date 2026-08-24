@@ -86,6 +86,23 @@ class AdminCourseEnrollmentController extends Controller
             'reviewed_by' => auth()->id(),
         ]);
 
+        // O'quvchiga va ota-onaga xabar yuborish
+        $enrollment->loadMissing('user', 'course');
+        $student = $enrollment->user;
+        if ($student && $student->telegram_chat_id) {
+            $courseTitle = $enrollment->course ? $enrollment->course->title : 'Noma\'lum kurs';
+            $studentName = htmlspecialchars($student->buildNameFromParts() ?: $student->name);
+            $text = "✅ <b>Kursga yozilish tasdiqlandi!</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Hurmatli <b>{$studentName}</b>,\n\n"
+                ."<b>Kurs:</b> {$courseTitle}\n"
+                ."🎓 Siz kursga muvaffaqiyatli qabul qilindingiz!\n\n"
+                ."⏰ Kurs boshlanishini kuting.";
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $student->telegram_chat_id, $text);
+            $student->notifyLinkedParents($text);
+        }
+
         return back()
             ->with('success', 'Yozilish tasdiqlandi.')
             ->with('toast_type', 'success');
@@ -102,6 +119,23 @@ class AdminCourseEnrollmentController extends Controller
             'reviewed_at' => now(),
             'reviewed_by' => auth()->id(),
         ]);
+
+        // O'quvchiga va ota-onaga xabar yuborish
+        $enrollment->loadMissing('user', 'course');
+        $student = $enrollment->user;
+        if ($student && $student->telegram_chat_id) {
+            $courseTitle = $enrollment->course ? $enrollment->course->title : 'Noma\'lum kurs';
+            $studentName = htmlspecialchars($student->buildNameFromParts() ?: $student->name);
+            $text = "❌ <b>Kursga yozilish rad etildi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Hurmatli <b>{$studentName}</b>,\n\n"
+                ."<b>Kurs:</b> {$courseTitle}\n"
+                ."😔 Afsuski, sizning arizangiz rad etildi.\n\n"
+                ."💡 Boshqa kurslarga yozilishni sinab ko'ring.";
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $student->telegram_chat_id, $text);
+            $student->notifyLinkedParents($text);
+        }
 
         return back()
             ->with('success', 'Yozilish rad etildi.')

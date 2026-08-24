@@ -27,9 +27,11 @@
                 <button type="button" class="btn btn-sm btn-outline" onclick="window.print()">
                     <i class="fa-solid fa-print"></i> {{ __('public.profile_results.print') }}
                 </button>
+                @if(auth()->user()->donorCanExport())
                 <a href="{{ route('profile.results.export') }}" class="btn btn-sm btn-outline">
                     <i class="fa-solid fa-file-csv"></i> {{ __('public.profile_results.export_all') }}
                 </a>
+                @endif
             </div>
         </div>
     </div>
@@ -124,9 +126,11 @@
                     </div>
 
                     <div class="profile-actions-row results-card-actions">
+                        @if(auth()->user()->donorCanExport())
                         <a href="{{ route('profile.results.single.export', $result) }}" class="btn btn-sm btn-outline">
                             <i class="fa-solid fa-file-csv"></i> {{ __('public.profile_results.export_single') }}
                         </a>
+                        @endif
                         <a href="{{ route('profile.exams.results.show', $result) }}" class="btn btn-outline btn-sm w-100" style="justify-content:center;">
                             <i class="fa-solid fa-chart-pie me-1"></i> {{ __('public.profile_results.details_chart') }}
                         </a>

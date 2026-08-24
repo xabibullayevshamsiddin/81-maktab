@@ -57,6 +57,9 @@ class FamilyLinkController extends Controller
 
         $parent->linkedStudents()->attach($user->id, ['linked_at' => now()]);
 
+        // Kodni o'chirish — qayta ishlatilmasligi uchun
+        $parent->update(['family_link_code' => null]);
+
         // O'quvchiga ham xabar
         if ($user->telegram_chat_id) {
             app(\App\Services\TelegramService::class)->sendMessage(

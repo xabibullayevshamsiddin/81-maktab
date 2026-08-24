@@ -235,7 +235,15 @@ class AdminController extends Controller
             return redirect()->route('user')->with('error', 'Yangilash uchun ma\'lumot yuborilmadi.');
         }
 
+        $oldRoleName = $user->role;
+        $oldRoleLabel = $user->roleRelation?->label ?? $oldRoleName;
+
         $user->update($updatePayload);
+
+        // Rol o'zgarganda Telegram xabar yuborish
+        if (array_key_exists('role_id', $validated) && $oldRoleName !== $effectiveRoleName) {
+            $this->notifyRoleChanged($user, $oldRoleLabel, $newRole->label ?? $effectiveRoleName);
+        }
 
         return redirect()->route('user')
             ->with('success', 'Foydalanuvchi yangilandi.')
@@ -525,5 +533,30 @@ class AdminController extends Controller
         }
 
         $telegram->sendMessage((int) $teacher->telegram_chat_id, $text);
+    }
+
+    private function notifyRoleChanged(User $user, string $oldRoleLabel, string $newRoleLabel): void
+    {
+        if (! $user->telegram_chat_id) {
+            return;
+        }
+
+        try {
+            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+            $adminName = htmlspecialchars(auth()->user()->buildNameFromParts() ?: auth()->user()->name);
+
+            $text = "🔄 <b>Ro'lingiz o'zgartirildi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
+                ."👨‍💼 <b>O'zgartirgan:</b> {$adminName}\n\n"
+                ."📊 <b>Eski ro'l:</b> {$oldRoleLabel}\n"
+                ."📊 <b>Yangi ro'l:</b> {$newRoleLabel}\n\n"
+                ."━━━━━━━━━━━━━━━━━━━━";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+        } catch (\Throwable $e) {
+            // ignore
+        }
     }
 }

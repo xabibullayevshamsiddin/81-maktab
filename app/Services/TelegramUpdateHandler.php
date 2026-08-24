@@ -579,18 +579,29 @@ class TelegramUpdateHandler
      */
     private function handleEnrollmentDecision(int $chatId, int $enrollmentId, bool $approved, string $callbackId, array $callbackQuery = []): void
     {
-        // Ruxsat tekshirish — admin yoki kurs egasi (o'qituvchi)
         $actingUser = \App\Models\User::where('telegram_chat_id', $chatId)->first();
-        $enrollment = \App\Models\CourseEnrollment::with(['course', 'user'])->find($enrollmentId);
-        $course = $enrollment?->course;
 
-        if (! $actingUser || ! $course || ! ($actingUser->isAdmin() || ($actingUser->isTeacher() && $actingUser->ownsCourse($course)))) {
-            $this->telegram->answerCallbackQuery($callbackId, "Sizda bu amalni bajarish huquqi yo'q.");
+        if (! $actingUser) {
+            $this->telegram->answerCallbackQuery($callbackId, "Telegram akkauntingiz tizimga ulanmagan.");
             return;
         }
 
-        if (! $enrollment || ! $enrollment->isPending()) {
+        $enrollment = \App\Models\CourseEnrollment::with(['course', 'user'])->find($enrollmentId);
+
+        if (! $enrollment) {
             $this->telegram->answerCallbackQuery($callbackId, 'Ariza topilmadi.');
+            return;
+        }
+
+        if (! $enrollment->isPending()) {
+            $this->telegram->answerCallbackQuery($callbackId, 'Bu ariza allaqachon ko\'rib chiqilgan.');
+            return;
+        }
+
+        // Ruxsat tekshirish — admin yoki kurs egasi (o'qituvchi)
+        $course = $enrollment->course;
+        if (! $actingUser->isAdmin() && ! ($actingUser->isTeacher() && $course && $actingUser->ownsCourse($course))) {
+            $this->telegram->answerCallbackQuery($callbackId, "Sizda bu amalni bajarish huquqi yo'q.");
             return;
         }
 
@@ -608,6 +619,9 @@ class TelegramUpdateHandler
                 ? "✅ Kursga yozilish tasdiqlandi!\n\n<b>Kurs:</b> ".htmlspecialchars($courseTitle)."\nKurs boshlanishini kuting."
                 : "❌ Kursga yozilish rad etildi.\n\n<b>Kurs:</b> ".htmlspecialchars($courseTitle);
             $this->telegram->sendMessage((int) $student->telegram_chat_id, $text);
+
+            // Ulangan ota-onalarga ham xabar yuborish
+            $student->notifyLinkedParents($text);
         }
 
         $decisionText = $approved ? 'Tasdiqlandi' : 'Rad etildi';

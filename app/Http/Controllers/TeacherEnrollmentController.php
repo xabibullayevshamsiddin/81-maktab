@@ -97,6 +97,9 @@ class TeacherEnrollmentController extends Controller
         }
 
         $telegram->sendMessage((int) $student->telegram_chat_id, $text);
+
+        // Ulangan ota-onalarga ham xabar yuborish
+        $student->notifyLinkedParents($text);
     }
 
     public function destroy(Request $request, CourseEnrollment $enrollment)

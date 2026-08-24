@@ -341,6 +341,12 @@ class TeacherExamController extends Controller
         $user = $request->user();
         $this->ensureUserCanManageExams($user);
 
+        if (! $user->donorCanExport()) {
+            return back()
+                ->with('error', 'CSV export donorlar uchun mavjud. Donat sotib oling!')
+                ->with('toast_type', 'error');
+        }
+
         $examId = $request->query('exam_id');
         $selectedExamId = $examId !== null && $examId !== '' ? (int) $examId : null;
 

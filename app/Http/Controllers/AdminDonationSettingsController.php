@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Donation;
 use App\Models\SiteSetting;
 use App\Models\User;
 use App\Models\UserActivity;
@@ -83,6 +84,26 @@ class AdminDonationSettingsController extends Controller
             'new_value' => null,
             'occurred_at' => now(),
         ]);
+
+        // Telegram xabar yuborish
+        if ($user->telegram_chat_id) {
+            try {
+                $config = Donation::configForRank($oldRank);
+                $label = $config["label"] ?? ucfirst($oldRank);
+                $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+                $text = "⚠️ <b>Donor holati bekor qilindi</b>\n"
+                    ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                    ."Salom, <b>{$userName}</b>!\n\n"
+                    ."Sizning <b>{$label}</b> obunangiz admin tomonidan bekor qilindi.\n\n"
+                    ."🔐 Imtiyozlar cheklandi.\n"
+                    ."💬 Savollar bo'lsa, admin bilan bog'laning.\n\n"
+                    ."━━━━━━━━━━━━━━━━━━━━";
+                $telegram = app(\App\Services\TelegramService::class);
+                $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
 
         return back()->with('success', "{$user->name} uchun donor holati bekor qilindi.");
     }

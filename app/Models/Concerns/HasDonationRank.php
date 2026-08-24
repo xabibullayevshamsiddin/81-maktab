@@ -313,6 +313,11 @@ trait HasDonationRank
             ["rank" => $rank, "amount" => $amount, "expires_at" => $expiresAt->toDateTimeString()]
         );
 
+        // Telegram tabrik xabari
+        if ($this->telegram_chat_id) {
+            $this->sendDonorActivationTelegram($rank, $expiresAt, $amount);
+        }
+
         return $donation;
     }
 
@@ -346,5 +351,33 @@ trait HasDonationRank
         }
 
         return implode(' ', $parts) ?: 'Kamroq 1 daqiqa';
+    }
+
+    private function sendDonorActivationTelegram(string $rank, \Illuminate\Support\Carbon $expiresAt, int $amount): void
+    {
+        try {
+            $config = \App\Models\Donation::configForRank($rank);
+            $label = $config["label"] ?? ucfirst($rank);
+            $userName = htmlspecialchars($this->buildNameFromParts() ?: $this->name);
+            $date = $expiresAt->format('d.m.Y');
+            $formattedAmount = number_format($amount);
+
+            $text = "🎉 <b>Tabriklaymiz!</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."Salom, <b>{$userName}</b>!\n\n"
+                ."Siz <b>{$label}</b> donoriga aylandingiz! 🏆\n\n"
+                ."💰 To'lov: <b>{$formattedAmount} so'm</b>\n"
+                ."📅 Muddat: <b>{$date}</b> gacha\n\n"
+                ."✨ Endi barcha imtiyozlardan foydalanishingiz mumkin!\n"
+                ."━━━━━━━━━━━━━━━━━━━━";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $this->telegram_chat_id, $text);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Telegram donor activation notification failed', [
+                'user_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
