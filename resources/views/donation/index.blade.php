@@ -228,6 +228,7 @@
         ["check" => true, "text" => "Maxsus profil dizayni"],
         ["check" => false, "text" => "Sahifalar orasida tezkor o'tish"],
         ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
+        ["check" => true, "icon" => "fa-solid fa-family", "text" => "Ota-ona: 3 tagacha farzandni bog'lash"],
     ];
     $premiumFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (binafsha)"],
@@ -240,6 +241,7 @@
         ["check" => true, "text" => __('public.donation.index_top_donors') . ' ro\'yhati'],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
         ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
+        ["check" => true, "icon" => "fa-solid fa-family", "text" => "Ota-ona: 4 tagacha farzandni bog'lash"],
     ];
     $vipFeatures = [
         ["check" => true, "text" => "Rangli kommentlar (oltin)"],
@@ -253,6 +255,7 @@
         ["check" => true, "text" => "Prioritet support"],
         ["check" => true, "icon" => "fa-solid fa-chalkboard-user", "text" => "O'qituvchilar: 3 ta kurs ochish"],
         ["check" => true, "icon" => "fa-solid fa-file-csv", "text" => "Imtihon natijalarini CSV export qilish"],
+        ["check" => true, "icon" => "fa-solid fa-family", "text" => "Ota-ona: 5 tagacha farzandni bog'lash"],
     ];
     
     // Pre-calculate prices for all durations
@@ -281,6 +284,22 @@
 </div>
 
 <div class="container" style="max-width: 1100px; padding: 0 1rem 3rem;">
+    
+    {{-- Ota-ona bog'lash limiti haqida info --}}
+    <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 12px;">
+        <i class="fa-solid fa-circle-info" style="color: #818cf8; font-size: 18px; margin-top: 2px;"></i>
+        <div>
+            <div style="font-weight: 700; font-size: 14px; color: #e2e8f0; margin-bottom: 4px;">👨‍👩‍👧 Ota-ona: farzand bog'lash limiti</div>
+            <div style="font-size: 13px; color: #94a3b8; line-height: 1.6;">
+                Oddiy foydalanuvchilar <b style="color:#e2e8f0;">2 ta</b> farzand bog'lay oladi.
+                Donor darajasi qancha yuqori bo'lsa — shuncha ko'p farzand bog'lash mumkin:
+                <span style="color:#60a5fa;">Supporter → 3 ta</span>,
+                <span style="color:#a78bfa;">Premium → 4 ta</span>,
+                <span style="color:#fbbf24;">VIP → 5 ta</span>.
+            </div>
+        </div>
+    </div>
+
     <div class="rank-grid">
         @foreach($ranks as $key => $config)
             @php
