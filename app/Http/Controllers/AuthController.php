@@ -259,6 +259,30 @@ class AuthController extends Controller
         $fullName = trim(($validated['first_name'] ?? '').' '.($validated['last_name'] ?? ''));
         $isParent = ! empty($validated['is_parent']);
 
+        // Faqat localhost (development) uchun — Telegram webhook mahalliy serverga yetib bormaydi,
+        // shuning uchun tasdiqlashsiz to'g'ridan-to'g'ri ro'yxatdan o'tkazamiz.
+        if (app()->environment('local')) {
+            $user = \App\Models\User::create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'name' => $fullName,
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'grade' => $isParent ? null : ($validated['grade'] ?? null),
+                'is_parent' => $isParent,
+                'password' => Hash::make($validated['password']),
+                'telegram_chat_id' => null,
+                'email_verified_at' => now(),
+            ]);
+
+            Auth::login($user, true);
+            $request->session()->regenerate();
+
+            return redirect()->route('home')
+                ->with('success', "Ro'yxatdan o'tish yakunlandi (local rejim — Telegram tasdiqlashsiz).")
+                ->with('toast_type', 'success');
+        }
+
         // Telegram orqali tasdiqlash — foydalanuvchini hali yaratmaymiz
         $token = $this->createTelegramVerification(
             TelegramVerification::PURPOSE_REGISTER,

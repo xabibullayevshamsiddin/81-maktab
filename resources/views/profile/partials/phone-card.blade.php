@@ -52,10 +52,11 @@
       </form>
       <form action="{{ route('profile.phone.resend') }}" method="POST" style="display:inline;" data-profile-async="phone">
         @csrf
-        <button class="btn btn-outline" type="submit">
-          <i class="fa-solid fa-paper-plane"></i> Qayta yuborish
+        <button class="btn btn-outline phone-resend-btn" type="submit" disabled style="opacity:0.5;cursor:not-allowed;">
+          <i class="fa-solid fa-paper-plane"></i> <span class="phone-resend-text">Qayta yuborish</span>
         </button>
       </form>
+      <div class="phone-resend-countdown" style="font-size:0.78rem;color:var(--muted);margin-top:4px;width:100%;text-align:center;"></div>
       <form action="{{ route('profile.phone.cancel') }}" method="POST" style="display:inline;" data-profile-async="phone">
         @csrf
         <button class="btn btn-outline" type="submit">
@@ -84,4 +85,32 @@
       </div>
     </form>
   @endif
+
+<script>
+(function() {
+    var btn = document.querySelector('.phone-resend-btn');
+    if (!btn) return;
+    var txt = btn.querySelector('.phone-resend-text');
+    var cd = btn.parentElement.nextElementSibling;
+    var remaining = 60;
+    function tick() {
+        if (remaining <= 0) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            if (txt) txt.textContent = 'Qayta yuborish';
+            if (cd) cd.textContent = '';
+            return;
+        }
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        if (txt) txt.textContent = 'Qayta yuborish';
+        if (cd) cd.textContent = remaining + ' soniyadan keyin';
+        remaining--;
+        setTimeout(tick, 1000);
+    }
+    tick();
+})();
+</script>
 </div>

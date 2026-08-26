@@ -232,10 +232,11 @@
 
                 <form action="{{ route('login.verify.resend') }}" method="POST" style="margin-bottom:1rem;">
                     @csrf
-                    <button type="submit" class="resend-btn">
-                        <i class="fa-solid fa-rotate"></i> Kodni qayta yuborish
+                    <button type="submit" class="resend-btn" id="login-resend-btn" disabled style="opacity:0.5;cursor:not-allowed;">
+                        <i class="fa-solid fa-rotate"></i> <span id="login-resend-text">Kodni qayta yuborish</span>
                     </button>
                 </form>
+                <div id="login-resend-countdown" style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;"></div>
 
                 <div class="verify-info">
                     <p>
@@ -349,6 +350,32 @@
                 }
             });
         }
+
+        // ========== RESEND COOLDOWN (60 soniya) ==========
+        var resendBtn = document.getElementById('login-resend-btn');
+        var resendText = document.getElementById('login-resend-text');
+        var resendCountdown = document.getElementById('login-resend-countdown');
+        var COOLDOWN = 60;
+        var remaining = COOLDOWN;
+
+        function tickResend() {
+            if (remaining <= 0) {
+                resendBtn.disabled = false;
+                resendBtn.style.opacity = '1';
+                resendBtn.style.cursor = 'pointer';
+                resendText.textContent = 'Kodni qayta yuborish';
+                resendCountdown.textContent = '';
+                return;
+            }
+            resendBtn.disabled = true;
+            resendBtn.style.opacity = '0.5';
+            resendBtn.style.cursor = 'not-allowed';
+            resendText.textContent = 'Kodni qayta yuborish';
+            resendCountdown.textContent = remaining + ' soniyadan keyin qayta yuborishingiz mumkin';
+            remaining--;
+            setTimeout(tickResend, 1000);
+        }
+        tickResend();
     });
     </script>
 </x-layouts.main>
