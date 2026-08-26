@@ -474,8 +474,12 @@ class ExamController extends Controller
             $telegram = app(TelegramService::class);
             $telegram->sendMessage((int) $user->telegram_chat_id, $text);
 
-            // Ulangan ota-onalarga ham xabar yuborish
-            $user->notifyLinkedParents($text);
+            // Ota-onaga faqat yakuniy natija tayyor bo'lsa yuboriladi
+            // ("Kutilmoqda" holatda YO'Q — matnli javoblar tekshirilgach
+            // GradeTextAnswerAction::sendGradingNotification() o'zi yuboradi)
+            if ($passed !== null) {
+                $user->notifyLinkedParents($text);
+            }
         } catch (\Throwable $e) {
             Log::error('Telegram exam result notification failed', [
                 'result_id' => $result->id,

@@ -206,7 +206,15 @@ class ProfileController extends Controller
                     ->paginate(12);
             }
 
-            return view('profile.results.index', compact('results', 'resultSummary', 'linkedStudents', 'selectedChild'));
+            // Farzandning kurslari
+            $childCourses = $selectedChild
+                ? \App\Models\CourseEnrollment::where('user_id', $selectedChild->id)
+                    ->with('course:id,title')
+                    ->latest()
+                    ->get()
+                : collect();
+
+            return view('profile.results.index', compact('results', 'resultSummary', 'linkedStudents', 'selectedChild', 'childCourses'));
         }
 
         $resultSummary = $this->userResultsBaseQuery($user)

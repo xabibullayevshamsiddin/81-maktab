@@ -16,6 +16,50 @@
 @endphp
 
 <div class="container exam-public-container" style="padding-top: 0;">
+    {{-- Ota-ona uchun: farzand tanlash --}}
+    @if(!empty($linkedStudents) && $linkedStudents->count() > 0)
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; margin-top: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <i class="fa-solid fa-users" style="color: #6366f1; font-size: 18px;"></i>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Farzandni tanlang</h3>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            @foreach($linkedStudents as $student)
+            <a href="{{ route('profile.results.index', ['child_id' => $student->id]) }}"
+               style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all .2s; {{ (isset($selectedChild) && $selectedChild && $selectedChild->id === $student->id) ? 'background: #6366f1; color: #fff;' : 'background: var(--surface-secondary, #f1f5f9); color: var(--text, #334155); border: 1px solid var(--border, #e2e8f0);' }}">
+                <i class="fa-solid fa-user-graduate"></i>
+                {{ $student->buildNameFromParts() ?: $student->name }}
+                @if($student->grade)
+                <span style="font-size: 12px; opacity: 0.7;">{{ $student->grade }}-sinf</span>
+                @endif
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- Ota-ona uchun: farzandning kurslari --}}
+    @if(!empty($childCourses) && $childCourses->count() > 0)
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+            <i class="fa-solid fa-graduation-cap" style="color: #059669; font-size: 18px;"></i>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Farzandingiz kurslari</h3>
+        </div>
+        @foreach($childCourses as $enrollment)
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border, #f1f5f9);">
+            <span style="font-weight: 600; font-size: 14px;">{{ $enrollment->course->title ?? 'Noma\'lum kurs' }}</span>
+            @if($enrollment->status === 'approved')
+                <span style="background: #d1fae5; color: #059669; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">Yozilgan</span>
+            @elseif($enrollment->status === 'pending')
+                <span style="background: #fef3c7; color: #d97706; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">Kutilmoqda</span>
+            @else
+                <span style="background: #f1f5f9; color: #64748b; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">Rad etilgan</span>
+            @endif
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     <div class="results-header" style="margin-top: 0;">
         <div class="results-header-actions">
             <div>

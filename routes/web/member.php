@@ -63,6 +63,12 @@ Route::middleware('auth')->group(function () {
         Route::post('profile/family/link', [FamilyLinkController::class, 'linkByCode'])->middleware('active')->name('profile.family.link');
         Route::delete('profile/family/{linkUserId}', [FamilyLinkController::class, 'unlink'])->middleware('active')->name('profile.family.unlink');
 
+        // Ota-ona xush kelish modalini yopish
+        Route::post('profile/dismiss-parent-welcome', function (\Illuminate\Http\Request $request) {
+            $request->session()->forget('show_parent_welcome');
+            return response()->json(['ok' => true]);
+        })->middleware('active')->name('profile.dismiss-parent-welcome');
+
         Route::post('feature-requests', [FeatureRequestController::class, 'store'])->middleware('active')->name('feature-requests.store');
         Route::post('feature-requests/{featureRequest}/vote', [FeatureRequestController::class, 'vote'])->middleware('active')->name('feature-requests.vote');
         Route::post('feature-requests/{featureRequest}/replies', [FeatureRequestController::class, 'storeReply'])

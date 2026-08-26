@@ -2431,8 +2431,8 @@ button.is-loading::after {
 
   body.has-chat-widget.has-ai-widget .prime-audio-toggle,
   body:has(#chat-widget):has(#ai-widget:not([hidden])) .prime-audio-toggle {
-    bottom: 140px !important;
-    right: 14px !important;
+    bottom: 100px !important;
+    right: 16px !important;
   }
 }
 
@@ -3972,7 +3972,7 @@ button.is-loading::after {
   .about-hero-3d-scene {
     display: none !important;
   }
-  
+
   /* Hero layout'ni 1 ustunli qilish */
   .news-hero-content,
   .about-hero-text {
@@ -3988,7 +3988,7 @@ button.is-loading::after {
   .ap-setting-row--cursor {
     display: none !important;
   }
-  
+
   /* Yoki aniqroq — cursor_label bor qatorni yashirish */
   .ap-setting-row .asr-label:has(+ .asr-desc) {
     /* Cursor section only */
@@ -4001,25 +4001,25 @@ button.is-loading::after {
   .ap-theme-card {
     padding: 0.5rem 0.4rem;
   }
-  
+
   .ap-theme-card .atc-icon {
     font-size: 1.2rem;
   }
-  
+
   .ap-theme-card .atc-name {
     font-size: 0.7rem;
   }
-  
+
   /* Preview qismini yashirish — joy tejash */
   .ap-preview {
     display: none;
   }
-  
+
   /* Settings grid'ni 1 ustunli qilish */
   .ap-settings-grid {
     grid-template-columns: 1fr;
   }
-  
+
   /* Saqlash tugmasini kattaroq qilish — touch uchun */
   .ap-btn-save {
     padding: 1rem;
@@ -4067,7 +4067,7 @@ button.is-loading::after {
   .desktop-header-locale .locale-current .locale-flag {
     font-size: 20px;
   }
-  
+
   .desktop-header-locale .locale-current .locale-code {
     font-size: 15px;
   }
@@ -4078,22 +4078,22 @@ button.is-loading::after {
   .mobile-header-locale .locale-current .locale-flag {
     font-size: 22px;
   }
-  
+
   .mobile-header-locale .locale-current .locale-code {
     font-size: 16px;
   }
-  
+
   .nav-dropdown--bomba-locale .nav-dropdown-item {
     display: flex;
     align-items: center;
     padding: 12px 16px;
   }
-  
+
   .nav-dropdown--bomba-locale .nav-dropdown-item .locale-flag {
     font-size: 24px;
     margin-right: 12px;
   }
-  
+
   .nav-dropdown--bomba-locale .nav-dropdown-item .locale-name {
     font-size: 16px;
     font-weight: 600;
@@ -4214,7 +4214,7 @@ button.is-loading::after {
 
 /* Modal backdrop — enhanced glassmorphism */
 .global-search-modal {
-  background: 
+  background:
     radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.15), transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.12), transparent 50%),
     radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08), transparent 60%),
@@ -4229,7 +4229,7 @@ button.is-loading::after {
   border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: 24px !important;
   padding: 32px !important;
-  box-shadow: 
+  box-shadow:
     0 32px 80px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset,
     0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
@@ -4245,10 +4245,10 @@ button.is-loading::after {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(147, 197, 253, 0.5), 
-    rgba(99, 102, 241, 0.5), 
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(147, 197, 253, 0.5),
+    rgba(99, 102, 241, 0.5),
     transparent);
   opacity: 0.8;
 }
@@ -4286,7 +4286,7 @@ button.is-loading::after {
   background: rgba(15, 23, 42, 0.6) !important;
   border-radius: 20px !important;
   padding: 0 24px !important;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.03) inset !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -4309,7 +4309,7 @@ button.is-loading::after {
 .global-search-input-wrap:focus-within {
   border-color: rgba(59, 130, 246, 0.5) !important;
   background: rgba(15, 23, 42, 0.8) !important;
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(59, 130, 246, 0.2),
     0 0 0 4px rgba(59, 130, 246, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
@@ -4393,8 +4393,8 @@ button.is-loading::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.08), 
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.08),
     rgba(139, 92, 246, 0.05));
   opacity: 0;
   transition: opacity 0.25s ease;
@@ -4408,7 +4408,7 @@ button.is-loading::after {
   transform: translateY(-3px) scale(1.01) !important;
   border-color: rgba(59, 130, 246, 0.3) !important;
   background: rgba(30, 41, 59, 0.7) !important;
-  box-shadow: 
+  box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(59, 130, 246, 0.2) inset !important;
 }

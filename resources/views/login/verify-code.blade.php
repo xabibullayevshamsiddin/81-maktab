@@ -126,10 +126,10 @@
         <h2>Tasdiqlash kerak</h2>
         <p class="tg-subtitle">Quyidagi tugmani bosib, Telegram'da tasdiqlang</p>
 
-        {{-- Telegram ochish tugmasi — mobil qurilmalarda birinchi --}}
-        <a href="https://t.me/{{ $bot_username ?: 'maktab81_verify_bot' }}?start={{ $token }}" target="_blank" class="tg-open-btn">
+        {{-- Telegram ochish tugmasi --}}
+        <button type="button" class="tg-open-btn" id="tg-open-btn">
           <i class="fa-brands fa-telegram"></i> Telegram'da ochish
-        </a>
+        </button>
 
         {{-- QR kod — faqat kompyuterda ko'rinadi --}}
         <div class="tg-qr-section">
@@ -169,9 +169,23 @@
       var statusUrl = '{{ route("telegram.status", ["token" => $token]) }}';
       var completeUrl = '{{ route("telegram.complete", ["token" => $token]) }}';
       var deepLink = 'https://t.me/' + botUsername + '?start=' + token;
+      var tgProtocol = 'tg://resolve?domain=' + botUsername + '&start=' + token;
+
+      // ========== TELEGRAM OCHISH TUGMASI ==========
+      var openBtn = document.getElementById('tg-open-btn');
+      if (openBtn) {
+        openBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          // tg:// protokoli orqali Telegram ilovasini ochish (telegram.org ga bermaydi)
+          window.location.href = tgProtocol;
+        });
+      }
 
       // ========== QR KOD (faqat kompyuterda) ==========
       var qrContainer = document.getElementById('tg-qr');
+      if (qrContainer) {
+        qrContainer.innerHTML = '';
+      }
       if (qrContainer && typeof QRCode !== 'undefined') {
         new QRCode(qrContainer, {
           text: deepLink,

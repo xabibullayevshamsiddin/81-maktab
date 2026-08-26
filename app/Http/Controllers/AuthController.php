@@ -393,9 +393,16 @@ class AuthController extends Controller
         Auth::login($user, true);
         session()->regenerate();
 
-        return redirect()->route('home')
+        $redirect = redirect()->route('home')
             ->with('success', 'Ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi.')
             ->with('toast_type', 'success');
+
+        // Ota-ona ro'yxatdan o'tgan bo'lsa — xush kelish modali ko'rsatish
+        if ($isParent) {
+            $redirect->with('show_parent_welcome', true);
+        }
+
+        return $redirect;
     }
 
     /**
