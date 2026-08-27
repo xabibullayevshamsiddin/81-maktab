@@ -897,7 +897,8 @@ class AiService
                 ."- 📊 Farzandining imtihon natijalari (matnli javobli imtihonlarda — o'qituvchi tekshirib bo'lgan **yakuniy** natija, oraliq/kutilayotgan holat emas).\n"
                 ."- 🎓 Kursga yozilish arizasi tasdiqlangan yoki rad etilgan bo'lsa.\n"
                 ."- 🚫 Agar admin akkauntni bloklasa.\n\n"
-                ."Bulardan tashqari, ota-ona o'z profilida (".route('profile.results.index').") farzandining barcha natijalari va kurslarini istalgan payt ko'rishi mumkin — Telegram'ni kutish shart emas.";
+                ."Bulardan tashqari, ota-ona o'z profilida (".route('profile.results.index').") farzandining barcha natijalari va kurslarini istalgan payt ko'rishi mumkin — Telegram'ni kutish shart emas.\n\n"
+                ."💬 Telegram botga /bolam yozib, istalgan payt farzandingizning qisqa holatini ko'rishingiz mumkin.";
         }
 
         return null;

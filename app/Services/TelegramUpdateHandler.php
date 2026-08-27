@@ -214,6 +214,86 @@ class TelegramUpdateHandler
     }
 
     /**
+     | /bolam — ota-ona uchun farzand xulosasi.
+     */
+    public function handleChildSummaryCommand(int $chatId): void
+    {
+        try {
+            $user = User::where('telegram_chat_id', $chatId)->first();
+
+            if (! $user) {
+                $this->telegram->sendMessage($chatId,
+                    "⚠️ Hisobingiz ulanmagan.\n\n"
+                    ."Saytda profil sozlamalaridan Telegram'ni ulang."
+                );
+                return;
+            }
+
+            if (! $user->is_parent) {
+                $this->telegram->sendMessage($chatId,
+                    "ℹ️ Bu buyruq faqat ota-ona akkauntlari uchun.\n\n"
+                    ."Agar siz o'quvchi bo'lsangiz, /natijalarim buyrug'idan foydalaning."
+                );
+                return;
+            }
+
+            $children = $user->linkedStudents;
+
+            if ($children->isEmpty()) {
+                $this->telegram->sendMessage($chatId,
+                    "📭 Sizga hali hech qanday farzand bog'lanmagan.\n\n"
+                    ."Saytdagi profilingizdan kod yaratib, farzandingizga bering — u o'z profilida shu kodni kiritib bog'lansin."
+                );
+                return;
+            }
+
+            $lines = ["👨‍👩‍👧 <b>Farzandlaringiz</b>"];
+
+            foreach ($children as $child) {
+                $lines[] = "\n━━━━━━━━━━━━━━━━━━━━";
+                $lines[] = "👤 <b>".htmlspecialchars($child->name)."</b>" . ($child->grade ? " ({$child->grade}-sinf)" : '');
+
+                $lastResults = Result::where('user_id', $child->id)
+                    ->where('status', 'submitted')
+                    ->latest('submitted_at')
+                    ->take(3)
+                    ->with('exam:id,title')
+                    ->get();
+
+                if ($lastResults->isEmpty()) {
+                    $lines[] = "📊 Hali imtihon natijalari yo'q.";
+                } else {
+                    $lines[] = "📊 <b>So'nggi natijalar:</b>";
+                    foreach ($lastResults as $result) {
+                        $title = $result->exam->title ?? 'Imtihon';
+                        $score = $result->passed === null
+                            ? '⏳ Kutilmoqda'
+                            : ($result->passed ? '✅' : '❌') . " {$result->points_earned}/{$result->points_total}";
+                        $lines[] = "  • ".htmlspecialchars($title)." — {$score}";
+                    }
+                }
+
+                $courseCount = \App\Models\CourseEnrollment::where('user_id', $child->id)
+                    ->where('status', 'approved')
+                    ->count();
+                $pendingCount = \App\Models\CourseEnrollment::where('user_id', $child->id)
+                    ->where('status', 'pending')
+                    ->count();
+
+                $lines[] = "🎓 Yozilgan kurslar: {$courseCount}" . ($pendingCount > 0 ? " (+ {$pendingCount} kutilmoqda)" : '');
+            }
+
+            $lines[] = "\n━━━━━━━━━━━━━━━━━━━━";
+            $lines[] = "💡 Batafsil ma'lumot: saytdagi profilingizda.";
+
+            $this->telegram->sendMessage($chatId, implode("\n", $lines));
+        } catch (\Throwable $e) {
+            Log::error('handleChildSummaryCommand error: ' . $e->getMessage());
+            $this->telegram->sendMessage($chatId, "⚠️ Xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.");
+        }
+    }
+
+    /**
      | /profilim — foydalanuvchi profilini ko'rsatish.
      */
     public function handleProfileCommand(int $chatId): void
@@ -295,7 +375,8 @@ class TelegramUpdateHandler
                 ."/start — Botni ishga tushirish\n"
                 ."/help — Shu xabarni ko'rsatish\n"
                 ."/natijalarim — Imtihon natijalaringiz\n"
-                ."/profilim — Profil ma'lumotlaringiz\n\n"
+                ."/profilim — Profil ma'lumotlaringiz\n"
+                ."/bolam — Farzandlar haqida ma'lumot (ota-ona)\n\n"
                 ."━━━━━━━━━━━━━━━━━━━━\n\n"
                 ."💡 Buyruqni guruh chatida yuborishingiz mumkin.";
 

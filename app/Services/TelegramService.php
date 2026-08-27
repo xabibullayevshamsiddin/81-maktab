@@ -23,6 +23,7 @@ class TelegramService
             ['command' => 'help', 'description' => 'Yordam va buyruqlar'],
             ['command' => 'natijalarim', 'description' => 'Imtihon natijalarim'],
             ['command' => 'profil', 'description' => 'Profil ma\'lumotlarim'],
+            ['command' => 'bolam', 'description' => "Farzandim haqida ma'lumot"],
         ];
     }
 

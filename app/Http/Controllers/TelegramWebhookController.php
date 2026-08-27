@@ -86,6 +86,12 @@ class TelegramWebhookController extends Controller
                     return response()->json(['ok' => true]);
                 }
 
+                if (str_starts_with($text, '/bolam') || str_starts_with($text, '/bolalarim')) {
+                    $this->handler->handleChildSummaryCommand($chatId);
+
+                    return response()->json(['ok' => true]);
+                }
+
                 if (str_starts_with($text, '/help')) {
                     $this->handler->handleHelpCommand($chatId);
 
