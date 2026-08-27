@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\TelegramService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class TelegramSetCommands extends Command
 {
@@ -16,20 +17,28 @@ class TelegramSetCommands extends Command
 
         $this->line("📋 Bot buyruqlari Telegram Menu ga ro'yxatdan o'tkazilmoqda...");
 
-        $result = $telegram->setMyCommands($commands);
+        try {
+            $result = $telegram->setMyCommands($commands);
 
-        if ($result !== null) {
+            if (! $result) {
+                $this->error('❌ Buyruqlarni ro\'yxatdan o\'tkazishda xatolik: setMyCommands() falsy qaytardi.');
+                Log::error('telegram:set-commands: setMyCommands() returned falsy');
+                return self::FAILURE;
+            }
+
             $this->info('✅ Bot buyruqlari muvaffaqiyatli ro\'yxatdan o\'tkazildi!');
             $this->line('');
             foreach ($commands as $cmd) {
                 $this->line("  /{$cmd['command']} — {$cmd['description']}");
             }
 
-            return 0;
+            return self::SUCCESS;
+        } catch (\Throwable $e) {
+            $this->error('❌ Xato: ' . $e->getMessage());
+            Log::error('telegram:set-commands xato: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            return self::FAILURE;
         }
-
-        $this->error('❌ Buyruqlarni ro\'yxatdan o\'tkazishda xatolik yuz berdi.');
-
-        return 1;
     }
 }

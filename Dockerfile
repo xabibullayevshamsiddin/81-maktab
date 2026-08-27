@@ -97,5 +97,5 @@ CMD ["/bin/sh", "-c", "\
     php artisan route:cache && \
     php artisan view:cache && \
     php artisan telegram:set-webhook 2>/dev/null || true && \
-    php artisan telegram:set-commands 2>/dev/null || true && \
+    php artisan telegram:set-commands && \
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
