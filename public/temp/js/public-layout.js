@@ -793,7 +793,11 @@
       var csrfMeta = document.querySelector('meta[name="csrf-token"]');
       var csrf = (cfg && cfg.getAttribute('data-csrf')) || (csrfMeta && csrfMeta.getAttribute('content'));
       if (!csrf) {
-        alert('CSRF token topilmadi.');
+        if (window.showToast) {
+          window.showToast('Xatolik: CSRF token topilmadi.', 'error');
+        } else {
+          alert('CSRF token topilmadi.');
+        }
         return;
       }
 
@@ -815,26 +819,26 @@
           .then(function (r) {
             return r.json().then(function (j) {
               if (!r.ok) {
-                throw new Error((j && (j.error || j.message)) || 'Xatolik yuz berdi');
+                throw new Error((j && (j.error || j.message)) || 'Foydalanuvchini bloklab bo\'lmadi.');
               }
               return j;
             });
           })
           .then(function (j) {
             if (window.showToast) {
-              window.showToast('Foydalanuvchi bloklandi (' + (j.duration_text || '1 kun') + ').', 'success');
+              window.showToast('Foydalanuvchi muvaffaqiyatli bloklandi (' + (j.duration_text || '1 kun') + ').', 'success');
             } else {
-              alert('Foydalanuvchi bloklandi (' + (j.duration_text || '1 kun') + ').');
+              alert('Foydalanuvchi muvaffaqiyatli bloklandi (' + (j.duration_text || '1 kun') + ').');
             }
             setTimeout(function () {
               location.reload();
-            }, 1000);
+            }, 1200);
           })
           .catch(function (err) {
             if (window.showToast) {
-              window.showToast(err.message || 'Xatolik', 'error');
+              window.showToast(err.message || 'Foydalanuvchini bloklashda xatolik yuz berdi.', 'error');
             } else {
-              alert(err.message || 'Xatolik');
+              alert(err.message || 'Xatolik yuz berdi');
             }
           });
       }, blockCount);
@@ -880,7 +884,7 @@
           .then(function (r) {
             return r.json().then(function (j) {
               if (!r.ok) {
-                throw new Error((j && (j.error || j.message)) || 'Xatolik');
+                throw new Error((j && (j.error || j.message)) || 'Amalni bajarishda xatolik yuz berdi.');
               }
               return j;
             });
@@ -888,8 +892,8 @@
           .then(function (j) {
             if (window.showToast) {
               var msg = isDeact 
-                ? ('Foydalanuvchi bloklandi (' + (j.duration_text || '1 kun') + ').')
-                : 'Akkaunt faollashtirildi.';
+                ? ('Foydalanuvchi muvaffaqiyatli bloklandi (' + (j.duration_text || '1 kun') + ').')
+                : 'Akkaunt muvaffaqiyatli faollashtirildi.';
               window.showToast(msg, 'success');
             }
             openUserProfilePreview(uid);
