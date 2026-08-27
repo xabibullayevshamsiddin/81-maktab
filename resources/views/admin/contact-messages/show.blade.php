@@ -99,7 +99,7 @@
             @if(!$message->is_blocked)
               @if($message->senderUser)
                 <button type="button" class="btn btn-sm btn-warning"
-                  onclick="openBlockModal('{{ addslashes($message->senderUser->name) }}', '{{ route('admin.contact-messages.block', $message) }}')">Bloklash</button>
+                  onclick="openBlockModal('{{ addslashes($message->senderUser->name) }}', '{{ route('admin.contact-messages.block', $message) }}', {{ (int) $message->senderUser->block_count }})">Bloklash</button>
               @else
                 <form method="POST" action="{{ route('admin.contact-messages.block', $message) }}" class="d-inline"
                   data-confirm="Bu xabarni bloklaysizmi? (spam yoki arxaiv)" data-confirm-title="Bloklash"

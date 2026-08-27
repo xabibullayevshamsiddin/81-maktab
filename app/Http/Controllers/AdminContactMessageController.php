@@ -109,6 +109,7 @@ class AdminContactMessageController extends Controller
                 default   => now()->addDay(),
             };
 
+            $senderUser->increment('block_count');
             $senderUser->update([
                 'is_blocked'    => true,
                 'blocked_until' => $blockedUntil,

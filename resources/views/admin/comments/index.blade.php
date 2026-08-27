@@ -106,7 +106,7 @@
                     @endif
                     @if($comment->user && auth()->user()->canManageSystem() && auth()->user()->canManage($comment->user) && (int)$comment->user->id !== (int)auth()->id())
                       <button type="button" class="btn btn-sm btn-dark"
-                        onclick="openBlockModal('{{ $comment->user->name }}', '{{ route('admin.comments.block-user', $comment->user) }}')">
+                        onclick="openBlockModal('{{ $comment->user->name }}', '{{ route('admin.comments.block-user', $comment->user) }}', {{ (int) $comment->user->block_count }})">
                         Bloklash
                       </button>
                     @endif

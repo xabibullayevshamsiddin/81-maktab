@@ -356,6 +356,7 @@ class AdminController extends Controller
             'forever' => 'Butun umr',
         };
 
+        $user->increment('block_count');
         $user->update([
             'is_blocked' => true,
             'is_active' => false,

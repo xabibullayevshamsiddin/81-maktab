@@ -142,6 +142,7 @@ class User extends Authenticatable
         'blocked_until',
         'blocked_reason',
         'blocked_by',
+        'block_count',
     ];
 
     public static function nameValidationRules(bool $required = true): array
@@ -201,6 +202,7 @@ class User extends Authenticatable
         'force_password_change' => 'boolean',
         'is_blocked' => 'boolean',
         'blocked_until' => 'datetime',
+        'block_count' => 'integer',
     ];
 
     protected static function booted(): void

@@ -180,7 +180,7 @@
                       <td>
                         @if (auth()->id() !== $user->id && auth()->user()->canManage($user))
                           @if($user->isCurrentlyBlocked())
-                            <span class="badge bg-danger" style="cursor:pointer;" onclick="openBlockModal('{{ $user->name }}', '{{ route('user.block', $user) }}')" title="Bloklangan: {{ $user->blocked_reason ?? 'Sababsiz' }} ({{ $user->blocked_until ? $user->blocked_until->diffForHumans() : 'Butun umr' }} gacha)">
+                            <span class="badge bg-danger" style="cursor:pointer;" onclick="openBlockModal('{{ $user->name }}', '{{ route('user.block', $user) }}', {{ (int) $user->block_count }})" title="Bloklangan: {{ $user->blocked_reason ?? 'Sababsiz' }} ({{ $user->blocked_until ? $user->blocked_until->diffForHumans() : 'Butun umr' }} gacha)">
                               <i class="lni lni-lock me-1"></i> Block
                             </span>
                           @else
@@ -188,7 +188,7 @@
                               @csrf
                               @method('PUT')
                               <input type="hidden" name="role_id" value="{{ $user->role_id }}">
-                              <select name="status_action" onchange="handleStatusChange(this, '{{ $user->name }}', '{{ route('user.block', $user) }}', '{{ route('user.unblock', $user) }}')" class="form-select form-select-sm" style="width: auto;">
+                              <select name="status_action" onchange="handleStatusChange(this, '{{ $user->name }}', '{{ route('user.block', $user) }}', '{{ route('user.unblock', $user) }}', {{ (int) $user->block_count }})" class="form-select form-select-sm" style="width: auto;">
                                 <option value="active" selected>Active</option>
                                 <option value="block">Block</option>
                               </select>
@@ -198,6 +198,21 @@
                           <span class="badge {{ $user->isCurrentlyBlocked() ? 'bg-danger' : 'bg-success' }}">
                             {{ $user->isCurrentlyBlocked() ? 'Block' : 'Active' }}
                           </span>
+                        @endif
+
+                        {{-- Jazo soni nishoni (agar avval qoidabuzarlik qilgan bo'lsa) --}}
+                        @if((int) $user->block_count === 1)
+                          <div>
+                            <span class="badge" style="background:#fef3c7; color:#92400e; font-size:10.5px; padding:2px 6px; border-radius:5px; margin-top:4px; display:inline-block;" title="1 marta bloklangan">
+                              1 ta jazo
+                            </span>
+                          </div>
+                        @elseif((int) $user->block_count > 1)
+                          <div>
+                            <span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:10.5px; padding:2px 6px; border-radius:5px; font-weight:700; margin-top:4px; display:inline-block;" title="{{ $user->block_count }} marta bloklangan">
+                              {{ $user->block_count }} ta jazo
+                            </span>
+                          </div>
                         @endif
                       </td>
 
@@ -214,7 +229,8 @@
                             <span class="text-muted me-2" title="Telegram bog'lanmagan" style="cursor:not-allowed;">
                               <i class="lni lni-telegram"></i>
                             </span>
-                          @endif                          @if (auth()->id() !== $user->id && auth()->user()->canManage($user) && $user->telegram_chat_id)
+                          @endif
+                          @if (auth()->id() !== $user->id && auth()->user()->canManage($user) && $user->telegram_chat_id)
                             <form action="{{ route('user.temp-password.generate', $user) }}" method="POST" style="display:inline;"
                               data-confirm="{{ $user->name }} uchun vaqtincha parol yaratilsinmi? Barcha qurilmalar logout bo'ladi. Telegram ga yuboriladi."
                               data-confirm-title="Vaqtincha parol yaratish"
@@ -232,14 +248,14 @@
                               <form action="{{ route('user.unblock', $user) }}" method="POST" style="display:inline;">
                                 @csrf
                                 <button type="submit" class="text-success me-2" style="background:none;border:none;padding:0;cursor:pointer;"
-                                  title="Blokdarn chiqarish">
+                                  title="Blokdan chiqarish">
                                   <i class="lni lni-unlock"></i>
                                 </button>
                               </form>
                             @else
                               <button type="button" class="text-danger me-2" style="background:none;border:none;padding:0;cursor:pointer;"
                                 title="Bloklash"
-                                onclick="openBlockModal('{{ $user->name }}', '{{ route('user.block', $user) }}')">
+                                onclick="openBlockModal('{{ $user->name }}', '{{ route('user.block', $user) }}', {{ (int) $user->block_count }})">
                                 <i class="lni lni-lock"></i>
                               </button>
                             @endif
@@ -435,10 +451,10 @@ function openTelegramModal(userName, actionUrl) {
   modal.show();
 }
 
-function handleStatusChange(select, userName, blockUrl, unblockUrl) {
+function handleStatusChange(select, userName, blockUrl, unblockUrl, blockCount) {
   var value = select.value;
   if (value === 'block') {
-    openBlockModal(userName, blockUrl);
+    openBlockModal(userName, blockUrl, blockCount);
   }
   // active tanlanganda hech narsa qilmaymiz — dropdown form submit bo'lmaydi
 }

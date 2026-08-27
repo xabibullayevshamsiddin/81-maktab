@@ -436,27 +436,32 @@
             @csrf
             <div class="modal-body">
               <p class="mb-3">
-                <strong>Kim bloklayapti:</strong> <span id="blockRecipient"></span>
+                <strong>Foydalanuvchi:</strong> <span id="blockRecipient" style="font-weight: 700;"></span>
               </p>
+
+              {{-- Foydalanuvchining avvalgi qoidabuzarliklari tarixi --}}
+              <div id="blockHistoryBox" class="mb-3" style="display: none;"></div>
+
               <div class="mb-3">
-                <label for="blockDuration" class="form-label">Blok muddati</label>
+                <label for="blockDuration" class="form-label" style="font-weight: 600;">Blok muddati</label>
                 <select name="duration" id="blockDuration" class="form-select" required>
-                  <option value="1h">1 soat</option>
-                  <option value="1d" selected>1 kun</option>
-                  <option value="1w">1 hafta</option>
-                  <option value="1m">1 oy</option>
-                  <option value="forever">Butun umr</option>
+                  <option value="1h">1 soat — Yengil / 1-marta</option>
+                  <option value="1d">1 kun — O'rta / takrorlanganda</option>
+                  <option value="1w">1 hafta — Og'ir / ko'p martalik</option>
+                  <option value="1m">1 oy — Juda og'ir qoidabuzarlik</option>
+                  <option value="forever">Butun umr — Xavfsizlikka tahdid</option>
                 </select>
               </div>
               <div class="mb-3">
-                <label for="blockReason" class="form-label">Blok sababi</label>
+                <label for="blockReason" class="form-label" style="font-weight: 600;">Blok sababi</label>
                 <textarea name="reason" id="blockReason" class="form-control" rows="3"
-                  placeholder="Nima uchun bloklayapsiz?" required maxlength="500"></textarea>
+                  placeholder="Nima uchun bloklayapsiz? (Masalan: Chatda so'kinganligi uchun)" required maxlength="500"></textarea>
+                <small class="text-muted">Bu sabab foydalanuvchi ekranida va Telegram xabarida ko'rsatiladi.</small>
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
-              <button type="submit" class="btn btn-danger">
+              <button type="submit" class="btn btn-danger" style="font-weight: 600;">
                 <i class="lni lni-lock me-1"></i> Bloklash
               </button>
             </div>
@@ -466,11 +471,35 @@
     </div>
 
     <script>
-    function openBlockModal(userName, actionUrl) {
+    function openBlockModal(userName, actionUrl, blockCount) {
       document.getElementById('blockRecipient').textContent = userName;
       document.getElementById('blockForm').action = actionUrl;
       document.getElementById('blockReason').value = '';
-      document.getElementById('blockDuration').value = '1d';
+      
+      var count = parseInt(blockCount, 10) || 0;
+      var box = document.getElementById('blockHistoryBox');
+      var durationSelect = document.getElementById('blockDuration');
+
+      if (box) {
+        box.style.display = 'block';
+        if (count === 0) {
+          box.innerHTML = '<div style="padding:10px 14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; font-size:13px; color:#1e40af;">'
+            + '<i class="lni lni-checkmark-circle me-1"></i> <strong>Birinchi marta:</strong> Ushbu foydalanuvchi avval bloklanmagan (1-marta qoidabuzarlik). Tavsiya: <b>1 soat</b> yoki <b>1 kun</b>.'
+            + '</div>';
+          if (durationSelect) durationSelect.value = '1h';
+        } else if (count === 1) {
+          box.innerHTML = '<div style="padding:10px 14px; background:#fef3c7; border:1px solid #fde68a; border-radius:10px; font-size:13px; color:#92400e;">'
+            + '<i class="lni lni-warning me-1"></i> <strong>Takroriy qoidabuzarlik:</strong> Ushbu foydalanuvchi avval <b>1 marta</b> bloklangan! Tavsiya: <b>1 kun</b> yoki <b>1 hafta</b>.'
+            + '</div>';
+          if (durationSelect) durationSelect.value = '1d';
+        } else {
+          box.innerHTML = '<div style="padding:10px 14px; background:#fee2e2; border:1px solid #fecaca; border-radius:10px; font-size:13px; color:#991b1b;">'
+            + '<i class="lni lni-cross-circle me-1"></i> <strong>Og‘ir / ko‘p martalik:</strong> Ushbu foydalanuvchi avval <b>' + count + ' marta</b> bloklangan! Tavsiya: <b>1 hafta</b>, <b>1 oy</b> yoki <b>Butun umr</b>.'
+            + '</div>';
+          if (durationSelect) durationSelect.value = '1w';
+        }
+      }
+
       var modal = new bootstrap.Modal(document.getElementById('blockModal'));
       modal.show();
     }
