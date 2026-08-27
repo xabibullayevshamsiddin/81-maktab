@@ -223,6 +223,7 @@ class ChatController extends Controller
                 'can_deactivate' => $viewerCanControl && (bool) $user->is_active,
                 'can_activate' => $viewerCanControl && ! $user->is_active,
                 'is_self' => $isSelf,
+                'block_count' => (int) ($user->block_count ?? 0),
             ];
         }
 

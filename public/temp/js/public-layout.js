@@ -733,7 +733,7 @@
             if (sa.can_deactivate) {
               admParts.push(
                 '<button type="button" class="chat-user-preview-btn chat-user-preview-btn--danger" data-sa-deactivate="'
-                + escAttr(String(userId)) + '"><i class="fa-solid fa-ban"></i> Bloklash (kirishni to‘xtatish)</button>'
+                + escAttr(String(userId)) + '" data-user-name="' + escAttr(d.display_name || '') + '" data-block-count="' + (sa.block_count || 0) + '"><i class="fa-solid fa-ban"></i> Bloklash (kirishni to‘xtatish)</button>'
               );
             }
             if (sa.can_activate) {
@@ -807,50 +807,66 @@
       var uid = deBtn ? deBtn.getAttribute('data-sa-deactivate') : acBtn.getAttribute('data-sa-activate');
       if (!uid) return;
       var isDeact = !!deBtn;
-      var confirmMsg = isDeact
-        ? 'Bu foydalanuvchini bloklaysizmi? U saytga kira olmaydi.'
-        : 'Akkauntni qayta faollashtirasizmi?';
-      function doFetch() {
-      fetch(previewBase + '/' + uid + '/' + (isDeact ? 'deactivate' : 'activate'), {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrf,
-        },
-        credentials: 'same-origin',
-        body: '{}',
-      })
-        .then(function (r) {
-          return r.json().then(function (j) {
-            if (!r.ok) {
-              throw new Error((j && (j.error || j.message)) || 'Xatolik');
+
+      function doFetch(duration, reason) {
+        var bodyData = isDeact ? {
+          duration: duration || '1d',
+          reason: reason || 'Chat orqali bloklandi'
+        } : {};
+
+        fetch(previewBase + '/' + uid + '/' + (isDeact ? 'deactivate' : 'activate'), {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrf,
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(bodyData),
+        })
+          .then(function (r) {
+            return r.json().then(function (j) {
+              if (!r.ok) {
+                throw new Error((j && (j.error || j.message)) || 'Xatolik');
+              }
+              return j;
+            });
+          })
+          .then(function (j) {
+            if (window.showToast) {
+              var msg = isDeact 
+                ? ('Foydalanuvchi bloklandi (' + (j.duration_text || '1 kun') + ').')
+                : 'Akkaunt faollashtirildi.';
+              window.showToast(msg, 'success');
             }
-            return j;
+            openUserProfilePreview(uid);
+          })
+          .catch(function (err) {
+            if (window.showToast) {
+              window.showToast(err && err.message ? err.message : 'Amal bajarilmadi.', 'error');
+            }
           });
-        })
-        .then(function () {
-          if (window.showToast) {
-            window.showToast(isDeact ? 'Foydalanuvchi bloklandi.' : 'Akkaunt faollashtirildi.', 'success');
-          }
-          openUserProfilePreview(uid);
-        })
-        .catch(function (err) {
-          if (window.showToast) {
-            window.showToast(err && err.message ? err.message : 'Amal bajarilmadi.', 'error');
-          }
-        });
       }
-      var p = window.primeConfirm && window.primeConfirm({
-        message: confirmMsg,
-        title: isDeact ? 'Foydalanuvchini bloklash' : 'Akkauntni faollashtirish',
-        variant: isDeact ? 'danger' : 'primary',
-        okText: isDeact ? 'Bloklash' : 'Ha',
-      });
-      if (p && typeof p.then === 'function') {
-        p.then(function (ok) { if (ok) doFetch(); });
-      } else if (window.confirm(confirmMsg)) {
-        doFetch();
+
+      if (isDeact) {
+        var uName = deBtn.getAttribute('data-user-name') || '';
+        var bCount = deBtn.getAttribute('data-block-count') || 0;
+        showChatBlockModal(uName, function (duration, reason) {
+          doFetch(duration, reason);
+        }, bCount);
+      } else {
+        var confirmMsg = 'Akkauntni qayta faollashtirasizmi?';
+        var p = window.primeConfirm && window.primeConfirm({
+          message: confirmMsg,
+          title: 'Akkauntni faollashtirish',
+          variant: 'primary',
+          okText: 'Ha, faollashtirish',
+        });
+        if (p && typeof p.then === 'function') {
+          p.then(function (ok) { if (ok) doFetch(); });
+        } else if (window.confirm(confirmMsg)) {
+          doFetch();
+        }
       }
     });
   }
@@ -4537,7 +4553,7 @@ function refreshChatAvailability() {
 })();
 
 /* ── Chat block modal (admin/moderator: bloklash muddati + sabab) ── */
-function showChatBlockModal(userName, onConfirm) {
+function showChatBlockModal(userName, onConfirm, blockCount) {
   var existing = document.getElementById('chat-block-modal');
   if (existing) existing.remove();
 
@@ -4572,38 +4588,60 @@ function showChatBlockModal(userName, onConfirm) {
     iconBg: 'linear-gradient(135deg,#fef2f2,#fee2e2)',
   };
 
+  var count = parseInt(blockCount, 10) || 0;
+  var historyHtml = '';
+  var defaultDuration = '1h';
+
+  if (count === 0) {
+    historyHtml = '<div style="margin-bottom:14px;padding:9px 12px;background:' + (isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff') + ';border:1px solid ' + (isDark ? 'rgba(59,130,246,0.3)' : '#bfdbfe') + ';border-radius:10px;font-size:12px;color:' + (isDark ? '#93c5fd' : '#1e40af') + ';">'
+      + '<i class="fa-solid fa-circle-info" style="margin-right:5px;"></i> <b>Birinchi marta:</b> Ushbu foydalanuvchi avval bloklanmagan. Tavsiya: <b>1 soat</b> yoki <b>1 kun</b>.'
+      + '</div>';
+    defaultDuration = '1h';
+  } else if (count === 1) {
+    historyHtml = '<div style="margin-bottom:14px;padding:9px 12px;background:' + (isDark ? 'rgba(245,158,11,0.15)' : '#fef3c7') + ';border:1px solid ' + (isDark ? 'rgba(245,158,11,0.3)' : '#fde68a') + ';border-radius:10px;font-size:12px;color:' + (isDark ? '#fde68a' : '#92400e') + ';">'
+      + '<i class="fa-solid fa-triangle-exclamation" style="margin-right:5px;"></i> <b>Takroriy qoidabuzarlik:</b> Avval <b>1 marta</b> bloklangan! Tavsiya: <b>1 kun</b> yoki <b>1 hafta</b>.'
+      + '</div>';
+    defaultDuration = '1d';
+  } else {
+    historyHtml = '<div style="margin-bottom:14px;padding:9px 12px;background:' + (isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2') + ';border:1px solid ' + (isDark ? 'rgba(239,68,68,0.3)' : '#fecaca') + ';border-radius:10px;font-size:12px;color:' + (isDark ? '#fca5a5' : '#991b1b') + ';">'
+      + '<i class="fa-solid fa-circle-xmark" style="margin-right:5px;"></i> <b>Ko‘p martalik:</b> Avval <b>' + count + ' marta</b> bloklangan! Tavsiya: <b>1 hafta</b> yoki <b>1 oy</b>.'
+      + '</div>';
+    defaultDuration = '1w';
+  }
+
   var modal = document.createElement('div');
   modal.id = 'chat-block-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
 
-  var nameHtml = userName ? '<strong style="color:' + c.headingColor + ';">' + userName + '</strong> bloklanadi' : 'Bu foydalanuvchini bloklaysizmi?';
+  var nameHtml = userName ? '<strong style="color:' + c.headingColor + ';">' + userName + '</strong>' : 'Foydalanuvchi';
   modal.innerHTML = [
     '<div class="cbm-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:opacity .3s;"></div>',
-    '<div class="cbm-dialog" style="position:relative;z-index:1;width:min(420px,100%);background:' + c.dialogBg + ';border-radius:20px;padding:32px 28px 24px;box-shadow:' + c.dialogShadow + ';transform:scale(.9) translateY(20px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);">',
-    '  <div style="text-align:center;margin-bottom:20px;">',
-    '    <div style="width:56px;height:56px;border-radius:16px;background:' + c.iconBg + ';display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;">',
-    '      <i class="fa-solid fa-ban" style="font-size:22px;color:#dc2626;"></i>',
+    '<div class="cbm-dialog" style="position:relative;z-index:1;width:min(420px,100%);background:' + c.dialogBg + ';border-radius:20px;padding:28px 24px 22px;box-shadow:' + c.dialogShadow + ';transform:scale(.9) translateY(20px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);">',
+    '  <div style="text-align:center;margin-bottom:16px;">',
+    '    <div style="width:52px;height:52px;border-radius:14px;background:' + c.iconBg + ';display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">',
+    '      <i class="fa-solid fa-ban" style="font-size:20px;color:#dc2626;"></i>',
     '    </div>',
-    '    <h3 style="margin:0 0 6px;font-size:1.2rem;font-weight:800;color:' + c.headingColor + ';">Foydalanuvchini bloklash</h3>',
-    '    <p style="margin:0;font-size:.85rem;color:' + c.subColor + ';">' + nameHtml + '</p>',
+    '    <h3 style="margin:0 0 4px;font-size:1.15rem;font-weight:800;color:' + c.headingColor + ';">Foydalanuvchini bloklash</h3>',
+    '    <p style="margin:0;font-size:.84rem;color:' + c.subColor + ';">' + nameHtml + ' sayt tizimidan cheklanadi</p>',
     '  </div>',
-    '  <div style="margin-bottom:16px;">',
+    historyHtml,
+    '  <div style="margin-bottom:14px;">',
     '    <label style="display:block;font-size:.75rem;font-weight:700;color:' + c.labelColor + ';text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Blok muddati</label>',
     '    <select id="cbm-duration" style="width:100%;padding:10px 12px;border:1.5px solid ' + c.inputBorder + ';border-radius:10px;font-size:.85rem;color:' + c.inputColor + ';background:' + c.inputBg + ';outline:none;transition:border .2s;">',
-    '      <option value="1h">1 soat</option>',
-    '      <option value="1d" selected>1 kun</option>',
-    '      <option value="1w">1 hafta</option>',
-    '      <option value="1m">1 oy</option>',
-    '      <option value="forever">Butun umr</option>',
+    '      <option value="1h"' + (defaultDuration === '1h' ? ' selected' : '') + '>1 soat — Yengil / 1-marta</option>',
+    '      <option value="1d"' + (defaultDuration === '1d' ? ' selected' : '') + '>1 kun — O‘rta / takrorlanganda</option>',
+    '      <option value="1w"' + (defaultDuration === '1w' ? ' selected' : '') + '>1 hafta — Og‘ir / ko‘p martalik</option>',
+    '      <option value="1m">1 oy — Juda og‘ir qoidabuzarlik</option>',
+    '      <option value="forever">Butun umr — Xavfsizlikka tahdid</option>',
     '    </select>',
     '  </div>',
-    '  <div style="margin-bottom:24px;">',
+    '  <div style="margin-bottom:20px;">',
     '    <label style="display:block;font-size:.75rem;font-weight:700;color:' + c.labelColor + ';text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Blok sababi</label>',
-    '    <textarea id="cbm-reason" rows="3" maxlength="500" placeholder="Sababni kiriting..." style="width:100%;padding:10px 12px;border:1.5px solid ' + c.inputBorder + ';border-radius:10px;font-size:.85rem;color:' + c.inputColor + ';background:' + c.inputBg + ';outline:none;resize:none;transition:border .2s;box-sizing:border-box;"></textarea>',
+    '    <textarea id="cbm-reason" rows="3" maxlength="500" placeholder="Nima uchun bloklayapsiz? (Masalan: Chatda so‘kinganligi uchun)" style="width:100%;padding:10px 12px;border:1.5px solid ' + c.inputBorder + ';border-radius:10px;font-size:.85rem;color:' + c.inputColor + ';background:' + c.inputBg + ';outline:none;resize:none;transition:border .2s;box-sizing:border-box;"></textarea>',
     '  </div>',
     '  <div style="display:flex;gap:10px;">',
-    '    <button type="button" class="cbm-cancel" style="flex:1;padding:11px;border-radius:12px;font-weight:700;font-size:.9rem;border:1.5px solid ' + c.cancelBorder + ';background:' + c.cancelBg + ';color:' + c.cancelColor + ';cursor:pointer;transition:all .2s;">Bekor qilish</button>',
-    '    <button type="button" class="cbm-ok" style="flex:1;padding:11px;border-radius:12px;font-weight:700;font-size:.9rem;border:none;background:linear-gradient(135deg,#f87171,#ef4444);color:#fff;cursor:pointer;box-shadow:0 6px 16px rgba(239,68,68,.3);transition:all .2s;">Bloklash</button>',
+    '    <button type="button" class="cbm-cancel" style="flex:1;padding:10px;border-radius:12px;font-weight:700;font-size:.88rem;border:1.5px solid ' + c.cancelBorder + ';background:' + c.cancelBg + ';color:' + c.cancelColor + ';cursor:pointer;transition:all .2s;">Bekor qilish</button>',
+    '    <button type="button" class="cbm-ok" style="flex:1;padding:10px;border-radius:12px;font-weight:700;font-size:.88rem;border:none;background:linear-gradient(135deg,#f87171,#ef4444);color:#fff;cursor:pointer;box-shadow:0 6px 16px rgba(239,68,68,.3);transition:all .2s;">Bloklash</button>',
     '  </div>',
     '</div>'
   ].join('\n');
