@@ -110,7 +110,7 @@ return [
         'quick_results' => 'My results 📝',
         'quick_contact' => 'Contact 📞',
         'question_input' => 'Type your question...',
-        'ai_greeting' => "Hello! I am the 81-IDUM AI assistant. Ask anything about our school, education, and subjects — I'm happy to help! ✨",
+        'ai_greeting' => '',
         'ai_first_message' => 'Hi! I am 81 School AI assistant. How can I help you? 😊',
         'ai_feedback_question' => 'Was this answer helpful?',
         'ai_feedback_useful' => 'Helpful',

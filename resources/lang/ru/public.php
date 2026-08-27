@@ -112,7 +112,7 @@ return array_replace_recursive($fallback, [
         'quick_results' => 'Мои результаты 📝',
         'quick_contact' => 'Контакты 📞',
         'question_input' => 'Введите вопрос...',
-        'ai_greeting' => 'Здравствуйте! Я AI-помощник сайта 81-IDUM. Пишите о школе, учебе и предметах — я с радостью помогу! ✨',
+        'ai_greeting' => '',
         'ai_first_message' => 'Привет! Я AI-помощник 81-й школы. Чем могу помочь? 😊',
         'ai_feedback_question' => 'Этот ответ был полезен?',
         'ai_feedback_useful' => 'Полезно',

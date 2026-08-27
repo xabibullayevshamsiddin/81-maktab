@@ -2409,7 +2409,7 @@ button.is-loading::after {
   }
 
   .scroll-top {
-    bottom: 86px !important;
+    bottom: 30px !important;
   }
 
   #chat-widget,

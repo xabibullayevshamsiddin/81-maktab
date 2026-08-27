@@ -53,17 +53,22 @@ class AiService
             return ['success' => true, 'text' => $schoolHelp, 'source' => 'school_help'];
         }
 
-        // 0. Smart analytics (intent-based, not keyword-locked)
+        // 0.015 Ota-ona ↔ farzand bog'lanish tizimi (analytics dan oldin — "nechta" so'zini tutib qolmasin)
+        if ($familyLink = $this->matchFamilyLinkQuery($message, $user)) {
+            return ['success' => true, 'text' => $familyLink, 'source' => 'family_link'];
+        }
+
+        // 0.02 Smart analytics (intent-based, not keyword-locked)
         if ($analytics = $this->matchAnalyticalData($message)) {
             return ['success' => true, 'text' => $analytics, 'source' => 'analytics_data'];
         }
 
-        // 0.02 Fan bo'yicha ustoz qidirish ("Matematikadan kim dars beradi?")
+        // 0.025 Fan bo'yicha ustoz qidirish ("Matematikadan kim dars beradi?")
         if ($subjectTeacher = $this->matchSubjectTeacherQuery($message)) {
             return ['success' => true, 'text' => $subjectTeacher, 'source' => 'subject_teacher'];
         }
 
-        // 0.025 Maktab qoidalari va tartibi
+        // 0.03 Maktab qoidalari va tartibi
         if ($schoolRules = $this->matchSchoolRulesQuery($message)) {
             return ['success' => true, 'text' => $schoolRules, 'source' => 'school_rules'];
         }
@@ -807,6 +812,95 @@ class AiService
             ."- Maktab mulkiga g'amxo'rlik qilish.\n\n"
             ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             ."💡 Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling.";
+    }
+
+    /**
+     * Ota-ona ↔ farzand bog'lanish tizimi haqida savol
+     */
+    private function matchFamilyLinkQuery(string $message, ?object $user = null): ?string
+    {
+        $q = $this->normalizeSearchText($message);
+        if ($q === '') {
+            return null;
+        }
+
+        $isFamilyTopic = Str::contains($q, [
+            'ota-ona', 'ota ona', 'farzand', 'bolam', 'bolamni', 'farzandimni',
+            'ota-onaga ulash', 'parent', 'oilaviy', 'family',
+            'boglash', 'bog\'lash', 'bog\'lanish', 'bog\'lasam', 'bog\'layman',
+            'ulash', 'ulasam', 'ulayman',
+        ]);
+        if (! $isFamilyTopic) {
+            return null;
+        }
+
+        // --- Limit va donor darajasi (avvalroq — "nechta" so'zi borligi uchun) ---
+        if (Str::contains($q, ['nechta', 'necha ta', 'qancha', 'limit', 'qaysi donor', 'qaysi darajada'])) {
+            $lines = ["**Nechta farzand bog'lash mumkin?**", "Bazaviy (donor bo'lmasa): **2 ta** farzand.", ""];
+
+            foreach (['supporter', 'premium', 'vip'] as $rank) {
+                $cfg = \App\Models\Donation::configForRank($rank);
+                if (! $cfg) {
+                    continue;
+                }
+                $limit = 2 + ($cfg['priority'] ?? 0);
+                $priceLabel = number_format($cfg['price'] ?? 0, 0, '.', ' ') . " so'm/oy";
+                $lines[] = "- **{$cfg['label']}** ({$priceLabel}) — **{$limit} ta** farzand";
+            }
+
+            $lines[] = "";
+            $lines[] = "Donor darajangiz oshgan sari, bog'lay oladigan farzandlar soni ham ortadi.";
+
+            $answer = implode("\n", $lines);
+
+            if ($user && ! empty($user->is_parent) && method_exists($user, 'isDonor') && $user->isDonor()) {
+                $count = method_exists($user, 'linkedStudents') ? $user->linkedStudents()->count() : 0;
+                $limit = method_exists($user, 'familyLinkLimit') ? $user->familyLinkLimit() : 2;
+                $answer .= "\n\n📌 Siz hozir **{$user->donation_rank}** darajasidasiz, **{$count} / {$limit}** farzand bog'langan.";
+            }
+
+            return $answer;
+        }
+
+        // --- Qanday bog'lash mumkin ---
+        if (Str::contains($q, ['qanday ulayman', 'qanday boglayman', 'qanday bog\'layman', 'ulash', 'ulasam', 'ulayman', 'bog\'lash', 'boglash', 'bog\'lasam', 'bog\'layman', 'qanday qilib'])) {
+            $answer = "**Ota-ona va farzand akkauntini bog'lash**\n"
+                ."1. Ota-ona o'z profilida (".route('profile.show').") kod yaratadi.\n"
+                ."2. Shu kodni farzandiga aytadi/yuboradi.\n"
+                ."3. Farzand o'z profilidagi tegishli bo'limda kodni kiritadi.\n"
+                ."4. Shundan so'ng ikkala akkaunt bog'lanadi — ota-ona farzandining natijalari, kurslari va bildirishnomalarini ko'ra oladi.\n\n"
+                ."⚠️ **Muhim:** kod bir martalik — ishlatilgach, ota-ona yangi farzand qo'shish uchun yangi kod yaratishi kerak.";
+
+            // Shaxsiylashtirish: agar so'ragan ota-ona bo'lsa, o'zining joriy holatini ko'rsatamiz
+            if ($user && ! empty($user->is_parent)) {
+                $count = method_exists($user, 'linkedStudents') ? $user->linkedStudents()->count() : 0;
+                $limit = method_exists($user, 'familyLinkLimit') ? $user->familyLinkLimit() : 2;
+                $answer .= "\n\n📌 Sizda hozir **{$count} / {$limit}** farzand bog'langan.";
+            }
+
+            return $answer;
+        }
+
+        // --- Kod qanday ishlaydi ---
+        if (Str::contains($q, ['kod qanday', 'kod nima', 'kodni kim', 'kod qayerda', 'link kod', 'bog\'lash kodi'])) {
+            return "**Bog'lash kodi qanday ishlaydi**\n"
+                ."- Kodni faqat **ota-ona akkaunti** yaratadi (profilidan).\n"
+                ."- Kodni **farzand (o'quvchi) akkaunti** kiritadi — shu orqali ikkalasi bog'lanadi.\n"
+                ."- Har bir kod **bir martalik** — ishlatilgach, avtomatik bekor bo'ladi.\n"
+                ."- Ota-ona akkaunti kodni istalgan payt qayta generatsiya qilishi mumkin (eskisi bekor bo'ladi).\n"
+                ."- Faqat haqiqiy o'quvchi akkaunti (sinfi bor) kod kirita oladi — ikkita ota-ona akkauntini bir-biriga ulab bo'lmaydi.";
+        }
+
+        // --- Qanday bildirishnomalar keladi ---
+        if (Str::contains($q, ['xabar keladi', 'bildirishnoma', 'nima keladi', 'telegram kelmoqda', 'nima korinadi', 'nimalar korinadi'])) {
+            return "**Bog'langandan keyin ota-onaga nimalar keladi?**\n"
+                ."- 📊 Farzandining imtihon natijalari (matnli javobli imtihonlarda — o'qituvchi tekshirib bo'lgan **yakuniy** natija, oraliq/kutilayotgan holat emas).\n"
+                ."- 🎓 Kursga yozilish arizasi tasdiqlangan yoki rad etilgan bo'lsa.\n"
+                ."- 🚫 Agar admin akkauntni bloklasa.\n\n"
+                ."Bulardan tashqari, ota-ona o'z profilida (".route('profile.results.index').") farzandining barcha natijalari va kurslarini istalgan payt ko'rishi mumkin — Telegram'ni kutish shart emas.";
+        }
+
+        return null;
     }
 
     /**
@@ -5019,6 +5113,9 @@ Faol kurslar: {$courseCount} ta
 - Aloqa: murojaatlar
 - Profil: foydalanuvchi ma'lumotlari, natijalar, kurs arizalari
 - Admin panel: content, inbox, ta'lim, foydalanuvchilar va sozlamalar
+
+=== OTA-ONA TIZIMI ===
+Ota-ona o'z profilida kod yaratadi, farzand o'sha kodni o'z profiliga kiritib bog'lanadi. Kod bir martalik. Bazaviy limit 2 farzand, donor darajasiga qarab (Supporter/Premium/VIP) +1/+2/+3 qo'shiladi. Bog'langandan keyin farzandning imtihon natijalari (yakuniy, tekshirilgach) va kurs holati ota-onaning Telegramiga ham, profiliga ham chiqadi.
 
 === ADMIN AI BILIM BAZASI ===
 {$knowledgeSnippets}

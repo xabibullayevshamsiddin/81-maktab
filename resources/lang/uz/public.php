@@ -110,7 +110,7 @@ return [
         'quick_results' => 'Natijalarim 📝',
         'quick_contact' => 'Aloqa 📞',
         'question_input' => 'Savolingizni kiriting...',
-        'ai_greeting' => 'Assalomu alaykum! Men 81-IDUM saytining AI yordamchisiman. Maktabimiz, ta’lim va boshqa fanlar bo‘yicha yozing — sizga bajonidil yordam beraman! ✨',
+        'ai_greeting' => '',
         'ai_first_message' => 'Salom! Men 81-maktabning AI yordamchisiman. Sizga qanday yordam bera olaman? 😊',
         'ai_feedback_question' => 'Bu javob foydali bo‘ldimi?',
         'ai_feedback_useful' => 'Foydali',

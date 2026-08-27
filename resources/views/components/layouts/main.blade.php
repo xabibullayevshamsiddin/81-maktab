@@ -1401,7 +1401,9 @@
             <span class="chat-panel-live-dot chat-panel-live-dot--ai" aria-hidden="true"></span>
             <span>{{ __('public.layout.ai_assistant') }}</span>
           </div>
+          @if(__('public.layout.ai_greeting'))
           <p class="chat-panel-subtitle">{{ __('public.layout.ai_greeting') }}</p>
+          @endif
         </div>
         <div class="chat-messages ai-messages" id="ai-messages" aria-live="polite">
           <div class="chat-msg is-ai reveal">
@@ -1415,9 +1417,15 @@
           <span class="chat-compose-status-text">{{ __('public.layout.thinking') }}</span>
         </div>
         <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
-          <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
-          <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
-          <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
+          @if(auth()->check() && auth()->user()->is_parent)
+            <button type="button" class="ai-action-btn" data-msg="Farzandimni qanday ulayman?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">👨‍👩‍👧 Bog'lash</button>
+            <button type="button" class="ai-action-btn" data-msg="Bog'langandan keyin nima keladi?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Natijalar</button>
+            <button type="button" class="ai-action-btn" data-msg="Nechta farzand bog'lasam bo'ladi?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">💳 Limit</button>
+          @else
+            <button type="button" class="ai-action-btn" data-msg="Qaysi kurslar bor?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_courses') }}</button>
+            <button type="button" class="ai-action-btn" data-msg="Mening imtihon natijalarimni ko'rsat" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_results') }}</button>
+            <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
+          @endif
         </div>
         <form class="chat-input-wrap" id="ai-chat-form">
           <textarea
