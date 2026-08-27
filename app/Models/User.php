@@ -432,6 +432,56 @@ class User extends Authenticatable
         return $this->canModerateCommentAuthor($commentAuthor);
     }
 
+    /**
+     * Foydalanuvchi va uning ota-onasiga bloklash to'g'risida to'liq stikerli va ma'muriyat havolali Telegram xabarnoma yuborish.
+     */
+    public function sendBlockNotification(User $blockedBy, string $durationText, ?\Carbon\CarbonInterface $blockedUntil, string $reason): void
+    {
+        if (! $this->telegram_chat_id && (! method_exists($this, 'linkedParents') || $this->linkedParents->isEmpty())) {
+            return;
+        }
+
+        $adminName = htmlspecialchars($blockedBy->buildNameFromParts() ?: $blockedBy->name);
+        $userName = htmlspecialchars($this->buildNameFromParts() ?: $this->name);
+        $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz (Butun umr)';
+        $contactUrl = route('contact');
+
+        $text = "🚫 <b>Hisobingiz bloklandi</b>\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
+            ."👨‍💼 <b>Bloklagan:</b> {$adminName}\n"
+            ."⏰ <b>Muddat:</b> {$durationText}\n"
+            ."📅 <b>Qachon gacha:</b> {$unblockTime}\n\n"
+            ."📝 <b>Sabab:</b>\n"
+            .htmlspecialchars($reason)."\n\n"
+            ."━━━━━━━━━━━━━━━━━━━━\n\n"
+            ."⚠️ <i>Blok muddati tugagandan so'ng hisobingiz avtomatik faollashadi.</i>\n\n"
+            ."📩 <b>Noto‘g‘ri bloklandimi?</b>\n"
+            ."Agar bloklash nohaq yoki xatolik deb hisoblasangiz, quyidagi havola orqali maktab ma'muriyatiga murojaat qoldirishingiz mumkin:\n"
+            ."🔗 <a href=\"{$contactUrl}\">Ma'muriyatga murojaat qilish</a>";
+
+        $replyMarkup = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '📩 Ma\'muriyatga murojaat qilish',
+                        'url' => $contactUrl,
+                    ],
+                ],
+            ],
+        ];
+
+        $telegram = app(\App\Services\TelegramService::class);
+
+        if ($this->telegram_chat_id) {
+            $telegram->sendMessage((int) $this->telegram_chat_id, $text, $replyMarkup);
+        }
+
+        if (method_exists($this, 'notifyLinkedParents')) {
+            $this->notifyLinkedParents($text);
+        }
+    }
+
     public function isTeacher(): bool
     {
         return $this->hasRole(self::ROLE_TEACHER);

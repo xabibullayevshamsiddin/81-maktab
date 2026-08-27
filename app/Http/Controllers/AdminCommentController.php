@@ -175,24 +175,7 @@ class AdminCommentController extends Controller
         ]);
 
         // Telegram xabar
-        if ($user->telegram_chat_id) {
-            $adminName = htmlspecialchars($current->buildNameFromParts() ?: $current->name);
-            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
-            $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz';
-
-            $text = "\ud83d\udeab <b>Hisobingiz bloklandi</b>\n"
-                ."\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n"
-                ."\ud83d\udc64 <b>Foydalanuvchi:</b> {$userName}\n"
-                ."\ud83d\udc68\u200d\ud83d\udcbb <b>Bloklagan:</b> {$adminName}\n"
-                ."\u23f0 <b>Muddat:</b> {$durationText}\n"
-                ."\ud83d\udcc5 <b>Qachon gacha:</b> {$unblockTime}\n\n"
-                ."\ud83d\udcdd <b>Sabab:</b>\n"
-                .htmlspecialchars($validated['reason']) . "\n\n"
-                ."\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
-
-            $telegram = app(\App\Services\TelegramService::class);
-            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
-        }
+        $user->sendBlockNotification($current, $durationText, $blockedUntil, $validated['reason']);
 
         return redirect()
             ->back()

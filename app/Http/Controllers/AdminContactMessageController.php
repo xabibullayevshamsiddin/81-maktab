@@ -109,13 +109,25 @@ class AdminContactMessageController extends Controller
                 default   => now()->addDay(),
             };
 
+            $durationText = match ($duration) {
+                '1h'      => '1 soat',
+                '1d'      => '1 kun',
+                '1w'      => '1 hafta',
+                '1m'      => '1 oy',
+                'forever' => 'Butun umr',
+                default   => '1 kun',
+            };
+            $reason = $validated['reason'] ?? 'Aloqa xabaridagi qoidabuzarlik tufayli bloklandi';
+
             $senderUser->increment('block_count');
             $senderUser->update([
                 'is_blocked'    => true,
                 'blocked_until' => $blockedUntil,
-                'blocked_reason' => $validated['reason'] ?? 'Aloqa xabaridan bloklandi',
+                'blocked_reason' => $reason,
                 'blocked_by'    => $request->user()->id,
             ]);
+
+            $senderUser->sendBlockNotification($request->user(), $durationText, $blockedUntil, $reason);
 
             $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz';
             return redirect()

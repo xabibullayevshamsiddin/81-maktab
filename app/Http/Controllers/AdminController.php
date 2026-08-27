@@ -366,28 +366,7 @@ class AdminController extends Controller
         ]);
 
         // Telegram xabar yuborish
-        if ($user->telegram_chat_id) {
-            $adminName = htmlspecialchars($admin->buildNameFromParts() ?: $admin->name);
-            $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
-            $unblockTime = $blockedUntil ? $blockedUntil->format('d.m.Y H:i') : 'Cheksiz';
-
-            $text = "🚫 <b>Hisobingiz bloklandi</b>\n"
-                ."━━━━━━━━━━━━━━━━━━━━\n\n"
-                ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
-                ."👨‍💼 <b>Bloklagan:</b> {$adminName}\n"
-                ."⏰ <b>Muddat:</b> {$durationText}\n"
-                ."📅 <b>Qachon gacha:</b> {$unblockTime}\n\n"
-                ."📝 <b>Sabab:</b>\n"
-                .htmlspecialchars($validated['reason']) . "\n\n"
-                ."━━━━━━━━━━━━━━━━━━━━\n\n"
-                ."⚠️ Blok muddati tugagandan keyin avtomatik yechiladi.";
-
-            $telegram = app(\App\Services\TelegramService::class);
-            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
-
-            // Ulangan ota-onalarga ham xabar yuborish
-            $user->notifyLinkedParents($text);
-        }
+        $user->sendBlockNotification($admin, $durationText, $blockedUntil, $validated['reason']);
 
         return redirect()->route('user')
             ->with('success', "{$user->name} {$durationText} muddatga bloklandi.")
