@@ -23,12 +23,15 @@ RUN echo '[supervisord]\nnodaemon=true\n\n\
 [program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true\n' \
     > /etc/supervisor/conf.d/supervisord.conf
 
-
-RUN echo 'server { \
+# Nginx config — write to sites-available AND create symlink to sites-enabled
+RUN mkdir -p /etc/nginx/sites-enabled && \
+    echo 'server { \
     listen 8080; \
+    server_name _; \
     root /app/public; \
     index index.php; \
     client_max_body_size 64M; \
+    \
     location /storage/ { \
         alias /app/storage/app/public/; \
         add_header Cache-Control "public, max-age=2592000"; \
@@ -36,7 +39,11 @@ RUN echo 'server { \
         access_log off; \
         try_files $uri $uri/ =404; \
     } \
-    location / { try_files $uri $uri/ /index.php?$query_string; } \
+    \
+    location / { \
+        try_files $uri $uri/ /index.php?$query_string; \
+    } \
+    \
     location ~ \.php$ { \
         fastcgi_pass 127.0.0.1:9000; \
         fastcgi_index index.php; \
@@ -44,8 +51,17 @@ RUN echo 'server { \
         include fastcgi_params; \
         fastcgi_read_timeout 120; \
     } \
-    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { expires 30d; add_header Cache-Control "public"; } \
-}' > /etc/nginx/sites-available/default
+    \
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { \
+        expires 30d; \
+        add_header Cache-Control "public"; \
+    } \
+}' > /etc/nginx/sites-available/default && \
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
+    rm -f /etc/nginx/sites-enabled/default.conf 2>/dev/null || true
+
+# Remove default nginx site config if it exists
+RUN rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
 
 RUN mkdir -p storage/app/public/posts \
     && mkdir -p storage/app/public/books \
