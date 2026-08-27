@@ -20,9 +20,9 @@ class TelegramSetCommands extends Command
         try {
             $result = $telegram->setMyCommands($commands);
 
-            if (! $result) {
-                $this->error('❌ Buyruqlarni ro\'yxatdan o\'tkazishda xatolik: setMyCommands() falsy qaytardi.');
-                Log::error('telegram:set-commands: setMyCommands() returned falsy');
+            if ($result === null) {
+                $this->error('❌ Buyruqlarni ro\'yxatdan o\'tkazishda xatolik: setMyCommands() null qaytardi.');
+                Log::error('telegram:set-commands: setMyCommands() returned null');
                 return self::FAILURE;
             }
 
