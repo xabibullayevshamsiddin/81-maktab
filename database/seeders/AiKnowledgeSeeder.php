@@ -593,12 +593,22 @@ class AiKnowledgeSeeder extends Seeder
             [
                 'question' => 'Akkauntim bloklangan',
                 'question_en' => 'My account is blocked',
-                'answer' => "🔒 Akkaunt bloklangan:\n\n👨‍💻 Admin bilan Aloqa sahifasi orqali bog'laning\n❓ Bloklash sababini so'rang\n🔧 Tuzatishga harakat qiling\n\n⚠️ Bloklangan akkaunt bilan tizimga kirish mumkin emas",
-                'answer_en' => "🔒 Account blocked:\n\n👨‍💻 Contact admin through the Contact page\n❓ Ask for the reason for blocking\n🔧 Try to resolve it\n\n⚠️ Cannot log in with a blocked account",
-                'keywords' => 'bloklangan, blocked, akkaunt blok, tizimga kira olmayapman',
-                'synonyms' => 'akkauntim o\'chirilganmi, blokdan qanday chiqaman, blokni qanday ochaman',
+                'answer' => "🔒 **Akkaunt bloklangan bo'lsa:**\n\n1️⃣ Bloklash sababi va muddati (1 soat, 1 kun, 1 hafta, 1 oy yoki Butun umr) ko'rsatiladi.\n2️⃣ Blok muddati tugagach, tizimga avtomatik kirishingiz mumkin.\n3️⃣ Agar nohaq bloklangan deb hisoblasangiz, **Aloqa** sahifasi orqali adminga murojaat qiling.\n\n⚠️ Bloklangan akkaunt bilan tizim imkoniyatlaridan foydalanish vaqtincha cheklanadi.",
+                'answer_en' => "🔒 **If account is blocked:**\n\n1️⃣ Block reason and duration (1 hour, 1 day, 1 week, 1 month, or Permanent) is specified.\n2️⃣ Once the duration expires, access is automatically restored.\n3️⃣ If you believe it was a mistake, contact admin through the Contact page.\n\n⚠️ Access to website features is temporarily restricted during a block.",
+                'keywords' => 'bloklangan, blocked, akkaunt blok, tizimga kira olmayapman, ban oldim',
+                'synonyms' => 'akkauntim o\'chirilganmi, blokdan qanday chiqaman, blokni qanday ochaman, ban muddati',
                 'category' => 'Texnik',
                 'priority' => 2,
+            ],
+            [
+                'question' => 'Sayt qoidalari va bloklash muddatlari qanday?',
+                'question_en' => 'What are the website rules and blocking durations?',
+                'answer' => "📋 **Saytda mavjud bloklash muddatlari va qoidabuzarliklar:**\n\n⏱️ **Muddatlar:** `1 soat`, `1 kun`, `1 hafta`, `1 oy`, `Butun umr`\n\n⚖️ **Jazo choralari:**\n• 💬 **So'kinish/haqorat:** 1-marta 1 soatlik bloklash, takrorlansa 1 kun, og'ir holatda 1 hafta.\n• 🚫 **Spam/reklama/noo'rin kontent:** 1-marta 1 soatlik bloklash + xabar o'chiriladi, takrorlansa 1 kun, og'ir holatda 1 oy.\n• 🗣️ **Ustozlar yoki o'quvchilarni kamsitish:** 1-marta 1 kun, takrorlansa 1 hafta, og'ir holatda 1 oy.\n• 📢 **Yolg'on (feyk) ma'lumot yoki tuhmat:** 1-marta 1 soat, takrorlansa 1 kun, og'ir holatda 1 hafta.\n• 📝 **Imtihonda g'irromlik/ko'chirish:** 1-marta 1 kun + natija bekor, takrorlansa 1 hafta, og'ir holatda 1 oy.\n• 🔒 **Boshqaning profiliga ruxsatsiz kirish:** 1-marta 1 hafta, takrorlansa 1 oy, og'ir holatda Butun umr.\n• 🛡️ **Tizim xavfsizligiga hujum/virus:** 1-marta 1 oy, og'ir holatda Butun umrga bloklash.\n\n📄 Batafsil: Foydalanish qoidalari sahifasida.",
+                'answer_en' => "📋 **Website rules and blocking durations:**\n\n⏱️ **Durations:** `1 hour`, `1 day`, `1 week`, `1 month`, `Permanent`\n\n⚖️ **Penalties:**\n• 💬 Insult/profanity: 1 hour, repeat 1 day, severe 1 week.\n• 🚫 Spam/ads/inappropriate content: 1 hour + delete, repeat 1 day, severe 1 month.\n• 🗣️ Disrespect/harassment: 1 day, repeat 1 week, severe 1 month.\n• 📢 Fake news/defamation: 1 hour, repeat 1 day, severe 1 week.\n• 📝 Cheating on exams: 1 day + exam annulled, repeat 1 week, severe 1 month.\n• 🔒 Unauthorized account access: 1 week, repeat 1 month, severe Permanent.\n• 🛡️ Security breach/malware: 1 month, severe Permanent block.",
+                'keywords' => 'sayt qoidalari, bloklash muddatlari, ban turlari, qoidabuzarlik, intizomiy choralar, qancha vaqtga bloklanadi',
+                'synonyms' => 'bloklash qoidalari, necha kunga ban beriladi, so\'kinganga qanday jazo, qoidalar jadvali',
+                'category' => 'Umumiy',
+                'priority' => 3,
             ],
         ];
 

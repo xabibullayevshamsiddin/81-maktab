@@ -784,34 +784,55 @@ class AiService
 
         $hasRulesIntent = Str::contains($q, [
             'qoida', 'qoidalar', 'qonun', 'nizom', 'intizom', 'tartib',
-            'odob', 'odob-axloq', 'axloq', 'qoidalar toplami',
-            'maktab nizomi', 'maktab qoidalari', 'ichki tartib',
+            'bloklash', 'blok', 'ban', 'jazo', 'taqiq', 'qoidabuzarlik',
+            'sayt qoidalari', 'ichki tartib', 'moderatsiya',
         ]);
 
         if (! $hasRulesIntent) {
             return null;
         }
 
-        return "📋 **MAKTAB ICHKI TARTIB-QOIDALARI**\n"
+        $termsUrl = route('terms');
+
+        return "📋 **SAYTDAN FOYDALANISH VA BLOKLASH QOIDALARI**\n"
             ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            ."⏰ **Dars vaqtlari:**\n"
-            ."- Darsga kechikmaslik kerak.\n"
-            ."- Kechikish sababini sinf rahbariga aytish shart.\n\n"
-            ."📱 **Telefon qoidalari:**\n"
-            ."- Dars vaqtida telefon ishlatish mumkin emas.\n"
-            ."- Zarur holatda oldindan ruxsat olish kerak.\n\n"
-            ."👗 **Kiyinish qoidalari:**\n"
-            ."- Maktab formasida kelish shart.\n"
-            ."- Ozoda va tartibli bo'lish kerak.\n\n"
-            ."📚 **O'quv jarayoni:**\n"
-            ."- Uy vazifasini vaqtida bajarish.\n"
-            ."- Darsda faol ishtirok etish.\n"
-            ."- O'qituvchilarga hurmat bilan munosabatda bo'lish.\n\n"
-            ."🏫 **Maktab hududi:**\n"
-            ."- Dars vaqtida ruxsatsiz maktabdan chiqish mumkin emas.\n"
-            ."- Maktab mulkiga g'amxo'rlik qilish.\n\n"
+            ."⏱️ **Saytda mavjud bloklash muddatlari:**\n"
+            ."• `1 soat` — yengil qoidabuzarlik yoki birinchi marta\n"
+            ."• `1 kun` — o'rta darajadagi qoidabuzarlik\n"
+            ."• `1 hafta` — takroriy qoidabuzarlik\n"
+            ."• `1 oy` — og'ir holatda\n"
+            ."• `Butun umr` — o'ta og'ir yoki xavfsizlikka tahdid soluvchi holatlarda\n\n"
+            ."⚖️ **Saytdagi qoidabuzarliklar va jazo choralari:**\n\n"
+            ."💬 **1. So'kinish, haqorat va janjal (Chat va izohlarda):**\n"
+            ."  - 1-marta: 1 soatlik bloklash\n"
+            ."  - Takrorlanganda: 1 kunlik bloklash\n"
+            ."  - Og'ir holatda: 1 haftalik bloklash\n\n"
+            ."🚫 **2. Spam, reklama va noo'rin/behayo kontent:**\n"
+            ."  - 1-marta: 1 soatlik bloklash + xabar o'chiriladi\n"
+            ."  - Takrorlanganda: 1 kunlik bloklash\n"
+            ."  - Og'ir holatda: 1 oylik bloklash\n\n"
+            ."🗣️ **3. Ustozlar, o'quvchilar yoki adminlarni kamsitish:**\n"
+            ."  - 1-marta: 1 kunlik bloklash\n"
+            ."  - Takrorlanganda: 1 haftalik bloklash\n"
+            ."  - Og'ir holatda: 1 oylik bloklash\n\n"
+            ."📢 **4. Saytda yolg'on ma'lumot yoki tuhmat tarqatish:**\n"
+            ."  - 1-marta: 1 soatlik bloklash + kontent o'chiriladi\n"
+            ."  - Takrorlanganda: 1 kunlik bloklash\n"
+            ."  - Og'ir holatda: 1 haftalik bloklash\n\n"
+            ."📝 **5. Imtihonlarda g'irromlik yoki testni buzish:**\n"
+            ."  - 1-marta: 1 kunlik bloklash + natija bekor qilinadi\n"
+            ."  - Takrorlanganda: 1 haftalik bloklash\n"
+            ."  - Og'ir holatda: 1 oylik bloklash\n\n"
+            ."🔒 **6. Boshqa birovning hisobiga kirish (parol o'g'irlash):**\n"
+            ."  - 1-marta: 1 haftalik bloklash\n"
+            ."  - Takrorlanganda: 1 oylik bloklash\n"
+            ."  - Og'ir holatda: Butun umrga bloklash\n\n"
+            ."🛡️ **7. Sayt xavfsizligiga hujum, fishing yoki virus tarqatish:**\n"
+            ."  - 1-marta: 1 oylik bloklash\n"
+            ."  - Takrorlanganda: Butun umrga bloklash\n"
+            ."  - Og'ir holatda: Butun umrga bloklash (IP/Akkaunt)\n\n"
             ."━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            ."💡 Batafsil ma'lumot uchun maktab ma'muriyatiga murojaat qiling.";
+            ."📄 To'liq qoidalar bilan tanishish: ".$termsUrl;
     }
 
     /**

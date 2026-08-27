@@ -118,15 +118,15 @@
             </div>
           </article>
 
-          {{-- ═══ INTIZOMIY JAZOLAR JADVALI ═══ --}}
+          {{-- ═══ SAYT INTIZOMIY JAZOLARI VA BLOKLASH CHORALARI ═══ --}}
           <article class="bento-item prime-glow-hover" style="padding: 1.5rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;">
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
               <div style="width: 45px; height: 45px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); display: flex; align-items: center; justify-content: center; color: #f87171; font-size: 1.2rem; flex-shrink: 0;">
                 <i class="fas fa-gavel"></i>
               </div>
               <div>
-                <h3 style="font-size: 1.2rem; color: var(--text-color); margin: 0;">Intizomiy choralar va jazolar</h3>
-                <p style="color: var(--text-secondary, #9ca3af); font-size: 0.85rem; margin: 0.2rem 0 0 0;">Maktab ichki tartib-qoidalariga muvofiq</p>
+                <h3 style="font-size: 1.2rem; color: var(--text-color); margin: 0;">Sayt intizomiy choralari va bloklash muddatlari</h3>
+                <p style="color: var(--text-secondary, #9ca3af); font-size: 0.85rem; margin: 0.2rem 0 0 0;">Sayt qoidalariga muvofiq tizimli jazo choralari</p>
               </div>
             </div>
 
@@ -134,47 +134,55 @@
               <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.9rem;">
                 <thead>
                   <tr style="background: rgba(239, 68, 68, 0.08);">
-                    <th style="padding: 12px 14px; text-align: left; font-weight: 600; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.08); border-radius: 10px 0 0 0;">Qoidabuzarlik</th>
+                    <th style="padding: 12px 14px; text-align: left; font-weight: 600; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.08); border-radius: 10px 0 0 0;">Saytdagi qoidabuzarlik</th>
                     <th style="padding: 12px 14px; text-align: left; font-weight: 600; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.08);">Birinchi marta</th>
                     <th style="padding: 12px 14px; text-align: left; font-weight: 600; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.08);">Takrorlanganda</th>
-                    <th style="padding: 12px 14px; text-align: left; font-weight: 600; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.08); border-radius: 0 10px 0 0;">Ogir holatda</th>
+                    <th style="padding: 12px 14px; text-align: left; font-weight: 600; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.08); border-radius: 0 10px 0 0;">Og'ir holatda</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 12px 14px; color: #e2e8f0;">👊 Sokinish, janjal</td>
-                    <td style="padding: 12px 14px; color: #fbbf24;">Ogohlantirish + ota-onaga xabar</td>
-                    <td style="padding: 12px 14px; color: #fb923c;">3 kunlik ogohlantirish</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">1 oygacha saytdan vaqtincha bloklash</td>
+                    <td style="padding: 12px 14px; color: #e2e8f0;">💬 Sokinish, haqorat va janjal (Chat va izohlarda)</td>
+                    <td style="padding: 12px 14px; color: #fbbf24;">1 soatlik bloklash</td>
+                    <td style="padding: 12px 14px; color: #fb923c;">1 kunlik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 haftalik bloklash</td>
                   </tr>
                   <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);">
-                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                  <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);">
-                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 12px 14px; color: #e2e8f0;">🗣️ O'qituvchiga hurmatsizlik</td>
-                    <td style="padding: 12px 14px; color: #fb923c;">3 kunlik ogohlantirish</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">1 oylik bloklash + ota-onaga xabar</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">3 oygacha bloklash</td>
-                  </tr>
-                  <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 12px 14px; color: #e2e8f0;">💀 Boshqa o'quvchini haqoratlash, kamsitish</td>
-                    <td style="padding: 12px 14px; color: #fb923c;">5 kunlik ogohlantirish + ota-onaga xabar</td>
+                    <td style="padding: 12px 14px; color: #e2e8f0;">🚫 Spam, reklama va noo'rin/behayo kontent yuborish</td>
+                    <td style="padding: 12px 14px; color: #fbbf24;">1 soatlik bloklash + xabar o'chiriladi</td>
+                    <td style="padding: 12px 14px; color: #fb923c;">1 kunlik bloklash</td>
                     <td style="padding: 12px 14px; color: #ef4444;">1 oylik bloklash</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">3 oygacha bloklash + psixolog bilan suhbat</td>
                   </tr>
                   <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 12px 14px; color: #e2e8f0;">🔒 Hisobga ruxsatsiz kirish (boshqaning parolini o'g'irlash)</td>
+                    <td style="padding: 12px 14px; color: #e2e8f0;">🗣️ Ustozlar, o'quvchilar yoki adminlarni kamsitish</td>
+                    <td style="padding: 12px 14px; color: #fb923c;">1 kunlik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 haftalik bloklash</td>
                     <td style="padding: 12px 14px; color: #ef4444;">1 oylik bloklash</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">3 oygacha bloklash</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">Butun umrga bloklash</td>
                   </tr>
                   <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 12px 14px; color: #e2e8f0;">📢 Saytda yolg'on ma'lumot tarqatish</td>
-                    <td style="padding: 12px 14px; color: #fbbf24;">Ogohlantirish + kontent o'chiriladi</td>
-                    <td style="padding: 12px 14px; color: #fb923c;">1 haftalik bloklash</td>
-                    <td style="padding: 12px 14px; color: #ef4444;">1 oygacha bloklash</td>
+                    <td style="padding: 12px 14px; color: #e2e8f0;">📢 Saytda yolg'on ma'lumot yoki tuhmat tarqatish</td>
+                    <td style="padding: 12px 14px; color: #fbbf24;">1 soatlik bloklash + kontent o'chiriladi</td>
+                    <td style="padding: 12px 14px; color: #fb923c;">1 kunlik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 haftalik bloklash</td>
                   </tr>
-
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                    <td style="padding: 12px 14px; color: #e2e8f0;">📝 Imtihonlarda g'irromlik, javoblarni tarqatish yoki testni buzish</td>
+                    <td style="padding: 12px 14px; color: #fb923c;">1 kunlik bloklash + natija bekor</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 haftalik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 oylik bloklash</td>
+                  </tr>
+                  <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04);">
+                    <td style="padding: 12px 14px; color: #e2e8f0;">🔒 Boshqa birovning akkauntiga ruxsatsiz kirish (parol o'g'irlash)</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 haftalik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 oylik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444; font-weight: 700;">Butun umrga bloklash</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                    <td style="padding: 12px 14px; color: #e2e8f0;">🛡️ Sayt xavfsizligiga hujum, fishing yoki virusli havola tarqatish</td>
+                    <td style="padding: 12px 14px; color: #ef4444;">1 oylik bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444; font-weight: 700;">Butun umrga bloklash</td>
+                    <td style="padding: 12px 14px; color: #ef4444; font-weight: 700;">Butun umrga bloklash (IP/Akkaunt)</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -182,7 +190,7 @@
             <div style="margin-top: 1rem; padding: 12px 16px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 10px; display: flex; align-items: flex-start; gap: 10px;">
               <span style="font-size: 1.1rem; margin-top: 1px;">⚠️</span>
               <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.5; margin: 0;">
-                <strong style="color: #fbbf24;">Eslatma:</strong> Har bir jazo holati alohida ko'rib chiqiladi. Og'ir holatlarda maktab ma'muriyati tomonidan qo'shimcha chora ko'rilishi mumkin. Ota-onalar bilan doimiy aloqa saqlanadi.
+                <strong style="color: #fbbf24;">Eslatma:</strong> Saytda bloklash muddatlari tizim imkoniyatlariga muvofiq: <strong>1 soat, 1 kun, 1 hafta, 1 oy va Butun umr</strong> etib belgilangan. Qoidabuzarlik darajasiga qarab admin yoki moderator tomonidan chora qo'llaniladi.
               </p>
             </div>
           </article>
