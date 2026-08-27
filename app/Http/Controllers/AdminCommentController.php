@@ -130,7 +130,7 @@ class AdminCommentController extends Controller
         $this->authorizeBlocker();
         $current = auth()->user();
 
-        if (! $current->canManage($user)) {
+        if (! $current->canManage($user) && ! $current->canModerateCommentAuthor($user)) {
             return redirect()
                 ->route('admin.comments.index')
                 ->with('error', 'Bu foydalanuvchini bloklash huquqingiz yo‘q.')
@@ -220,6 +220,6 @@ class AdminCommentController extends Controller
     {
         /** @var User|null $user */
         $user = auth()->user();
-        abort_unless($user && $user->isAdmin(), 403);
+        abort_unless($user && ($user->isAdmin() || $user->isModerator()), 403);
     }
 }

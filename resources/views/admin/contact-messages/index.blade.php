@@ -113,10 +113,31 @@
                     @if(!$row->read_at)
                       <form method="POST" action="{{ route('admin.contact-messages.read', $row) }}" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-success w-100">O‘qilgan qilib belgilash</button>
+                        <button type="submit" class="btn btn-sm btn-outline-success w-100">O‘qilgan</button>
                       </form>
                     @endif
-                   
+
+                    @if(!$row->is_blocked)
+                      @if($row->senderUser && (auth()->user()->isAdmin() || auth()->user()->isModerator()) && auth()->user()->canManage($row->senderUser) && (int)$row->senderUser->id !== (int)auth()->id())
+                        <button type="button" class="btn btn-sm btn-warning w-100"
+                          onclick="openBlockModal('{{ addslashes($row->senderUser->name) }}', '{{ route('admin.contact-messages.block', $row) }}', {{ (int) $row->senderUser->block_count }})">
+                          Bloklash
+                        </button>
+                      @else
+                        <form method="POST" action="{{ route('admin.contact-messages.block', $row) }}" class="d-inline"
+                          data-confirm="Bu xabarni bloklaysizmi? (spam yoki arxaiv)" data-confirm-title="Bloklash"
+                          data-confirm-variant="danger" data-confirm-ok="Bloklash">
+                          @csrf
+                          <button type="submit" class="btn btn-sm btn-warning w-100">Bloklash</button>
+                        </form>
+                      @endif
+                    @else
+                      <form method="POST" action="{{ route('admin.contact-messages.unblock', $row) }}" class="d-inline" data-confirm="Bu foydalanuvchi/xabar blokdan chiqarilsinmi?" data-confirm-title="Blokdan chiqarish" data-confirm-variant="primary" data-confirm-ok="Ha, chiqarish">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Blokdan ochish</button>
+                      </form>
+                    @endif
+
                     @if($canInbox)
                       <form method="POST" action="{{ route('admin.contact-messages.destroy', $row) }}" class="d-inline" data-confirm="O‘chirilsinmi?" data-confirm-title="Xabarni o'chirish" data-confirm-variant="danger" data-confirm-ok="O'chirish">
                         @csrf
