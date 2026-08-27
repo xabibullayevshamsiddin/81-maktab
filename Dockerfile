@@ -24,27 +24,27 @@ RUN echo '[supervisord]\nnodaemon=true\n\n\
     > /etc/supervisor/conf.d/supervisord.conf
 
 
-RUN echo 'server { \n\
-    listen ${PORT:-8080}; \n\
-    root /app/public; \n\
-    index index.php; \n\
-    client_max_body_size 64M; \n\
-    location /storage/ { \n\
-        alias /app/storage/app/public/; \n\
-        add_header Cache-Control "public, max-age=2592000"; \n\
-        expires 30d; \n\
-        access_log off; \n\
-        try_files $uri $uri/ =404; \n\
-    } \n\
-    location / { try_files $uri $uri/ /index.php?$query_string; } \n\
-    location ~ \.php$ { \n\
-        fastcgi_pass 127.0.0.1:9000; \n\
-        fastcgi_index index.php; \n\
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name; \n\
-        include fastcgi_params; \n\
-        fastcgi_read_timeout 120; \n\
-    } \n\
-    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { expires 30d; add_header Cache-Control "public"; } \n\
+RUN echo 'server { \
+    listen 8080; \
+    root /app/public; \
+    index index.php; \
+    client_max_body_size 64M; \
+    location /storage/ { \
+        alias /app/storage/app/public/; \
+        add_header Cache-Control "public, max-age=2592000"; \
+        expires 30d; \
+        access_log off; \
+        try_files $uri $uri/ =404; \
+    } \
+    location / { try_files $uri $uri/ /index.php?$query_string; } \
+    location ~ \.php$ { \
+        fastcgi_pass 127.0.0.1:9000; \
+        fastcgi_index index.php; \
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name; \
+        include fastcgi_params; \
+        fastcgi_read_timeout 120; \
+    } \
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { expires 30d; add_header Cache-Control "public"; } \
 }' > /etc/nginx/sites-available/default
 
 RUN mkdir -p storage/app/public/posts \
@@ -82,5 +82,4 @@ CMD ["/bin/sh", "-c", "\
     php artisan view:cache && \
     php artisan telegram:set-webhook 2>/dev/null || true && \
     php artisan telegram:set-commands 2>/dev/null || true && \
-    sed -i \"s/\\${PORT:-8080}/${PORT:-8080}/g\" /etc/nginx/sites-available/default && \
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
