@@ -146,11 +146,66 @@ class TelegramService
     /**
      | Bot buyruqlarini Telegram Menu ga ro'yxatdan o'tkazish.
      */
-    public function setMyCommands(array $commands): ?array
+    public function setMyCommands(array $commands, ?array $scope = null, string $languageCode = ''): ?array
     {
-        return $this->callApi('setMyCommands', [
+        $payload = [
             'commands' => $commands,
-        ]);
+        ];
+        if ($scope !== null) {
+            $payload['scope'] = $scope;
+        }
+        if ($languageCode !== '') {
+            $payload['language_code'] = $languageCode;
+        }
+
+        return $this->callApi('setMyCommands', $payload);
+    }
+
+    /**
+     | Telegram serveridagi joriy buyruqlarni olish.
+     */
+    public function getMyCommands(?array $scope = null, string $languageCode = ''): ?array
+    {
+        $payload = [];
+        if ($scope !== null) {
+            $payload['scope'] = $scope;
+        }
+        if ($languageCode !== '') {
+            $payload['language_code'] = $languageCode;
+        }
+
+        return $this->callApi('getMyCommands', $payload);
+    }
+
+    /**
+     | Barcha bot buyruqlarini o'chirish (scope bo'yicha reset).
+     */
+    public function deleteMyCommands(?array $scope = null, string $languageCode = ''): ?array
+    {
+        $payload = [];
+        if ($scope !== null) {
+            $payload['scope'] = $scope;
+        }
+        if ($languageCode !== '') {
+            $payload['language_code'] = $languageCode;
+        }
+
+        return $this->callApi('deleteMyCommands', $payload);
+    }
+
+    /**
+     | Chat Menu tugmasini sozlash (type: commands, web_app, default).
+     */
+    public function setChatMenuButton(?array $menuButton = null, ?int $chatId = null): ?array
+    {
+        $payload = [
+            'menu_button' => $menuButton ?? ['type' => 'commands'],
+        ];
+        if ($chatId !== null) {
+            $payload['chat_id'] = $chatId;
+        }
+
+        return $this->callApi('setChatMenuButton', $payload);
     }
 
     /**
