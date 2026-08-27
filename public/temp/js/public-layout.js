@@ -787,6 +787,59 @@
 
     window.openUserProfilePreview = openUserProfilePreview;
 
+    window.openCommentUserBlockModal = function (userId, userName, blockCount) {
+      var cfg = userPreviewConfigEl();
+      var previewBase = (cfg && cfg.getAttribute('data-user-preview-base')) || '/chat/user';
+      var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+      var csrf = (cfg && cfg.getAttribute('data-csrf')) || (csrfMeta && csrfMeta.getAttribute('content'));
+      if (!csrf) {
+        alert('CSRF token topilmadi.');
+        return;
+      }
+
+      showChatBlockModal(userName, function (duration, reason) {
+        var url = previewBase + '/' + userId + '/deactivate';
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrf,
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            duration: duration || '1d',
+            reason: reason || 'Izoh qoidabuzarligi uchun bloklandi',
+          }),
+        })
+          .then(function (r) {
+            return r.json().then(function (j) {
+              if (!r.ok) {
+                throw new Error((j && (j.error || j.message)) || 'Xatolik yuz berdi');
+              }
+              return j;
+            });
+          })
+          .then(function (j) {
+            if (window.showToast) {
+              window.showToast('Foydalanuvchi bloklandi (' + (j.duration_text || '1 kun') + ').', 'success');
+            } else {
+              alert('Foydalanuvchi bloklandi (' + (j.duration_text || '1 kun') + ').');
+            }
+            setTimeout(function () {
+              location.reload();
+            }, 1000);
+          })
+          .catch(function (err) {
+            if (window.showToast) {
+              window.showToast(err.message || 'Xatolik', 'error');
+            } else {
+              alert(err.message || 'Xatolik');
+            }
+          });
+      }, blockCount);
+    };
+
     document.addEventListener('click', function (e) {
       var tr = e.target.closest('[data-user-preview-id]');
       if (!tr) return;

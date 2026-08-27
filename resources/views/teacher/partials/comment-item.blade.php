@@ -161,6 +161,22 @@
           </button>
         </form>
       @endif
+
+      @php
+        $canBlockCommentAuthor = $authUser && $comment->user && ($authUser->isAdmin() || $authUser->isModerator()) && (int) $comment->user->id !== (int) $authUser->id && !$comment->user->isAdmin();
+      @endphp
+
+      @if($canBlockCommentAuthor)
+        <button
+          type="button"
+          class="btn btn-sm comment-block-btn"
+          style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; font-weight: 600; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.2s;"
+          title="Foydalanuvchini bloklash"
+          onclick="openCommentUserBlockModal({{ $comment->user->id }}, '{{ addslashes($comment->user->name) }}', {{ (int) $comment->user->block_count }})"
+        >
+          <i class="fa-solid fa-ban"></i> Bloklash
+        </button>
+      @endif
     </div>
   </div>
 
