@@ -2749,6 +2749,9 @@ function refreshChatAvailability() {
       }
       positionPanel();
       panel.hidden = false;
+      if (messagesEl) {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
       panel.classList.remove('is-closing');
       panel.classList.add('is-opening');
       widget.classList.add('is-open');
@@ -2756,6 +2759,7 @@ function refreshChatAvailability() {
       resetChatComposeState();
       syncDockState();
       markChatAsRead(lastId);
+      scrollDown();
 
       if (!chatEnabled && chatDisabledPanel && chatPanelMain) {
         setChatEnabledState(false, widget.getAttribute('data-chat-disabled-message') || getChatText('chat_disabled_default', 'Global chat vaqtincha o‘chirilgan.'));
@@ -2774,8 +2778,10 @@ function refreshChatAvailability() {
             syncComposeState();
           });
         }).finally(function () {
+          scrollDown();
           setTimeout(function () {
             panel.classList.remove('is-opening');
+            scrollDown();
           }, 520);
         });
 
@@ -2785,7 +2791,10 @@ function refreshChatAvailability() {
       setChatEnabledState(true);
 
       // Global chat
-        if (messagesEl) messagesEl.hidden = false;
+        if (messagesEl) {
+          messagesEl.hidden = false;
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
         var composePanelG = document.getElementById('chat-form');
         if (composePanelG) composePanelG.hidden = false;
         loadMessages().finally(function () {
@@ -2793,7 +2802,10 @@ function refreshChatAvailability() {
           scrollDown();
           if (input) input.focus();
           syncComposeState();
-          setTimeout(function () { panel.classList.remove('is-opening'); }, 520);
+          setTimeout(function () {
+            panel.classList.remove('is-opening');
+            scrollDown();
+          }, 520);
         });
     }
 
@@ -2828,6 +2840,7 @@ function refreshChatAvailability() {
         document.body.classList.add('chat-fullscreen-active');
         setTimeout(function () {
           panel.classList.remove('is-fullscreen-enter');
+          scrollDown();
         }, 360);
         icon.className = 'fa-solid fa-compress';
         fullBtn.title = getChatText('chat_fullscreen_exit', 'Kichiklashtirish');
@@ -2840,6 +2853,7 @@ function refreshChatAvailability() {
           panel.style.removeProperty('left');
           panel.style.removeProperty('top');
           if (isOpen) positionPanel();
+          scrollDown();
         }, 320);
         icon.className = 'fa-solid fa-expand';
         fullBtn.title = getChatText('chat_fullscreen_enter', "To'liq ekran");
@@ -2847,7 +2861,19 @@ function refreshChatAvailability() {
     }
 
     function scrollDown() {
-      setTimeout(function () { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
+      if (!messagesEl) return;
+      var jumpToBottom = function () {
+        if (messagesEl) {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+      };
+      jumpToBottom();
+      requestAnimationFrame(jumpToBottom);
+      setTimeout(jumpToBottom, 20);
+      setTimeout(jumpToBottom, 60);
+      setTimeout(jumpToBottom, 150);
+      setTimeout(jumpToBottom, 300);
+      setTimeout(jumpToBottom, 530);
     }
 
     function setComposeState(state) {
@@ -2927,8 +2953,24 @@ function refreshChatAvailability() {
         if (options && options.burst && node.classList.contains('is-mine')) {
           node.classList.add('is-burst');
         }
+        var imgs = node.querySelectorAll('img');
+        if (imgs.length) {
+          imgs.forEach(function (img) {
+            if (!img.complete) {
+              img.addEventListener('load', function () {
+                if (isOpen && messagesEl) {
+                  messagesEl.scrollTop = messagesEl.scrollHeight;
+                }
+              }, { once: true });
+            }
+          });
+        }
         messagesEl.appendChild(node);
       });
+
+      if (isOpen) {
+        scrollDown();
+      }
 
       return nodes;
     }

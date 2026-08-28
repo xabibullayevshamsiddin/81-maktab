@@ -2631,6 +2631,8 @@ body.chat-fullscreen-active::before {
   gap: 8px;
   -webkit-user-select: none;
   user-select: none;
+  scroll-behavior: auto !important;
+  overscroll-behavior: contain;
 }
 
 .chat-msg {
