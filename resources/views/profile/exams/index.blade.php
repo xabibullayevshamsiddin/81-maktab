@@ -108,14 +108,15 @@
 .exams-table-responsive {
   width: 100%;
   overflow-x: auto;
-  padding: 10px 0 0;
+  padding: 6px 0 0;
 }
 
 .exams-modern-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   text-align: left;
+  table-layout: auto;
 }
 
 .exams-modern-table thead tr {
@@ -124,11 +125,11 @@
 }
 
 .exams-modern-table th {
-  padding: 16px 18px;
-  font-size: 0.82rem;
+  padding: 12px 10px;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--muted-text, #64748b);
   white-space: nowrap;
 }
@@ -143,7 +144,7 @@
 }
 
 .exams-modern-table td {
-  padding: 16px 18px;
+  padding: 12px 10px;
   vertical-align: middle;
   color: var(--text-color, #1e293b);
 }
@@ -152,33 +153,33 @@
 .exam-title-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 220px;
+  gap: 10px;
 }
 
 .exam-icon-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #0ea5e9, #0284c7);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);
+  box-shadow: 0 3px 8px rgba(14, 165, 233, 0.2);
 }
 
 .exam-meta-title {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--text-color, #0f172a);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
+  line-height: 1.3;
 }
 
 .exam-meta-subtitle {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--muted-text, #64748b);
 }
 
@@ -186,10 +187,10 @@
 .badge-status-active {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   background: #dcfce7;
   color: #166534;
@@ -199,10 +200,10 @@
 .badge-status-incomplete {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   background: #fef3c7;
   color: #92400e;
@@ -213,9 +214,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 700;
   background: rgba(99, 102, 241, 0.08);
   color: #4f46e5;
@@ -224,9 +225,9 @@
 
 .badge-pill-grade {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
   background: rgba(148, 163, 184, 0.12);
   color: var(--text-color, #334155);
@@ -236,18 +237,18 @@
 .exam-table-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
 }
 
 .btn-action-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 0.82rem;
   border: 1px solid transparent;
   text-decoration: none;
   transition: all 0.2s ease;
@@ -506,15 +507,13 @@
           <table class="exams-modern-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th style="width: 38px;">#</th>
                 <th><i class="fa-solid fa-file-pen me-1"></i> {{ __('public.profile_exams.col_name') }}</th>
                 <th><i class="fa-solid fa-list-ol me-1"></i> {{ __('public.profile_exams.col_questions') }}</th>
-                <th><i class="fa-solid fa-star me-1"></i> {{ __('public.profile_exams.col_points') }}</th>
-                <th><i class="fa-solid fa-bullseye me-1"></i> {{ __('public.profile_exams.col_passing') }}</th>
-                <th><i class="fa-solid fa-calendar-days me-1"></i> {{ __('public.profile_exams.col_start_planned') }}</th>
-                <th><i class="fa-solid fa-school me-1"></i> {{ __('public.profile_exams.col_grades') }}</th>
-                <th><i class="fa-solid fa-users me-1"></i> Ishtirokchilar</th>
-                <th class="text-end"><i class="fa-solid fa-sliders me-1"></i> {{ __('public.profile_exams.col_actions') }}</th>
+                <th><i class="fa-solid fa-star me-1"></i> Ball (O'tish)</th>
+                <th><i class="fa-solid fa-calendar-days me-1"></i> Boshlanish / Sinf</th>
+                <th><i class="fa-solid fa-users me-1"></i> Ishtirok</th>
+                <th class="text-end" style="width: 145px;"><i class="fa-solid fa-sliders me-1"></i> {{ __('public.profile_exams.col_actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -553,40 +552,36 @@
                     </span>
                   </td>
 
-                  {{-- Jami ball --}}
+                  {{-- Jami ball & O'tish bali --}}
                   <td>
-                    <strong style="color: #4f46e5;">{{ $exam->total_points }} ball</strong>
+                    <strong style="color: #4f46e5; font-size: 0.9rem;">{{ $exam->total_points }} ball</strong>
+                    <div style="font-size: 0.76rem; color: var(--muted-text, #64748b);">
+                      O'tish: {{ $exam->passing_points ?? '—' }}
+                    </div>
                   </td>
 
-                  {{-- O'tish bali --}}
+                  {{-- Boshlanish vaqti & Sinf --}}
                   <td>
-                    <span style="font-weight: 600;">{{ $exam->passing_points ?? '—' }}</span>
-                  </td>
-
-                  {{-- Boshlanish vaqti --}}
-                  <td>
-                    <span style="font-size: 0.86rem; font-weight: 500;">
+                    <div style="font-size: 0.82rem; font-weight: 600;">
                       {{ $exam->availableFromLabel() ?? 'Ixtiyoriy vaqt' }}
-                    </span>
-                  </td>
-
-                  {{-- Sinf --}}
-                  <td>
-                    <span class="badge-pill-grade" title="{{ $exam->allowedGradesLabel() }}">
-                      {{ \Illuminate\Support\Str::limit($exam->allowedGradesLabel(), 18) }}
-                    </span>
+                    </div>
+                    <div style="margin-top: 2px;">
+                      <span class="badge-pill-grade" title="{{ $exam->allowedGradesLabel() }}">
+                        {{ \Illuminate\Support\Str::limit($exam->allowedGradesLabel(), 18) }}
+                      </span>
+                    </div>
                   </td>
 
                   {{-- Ishtirokchilar --}}
                   <td>
-                    <span style="{{ $exam->hasParticipantLimit() && $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:700;' : 'font-weight:600;' }}">
+                    <span style="{{ $exam->hasParticipantLimit() && $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:700;' : 'font-weight:600;' }}; font-size: 0.84rem;">
                       {{ $exam->participantLimitLabel() }}
                     </span>
                   </td>
 
                   {{-- Amallar --}}
                   <td class="text-end">
-                    <div class="exam-table-actions" style="justify-content: flex-end;">
+                    <div class="exam-table-actions">
                       <a href="{{ route('profile.exams.results', ['exam_id' => $exam->id]) }}" class="btn-action-icon btn-action-icon--results" title="{{ __('public.profile_exams.results_btn') }}">
                         <i class="fa-solid fa-chart-pie"></i>
                       </a>
@@ -608,7 +603,7 @@
                 </tr>
               @empty
                 <tr>
-                  <td colspan="9" style="padding: 40px 20px; text-align: center; color: var(--muted-text, #64748b);">
+                  <td colspan="7" style="padding: 40px 20px; text-align: center; color: var(--muted-text, #64748b);">
                     <i class="fa-solid fa-folder-open mb-2" style="font-size: 2.5rem; opacity: 0.4; display: block;"></i>
                     <span style="font-weight: 600; font-size: 1rem;">{{ __('public.profile_exams.empty') }}</span>
                   </td>
