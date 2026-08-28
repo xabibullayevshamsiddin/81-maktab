@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Middleware;
 
@@ -83,7 +83,7 @@ class TrackSiteVisits
         $userId = $request->user()?->id;
 
         // 1. Noyob mehmon (IP + User-Agent) bugun kirganmi?
-        $uniqueVisitorKey = 'visit_u_' . $today . '_' . md5($ip . '|' . $userAgentKey = substr($ua, 0, 100));
+        $uniqueVisitorKey = 'visit_u_' . $today . '_' . md5($ip . '|' . substr($ua, 0, 100));
         $isNewUnique = false;
         if (! Cache::has($uniqueVisitorKey)) {
             Cache::put($uniqueVisitorKey, 1, now()->endOfDay()->addHours(2));
