@@ -803,6 +803,11 @@
           'global_chat_clear_ok' => __('public.layout.global_chat_clear_ok'),
         ];
       @endphp
+      @php
+        $chatAuthUser = auth()->user();
+        $chatUserBlocked = $chatAuthUser && $chatAuthUser->is_blocked;
+        $chatBlockedUntilTs = ($chatUserBlocked && $chatAuthUser->blocked_until) ? $chatAuthUser->blocked_until->timestamp : 0;
+      @endphp
       <div id="chat-widget" class="chat-widget"
         data-chat-status-url="{{ route('chat.status') }}"
         data-chat-messages-url="{{ route('chat.messages') }}"
@@ -816,6 +821,8 @@
         data-chat-enabled="{{ $globalChatEnabled ? '1' : '0' }}"
         data-chat-disabled-message="{{ e($globalChatDisabledMsg) }}"
         data-chat-texts='@json($chatText)'
+        data-user-blocked="{{ $chatUserBlocked ? '1' : '0' }}"
+        data-blocked-until-ts="{{ $chatBlockedUntilTs }}"
       >
         <button type="button" class="chat-bubble" id="chat-bubble" aria-label="{{ __('public.layout.chat') }}">
           <i class="fa-solid fa-comments"></i>
@@ -1022,6 +1029,34 @@
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </form>
+          <div id="chat-user-blocked-bar" class="chat-user-blocked-bar" @if(!$chatUserBlocked) hidden @endif>
+            <div class="chat-blocked-header-row">
+              <div class="chat-blocked-lock-badge"><i class="fa-solid fa-lock"></i></div>
+              <div class="chat-blocked-bar-title">Hisobingiz bloklangan</div>
+            </div>
+            @if($chatAuthUser && $chatAuthUser->blocked_reason)
+              <div class="chat-blocked-bar-reason">{{ $chatAuthUser->blocked_reason }}</div>
+            @endif
+            <div class="chat-blocked-countdown-box">
+              <div class="chat-blocked-countdown-title">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Blok tugashiga qolgan vaqt:</span>
+              </div>
+              <div class="chat-blocked-timer-digits" id="chat-blocked-timer-digits">
+                <div class="timer-segment" id="chat-timer-d-wrap"><span class="timer-num" id="chat-timer-d">00</span><span class="timer-lbl">kun</span></div>
+                <span class="timer-sep" id="chat-timer-d-sep">:</span>
+                <div class="timer-segment"><span class="timer-num" id="chat-timer-h">00</span><span class="timer-lbl">soat</span></div>
+                <span class="timer-sep">:</span>
+                <div class="timer-segment"><span class="timer-num" id="chat-timer-m">00</span><span class="timer-lbl">daq</span></div>
+                <span class="timer-sep">:</span>
+                <div class="timer-segment"><span class="timer-num timer-num--sec" id="chat-timer-s">00</span><span class="timer-lbl">son</span></div>
+              </div>
+              <div class="chat-blocked-permanent" id="chat-blocked-permanent" hidden>
+                <i class="fa-solid fa-infinity"></i>
+                <span>Doimiy bloklangan</span>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -1365,6 +1400,11 @@
       $aiChatEnabled = \App\Models\SiteSetting::get('ai_chat_enabled', '1') === '1';
       $aiChatDisabledMsg = trim((string) \App\Models\SiteSetting::get('ai_chat_disabled_message', '')) ?: __('public.layout.ai_disabled_default');
     @endphp
+      @php
+        $aiAuthUser = auth()->user();
+        $aiUserBlocked = $aiAuthUser && $aiAuthUser->is_blocked;
+        $aiBlockedUntilTs = ($aiUserBlocked && $aiAuthUser->blocked_until) ? $aiAuthUser->blocked_until->timestamp : 0;
+      @endphp
     <div
       id="ai-widget"
       class="ai-widget"
@@ -1375,6 +1415,9 @@
       data-ai-mock-delim="{{ config('ai.mock_delimiter') }}"
       data-ai-enabled="{{ $aiChatEnabled ? '1' : '0' }}"
       data-ai-disabled-message="{{ e($aiChatDisabledMsg) }}"
+      data-user-blocked="{{ $aiUserBlocked ? '1' : '0' }}"
+      data-blocked-until-ts="{{ $aiBlockedUntilTs }}"
+      data-blocked-reason="{{ e($aiAuthUser?->blocked_reason ?? '') }}"
     >
       <button type="button" class="ai-bubble prime-3d-target" id="ai-bubble" aria-label="{{ __('public.layout.ai_assistant') }}" title="{{ __('public.layout.ai_assistant') }}">
         <i class="fa-solid fa-brain ai-icon-fa"></i>
@@ -1416,7 +1459,7 @@
           </span>
           <span class="chat-compose-status-text">{{ __('public.layout.thinking') }}</span>
         </div>
-        <div class="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;">
+        <div class="ai-quick-actions" id="ai-quick-actions" style="display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 10px;" @if($aiUserBlocked) hidden @endif>
           @if(auth()->check() && auth()->user()->is_parent)
             <button type="button" class="ai-action-btn" data-msg="Farzandimni qanday ulayman?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">👨‍👩‍👧 Bog'lash</button>
             <button type="button" class="ai-action-btn" data-msg="Bog'langandan keyin nima keladi?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">📊 Natijalar</button>
@@ -1427,7 +1470,7 @@
             <button type="button" class="ai-action-btn" data-msg="Maktab manzili va telefon raqami qanday?" style="white-space:nowrap; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer">{{ __('public.layout.quick_contact') }}</button>
           @endif
         </div>
-        <form class="chat-input-wrap" id="ai-chat-form">
+        <form class="chat-input-wrap" id="ai-chat-form" @if($aiUserBlocked) hidden @endif>
           <textarea
             class="chat-textarea"
             id="ai-textarea"
@@ -1440,6 +1483,34 @@
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </form>
+        <div id="ai-user-blocked-bar" class="chat-user-blocked-bar ai-user-blocked-bar" @if(!$aiUserBlocked) hidden @endif>
+          <div class="chat-blocked-header-row">
+            <div class="chat-blocked-lock-badge"><i class="fa-solid fa-lock"></i></div>
+            <div class="chat-blocked-bar-title">AI yordamchi bloklangan</div>
+          </div>
+          @if($aiAuthUser && $aiAuthUser->blocked_reason)
+            <div class="chat-blocked-bar-reason">{{ $aiAuthUser->blocked_reason }}</div>
+          @endif
+          <div class="chat-blocked-countdown-box">
+            <div class="chat-blocked-countdown-title">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>Blok tugashiga qolgan vaqt:</span>
+            </div>
+            <div class="chat-blocked-timer-digits" id="ai-blocked-timer-digits">
+              <div class="timer-segment" id="ai-timer-d-wrap"><span class="timer-num" id="ai-timer-d">00</span><span class="timer-lbl">kun</span></div>
+              <span class="timer-sep" id="ai-timer-d-sep">:</span>
+              <div class="timer-segment"><span class="timer-num" id="ai-timer-h">00</span><span class="timer-lbl">soat</span></div>
+              <span class="timer-sep">:</span>
+              <div class="timer-segment"><span class="timer-num" id="ai-timer-m">00</span><span class="timer-lbl">daq</span></div>
+              <span class="timer-sep">:</span>
+              <div class="timer-segment"><span class="timer-num timer-num--sec" id="ai-timer-s">00</span><span class="timer-lbl">son</span></div>
+            </div>
+            <div class="chat-blocked-permanent" id="ai-blocked-permanent" hidden>
+              <i class="fa-solid fa-infinity"></i>
+              <span>Doimiy bloklangan</span>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
     </div>
@@ -1486,7 +1557,118 @@
         var aiPanelMain = document.getElementById('ai-panel-main');
         var aiDisabledText = document.getElementById('ai-disabled-panel-text');
         var aiEnabled = widget.getAttribute('data-ai-enabled') !== '0';
+        var isAiUserBlocked = widget.getAttribute('data-user-blocked') === '1';
+        var aiBlockedUntilTs = parseInt(widget.getAttribute('data-blocked-until-ts') || '0', 10);
+        var aiUserBlockedBar = document.getElementById('ai-user-blocked-bar');
+        var aiQuickActions = document.getElementById('ai-quick-actions');
+        var aiBlockCountdownTimer = null;
         var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function updateAiBlockCountdownUI(targetTs) {
+          var dEl = document.getElementById('ai-timer-d');
+          var dWrap = document.getElementById('ai-timer-d-wrap');
+          var dSep = document.getElementById('ai-timer-d-sep');
+          var hEl = document.getElementById('ai-timer-h');
+          var mEl = document.getElementById('ai-timer-m');
+          var sEl = document.getElementById('ai-timer-s');
+          var digitsBox = document.getElementById('ai-blocked-timer-digits');
+          var permBox = document.getElementById('ai-blocked-permanent');
+
+          if (!targetTs || targetTs <= 0) {
+            if (digitsBox) digitsBox.hidden = true;
+            if (permBox) permBox.hidden = false;
+            return true;
+          }
+
+          if (permBox) permBox.hidden = true;
+          if (digitsBox) digitsBox.hidden = false;
+
+          var nowTs = Math.floor(Date.now() / 1000);
+          var diff = targetTs - nowTs;
+
+          if (diff <= 0) {
+            if (dEl) dEl.textContent = '00';
+            if (hEl) hEl.textContent = '00';
+            if (mEl) mEl.textContent = '00';
+            if (sEl) sEl.textContent = '00';
+            return false;
+          }
+
+          var days = Math.floor(diff / 86400);
+          var hours = Math.floor((diff % 86400) / 3600);
+          var minutes = Math.floor((diff % 3600) / 60);
+          var seconds = Math.floor(diff % 60);
+
+          if (dWrap && dSep) {
+            if (days > 0) {
+              dWrap.style.display = 'flex';
+              dSep.style.display = 'inline';
+              if (dEl) dEl.textContent = String(days).padStart(2, '0');
+            } else {
+              dWrap.style.display = 'none';
+              dSep.style.display = 'none';
+            }
+          }
+
+          if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+          if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
+          if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
+
+          return true;
+        }
+
+        function startAiBlockCountdown(targetTs) {
+          if (aiBlockCountdownTimer) {
+            clearInterval(aiBlockCountdownTimer);
+            aiBlockCountdownTimer = null;
+          }
+
+          var active = updateAiBlockCountdownUI(targetTs);
+          if (!active && targetTs > 0) {
+            setAiUserBlockedState(false, 0);
+            return;
+          }
+
+          if (targetTs > 0) {
+            aiBlockCountdownTimer = setInterval(function() {
+              var running = updateAiBlockCountdownUI(targetTs);
+              if (!running) {
+                clearInterval(aiBlockCountdownTimer);
+                aiBlockCountdownTimer = null;
+                setAiUserBlockedState(false, 0);
+              }
+            }, 1000);
+          }
+        }
+
+        function setAiUserBlockedState(blocked, targetTs) {
+          isAiUserBlocked = !!blocked;
+          aiBlockedUntilTs = parseInt(targetTs || '0', 10);
+          widget.setAttribute('data-user-blocked', isAiUserBlocked ? '1' : '0');
+          widget.setAttribute('data-blocked-until-ts', String(aiBlockedUntilTs));
+
+          if (aiUserBlockedBar) {
+            aiUserBlockedBar.hidden = !isAiUserBlocked;
+          }
+          if (form) {
+            form.hidden = isAiUserBlocked || !aiEnabled;
+          }
+          if (aiQuickActions) {
+            aiQuickActions.hidden = isAiUserBlocked;
+          }
+
+          if (isAiUserBlocked) {
+            startAiBlockCountdown(aiBlockedUntilTs);
+          } else if (aiBlockCountdownTimer) {
+            clearInterval(aiBlockCountdownTimer);
+            aiBlockCountdownTimer = null;
+          }
+        }
+
+        if (isAiUserBlocked) {
+          setAiUserBlockedState(true, aiBlockedUntilTs);
+        }
+
         /* PRIME AI Typewriter v2.0 — all keyframes live in style.css, nothing to inject */
         function setAiEnabledState(enabled, message) {
           aiEnabled = !!enabled;
@@ -1497,6 +1679,12 @@
           if (aiDisabledPanel && aiPanelMain) {
             aiPanelMain.hidden = !aiEnabled;
             aiDisabledPanel.hidden = aiEnabled;
+          }
+          if (form) {
+            form.hidden = !aiEnabled || isAiUserBlocked;
+          }
+          if (aiQuickActions) {
+            aiQuickActions.hidden = !aiEnabled || isAiUserBlocked;
           }
         }
         function refreshAiAvailability() {
@@ -1513,6 +1701,9 @@
             })
             .then(function (data) {
               if (!data) return aiEnabled;
+              if (data.user_blocked !== undefined) {
+                setAiUserBlockedState(data.user_blocked, data.blocked_until_ts);
+              }
               setAiEnabledState(!!data.enabled, data.disabled_message || data.error || widget.getAttribute('data-ai-disabled-message'));
               return aiEnabled;
             })
@@ -2019,6 +2210,11 @@
           })
           .then(function(payload) {
             var data = payload.data;
+            if (payload.status === 403 && (data && (data.error === 'Account blocked' || data.user_blocked))) {
+              setAiUserBlockedState(true, (data && data.blocked_until_ts) || aiBlockedUntilTs);
+              resetAiComposeState();
+              return;
+            }
             if (data && data.disabled) {
               data.error = data.error || "AI vaqtincha o'chirilgan.";
               setAiEnabledState(false, data.error);

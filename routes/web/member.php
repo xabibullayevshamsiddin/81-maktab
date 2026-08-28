@@ -16,7 +16,6 @@ Route::middleware('auth')->group(function () {
     Route::get('chat/status', [ChatController::class, 'status'])
         ->name('chat.status');
     Route::get('chat/messages', [ChatController::class, 'messages'])
-        ->middleware('active')
         ->name('chat.messages');
     Route::get('chat/user/{user}/preview', [ChatController::class, 'userPreview'])
         ->middleware('throttle:60,1')

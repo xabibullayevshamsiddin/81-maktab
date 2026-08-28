@@ -20988,3 +20988,197 @@ body[data-cursor-animation="1"][data-cursor-type="trailing"] #d-cursor-dot::afte
 ::view-transition-new(root) {
   animation-duration: 0.18s;
 }
+
+/* =====================================================================
+   BLOCKED USER LIVE COUNTDOWN & LOCK BAR (GLOBAL CHAT & AI)
+   ===================================================================== */
+.chat-user-blocked-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(245, 158, 11, 0.05));
+  border-top: 1px solid rgba(239, 68, 68, 0.22);
+  position: relative;
+  overflow: hidden;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-align: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+:root[data-theme='dark'] .chat-user-blocked-bar {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14), rgba(245, 158, 11, 0.08));
+  border-top-color: rgba(239, 68, 68, 0.35);
+}
+
+.chat-blocked-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.chat-blocked-lock-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #f59e0b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  animation: lockPulseGlow 2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes lockPulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.65), 0 0 24px rgba(245, 158, 11, 0.4);
+  }
+}
+
+.chat-blocked-bar-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #ef4444;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+:root[data-theme='dark'] .chat-blocked-bar-title {
+  color: #fca5a5;
+}
+
+.chat-blocked-bar-reason {
+  font-size: 0.75rem;
+  color: var(--muted, #64748b);
+  margin-bottom: 6px;
+  max-width: 90%;
+  line-height: 1.3;
+}
+
+.chat-blocked-countdown-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.chat-blocked-countdown-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chat-blocked-countdown-title i {
+  color: #f59e0b;
+  font-size: 10px;
+}
+
+.chat-blocked-timer-digits {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  padding: 5px 8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='dark'] .chat-blocked-timer-digits {
+  background: rgba(0, 0, 0, 0.28);
+  border-color: rgba(239, 68, 68, 0.32);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.timer-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 28px;
+}
+
+.timer-num {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ef4444;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
+}
+
+:root[data-theme='dark'] .timer-num {
+  color: #f87171;
+}
+
+.timer-num--sec {
+  color: #f59e0b !important;
+  animation: secondTickAnim 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes secondTickAnim {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.timer-lbl {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted, #94a3b8);
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+}
+
+.timer-sep {
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(239, 68, 68, 0.4);
+  margin: 0 1px;
+  align-self: flex-start;
+  margin-top: 1px;
+}
+
+.chat-blocked-permanent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .chat-blocked-permanent {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+

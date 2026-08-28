@@ -24,14 +24,25 @@ class ChatController extends Controller
     public function status(): JsonResponse
     {
         $enabled = SiteSetting::get('global_chat_enabled', '1') === '1';
+        $user    = request()->user();
+
+        // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
+        $userBlocked   = false;
+        $blockedUntilTs = null;
+        if ($user && $user->is_blocked) {
+            $userBlocked    = true;
+            $blockedUntilTs = $user->blocked_until ? $user->blocked_until->timestamp : null;
+        }
 
         return response()->json([
-            'enabled' => $enabled,
-            'chat_disabled' => ! $enabled,
+            'enabled'          => $enabled,
+            'chat_disabled'    => ! $enabled,
             'disabled_message' => SiteSetting::get(
                 'global_chat_disabled_message',
                 "Global chat vaqtincha o'chirilgan. Keyinroq urinib ko'ring."
             ),
+            'user_blocked'      => $userBlocked,
+            'blocked_until_ts'  => $blockedUntilTs,
         ]);
     }
 
@@ -146,11 +157,19 @@ class ChatController extends Controller
 
         $this->cleanOldMessages();
 
+        // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
+        $userBlocked    = $currentUser->is_blocked;
+        $blockedUntilTs = ($userBlocked && $currentUser->blocked_until)
+            ? $currentUser->blocked_until->timestamp
+            : null;
+
         return response()->json([
-            'messages' => $data,
-            'last_id' => $messages->last()?->id ?? $afterId,
-            'can_moderate' => $canModerate,
-            'can_clear_all' => $canClearAll,
+            'messages'         => $data,
+            'last_id'          => $messages->last()?->id ?? $afterId,
+            'can_moderate'     => $canModerate,
+            'can_clear_all'    => $canClearAll,
+            'user_blocked'     => $userBlocked,
+            'blocked_until_ts' => $blockedUntilTs,
         ]);
     }
 

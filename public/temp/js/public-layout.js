@@ -2567,6 +2567,10 @@
     var chatPanelMain = document.getElementById('chat-panel-main');
     var chatDisabledText = document.getElementById('chat-disabled-panel-text');
     var chatEnabled = widget.getAttribute('data-chat-enabled') !== '0';
+    var userBlockedBar = document.getElementById('chat-user-blocked-bar');
+    var isUserBlocked = widget.getAttribute('data-user-blocked') === '1';
+    var blockedUntilTs = parseInt(widget.getAttribute('data-blocked-until-ts') || '0', 10);
+    var blockCountdownTimer = null;
 
     var chatStatusUrl = widget.getAttribute('data-chat-status-url');
     var messagesUrl = widget.getAttribute('data-chat-messages-url');
@@ -2631,6 +2635,108 @@ function syncChatAdminActions() {
   clearBtn.hidden = !canClearAll; clearBtn.disabled = !canClearAll;
 }
 
+function updateBlockCountdownUI(targetTs, prefix) {
+  var dEl = document.getElementById(prefix + '-timer-d');
+  var dWrap = document.getElementById(prefix + '-timer-d-wrap');
+  var dSep = document.getElementById(prefix + '-timer-d-sep');
+  var hEl = document.getElementById(prefix + '-timer-h');
+  var mEl = document.getElementById(prefix + '-timer-m');
+  var sEl = document.getElementById(prefix + '-timer-s');
+  var digitsBox = document.getElementById(prefix + '-blocked-timer-digits');
+  var permBox = document.getElementById(prefix + '-blocked-permanent');
+
+  if (!targetTs || targetTs <= 0) {
+    if (digitsBox) digitsBox.hidden = true;
+    if (permBox) permBox.hidden = false;
+    return true;
+  }
+
+  if (permBox) permBox.hidden = true;
+  if (digitsBox) digitsBox.hidden = false;
+
+  var nowTs = Math.floor(Date.now() / 1000);
+  var diff = targetTs - nowTs;
+
+  if (diff <= 0) {
+    if (dEl) dEl.textContent = '00';
+    if (hEl) hEl.textContent = '00';
+    if (mEl) mEl.textContent = '00';
+    if (sEl) sEl.textContent = '00';
+    return false;
+  }
+
+  var days = Math.floor(diff / 86400);
+  var hours = Math.floor((diff % 86400) / 3600);
+  var minutes = Math.floor((diff % 3600) / 60);
+  var seconds = Math.floor(diff % 60);
+
+  if (dWrap && dSep) {
+    if (days > 0) {
+      dWrap.style.display = 'flex';
+      dSep.style.display = 'inline';
+      if (dEl) dEl.textContent = String(days).padStart(2, '0');
+    } else {
+      dWrap.style.display = 'none';
+      dSep.style.display = 'none';
+    }
+  }
+
+  if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+  if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
+  if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
+
+  return true;
+}
+
+function startGlobalChatBlockCountdown(targetTs) {
+  if (blockCountdownTimer) {
+    clearInterval(blockCountdownTimer);
+    blockCountdownTimer = null;
+  }
+
+  var active = updateBlockCountdownUI(targetTs, 'chat');
+  if (!active && targetTs > 0) {
+    setUserBlockedState(false, 0);
+    return;
+  }
+
+  if (targetTs > 0) {
+    blockCountdownTimer = setInterval(function() {
+      var running = updateBlockCountdownUI(targetTs, 'chat');
+      if (!running) {
+        clearInterval(blockCountdownTimer);
+        blockCountdownTimer = null;
+        setUserBlockedState(false, 0);
+      }
+    }, 1000);
+  }
+}
+
+function setUserBlockedState(blocked, targetTs) {
+  isUserBlocked = !!blocked;
+  blockedUntilTs = parseInt(targetTs || '0', 10);
+  widget.setAttribute('data-user-blocked', isUserBlocked ? '1' : '0');
+  widget.setAttribute('data-blocked-until-ts', String(blockedUntilTs));
+
+  if (userBlockedBar) {
+    userBlockedBar.hidden = !isUserBlocked;
+  }
+  if (form) {
+    form.hidden = isUserBlocked || !chatEnabled;
+  }
+
+  if (isUserBlocked) {
+    startGlobalChatBlockCountdown(blockedUntilTs);
+  } else if (blockCountdownTimer) {
+    clearInterval(blockCountdownTimer);
+    blockCountdownTimer = null;
+  }
+}
+
+if (isUserBlocked) {
+  setUserBlockedState(true, blockedUntilTs);
+}
+
 function setChatEnabledState(enabled, message) {
   chatEnabled = !!enabled;
   widget.setAttribute('data-chat-enabled', chatEnabled ? '1' : '0');
@@ -2649,7 +2755,7 @@ function setChatEnabledState(enabled, message) {
   }
 
   if (form) {
-    form.hidden = !chatEnabled;
+    form.hidden = !chatEnabled || isUserBlocked;
   }
 }
 
@@ -2668,6 +2774,10 @@ function refreshChatAvailability() {
     })
     .then(function (data) {
       if (!data) return chatEnabled;
+
+      if (data.user_blocked !== undefined) {
+        setUserBlockedState(data.user_blocked, data.blocked_until_ts);
+      }
 
       if (data.chat_disabled) {
         setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
@@ -3061,6 +3171,9 @@ function refreshChatAvailability() {
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          if (data.user_blocked !== undefined) {
+            setUserBlockedState(data.user_blocked, data.blocked_until_ts);
+          }
           if (data.chat_disabled) {
             setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();
@@ -3103,6 +3216,9 @@ function refreshChatAvailability() {
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          if (data.user_blocked !== undefined) {
+            setUserBlockedState(data.user_blocked, data.blocked_until_ts);
+          }
           if (data.chat_disabled) {
             setChatEnabledState(false, data.disabled_message || widget.getAttribute('data-chat-disabled-message'));
             stopPolling();

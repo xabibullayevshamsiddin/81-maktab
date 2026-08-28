@@ -172,14 +172,25 @@ class SiteAiController extends Controller
     public function status(): JsonResponse
     {
         $enabled = SiteSetting::get('ai_chat_enabled', '1') === '1';
+        $user    = request()->user();
+
+        // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
+        $userBlocked    = false;
+        $blockedUntilTs = null;
+        if ($user && $user->is_blocked) {
+            $userBlocked    = true;
+            $blockedUntilTs = $user->blocked_until ? $user->blocked_until->timestamp : null;
+        }
 
         return response()->json([
-            'enabled' => $enabled,
-            'disabled' => ! $enabled,
+            'enabled'          => $enabled,
+            'disabled'         => ! $enabled,
             'disabled_message' => SiteSetting::get(
                 'ai_chat_disabled_message',
                 "AI yordamchi vaqtincha o'chirilgan. Keyinroq urinib ko'ring."
             ),
+            'user_blocked'      => $userBlocked,
+            'blocked_until_ts'  => $blockedUntilTs,
         ]);
     }
 

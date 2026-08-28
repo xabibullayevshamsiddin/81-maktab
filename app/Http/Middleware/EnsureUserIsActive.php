@@ -34,12 +34,16 @@ class EnsureUserIsActive
 
     private function blockedResponse(Request $request): Response
     {
+        $user = $request->user();
         $message = "Kechirasiz, sizning hisobingiz vaqtincha bloklangan. Iltimos, sababini bilish uchun 'Aloqa' bo'limi orqali bizga xabar yo'llang.";
 
         if ($request->expectsJson() || $request->isXmlHttpRequest() || $request->is('chat/*') || $request->is('ai-chat')) {
             return response()->json([
                 'message' => $message,
-                'error' => 'Account blocked'
+                'error' => 'Account blocked',
+                'user_blocked' => true,
+                'blocked_until_ts' => ($user && $user->blocked_until) ? $user->blocked_until->timestamp : null,
+                'blocked_reason' => $user?->blocked_reason,
             ], 403);
         }
 
