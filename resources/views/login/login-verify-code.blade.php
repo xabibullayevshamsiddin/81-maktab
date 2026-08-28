@@ -215,12 +215,12 @@
                     @csrf
                     <input type="hidden" name="code" id="real-code-input" value="">
                     <div class="code-input-group">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                        <input type="text" class="code-input" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus>
+                        <input type="text" class="code-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" class="code-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" class="code-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" class="code-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" class="code-input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                     </div>
                     @error('code')
                         <p class="form-message" style="color:#b91c1c;margin-bottom:1rem;">{{ $message }}</p>
@@ -265,45 +265,71 @@
             inputs.forEach(input => {
                 code += input.value;
             });
-            if (hiddenInput) {
-                hiddenInput.value = code;
-            }
+            if (hiddenInput) hiddenInput.value = code;
             return code;
         }
 
+        // Distribute a string of digits across all inputs starting from index 0
+        function distributeDigits(str, startIndex) {
+            const digits = str.replace(/[^0-9]/g, '').slice(0, 6).split('');
+            digits.forEach((digit, i) => {
+                if (inputs[startIndex + i]) {
+                    inputs[startIndex + i].value = digit;
+                }
+            });
+            // Clear any inputs beyond what was pasted
+            for (let j = startIndex + digits.length; j < inputs.length; j++) {
+                inputs[j].value = '';
+            }
+            const focusIdx = Math.min(startIndex + digits.length, inputs.length - 1);
+            inputs[focusIdx].focus();
+            const code = syncCode();
+            if (code.length === 6 && form) {
+                setTimeout(() => form.submit(), 120);
+            }
+        }
+
         inputs.forEach((input, index) => {
-            input.addEventListener('focus', function() {
+            input.addEventListener('focus', function () {
                 this.select();
             });
 
-            input.addEventListener('input', function(e) {
-                let val = this.value.replace(/[^0-9]/g, '');
-
-                if (val.length > 1) {
-                    const digits = val.split('');
-                    digits.forEach((digit, i) => {
-                        if (inputs[index + i]) {
-                            inputs[index + i].value = digit;
-                        }
-                    });
-                    const nextIndex = Math.min(index + digits.length, inputs.length - 1);
-                    inputs[nextIndex].focus();
-                } else {
-                    this.value = val;
-                    if (val && index < inputs.length - 1) {
-                        inputs[index + 1].focus();
+            // MOBILE FIX: beforeinput fires BEFORE the value is changed,
+            // so we can intercept paste BEFORE maxlength (or mobile browser)
+            // truncates the pasted text.
+            input.addEventListener('beforeinput', function (e) {
+                if (e.inputType === 'insertFromPaste' ||
+                    e.inputType === 'insertFromPasteAsQuotation') {
+                    const data = e.data || '';
+                    if (data.replace(/[^0-9]/g, '').length > 1) {
+                        e.preventDefault();
+                        distributeDigits(data, 0);
                     }
-                }
-
-                const currentCode = syncCode();
-                if (currentCode.length === 6 && form) {
-                    setTimeout(function() {
-                        form.submit();
-                    }, 100);
                 }
             });
 
-            input.addEventListener('keydown', function(e) {
+            input.addEventListener('input', function (e) {
+                // Strip non-digits from whatever landed in this box
+                const val = this.value.replace(/[^0-9]/g, '');
+
+                if (val.length > 1) {
+                    // Multiple digits — distribute across boxes (mobile paste bypass)
+                    this.value = '';          // clear first to avoid showing multi-digit
+                    distributeDigits(val, 0); // always start from box 0
+                } else {
+                    this.value = val;         // keep the single digit
+                    if (val && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    syncCode();
+                    const code = syncCode();
+                    if (code.length === 6 && form) {
+                        setTimeout(() => form.submit(), 120);
+                    }
+                }
+            });
+
+            input.addEventListener('keydown', function (e) {
                 if (e.key === 'Backspace') {
                     if (!this.value && index > 0) {
                         inputs[index - 1].focus();
@@ -317,37 +343,26 @@
                 }
             });
 
-            input.addEventListener('paste', function(e) {
+            // Desktop paste fallback (also works on mobile as secondary)
+            input.addEventListener('paste', function (e) {
                 e.preventDefault();
-                const pastedText = (e.clipboardData || window.clipboardData).getData('text') || '';
-                const digits = pastedText.replace(/[^0-9]/g, '').slice(0, 6).split('');
-
-                digits.forEach((digit, i) => {
-                    if (inputs[i]) {
-                        inputs[i].value = digit;
-                    }
-                });
-
-                if (digits.length > 0) {
-                    const targetIdx = Math.min(digits.length, inputs.length - 1);
-                    inputs[targetIdx].focus();
-                }
-
-                const currentCode = syncCode();
-                if (currentCode.length === 6 && form) {
-                    setTimeout(function() {
-                        form.submit();
-                    }, 100);
+                const clipData = e.clipboardData || window.clipboardData;
+                const pastedText = clipData ? clipData.getData('text') : '';
+                if (pastedText) {
+                    distributeDigits(pastedText, 0);
+                } else if (navigator.clipboard && navigator.clipboard.readText) {
+                    // Async fallback (mobile Chrome)
+                    navigator.clipboard.readText().then(text => {
+                        if (text) distributeDigits(text, 0);
+                    }).catch(() => {});
                 }
             });
         });
 
         if (form) {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 const code = syncCode();
-                if (code.length < 6) {
-                    e.preventDefault();
-                }
+                if (code.length < 6) e.preventDefault();
             });
         }
 
