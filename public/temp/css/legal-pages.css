@@ -1,5 +1,24 @@
 /* ===== Legal Pages (Terms / Privacy) — Light Mode ===== */
 
+/* ── Layout: hero section spacing ── */
+.terms-hero-section {
+  padding: 0;
+}
+
+.terms-hero-section .container {
+  max-width: 100%;
+}
+
+/* ── Layout: glass section wrapper ── */
+.terms-document {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem;
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* Glass section wrapper */
 :root:not([data-theme='dark']) .glass-section {
   background: rgba(255, 255, 255, 0.92) !important;
@@ -70,13 +89,25 @@
 }
 
 .terms-rules-table th {
-  padding: 12px 14px;
+  padding: 14px 16px;
   text-align: left;
   font-weight: 700;
 }
 
 .terms-rules-table td {
-  padding: 12px 14px;
+  padding: 13px 16px;
+  vertical-align: middle;
+}
+
+.terms-rules-table .badge-warn-1,
+.terms-rules-table .badge-warn-2,
+.terms-rules-table .badge-danger,
+.terms-rules-table .badge-permanent {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.3;
 }
 
 /* Light mode table rules */
@@ -85,10 +116,11 @@
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
 }
 
 :root:not([data-theme='dark']) .terms-rules-table thead tr {
-  background: rgba(239, 68, 68, 0.08);
+  background: #f1f5f9;
 }
 
 :root:not([data-theme='dark']) .terms-rules-table th {
@@ -101,7 +133,7 @@
 }
 
 :root:not([data-theme='dark']) .terms-rules-table tr.row-even {
-  background: rgba(248, 250, 252, 0.85);
+  background: #f8fafc;
 }
 
 :root:not([data-theme='dark']) .terms-rules-table td.col-violation {
@@ -109,23 +141,36 @@
   font-weight: 600;
 }
 
+:root:not([data-theme='dark']) .terms-rules-table td small {
+  color: #64748b !important;
+  font-weight: 400;
+}
+
 :root:not([data-theme='dark']) .terms-rules-table .badge-warn-1 {
-  color: #b45309 !important;
+  background: #fef3c7;
+  color: #92400e !important;
+  border: 1px solid #fde68a;
   font-weight: 700;
 }
 
 :root:not([data-theme='dark']) .terms-rules-table .badge-warn-2 {
-  color: #c2410c !important;
+  background: #ffedd5;
+  color: #9a3412 !important;
+  border: 1px solid #fed7aa;
   font-weight: 700;
 }
 
 :root:not([data-theme='dark']) .terms-rules-table .badge-danger {
-  color: #dc2626 !important;
+  background: #fee2e2;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca;
   font-weight: 700;
 }
 
 :root:not([data-theme='dark']) .terms-rules-table .badge-permanent {
-  color: #991b1b !important;
+  background: #1e293b;
+  color: #ffffff !important;
+  border: 1px solid #0f172a;
   font-weight: 800;
 }
 
@@ -159,11 +204,11 @@
 }
 
 :root[data-theme='dark'] .terms-rules-table thead tr {
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(239, 68, 68, 0.12);
 }
 
 :root[data-theme='dark'] .terms-rules-table th {
-  color: #e2e8f0;
+  color: #f1f5f9;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -176,23 +221,38 @@
 }
 
 :root[data-theme='dark'] .terms-rules-table td.col-violation {
-  color: #e2e8f0;
+  color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .terms-rules-table td small {
+  color: #94a3b8;
 }
 
 :root[data-theme='dark'] .terms-rules-table .badge-warn-1 {
+  background: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-weight: 600;
 }
 
 :root[data-theme='dark'] .terms-rules-table .badge-warn-2 {
+  background: rgba(249, 115, 22, 0.15);
   color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  font-weight: 600;
 }
 
 :root[data-theme='dark'] .terms-rules-table .badge-danger {
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-weight: 600;
 }
 
 :root[data-theme='dark'] .terms-rules-table .badge-permanent {
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.5);
   font-weight: 700;
 }
 

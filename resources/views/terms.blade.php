@@ -2,7 +2,7 @@
   @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/legal-pages.css') }}?v={{ app_asset_version('temp/css/legal-pages.css') }}">
   @endpush
-  <section class="news-hero news-hero-v2" id="home">
+  <section class="news-hero news-hero-v2 terms-hero-section" id="home">
     <div class="container">
       <div class="news-hero-grid prime-reveal">
         <div class="news-hero-text">
@@ -65,7 +65,7 @@
 
   <main style="padding: 4rem 0;">
     <section class="container prime-reveal">
-      <div class="glass-section" style="max-width: 900px; margin: 0 auto; padding: 3rem; border-radius: 24px; background: rgba(30, 30, 35, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px);">
+      <div class="glass-section terms-document">
         
         <div class="document-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 2rem; margin-bottom: 2.5rem; text-align: center;">
           <h2 style="font-size: 2rem; color: var(--text-color); font-weight: 700; margin-bottom: 0.5rem;">{{ __('public.legal.terms.sections_title') }}</h2>
@@ -100,6 +100,16 @@
             <h3 style="font-size: 1.2rem; color: var(--text-color); margin-bottom: 0.8rem;">{{ __('public.legal.terms.security_title') }}</h3>
             <p style="color: var(--text-secondary, #9ca3af); line-height: 1.6; font-size: 0.95rem;">
               {{ __('public.legal.terms.security_text') }}
+            </p>
+          </article>
+
+          <article class="bento-item prime-glow-hover" style="padding: 1.5rem; border-radius: 16px;">
+             <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: #fbbf24; font-size: 1.2rem;">
+              <i class="fas fa-hand-holding-heart"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; color: var(--text-color); margin-bottom: 0.8rem;">{{ __('public.legal.terms.donation_title') }}</h3>
+            <p style="color: var(--text-secondary, #9ca3af); line-height: 1.6; font-size: 0.95rem;">
+              {{ __('public.legal.terms.donation_text') }}
             </p>
           </article>
         </div>
@@ -182,6 +192,15 @@
                     <td><span class="badge-danger">1 oylik bloklash</span></td>
                     <td><span class="badge-permanent">Butun umrga bloklash</span></td>
                     <td><span class="badge-permanent">Butun umrga bloklash (IP)</span></td>
+                  </tr>
+                  <tr class="row-even">
+                    <td class="col-violation">
+                      🖼️ Profilga yomon yoki noo'rin rasmlar qo'yish
+                      <small style="display:block; opacity:0.75;">Nomaqbul kontentli avatar yoki profil rasmi</small>
+                    </td>
+                    <td><span class="badge-warn-2">1 kunlik bloklash</span></td>
+                    <td><span class="badge-danger">1 haftalik bloklash</span></td>
+                    <td><span class="badge-danger">1 oylik bloklash</span></td>
                   </tr>
                 </tbody>
               </table>
