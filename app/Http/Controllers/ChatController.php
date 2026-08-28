@@ -246,9 +246,44 @@ class ChatController extends Controller
             return response()->json(['ok' => false, 'error' => 'O‘zingizni bloklab bo‘lmaydi.'], 422);
         }
 
-        $user->update(['is_active' => false]);
+        $duration = $request->input('duration', '1d');
+        $reason   = $request->input('reason', 'Chat preview orqali bloklandi');
 
-        return response()->json(['ok' => true, 'is_active' => false]);
+        $blockedUntil = match ($duration) {
+            '1h'      => now()->addHour(),
+            '1d'      => now()->addDay(),
+            '1w'      => now()->addWeek(),
+            '1m'      => now()->addMonth(),
+            'forever' => null,
+            default   => now()->addDay(),
+        };
+
+        $durationText = match ($duration) {
+            '1h'      => '1 soat',
+            '1d'      => '1 kun',
+            '1w'      => '1 hafta',
+            '1m'      => '1 oy',
+            'forever' => 'Butun umr',
+            default   => '1 kun',
+        };
+
+        $user->increment('block_count');
+        $user->update([
+            'is_blocked'     => true,
+            'is_active'      => false,
+            'blocked_until'  => $blockedUntil,
+            'blocked_reason' => $reason,
+            'blocked_by'     => $current->id,
+        ]);
+
+        $user->sendBlockNotification($current, $durationText, $blockedUntil, $reason);
+
+        return response()->json([
+            'ok'            => true,
+            'is_active'     => false,
+            'duration_text' => $durationText,
+            'blocked_until' => $blockedUntil?->format('d.m.Y H:i'),
+        ]);
     }
 
     /**
@@ -267,7 +302,32 @@ class ChatController extends Controller
             return response()->json(['ok' => false, 'error' => 'Bu amalni bajarib bo‘lmaydi.'], 422);
         }
 
-        $user->update(['is_active' => true]);
+        $user->update([
+            'is_blocked'     => false,
+            'is_active'      => true,
+            'blocked_until'  => null,
+            'blocked_reason' => null,
+            'blocked_by'     => null,
+        ]);
+
+        // Telegram xabar yuborish
+        if ($user->telegram_chat_id) {
+            $adminName = htmlspecialchars($current->buildNameFromParts() ?: $current->name);
+            $userName  = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
+
+            $text = "✅ <b>Hisobingiz blokdan chiqarildi</b>\n"
+                ."━━━━━━━━━━━━━━━━━━━━\n\n"
+                ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
+                ."👨‍💼 <b>Blokdan chiqargan:</b> {$adminName}\n\n"
+                ."🎉 <i>Endi tizimga erkin kirishingiz mumkin!</i>";
+
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+
+            if (method_exists($user, 'notifyLinkedParents')) {
+                $user->notifyLinkedParents($text);
+            }
+        }
 
         return response()->json(['ok' => true, 'is_active' => true]);
     }

@@ -369,7 +369,7 @@ class AdminController extends Controller
         $user->sendBlockNotification($admin, $durationText, $blockedUntil, $validated['reason']);
 
         return redirect()->route('user')
-            ->with('success', "{$user->name} {$durationText} muddatga bloklandi.")
+            ->with('success', "🔒 {$user->name} {$durationText} muddatga bloklandi.")
             ->with('toast_type', 'success');
     }
 
@@ -394,22 +394,27 @@ class AdminController extends Controller
             'blocked_by' => null,
         ]);
 
-        // Telegram xabar yuborish
+        // Telegram xabar yuborish — foydalanuvchi va ulangan ota-onalar
         if ($user->telegram_chat_id) {
+            $adminName = htmlspecialchars($admin->buildNameFromParts() ?: $admin->name);
             $userName = htmlspecialchars($user->buildNameFromParts() ?: $user->name);
 
             $text = "✅ <b>Hisobingiz blokdan chiqarildi</b>\n"
                 ."━━━━━━━━━━━━━━━━━━━━\n\n"
                 ."👤 <b>Foydalanuvchi:</b> {$userName}\n"
-                ."👨‍💼 <b>Chiqargan:</b> " . htmlspecialchars($admin->buildNameFromParts() ?: $admin->name) . "\n\n"
-                ."Endi tizimga kirishingiz mumkin.";
+                ."👨‍💼 <b>Blokdan chiqargan:</b> {$adminName}\n\n"
+                ."🎉 <i>Endi tizimga erkin kirishingiz mumkin!</i>";
 
             $telegram = app(\App\Services\TelegramService::class);
             $telegram->sendMessage((int) $user->telegram_chat_id, $text);
+
+            if (method_exists($user, 'notifyLinkedParents')) {
+                $user->notifyLinkedParents($text);
+            }
         }
 
         return redirect()->route('user')
-            ->with('success', "{$user->name} blokdan chiqarildi.")
+            ->with('success', "✅ {$user->name} blokdan muvaffaqiyatli chiqarildi.")
             ->with('toast_type', 'success');
     }
 
