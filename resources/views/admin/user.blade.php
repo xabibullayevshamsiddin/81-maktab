@@ -329,17 +329,17 @@
 <div id="rulesGuideModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
     <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.18);">
-      <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 18px 24px;">
+      <div class="modal-header" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #1e293b; padding: 18px 24px;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; color: #60a5fa; font-size: 1.2rem;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 1.2rem;">
             <i class="fa-solid fa-scale-balanced"></i>
           </div>
           <div>
-            <h5 class="modal-title" style="color: #fff; font-size: 1.15rem; font-weight: 700; margin: 0;">Sayt bloklash mezonlari & intizomiy choralar</h5>
-            <p style="color: #94a3b8; font-size: 0.82rem; margin: 2px 0 0 0;">Admin va moderatorlar uchun jazo choralari qo'llanmasi</p>
+            <h5 class="modal-title" style="color: #1e293b; font-size: 1.15rem; font-weight: 700; margin: 0;">Sayt bloklash mezonlari & intizomiy choralar</h5>
+            <p style="color: #64748b; font-size: 0.82rem; margin: 2px 0 0 0;">Admin va moderatorlar uchun jazo choralari qo'llanmasi</p>
           </div>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Yopish"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish"></button>
       </div>
       <div class="modal-body" style="padding: 24px; background: #f8fafc;">
         
@@ -422,6 +422,14 @@
                 <td style="padding: 12px 14px;"><span class="badge bg-danger">1 oy</span></td>
                 <td style="padding: 12px 14px;"><span class="badge bg-dark text-white font-monospace">Butun umr</span></td>
                 <td style="padding: 12px 14px;"><span class="badge bg-dark text-white font-monospace">Butun umr (IP)</span></td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 12px 14px; font-weight: 600; color: #334155;">
+                  🖼️ Profilga yomon yoki noo'rin rasmlar qo'yish <br><small class="text-muted">Nomaqbul kontentli avatar yoki profil rasmi</small>
+                </td>
+                <td style="padding: 12px 14px;"><span class="badge" style="background: #fdba74; color: #7c2d12;">1 kun</span></td>
+                <td style="padding: 12px 14px;"><span class="badge bg-danger">1 hafta</span></td>
+                <td style="padding: 12px 14px;"><span class="badge bg-danger">1 oy</span></td>
               </tr>
             </tbody>
           </table>

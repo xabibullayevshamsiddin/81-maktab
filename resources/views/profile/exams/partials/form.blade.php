@@ -71,17 +71,17 @@
   <p class="exam-form-hint" style="margin-bottom:1rem;">
     Agar belgilansa, maktab o'qituvchilari (shu jumladan siz ham) bu imtihonni topshirish imkoniyatiga ega bo'ladilar.
   </p>
-  <label class="d-flex align-items-center gap-3 cursor-pointer" style="user-select:none; padding: 1rem; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); width: fit-content;">
+  <label class="cursor-pointer" style="display:flex;align-items:flex-start;gap:12px;user-select:none;padding:1rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);width:100%;box-sizing:border-box;">
     <input
       type="checkbox"
       name="allowed_grades[]"
       value="TEACHER"
       {{ in_array('TEACHER', $selectedAllowedGrades, true) ? 'checked' : '' }}
-      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;"
+      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;margin-top:2px;"
     >
-    <span>
-      <strong style="color:var(--text);">O'qituvchilar ham imtihonni topshirishi mumkin</strong>
-      <span class="d-block small" style="color:var(--muted);margin-top:2px;">
+    <span style="flex:1;min-width:0;">
+      <strong style="color:var(--text);display:block;margin-bottom:4px;">O'qituvchilar ham imtihonni topshirishi mumkin</strong>
+      <span style="color:var(--muted);font-size:0.85rem;line-height:1.5;display:block;">
         O'qituvchi akkauntlari orqali imtihon boshlash va topshirishga ruxsat beriladi
       </span>
     </span>
@@ -96,18 +96,18 @@
   <p class="exam-form-hint" style="margin-bottom:1rem;">
     Yoqilsa — o'quvchi imtihon boshlagan zahoti to'liq ekran (fullscreen) rejimi yonadi, sahifadan chiqsa yoki skrinshot olsa ogohlantirish keladi va qoidabuzarlik hisoblanadi. O'chirilsa — hech qanday cheklov bo'lmaydi, imtihon oddiy rejimda o'tadi.
   </p>
-  <label class="d-flex align-items-center gap-3 cursor-pointer" style="user-select:none; padding: 1rem; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); width: fit-content;">
+  <label class="cursor-pointer" style="display:flex;align-items:flex-start;gap:12px;user-select:none;padding:1rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);width:100%;box-sizing:border-box;">
     <input
       type="checkbox"
       name="security_enabled"
       value="1"
       id="exam-security-enabled"
       {{ old('security_enabled', isset($exam) ? ($exam->security_enabled ?? true) : true) ? 'checked' : '' }}
-      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;"
+      style="width:1.3rem;height:1.3rem;cursor:pointer;accent-color:var(--primary);flex-shrink:0;margin-top:2px;"
     >
-    <span>
-      <strong style="color:var(--text);">Xavfsizlik himoyasini yoqish</strong>
-      <span class="d-block small" style="color:var(--muted);margin-top:2px;">
+    <span style="flex:1;min-width:0;">
+      <strong style="color:var(--text);display:block;margin-bottom:4px;">Xavfsizlik himoyasini yoqish</strong>
+      <span style="color:var(--muted);font-size:0.85rem;line-height:1.5;display:block;">
         Fullscreen, tab o'zgartirish va skrinshot ogohlantirishlari faollashtiriladi
       </span>
     </span>

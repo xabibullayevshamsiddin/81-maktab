@@ -163,6 +163,12 @@ html {
 
 html[data-theme='dark'] {
   background: #07111f !important;
+  color-scheme: dark;
+}
+
+/* Light mode — native form controls (spinners, scrollbars) */
+html:not([data-theme='dark']) {
+  color-scheme: light;
 }
 
 body {

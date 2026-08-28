@@ -93,7 +93,7 @@
                             $initials = strtoupper(substr($result->user->name ?? 'U', 0, 1));
                         @endphp
                         <tr>
-                            <td>
+                            <td data-label="O'quvchi">
                                 <div class="user-info-cell">
                                     <div class="user-avatar-placeholder">{{ $initials }}</div>
                                     <div class="user-data">
@@ -103,7 +103,7 @@
                                 </div>
                             </td>
                             @if(!$selectedExamId)
-                                <td>
+                                <td data-label="Imtihon">
                                     <span class="fw-bold" style="color: #4b6282;">
                                         {{ $result->exam->title ?? '—' }}
                                         @if($result->exam?->trashed())
@@ -112,13 +112,13 @@
                                     </span>
                                 </td>
                             @endif
-                            <td>
+                            <td data-label="Ball (Jami)">
                                 <div class="score-badge" style="background: rgba(13, 63, 120, 0.05); color: #0d3f78;">
                                     <i class="fa-solid fa-chart-simple"></i>
                                     {{ $result->points_earned ?? 0 }} / {{ $result->points_max ?? 0 }}
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="Status">
                                 <span class="status-badge {{ $statusClass }}">
                                     @if($result->status === 'submitted') <i class="fa-solid fa-circle-check"></i> @endif
                                     @if($result->status === 'started') <i class="fa-solid fa-hourglass-half"></i> @endif
@@ -126,7 +126,7 @@
                                     {{ $statusLabel }}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Natija">
                                 @if($result->passed === null)
                                     <span class="result-tag tag-pending"><i class="fa-solid fa-clock-rotate-left"></i> Tekshiruvda</span>
                                 @elseif($result->passed)
@@ -135,18 +135,18 @@
                                     <span class="result-tag tag-fail"><i class="fa-solid fa-circle-xmark"></i> Yiqildi</span>
                                 @endif
                             </td>
-                            <td>
+                            <td data-label="Sinf">
                                 <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">
                                     {{ $result->user_grade ?? $result->user->grade ?? '—' }}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Sana">
                                 <div class="d-flex flex-column" style="font-size: 13px;">
                                     <span class="fw-bold">{{ $result->submitted_at?->format('d.m.Y') ?? '-' }}</span>
                                     <span class="text-muted">{{ $result->submitted_at?->format('H:i') ?? '' }}</span>
                                 </div>
                             </td>
-                            <td style="text-align: right;">
+                            <td data-label="Amallar" style="text-align: right;">
                                 <a href="{{ route('profile.exams.results.show', $result) }}" class="btn btn-primary btn-sm px-4">
                                     <i class="fa-solid fa-eye me-1"></i> Ko'rish
                                 </a>

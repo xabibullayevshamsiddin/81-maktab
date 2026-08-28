@@ -2,7 +2,7 @@
   @push('page_styles')
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/legal-pages.css') }}?v={{ app_asset_version('temp/css/legal-pages.css') }}">
   @endpush
-  <section class="news-hero news-hero-v2" id="home">
+  <section class="news-hero news-hero-v2 terms-hero-section" id="home">
     <div class="container">
       <div class="news-hero-grid prime-reveal">
         <div class="news-hero-text">
@@ -49,7 +49,7 @@
 
   <main style="padding: 4rem 0;">
     <section class="container prime-reveal">
-      <div class="glass-section" style="max-width: 900px; margin: 0 auto; padding: 3rem; border-radius: 24px; background: rgba(30, 30, 35, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); backdrop-filter: blur(20px);">
+      <div class="glass-section terms-document">
         
         <div class="document-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 2rem; margin-bottom: 2.5rem; text-align: center;">
           <h2 style="font-size: 2rem; color: var(--text-color); font-weight: 700; margin-bottom: 0.5rem;">{{ __('public.legal.privacy.sections_title') }}</h2>
@@ -114,7 +114,19 @@
             </div>
           </article>
 
-          <article class="bento-item prime-glow-hover" style="padding: 1.5rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+          <article class="bento-item prime-glow-hover" style="padding: 1.5rem; border-radius: 16px; display: flex; align-items: flex-start; gap: 1.5rem;">
+            <div style="width: 45px; height: 45px; border-radius: 12px; background: rgba(139, 92, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #a78bfa; font-size: 1.2rem; flex-shrink: 0;">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <h3 style="font-size: 1.2rem; color: var(--text-color); margin-bottom: 0.5rem;">{{ __('public.legal.privacy.family_title') }}</h3>
+              <p style="color: var(--text-secondary, #9ca3af); line-height: 1.6; font-size: 0.95rem; margin: 0;">
+                {{ __('public.legal.privacy.family_text') }}
+              </p>
+            </div>
+          </article>
+
+          <article class="bento-item prime-glow-hover" style="padding: 1.5rem; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
             <div style="display: flex; align-items: center; gap: 1.5rem;">
               <div style="width: 45px; height: 45px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #34d399; font-size: 1.2rem; flex-shrink: 0;">
                 <i class="fas fa-envelope"></i>

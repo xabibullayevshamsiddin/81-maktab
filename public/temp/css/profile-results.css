@@ -516,6 +516,53 @@
     color: #e2e8f0;
 }
 
+/* ============ Mobil: jadval → kartalar ============ */
+@media (max-width: 860px) {
+  .results-table thead { display: none; }
+  .results-table, .results-table tbody, .results-table tr, .results-table td {
+    display: block; width: 100%;
+  }
+  .results-table tr {
+    margin-bottom: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(13, 63, 120, 0.1);
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+  .results-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border: none;
+    border-bottom: 1px solid rgba(13, 63, 120, 0.06);
+    text-align: right;
+  }
+  .results-table td:last-child { border-bottom: none; }
+  .results-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #4b6282;
+    text-align: left;
+    flex-shrink: 0;
+  }
+  /* Amallar ustuni */
+  .results-table td[data-label='Amallar'] {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+  .results-table td[data-label='Amallar']::before { margin-bottom: 8px; }
+  .results-table td[data-label='Amallar'] .btn { width: 100%; }
+}
+:root[data-theme='dark'] .results-table tr { background: #0f1b2d; border-color: rgba(255,255,255,0.08); }
+:root[data-theme='dark'] .results-table td { border-bottom-color: rgba(255,255,255,0.06); }
+:root[data-theme='dark'] .results-table td::before { color: #94a3b8; }
+
 
 
 

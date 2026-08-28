@@ -1,4 +1,45 @@
 <x-layouts.main title="81-IDUM | Kursga yozilishlar">
+@push('page_styles')
+<style>
+@media (max-width: 860px) {
+  .profile-enrollments-table thead { display: none; }
+  .profile-enrollments-table, .profile-enrollments-table tbody,
+  .profile-enrollments-table tr, .profile-enrollments-table td {
+    display: block; width: 100%;
+  }
+  .profile-enrollments-table tr {
+    margin-bottom: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(13, 63, 120, 0.1);
+    background: #fff;
+    overflow: hidden;
+  }
+  .profile-enrollments-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border: none;
+    border-bottom: 1px solid rgba(13, 63, 120, 0.06);
+    text-align: right;
+  }
+  .profile-enrollments-table td:last-child { border-bottom: none; }
+  .profile-enrollments-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #4b6282;
+    text-align: left;
+    flex-shrink: 0;
+  }
+}
+:root[data-theme='dark'] .profile-enrollments-table tr { background: #0f1b2d; border-color: rgba(255,255,255,0.08); }
+:root[data-theme='dark'] .profile-enrollments-table td { border-bottom-color: rgba(255,255,255,0.06); }
+:root[data-theme='dark'] .profile-enrollments-table td::before { color: #94a3b8; }
+</style>
+@endpush
   <section class="news-hero profile-hero">
     <div class="container">
       <div class="news-hero-content prime-reveal">
@@ -40,20 +81,20 @@
             <tbody>
               @forelse($enrollments as $row)
                 <tr>
-                  <td>
+                  <td data-label="Kurs">
                     <strong>{{ $row->course?->title ?: '-' }}</strong>
                   </td>
-                  <td>
+                  <td data-label="O'quvchi">
                     {{ $row->user?->name ?: '-' }}<br>
                     <small class="profile-muted">{{ $row->user?->email }}</small>
                     @if($row->note)
                       <p class="profile-note"><em>Izoh:</em> {{ $row->note }}</p>
                     @endif
                   </td>
-                  <td>{{ $row->contact_phone ?: '-' }}</td>
-                  <td>{{ $row->grade ?: '-' }}</td>
-                  <td>{{ $row->subject_level ?: '-' }}</td>
-                  <td>
+                  <td data-label="Aloqa tel.">{{ $row->contact_phone ?: '-' }}</td>
+                  <td data-label="Sinf">{{ $row->grade ?: '-' }}</td>
+                  <td data-label="Fan darajasi">{{ $row->subject_level ?: '-' }}</td>
+                  <td data-label="Holat">
                     @if($row->isPending())
                       <span class="badge" style="background:#f59e0b;">Kutilmoqda</span>
                     @elseif($row->isApproved())
@@ -62,7 +103,7 @@
                       <span class="badge" style="background:#b91c1c;">Rad etilgan</span>
                     @endif
                   </td>
-                  <td>
+                  <td data-label="Amallar">
                     @if($row->isPending())
                       <form action="{{ route('teacher.enrollments.approve', $row) }}" method="POST" style="display:inline;">
                         @csrf
@@ -76,7 +117,7 @@
                       <span class="profile-muted">-</span>
                     @endif
                   </td>
-                  <td>
+                  <td data-label="Olib tashlash">
                     <form action="{{ route('teacher.enrollments.destroy', $row) }}" method="POST" data-confirm="Yozilish olib tashlansinmi?" data-confirm-title="Yozilishni olib tashlash" data-confirm-variant="danger" data-confirm-ok="Olib tashlash">
                       @csrf
                       @method('DELETE')

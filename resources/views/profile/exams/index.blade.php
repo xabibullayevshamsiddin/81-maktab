@@ -28,10 +28,8 @@
               <th>{{ __('public.profile_exams.col_questions') }}</th>
               <th>{{ __('public.profile_exams.col_points') }}</th>
               <th>{{ __('public.profile_exams.col_passing') }}</th>
-              <th>{{ __('public.profile_exams.col_duration') }}</th>
               <th>{{ __('public.profile_exams.col_start_planned') }}</th>
               <th>{{ __('public.profile_exams.col_grades') }}</th>
-              <th>{{ __('public.profile_exams.col_status') }}</th>
               <th>Ishtirokchilar</th>
               <th>{{ __('public.profile_exams.col_actions') }}</th>
             </tr>
@@ -39,24 +37,22 @@
           <tbody>
             @if($exams->isEmpty())
               <tr>
-                <td colspan="10">{{ __('public.profile_exams.empty') }}</td>
+                <td colspan="9">{{ __('public.profile_exams.empty') }}</td>
               </tr>
             @else
               @foreach($exams as $exam)
                 <tr>
-                  <td>{{ $exam->id }}</td>
-                  <td>{{ $exam->title }}</td>
-                  <td>{{ $exam->questions_count }} / {{ $exam->required_questions }}</td>
-                  <td>{{ $exam->total_points }}</td>
-                  <td>{{ $exam->passing_points ?? '-' }}</td>
-                  <td>{{ $exam->duration_minutes }} {{ __('public.exam.minutes_short') }}</td>
-                  <td>{{ $exam->availableFromLabel() ?? '—' }}</td>
-                  <td title="{{ $exam->allowedGradesLabel() }}">{{ $exam->allowedGradesLabel() }}</td>
-                  <td style="{{ $exam->hasParticipantLimit() && $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:600;' : '' }}">{{ $exam->participantLimitLabel() }}</td>
-                  <td>{{ $exam->is_active ? __('public.profile_exams.status_active') : __('public.profile_exams.status_draft') }}</td>
-                  <td style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <td data-label="#">{{ $exam->id }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_name') }}">{{ $exam->title }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_questions') }}">{{ $exam->questions_count }} / {{ $exam->required_questions }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_points') }}">{{ $exam->total_points }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_passing') }}">{{ $exam->passing_points ?? '-' }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_start_planned') }}">{{ $exam->availableFromLabel() ?? '—' }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_grades') }}" title="{{ $exam->allowedGradesLabel() }}">{{ $exam->allowedGradesLabel() }}</td>
+                  <td data-label="Ishtirokchilar" style="{{ $exam->hasParticipantLimit() && $exam->isParticipantLimitReached() ? 'color:#dc2626;font-weight:600;' : '' }}">{{ $exam->participantLimitLabel() }}</td>
+                  <td data-label="{{ __('public.profile_exams.col_actions') }}" style="display:flex;gap:8px;flex-wrap:wrap;">
                     <a href="{{ route('profile.exams.results', ['exam_id' => $exam->id]) }}" class="btn btn-info btn-sm">{{ __('public.profile_exams.results_btn') }}</a>
-                    <a href="{{ route('profile.exams.questions.index', $exam) }}" class="btn btn-primary  btn-sm">{{ __('public.profile_exams.questions_btn') }}</a>
+                    <a href="{{ route('profile.exams.questions.index', $exam) }}" class="btn btn-primary btn-sm">{{ __('public.profile_exams.questions_btn') }}</a>
                     <a href="{{ route('profile.exams.edit', $exam) }}" class="btn btn-warning btn-sm">{{ __('public.profile_exams.edit_btn') }}</a>
                     <form method="POST" action="{{ route('profile.exams.destroy', $exam) }}">
                       @csrf
