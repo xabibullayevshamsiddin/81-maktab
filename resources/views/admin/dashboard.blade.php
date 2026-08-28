@@ -478,11 +478,57 @@
 
         <!-- Activity Chart -->
         <div class="chart-card dashboard-card-item" style="animation-delay: 0.35s">
-          <h5>
-            Haftalik Faollik
-            <span class="text-muted small" style="font-weight: 400;">Oxirgi 7 kun</span>
-          </h5>
-          <div style="position:relative; height:260px;">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+              <h5 class="mb-1" style="font-size: 1.1rem; font-weight: 700; color: var(--admin-text-main);">
+                <i class="mdi mdi-chart-timeline-variant text-primary me-1"></i> Sayt Haftalik Tashriflari & Faollik
+              </h5>
+              <p class="text-muted small mb-0">Oxirgi 7 kunlik real tashriflar va noyob mehmonlar dinamikasi</p>
+            </div>
+            <div class="btn-group btn-group-sm" role="group" id="chart-dataset-toggle">
+              <button type="button" class="btn btn-primary active" data-view="both" style="font-size: 0.78rem; font-weight: 600;">Barchasi</button>
+              <button type="button" class="btn btn-outline-primary" data-view="views" style="font-size: 0.78rem; font-weight: 600;">Ko'rishlar</button>
+              <button type="button" class="btn btn-outline-primary" data-view="uniques" style="font-size: 0.78rem; font-weight: 600;">Noyob mehmonlar</button>
+            </div>
+          </div>
+
+          {{-- Pro Summary Metrics Grid --}}
+          <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+              <div style="background: var(--admin-bg, rgba(99, 102, 241, 0.04)); border: 1px solid var(--admin-border-subtle, #e2e8f0); border-radius: 12px; padding: 10px 12px;">
+                <div style="font-size: 0.75rem; color: var(--admin-text-muted); font-weight: 600;">Bugungi tashriflar</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #6366f1; margin-top: 2px;">
+                  {{ $weeklyStats['today_views'] ?? 0 }} <span style="font-size: 0.75rem; font-weight: 600; color: var(--admin-text-muted);">/ {{ $weeklyStats['today_uniques'] ?? 0 }} noyob</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div style="background: var(--admin-bg, rgba(16, 185, 129, 0.04)); border: 1px solid var(--admin-border-subtle, #e2e8f0); border-radius: 12px; padding: 10px 12px;">
+                <div style="font-size: 0.75rem; color: var(--admin-text-muted); font-weight: 600;">Haftalik jami</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #10b981; margin-top: 2px;">
+                  {{ $weeklyStats['total_views'] ?? 0 }} <span style="font-size: 0.75rem; font-weight: 600; color: var(--admin-text-muted);">ko'rish</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div style="background: var(--admin-bg, rgba(245, 158, 11, 0.04)); border: 1px solid var(--admin-border-subtle, #e2e8f0); border-radius: 12px; padding: 10px 12px;">
+                <div style="font-size: 0.75rem; color: var(--admin-text-muted); font-weight: 600;">O'rtacha kunlik</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 2px;">
+                  {{ $weeklyStats['avg_daily'] ?? 0 }} <span style="font-size: 0.75rem; font-weight: 600; color: var(--admin-text-muted);">/kun</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div style="background: var(--admin-bg, rgba(139, 92, 246, 0.04)); border: 1px solid var(--admin-border-subtle, #e2e8f0); border-radius: 12px; padding: 10px 12px;">
+                <div style="font-size: 0.75rem; color: var(--admin-text-muted); font-weight: 600;">Eng faol kun</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #8b5cf6; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {{ $weeklyStats['peak_day'] ?? '—' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="position:relative; height:270px;">
             <canvas id="dashboard-weekly-activity-chart" aria-label="Haftalik faollik grafigi"></canvas>
           </div>
         </div>
@@ -626,53 +672,114 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  var labels = @json(array_column($weeklyActivity, 'label'));
-  var values = @json(array_column($weeklyActivity, 'count'));
+  var daysData = @json($weeklyActivity);
+  var labels = daysData.map(function(d) { return d.label + ' (' + d.full_date + ')'; });
+  var viewsValues = daysData.map(function(d) { return d.views || d.count || 0; });
+  var uniquesValues = daysData.map(function(d) { return d.uniques || 0; });
+  var authValues = daysData.map(function(d) { return d.auth_users || 0; });
 
-  new Chart(canvas.getContext('2d'), {
+  var ctx = canvas.getContext('2d');
+
+  // Gradient 1: Pageviews (Indigo/Purple)
+  var gradientViews = ctx.createLinearGradient(0, 0, 0, 260);
+  gradientViews.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+  gradientViews.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
+
+  // Gradient 2: Unique Visitors (Emerald/Green)
+  var gradientUniques = ctx.createLinearGradient(0, 0, 0, 260);
+  gradientUniques.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+  gradientUniques.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+
+  var chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [{
-        label: 'Kirishlar',
-        data: values,
-        borderColor: '#6366f1',
-        backgroundColor: 'rgba(99, 102, 241, 0.08)',
-        borderWidth: 2.5,
-        pointRadius: 4,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#6366f1',
-        pointBorderWidth: 2,
-        pointHoverRadius: 6,
-        fill: true,
-        tension: 0.4,
-      }],
+      datasets: [
+        {
+          label: "Umumiy ko'rishlar (Pageviews)",
+          data: viewsValues,
+          borderColor: '#6366f1',
+          backgroundColor: gradientViews,
+          borderWidth: 2.8,
+          pointRadius: 4,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#6366f1',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6.5,
+          fill: true,
+          tension: 0.38,
+        },
+        {
+          label: "Noyob mehmonlar (Unique)",
+          data: uniquesValues,
+          borderColor: '#10b981',
+          backgroundColor: gradientUniques,
+          borderWidth: 2.4,
+          borderDash: [4, 4],
+          pointRadius: 3.5,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#10b981',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.38,
+        }
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 12,
+            boxHeight: 12,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: { size: 11.5, weight: '600' },
+            color: '#64748b',
+          }
+        },
         tooltip: {
-          backgroundColor: '#1e293b',
-          titleColor: '#fff',
-          bodyColor: '#cbd5e1',
+          backgroundColor: '#0f172a',
+          titleColor: '#f8fafc',
+          titleFont: { size: 13, weight: 'bold' },
+          bodyColor: '#e2e8f0',
+          bodyFont: { size: 12 },
           borderColor: '#334155',
           borderWidth: 1,
-          cornerRadius: 8,
+          cornerRadius: 10,
           padding: 12,
-          displayColors: false,
+          boxPadding: 6,
+          usePointStyle: true,
+          callbacks: {
+            title: function(items) {
+              if (!items.length) return '';
+              var idx = items[0].dataIndex;
+              var d = daysData[idx];
+              return d.label + ' • ' + d.date;
+            },
+            afterBody: function(items) {
+              if (!items.length) return '';
+              var idx = items[0].dataIndex;
+              var d = daysData[idx];
+              return '🔐 Tizimdagi faol a\'zolar: ' + (d.auth_users || 0) + ' ta';
+            }
+          }
         },
       },
       scales: {
         x: {
           grid: { display: false },
-          ticks: { color: '#94a3b8', font: { size: 12 } },
+          ticks: { color: '#94a3b8', font: { size: 11.5 } },
         },
         y: {
           beginAtZero: true,
-          grid: { color: 'rgba(148, 163, 184, 0.1)' },
-          ticks: { color: '#94a3b8', font: { size: 12 }, precision: 0 },
+          grid: { color: 'rgba(148, 163, 184, 0.12)' },
+          ticks: { color: '#94a3b8', font: { size: 11.5 }, precision: 0 },
         },
       },
       interaction: {
@@ -681,6 +788,35 @@ document.addEventListener('DOMContentLoaded', function () {
       },
     },
   });
+
+  // Filter Buttons Toggle
+  var toggleGroup = document.getElementById('chart-dataset-toggle');
+  if (toggleGroup) {
+    var buttons = toggleGroup.querySelectorAll('button');
+    buttons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        buttons.forEach(function(b) {
+          b.classList.remove('btn-primary', 'active');
+          b.classList.add('btn-outline-primary');
+        });
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-primary', 'active');
+
+        var viewMode = btn.getAttribute('data-view');
+        if (viewMode === 'both') {
+          chart.data.datasets[0].hidden = false;
+          chart.data.datasets[1].hidden = false;
+        } else if (viewMode === 'views') {
+          chart.data.datasets[0].hidden = false;
+          chart.data.datasets[1].hidden = true;
+        } else if (viewMode === 'uniques') {
+          chart.data.datasets[0].hidden = true;
+          chart.data.datasets[1].hidden = false;
+        }
+        chart.update();
+      });
+    });
+  }
 });
 </script>
 @endsection
