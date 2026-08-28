@@ -2301,7 +2301,6 @@ body.chat-fullscreen-active::before {
 .chat-panel.is-opening .chat-panel-intro,
 .chat-panel.is-opening .chat-rules,
 .chat-panel.is-opening .chat-feed-stack,
-.chat-panel.is-opening .chat-compose-status,
 .chat-panel.is-opening .chat-input-wrap {
   animation: chatPanelSectionIn 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -2318,10 +2317,6 @@ body.chat-fullscreen-active::before {
   animation-delay: 0.11s;
 }
 
-.chat-panel.is-opening .chat-compose-status {
-  animation-delay: 0.14s;
-}
-
 .chat-panel.is-opening .chat-input-wrap {
   animation-delay: 0.17s;
 }
@@ -2330,7 +2325,6 @@ body.chat-fullscreen-active::before {
 .chat-panel.is-closing .chat-panel-intro,
 .chat-panel.is-closing .chat-rules,
 .chat-panel.is-closing .chat-feed-stack,
-.chat-panel.is-closing .chat-compose-status,
 .chat-panel.is-closing .chat-input-wrap {
   animation: chatPanelSectionOut 0.28s cubic-bezier(0.4, 0, 1, 1) both;
 }
@@ -2349,10 +2343,6 @@ body.chat-fullscreen-active::before {
 
 .chat-panel.is-closing .chat-feed-stack {
   animation-delay: 70ms;
-}
-
-.chat-panel.is-closing .chat-compose-status {
-  animation-delay: 95ms;
 }
 
 .chat-panel.is-closing .chat-input-wrap {
@@ -4615,7 +4605,17 @@ button.chat-msg-avatar-btn:focus-visible {
   transition: opacity 0.24s ease, transform 0.24s ease;
 }
 
+.chat-compose-status[hidden],
+.chat-panel .chat-compose-status[hidden] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(8px) !important;
+  pointer-events: none !important;
+}
+
 .chat-compose-status:not([hidden]) {
+  display: flex !important;
   opacity: 1;
   transform: translateY(0);
 }

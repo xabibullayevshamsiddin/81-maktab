@@ -2696,7 +2696,7 @@ function refreshChatAvailability() {
       stickerButtons.forEach(function (btn) {
         btn.disabled = false;
       });
-      syncComposeState();
+      setComposeState('idle');
     }
 
     function syncDockState() {
@@ -2886,7 +2886,7 @@ function refreshChatAvailability() {
 
       if (!composeStatus || !composeStatusText) return;
 
-      if (state === 'idle' || !isOpen) {
+      if (state === 'idle' || !isOpen || (!typing && !sending)) {
         composeStatus.hidden = true;
         composeStatus.setAttribute('data-state', 'idle');
         return;
@@ -2908,7 +2908,7 @@ function refreshChatAvailability() {
         return;
       }
 
-      if (document.activeElement === input && input.value.trim()) {
+      if (input && input.value && input.value.trim().length > 0) {
         setComposeState('typing');
         return;
       }
