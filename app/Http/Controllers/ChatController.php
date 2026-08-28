@@ -27,12 +27,8 @@ class ChatController extends Controller
         $user    = request()->user();
 
         // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
-        $userBlocked   = false;
-        $blockedUntilTs = null;
-        if ($user && $user->is_blocked) {
-            $userBlocked    = true;
-            $blockedUntilTs = $user->blocked_until ? $user->blocked_until->timestamp : null;
-        }
+        $userBlocked    = (bool) ($user && $user->isCurrentlyBlocked());
+        $blockedUntilTs = ($userBlocked && $user->blocked_until) ? $user->blocked_until->timestamp : null;
 
         return response()->json([
             'enabled'          => $enabled,
@@ -158,7 +154,7 @@ class ChatController extends Controller
         $this->cleanOldMessages();
 
         // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
-        $userBlocked    = $currentUser->is_blocked;
+        $userBlocked    = (bool) ($currentUser && $currentUser->isCurrentlyBlocked());
         $blockedUntilTs = ($userBlocked && $currentUser->blocked_until)
             ? $currentUser->blocked_until->timestamp
             : null;

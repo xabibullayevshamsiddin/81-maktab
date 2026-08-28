@@ -2670,14 +2670,12 @@ function updateBlockCountdownUI(targetTs, prefix) {
   var minutes = Math.floor((diff % 3600) / 60);
   var seconds = Math.floor(diff % 60);
 
-  if (dWrap && dSep) {
+  if (dWrap) {
     if (days > 0) {
-      dWrap.style.display = 'flex';
-      dSep.style.display = 'inline';
+      dWrap.style.display = 'inline-flex';
       if (dEl) dEl.textContent = String(days).padStart(2, '0');
     } else {
       dWrap.style.display = 'none';
-      dSep.style.display = 'none';
     }
   }
 

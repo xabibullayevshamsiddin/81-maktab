@@ -805,7 +805,7 @@
       @endphp
       @php
         $chatAuthUser = auth()->user();
-        $chatUserBlocked = $chatAuthUser && $chatAuthUser->is_blocked;
+        $chatUserBlocked = (bool) ($chatAuthUser && $chatAuthUser->isCurrentlyBlocked());
         $chatBlockedUntilTs = ($chatUserBlocked && $chatAuthUser->blocked_until) ? $chatAuthUser->blocked_until->timestamp : 0;
       @endphp
       <div id="chat-widget" class="chat-widget"
@@ -1030,30 +1030,31 @@
             </button>
           </form>
           <div id="chat-user-blocked-bar" class="chat-user-blocked-bar" @if(!$chatUserBlocked) hidden @endif>
-            <div class="chat-blocked-header-row">
-              <div class="chat-blocked-lock-badge"><i class="fa-solid fa-lock"></i></div>
-              <div class="chat-blocked-bar-title">Hisobingiz bloklangan</div>
-            </div>
-            @if($chatAuthUser && $chatAuthUser->blocked_reason)
-              <div class="chat-blocked-bar-reason">{{ $chatAuthUser->blocked_reason }}</div>
-            @endif
-            <div class="chat-blocked-countdown-box">
-              <div class="chat-blocked-countdown-title">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <span>Blok tugashiga qolgan vaqt:</span>
+            <div class="chat-blocked-inline-content">
+              <div class="chat-blocked-lock-badge">
+                <i class="fa-solid fa-lock"></i>
               </div>
-              <div class="chat-blocked-timer-digits" id="chat-blocked-timer-digits">
-                <div class="timer-segment" id="chat-timer-d-wrap"><span class="timer-num" id="chat-timer-d">00</span><span class="timer-lbl">kun</span></div>
-                <span class="timer-sep" id="chat-timer-d-sep">:</span>
-                <div class="timer-segment"><span class="timer-num" id="chat-timer-h">00</span><span class="timer-lbl">soat</span></div>
-                <span class="timer-sep">:</span>
-                <div class="timer-segment"><span class="timer-num" id="chat-timer-m">00</span><span class="timer-lbl">daq</span></div>
-                <span class="timer-sep">:</span>
-                <div class="timer-segment"><span class="timer-num timer-num--sec" id="chat-timer-s">00</span><span class="timer-lbl">son</span></div>
-              </div>
-              <div class="chat-blocked-permanent" id="chat-blocked-permanent" hidden>
-                <i class="fa-solid fa-infinity"></i>
-                <span>Doimiy bloklangan</span>
+              <div class="chat-blocked-info">
+                <div class="chat-blocked-top-row">
+                  <span class="chat-blocked-label">Hisobingiz bloklangan</span>
+                  @if($chatAuthUser && $chatAuthUser->blocked_reason)
+                    <span class="chat-blocked-dot">•</span>
+                    <span class="chat-blocked-reason" title="{{ $chatAuthUser->blocked_reason }}">{{ \Illuminate\Support\Str::limit($chatAuthUser->blocked_reason, 22) }}</span>
+                  @endif
+                </div>
+                <div class="chat-blocked-timer-row">
+                  <div class="chat-blocked-timer-digits" id="chat-blocked-timer-digits">
+                    <i class="fa-solid fa-clock-rotate-left chat-timer-icon"></i>
+                    <span class="timer-unit-group" id="chat-timer-d-wrap"><strong class="timer-num" id="chat-timer-d">00</strong><small class="timer-lbl">k</small><span class="timer-sep">:</span></span>
+                    <span class="timer-unit-group"><strong class="timer-num" id="chat-timer-h">00</strong><small class="timer-lbl">s</small><span class="timer-sep">:</span></span>
+                    <span class="timer-unit-group"><strong class="timer-num" id="chat-timer-m">00</strong><small class="timer-lbl">d</small><span class="timer-sep">:</span></span>
+                    <span class="timer-unit-group"><strong class="timer-num timer-num--sec" id="chat-timer-s">00</strong><small class="timer-lbl">son</small></span>
+                  </div>
+                  <div class="chat-blocked-permanent" id="chat-blocked-permanent" hidden>
+                    <i class="fa-solid fa-infinity"></i>
+                    <span>Doimiy blok</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1402,7 +1403,7 @@
     @endphp
       @php
         $aiAuthUser = auth()->user();
-        $aiUserBlocked = $aiAuthUser && $aiAuthUser->is_blocked;
+        $aiUserBlocked = (bool) ($aiAuthUser && $aiAuthUser->isCurrentlyBlocked());
         $aiBlockedUntilTs = ($aiUserBlocked && $aiAuthUser->blocked_until) ? $aiAuthUser->blocked_until->timestamp : 0;
       @endphp
     <div
@@ -1484,30 +1485,31 @@
           </button>
         </form>
         <div id="ai-user-blocked-bar" class="chat-user-blocked-bar ai-user-blocked-bar" @if(!$aiUserBlocked) hidden @endif>
-          <div class="chat-blocked-header-row">
-            <div class="chat-blocked-lock-badge"><i class="fa-solid fa-lock"></i></div>
-            <div class="chat-blocked-bar-title">AI yordamchi bloklangan</div>
-          </div>
-          @if($aiAuthUser && $aiAuthUser->blocked_reason)
-            <div class="chat-blocked-bar-reason">{{ $aiAuthUser->blocked_reason }}</div>
-          @endif
-          <div class="chat-blocked-countdown-box">
-            <div class="chat-blocked-countdown-title">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-              <span>Blok tugashiga qolgan vaqt:</span>
+          <div class="chat-blocked-inline-content">
+            <div class="chat-blocked-lock-badge">
+              <i class="fa-solid fa-lock"></i>
             </div>
-            <div class="chat-blocked-timer-digits" id="ai-blocked-timer-digits">
-              <div class="timer-segment" id="ai-timer-d-wrap"><span class="timer-num" id="ai-timer-d">00</span><span class="timer-lbl">kun</span></div>
-              <span class="timer-sep" id="ai-timer-d-sep">:</span>
-              <div class="timer-segment"><span class="timer-num" id="ai-timer-h">00</span><span class="timer-lbl">soat</span></div>
-              <span class="timer-sep">:</span>
-              <div class="timer-segment"><span class="timer-num" id="ai-timer-m">00</span><span class="timer-lbl">daq</span></div>
-              <span class="timer-sep">:</span>
-              <div class="timer-segment"><span class="timer-num timer-num--sec" id="ai-timer-s">00</span><span class="timer-lbl">son</span></div>
-            </div>
-            <div class="chat-blocked-permanent" id="ai-blocked-permanent" hidden>
-              <i class="fa-solid fa-infinity"></i>
-              <span>Doimiy bloklangan</span>
+            <div class="chat-blocked-info">
+              <div class="chat-blocked-top-row">
+                <span class="chat-blocked-label">AI yordamchi bloklangan</span>
+                @if($aiAuthUser && $aiAuthUser->blocked_reason)
+                  <span class="chat-blocked-dot">•</span>
+                  <span class="chat-blocked-reason" title="{{ $aiAuthUser->blocked_reason }}">{{ \Illuminate\Support\Str::limit($aiAuthUser->blocked_reason, 22) }}</span>
+                @endif
+              </div>
+              <div class="chat-blocked-timer-row">
+                <div class="chat-blocked-timer-digits" id="ai-blocked-timer-digits">
+                  <i class="fa-solid fa-clock-rotate-left chat-timer-icon"></i>
+                  <span class="timer-unit-group" id="ai-timer-d-wrap"><strong class="timer-num" id="ai-timer-d">00</strong><small class="timer-lbl">k</small><span class="timer-sep">:</span></span>
+                  <span class="timer-unit-group"><strong class="timer-num" id="ai-timer-h">00</strong><small class="timer-lbl">s</small><span class="timer-sep">:</span></span>
+                  <span class="timer-unit-group"><strong class="timer-num" id="ai-timer-m">00</strong><small class="timer-lbl">d</small><span class="timer-sep">:</span></span>
+                  <span class="timer-unit-group"><strong class="timer-num timer-num--sec" id="ai-timer-s">00</strong><small class="timer-lbl">son</small></span>
+                </div>
+                <div class="chat-blocked-permanent" id="ai-blocked-permanent" hidden>
+                  <i class="fa-solid fa-infinity"></i>
+                  <span>Doimiy blok</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1599,14 +1601,12 @@
           var minutes = Math.floor((diff % 3600) / 60);
           var seconds = Math.floor(diff % 60);
 
-          if (dWrap && dSep) {
+          if (dWrap) {
             if (days > 0) {
-              dWrap.style.display = 'flex';
-              dSep.style.display = 'inline';
+              dWrap.style.display = 'inline-flex';
               if (dEl) dEl.textContent = String(days).padStart(2, '0');
             } else {
               dWrap.style.display = 'none';
-              dSep.style.display = 'none';
             }
           }
 

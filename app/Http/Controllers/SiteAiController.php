@@ -175,12 +175,8 @@ class SiteAiController extends Controller
         $user    = request()->user();
 
         // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
-        $userBlocked    = false;
-        $blockedUntilTs = null;
-        if ($user && $user->is_blocked) {
-            $userBlocked    = true;
-            $blockedUntilTs = $user->blocked_until ? $user->blocked_until->timestamp : null;
-        }
+        $userBlocked    = (bool) ($user && $user->isCurrentlyBlocked());
+        $blockedUntilTs = ($userBlocked && $user->blocked_until) ? $user->blocked_until->timestamp : null;
 
         return response()->json([
             'enabled'          => $enabled,
