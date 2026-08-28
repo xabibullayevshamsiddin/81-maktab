@@ -2210,7 +2210,7 @@ a.bookmark-btn--guest:hover {
   height: 100%;
   border-radius: 0;
   border: 0;
-  z-index: 10200;
+  z-index: 1000000;
   transform-origin: center;
   animation: chatFullIn 0.52s cubic-bezier(0.18, 0.92, 0.28, 1) both;
 }
@@ -2255,6 +2255,13 @@ a.bookmark-btn--guest:hover {
     transform: scale(0.92) translateY(16px);
     filter: blur(5px);
   }
+}
+
+body.chat-fullscreen-active .header-main,
+body.chat-fullscreen-active .page-header {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 body.chat-fullscreen-active::before {

@@ -148,6 +148,13 @@
 
   function closeChatPanel() {
     isOpen = false;
+    // Reset fullscreen if active
+    if (isFullscreen) {
+      isFullscreen = false;
+      panel.classList.remove('is-fullscreen');
+      document.body.classList.remove('chat-fullscreen-active');
+      fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+    }
     panel.classList.remove('is-open');
     widget.classList.remove('is-open');
     setTimeout(function() { panel.setAttribute('hidden', ''); }, 300);
@@ -179,7 +186,8 @@
   // Fullscreen
   fullscreenBtn.addEventListener('click', function() {
     isFullscreen = !isFullscreen;
-    panel.classList.toggle('chat-panel--fullscreen', isFullscreen);
+    panel.classList.toggle('is-fullscreen', isFullscreen);
+    document.body.classList.toggle('chat-fullscreen-active', isFullscreen);
     fullscreenBtn.innerHTML = isFullscreen
       ? '<i class="fa-solid fa-compress"></i>'
       : '<i class="fa-solid fa-expand"></i>';
