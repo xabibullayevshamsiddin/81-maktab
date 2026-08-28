@@ -1,242 +1,695 @@
 <x-layouts.main :title="__('public.feature_requests.page_title')">
   @push('page_styles')
     <style>
+      /* ====================================================================
+         Feature Requests / Takliflar — High-End Glassmorphism UI
+         ==================================================================== */
+      .features-page-wrapper {
+        padding: 30px 0 80px;
+      }
+
+      /* Submit Proposal Glass Card */
+      .feature-submit-card {
+        background: var(--card-bg, rgba(255, 255, 255, 0.9));
+        border: 1px solid var(--border-color, rgba(148, 163, 184, 0.25));
+        border-radius: 20px;
+        padding: 26px 30px;
+        margin-bottom: 36px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        transition: all 0.3s ease;
+      }
+
+      .feature-submit-card:focus-within {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 14px 40px rgba(99, 102, 241, 0.08);
+      }
+
+      .feature-submit-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .feature-submit-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        flex-shrink: 0;
+      }
+
+      .feature-submit-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-color, #0f172a);
+        margin: 0;
+      }
+
+      .feature-submit-subtitle {
+        font-size: 0.85rem;
+        color: var(--muted-text, #64748b);
+        margin: 2px 0 0;
+      }
+
+      .feature-form-group {
+        margin-bottom: 16px;
+      }
+
+      .feature-form-label {
+        display: block;
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--text-color, #334155);
+        margin-bottom: 6px;
+      }
+
+      .feature-form-input,
+      .feature-form-textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color, rgba(148, 163, 184, 0.25));
+        background: var(--input-bg, rgba(248, 250, 252, 0.8));
+        color: var(--text-color, #0f172a);
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.25s ease;
+        outline: none;
+      }
+
+      .feature-form-input:focus,
+      .feature-form-textarea:focus {
+        background: var(--input-focus-bg, #ffffff);
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      }
+
+      .feature-form-textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+
+      .btn-submit-proposal {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: #fff !important;
+        border: none;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+        cursor: pointer;
+        transition: all 0.25s ease;
+      }
+
+      .btn-submit-proposal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+      }
+
+      /* Proposal List & Cards (ProductHunt Style) */
+      .features-feed-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .features-feed-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--text-color, #0f172a);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .features-feed-count {
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 999px;
+        background: rgba(99, 102, 241, 0.1);
+        color: #4f46e5;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+      }
+
       .feature-list {
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 20px;
       }
-      .feature-item {
-        border: 1px solid var(--border);
-        background: var(--surface);
+
+      /* Main Proposal Item */
+      .feature-card {
+        background: var(--card-bg, rgba(255, 255, 255, 0.9));
+        border: 1px solid var(--border-color, rgba(148, 163, 184, 0.25));
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        display: flex;
+        gap: 20px;
+        transition: all 0.25s ease;
+      }
+
+      .feature-card:hover {
+        border-color: rgba(99, 102, 241, 0.35);
+        box-shadow: 0 8px 30px rgba(99, 102, 241, 0.06);
+        transform: translateY(-2px);
+      }
+
+      /* Left Side Tactile Upvote Box */
+      .feature-vote-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 68px;
+        min-width: 68px;
+        height: 76px;
         border-radius: 16px;
-        padding: 16px;
+        border: 1.5px solid var(--border-color, rgba(148, 163, 184, 0.3));
+        background: var(--vote-bg, rgba(248, 250, 252, 0.8));
+        color: var(--text-color, #1e293b);
+        cursor: pointer;
+        padding: 8px 6px;
+        transition: all 0.25s ease;
+        text-decoration: none;
       }
-      .feature-item-head {
+
+      .feature-vote-box:hover {
+        border-color: #6366f1;
+        background: rgba(99, 102, 241, 0.08);
+        color: #4f46e5;
+        transform: scale(1.04);
+      }
+
+      .feature-vote-box.is-voted {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        border-color: #4f46e5;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      }
+
+      .feature-vote-box.is-voted:hover {
+        background: linear-gradient(135deg, #4338ca, #4f46e5);
+      }
+
+      .vote-icon {
+        font-size: 1.1rem;
+        margin-bottom: 2px;
+        transition: transform 0.2s ease;
+      }
+
+      .feature-vote-box:hover .vote-icon {
+        transform: translateY(-2px);
+      }
+
+      .vote-count {
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .vote-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-top: 3px;
+        opacity: 0.85;
+      }
+
+      /* Proposal Main Details */
+      .feature-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .feature-header-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         gap: 12px;
         flex-wrap: wrap;
       }
-      .feature-item-title {
-        margin: 0 0 6px;
-        color: var(--primary);
+
+      .feature-title-text {
+        font-size: 1.12rem;
+        font-weight: 800;
+        color: var(--text-color, #0f172a);
+        margin: 0 0 4px;
+        line-height: 1.35;
       }
-      .feature-item-meta {
-        margin: 0;
-        color: var(--muted);
-        font-size: 13px;
+
+      .feature-author-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+        color: var(--muted-text, #64748b);
+        flex-wrap: wrap;
       }
-      .feature-item-body {
-        margin: 12px 0 0;
-        color: var(--text);
+
+      .feature-user-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Status Badges */
+      .feature-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .feature-body-text {
+        font-size: 0.94rem;
+        line-height: 1.55;
+        color: var(--text-color, #334155);
+        margin: 2px 0 0;
         white-space: pre-line;
       }
-      .feature-controls {
-        margin-top: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+
+      /* Admin Official Note Callout */
+      .feature-admin-callout {
+        margin-top: 10px;
+        background: rgba(99, 102, 241, 0.06);
+        border-left: 3px solid #6366f1;
+        border-radius: 4px 12px 12px 4px;
+        padding: 10px 14px;
+        font-size: 0.88rem;
+        color: var(--text-color, #1e293b);
       }
-      .feature-inline-form {
+
+      .feature-admin-callout strong {
+        color: #4f46e5;
         display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
         align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
-      .feature-delete-btn {
-        border-color: #ef4444 !important;
-        color: #b91c1c !important;
-      }
-      .feature-replies-wrap {
-        margin-top: 12px;
-        border-top: 1px solid var(--border);
+
+      /* Bottom Action Bar */
+      .feature-action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
         padding-top: 12px;
+        border-top: 1px solid var(--border-soft, rgba(148, 163, 184, 0.12));
       }
-      .feature-replies-title {
-        font-size: 13px;
+
+      .feature-admin-reply-form {
+        display: flex;
+        gap: 8px;
+        flex: 1;
+        min-width: 260px;
+      }
+
+      .feature-reply-input {
+        flex: 1;
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color, rgba(148, 163, 184, 0.25));
+        background: var(--input-bg, rgba(248, 250, 252, 0.8));
+        color: var(--text-color, #0f172a);
+        font-size: 0.88rem;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+
+      .feature-reply-input:focus {
+        border-color: #6366f1;
+        background: var(--input-focus-bg, #ffffff);
+      }
+
+      .btn-reply-send {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 16px;
+        border-radius: 10px;
         font-weight: 700;
-        color: var(--muted);
-        margin-bottom: 8px;
+        font-size: 0.82rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: #4f46e5;
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
       }
+
+      .btn-reply-send:hover {
+        background: #4f46e5;
+        color: #fff;
+      }
+
+      .btn-delete-proposal {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: transparent;
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-delete-proposal:hover {
+        background: #ef4444;
+        color: #fff;
+      }
+
+      /* Replies Stream (Javoblar) */
+      .feature-replies-block {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed var(--border-soft, rgba(148, 163, 184, 0.2));
+      }
+
+      .feature-replies-header {
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted-text, #64748b);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
       .feature-replies-list {
         display: flex;
         flex-direction: column;
         gap: 10px;
       }
-      .feature-reply-card {
-        border-radius: 12px;
-        padding: 12px 14px;
-        border: 1px solid rgba(13, 63, 120, 0.1);
-        background: rgba(13, 63, 120, 0.04);
-        animation: featureReplyPop .22s ease both;
-      }
-      .feature-reply-card.is-admin {
+
+      .feature-reply-item {
+        border-radius: 14px;
+        padding: 14px 16px;
+        border: 1px solid var(--border-color, rgba(148, 163, 184, 0.2));
+        background: var(--reply-bg, rgba(248, 250, 252, 0.7));
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
         position: relative;
-        overflow: hidden;
-        isolation: isolate;
-        background: linear-gradient(135deg, rgba(15, 118, 110, 0.16), rgba(2, 132, 199, 0.12));
-        border-color: rgba(6, 182, 212, 0.45);
-        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22), 0 10px 24px rgba(8, 145, 178, 0.18);
-        animation: featureReplyPop .22s ease both, adminGlow 2s ease-in-out infinite alternate;
       }
-      .feature-reply-card.is-admin::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: 12px;
-        pointer-events: none;
-        background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.2) 45%, transparent 65%);
-        transform: translateX(-120%);
-        z-index: 0;
-        animation: adminShine 3s ease-in-out infinite;
+
+      .feature-reply-item.is-super-admin {
+        background: linear-gradient(135deg, rgba(88, 28, 135, 0.08), rgba(30, 64, 175, 0.06));
+        border-color: rgba(99, 102, 241, 0.35);
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.06);
       }
-      .feature-reply-card.is-admin > * {
-        position: relative;
-        z-index: 1;
+
+      .feature-reply-item.is-admin {
+        background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(2, 132, 199, 0.06));
+        border-color: rgba(6, 182, 212, 0.35);
+        box-shadow: 0 4px 16px rgba(6, 182, 212, 0.06);
       }
-      .feature-reply-card.is-super-admin {
-        position: relative;
-        overflow: hidden;
-        isolation: isolate;
-        background: linear-gradient(135deg, rgba(88, 28, 135, 0.16), rgba(30, 64, 175, 0.12));
-        border-color: rgba(99, 102, 241, 0.45);
-        box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.22), 0 10px 24px rgba(67, 56, 202, 0.18);
-        animation: featureReplyPop .22s ease both, superAdminGlow 1.8s ease-in-out infinite alternate;
+
+      .feature-reply-head-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
       }
-      .feature-reply-card.is-super-admin::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: 12px;
-        pointer-events: none;
-        background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.22) 45%, transparent 65%);
-        transform: translateX(-120%);
-        z-index: 0;
-        animation: superAdminShine 2.8s ease-in-out infinite;
-      }
-      .feature-reply-card.is-super-admin > * {
-        position: relative;
-        z-index: 1;
-      }
-      .feature-reply-card.is-moderator {
-        background: rgba(245, 158, 11, 0.08);
-        border-color: rgba(217, 119, 6, 0.25);
-      }
-      .feature-reply-head {
+
+      .feature-reply-user {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 6px;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        color: var(--text-color, #0f172a);
       }
-      .feature-reply-role {
-        font-size: 11px;
-        padding: 4px 10px;
-        border-radius: 999px;
+
+      .badge-role-pill {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 6px;
       }
-      .feature-reply-meta {
-        margin-left: auto;
-        font-size: 12px;
-        color: var(--muted);
+
+      .badge-role-superadmin {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
       }
-      .feature-reply-footer {
-        margin-top: 8px;
-        display: flex;
-        justify-content: flex-end;
+
+      .badge-role-admin {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: #fff;
       }
-      .feature-reply-message {
-        margin: 2px 0 0;
-        color: var(--text);
-        line-height: 1.45;
+
+      .badge-role-mod {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
       }
-      .feature-reply-delete-btn {
-        border-color: #ef4444 !important;
-        color: #b91c1c !important;
-        padding: 3px 8px !important;
-        font-size: 12px !important;
-        line-height: 1.2;
+
+      .feature-reply-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--text-color, #1e293b);
+        margin: 0;
       }
-      .feature-actions-tip {
-        font-size: 12px;
-        color: var(--muted);
+
+      .feature-reply-date {
+        font-size: 0.75rem;
+        color: var(--muted-text, #64748b);
       }
-      @keyframes featureReplyPop {
-        from { opacity: 0; transform: translateY(4px); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+
+      .btn-reply-delete {
+        background: transparent;
+        border: none;
+        color: #ef4444;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
       }
-      @keyframes superAdminGlow {
-        from { box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.18), 0 8px 20px rgba(67, 56, 202, 0.14); }
-        to { box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35), 0 12px 28px rgba(67, 56, 202, 0.25); }
+
+      .btn-reply-delete:hover {
+        background: rgba(239, 68, 68, 0.1);
       }
-      @keyframes superAdminShine {
-        0% { transform: translateX(-120%); opacity: 0; }
-        18% { opacity: .75; }
-        40% { transform: translateX(120%); opacity: 0; }
-        100% { transform: translateX(120%); opacity: 0; }
+
+      /* Mobile Layout adjustments */
+      @media (max-width: 640px) {
+        .feature-card {
+          flex-direction: column;
+          gap: 14px;
+          padding: 18px 16px;
+        }
+
+        .feature-vote-box {
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          justify-content: center;
+          gap: 10px;
+          padding: 10px 16px;
+        }
+
+        .feature-vote-box .vote-label {
+          margin-top: 0;
+        }
+
+        .feature-admin-reply-form {
+          width: 100%;
+          min-width: 100%;
+        }
       }
-      @keyframes adminGlow {
-        from { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18), 0 8px 20px rgba(8, 145, 178, 0.14); }
-        to { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 12px 28px rgba(8, 145, 178, 0.25); }
+
+      /* ====================================================================
+         Dark Mode Overrides
+         ==================================================================== */
+      :root[data-theme='dark'] .feature-submit-card,
+      :root[data-theme='dark'] .feature-card {
+        background: linear-gradient(180deg, rgba(15, 27, 45, 0.95), rgba(10, 19, 33, 0.98)) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
       }
-      @keyframes adminShine {
-        0% { transform: translateX(-120%); opacity: 0; }
-        20% { opacity: .7; }
-        45% { transform: translateX(120%); opacity: 0; }
-        100% { transform: translateX(120%); opacity: 0; }
+
+      :root[data-theme='dark'] .feature-vote-box {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f1f5f9 !important;
+      }
+
+      :root[data-theme='dark'] .feature-vote-box:hover {
+        background: rgba(99, 102, 241, 0.2) !important;
+        border-color: #818cf8 !important;
+      }
+
+      :root[data-theme='dark'] .feature-vote-box.is-voted {
+        background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+        border-color: #6366f1 !important;
+        color: #ffffff !important;
+      }
+
+      :root[data-theme='dark'] .feature-form-input,
+      :root[data-theme='dark'] .feature-form-textarea,
+      :root[data-theme='dark'] .feature-reply-input {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f8fafc !important;
+      }
+
+      :root[data-theme='dark'] .feature-form-input:focus,
+      :root[data-theme='dark'] .feature-form-textarea:focus,
+      :root[data-theme='dark'] .feature-reply-input:focus {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border-color: #818cf8 !important;
+      }
+
+      :root[data-theme='dark'] .feature-submit-title,
+      :root[data-theme='dark'] .features-feed-title,
+      :root[data-theme='dark'] .feature-title-text,
+      :root[data-theme='dark'] .feature-reply-user {
+        color: #f8fafc !important;
+      }
+
+      :root[data-theme='dark'] .feature-body-text,
+      :root[data-theme='dark'] .feature-reply-text {
+        color: #cbd5e1 !important;
+      }
+
+      :root[data-theme='dark'] .feature-form-label {
+        color: #94a3b8 !important;
+      }
+
+      :root[data-theme='dark'] .feature-reply-item {
+        background: rgba(15, 23, 42, 0.5) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+      }
+
+      :root[data-theme='dark'] .feature-admin-callout {
+        background: rgba(99, 102, 241, 0.12) !important;
+        border-left-color: #818cf8 !important;
+        color: #e2e8f0 !important;
+      }
+
+      :root[data-theme='dark'] .feature-admin-callout strong {
+        color: #a5b4fc !important;
       }
     </style>
   @endpush
 
+  {{-- Hero Header --}}
   <section class="news-hero" id="home">
     <div class="container">
       <div class="news-hero-content prime-reveal">
-        <span class="badge">{{ __('public.feature_requests.badge') }}</span>
+        <span class="badge"><i class="fa-solid fa-lightbulb me-1"></i> {{ __('public.feature_requests.badge') }}</span>
         <h1 class="js-split-text">{{ __('public.feature_requests.hero_title') }}</h1>
         <p>{{ __('public.feature_requests.hero_text') }}</p>
       </div>
     </div>
   </section>
 
-  <main>
-    <section class="container courses-filter-section prime-reveal" style="padding-top: 40px; padding-bottom: 60px;">
+  <main class="features-page-wrapper">
+    <div class="container">
+
+      {{-- 1. Submit Proposal Form --}}
       @auth
-        <form method="POST" action="{{ route('feature-requests.store') }}" class="exam-filter-panel" style="margin-bottom: 30px;">
-          @csrf
-          <div class="exam-filter-row">
-            <div class="exam-filter-field" style="flex:1;">
-              <label class="exam-filter-label" for="feature-title">{{ __('public.feature_requests.title_label') }}</label>
-              <input id="feature-title" type="text" name="title" class="exam-filter-input" maxlength="180" required value="{{ old('title') }}" placeholder="{{ __('public.feature_requests.title_placeholder') }}">
+        <div class="feature-submit-card prime-reveal">
+          <div class="feature-submit-header">
+            <div class="feature-submit-icon">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+              <h3 class="feature-submit-title">Yangi taklif yoki g'oya qoldiring</h3>
+              <p class="feature-submit-subtitle">Qanday qulaylik yoki yangilik saytimizni yanada yaxshilaydi deb o'ylaysiz?</p>
             </div>
           </div>
-          <div class="exam-filter-row" style="margin-top:10px;">
-            <div class="exam-filter-field" style="flex:1;">
-              <label class="exam-filter-label" for="feature-description">{{ __('public.feature_requests.description_label') }}</label>
-              <textarea id="feature-description" name="description" class="exam-filter-input" rows="3" maxlength="3000" placeholder="{{ __('public.feature_requests.description_placeholder') }}">{{ old('description') }}</textarea>
+
+          <form method="POST" action="{{ route('feature-requests.store') }}">
+            @csrf
+            <div class="feature-form-group">
+              <label class="feature-form-label" for="feature-title">{{ __('public.feature_requests.title_label') }}</label>
+              <input id="feature-title" type="text" name="title" class="feature-form-input" maxlength="180" required value="{{ old('title') }}" placeholder="{{ __('public.feature_requests.title_placeholder') }}">
             </div>
-          </div>
-          <div style="margin-top: 14px;">
-            <button type="submit" class="btn btn-prime">
-              <i class="fa-solid fa-plus"></i> {{ __('public.feature_requests.submit') }}
+
+            <div class="feature-form-group">
+              <label class="feature-form-label" for="feature-description">{{ __('public.feature_requests.description_label') }}</label>
+              <textarea id="feature-description" name="description" class="feature-form-textarea" rows="3" maxlength="3000" placeholder="{{ __('public.feature_requests.description_placeholder') }}">{{ old('description') }}</textarea>
+            </div>
+
+            <button type="submit" class="btn-submit-proposal">
+              <i class="fa-solid fa-paper-plane"></i> {{ __('public.feature_requests.submit') }}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       @else
-        <div class="empty-state" style="margin-bottom: 24px;">
-          <p>{{ __('public.feature_requests.login_required') }}</p>
-          <a href="{{ route('login') }}" class="btn btn-prime" style="margin-top: 10px;">{{ __('public.feature_requests.login') }}</a>
+        <div class="feature-submit-card text-center prime-reveal" style="padding: 32px 20px;">
+          <i class="fa-solid fa-lock mb-2" style="font-size: 2.2rem; color: #6366f1; opacity: 0.8;"></i>
+          <h3 class="feature-submit-title">{{ __('public.feature_requests.login_required') }}</h3>
+          <p class="feature-submit-subtitle mb-3">Taklif qoldirish va boshqalarning g'oyalariga ovoz berish uchun tizimga kiring.</p>
+          <a href="{{ route('login') }}" class="btn-submit-proposal" style="text-decoration: none;">
+            <i class="fa-solid fa-right-to-bracket"></i> {{ __('public.feature_requests.login') }}
+          </a>
         </div>
       @endauth
 
-      <div class="section-head" style="text-align:left; margin-bottom: 20px;">
-        <h2>{{ __('public.feature_requests.list_title') }}</h2>
+      {{-- 2. Proposals Feed Header --}}
+      <div class="features-feed-header prime-reveal">
+        <h2 class="features-feed-title">
+          <i class="fa-solid fa-fire text-primary"></i> {{ __('public.feature_requests.list_title') }}
+        </h2>
+        <span class="features-feed-count">
+          Jami: {{ $featureRequests->total() }} ta taklif
+        </span>
       </div>
 
+      {{-- 3. Proposals List --}}
       @if($featureRequests->count() === 0)
-        <div class="empty-state">
-          <p>{{ __('public.feature_requests.empty') }}</p>
+        <div class="feature-submit-card text-center" style="padding: 48px 20px;">
+          <i class="fa-solid fa-comment-dots mb-3" style="font-size: 3rem; opacity: 0.3; color: #64748b;"></i>
+          <h3 class="feature-submit-title" style="color: var(--muted-text, #64748b);">{{ __('public.feature_requests.empty') }}</h3>
         </div>
       @else
         <div class="feature-list">
@@ -246,7 +699,9 @@
               if ($authorName === '') {
                   $authorName = $requestItem->user->name ?? __('public.feature_requests.default_user');
               }
+              $authorInitial = mb_strtoupper(mb_substr($authorName, 0, 1));
               $hasVoted = in_array($requestItem->id, $votedRequestIds, true);
+              
               $statusLabel = match ($requestItem->status) {
                 \App\Models\FeatureRequest::STATUS_PLANNED => __('public.feature_requests.status_planned'),
                 \App\Models\FeatureRequest::STATUS_IN_PROGRESS => __('public.feature_requests.status_progress'),
@@ -254,160 +709,203 @@
                 \App\Models\FeatureRequest::STATUS_REJECTED => __('public.feature_requests.status_rejected'),
                 default => __('public.feature_requests.status_review'),
               };
+              
               $statusStyle = match ($requestItem->status) {
-                \App\Models\FeatureRequest::STATUS_PLANNED => 'background:rgba(59,130,246,.12);color:#1d4ed8;',
-                \App\Models\FeatureRequest::STATUS_IN_PROGRESS => 'background:rgba(14,165,233,.12);color:#0369a1;',
-                \App\Models\FeatureRequest::STATUS_DONE => 'background:rgba(16,185,129,.12);color:#047857;',
-                \App\Models\FeatureRequest::STATUS_REJECTED => 'background:rgba(239,68,68,.12);color:#b91c1c;',
-                default => 'background:rgba(245,158,11,.12);color:#b45309;',
+                \App\Models\FeatureRequest::STATUS_PLANNED => 'background:rgba(59,130,246,0.12); color:#2563eb; border:1px solid rgba(59,130,246,0.25);',
+                \App\Models\FeatureRequest::STATUS_IN_PROGRESS => 'background:rgba(14,165,233,0.12); color:#0284c7; border:1px solid rgba(14,165,233,0.25);',
+                \App\Models\FeatureRequest::STATUS_DONE => 'background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.25);',
+                \App\Models\FeatureRequest::STATUS_REJECTED => 'background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.25);',
+                default => 'background:rgba(245,158,11,0.12); color:#d97706; border:1px solid rgba(245,158,11,0.25);',
               };
+
+              $statusIcon = match ($requestItem->status) {
+                \App\Models\FeatureRequest::STATUS_PLANNED => 'fa-calendar-check',
+                \App\Models\FeatureRequest::STATUS_IN_PROGRESS => 'fa-bolt',
+                \App\Models\FeatureRequest::STATUS_DONE => 'fa-circle-check',
+                \App\Models\FeatureRequest::STATUS_REJECTED => 'fa-circle-xmark',
+                default => 'fa-hourglass-half',
+              };
+
               $canVote = in_array((string) $requestItem->status, \App\Models\FeatureRequest::VOTABLE_STATUSES, true) && $requestItem->is_active;
               $canReply = auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->hasRole(\App\Models\User::ROLE_MODERATOR));
               $canModerate = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin());
               $canDelete = auth()->check() && ($canModerate || (int) auth()->id() === (int) $requestItem->user_id);
             @endphp
-            <article class="feature-item">
-              <div class="feature-item-head">
-                <div>
-                  <h3 class="feature-item-title">{{ $requestItem->title }}</h3>
-                  <p class="feature-item-meta">
-                    {{ __('public.feature_requests.author', ['name' => $authorName]) }} · {{ $requestItem->created_at?->format('d.m.Y H:i') }}
-                  </p>
-                </div>
-                <span class="badge" style="background: var(--warning-bg); color: var(--warning-text);">
-                  <i class="fa-solid fa-arrow-up"></i> {{ __('public.feature_requests.votes', ['count' => (int) $requestItem->votes_count]) }}
-                </span>
-              </div>
-              <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-                <span class="badge" style="{{ $statusStyle }}">{{ $statusLabel }}</span>
-                @if($requestItem->announced_at)
-                  <span class="badge" style="background: var(--badge-bg); color: var(--badge-text);">
-                    {{ __('public.feature_requests.announced', ['date' => $requestItem->announced_at->format('d.m.Y H:i')]) }}
-                  </span>
-                @endif
-              </div>
 
-              @if($requestItem->description)
-                <p class="feature-item-body">{{ $requestItem->description }}</p>
-              @endif
-              @if($requestItem->admin_note)
-                <p style="margin:10px 0 0; color: var(--text-secondary); background: var(--badge-bg); border-radius:10px; padding:10px;">
-                  <strong>{{ __('public.feature_requests.admin_note') }}</strong> {{ $requestItem->admin_note }}
-                </p>
-              @endif
-
-              @auth
-                <div class="feature-controls">
+            <article class="feature-card">
+              {{-- Left Tactile Upvote Button --}}
+              <div>
+                @auth
                   @if($canVote)
-                    <form method="POST" action="{{ route('feature-requests.vote', $requestItem) }}">
+                    <form method="POST" action="{{ route('feature-requests.vote', $requestItem) }}" style="margin:0;">
                       @csrf
-                      <button type="submit" class="btn {{ $hasVoted ? 'btn-outline' : 'btn-prime' }}">
-                        @if($hasVoted)
-                          <i class="fa-solid fa-check"></i> {{ __('public.feature_requests.vote_remove') }}
-                        @else
-                          <i class="fa-solid fa-thumbs-up"></i> {{ __('public.feature_requests.vote_add') }}
-                        @endif
+                      <button type="submit" class="feature-vote-box {{ $hasVoted ? 'is-voted' : '' }}" title="{{ $hasVoted ? 'Ovozni bekor qilish' : 'Ovoz berish' }}">
+                        <i class="fa-solid {{ $hasVoted ? 'fa-check' : 'fa-chevron-up' }} vote-icon"></i>
+                        <span class="vote-count">{{ (int) $requestItem->votes_count }}</span>
+                        <span class="vote-label">{{ $hasVoted ? 'Ovoz berildi' : 'Ovoz' }}</span>
                       </button>
                     </form>
+                  @else
+                    <div class="feature-vote-box" style="opacity: 0.6; cursor: default;">
+                      <i class="fa-solid fa-lock vote-icon"></i>
+                      <span class="vote-count">{{ (int) $requestItem->votes_count }}</span>
+                      <span class="vote-label">Yopiq</span>
+                    </div>
                   @endif
+                @else
+                  <a href="{{ route('login') }}" class="feature-vote-box" title="Ovoz berish uchun tizimga kiring">
+                    <i class="fa-solid fa-chevron-up vote-icon"></i>
+                    <span class="vote-count">{{ (int) $requestItem->votes_count }}</span>
+                    <span class="vote-label">Ovoz</span>
+                  </a>
+                @endauth
+              </div>
 
-                  @if($canReply)
-                    <form method="POST" action="{{ route('feature-requests.replies.store', $requestItem) }}">
-                      @csrf
-                      <div class="feature-inline-form">
-                        <input type="text" name="message" class="exam-filter-input" maxlength="3000" placeholder="{{ __('public.feature_requests.reply_placeholder') }}" style="flex:1; min-width:220px;">
-                        <button type="submit" class="btn btn-outline">
-                          <i class="fa-solid fa-reply"></i> {{ __('public.feature_requests.reply_submit') }}
-                        </button>
-                      </div>
-                    </form>
-                  @endif
+              {{-- Main Content Column --}}
+              <div class="feature-content">
+                {{-- Header Row: Title & Status --}}
+                <div class="feature-header-row">
+                  <div>
+                    <h3 class="feature-title-text">{{ $requestItem->title }}</h3>
+                    <div class="feature-author-meta">
+                      <span class="feature-user-avatar">{{ $authorInitial }}</span>
+                      <span style="font-weight: 600; color: var(--text-color, #334155);">{{ $authorName }}</span>
+                      <span>·</span>
+                      <span>{{ $requestItem->created_at?->format('d.m.Y H:i') }}</span>
+                    </div>
+                  </div>
 
-                  @if($canDelete)
-                    <form method="POST" action="{{ route('feature-requests.destroy', $requestItem) }}"
-                      data-confirm="{{ __('public.feature_requests.delete_confirm') }}"
-                      data-confirm-title="{{ __('public.feature_requests.delete_title') }}"
-                      data-confirm-variant="danger"
-                      data-confirm-ok="{{ __('public.feature_requests.delete_ok') }}">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="btn btn-outline feature-delete-btn">
-                        <i class="fa-solid fa-trash"></i> {{ __('public.feature_requests.delete') }}
-                      </button>
-                    </form>
-                    <span class="feature-actions-tip">{{ __('public.feature_requests.delete_tip') }}</span>
-                  @endif
-                </div>
-              @endauth
-
-              @if(($requestItem->replies ?? collect())->isNotEmpty())
-                <div class="feature-replies-wrap">
-                  <div class="feature-replies-title">{{ __('public.feature_requests.replies') }}</div>
-                  <div class="feature-replies-list">
-                  @foreach($requestItem->replies as $reply)
-                    @php
-                      $replyAuthor = trim((string) ($reply->user->first_name ?? '').' '.(string) ($reply->user->last_name ?? ''));
-                      if ($replyAuthor === '') {
-                        $replyAuthor = $reply->user->name ?? __('public.feature_requests.default_staff');
-                      }
-                      $isSuperAdminReply = (bool) ($reply->user?->isSuperAdmin());
-                      $isAdminReply = $isSuperAdminReply || (bool) ($reply->user?->isAdmin());
-                      $isModeratorReply = (bool) ($reply->user?->hasRole(\App\Models\User::ROLE_MODERATOR));
-                      $replyRoleLabel = $isSuperAdminReply
-                        ? 'Super Admin'
-                        : ($isAdminReply
-                            ? 'Admin'
-                            : ($isModeratorReply ? 'Moderator' : 'Foydalanuvchi'));
-                      $replyBadgeStyle = $isAdminReply
-                        ? 'background:rgba(6,182,212,.16); color:#0891b2;'
-                        : ($isModeratorReply
-                            ? 'background:rgba(217,119,6,.16); color:#92400e;'
-                            : 'background:rgba(15,23,42,.08); color:#334155;');
-                      $replyDate = $reply->created_at?->format('d.m.Y H:i');
-                    @endphp
-                    <article class="feature-reply-card {{ $isSuperAdminReply ? 'is-super-admin' : ($isAdminReply ? 'is-admin' : ($isModeratorReply ? 'is-moderator' : '')) }}">
-                      <div class="feature-reply-head">
-                        <span class="badge feature-reply-role" style="{{ $replyBadgeStyle }}">
-                          {{ $replyRoleLabel }}
-                        </span>
-                        <span class="feature-reply-meta">
-                          {{ $replyAuthor }} · {{ $replyDate }}
-                        </span>
-                      </div>
-                      <p class="feature-reply-message">{{ $reply->message }}</p>
-                      @auth
-                        @php
-                          $canDeleteReply = (int) auth()->id() === (int) $reply->user_id || (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin());
-                        @endphp
-                        @if($canDeleteReply)
-                          <div class="feature-reply-footer">
-                            <form method="POST" action="{{ route('feature-requests.replies.destroy', $reply) }}"
-                              data-confirm="{{ __('public.feature_requests.reply_delete_confirm') }}"
-                              data-confirm-title="{{ __('public.feature_requests.reply_delete_title') }}"
-                              data-confirm-variant="danger"
-                              data-confirm-ok="{{ __('public.feature_requests.delete_ok') }}">
-                              @csrf
-                              @method('DELETE')
-                              <button type="submit" class="btn btn-outline btn-sm feature-reply-delete-btn">
-                                <i class="fa-solid fa-trash"></i> O'chirish
-                              </button>
-                            </form>
-                          </div>
-                        @endif
-                      @endauth
-                    </article>
-                  @endforeach
+                  <div>
+                    <span class="feature-status-badge" style="{{ $statusStyle }}">
+                      <i class="fa-solid {{ $statusIcon }}"></i> {{ $statusLabel }}
+                    </span>
+                    @if($requestItem->announced_at)
+                      <span class="feature-status-badge" style="background:rgba(99,102,241,0.08); color:#6366f1; border:1px solid rgba(99,102,241,0.2); margin-left:4px;">
+                        <i class="fa-solid fa-bullhorn"></i> {{ $requestItem->announced_at->format('d.m.Y') }}
+                      </span>
+                    @endif
                   </div>
                 </div>
-              @endif
+
+                {{-- Description Body --}}
+                @if($requestItem->description)
+                  <p class="feature-body-text">{{ $requestItem->description }}</p>
+                @endif
+
+                {{-- Official Admin Sticky Note --}}
+                @if($requestItem->admin_note)
+                  <div class="feature-admin-callout">
+                    <strong><i class="fa-solid fa-shield-check"></i> {{ __('public.feature_requests.admin_note') }}</strong>
+                    <div>{{ $requestItem->admin_note }}</div>
+                  </div>
+                @endif
+
+                {{-- Admin Reply Input & Actions --}}
+                @auth
+                  <div class="feature-action-bar">
+                    @if($canReply)
+                      <form method="POST" action="{{ route('feature-requests.replies.store', $requestItem) }}" class="feature-admin-reply-form">
+                        @csrf
+                        <input type="text" name="message" class="feature-reply-input" maxlength="3000" required placeholder="{{ __('public.feature_requests.reply_placeholder') }}">
+                        <button type="submit" class="btn-reply-send">
+                          <i class="fa-solid fa-reply"></i> {{ __('public.feature_requests.reply_submit') }}
+                        </button>
+                      </form>
+                    @endif
+
+                    @if($canDelete)
+                      <div class="ms-auto">
+                        <form method="POST" action="{{ route('feature-requests.destroy', $requestItem) }}" style="margin:0;"
+                          data-confirm="{{ __('public.feature_requests.delete_confirm') }}"
+                          data-confirm-title="{{ __('public.feature_requests.delete_title') }}"
+                          data-confirm-variant="danger"
+                          data-confirm-ok="{{ __('public.feature_requests.delete_ok') }}">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn-delete-proposal" title="{{ __('public.feature_requests.delete_tip') }}">
+                            <i class="fa-solid fa-trash-can"></i> {{ __('public.feature_requests.delete') }}
+                          </button>
+                        </form>
+                      </div>
+                    @endif
+                  </div>
+                @endauth
+
+                {{-- Replies Stream (Javoblar) --}}
+                @if(($requestItem->replies ?? collect())->isNotEmpty())
+                  <div class="feature-replies-block">
+                    <div class="feature-replies-header">
+                      <i class="fa-solid fa-comments"></i> {{ __('public.feature_requests.replies') }} ({{ $requestItem->replies->count() }})
+                    </div>
+                    <div class="feature-replies-list">
+                      @foreach($requestItem->replies as $reply)
+                        @php
+                          $replyAuthor = trim((string) ($reply->user->first_name ?? '').' '.(string) ($reply->user->last_name ?? ''));
+                          if ($replyAuthor === '') {
+                            $replyAuthor = $reply->user->name ?? __('public.feature_requests.default_staff');
+                          }
+                          $replyInitial = mb_strtoupper(mb_substr($replyAuthor, 0, 1));
+                          $isSuperAdminReply = (bool) ($reply->user?->isSuperAdmin());
+                          $isAdminReply = $isSuperAdminReply || (bool) ($reply->user?->isAdmin());
+                          $isModeratorReply = (bool) ($reply->user?->hasRole(\App\Models\User::ROLE_MODERATOR));
+                          $replyRoleLabel = $isSuperAdminReply
+                            ? 'Super Admin'
+                            : ($isAdminReply
+                                ? 'Admin'
+                                : ($isModeratorReply ? 'Moderator' : 'Foydalanuvchi'));
+                          
+                          $roleClass = $isSuperAdminReply ? 'badge-role-superadmin' : ($isAdminReply ? 'badge-role-admin' : ($isModeratorReply ? 'badge-role-mod' : ''));
+                          $cardClass = $isSuperAdminReply ? 'is-super-admin' : ($isAdminReply ? 'is-admin' : '');
+                        @endphp
+                        <div class="feature-reply-item {{ $cardClass }}">
+                          <div class="feature-reply-head-row">
+                            <div class="feature-reply-user">
+                              <span class="feature-user-avatar" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">{{ $replyInitial }}</span>
+                              <span>{{ $replyAuthor }}</span>
+                              <span class="badge-role-pill {{ $roleClass }}">{{ $replyRoleLabel }}</span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-2">
+                              <span class="feature-reply-date">{{ $reply->created_at?->format('d.m.Y H:i') }}</span>
+                              @auth
+                                @php
+                                  $canDeleteReply = (int) auth()->id() === (int) $reply->user_id || (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin());
+                                @endphp
+                                @if($canDeleteReply)
+                                  <form method="POST" action="{{ route('feature-requests.replies.destroy', $reply) }}" style="margin:0;"
+                                    data-confirm="{{ __('public.feature_requests.reply_delete_confirm') }}"
+                                    data-confirm-title="{{ __('public.feature_requests.reply_delete_title') }}"
+                                    data-confirm-variant="danger"
+                                    data-confirm-ok="{{ __('public.feature_requests.delete_ok') }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-reply-delete" title="Javobni o'chirish">
+                                      <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                  </form>
+                                @endif
+                              @endauth
+                            </div>
+                          </div>
+                          <p class="feature-reply-text">{{ $reply->message }}</p>
+                        </div>
+                      @endforeach
+                    </div>
+                  </div>
+                @endif
+              </div>
             </article>
           @endforeach
         </div>
 
-        <div style="margin-top: 18px;">
-          {{ $featureRequests->links() }}
-        </div>
+        {{-- Pagination --}}
+        @if($featureRequests->hasPages())
+          <div style="margin-top: 24px; display: flex; justify-content: center;">
+            {{ $featureRequests->links() }}
+          </div>
+        @endif
       @endif
-    </section>
+
+    </div>
   </main>
-</x-loyouts.main>
+</x-layouts.main>
