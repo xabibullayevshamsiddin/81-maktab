@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Donation;
+use Illuminate\Http\Request;
 
 class DonationController extends Controller
 {
@@ -102,7 +103,7 @@ class DonationController extends Controller
         ]);
     }
 
-    public function showCheckout(string $rank)
+    public function showCheckout(string $rank, Request $request)
     {
         if (!in_array($rank, Donation::ALL_RANKS, true)) {
             return redirect()->route("donation.index")
@@ -111,10 +112,20 @@ class DonationController extends Controller
         }
 
         $config = Donation::configForRank($rank);
+        $duration = $request->query('duration', '1month');
+        if (! array_key_exists($duration, Donation::DURATIONS())) {
+            $duration = '1month';
+        }
+
+        $durationConfig = Donation::DURATIONS()[$duration];
+        $totalPrice = Donation::priceForDuration($rank, $duration);
 
         return view("donation.checkout", [
             "rank" => $rank,
             "config" => $config,
+            "duration" => $duration,
+            "durationLabel" => $durationConfig['label'],
+            "totalPrice" => $totalPrice,
         ]);
     }
 }

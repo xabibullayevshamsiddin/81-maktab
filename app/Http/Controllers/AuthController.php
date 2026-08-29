@@ -471,8 +471,9 @@ class AuthController extends Controller
         $user = User::query()->where('phone', $phone)->first();
 
         if (! $user) {
+            // Xavfsizlik: hisob mavjudligini oshkor qilmaslik uchun har doim bir xil xabar
             return back()
-                ->withErrors(['phone' => 'Bu telefon raqami bilan hisob topilmadi.'])
+                ->with('success', "Agar shu raqam bilan hisob mavjud bo'lsa, tasdiqlash kodi yuborildi.")
                 ->onlyInput('phone');
         }
 
@@ -491,14 +492,15 @@ class AuthController extends Controller
                 $token
             );
 
+            // Xavfsizlik: hisob mavjudligini oshkor qilmaslik uchun bir xil xabar
             return redirect()->route('password.reset.form', ['phone' => $phone])
-                ->with('success', 'Telegram orqali 6 xonali tasdiqlash kodi yuborildi.')
+                ->with('success', "Agar shu raqam bilan hisob mavjud bo'lsa, tasdiqlash kodi yuborildi.")
                 ->with('toast_type', 'success');
         }
 
-        // Telegram chat_id yo'q — xato berish
+        // Telegram chat_id yo'q — xavfsizlik uchun bir xil xabar
         return back()
-            ->withErrors(['phone' => 'Bu foydalanuvchi Telegram bilan bog\'lanmagan. Admin bilan bog\'laning.'])
+            ->with('success', "Agar shu raqam bilan hisob mavjud bo'lsa, tasdiqlash kodi yuborildi.")
             ->onlyInput('phone');
     }
 
@@ -594,9 +596,10 @@ class AuthController extends Controller
         $user = User::query()->where('phone', $phone)->first();
 
         if (! $user) {
+            // Xavfsizlik: hisob mavjudligini oshkor qilmaslik uchun bir xil xabar
             return redirect()
                 ->route('password.forgot.form', ['phone' => $phone])
-                ->withErrors(['phone' => 'Bu telefon raqami bilan hisob topilmadi.']);
+                ->with('success', "Agar shu raqam bilan hisob mavjud bo'lsa, yangi tasdiqlash kodi yuborildi.");
         }
 
         // Telegram orqali qayta yuborish — yangi kod bilan
@@ -613,14 +616,15 @@ class AuthController extends Controller
                 $token
             );
 
+            // Xavfsizlik: hisob mavjudligini oshkor qilmaslik uchun bir xil xabar
             return back()
-                ->with('success', 'Telegram orqali yangi 6 xonali kod yuborildi.')
+                ->with('success', "Agar shu raqam bilan hisob mavjud bo'lsa, yangi tasdiqlash kodi yuborildi.")
                 ->with('toast_type', 'success');
         }
 
-        // Telegram chat_id yo'q
+        // Telegram chat_id yo'q — xavfsizlik uchun bir xil xabar
         return back()
-            ->withErrors(['phone' => 'Bu foydalanuvchi Telegram bilan bog\'lanmagan. Admin bilan bog\'laning.']);
+            ->with('success', "Agar shu raqam bilan hisob mavjud bo'lsa, yangi tasdiqlash kodi yuborildi.");
     }
 
     public function logout(Request $request)

@@ -27,11 +27,14 @@
             $color = $config["badge_color"];
             $iconClass = $config["badge_icon"];
             $label = $config["label"];
-            $price = number_format($config["price"], 0, ".", " ");
+            $price = number_format($totalPrice, 0, ".", " ");
+            $tgMessage = "Salom! Men \"{$label}\" tarifini ({$durationLabel}, {$price} so'm) sotib olmoqchiman.";
+            $tgUrl = "https://t.me/NgLord_404?text=" . urlencode($tgMessage);
         @endphp
         <div class="icon" style="color: {{ $color }};"><i class="{{ $iconClass }}"></i></div>
         <h2>{{ $label }}</h2>
         <div class="price-text">{{ $price }} <small>som</small></div>
+        <p style="color: var(--muted); margin-top: -0.5rem; margin-bottom: 1rem;">{{ $durationLabel }} uchun</p>
         <div class="steps">
             <h4>{{ __('public.donation.checkout_how_title') }}</h4>
             <ol>
@@ -41,7 +44,7 @@
                 <li><strong>4.</strong> <span>{{ __('public.donation.checkout_step4') }}</span></li>
             </ol>
         </div>
-        <a href="https://t.me/NgLord_404" target="_blank" class="btn-tg">
+        <a href="{{ $tgUrl }}" target="_blank" class="btn-tg">
             <i class="fa-brands fa-telegram"></i> {{ __('public.donation.checkout_tg_btn') }}
         </a>
         <div class="divider"><hr><span>{{ __('public.donation.checkout_or') }}</span><hr></div>
@@ -50,4 +53,4 @@
         </a>
     </div>
 </div>
-</x-loyouts.main>
+</x-layouts.main>

@@ -247,8 +247,13 @@ class PostController extends Controller
                 }
 
                 $ext = strtolower($value->getClientOriginalExtension());
-                if (! in_array($ext, ['mp4', 'webm'], true)) {
-                    $fail('Video faqat MP4 yoki WebM bo‘lishi kerak.');
+                $realMime = $value->getMimeType(); // Server tomonidan fileinfo orqali aniqlangan, brauzer aytgani emas
+
+                $allowedExt = ['mp4', 'webm'];
+                $allowedMimes = ['video/mp4', 'video/webm'];
+
+                if (! in_array($ext, $allowedExt, true) || ! in_array($realMime, $allowedMimes, true)) {
+                    $fail('Video faqat MP4 yoki WebM formatida bo‘lishi kerak.');
                 }
             },
         ];

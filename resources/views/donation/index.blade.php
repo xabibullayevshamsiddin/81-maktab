@@ -429,7 +429,10 @@
             <i class="fa-brands fa-telegram"></i> {{ __('public.donation.index_tg_btn') }}
         </a>
         <p style="font-size: 0.85rem; margin-top: 0.75rem;">
-            {{ __('public.donation.index_tg_contact') }} <a href="https://t.me/NgLord_404" target="_blank" style="color:#0d3f78;">@NgLord_404</a>
+            @php
+                $tgGeneralUrl = "https://t.me/NgLord_404?text=" . urlencode("Salom! Donor tariflari haqida savolim bor.");
+            @endphp
+            {{ __('public.donation.index_tg_contact') }} <a href="{{ $tgGeneralUrl }}" target="_blank" style="color:#0d3f78;">@NgLord_404</a>
         </p>
     </div>
 </div>
@@ -472,10 +475,11 @@ function switchDuration(rank, dur) {
     // Update buy button link
     const buyBtn = document.getElementById(`buy-btn-${rank}`);
     if (buyBtn) {
-        buyBtn.href = `/donation/checkout/${rank}?duration=${dur}`;
+        const checkoutBase = @json(url('donation'));
+        buyBtn.href = `${checkoutBase}/${rank}/checkout?duration=${dur}`;
     }
 }
 </script>
 @endpush
 
-</x-loyouts.main>
+</x-layouts.main>

@@ -38,9 +38,12 @@
             <li>{{ __('public.donation.activate_step5') }}</li>
             <li>{{ __('public.donation.activate_step6') }}</li>
         </ol>
-        <a href="https://t.me/NgLord_404" target="_blank" style="display:inline-flex; align-items:center; gap:0.5rem; margin-top:1rem; padding:0.7rem 1.5rem; background:#1e96e1; color:#fff; border-radius:9999px; text-decoration:none; font-weight:600;">
+        @php
+            $tgUrl = "https://t.me/NgLord_404?text=" . urlencode("Salom! Donor kodi olishni xohlayman.");
+        @endphp
+        <a href="{{ $tgUrl }}" target="_blank" style="display:inline-flex; align-items:center; gap:0.5rem; margin-top:1rem; padding:0.7rem 1.5rem; background:#1e96e1; color:#fff; border-radius:9999px; text-decoration:none; font-weight:600;">
             <i class="fa-brands fa-telegram"></i> {{ __('public.donation.activate_tg_btn') }}
         </a>
     </div>
 </div>
-</x-loyouts.main>
+</x-layouts.main>

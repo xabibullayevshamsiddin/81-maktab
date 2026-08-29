@@ -299,7 +299,11 @@ class AdminController extends Controller
         $oldRoleName = $user->role;
         $oldRoleLabel = $user->roleRelation?->label ?? $oldRoleName;
 
-        $user->update($updatePayload);
+        // Direct property assignment (role_id removed from $fillable for security)
+        foreach ($updatePayload as $key => $value) {
+            $user->{$key} = $value;
+        }
+        $user->save();
 
         // Rol o'zgarganda Telegram xabar yuborish
         if (array_key_exists('role_id', $validated) && $oldRoleName !== $effectiveRoleName) {

@@ -1091,6 +1091,29 @@
     color: #fff !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
   }
+
+  /* Dark mode — ustoz kartasi tugmalari */
+  :root[data-theme='dark'] .teacher-img-actions .btn1 {
+    background: rgba(125, 180, 255, 0.1) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(125, 180, 255, 0.3) !important;
+  }
+
+  :root[data-theme='dark'] .teacher-img-actions .btn1:hover {
+    background: rgba(125, 180, 255, 0.18) !important;
+    border-color: rgba(125, 180, 255, 0.5) !important;
+  }
+
+  :root[data-theme='dark'] .teacher-img-actions .share-btn {
+    background: rgba(125, 180, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(125, 180, 255, 0.25) !important;
+  }
+
+  :root[data-theme='dark'] .teacher-img-actions .share-btn:hover {
+    background: rgba(125, 180, 255, 0.16) !important;
+    border-color: rgba(125, 180, 255, 0.45) !important;
+  }
 }
 
 /* ====================================================================

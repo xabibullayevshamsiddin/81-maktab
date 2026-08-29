@@ -71,10 +71,10 @@ class AdminDonationSettingsController extends Controller
         $oldRank = $user->donation_rank;
         $oldExpiresAt = $user->donation_rank_expires_at;
 
-        $user->update([
-            'donation_rank' => null,
-            'donation_rank_expires_at' => null,
-        ]);
+        // Direct property assignment (donation_rank removed from $fillable for security)
+        $user->donation_rank = null;
+        $user->donation_rank_expires_at = null;
+        $user->save();
 
         UserActivity::create([
             'user_id' => $user->id,

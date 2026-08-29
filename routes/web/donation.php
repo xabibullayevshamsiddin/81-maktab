@@ -18,6 +18,10 @@ Route::get("donation/{rank}/checkout", [DonationController::class, "showCheckout
     ->middleware(["auth", "active"])
     ->name("donation.checkout");
 
+Route::get("donation/checkout/{rank}", [DonationController::class, "showCheckout"])
+    ->middleware(["auth", "active"])
+    ->name("donation.checkout.alt");
+
 // Telegram orqali olingan kodni aktivlashtirish
 Route::get("donation/activate", [ActivationKeyController::class, "showForm"])
     ->middleware(["auth", "active"])
