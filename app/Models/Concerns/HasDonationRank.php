@@ -67,6 +67,75 @@ trait HasDonationRank
     }
 
     /**
+     * Foydalanuvchining donor imtiyozi bo'yicha blok (ban) muddati qisqarish foizi.
+     * Supporter: 10%, Premium: 25%, VIP: 45%, Oddiy foydalanuvchi: 0%.
+     */
+    public function getBanReductionPercent(): int
+    {
+        if (! $this->isDonor()) {
+            return 0;
+        }
+
+        return Donation::banReductionPercent($this->donation_rank);
+    }
+
+    /**
+     * Berilgan blok muddati kodi (1h, 1d, 1w, 1m, forever) bo'yicha donor chegirmasini
+     * hisobga olgan holda tugash vaqti ($blockedUntil) va matnini ($durationText) hisoblash.
+     *
+     * @return array{blocked_until: ?\Carbon\Carbon, duration_text: string, discount_percent: int}
+     */
+    public function calculateBlockDuration(string $durationCode): array
+    {
+        $baseSeconds = match ($durationCode) {
+            '1h'      => 3600,
+            '1d'      => 86400,
+            '1w'      => 7 * 86400,
+            '1m'      => 30 * 86400,
+            'forever' => null,
+            default   => 86400,
+        };
+
+        $baseText = match ($durationCode) {
+            '1h'      => '1 soat',
+            '1d'      => '1 kun',
+            '1w'      => '1 hafta',
+            '1m'      => '1 oy',
+            'forever' => 'Butun umr',
+            default   => '1 kun',
+        };
+
+        if ($baseSeconds === null || $durationCode === 'forever') {
+            return [
+                'blocked_until'    => null,
+                'duration_text'    => $baseText,
+                'discount_percent' => 0,
+            ];
+        }
+
+        $discountPercent = $this->getBanReductionPercent();
+
+        if ($discountPercent <= 0) {
+            return [
+                'blocked_until'    => now()->addSeconds($baseSeconds),
+                'duration_text'    => $baseText,
+                'discount_percent' => 0,
+            ];
+        }
+
+        $reducedSeconds = (int) round($baseSeconds * (100 - $discountPercent) / 100);
+        $blockedUntil = now()->addSeconds($reducedSeconds);
+        $rankLabel = $this->donorRankLabel() ?? 'Donor';
+        $durationText = "{$baseText} (-{$discountPercent}% {$rankLabel} imtiyozi)";
+
+        return [
+            'blocked_until'    => $blockedUntil,
+            'duration_text'    => $durationText,
+            'discount_percent' => $discountPercent,
+        ];
+    }
+
+    /**
      * Foydalanuvchining joriy haqiqiy temasini qaytaradi.
      *
      * 1. Avval profile_theme (foydalanuvchi tanlagan) ni tekshiradi.
@@ -283,27 +352,29 @@ trait HasDonationRank
                 $shouldUpgrade = false;
                 // Faqat expiration ni uzaytiramiz (agar yangi muddat uzunroq bo'lsa)
                 if ($this->donation_rank_expires_at && $expiresAt->isAfter($this->donation_rank_expires_at)) {
-                    $this->update([
+                    $this->forceFill([
                         "donation_rank_expires_at" => $expiresAt,
                         "total_donated" => ($this->total_donated ?? 0) + $amount,
-                    ]);
+                    ])->save();
                 } else {
-                    $this->update([
+                    $this->forceFill([
                         "total_donated" => ($this->total_donated ?? 0) + $amount,
-                    ]);
+                    ])->save();
                 }
             }
         }
         
         if ($shouldUpgrade) {
-            $this->update([
+            $this->forceFill([
                 "donation_rank" => $rank,
                 "donation_rank_expires_at" => $expiresAt,
                 "total_donated" => ($this->total_donated ?? 0) + $amount,
                 "username_color" => $config["badge_color"],
                 "profile_theme" => $rank,
-            ]);
+            ])->save();
         }
+
+        $this->_donorCache = [];
 
         UserActivityLogger::log(
             $this,

@@ -405,21 +405,9 @@ class AdminController extends Controller
             'reason.required' => 'Blok sababini kiriting.',
         ]);
 
-        $blockedUntil = match ($validated['duration']) {
-            '1h' => now()->addHour(),
-            '1d' => now()->addDay(),
-            '1w' => now()->addWeek(),
-            '1m' => now()->addMonth(),
-            'forever' => null,
-        };
-
-        $durationText = match ($validated['duration']) {
-            '1h' => '1 soat',
-            '1d' => '1 kun',
-            '1w' => '1 hafta',
-            '1m' => '1 oy',
-            'forever' => 'Butun umr',
-        };
+        $blockInfo = $user->calculateBlockDuration($validated['duration']);
+        $blockedUntil = $blockInfo['blocked_until'];
+        $durationText = $blockInfo['duration_text'];
 
         $user->increment('block_count');
         $user->update([

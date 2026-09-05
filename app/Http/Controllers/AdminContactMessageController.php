@@ -100,23 +100,9 @@ class AdminContactMessageController extends Controller
         $senderUser = $contactMessage->senderUser;
         if ($senderUser) {
             $duration = $validated['duration'] ?? '1d';
-            $blockedUntil = match ($duration) {
-                '1h'      => now()->addHour(),
-                '1d'      => now()->addDay(),
-                '1w'      => now()->addWeek(),
-                '1m'      => now()->addMonth(),
-                'forever' => null,
-                default   => now()->addDay(),
-            };
-
-            $durationText = match ($duration) {
-                '1h'      => '1 soat',
-                '1d'      => '1 kun',
-                '1w'      => '1 hafta',
-                '1m'      => '1 oy',
-                'forever' => 'Butun umr',
-                default   => '1 kun',
-            };
+            $blockInfo = $senderUser->calculateBlockDuration($duration);
+            $blockedUntil = $blockInfo['blocked_until'];
+            $durationText = $blockInfo['duration_text'];
             $reason = $validated['reason'] ?? 'Aloqa xabaridagi qoidabuzarlik tufayli bloklandi';
 
             $senderUser->increment('block_count');

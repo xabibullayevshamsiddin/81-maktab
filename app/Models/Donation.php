@@ -63,6 +63,7 @@ class Donation extends Model
                 "price" => (int) \App\Models\SiteSetting::get("donation_supporter_price", "15000"),
                 "max_avatar_size_kb" => 10240,
                 "ai_chat_limit" => 100,
+                "ban_reduction_percent" => 10,
                 "priority" => 1,
             ],
             self::RANK_PREMIUM => [
@@ -73,6 +74,7 @@ class Donation extends Model
                 "price" => (int) \App\Models\SiteSetting::get("donation_premium_price", "35000"),
                 "max_avatar_size_kb" => 25600,
                 "ai_chat_limit" => 300,
+                "ban_reduction_percent" => 25,
                 "priority" => 2,
             ],
             self::RANK_VIP => [
@@ -83,10 +85,25 @@ class Donation extends Model
                 "price" => (int) \App\Models\SiteSetting::get("donation_vip_price", "75000"),
                 "max_avatar_size_kb" => 51200,
                 "ai_chat_limit" => -1,
+                "ban_reduction_percent" => 45,
                 "priority" => 3,
             ],
         ];
 
+    }
+
+    /**
+     * Donor ranki bo'yicha blok (ban) muddatining qisqarish foizi.
+     * Supporter: 10%, Premium: 25%, VIP: 45%.
+     */
+    public static function banReductionPercent(?string $rank): int
+    {
+        return match ($rank) {
+            self::RANK_SUPPORTER => 10,
+            self::RANK_PREMIUM   => 25,
+            self::RANK_VIP       => 45,
+            default              => 0,
+        };
     }
 
     /**

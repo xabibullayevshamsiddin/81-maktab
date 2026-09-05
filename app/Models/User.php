@@ -108,7 +108,7 @@ class User extends Authenticatable
         'is_active',
         'is_parent',
         'family_link_code',
-        // 'donation_rank' — removed from fillable for security (set via direct assignment only)
+        'donation_rank',
         'donation_rank_expires_at',
         'total_donated',
         'banner_image',
