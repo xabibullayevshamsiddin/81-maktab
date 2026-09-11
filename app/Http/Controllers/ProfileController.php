@@ -1159,6 +1159,13 @@ class ProfileController extends Controller
     public function updateAppearance(Request $request)
     {
         $user = $request->user();
+
+        if (! $user->isDonor() && ! $user->isAdmin()) {
+            return redirect()->route("profile.show", ["panel" => "appearance"])
+                ->with("error", "Ko'rinishni sozlash faqat donorlar uchun.")
+                ->with("toast_type", "error");
+        }
+
         $data = $request->validate([
             "donor_theme"           => "nullable|string|max:40",
             "badge_style"           => "nullable|in:default,pill,icon",

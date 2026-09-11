@@ -140,9 +140,9 @@
 	        data-site-first-error="{{ $errors->any() ? $errors->first() : '' }}"
 		        data-phone-pattern="{{ uz_phone_input_pattern() }}"
 		        data-phone-title="{{ uz_phone_input_title() }}"
-		        @if(auth()->check() && auth()->user()->donor_cursor_animation && (auth()->user()->donor_cursor_type ?? 'off') !== 'off')
+		        @if(auth()->check() && auth()->user()->donorCursorAnimation() && (auth()->user()->donorCursorType() ?? 'off') !== 'off')
 		        data-cursor-animation="1"
-		        data-cursor-type="{{ auth()->user()->donor_cursor_type ?? 'orbit' }}"
+		        data-cursor-type="{{ auth()->user()->donorCursorType() ?? 'orbit' }}"
 		        @endif
 		      >
     @unless(request()->routeIs('exam.session'))
@@ -311,6 +311,7 @@
               <li><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('public.layout.nav.home') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">{{ __('public.layout.nav.about') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('courses') ? 'active' : '' }}" href="{{ route('courses') }}">{{ __('public.layout.nav.courses') }}</a></li>
+              <li><a class="nav-link {{ request()->routeIs('ielts.*') ? 'active' : '' }}" href="{{ route('ielts.index') }}">IELTS</a></li>
               <li><a class="nav-link {{ request()->routeIs('post') ? 'active' : '' }}" href="{{ route('post') }}">{{ __('public.layout.nav.posts') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">{{ __('public.layout.nav.calendar') }}</a></li>
               <li><a class="nav-link {{ request()->routeIs('teacher') || request()->routeIs('teacher.show') ? 'active' : '' }}" href="{{ route('teacher') }}">{{ __('public.layout.nav.teachers') }}</a></li>
@@ -368,6 +369,10 @@
                       <a class="nav-dropdown-item {{ request()->routeIs('exam.*') ? 'active' : '' }}" href="{{ route('exam.index') }}">
                         <i class="fa-solid fa-graduation-cap"></i>
                         {{ __('public.layout.menu.exams') }}
+                      </a>
+                      <a class="nav-dropdown-item {{ request()->routeIs('ielts.*') ? 'active' : '' }}" href="{{ route('ielts.index') }}">
+                        <i class="fa-solid fa-language"></i>
+                        IELTS Test
                       </a>
 		                      <a class="nav-dropdown-item {{ request()->routeIs('feature-requests.*') ? 'active' : '' }}" href="{{ route('feature-requests.index') }}">
 		                        <i class="fa-solid fa-lightbulb"></i>
@@ -433,6 +438,7 @@
                 </div>
 			                <div class="mobile-nav-actions mobile-nav-actions--auth">
 			                  <a href="{{ route('exam.index') }}" class="btn btn-outline">{{ __('public.layout.menu.exams') }}</a>
+			                  <a href="{{ route('ielts.index') }}" class="btn btn-outline">IELTS</a>
 	                    <a href="{{ route('books.index') }}" class="btn btn-outline">{{ __('public.layout.nav.library') }}</a>
 			                  <a href="{{ route('profile.show') }}" class="btn btn-outline">{{ __('public.layout.menu.profile') }}</a>
 	                    <a href="{{ route('feature-requests.index') }}" class="btn btn-outline">{{ __('public.layout.feature_requests') }}</a>
@@ -2416,7 +2422,7 @@
     </script>
 
     {{-- DONOR PREMIUM CURSOR --}}
-    @if(auth()->check() && auth()->user()->donor_cursor_animation)
+    @if(auth()->check() && auth()->user()->donorCursorAnimation())
     <div id="d-cursor-dot"></div>
     <div id="d-cursor-ring"></div>
     <script>

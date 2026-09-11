@@ -17,7 +17,7 @@
   $userTheme = $comment->user?->effectiveTheme();
   $donorBadge = $comment->user?->donorBadgeHtml() ?? '';
   $effectThemeType = $userTheme ? (\App\Models\Donation::themeConfig($userTheme)["type"] ?? null) : null;
-  $commentStyleClass = $userTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
+  $commentStyleClass = $userTheme ? ("comment-style--" . ($comment->user?->donorCommentStyle() ?? "border")) : "";
   $roleCardClass = '';
   $themeOverlayClass = '';
   if ($userTheme && $effectThemeType === 'donor') {
@@ -56,12 +56,12 @@
         $authorStyle = '';
         if ($userTheme && $comment->user) {
           $c = $comment->user->donorUsernameColor();
-          $w = $comment->user->name_font_weight ?? '700';
+          $w = $comment->user->donorNameFontWeight();
           if ($c) { $authorStyle .= 'color:' . $c . ';'; }
           $authorStyle .= 'font-weight:' . $w . ';';
         }
-        $badgePos    = $comment->user?->badge_position ?? 'after';
-        $statusEmoji = $comment->user?->status_emoji ?? '';
+        $badgePos    = $comment->user?->donorBadgePosition() ?? 'after';
+        $statusEmoji = $comment->user?->donorStatusEmoji() ?? '';
       @endphp
       @if($donorBadge && $badgePos === 'before'){!! $donorBadge !!} @endif
       <strong style="{{ $authorStyle }}">{{ $comment->author_name ?? 'Mehmon' }}{{ $statusEmoji ? ' '.$statusEmoji : '' }}</strong>

@@ -187,6 +187,13 @@
                   <span class="text">Imtihon natijalari</span>
                 </a>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.ielts.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.ielts.index') }}">
+                  <span class="icon"><i class="mdi mdi-translate"></i></span>
+                  <span class="text">IELTS Testlari</span>
+                </a>
+              </li>
             @elseif($sidebarUser->hasRole('teacher'))
               <li class="nav-item {{ request()->routeIs('teacher.enrollments.*') ? 'active' : '' }}">
                 <a href="{{ route('teacher.enrollments.index') }}">

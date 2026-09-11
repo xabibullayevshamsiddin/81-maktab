@@ -15,11 +15,11 @@
   $commentBodyMax = $comment->parent_id ? 50 : 100;
 
   $userTheme = $comment->user?->effectiveTheme();
-  $donorRank = $comment->user?->donation_rank;
+  $donorRank = $comment->user?->isDonor() ? $comment->user->donation_rank : null;
   $donorBadge = $comment->user?->donorBadgeHtml() ?? "";
   $effectTheme = $userTheme ?: $donorRank;
   $effectThemeType = $effectTheme ? (\App\Models\Donation::themeConfig($effectTheme)["type"] ?? null) : null;
-  $commentStyleClass = $effectTheme ? ("comment-style--" . ($comment->user?->comment_style ?? "border")) : "";
+  $commentStyleClass = $effectTheme ? ("comment-style--" . ($comment->user?->donorCommentStyle() ?? "border")) : "";
   $roleCardClass = "";
   $themeOverlayClass = "";
   if ($effectTheme && $effectThemeType === "donor") {
@@ -29,8 +29,8 @@
   }
 
   // Badge pozitsiyasi va status emoji
-  $badgePos    = $comment->user?->badge_position ?? 'after';
-  $statusEmoji = $comment->user?->status_emoji ?? '';
+  $badgePos    = $comment->user?->donorBadgePosition() ?? 'after';
+  $statusEmoji = $comment->user?->donorStatusEmoji() ?? '';
 @endphp
 
 <article class="comment-card reveal {{ $showReplyForm ? "" : "comment-item-reply" }} {{ $roleCardClass }} {{ $commentStyleClass }} {{ $themeOverlayClass }}" data-comment-id="{{ $comment->id }}">
@@ -63,8 +63,8 @@
         $authorFontClass = '';
         if ($effectTheme && $comment->user) {
           $c = $comment->user->donorUsernameColor();
-          $w = $comment->user->name_font_weight ?? '700';
-          $ff = $comment->user->name_font_family ?? '';
+          $w = $comment->user->donorNameFontWeight();
+          $ff = $comment->user->donorNameFontFamily() ?? '';
           if ($c) { $authorStyle .= 'color:' . $c . ';'; }
           $authorStyle .= 'font-weight:' . $w . ';';
           $validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];

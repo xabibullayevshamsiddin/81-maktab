@@ -118,10 +118,10 @@
   </style>
 @endpush
 
-<section class="news-hero profile-hero {{ $user->donorThemeClass() }} banner-anim-{{ $user->banner_animation ?? 'none' }}">
+<section class="news-hero profile-hero {{ $user->donorThemeClass() }} banner-anim-{{ $user->donorBannerAnimation() }}">
   <div class="container">
     @if($user->donorBannerUrl())
-      <img src="{{ $user->donorBannerUrl() }}" alt="Banner" class="donor-banner banner-anim-{{ $user->banner_animation ?? 'none' }}">
+      <img src="{{ $user->donorBannerUrl() }}" alt="Banner" class="donor-banner banner-anim-{{ $user->donorBannerAnimation() }}">
     @endif
     <div class="news-hero-content prime-reveal">
       <span class="badge">{{ __('profile.badge') }}</span>
@@ -129,7 +129,7 @@
       <p>{{ __('profile.intro') }}</p>
     </div>
 
-    <section class="profile-overview-panel {{ $profileOverviewDonorClass }} {{ $profileOverviewThemeClass }} profile-bg-{{ $user->profile_bg_style ?? 'plain' }}" style="margin-top:32px;">
+    <section class="profile-overview-panel {{ $profileOverviewDonorClass }} {{ $profileOverviewThemeClass }} profile-bg-{{ $user->donorProfileBgStyle() }}" style="margin-top:32px;">
     <div class="profile-overview-main">
       <div class="profile-avatar" data-profile-avatar-box data-profile-avatar-initial="{{ $profileInitial }}"
         data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}">{{ $profileInitial }}</div>
@@ -147,20 +147,20 @@
         </div>
         <div class="profile-overview-title-row">
           @php
-            $badgePos = $user->badge_position ?? 'after';
-            $statusEmoji = $user->status_emoji ?? '';
+            $badgePos = $user->donorBadgePosition();
+            $statusEmoji = $user->donorStatusEmoji();
             $donorBadge = $user->donorBadgeHtml();
           @endphp
           @if($donorBadge && $badgePos === 'before')
             {!! $donorBadge !!}
           @endif
           @php
-            $fontFamily = $user->name_font_family ?? '';
+            $fontFamily = $user->donorNameFontFamily() ?? '';
             $validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];
             $fontClass = in_array($fontFamily, $validFonts) ? ' font-'.$fontFamily : '';
           @endphp
           <h2 class="profile-overview-name{{ $fontClass }}">
-            <span style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->donorIsActive ? ($user->name_font_weight ?? '700') : 'inherit' }};">{{ $user->name }}</span>{{ $statusEmoji ? ' '.$statusEmoji : '' }}
+            <span style="color: {{ $user->donorUsernameColor() ?? 'inherit' }}; font-weight: {{ $user->isDonor() ? $user->donorNameFontWeight() : 'inherit' }};">{{ $user->name }}</span>{{ $statusEmoji ? ' '.$statusEmoji : '' }}
           </h2>
           @if($donorBadge && $badgePos !== 'before')
             {!! $donorBadge !!}

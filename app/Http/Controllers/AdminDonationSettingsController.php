@@ -7,6 +7,7 @@ use App\Models\SiteSetting;
 use App\Models\User;
 use App\Models\UserActivity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminDonationSettingsController extends Controller
 {
@@ -71,19 +72,21 @@ class AdminDonationSettingsController extends Controller
         $oldRank = $user->donation_rank;
         $oldExpiresAt = $user->donation_rank_expires_at;
 
-        // Direct property assignment (donation_rank removed from $fillable for security)
-        $user->donation_rank = null;
-        $user->donation_rank_expires_at = null;
-        $user->save();
+        DB::transaction(function () use ($user, $oldRank, $oldExpiresAt) {
+            $user->donation_rank = null;
+            $user->donation_rank_expires_at = null;
+            $user->clearDonorCustomizations();
+            $user->save();
 
-        UserActivity::create([
-            'user_id' => $user->id,
-            'type' => UserActivity::TYPE_DONATION_REVOKED,
-            'description' => "Admin tomonidan donor holati bekor qilindi (avvalgi: {$oldRank})",
-            'old_value' => ['rank' => $oldRank, 'expires_at' => $oldExpiresAt?->toIso8601String()],
-            'new_value' => null,
-            'occurred_at' => now(),
-        ]);
+            UserActivity::create([
+                'user_id' => $user->id,
+                'type' => UserActivity::TYPE_DONATION_REVOKED,
+                'description' => "Admin tomonidan donor holati bekor qilindi (avvalgi: {$oldRank})",
+                'old_value' => ['rank' => $oldRank, 'expires_at' => $oldExpiresAt?->toIso8601String()],
+                'new_value' => null,
+                'occurred_at' => now(),
+            ]);
+        });
 
         // Telegram xabar yuborish
         if ($user->telegram_chat_id) {

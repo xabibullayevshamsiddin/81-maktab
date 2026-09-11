@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\AdminCourseEnrollmentController;
 use App\Http\Controllers\AdminExamController;
+use App\Http\Controllers\AdminIeltsController;
 use App\Http\Controllers\AdminQuestionController;
 use App\Http\Controllers\AdminSchoolClassController;
 use App\Http\Controllers\AdminSettingsController;
@@ -122,6 +123,26 @@ Route::prefix('admin')->middleware(['auth', 'active', 'role:super_admin,admin,ed
         Route::delete('exam-results/{result}', [AdminExamController::class, 'destroyResult'])
             ->whereNumber('result')
             ->name('admin.exams.results.destroy');
+
+        // IELTS Test Management
+        Route::get('ielts', [AdminIeltsController::class, 'index'])->name('admin.ielts.index');
+        Route::get('ielts/create', [AdminIeltsController::class, 'create'])->name('admin.ielts.create');
+        Route::post('ielts', [AdminIeltsController::class, 'store'])->name('admin.ielts.store');
+        Route::get('ielts/{test}', [AdminIeltsController::class, 'show'])->name('admin.ielts.show');
+        Route::get('ielts/{test}/edit', [AdminIeltsController::class, 'edit'])->name('admin.ielts.edit');
+        Route::put('ielts/{test}', [AdminIeltsController::class, 'update'])->name('admin.ielts.update');
+        Route::delete('ielts/{test}', [AdminIeltsController::class, 'destroy'])->name('admin.ielts.destroy');
+        Route::get('ielts/{test}/results', [AdminIeltsController::class, 'results'])->name('admin.ielts.results');
+
+        // IELTS Passages
+        Route::post('ielts/sections/{section}/passages', [AdminIeltsController::class, 'storePassage'])->name('admin.ielts.passages.store');
+        Route::put('ielts/passages/{passage}', [AdminIeltsController::class, 'updatePassage'])->name('admin.ielts.passages.update');
+        Route::delete('ielts/passages/{passage}', [AdminIeltsController::class, 'destroyPassage'])->name('admin.ielts.passages.destroy');
+
+        // IELTS Questions
+        Route::post('ielts/passages/{passage}/questions', [AdminIeltsController::class, 'storeQuestion'])->name('admin.ielts.questions.store');
+        Route::put('ielts/questions/{question}', [AdminIeltsController::class, 'updateQuestion'])->name('admin.ielts.questions.update');
+        Route::delete('ielts/questions/{question}', [AdminIeltsController::class, 'destroyQuestion'])->name('admin.ielts.questions.destroy');
     });
 
     Route::middleware('role:super_admin,admin')->group(function () {

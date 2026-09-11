@@ -23,8 +23,33 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 trait HasDonationRank
 {
+    /** @var array<string,mixed>|null Cached list of valid donor columns present in DB */
+    protected static ?array $userDonorColumns = null;
+
     /** @var array<string,mixed> instance-level memoize cache */
     private array $_donorCache = [];
+
+    public static function donorCustomizationDefaults(): array
+    {
+        return [
+            'profile_theme' => null,
+            'badge_style' => null,
+            'comment_style' => null,
+            'chat_style' => null,
+            'name_font_weight' => '700',
+            'name_font_family' => null,
+            'username_color' => null,
+            'donor_cursor_animation' => false,
+            'donor_cursor_type' => null,
+            'profile_bg_style' => 'plain',
+            'badge_position' => 'after',
+            'banner_animation' => 'none',
+            'status_emoji' => null,
+            'donor_text_selection' => 'off',
+            'banner_image' => null,
+            'show_expiry_badge' => '1',
+        ];
+    }
 
     public function donations(): HasMany
     {
@@ -317,6 +342,130 @@ trait HasDonationRank
             return true;
         }
         return $this->isDonor() && in_array($this->donation_rank, [Donation::RANK_VIP], true);
+    }
+
+    /**
+     * Donor customizatsiyalarini standart holatga qaytarish (revoke yoki expire bo'lganda).
+     */
+    public function clearDonorCustomizations(bool $save = false): void
+    {
+        if (static::$userDonorColumns === null) {
+            try {
+                $tableColumns = \Illuminate\Support\Facades\Schema::getColumnListing($this->getTable());
+                static::$userDonorColumns = array_intersect_key(
+                    static::donorCustomizationDefaults(),
+                    array_flip($tableColumns)
+                );
+            } catch (\Throwable) {
+                static::$userDonorColumns = static::donorCustomizationDefaults();
+            }
+        }
+
+        $this->forceFill(static::$userDonorColumns);
+        $this->_donorCache = [];
+
+        if ($save) {
+            $this->save();
+        }
+    }
+
+    public function donorCursorAnimation(): bool
+    {
+        if (! $this->isDonor()) {
+            return false;
+        }
+
+        return (bool) ($this->donor_cursor_animation ?? false);
+    }
+
+    public function donorCursorType(): ?string
+    {
+        if (! $this->isDonor()) {
+            return null;
+        }
+
+        return $this->donor_cursor_type;
+    }
+
+    public function donorStatusEmoji(): ?string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return null;
+        }
+
+        return $this->status_emoji;
+    }
+
+    public function donorBadgePosition(): string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return 'after';
+        }
+
+        return $this->badge_position ?? 'after';
+    }
+
+    public function donorNameFontWeight(): string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return '700';
+        }
+
+        return $this->name_font_weight ?? '700';
+    }
+
+    public function donorNameFontFamily(): ?string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return null;
+        }
+
+        return $this->name_font_family;
+    }
+
+    public function donorProfileBgStyle(): string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return 'plain';
+        }
+
+        return $this->profile_bg_style ?? 'plain';
+    }
+
+    public function donorBannerAnimation(): string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return 'none';
+        }
+
+        return $this->banner_animation ?? 'none';
+    }
+
+    public function donorTextSelection(): string
+    {
+        if (! $this->isDonor()) {
+            return 'off';
+        }
+
+        return $this->donor_text_selection ?? 'off';
+    }
+
+    public function donorCommentStyle(): ?string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return null;
+        }
+
+        return $this->comment_style;
+    }
+
+    public function donorChatStyle(): ?string
+    {
+        if (! $this->isDonor() && ! $this->isAdmin()) {
+            return null;
+        }
+
+        return $this->chat_style;
     }
 
     public function activateDonationRank(string $rank, int $amount = 0, string $paymentSystem = "manual", ?string $paymentId = null, int $durationDays = 30): Donation

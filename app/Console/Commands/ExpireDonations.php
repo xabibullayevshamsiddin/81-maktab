@@ -29,13 +29,10 @@ class ExpireDonations extends Command
         foreach ($expiredUsers as $user) {
             $oldRank = $user->donation_rank;
 
-            $user->forceFill([
-                'donation_rank' => null,
-                'donation_rank_expires_at' => null,
-                'username_color' => null,
-                'profile_theme' => null,
-                'banner_image' => null,
-            ])->save();
+            $user->donation_rank = null;
+            $user->donation_rank_expires_at = null;
+            $user->clearDonorCustomizations();
+            $user->save();
 
             UserActivityLogger::log(
                 $user,

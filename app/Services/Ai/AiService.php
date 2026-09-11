@@ -5157,6 +5157,47 @@ Vaqt: {$now->format('H:i')} (Toshkent vaqti){$userContext}
 PROMPT;
     }
 
+    /**
+     * Erkin, bir martalik AI so'rovi — maktab-chat kontekstisiz (foydalanuvchi/tarix qo'shilmaydi).
+     * IELTS baholash kabi alohida, tuzilmali (JSON) javob kerak bo'lgan hollar uchun.
+     */
+    public function askRaw(string $systemPrompt, string $userPrompt): string
+    {
+        try {
+            $apiKey = (string) (config('services.groq.key') ?: config('services.groq.api_key') ?: env('GROQ_API_KEY'));
+            $model = (string) config('services.groq.model', 'llama-3.3-70b-versatile');
+
+            if ($apiKey === '') {
+                \Illuminate\Support\Facades\Log::warning('AiService::askRaw: Groq API key is empty.');
+                return '';
+            }
+
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => $model,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userPrompt],
+                    ],
+                    'temperature' => 0.3,
+                ]);
+
+            if ($response->successful()) {
+                return (string) ($response->json('choices.0.message.content') ?? '');
+            }
+
+            \Illuminate\Support\Facades\Log::error('AiService::askRaw API error: '.$response->status().' - '.$response->body());
+            return '';
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('AiService::askRaw xato: '.$e->getMessage());
+            return '';
+        }
+    }
+
     private function handleTicketCreation(string $text): string
     {
         if (Str::contains($text, '[CREATE_TICKET:')) {
