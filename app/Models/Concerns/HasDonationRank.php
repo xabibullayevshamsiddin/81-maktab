@@ -48,6 +48,9 @@ trait HasDonationRank
             'donor_text_selection' => 'off',
             'banner_image' => null,
             'show_expiry_badge' => '1',
+            'custom_css' => null,
+            'profile_border_style' => null,
+            'profile_glow' => null,
         ];
     }
 
