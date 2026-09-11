@@ -17311,19 +17311,6 @@ body:has(#chat-widget):has(#ai-widget:not([hidden])) .prime-audio-toggle {
   }
 }
 
-/* ==================================================================
-
-:root[data-theme='dark'] .chat-request-item {
-  border-color: rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.03);
-}
-
-/* ==================================================================
-
-:root[data-theme='dark'] .chat-empty-message {
-  background: rgba(255,255,255,0.02);
-}
-
 #chat-messages[hidden],
 #chat-form[hidden],
 .chat-input-wrap[hidden] {
@@ -17813,10 +17800,6 @@ body:not([data-theme="dark"]) .profile-theme-admin-phoenix .profile-overview-nam
 [data-donor-theme="admin-phoenix"] .profile-chip { border-color: rgba(234,88,12,0.3); }
 
 /* Username color applied from user setting */
-
-/* --- Custom Group Chat Gamified/Discord Style --- */
-
-/* Actions in Subpanel */
 
 /* ====================================================================
    DONOR CURSOR — Premium Smooth Cursor

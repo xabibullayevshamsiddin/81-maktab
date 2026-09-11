@@ -218,7 +218,8 @@
     if (donorThemeClass) div.className += donorThemeClass;
 
     var nameStyle = '';
-var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(m.name_font_family)) ? ' font-' + m.name_font_family : '';
+    var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(m.name_font_family)) ? ' font-' + m.name_font_family : '';
+    if (m.name_font_family && window.loadDonorFont) window.loadDonorFont(m.name_font_family);
     if (m.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(m.donor_color))) {
       nameStyle += 'color:' + escAttr(m.donor_color) + ';';
     }

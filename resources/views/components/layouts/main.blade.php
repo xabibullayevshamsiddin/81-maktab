@@ -8,6 +8,9 @@
     {!! \Artesaos\SEOTools\Facades\SEOMeta::generate() !!}
     {!! \Artesaos\SEOTools\Facades\OpenGraph::generate() !!}
     @stack('seo')
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
@@ -18,15 +21,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Orbitron:wght@700;800;900&family=Caveat:wght@700&family=Press+Start+2P&family=Pacifico&family=Righteous&family=Bungee&family=Permanent+Marker&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
+    @if(auth()->check() && auth()->user()->isDonor() && ($donorFont = auth()->user()->donorNameFontFamily()))
+      @php
+        $donorFontParams = [
+          'orbitron' => 'Orbitron:wght@700;800;900',
+          'caveat' => 'Caveat:wght@700',
+          'press-start' => 'Press+Start+2P',
+          'pacifico' => 'Pacifico',
+          'righteous' => 'Righteous',
+          'bungee' => 'Bungee',
+          'permanent-marker' => 'Permanent+Marker',
+        ];
+      @endphp
+      @if(isset($donorFontParams[$donorFont]))
+        <link href="https://fonts.googleapis.com/css2?family={{ $donorFontParams[$donorFont] }}&display=swap" rel="stylesheet" />
+      @endif
+    @endif
+    @if(request()->routeIs('profile.show') || request()->routeIs('profile.edit'))
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Caveat:wght@700&family=Press+Start+2P&family=Pacifico&family=Righteous&family=Bungee&family=Permanent+Marker&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    @endif
     <script src="{{ app_public_asset('temp/js/theme-init.js') }}?v={{ app_asset_version('temp/js/theme-init.js') }}"></script>
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/style.css') }}?v={{ app_asset_version('temp/css/style.css') }}&cb=11" />
     @unless(request()->routeIs('exam.session'))
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-boot-loader.css') }}?v={{ app_asset_version('temp/css/site-boot-loader.css') }}" />
-    {{-- Three.js — 3D loader animatsiyasi uchun --}}
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" onload="window.dispatchEvent(new Event('THREE_READY'))" crossorigin="anonymous"></script>
     @endunless
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ app_asset_version('temp/css/extracted-public.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ app_asset_version('temp/css/mobile-public.css') }}" />
@@ -42,7 +62,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ app_public_asset('temp/img/favicon-180.png') }}?v={{ app_asset_version('temp/img/favicon-180.png') }}" />
     <link rel="manifest" href="{{ app_public_asset('manifest.json') }}">
     <meta name="theme-color" content="#4f46e5">
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
     :root {
       --user-color: {{ auth()->check() && auth()->user()->donorUsernameColor() ? auth()->user()->donorUsernameColor() : '#6366f1' }};
@@ -150,15 +169,12 @@
       <div class="site-boot-loader__backdrop" aria-hidden="true"></div>
       <div class="site-boot-loader__content">
         <div class="site-boot-loader__visual">
-          {{-- Three.js WebGL canvas --}}
-          <canvas id="loader-3d-canvas" aria-hidden="true"></canvas>
-          {{-- CSS fallback (Three.js yuklanmasa) --}}
           <div class="site-boot-loader__orbit" aria-hidden="true">
             <div class="site-boot-loader__ring site-boot-loader__ring--1"></div>
             <div class="site-boot-loader__ring site-boot-loader__ring--2"></div>
             <div class="site-boot-loader__ring site-boot-loader__ring--3"></div>
           </div>
-          {{-- "81" brend overlay (canvas ustida) --}}
+          {{-- "81" brend overlay (markaziy "81 IDUM" nishon) --}}
           <div class="site-boot-loader__brand-overlay">
             <div class="site-boot-loader__brand-glass">
               <span class="site-boot-loader__num">81</span>
@@ -182,8 +198,6 @@
         </div>
       </div>
     </div>
-    {{-- Three.js 3D loader animatsiyasi --}}
-    <script src="{{ app_public_asset('temp/js/loader-3d.js') }}?v={{ app_asset_version('temp/js/loader-3d.js') }}"></script>
     <!-- BOMBA WELCOME OVERLAY -->
     <div id="bomba-welcome" class="bomba-welcome" style="display: none;">
       <div class="bomba-welcome__inner">

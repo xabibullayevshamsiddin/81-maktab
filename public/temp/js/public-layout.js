@@ -612,7 +612,10 @@
             previewNameEl.removeAttribute("style");
             var fontFam = d.name_font_family || '';
             var validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];
-            if (validFonts.indexOf(fontFam) !== -1) { previewNameEl.classList.add('font-' + fontFam); }
+            if (validFonts.indexOf(fontFam) !== -1) {
+              previewNameEl.classList.add('font-' + fontFam);
+              if (window.loadDonorFont) window.loadDonorFont(fontFam);
+            }
           }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
@@ -2055,6 +2058,7 @@
         }
         const authorStyleAttr = authorStyle ? ` style="${authorStyle}"` : '';
         const authorFontClass = (comment.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(comment.name_font_family)) ? ' font-' + comment.name_font_family : '';
+        if (comment.name_font_family && window.loadDonorFont) window.loadDonorFont(comment.name_font_family);
 
         function buildReplyLi() {
           return `
@@ -3133,6 +3137,7 @@ function refreshChatAvailability() {
       }
       var actionsHtml = actions ? '<div class="chat-msg-actions">' + actions + '</div>' : '';
       var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(m.name_font_family)) ? ' font-' + m.name_font_family : '';
+      if (m.name_font_family && window.loadDonorFont) window.loadDonorFont(m.name_font_family);
       var nameStyle = '';
       if (m.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(m.donor_color))) {
         nameStyle += 'color:' + m.donor_color + ';';
@@ -4197,7 +4202,14 @@ function refreshChatAvailability() {
   /** Prime Pro Max: Animated Charts (ApexCharts) */
   function initPrimeCharts() {
     const chartContainers = document.querySelectorAll('.prime-chart-container');
-    if (!chartContainers.length || typeof ApexCharts === 'undefined') return;
+    if (!chartContainers.length) return;
+    if (typeof ApexCharts === 'undefined') {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/apexcharts';
+      s.onload = () => initPrimeCharts();
+      document.head.appendChild(s);
+      return;
+    }
 
     chartContainers.forEach(container => {
       const type = container.getAttribute('data-chart-type') || 'area';
