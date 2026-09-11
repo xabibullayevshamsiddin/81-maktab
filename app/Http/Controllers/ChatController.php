@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ValidatesTurnstile;
-use App\Models\ChatGroup;
-use App\Models\ChatGroupMember;
 use App\Models\ChatMessage;
 use App\Models\ChatSticker;
 use App\Models\SiteSetting;
@@ -44,9 +42,7 @@ class ChatController extends Controller
 
     public function messages(Request $request): JsonResponse
     {
-        $groupId = (int) $request->query('group_id', 0);
-
-        if ($groupId <= 0 && SiteSetting::get('global_chat_enabled', '1') !== '1') {
+        if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
             return response()->json([
                 'messages' => [],
                 'last_id' => (int) $request->query('after', 0),
@@ -70,30 +66,6 @@ class ChatController extends Controller
             ->with('user:id,first_name,name,role_id,avatar,is_active,donation_rank,donation_rank_expires_at,username_color,profile_theme,chat_style,badge_style,show_expiry_badge,name_font_weight,name_font_family,status_emoji')
             ->with('user.roleRelation:id,name')
             ->with('sticker:id,code,image_path');
-
-        if ($groupId > 0) {
-            $group = ChatGroup::findOrFail($groupId);
-            if (! $this->currentUserCanViewGroup($group, $currentUser)) {
-                return response()->json(['messages' => [], 'last_id' => $afterId, 'can_moderate' => false, 'can_clear_all' => false, 'chat_disabled' => false], 403);
-            }
-            $query->where('chat_group_id', $groupId);
-        } else {
-            if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
-                return response()->json([
-                    'messages' => [],
-                    'last_id' => $afterId,
-                    'can_moderate' => false,
-                    'can_clear_all' => false,
-                    'chat_disabled' => true,
-                    'disabled_message' => SiteSetting::get(
-                        'global_chat_disabled_message',
-                        'Global chat vaqtincha o‘chirilgan. Keyinroq urinib ko‘ring.'
-                    ),
-                ]);
-            }
-
-            $query->whereNull('chat_group_id');
-        }
 
         if ($afterId > 0) {
             $query->where('id', '>', $afterId);
@@ -397,38 +369,6 @@ class ChatController extends Controller
         return $viewer->isSuperAdmin();
     }
 
-    private function currentUserCanViewGroup(ChatGroup $group, User $user): bool
-    {
-        if ((int) $group->owner_id === (int) $user->id) {
-            return true;
-        }
-
-        if ($user->isAdmin() || $user->isModerator()) {
-            return true;
-        }
-
-        return ChatGroupMember::query()
-            ->where('chat_group_id', $group->id)
-            ->where('user_id', $user->id)
-            ->exists();
-    }
-
-    private function currentUserCanSendToGroup(ChatGroup $group, User $user): bool
-    {
-        if ((int) $group->owner_id === (int) $user->id) {
-            return true;
-        }
-
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        return ChatGroupMember::query()
-            ->where('chat_group_id', $group->id)
-            ->where('user_id', $user->id)
-            ->exists();
-    }
-
     private function buildUserPreviewAdminProfile(User $user, string $roleName, string $roleLabel, int $roleLevel): array
     {
         return [
@@ -526,22 +466,14 @@ class ChatController extends Controller
 
         $this->validateTurnstile($request);
 
-        $groupId = (int) $request->input('chat_group_id', 0);
-        if ($groupId > 0) {
-            $group = ChatGroup::findOrFail($groupId);
-            if (! $this->currentUserCanSendToGroup($group, $user)) {
-                return response()->json(['ok' => false, 'error' => 'Siz bu guruhga xabar yuborolmaysiz.'], 403);
-            }
-        } else {
-            if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
-                return response()->json([
-                    'ok' => false,
-                    'error' => SiteSetting::get(
-                        'global_chat_disabled_message',
-                        'Global chat vaqtincha o‘chirilgan.'
-                    ),
-                ], 403);
-            }
+        if (SiteSetting::get('global_chat_enabled', '1') !== '1') {
+            return response()->json([
+                'ok' => false,
+                'error' => SiteSetting::get(
+                    'global_chat_disabled_message',
+                    'Global chat vaqtincha o‘chirilgan.'
+                ),
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -585,10 +517,6 @@ class ChatController extends Controller
             'body' => $body,
             'chat_sticker_id' => $stickerId,
         ];
-
-        if (isset($group) && $groupId > 0) {
-            $messagePayload['chat_group_id'] = $groupId;
-        }
 
         // Idempotency check: bir xil xabarni 2 soniya ichida qayta yuborishni cheklash
         $lastMessage = ChatMessage::where('user_id', $user->id)
