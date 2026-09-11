@@ -50,8 +50,11 @@
     @endunless
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/extracted-public.css') }}?v={{ app_asset_version('temp/css/extracted-public.css') }}" />
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/mobile-public.css') }}?v={{ app_asset_version('temp/css/mobile-public.css') }}" />
-	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" />
+	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" media="print" onload="this.media='all'" />
+	    <noscript><link rel="stylesheet" href="{{ app_public_asset('temp/css/confirm-modal.css') }}?v={{ app_asset_version('temp/css/confirm-modal.css') }}" /></noscript>
+	    @if(request()->routeIs('calendar*') || request()->routeIs('exam.*') || request()->routeIs('profile.activities'))
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/calendar-public.css') }}?v={{ app_asset_version('temp/css/calendar-public.css') }}" />
+	    @endif
 	    <link rel="stylesheet" href="{{ app_public_asset('temp/css/site-refresh.css') }}?v={{ app_asset_version('temp/css/site-refresh.css') }}" />
     <link rel="stylesheet" href="{{ app_public_asset('temp/css/light-mode-fixes.css') }}?v={{ app_asset_version('temp/css/light-mode-fixes.css') }}" />
     @if(turnstile_enabled())
