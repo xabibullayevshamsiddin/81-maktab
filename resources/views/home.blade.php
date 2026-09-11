@@ -264,7 +264,7 @@
       </div>
     </section>
 
-    <section class="teachers prime-reveal" id="teachers">
+    <section class="teachers" id="teachers">
       <div class="container teacher">
         <div class="teacher-content">
           <div class="home-teacher-eyebrow">
@@ -280,6 +280,7 @@
                 <span class="stat-num">{{ __('public.home.teachers_stat_1_num') }}</span>
                 <span class="stat-lbl">{{ __('public.home.teachers_stat_1_label') }}</span>
               </div>
+              <div class="teacher-card-glare" aria-hidden="true"></div>
             </div>
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-certificate"></i></div>
@@ -287,6 +288,7 @@
                 <span class="stat-num">{{ __('public.home.teachers_stat_2_num') }}</span>
                 <span class="stat-lbl">{{ __('public.home.teachers_stat_2_label') }}</span>
               </div>
+              <div class="teacher-card-glare" aria-hidden="true"></div>
             </div>
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
@@ -294,6 +296,7 @@
                 <span class="stat-num">{{ __('public.home.teachers_stat_3_num') }}</span>
                 <span class="stat-lbl">{{ __('public.home.teachers_stat_3_label') }}</span>
               </div>
+              <div class="teacher-card-glare" aria-hidden="true"></div>
             </div>
             <div class="home-teacher-stat-card">
               <div class="stat-icon"><i class="fa-solid fa-earth-americas"></i></div>
@@ -301,6 +304,7 @@
                 <span class="stat-num">{{ __('public.home.teachers_stat_4_num') }}</span>
                 <span class="stat-lbl">{{ __('public.home.teachers_stat_4_label') }}</span>
               </div>
+              <div class="teacher-card-glare" aria-hidden="true"></div>
             </div>
           </div>
 
@@ -319,13 +323,16 @@
             $featuredTeacherSubject = localized_model_value($featuredTeacher, 'subject');
             $featuredTeacherMetaLine = $featuredTeacherSubject ?: localized_model_value($featuredTeacher, 'lavozim');
           @endphp
-          <article class="teacher-img prime-reveal prime-reveal--scale">
-            <img
-              src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
-              alt="{{ $featuredTeacher->full_name }} profil rasmi"
-              loading="lazy"
-              decoding="async"
-            />
+          <article class="teacher-img">
+            <div class="teacher-img-photo-wrap">
+              <img
+                src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
+                alt="{{ $featuredTeacher->full_name }} profil rasmi"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <div class="teacher-card-glare" aria-hidden="true"></div>
             <h3>{{ $featuredTeacher->full_name }}</h3>
             @php
               $featuredTeacherBio = localized_model_value($featuredTeacher, 'bio');
@@ -365,6 +372,370 @@
         @endif
       </div>
     </section>
+
+    {{-- Scoped 3D Scroll & Tilt Animation for "Ustozlar jamoasi" --}}
+    <style>
+      #teachers {
+        perspective: 1200px;
+        overflow: visible;
+      }
+      #teachers .teacher {
+        perspective: 1200px;
+      }
+
+      /* ── Scroll Reveal Initial States (Scoped to #teachers with progressive enhancement) ── */
+      #teachers.has-teacher-3d .home-teacher-eyebrow,
+      #teachers.has-teacher-3d .teacher-content > h2,
+      #teachers.has-teacher-3d .teacher-content > p,
+      #teachers.has-teacher-3d .home-teacher-cta-group {
+        opacity: 0;
+        transform: translateY(35px);
+        transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: opacity, transform;
+      }
+
+      #teachers.has-teacher-3d .home-teacher-stat-card,
+      #teachers.has-teacher-3d .teacher-img {
+        opacity: 0;
+        transform: perspective(1000px) translateY(70px) scale(0.92) rotateX(8deg) rotateY(var(--init-rot-y, -8deg));
+        transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: opacity, transform;
+        transform-style: preserve-3d;
+      }
+
+      #teachers.has-teacher-3d .home-teacher-stat-card:nth-child(odd) {
+        --init-rot-y: -8deg;
+      }
+      #teachers.has-teacher-3d .home-teacher-stat-card:nth-child(even) {
+        --init-rot-y: 8deg;
+      }
+      #teachers.has-teacher-3d .teacher-img {
+        --init-rot-y: 8deg;
+      }
+
+      /* ── Scroll Reveal Active State ── */
+      #teachers.is-revealed .home-teacher-eyebrow {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.05s;
+      }
+      #teachers.is-revealed .teacher-content > h2 {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.12s;
+      }
+      #teachers.is-revealed .teacher-content > p {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.20s;
+      }
+      #teachers.is-revealed .home-teacher-cta-group {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.50s;
+      }
+
+      #teachers.is-revealed .home-teacher-stat-card,
+      #teachers.is-revealed .teacher-img {
+        opacity: 1;
+        transform: perspective(1000px) translateY(0) scale(1) rotateX(0deg) rotateY(0deg);
+      }
+      #teachers.is-revealed .home-teacher-stat-card:nth-child(1) { transition-delay: 0.10s; }
+      #teachers.is-revealed .home-teacher-stat-card:nth-child(2) { transition-delay: 0.22s; }
+      #teachers.is-revealed .home-teacher-stat-card:nth-child(3) { transition-delay: 0.34s; }
+      #teachers.is-revealed .home-teacher-stat-card:nth-child(4) { transition-delay: 0.46s; }
+      #teachers.is-revealed .teacher-img { transition-delay: 0.25s; }
+
+      /* ── Teacher Card & Parallax Image Structure ── */
+      #teachers .teacher-img {
+        position: relative;
+        overflow: hidden;
+        transform-style: preserve-3d;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+
+      #teachers .teacher-img-photo-wrap {
+        width: 100%;
+        height: 460px;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 12px;
+        background: rgba(10, 30, 60, 0.35);
+        transform: translateZ(0);
+      }
+
+      #teachers .teacher-img-photo-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        border-radius: 0;
+        margin-bottom: 0;
+        display: block;
+        transform: scale(1.08) translate3d(var(--img-shift-x, 0px), calc(var(--parallax-y, 0px) + var(--img-shift-y, 0px)), 0);
+        will-change: transform;
+        transition: transform 0.1s linear;
+      }
+
+      /* Depth planes inside card */
+      #teachers .teacher-img h3 {
+        transform: translateZ(28px);
+        position: relative;
+        z-index: 3;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      }
+      #teachers .teacher-img .teacher-desc {
+        transform: translateZ(18px);
+        position: relative;
+        z-index: 3;
+      }
+      #teachers .teacher-img .home-featured-teacher-meta {
+        transform: translateZ(24px);
+        position: relative;
+        z-index: 3;
+      }
+      #teachers .teacher-img .teacher-img-actions {
+        transform: translateZ(28px);
+        position: relative;
+        z-index: 3;
+      }
+
+      /* Stat cards 3D depth */
+      #teachers .home-teacher-stat-card {
+        position: relative;
+        overflow: hidden;
+        transform-style: preserve-3d;
+      }
+      #teachers.has-teacher-3d .home-teacher-stat-card:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      #teachers .home-teacher-stat-card .stat-icon {
+        transform: translateZ(20px);
+        position: relative;
+        z-index: 3;
+      }
+      #teachers .home-teacher-stat-card .stat-info {
+        transform: translateZ(16px);
+        position: relative;
+        z-index: 3;
+      }
+
+      /* ── Glare Effect ── */
+      #teachers .teacher-card-glare {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: 0;
+        z-index: 6;
+        transition: opacity 0.35s ease;
+        background: radial-gradient(
+          circle 340px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(255, 255, 255, 0.20),
+          transparent 65%
+        );
+        mix-blend-mode: overlay;
+      }
+
+      #teachers .teacher-img.is-hovered .teacher-card-glare,
+      #teachers .home-teacher-stat-card.is-hovered .teacher-card-glare {
+        opacity: 1;
+      }
+
+      /* ── Responsive rules ── */
+      @media (max-width: 768px) {
+        #teachers .teacher-img-photo-wrap {
+          height: 380px;
+        }
+        #teachers.has-teacher-3d .home-teacher-stat-card,
+        #teachers.has-teacher-3d .teacher-img {
+          transform: perspective(1000px) translateY(50px) scale(0.95) rotateX(4deg) rotateY(var(--init-rot-y-mob, -4deg));
+        }
+        #teachers.has-teacher-3d .home-teacher-stat-card:nth-child(odd) {
+          --init-rot-y-mob: -4deg;
+        }
+        #teachers.has-teacher-3d .home-teacher-stat-card:nth-child(even),
+        #teachers.has-teacher-3d .teacher-img {
+          --init-rot-y-mob: 4deg;
+        }
+      }
+
+      @media (max-width: 580px) {
+        #teachers .teacher-img-photo-wrap {
+          height: 340px;
+        }
+      }
+
+      /* ── Accessibility: Reduced Motion ── */
+      @media (prefers-reduced-motion: reduce) {
+        #teachers.has-teacher-3d .home-teacher-eyebrow,
+        #teachers.has-teacher-3d .teacher-content > h2,
+        #teachers.has-teacher-3d .teacher-content > p,
+        #teachers.has-teacher-3d .home-teacher-cta-group,
+        #teachers.has-teacher-3d .home-teacher-stat-card,
+        #teachers.has-teacher-3d .teacher-img,
+        #teachers .teacher-img-photo-wrap img {
+          opacity: 1 !important;
+          transform: none !important;
+          transition: none !important;
+          animation: none !important;
+        }
+        #teachers .teacher-card-glare {
+          display: none !important;
+        }
+      }
+    </style>
+
+    <script>
+      (function() {
+        var section = document.getElementById('teachers');
+        if (!section) return;
+
+        // Reduced motion check
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          return;
+        }
+
+        // Enable progressive animation class
+        section.classList.add('has-teacher-3d');
+
+        // 1. Scroll Reveal via IntersectionObserver
+        var revealObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              section.classList.add('is-revealed');
+              revealObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+
+        revealObserver.observe(section);
+
+        // Immediate check if already visible on load
+        var r = section.getBoundingClientRect();
+        if (r.top < window.innerHeight * 0.85 && r.bottom > 0) {
+          section.classList.add('is-revealed');
+        }
+
+        // 2. Image Scroll-Parallax (requestAnimationFrame, active only when in view)
+        var photo = section.querySelector('.teacher-img-photo-wrap img');
+        var isInView = false;
+        var rafParallax = null;
+
+        var visObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            isInView = entry.isIntersecting;
+            if (isInView && !rafParallax) {
+              requestParallax();
+            }
+          });
+        }, { threshold: 0, rootMargin: '120px 0px 120px 0px' });
+        visObserver.observe(section);
+
+        function updateParallax() {
+          rafParallax = null;
+          if (!photo || !isInView) return;
+
+          var sRect = section.getBoundingClientRect();
+          var winH = window.innerHeight;
+          var progress = (winH - sRect.top) / (winH + sRect.height);
+          var clamped = Math.max(0, Math.min(1, progress));
+          var parallaxY = (clamped - 0.5) * 36; // -18px to +18px
+
+          photo.style.setProperty('--parallax-y', parallaxY.toFixed(2) + 'px');
+        }
+
+        function requestParallax() {
+          if (!rafParallax && isInView) {
+            rafParallax = requestAnimationFrame(updateParallax);
+          }
+        }
+
+        window.addEventListener('scroll', requestParallax, { passive: true });
+        window.addEventListener('resize', requestParallax, { passive: true });
+        requestParallax();
+
+        // 3. Desktop 3D Hover Tilt & Glare (disabled on touch/mobile)
+        if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+          return;
+        }
+
+        var cards = section.querySelectorAll('.teacher-img, .home-teacher-stat-card');
+
+        cards.forEach(function(card) {
+          var cardRaf = null;
+          var isMain = card.classList.contains('teacher-img');
+          var maxTilt = isMain ? 7 : 5;
+          var maxShift = isMain ? 8 : 0;
+
+          var rotX = 0, rotY = 0;
+          var shiftX = 0, shiftY = 0;
+          var mouseX = 0, mouseY = 0;
+
+          function renderTilt() {
+            cardRaf = null;
+            card.style.transform = 'perspective(1000px) translateY(-5px) scale3d(1.01, 1.01, 1.01) rotateX(' + rotX.toFixed(2) + 'deg) rotateY(' + rotY.toFixed(2) + 'deg)';
+
+            if (isMain && photo) {
+              photo.style.setProperty('--img-shift-x', shiftX.toFixed(2) + 'px');
+              photo.style.setProperty('--img-shift-y', shiftY.toFixed(2) + 'px');
+            }
+
+            card.style.setProperty('--mouse-x', mouseX.toFixed(1) + 'px');
+            card.style.setProperty('--mouse-y', mouseY.toFixed(1) + 'px');
+          }
+
+          card.addEventListener('mouseenter', function() {
+            card.classList.add('is-hovered');
+            card.style.transition = 'transform 0.12s ease-out, box-shadow 0.3s ease';
+          });
+
+          card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            mouseX = x;
+            mouseY = y;
+
+            var xPct = (x / rect.width - 0.5) * 2;
+            var yPct = (y / rect.height - 0.5) * 2;
+
+            rotX = -yPct * maxTilt;
+            rotY = xPct * maxTilt;
+
+            shiftX = -xPct * maxShift;
+            shiftY = -yPct * maxShift;
+
+            if (!cardRaf) {
+              cardRaf = requestAnimationFrame(renderTilt);
+            }
+          });
+
+          card.addEventListener('mouseleave', function() {
+            card.classList.remove('is-hovered');
+            if (cardRaf) {
+              cancelAnimationFrame(cardRaf);
+              cardRaf = null;
+            }
+            card.style.transition = 'transform 0.55s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.55s ease';
+            card.style.transform = 'perspective(1000px) translateY(0) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg)';
+
+            if (isMain && photo) {
+              photo.style.setProperty('--img-shift-x', '0px');
+              photo.style.setProperty('--img-shift-y', '0px');
+            }
+          });
+        });
+      })();
+    </script>
   </main>
 
   {{-- Ota-ona ro'yxatdan o'tgandan keyin chiqadigan xush kelish modali --}}

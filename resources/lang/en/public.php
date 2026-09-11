@@ -218,6 +218,11 @@ return [
         'teacher_share_success' => 'The teacher link was copied.',
         'teachers_page_share_text' => 'Discover the teachers team of 81-IDUM',
         'teachers_page_share_success' => 'The teachers page link was copied.',
+        'stat_teachers' => 'Qualified teachers',
+        'stat_education' => 'Higher education',
+        'stat_experience' => 'Years of experience',
+        'stat_level_high' => 'Highest category teachers',
+        'stat_category' => 'Categorized teachers',
     ],
     'about' => [
         'page_title' => '81-IDUM | About school',

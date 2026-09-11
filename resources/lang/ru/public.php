@@ -220,6 +220,11 @@ return array_replace_recursive($fallback, [
         'teacher_share_success' => 'Ссылка на учителя скопирована.',
         'teachers_page_share_text' => 'Познакомьтесь с командой учителей 81-IDUM',
         'teachers_page_share_success' => 'Ссылка на страницу учителей скопирована.',
+        'stat_teachers' => 'Квалифицированных учителей',
+        'stat_education' => 'Высшее образование',
+        'stat_experience' => 'Лет опыта',
+        'stat_level_high' => 'Учителей высшей категории',
+        'stat_category' => 'Категорийных учителей',
     ],
     'about' => [
         'page_title' => '81-IDUM | О школе',

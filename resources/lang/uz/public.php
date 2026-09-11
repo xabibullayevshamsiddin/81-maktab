@@ -218,6 +218,11 @@ return [
         'teacher_share_success' => 'Ustoz havolasi nusxalandi.',
         'teachers_page_share_text' => '81-IDUM dagi ustozlar jamoasi bilan tanishing',
         'teachers_page_share_success' => 'Ustozlar sahifasi havolasi nusxalandi.',
+        'stat_teachers' => 'Malakali ustozlar',
+        'stat_education' => "Oliy ma'lumotli",
+        'stat_experience' => 'Yillik tajriba',
+        'stat_level_high' => 'Oliy toifali ustozlar',
+        'stat_category' => 'Toifali ustozlar',
     ],
     'about' => [
         'page_title' => '81-IDUM | Maktab haqida',
