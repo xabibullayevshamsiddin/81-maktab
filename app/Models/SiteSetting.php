@@ -14,6 +14,8 @@ class SiteSetting extends Model
 
     private const CACHE_KEY = 'site_settings_all';
 
+    private const UNCACHED_CACHE_KEY = 'site_settings_uncached_all';
+
     private const CACHE_TTL_SECONDS = 300;
 
     /** @var array<string, ?string> */
@@ -76,6 +78,7 @@ class SiteSetting extends Model
         );
 
         Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::UNCACHED_CACHE_KEY);
         unset(self::$runtimeCache[$key]);
 
         if (in_array($key, self::UNCACHED_KEYS, true)) {
@@ -96,15 +99,18 @@ class SiteSetting extends Model
             return;
         }
 
-        $rows = static::query()
-            ->whereIn('key', self::UNCACHED_KEYS)
-            ->pluck('value', 'key');
+        $cachedRows = Cache::remember(self::UNCACHED_CACHE_KEY, self::CACHE_TTL_SECONDS, function () {
+            return static::query()
+                ->whereIn('key', self::UNCACHED_KEYS)
+                ->pluck('value', 'key')
+                ->all();
+        });
 
         foreach (self::UNCACHED_KEYS as $uncachedKey) {
-            if ($rows->has($uncachedKey)) {
+            if (array_key_exists($uncachedKey, $cachedRows)) {
                 self::$runtimeCache[$uncachedKey] = static::normalizeValue(
                     $uncachedKey,
-                    $rows->get($uncachedKey),
+                    $cachedRows[$uncachedKey],
                     null
                 );
             }
