@@ -394,18 +394,68 @@
   });
 
   // =====================================================================
-  //  POLLING
+  //  POLLING — tab visibility + error backoff
   // =====================================================================
+  var pollErrors = 0;
+  var MAX_POLL_INTERVAL = 30000; // 30s max when tab is idle/has errors
+  var BASE_POLL_INTERVAL = 3000; // 3s normal
+
+  function schedulePoll() {
+    if (pollTimer) clearTimeout(pollTimer);
+    if (!isOpen || document.hidden) return;
+    var delay = Math.min(BASE_POLL_INTERVAL * Math.pow(1.5, pollErrors), MAX_POLL_INTERVAL);
+    pollTimer = setTimeout(function() {
+      doPoll();
+    }, delay);
+  }
+
+  function doPoll() {
+    if (!isOpen || document.hidden) return;
+    var afterId = lastMessageId;
+    var url = messagesUrl;
+    if (afterId > 0) url += '?after=' + afterId;
+    apiFetch(url).then(function(data) {
+      pollErrors = 0;
+      if (!data) { schedulePoll(); return; }
+      if (data.chat_disabled) {
+        showDisabledPanel(data.disabled_message || text('chat_disabled_default', 'Chat ochirilgan'));
+        schedulePoll(); return;
+      }
+      hideDisabledPanel();
+      if (afterId > 0) { appendMessages(data.messages || []); }
+      else { renderMessages(data.messages || []); }
+      if (data.last_id) lastMessageId = data.last_id;
+      updateClearBtn(data.can_clear_all, data.can_moderate);
+      if (data.user_blocked !== undefined) {
+        updateBlockedState(data.user_blocked, data.blocked_until_ts);
+      }
+      schedulePoll();
+    }).catch(function() {
+      pollErrors = Math.min(pollErrors + 1, 5);
+      chatLog('Poll failed #' + pollErrors);
+      schedulePoll();
+    });
+  }
+
   function startPolling() {
     stopPolling();
-    pollTimer = setInterval(function() {
-      if (isOpen) loadChatMessages(lastMessageId);
-    }, pollInterval);
+    pollErrors = 0;
+    schedulePoll();
   }
 
   function stopPolling() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
   }
+
+  // Pause when tab hidden, resume on visibility restore
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      stopPolling();
+    } else if (isOpen) {
+      pollErrors = 0;
+      schedulePoll();
+    }
+  });
 
   function scrollToBottom() {
     setTimeout(function() {

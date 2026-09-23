@@ -2584,13 +2584,11 @@
     var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
     var currentUserId = String(widget.getAttribute('data-user-id') || '');
-    var groupsData = [];
     var chatTexts = (function() { try { return JSON.parse(widget.getAttribute('data-chat-texts') || '{}'); } catch(e) { return {}; } })();
     var isOpen = false;
     var isSending = false;
     var lastId = 0;
     var unreadCount = 0;
-    var activeChannel = 'global';
     var lastReadStorageKey = 'prime-chat-last-read:' + (widget.getAttribute('data-user-id') || '0');
     var lastReadId = (function() {
       try { return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0); } catch(e) { return 0; }
@@ -3589,31 +3587,6 @@ function refreshChatAvailability() {
 
 
 
-
-    var groupCreateBtn = document.getElementById('chat-group-create-btn');
-    var groupCreateModal = document.getElementById('prime-group-create-modal');
-
-    if (groupCreateBtn && typeof openGroupCreateModal === 'function') {
-      groupCreateBtn.addEventListener('click', function () {
-        openGroupCreateModal();
-      });
-    }
-
-    if (groupCreateModal && typeof closeGroupCreateModal === 'function' && typeof submitGroupCreate === 'function') {
-      var cancelBtn = groupCreateModal.querySelector('[data-group-create-cancel]');
-      var okBtn = groupCreateModal.querySelector('[data-group-create-ok]');
-      var toggleBtns = groupCreateModal.querySelectorAll('.prime-group-create__toggle-btn');
-
-      if(cancelBtn) cancelBtn.addEventListener('click', closeGroupCreateModal);
-      if(okBtn) okBtn.addEventListener('click', submitGroupCreate);
-
-      toggleBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          toggleBtns.forEach(function(b) { b.classList.remove('prime-group-create__toggle-btn--active'); });
-          btn.classList.add('prime-group-create__toggle-btn--active');
-        });
-      });
-    }
 
 
     window.addEventListener('resize', function () {

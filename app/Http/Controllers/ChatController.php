@@ -123,8 +123,6 @@ class ChatController extends Controller
             ];
         });
 
-        $this->cleanOldMessages();
-
         // Bloklangan foydalanuvchi uchun qo'shimcha ma'lumot
         $userBlocked    = (bool) ($currentUser && $currentUser->isCurrentlyBlocked());
         $blockedUntilTs = ($userBlocked && $currentUser->blocked_until)
