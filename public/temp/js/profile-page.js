@@ -80,10 +80,11 @@
 
     avatarInput.dataset.avatarBound = 'true';
 
-    const avatarBoxes = Array.from(rootEl.querySelectorAll('[data-profile-avatar-box]'));
+    const getAvatarBoxes = () => Array.from(document.querySelectorAll('[data-profile-avatar-box]'));
     const avatarMeta = rootEl.querySelector('[data-profile-avatar-meta]');
     const removeAvatarBtn = rootEl.querySelector('[data-profile-avatar-remove]');
     const removeAvatarFlag = rootEl.querySelector('[data-profile-avatar-remove-flag]');
+    const avatarActionsWrap = rootEl.querySelector('[data-profile-avatar-actions-wrap]');
     const avatarMetaDefault = avatarMeta ? avatarMeta.textContent.trim() : '';
     let previewObjectUrl = null;
 
@@ -108,6 +109,12 @@
 
     const applyAvatarSource = async (box, src) => {
       const initial = box.dataset.profileAvatarInitial || '';
+      if (!src) {
+        box.classList.remove('profile-avatar--image');
+        box.style.backgroundImage = '';
+        box.textContent = initial;
+        return;
+      }
       const ok = await loadAvatarSource(src);
 
       if (ok) {
@@ -122,7 +129,7 @@
     };
 
     const updatePreview = async (src) => {
-      await Promise.all(avatarBoxes.map((box) => applyAvatarSource(box, src)));
+      await Promise.all(getAvatarBoxes().map((box) => applyAvatarSource(box, src)));
     };
 
     const formatSize = (bytes) => {
@@ -212,6 +219,9 @@
       if (removeAvatarFlag) {
         removeAvatarFlag.value = '0';
       }
+      if (avatarActionsWrap) {
+        avatarActionsWrap.style.display = '';
+      }
 
       setMeta(profileI18n.preparingAvatar, 'is-processing');
 
@@ -237,7 +247,7 @@
       }
     });
 
-    avatarBoxes.forEach((box) => {
+    getAvatarBoxes().forEach((box) => {
       const existingSrc = box.dataset.profileAvatarUrl || '';
       if (existingSrc) {
         applyAvatarSource(box, existingSrc);
@@ -254,6 +264,9 @@
         avatarInput.value = '';
         if (removeAvatarFlag) {
           removeAvatarFlag.value = '1';
+        }
+        if (avatarActionsWrap) {
+          avatarActionsWrap.style.display = 'none';
         }
 
         await updatePreview('');
@@ -397,7 +410,7 @@
   (function applyStoredAvatar() {
     // bindAvatarInput o'zi ham apply qiladi, shuning uchun input bo'lsa skip
     if (profileRoot.querySelector('#profile-avatar')) return;
-    const boxes = Array.from(profileRoot.querySelectorAll('[data-profile-avatar-box]'));
+    const boxes = Array.from(document.querySelectorAll('[data-profile-avatar-box]'));
     boxes.forEach(function (box) {
       const src = box.dataset.profileAvatarUrl || '';
       const initial = box.dataset.profileAvatarInitial || '';
