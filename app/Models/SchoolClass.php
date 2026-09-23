@@ -11,7 +11,12 @@ class SchoolClass extends Model
 {
     use HasFactory;
 
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
     protected $fillable = [
+        'grade',
         'grade_number',
         'section',
         'name',
@@ -19,6 +24,28 @@ class SchoolClass extends Model
         'sort_order',
         'max_students',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (SchoolClass $schoolClass) {
+            if (empty($schoolClass->grade_number) && !empty($schoolClass->name)) {
+                if (preg_match('/^(\d+)[-_\s]*([A-Za-z0-9]+)?/', $schoolClass->name, $matches)) {
+                    $schoolClass->grade_number = (int) $matches[1];
+                    if (empty($schoolClass->section) && !empty($matches[2])) {
+                        $schoolClass->section = self::normalizeSection($matches[2]);
+                    }
+                }
+            }
+            if (empty($schoolClass->section)) {
+                $schoolClass->section = 'A';
+            }
+        });
+    }
+
+    public function setGradeAttribute($value): void
+    {
+        $this->attributes['grade_number'] = (int) $value;
+    }
 
     protected $casts = [
         'grade_number'  => 'integer',
