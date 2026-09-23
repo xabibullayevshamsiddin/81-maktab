@@ -246,9 +246,11 @@
             <article class="teacher-card prime-glow-hover" data-teacher-card data-search-text="{{ e(mb_strtolower($teacher->full_name)) }}" data-subject="{{ e(mb_strtolower($teacherSubject)) }}">
               <div class="teacher-photo-wrap">
                 <img
-                  src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
+                  src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/teacher-default.webp') }}"
                   alt="{{ $teacher->full_name }} profil rasmi"
                   class="teacher-photo"
+                  width="280"
+                  height="280"
                   loading="lazy"
                   decoding="async"
                 />

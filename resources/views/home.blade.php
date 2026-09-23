@@ -326,8 +326,10 @@
           <article class="teacher-img">
             <div class="teacher-img-photo-wrap">
               <img
-                src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
+                src="{{ $featuredTeacher->image ? app_storage_asset($featuredTeacher->image) : app_public_asset('temp/img/teacher-default.webp') }}"
                 alt="{{ $featuredTeacher->full_name }} profil rasmi"
+                width="320"
+                height="320"
                 loading="lazy"
                 decoding="async"
               />

@@ -15,8 +15,10 @@
       <div class="row g-3 align-items-start">
         <div class="col-md-4">
           <img
-            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
+            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/teacher-default.webp') }}"
             alt="{{ $teacher->full_name }}"
+            width="360"
+            height="240"
             style="width:100%;max-width:360px;aspect-ratio:3/2;object-fit:cover;border-radius:14px;"
           >
         </div>

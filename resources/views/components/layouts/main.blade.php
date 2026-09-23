@@ -273,10 +273,17 @@
 	      <div class="container">
 	        <div class="header-main header-main--offset" id="navbar">
           <a class="logo" href="{{ route('home') }}" aria-label="{{ __('public.layout.nav.home') }}">
-            <img
-              src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
-              alt="{{ __('public.layout.logo_alt') }}"
-            />
+            <picture>
+              <source srcset="{{ app_public_asset('temp/img/logo.webp') }}" type="image/webp">
+              <img
+                src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}"
+                alt="{{ __('public.layout.logo_alt') }}"
+                width="48"
+                height="48"
+                fetchpriority="high"
+                decoding="async"
+              />
+            </picture>
           </a>
           <div class="mobile-header-actions">
             <button class="theme-toggle mobile-search-btn" type="button" data-global-search-open aria-label="{{ __('public.common.search') }}" title="{{ __('public.common.search') }}">
@@ -723,7 +730,10 @@
         <!-- Column 1: Branding -->
         <div class="footer-column footer-brand">
           <a href="{{ route('home') }}" class="footer-logo">
-            <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="{{ __('public.layout.logo_alt') }}" />
+            <picture>
+              <source srcset="{{ app_public_asset('temp/img/logo.webp') }}" type="image/webp">
+              <img src="{{ app_public_asset('temp/img/photo_2026-02-06_11-05-24-2.jpg') }}" alt="{{ __('public.layout.logo_alt') }}" width="48" height="48" loading="lazy" decoding="async" />
+            </picture>
             <span>{{ __('public.layout.school_name') }}</span>
           </a>
           <p class="footer-desc">{{ __('public.layout.footer.description') }}</p>

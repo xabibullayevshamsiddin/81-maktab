@@ -100,8 +100,10 @@
 
         <article class="detail-image-card reveal">
           <img
-            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
+            src="{{ $teacher->image ? app_storage_asset($teacher->image) : app_public_asset('temp/img/teacher-default.webp') }}"
             alt="{{ $teacher->full_name }} rasmi"
+            width="360"
+            height="360"
             loading="lazy"
             decoding="async"
           />
