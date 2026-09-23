@@ -32,6 +32,12 @@ RUN mkdir -p /etc/nginx/sites-enabled && \
     index index.php; \
     client_max_body_size 64M; \
     \
+    gzip on; \
+    gzip_vary on; \
+    gzip_proxied any; \
+    gzip_comp_level 6; \
+    gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml application/atom+xml image/svg+xml; \
+    \
     location /storage/ { \
         alias /app/storage/app/public/; \
         add_header Cache-Control "public, max-age=2592000"; \
@@ -52,9 +58,9 @@ RUN mkdir -p /etc/nginx/sites-enabled && \
         fastcgi_read_timeout 120; \
     } \
     \
-    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { \
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|webp|avif|woff2?)$ { \
         expires 30d; \
-        add_header Cache-Control "public"; \
+        add_header Cache-Control "public, max-age=2592000, immutable"; \
     } \
 }' > /etc/nginx/sites-available/default && \
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
