@@ -1,28 +1,29 @@
 // ═══════════════════════════════════════════════════════════════════
-// 81-IDUM — SERVICE WORKER (Offline Mode / PWA)
+// 81-IDUM — SERVICE WORKER (Optimized PWA & Offline Strategy)
 // ═══════════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'v1.0.0';
+const CACHE_NAME = '81-idum-v2.0.0';
 const OFFLINE_URL = '/offline.html';
 
-// Static assets to cache
+// Critical static shell assets to pre-cache on install
 const STATIC_ASSETS = [
   '/',
   '/offline.html',
   '/temp/css/style.css',
   '/temp/css/site-refresh.css',
   '/temp/js/public-layout.js',
+  '/temp/img/logo.webp',
   '/temp/img/favicon-32.png',
   '/temp/img/favicon-180.png',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css'
 ];
 
-// Pages to cache for offline use
+// Public pages safe for offline reading
 const CACHED_PAGES = [
   '/',
   '/courses',
-  '/teachers',
+  '/teacher',
   '/contact',
   '/about',
   '/calendar',
@@ -30,89 +31,122 @@ const CACHED_PAGES = [
   '/terms'
 ];
 
+// URLs that must NEVER be cached (Network Only)
+const NEVER_CACHE_PATTERNS = [
+  /\/chat(\/|$)/,
+  /\/ai(\/|$)/,
+  /\/api(\/|$)/,
+  /\/admin(\/|$)/,
+  /\/login(\/|$)/,
+  /\/register(\/|$)/,
+  /\/logout(\/|$)/,
+  /\/profile(\/|$)/,
+  /\/exam\/session(\/|$)/,
+  /\/password(\/|$)/,
+  /[?&](after|poll|timestamp)=/
+];
+
+function isNeverCache(url) {
+  return NEVER_CACHE_PATTERNS.some((pattern) => pattern.test(url));
+}
+
 // ═══════════════════════════════════════════════════════════════════
-// INSTALL — Cache static assets
+// INSTALL — Safely cache static shell
 // ═══════════════════════════════════════════════════════════════════
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll([...STATIC_ASSETS, ...CACHED_PAGES]);
-    }).then(() => {
-      console.log('[SW] Skip waiting');
-      return self.skipWaiting();
-    })
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const urls = [...STATIC_ASSETS, ...CACHED_PAGES];
+      // Use map to avoid failure of one URL aborting the entire install
+      await Promise.allSettled(
+        urls.map((url) =>
+          fetch(url, { cache: 'no-cache' })
+            .then((res) => {
+              if (res.ok) return cache.put(url, res);
+            })
+            .catch(() => null)
+        )
+      );
+    }).then(() => self.skipWaiting())
   );
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// ACTIVATE — Clean old caches
+// ACTIVATE — Delete old caches and take control
 // ═══════════════════════════════════════════════════════════════════
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => {
-          console.log('[SW] Deleting old cache:', name);
-          return caches.delete(name);
-        })
-      );
-    }).then(() => {
-      console.log('[SW] Claiming clients');
-      return self.clients.claim();
-    })
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// FETCH — Network first, fallback to cache, then offline page
+// FETCH — Smart Routing: Network-First for HTML, Stale-While-Revalidate for Assets, Network-Only for Chat/API
 // ═══════════════════════════════════════════════════════════════════
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
+  // Only handle GET requests with http/https
+  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
+    return;
+  }
 
-  // Skip chrome-extension and other non-http requests
-  if (!event.request.url.startsWith('http')) return;
+  const url = event.request.url;
 
-  event.respondWith(
-    (async () => {
-      try {
-        // Try network first
-        const networkResponse = await fetch(event.request);
-        
-        // If successful, cache the response
-        if (networkResponse.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(event.request, networkResponse.clone());
-        }
-        
-        return networkResponse;
-      } catch (error) {
-        // Network failed, try cache
-        const cachedResponse = await caches.match(event.request);
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        
-        // If it's a page request, show offline page
-        if (event.request.mode === 'navigate') {
+  // 1. Dynamic / Sensitive endpoints: NETWORK ONLY (never cache)
+  if (isNeverCache(url)) {
+    return; // allow browser default network request
+  }
+
+  // 2. Navigation / HTML pages: NETWORK FIRST with offline fallback
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (err) {
+          const cachedResponse = await caches.match(event.request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
           const offlineResponse = await caches.match(OFFLINE_URL);
           if (offlineResponse) {
             return offlineResponse;
           }
+          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
         }
-        
-        // Return a simple offline response for other requests
-        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-      }
+      })()
+    );
+    return;
+  }
+
+  // 3. Static assets (CSS, JS, images, fonts): STALE-WHILE-REVALIDATE
+  event.respondWith(
+    (async () => {
+      const cachedResponse = await caches.match(event.request);
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse.ok) {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+          });
+        }
+        return networkResponse;
+      }).catch(() => null);
+
+      return cachedResponse || (await fetchPromise) || new Response('', { status: 408 });
     })()
   );
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// MESSAGE — Handle messages from main thread
+// MESSAGE — Skip waiting on user trigger
 // ═══════════════════════════════════════════════════════════════════
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
