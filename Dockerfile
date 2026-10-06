@@ -32,6 +32,12 @@ RUN mkdir -p /etc/nginx/sites-enabled && \
     index index.php; \
     client_max_body_size 64M; \
     \
+    gzip on; \
+    gzip_vary on; \
+    gzip_proxied any; \
+    gzip_comp_level 6; \
+    gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml application/atom+xml image/svg+xml; \
+    \
     location /storage/ { \
         alias /app/storage/app/public/; \
         add_header Cache-Control "public, max-age=2592000"; \
@@ -52,9 +58,9 @@ RUN mkdir -p /etc/nginx/sites-enabled && \
         fastcgi_read_timeout 120; \
     } \
     \
-    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ { \
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|webp|avif|woff2?)$ { \
         expires 30d; \
-        add_header Cache-Control "public"; \
+        add_header Cache-Control "public, max-age=2592000, immutable"; \
     } \
 }' > /etc/nginx/sites-available/default && \
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
@@ -88,15 +94,16 @@ CMD ["/bin/sh", "-c", "\
     mkdir -p storage/framework/sessions && \
     mkdir -p storage/framework/views && \
     mkdir -p storage/logs && \
+    touch storage/logs/laravel.log && \
     mkdir -p bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache && \
     php artisan storage:link --force 2>/dev/null || true && \
-    php artisan migrate --force && \
+    php artisan migrate --force 2>/dev/null || true && \
     php artisan db:seed --force 2>/dev/null || true && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
     php artisan telegram:set-webhook 2>/dev/null || true && \
     php artisan telegram:set-commands 2>/dev/null || true && \
+    chmod -R 777 storage bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]

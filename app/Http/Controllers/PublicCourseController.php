@@ -40,14 +40,16 @@ class PublicCourseController extends Controller
                 ->pluck('course_id');
         }
 
-        $allSubjects = \App\Models\Teacher::query()
-            ->where('is_active', true)
-            ->whereNotNull('subject')
-            ->where('subject', '!=', '')
-            ->distinct()
-            ->pluck('subject')
-            ->sort()
-            ->values();
+        $allSubjects = Cache::remember('courses_all_subjects', now()->addMinutes(30), function () {
+            return \App\Models\Teacher::query()
+                ->where('is_active', true)
+                ->whereNotNull('subject')
+                ->where('subject', '!=', '')
+                ->distinct()
+                ->pluck('subject')
+                ->sort()
+                ->values();
+        });
 
         $bookmarkedCourseIds = Bookmark::bookmarkedIdsForUser(
             auth()->user(),

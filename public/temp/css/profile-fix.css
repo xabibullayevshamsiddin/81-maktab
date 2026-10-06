@@ -959,6 +959,11 @@
   .profile-facts {
     grid-template-columns: 1fr !important;
   }
+  .profile-avatar-upload {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
 }
 
 /* ==========================================================================

@@ -131,8 +131,15 @@
 
     <section class="profile-overview-panel {{ $profileOverviewDonorClass }} {{ $profileOverviewThemeClass }} profile-bg-{{ $user->donorProfileBgStyle() }}" style="margin-top:32px;">
     <div class="profile-overview-main">
-      <div class="profile-avatar" data-profile-avatar-box data-profile-avatar-initial="{{ $profileInitial }}"
-        data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}">{{ $profileInitial }}</div>
+      <div class="profile-avatar {{ $profileAvatarUrl ? 'profile-avatar--image' : '' }}"
+        data-profile-avatar-box
+        data-profile-avatar-initial="{{ $profileInitial }}"
+        data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}"
+        @if($profileAvatarUrl) style="background-image: url('{{ $profileAvatarUrl }}');" @endif>
+        @if(!$profileAvatarUrl)
+          {{ $profileInitial }}
+        @endif
+      </div>
 
       <div class="profile-overview-copy">
         <div class="profile-overview-headline">

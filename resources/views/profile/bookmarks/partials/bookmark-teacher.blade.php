@@ -6,10 +6,12 @@
 @endphp
 <article class="news-card post-card prime-glow-hover">
   <img
-    src="{{ $t->image ? app_storage_asset($t->image) : app_public_asset('temp/img/ChatGPT Image Jul 5, 2026, 01_38_09 AM.png') }}"
+    src="{{ $t->image ? app_storage_asset($t->image) : app_public_asset('temp/img/teacher-default.webp') }}"
     alt="{{ $t->full_name }}"
     class="js-image-zoom-trigger zoomable-image"
     data-zoom-src="{{ $t->image ? app_storage_asset($t->image) : '' }}"
+    width="280"
+    height="280"
     loading="lazy"
     decoding="async"
     role="button"

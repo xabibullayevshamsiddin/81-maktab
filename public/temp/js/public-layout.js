@@ -612,7 +612,10 @@
             previewNameEl.removeAttribute("style");
             var fontFam = d.name_font_family || '';
             var validFonts = ['orbitron','caveat','press-start','pacifico','righteous','bungee','permanent-marker'];
-            if (validFonts.indexOf(fontFam) !== -1) { previewNameEl.classList.add('font-' + fontFam); }
+            if (validFonts.indexOf(fontFam) !== -1) {
+              previewNameEl.classList.add('font-' + fontFam);
+              if (window.loadDonorFont) window.loadDonorFont(fontFam);
+            }
           }
           if (previewRoleEl) {
             var rl = escChatHtml(d.role_label || '');
@@ -2055,6 +2058,7 @@
         }
         const authorStyleAttr = authorStyle ? ` style="${authorStyle}"` : '';
         const authorFontClass = (comment.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(comment.name_font_family)) ? ' font-' + comment.name_font_family : '';
+        if (comment.name_font_family && window.loadDonorFont) window.loadDonorFont(comment.name_font_family);
 
         function buildReplyLi() {
           return `
@@ -2580,13 +2584,11 @@
     var blockUrl = widget.getAttribute('data-chat-block-url');
     var csrf = widget.getAttribute('data-csrf');
     var currentUserId = String(widget.getAttribute('data-user-id') || '');
-    var groupsData = [];
     var chatTexts = (function() { try { return JSON.parse(widget.getAttribute('data-chat-texts') || '{}'); } catch(e) { return {}; } })();
     var isOpen = false;
     var isSending = false;
     var lastId = 0;
     var unreadCount = 0;
-    var activeChannel = 'global';
     var lastReadStorageKey = 'prime-chat-last-read:' + (widget.getAttribute('data-user-id') || '0');
     var lastReadId = (function() {
       try { return Math.max(0, parseInt(window.localStorage.getItem(lastReadStorageKey) || '0', 10) || 0); } catch(e) { return 0; }
@@ -3133,6 +3135,7 @@ function refreshChatAvailability() {
       }
       var actionsHtml = actions ? '<div class="chat-msg-actions">' + actions + '</div>' : '';
       var fontClass = (m.name_font_family && /^(orbitron|caveat|press-start|pacifico|righteous|bungee|permanent-marker)$/.test(m.name_font_family)) ? ' font-' + m.name_font_family : '';
+      if (m.name_font_family && window.loadDonorFont) window.loadDonorFont(m.name_font_family);
       var nameStyle = '';
       if (m.donor_color && /^#[0-9a-f]{3,8}$/i.test(String(m.donor_color))) {
         nameStyle += 'color:' + m.donor_color + ';';
@@ -3584,31 +3587,6 @@ function refreshChatAvailability() {
 
 
 
-
-    var groupCreateBtn = document.getElementById('chat-group-create-btn');
-    var groupCreateModal = document.getElementById('prime-group-create-modal');
-
-    if (groupCreateBtn && typeof openGroupCreateModal === 'function') {
-      groupCreateBtn.addEventListener('click', function () {
-        openGroupCreateModal();
-      });
-    }
-
-    if (groupCreateModal && typeof closeGroupCreateModal === 'function' && typeof submitGroupCreate === 'function') {
-      var cancelBtn = groupCreateModal.querySelector('[data-group-create-cancel]');
-      var okBtn = groupCreateModal.querySelector('[data-group-create-ok]');
-      var toggleBtns = groupCreateModal.querySelectorAll('.prime-group-create__toggle-btn');
-
-      if(cancelBtn) cancelBtn.addEventListener('click', closeGroupCreateModal);
-      if(okBtn) okBtn.addEventListener('click', submitGroupCreate);
-
-      toggleBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          toggleBtns.forEach(function(b) { b.classList.remove('prime-group-create__toggle-btn--active'); });
-          btn.classList.add('prime-group-create__toggle-btn--active');
-        });
-      });
-    }
 
 
     window.addEventListener('resize', function () {
@@ -4197,7 +4175,14 @@ function refreshChatAvailability() {
   /** Prime Pro Max: Animated Charts (ApexCharts) */
   function initPrimeCharts() {
     const chartContainers = document.querySelectorAll('.prime-chart-container');
-    if (!chartContainers.length || typeof ApexCharts === 'undefined') return;
+    if (!chartContainers.length) return;
+    if (typeof ApexCharts === 'undefined') {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/apexcharts';
+      s.onload = () => initPrimeCharts();
+      document.head.appendChild(s);
+      return;
+    }
 
     chartContainers.forEach(container => {
       const type = container.getAttribute('data-chart-type') || 'area';

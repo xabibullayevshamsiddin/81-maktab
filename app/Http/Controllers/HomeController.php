@@ -47,55 +47,26 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        $featuredTeacherId = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
+        $featuredTeacher = Cache::remember(cache_key_home_featured_teacher(), now()->addMinutes(10), function () {
             return Teacher::query()
+                ->select([
+                    'id',
+                    'full_name',
+                    'slug',
+                    'subject',
+                    'subject_en',
+                    'lavozim',
+                    'lavozim_en',
+                    'toifa',
+                    'toifa_en',
+                    'image',
+                    'experience_years',
+                    'is_active',
+                ])
                 ->where('is_active', true)
                 ->inRandomOrder()
-                ->value('id');
+                ->first();
         });
-
-        $featuredTeacher = null;
-        if ($featuredTeacherId) {
-            $featuredTeacher = Teacher::query()
-                ->select([
-                    'id',
-                    'full_name',
-                    'slug',
-                    'subject',
-                    'subject_en',
-                    'lavozim',
-                    'lavozim_en',
-                    'toifa',
-                    'toifa_en',
-                    'image',
-                    'experience_years',
-                    'is_active',
-                ])
-                ->where('id', $featuredTeacherId)
-                ->where('is_active', true)
-                ->first();
-        }
-
-        if (! $featuredTeacher) {
-            $featuredTeacher = Teacher::query()
-                ->select([
-                    'id',
-                    'full_name',
-                    'slug',
-                    'subject',
-                    'subject_en',
-                    'lavozim',
-                    'lavozim_en',
-                    'toifa',
-                    'toifa_en',
-                    'image',
-                    'experience_years',
-                    'is_active',
-                ])
-                ->where('is_active', true)
-                ->inRandomOrder()
-                ->first();
-        }
 
         $postKindLabels = config('post_kinds', []);
 
@@ -145,9 +116,13 @@ class HomeController extends Controller
     {
         $comments = TeacherComment::query()
             ->whereNull('parent_id')
-            ->with(['replies' => function ($query) {
-                $query->latest();
-            }])
+            ->with([
+                'user.roleRelation',
+                'replies' => function ($query) {
+                    $query->with('user.roleRelation')->withCount('likes')->latest();
+                },
+            ])
+            ->withCount('likes')
             ->latest()
             ->get();
 

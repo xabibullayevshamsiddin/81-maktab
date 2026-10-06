@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Posts — title, title_en, short_content, content ustunlari uchun FULLTEXT
         Schema::table('posts', function (Blueprint $table) {
             $table->fullText(['title', 'title_en', 'short_content']);
@@ -27,6 +31,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('posts', function (Blueprint $table) {
             $table->dropFullText(['title', 'title_en', 'short_content']);
         });

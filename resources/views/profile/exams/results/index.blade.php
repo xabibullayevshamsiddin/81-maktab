@@ -518,7 +518,11 @@
                   {{-- O'quvchi --}}
                   <td>
                     <div class="student-profile-cell">
-                      <div class="student-avatar-badge">{{ $initials }}</div>
+                      @if($result->user?->avatar_url)
+                        <img src="{{ $result->user->avatar_url }}" alt="{{ $userName }}" class="student-avatar-badge" style="object-fit: cover; padding: 0;">
+                      @else
+                        <div class="student-avatar-badge">{{ $initials }}</div>
+                      @endif
                       <div class="student-meta-info">
                         <span class="student-name">{{ $userName }}</span>
                         <span class="student-email">{{ $result->user->phone ?? $result->user->email ?? '-' }}</span>
@@ -642,7 +646,11 @@
 
               {{-- O'quvchi profili --}}
               <div class="result-card-mobile__student">
-                <div class="student-avatar-badge">{{ $initials }}</div>
+                @if($result->user?->avatar_url)
+                  <img src="{{ $result->user->avatar_url }}" alt="{{ $userName }}" class="student-avatar-badge" style="object-fit: cover; padding: 0;">
+                @else
+                  <div class="student-avatar-badge">{{ $initials }}</div>
+                @endif
                 <div class="student-meta-info">
                   <span class="student-name">{{ $userName }}</span>
                   <span class="student-email">{{ $result->user->phone ?? $result->user->email ?? '-' }}</span>

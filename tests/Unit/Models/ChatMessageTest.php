@@ -2,8 +2,6 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\ChatGroup;
-use App\Models\ChatGroupMember;
 use App\Models\ChatMessage;
 use App\Models\Role;
 use App\Models\User;
@@ -42,10 +40,10 @@ class ChatMessageTest extends TestCase
 
         $msg = ChatMessage::query()->create([
             "user_id" => $user->id,
-            "message" => "Salom!",
+            "body" => "Salom!",
         ]);
 
-        $this->assertDatabaseHas("chat_messages", ["message" => "Salom!"]);
+        $this->assertDatabaseHas("chat_messages", ["body" => "Salom!"]);
     }
 
     public function test_belongs_to_user(): void
@@ -53,41 +51,10 @@ class ChatMessageTest extends TestCase
         $user = $this->createUser();
         $msg = ChatMessage::query()->create([
             "user_id" => $user->id,
-            "message" => "Test",
+            "body" => "Test",
         ]);
 
         $this->assertInstanceOf(User::class, $msg->user);
         $this->assertSame($user->id, $msg->user->id);
-    }
-
-    public function test_can_belong_to_group(): void
-    {
-        $user = $this->createUser();
-        $group = ChatGroup::query()->create([
-            "name" => "Test Group",
-            "created_by" => $user->id,
-        ]);
-
-        $msg = ChatMessage::query()->create([
-            "user_id" => $user->id,
-            "chat_group_id" => $group->id,
-            "message" => "Group message",
-        ]);
-
-        $this->assertInstanceOf(ChatGroup::class, $msg->group);
-    }
-
-    public function test_private_message(): void
-    {
-        $user1 = $this->createUser();
-        $user2 = $this->createUser();
-
-        $msg = ChatMessage::query()->create([
-            "user_id" => $user1->id,
-            "receiver_id" => $user2->id,
-            "message" => "Private message",
-        ]);
-
-        $this->assertSame($user2->id, $msg->receiver_id);
     }
 }

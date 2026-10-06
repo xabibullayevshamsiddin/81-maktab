@@ -31,17 +31,17 @@
   $profileStats = [
     [
       'icon' => 'fa-regular fa-comments',
-      'value' => $postCommentCount + $teacherCommentCount,
+      'value' => ($postCommentCount ?? 0) + ($teacherCommentCount ?? 0),
       'label' => __('profile.stats.comments'),
     ],
     [
       'icon' => 'fa-solid fa-book-open',
-      'value' => $courseEnrollmentCount,
+      'value' => $courseEnrollmentCount ?? 0,
       'label' => __('profile.stats.enrolled_courses'),
     ],
     [
       'icon' => $canViewCourseEnrollments ? 'fa-solid fa-clipboard-check' : 'fa-solid fa-layer-group',
-      'value' => $canViewCourseEnrollments ? $pendingTeacherEnrollmentCount : $createdCourseCount,
+      'value' => $canViewCourseEnrollments ? ($pendingTeacherEnrollmentCount ?? 0) : ($createdCourseCount ?? 0),
       'label' => $canViewCourseEnrollments ? __('profile.stats.pending_requests') : __('profile.stats.created_courses'),
     ],
   ];
@@ -169,13 +169,24 @@
                 @csrf
                 @method('PUT')
 
-                <div class="profile-avatar-upload">
-                  <div class="profile-avatar-upload-copy">
+                <div class="profile-avatar-upload" style="display: flex; gap: 20px; align-items: center; margin-bottom: 24px; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px;">
+                  <div class="profile-avatar-upload-preview" style="flex-shrink: 0;">
+                    <div class="profile-avatar {{ $profileAvatarUrl ? 'profile-avatar--image' : '' }}"
+                      data-profile-avatar-box
+                      data-profile-avatar-initial="{{ $profileInitial }}"
+                      data-profile-avatar-url="{{ $profileAvatarUrl ?: '' }}"
+                      style="width: 80px !important; height: 80px !important; flex: 0 0 80px !important; border-radius: 24px !important; font-size: 2rem !important; {{ $profileAvatarUrl ? "background-image: url('{$profileAvatarUrl}');" : '' }}">
+                      @if(!$profileAvatarUrl)
+                        {{ $profileInitial }}
+                      @endif
+                    </div>
+                  </div>
+                  <div class="profile-avatar-upload-copy" style="flex: 1; min-width: 0;">
                     @php
                       $avatarMaxKb = $user->donorMaxAvatarSize();
                       $avatarMaxMb = round($avatarMaxKb / 1024);
                     @endphp
-                    <div class="profile-field">
+                    <div class="profile-field" style="margin-bottom: 0;">
                       <label for="profile-avatar">{{ __('profile.main_card.avatar_label') }}</label>
                       <span class="profile-field-hint">{!! __('profile.main_card.avatar_hint', ['max' => $avatarMaxMb]) !!}</span>
                       @if($donorIsActive)
@@ -188,13 +199,11 @@
                       <input type="file" id="profile-avatar" name="avatar" accept="image/jpeg,image/png,image/webp"
                         data-profile-avatar-max="{{ $avatarMaxKb }}"
                         data-profile-avatar-max-mb="{{ $avatarMaxMb }}" />
-                      @if($profileAvatarUrl)
-                        <div class="profile-actions-row profile-avatar-actions">
-                          <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
-                            {{ __('profile.main_card.avatar_remove') }}
-                          </button>
-                        </div>
-                      @endif
+                      <div class="profile-actions-row profile-avatar-actions" data-profile-avatar-actions-wrap style="{{ $profileAvatarUrl ? '' : 'display: none;' }}">
+                        <button type="button" class="btn btn-outline btn-sm" data-profile-avatar-remove>
+                          {{ __('profile.main_card.avatar_remove') }}
+                        </button>
+                      </div>
                       <span class="profile-avatar-meta"
                         data-profile-avatar-meta>{{ __('profile.main_card.avatar_meta', ['max' => $avatarMaxMb]) }}</span>
                       @error('avatar')
@@ -635,7 +644,7 @@
   </main>
 
   @push('page_scripts')
-    <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v=2025062802"></script>
+    <script src="{{ app_public_asset('temp/js/profile-page.js') }}?v={{ app_asset_version('temp/js/profile-page.js') }}"></script>
     @if($user->isDonor() && $user->donation_rank_expires_at)
       <script src="{{ app_public_asset('temp/js/donor-countdown.js') }}?v={{ app_asset_version('temp/js/donor-countdown.js') }}"></script>
     @endif
