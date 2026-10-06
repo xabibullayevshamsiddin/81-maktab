@@ -94,15 +94,16 @@ CMD ["/bin/sh", "-c", "\
     mkdir -p storage/framework/sessions && \
     mkdir -p storage/framework/views && \
     mkdir -p storage/logs && \
+    touch storage/logs/laravel.log && \
     mkdir -p bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache && \
     php artisan storage:link --force 2>/dev/null || true && \
-    php artisan migrate --force && \
+    php artisan migrate --force 2>/dev/null || true && \
     php artisan db:seed --force 2>/dev/null || true && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
     php artisan telegram:set-webhook 2>/dev/null || true && \
     php artisan telegram:set-commands 2>/dev/null || true && \
+    chmod -R 777 storage bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]

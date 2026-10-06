@@ -18,6 +18,8 @@ services:
         value: database
       - key: FILESYSTEM_DISK
         value: public
+      - key: LOG_CHANNEL
+        value: stderr
       - key: APP_KEY
         generateValue: true
       # Quyidagilarni Render.com dashboard da qo'lda kiriting:
