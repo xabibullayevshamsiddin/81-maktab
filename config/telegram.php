@@ -14,7 +14,7 @@ return [
     */
 
     'bot_token' => env('TELEGRAM_BOT_TOKEN', ''),
-    'bot_username' => env('TELEGRAM_BOT_USERNAME', ''),
+    'bot_username' => ltrim((string) env('TELEGRAM_BOT_USERNAME', ''), '@'),
     'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET', ''),
 
     /*

@@ -126,10 +126,15 @@
         <h2>Tasdiqlash kerak</h2>
         <p class="tg-subtitle">Quyidagi tugmani bosib, Telegram'da tasdiqlang</p>
 
+        @php
+          $cleanBotUsername = ltrim((string) ($bot_username ?: config('telegram.bot_username', 'maktab81_verify_bot')), '@');
+          $deepLink = "https://t.me/{$cleanBotUsername}?start={$token}";
+        @endphp
+
         {{-- Telegram ochish tugmasi --}}
-        <button type="button" class="tg-open-btn" id="tg-open-btn">
+        <a href="{{ $deepLink }}" target="_blank" rel="noopener noreferrer" class="tg-open-btn" id="tg-open-btn">
           <i class="fa-brands fa-telegram"></i> Telegram'da ochish
-        </button>
+        </a>
 
         {{-- QR kod — faqat kompyuterda ko'rinadi --}}
         <div class="tg-qr-section">
@@ -165,20 +170,15 @@
   <script>
     (function() {
       var token = '{{ $token }}';
-      var botUsername = '{{ $bot_username ?: "maktab81_verify_bot" }}';
+      var botUsername = '{{ $cleanBotUsername }}';
       var statusUrl = '{{ route("telegram.status", ["token" => $token]) }}';
       var completeUrl = '{{ route("telegram.complete", ["token" => $token]) }}';
       var deepLink = 'https://t.me/' + botUsername + '?start=' + token;
-      var tgProtocol = 'tg://resolve?domain=' + botUsername + '&start=' + token;
 
       // ========== TELEGRAM OCHISH TUGMASI ==========
       var openBtn = document.getElementById('tg-open-btn');
       if (openBtn) {
-        openBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          // tg:// protokoli orqali Telegram ilovasini ochish (telegram.org ga bermaydi)
-          window.location.href = tgProtocol;
-        });
+        openBtn.href = deepLink;
       }
 
       // ========== QR KOD (faqat kompyuterda) ==========
