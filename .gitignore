@@ -4,11 +4,24 @@
 /public/storage
 /storage/*.key
 .env
-.env.backup
+.env.*
+!.env.example
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
 *.log
+error.log
+/storage/logs/*.log
+
+# Local Agent / IDE workspaces & databases
+/.freebuff/
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Caches & Editors
 .sass-cache
 .cache
 .DS_Store
