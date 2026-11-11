@@ -13,7 +13,7 @@ class PostTest extends TestCase
 
     private function createCategory(): Category
     {
-        return Category::query()->create(["name" => "Test Cat"]);
+        return Category::query()->create(["name" => "Test Cat " . uniqid()]);
     }
 
     private function createPost(array $overrides = []): Post
@@ -87,7 +87,7 @@ class PostTest extends TestCase
     public function test_post_kind_default(): void
     {
         $post = $this->createPost();
-        $this->assertSame("general", $post->post_kind);
+        $this->assertSame("general", $post->fresh()->post_kind);
     }
 
     public function test_latest_scope(): void

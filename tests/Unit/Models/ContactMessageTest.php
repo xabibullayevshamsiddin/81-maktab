@@ -14,7 +14,7 @@ class ContactMessageTest extends TestCase
     {
         $msg = ContactMessage::query()->create([
             "name" => "Ali Valiyev",
-            "email" => "ali@example.com",
+            "email" => "ali@example.com", "phone" => "+998901234567",
             "message" => "Saytda xatolik bor.",
         ]);
 
@@ -25,7 +25,7 @@ class ContactMessageTest extends TestCase
     {
         $msg = ContactMessage::query()->create([
             "name" => "Test",
-            "email" => "test@example.com",
+            "email" => "test@example.com", "phone" => "+998901234567",
             "message" => "Test message",
         ]);
 

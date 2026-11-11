@@ -14,23 +14,23 @@ class QuestionTest extends TestCase
 
     public function test_can_be_created(): void
     {
-        $exam = Exam::query()->create(["title" => "Q Exam"]);
+        $exam = Exam::query()->create(["title" => "Q Exam", "duration_minutes" => 30]);
         $question = $exam->questions()->create([
-            "question_text" => "What is 2+2?",
+            "body" => "What is 2+2?",
             "points" => 5,
-            "type" => "single",
+            "question_type" => "mcq",
         ]);
 
-        $this->assertDatabaseHas("questions", ["question_text" => "What is 2+2?"]);
+        $this->assertDatabaseHas("questions", ["body" => "What is 2+2?"]);
     }
 
     public function test_belongs_to_exam(): void
     {
-        $exam = Exam::query()->create(["title" => "Parent"]);
+        $exam = Exam::query()->create(["title" => "Parent", "duration_minutes" => 30]);
         $question = $exam->questions()->create([
-            "question_text" => "Q?",
+            "body" => "Q?",
             "points" => 10,
-            "type" => "single",
+            "question_type" => "mcq",
         ]);
 
         $this->assertInstanceOf(Exam::class, $question->exam);
@@ -38,17 +38,17 @@ class QuestionTest extends TestCase
 
     public function test_has_options(): void
     {
-        $exam = Exam::query()->create(["title" => "Options Test"]);
+        $exam = Exam::query()->create(["title" => "Options Test", "duration_minutes" => 30]);
         $question = $exam->questions()->create([
-            "question_text" => "Choose?",
+            "body" => "Choose?",
             "points" => 5,
-            "type" => "single",
+            "question_type" => "mcq",
         ]);
 
         $question->options()->createMany([
-            ["option_text" => "A", "is_correct" => true],
-            ["option_text" => "B", "is_correct" => false],
-            ["option_text" => "C", "is_correct" => false],
+            ["label" => "A", "body" => "A", "is_correct" => true],
+            ["label" => "B", "body" => "B", "is_correct" => false],
+            ["label" => "C", "body" => "C", "is_correct" => false],
         ]);
 
         $this->assertCount(3, $question->fresh()->options);
@@ -56,29 +56,29 @@ class QuestionTest extends TestCase
 
     public function test_option_fields(): void
     {
-        $exam = Exam::query()->create(["title" => "Opt"]);
+        $exam = Exam::query()->create(["title" => "Opt", "duration_minutes" => 30]);
         $question = $exam->questions()->create([
-            "question_text" => "Pick",
+            "body" => "Pick",
             "points" => 1,
-            "type" => "single",
+            "question_type" => "mcq",
         ]);
 
         $option = $question->options()->create([
-            "option_text" => "Correct Answer",
+            "label" => "A", "body" => "Correct Answer",
             "is_correct" => true,
         ]);
 
         $this->assertTrue($option->is_correct);
-        $this->assertSame("Correct Answer", $option->option_text);
+        $this->assertSame("Correct Answer", $option->body);
     }
 
     public function test_image_path(): void
     {
-        $exam = Exam::query()->create(["title" => "Img"]);
+        $exam = Exam::query()->create(["title" => "Img", "duration_minutes" => 30]);
         $question = $exam->questions()->create([
-            "question_text" => "See image",
+            "body" => "See image",
             "points" => 2,
-            "type" => "single",
+            "question_type" => "mcq",
             "image_path" => "questions/diagram.png",
         ]);
 

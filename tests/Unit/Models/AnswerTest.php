@@ -49,9 +49,9 @@ class AnswerTest extends TestCase
 
         $exam = $this->createExam();
         $question = $exam->questions()->create([
-            "question_text" => "Q?",
+            "body" => "Q?",
             "points" => 10,
-            "type" => "single",
+            "question_type" => "mcq",
         ]);
         $result = Result::query()->create([
             "exam_id" => $exam->id,
@@ -80,7 +80,7 @@ class AnswerTest extends TestCase
         $exam = $this->createExam();
         $exam->update(["title" => "E2"]);
         $question = $exam->questions()->create([
-            "question_text" => "Q2?", "points" => 5, "type" => "single",
+            "body" => "Q2?", "points" => 5, "question_type" => "mcq",
         ]);
         $result = Result::query()->create(["exam_id" => $exam->id, "user_id" => $user->id]);
 
@@ -106,7 +106,7 @@ class AnswerTest extends TestCase
         $exam = $this->createExam();
         $exam->update(["title" => "E3"]);
         $question = $exam->questions()->create([
-            "question_text" => "Essay?",
+            "body" => "Essay?",
             "points" => 20,
             "type" => "text",
         ]);

@@ -49,6 +49,13 @@ return [
             'label' => 'Role',
             'hint' => 'Which sections are available to you depends on your role.',
         ],
+        'donor_rank' => [
+            'label' => 'Donor rank',
+            'value_none' => 'None',
+            'hint_none' => 'Become a donor to get benefits',
+            'hint_expires' => 'Expires: :time',
+            'hint_expired' => 'Expired',
+        ],
     ],
     'main_card' => [
         'title' => 'Main information',
@@ -66,6 +73,12 @@ return [
         'save' => 'Save',
         'save_hint' => 'Once saved, your profile updates immediately.',
         'avatar_alt' => ':name profile photo',
+        'avatar_remove' => 'Remove photo',
+        'first_name_label' => 'First name',
+        'first_name_hint' => 'Letters, spaces and hyphens only',
+        'last_name_label' => 'Last name',
+        'last_name_hint' => 'Letters, spaces and hyphens only',
+        'edit_kicker' => 'Edit',
     ],
     'blocks' => [
         'exams' => [
@@ -227,24 +240,6 @@ return [
     'activity_manage_exams_text' => 'Manage exams you created and student results.',
     'activity_results_text' => 'Your submitted exams are now on a separate page.',
     'course_request_default_reason' => 'Requesting permission to open a course',
-    'facts' => [
-        'donor_rank' => [
-            'label' => 'Donor rank',
-            'value_none' => 'None',
-            'hint_none' => 'Become a donor to get benefits',
-            'hint_expires' => 'Expires: :time',
-            'hint_expired' => 'Expired',
-        ],
-    ],
-    'main_card' => [
-        'avatar_remove' => 'Remove photo',
-        'first_name_label' => 'First name',
-        'first_name_hint' => 'Letters, spaces and hyphens only',
-        'last_name_label' => 'Last name',
-        'last_name_hint' => 'Letters, spaces and hyphens only',
-        'edit_kicker' => 'Edit',
-    ],
-
     'appearance' => [
         'themes_title' => 'Available themes',
         'themes_view_all' => 'View all',

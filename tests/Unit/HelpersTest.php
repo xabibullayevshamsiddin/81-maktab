@@ -55,7 +55,7 @@ class HelpersTest extends TestCase
         app()->detectEnvironment(fn() => "production");
         config(["app.asset_version" => "v1"]);
 
-        $this->assertSame("v1", app_asset_version("temp/css/style.css"));
+        $this->assertSame("v1", app_asset_version("temp/css/prod-version-test.css"));
     }
 
     public function test_app_asset_version_in_local(): void
@@ -63,7 +63,7 @@ class HelpersTest extends TestCase
         app()->detectEnvironment(fn() => "local");
         config(["app.asset_version" => ""]);
 
-        $path = "temp/js/theme-init.js";
+        $path = "temp/js/donor-countdown.js";
         $fullPath = public_path($path);
 
         $this->assertFileExists($fullPath);

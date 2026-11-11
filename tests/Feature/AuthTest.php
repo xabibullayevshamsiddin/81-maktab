@@ -7,6 +7,7 @@ use App\Models\TelegramVerification;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -27,6 +28,7 @@ class AuthTest extends TestCase
     protected function tearDown(): void
     {
         Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('school_classes');
         Schema::dropIfExists('user_activities');
         Schema::dropIfExists('telegram_verifications');
         Schema::dropIfExists('one_time_codes');
@@ -55,7 +57,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    public function test_login_without_telegram_chat_id_redirects_to_verification(): void
+    public function test_login_without_telegram_chat_id_authenticates_directly(): void
     {
         $user = $this->createUser([
             'phone' => '+998901234567',
@@ -68,19 +70,15 @@ class AuthTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect();
-        $this->assertStringContainsString('telegram-verify/', $response->getTargetUrl());
-        $this->assertGuest();
-
-        $this->assertDatabaseHas('telegram_verifications', [
-            'purpose' => TelegramVerification::PURPOSE_LOGIN,
-            'status' => TelegramVerification::STATUS_PENDING,
-        ]);
+        $response->assertRedirect(route('home'));
+        $this->assertAuthenticatedAs($user);
     }
 
-    public function test_login_with_telegram_chat_id_authenticates_directly(): void
+    public function test_login_with_telegram_chat_id_requires_telegram_code(): void
     {
-        $user = $this->createUser([
+        Http::fake();
+
+        $this->createUser([
             'phone' => '+998901234567',
             'password' => 'password123',
             'telegram_chat_id' => 123456789,
@@ -91,8 +89,9 @@ class AuthTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('home'));
-        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect(route('login.verify.form'));
+        $response->assertSessionHas('login_verification');
+        $this->assertGuest();
     }
 
     public function test_login_rejects_invalid_phone(): void
@@ -193,6 +192,7 @@ class AuthTest extends TestCase
     private function createAuthTestTables(): void
     {
         Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('school_classes');
         Schema::dropIfExists('user_activities');
         Schema::dropIfExists('telegram_verifications');
         Schema::dropIfExists('one_time_codes');
@@ -247,6 +247,7 @@ class AuthTest extends TestCase
         Schema::create('telegram_verifications', static function (Blueprint $table): void {
             $table->id();
             $table->string('token', 40)->unique();
+            $table->string('verification_code', 20)->nullable();
             $table->string('purpose');
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('email')->index();
@@ -270,6 +271,23 @@ class AuthTest extends TestCase
             $table->timestamp('occurred_at')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('school_classes', static function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedTinyInteger('grade_number');
+            $table->string('section', 10);
+            $table->string('name', 20);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamps();
+        });
+
+        \App\Models\SchoolClass::query()->create([
+            'grade_number' => 5,
+            'section' => 'A',
+            'name' => '5-A',
+            'is_active' => true,
+        ]);
 
         Role::query()->create([
             'name' => Role::NAME_USER,

@@ -29,6 +29,8 @@ class ProfileResultExportTest extends TestCase
             'name' => 'Ali Valiyev',
         ]);
 
+        $user->forceFill(['donation_rank' => 'vip'])->save();
+
         $exam = Exam::query()->create([
             'title' => 'Algebra testi',
             'duration_minutes' => 45,
@@ -70,6 +72,7 @@ class ProfileResultExportTest extends TestCase
     {
         $owner = User::factory()->create();
         $otherUser = User::factory()->create();
+        $otherUser->forceFill(['donation_rank' => 'vip'])->save();
 
         $exam = Exam::query()->create([
             'title' => 'Geometriya testi',

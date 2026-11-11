@@ -162,7 +162,9 @@ class Exam extends Model
             && $count >= $this->required_questions
             && $sumPoints === $total;
 
-        if ((bool) $this->is_active !== $complete) {
+        $current = (bool) $this->newQuery()->whereKey($this->getKey())->value('is_active');
+
+        if ($current !== $complete) {
             $this->forceFill(['is_active' => $complete])->save();
         }
     }

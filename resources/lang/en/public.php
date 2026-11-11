@@ -815,6 +815,8 @@ return [
             'contact_title' => '4. Contact',
             'contact_text' => 'If you have questions, contact us via the Contact page.',
             'contact_button' => 'Contact page',
+            'family_title' => '5. Parent and child accounts',
+            'family_text' => 'If a parent account is linked to a child\'s account by mutual consent (via a special code), the parent can see the child\'s exam results and course enrollment status in their profile and via Telegram. Either side (parent or child) can unlink at any time from their profile.',
         ],
         'terms' => [
             'badge' => '81-IDUM Documents',
@@ -834,6 +836,8 @@ return [
             'contact_title' => '5. Contact',
             'contact_text' => 'For questions, use the Contact page.',
             'contact_button' => 'Contact page',
+            'donation_title' => '4. Donations and payments',
+            'donation_text' => 'Donor status grants extra features (badge, extended limits, etc.) for a fixed period (30 days / 3 months / 1 year). When the period ends, the status expires automatically. Payments are non-refundable unless the admin decides otherwise.',
         ],
     ],
     'errors' => [
@@ -1008,6 +1012,11 @@ return [
         'showcase_subtitle' => 'See a live preview of how your profile looks at each level.',
         'showcase_select_theme' => 'Choose my theme',
         'showcase_donate' => 'Donate',
+        'showcase_feat_plain' => ['Standard profile look', 'Colored name and badge', 'Profile decoration effects', 'Enlarged avatar'],
+        'showcase_feat_supporter' => ['Blue name and badge', 'Stand out in comments and chat', 'Avatar up to 10 MB', 'AI chat — 100 messages'],
+        'showcase_feat_premium' => ['Purple premium badge', 'Profile shimmer effect', 'Avatar up to 25 MB', 'AI chat — 300 messages'],
+        'showcase_feat_vip' => ['Golden VIP crown badge', 'Animated profile frame', 'Avatar up to 50 MB', 'AI chat — unlimited'],
+        'showcase_feat_admin' => ['Exclusive special badge', 'Premium glow + sheen', 'Super admin only'],
         'showcase_section_title' => 'Theme gallery',
         'showcase_section_text' => 'From plain to the most exclusive.',
         'showcase_profile_preview' => 'Profile view',
@@ -1093,6 +1102,7 @@ return [
         'index_become' => 'Become :label',
     ],
     'courses_show' => [
+        'payment' => 'Payment',
         'duration_kpi' => 'Course duration',
         'start_kpi' => 'Start',
         'audience_title' => 'Who is this course for?',

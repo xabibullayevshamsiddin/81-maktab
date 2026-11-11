@@ -26,7 +26,7 @@ class ResultTest extends TestCase
 
     public function test_can_be_created(): void
     {
-        $exam = Exam::query()->create(["title" => "Final"]);
+        $exam = Exam::query()->create(["title" => "Final", "duration_minutes" => 30]);
         $user = User::query()->create([
             "name" => "U",
             "email" => "r-" . uniqid() . "@test.com",
@@ -45,7 +45,7 @@ class ResultTest extends TestCase
 
     public function test_score_and_passing(): void
     {
-        $exam = Exam::query()->create(["title" => "Scored", "total_points" => 100, "passing_points" => 50]);
+        $exam = Exam::query()->create(["title" => "Scored", "duration_minutes" => 30, "total_points" => 100, "passing_points" => 50]);
         $user = User::query()->create([
             "name" => "U2",
             "email" => "r2-" . uniqid() . "@test.com",
@@ -69,7 +69,7 @@ class ResultTest extends TestCase
 
     public function test_belongs_to_exam_and_user(): void
     {
-        $exam = Exam::query()->create(["title" => "Rel"]);
+        $exam = Exam::query()->create(["title" => "Rel", "duration_minutes" => 30]);
         $user = User::query()->create([
             "name" => "U3",
             "email" => "r3-" . uniqid() . "@test.com",
@@ -89,7 +89,7 @@ class ResultTest extends TestCase
 
     public function test_has_answers(): void
     {
-        $exam = Exam::query()->create(["title" => "AnsRel"]);
+        $exam = Exam::query()->create(["title" => "AnsRel", "duration_minutes" => 30]);
         $user = User::query()->create([
             "name" => "U4",
             "email" => "r4-" . uniqid() . "@test.com",
@@ -108,7 +108,7 @@ class ResultTest extends TestCase
 
     public function test_violation_count(): void
     {
-        $exam = Exam::query()->create(["title" => "V"]);
+        $exam = Exam::query()->create(["title" => "V", "duration_minutes" => 30]);
         $user = User::query()->create([
             "name" => "U5",
             "email" => "r5-" . uniqid() . "@test.com",

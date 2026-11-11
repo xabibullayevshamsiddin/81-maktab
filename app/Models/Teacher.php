@@ -130,7 +130,7 @@ class Teacher extends Model
     {
         if (! empty($this->image)) {
             $url = app_storage_asset($this->image);
-            if ($url && preg_match('#^https?://#i', $url)) {
+            if ($url) {
                 return $url;
             }
         }

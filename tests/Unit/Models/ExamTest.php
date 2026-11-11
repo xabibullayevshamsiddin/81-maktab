@@ -60,8 +60,8 @@ class ExamTest extends TestCase
         ]);
 
         $exam->questions()->createMany([
-            ["question_text" => "Savol 1?", "points" => 10, "type" => "single"],
-            ["question_text" => "Savol 2?", "points" => 10, "type" => "single"],
+            ["body" => "Savol 1?", "points" => 10, "question_type" => "mcq"],
+            ["body" => "Savol 2?", "points" => 10, "question_type" => "mcq"],
         ]);
 
         $exam->syncActiveFromQuestions();
@@ -79,7 +79,7 @@ class ExamTest extends TestCase
         ]);
 
         $exam->questions()->createMany([
-            ["question_text" => "Savol 1?", "points" => 10, "type" => "single"],
+            ["body" => "Savol 1?", "points" => 10, "question_type" => "mcq"],
         ]);
 
         $exam->syncActiveFromQuestions();
@@ -146,11 +146,11 @@ class ExamTest extends TestCase
 
     public function test_sum_question_points(): void
     {
-        $exam = Exam::query()->create(["title" => "Test", "total_points" => 30]);
+        $exam = Exam::query()->create(["title" => "Test", "duration_minutes" => 30, "total_points" => 30]);
         $exam->questions()->createMany([
-            ["question_text" => "Q1", "points" => 10, "type" => "single"],
-            ["question_text" => "Q2", "points" => 15, "type" => "single"],
-            ["question_text" => "Q3", "points" => 5, "type" => "single"],
+            ["body" => "Q1", "points" => 10, "question_type" => "mcq"],
+            ["body" => "Q2", "points" => 15, "question_type" => "mcq"],
+            ["body" => "Q3", "points" => 5, "question_type" => "mcq"],
         ]);
 
         $this->assertSame(30, $exam->sumQuestionPoints());
@@ -158,13 +158,13 @@ class ExamTest extends TestCase
 
     public function test_question_quota(): void
     {
-        $exam = Exam::query()->create(["title" => "Test", "required_questions" => 3]);
+        $exam = Exam::query()->create(["title" => "Test", "duration_minutes" => 30, "required_questions" => 3]);
         $this->assertFalse($exam->isQuestionQuotaFilled());
 
         $exam->questions()->createMany([
-            ["question_text" => "Q1", "points" => 10, "type" => "single"],
-            ["question_text" => "Q2", "points" => 10, "type" => "single"],
-            ["question_text" => "Q3", "points" => 10, "type" => "single"],
+            ["body" => "Q1", "points" => 10, "question_type" => "mcq"],
+            ["body" => "Q2", "points" => 10, "question_type" => "mcq"],
+            ["body" => "Q3", "points" => 10, "question_type" => "mcq"],
         ]);
 
         $this->assertTrue($exam->fresh()->isQuestionQuotaFilled());
@@ -172,7 +172,7 @@ class ExamTest extends TestCase
 
     public function test_soft_deletes(): void
     {
-        $exam = Exam::query()->create(["title" => "Delete test"]);
+        $exam = Exam::query()->create(["title" => "Delete test", "duration_minutes" => 30]);
         $exam->delete();
 
         $this->assertSoftDeleted($exam);
@@ -180,14 +180,14 @@ class ExamTest extends TestCase
 
     public function test_has_results(): void
     {
-        $exam = Exam::query()->create(["title" => "Results test"]);
+        $exam = Exam::query()->create(["title" => "Results test", "duration_minutes" => 30]);
         $this->assertCount(0, $exam->results);
     }
 
     public function test_teacher_owns_exam(): void
     {
         $teacher = $this->makeUser(User::ROLE_TEACHER);
-        $exam = Exam::query()->create(["title" => "Owned", "created_by" => $teacher->id]);
+        $exam = Exam::query()->create(["title" => "Owned", "duration_minutes" => 30, "created_by" => $teacher->id]);
 
         $this->assertTrue($exam->ownsExam($teacher));
         $this->assertFalse($exam->ownsExam($this->makeUser(User::ROLE_USER)));
@@ -196,7 +196,7 @@ class ExamTest extends TestCase
     public function test_admin_owns_any_exam(): void
     {
         $admin = $this->makeUser(User::ROLE_ADMIN);
-        $exam = Exam::query()->create(["title" => "Any exam"]);
+        $exam = Exam::query()->create(["title" => "Any exam", "duration_minutes" => 30]);
 
         $this->assertTrue($exam->ownsExam($admin));
     }
@@ -225,7 +225,7 @@ class ExamTest extends TestCase
     public function test_available_from_label_set(): void
     {
         $exam = Exam::query()->create([
-            "title" => "Timed",
+            "title" => "Timed", "duration_minutes" => 30,
             "available_from" => now()->addDay(),
         ]);
 

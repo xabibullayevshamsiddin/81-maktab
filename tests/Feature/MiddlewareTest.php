@@ -84,18 +84,18 @@ class MiddlewareTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->from(route("home"))
-            ->get(route("courses"))
-            ->assertRedirect(route("home"));
+            ->postJson(route("chat.send"), ["message" => "salom"])
+            ->assertForbidden()
+            ->assertJson(["user_blocked" => true]);
     }
 
-    public function test_admin_can_access_admin_pages(): void
+    public function test_super_admin_can_access_settings_page(): void
     {
         $admin = User::query()->create([
-            "name" => "Admin2",
+            "name" => "Super Admin",
             "email" => "ad2-" . uniqid() . "@test.com",
             "password" => bcrypt("pw"),
-            "role_id" => Role::idByName(Role::NAME_ADMIN),
+            "role_id" => Role::idByName(Role::NAME_SUPER_ADMIN),
             "is_active" => true,
         ]);
 

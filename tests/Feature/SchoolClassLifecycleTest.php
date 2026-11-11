@@ -39,9 +39,9 @@ class SchoolClassLifecycleTest extends TestCase
 
         $summary = $service->promoteAcademicYear(2026, 2027);
 
-        $this->assertSame(4, $summary['total']);
-        $this->assertSame(2, $summary['promoted']);
-        $this->assertSame(1, $summary['graduated']);
+        $this->assertSame(4, $summary['total_students']);
+        $this->assertSame(2, $summary['promoted_students']);
+        $this->assertSame(1, $summary['graduated_students']);
         $this->assertSame(1, $summary['selection_required']);
 
         $this->assertSame('9-E', $promoted->refresh()->grade);

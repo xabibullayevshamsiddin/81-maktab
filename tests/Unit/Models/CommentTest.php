@@ -29,9 +29,8 @@ class CommentTest extends TestCase
     {
         $post = $this->createPost();
         $comment = Comment::query()->create([
-            "commentable_type" => Post::class,
-            "commentable_id" => $post->id,
-            "user_name" => "Ali",
+            "post_id" => $post->id,
+            "author_name" => "Ali",
             "body" => "Great post!",
             "is_approved" => true,
         ]);
@@ -39,37 +38,34 @@ class CommentTest extends TestCase
         $this->assertDatabaseHas("comments", ["body" => "Great post!"]);
     }
 
-    public function test_commentable_polymorphic(): void
+    public function test_belongs_to_post(): void
     {
         $post = $this->createPost();
         $comment = Comment::query()->create([
-            "commentable_type" => Post::class,
-            "commentable_id" => $post->id,
-            "user_name" => "Ali",
+            "post_id" => $post->id,
+            "author_name" => "Ali",
             "body" => "Nice!",
             "is_approved" => true,
         ]);
 
-        $this->assertInstanceOf(Post::class, $comment->commentable);
-        $this->assertSame($post->id, $comment->commentable->id);
+        $this->assertInstanceOf(Post::class, $comment->post);
+        $this->assertSame($post->id, $comment->post->id);
     }
 
     public function test_replies_relation(): void
     {
         $post = $this->createPost();
         $parent = Comment::query()->create([
-            "commentable_type" => Post::class,
-            "commentable_id" => $post->id,
-            "user_name" => "Parent",
+            "post_id" => $post->id,
+            "author_name" => "Parent",
             "body" => "Parent comment",
             "is_approved" => true,
         ]);
 
         Comment::query()->create([
-            "commentable_type" => Post::class,
-            "commentable_id" => $post->id,
+            "post_id" => $post->id,
             "parent_id" => $parent->id,
-            "user_name" => "Child",
+            "author_name" => "Child",
             "body" => "Reply comment",
             "is_approved" => true,
         ]);
@@ -81,12 +77,12 @@ class CommentTest extends TestCase
     {
         $post = $this->createPost();
         Comment::query()->create([
-            "commentable_type" => Post::class, "commentable_id" => $post->id,
-            "user_name" => "A", "body" => "Approved", "is_approved" => true,
+            "post_id" => $post->id,
+            "author_name" => "A", "body" => "Approved", "is_approved" => true,
         ]);
         Comment::query()->create([
-            "commentable_type" => Post::class, "commentable_id" => $post->id,
-            "user_name" => "B", "body" => "Pending", "is_approved" => false,
+            "post_id" => $post->id,
+            "author_name" => "B", "body" => "Pending", "is_approved" => false,
         ]);
 
         $this->assertCount(1, Comment::query()->where("is_approved", true)->get());
@@ -97,8 +93,8 @@ class CommentTest extends TestCase
     {
         $post = $this->createPost();
         $comment = Comment::query()->create([
-            "commentable_type" => Post::class, "commentable_id" => $post->id,
-            "user_name" => "Ali", "body" => "Liked", "is_approved" => true,
+            "post_id" => $post->id,
+            "author_name" => "Ali", "body" => "Liked", "is_approved" => true,
         ]);
 
         $this->assertCount(0, $comment->likes);
@@ -108,13 +104,13 @@ class CommentTest extends TestCase
     {
         $post = $this->createPost();
         $parent = Comment::query()->create([
-            "commentable_type" => Post::class, "commentable_id" => $post->id,
-            "user_name" => "P", "body" => "Parent", "is_approved" => true,
+            "post_id" => $post->id,
+            "author_name" => "P", "body" => "Parent", "is_approved" => true,
         ]);
         $child = Comment::query()->create([
-            "commentable_type" => Post::class, "commentable_id" => $post->id,
+            "post_id" => $post->id,
             "parent_id" => $parent->id,
-            "user_name" => "C", "body" => "Child", "is_approved" => true,
+            "author_name" => "C", "body" => "Child", "is_approved" => true,
         ]);
 
         $this->assertNotNull($child->parent);

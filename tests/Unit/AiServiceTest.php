@@ -290,7 +290,7 @@ class AiServiceTest extends TestCase
             $result = $service->generateResponse($question);
 
             $this->assertTrue($result['success']);
-            $this->assertSame('dynamic_data', $result['source']);
+            $this->assertSame('dynamic_data', $result['source'], $question);
             $this->assertStringContainsString("oxirgi 3 ta kurs", $result['text']);
             $this->assertStringContainsString('Ingliz tili speaking', $result['text']);
             $this->assertStringContainsString('Fizika master', $result['text']);

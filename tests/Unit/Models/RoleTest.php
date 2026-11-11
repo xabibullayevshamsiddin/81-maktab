@@ -41,8 +41,7 @@ class RoleTest extends TestCase
 
     public function test_default_user_role_id(): void
     {
-        $role = Role::query()->create([
-            "name" => Role::NAME_USER,
+        $role = Role::query()->firstOrCreate(["name" => Role::NAME_USER], [
             "label" => "User",
             "level" => 1,
         ]);

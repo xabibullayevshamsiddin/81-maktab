@@ -51,6 +51,13 @@ return array_replace_recursive($fallback, [
             'label' => 'Роль',
             'hint' => 'Доступные разделы зависят от вашей роли.',
         ],
+        'donor_rank' => [
+            'label' => 'Рейтинг донора',
+            'value_none' => 'Нет',
+            'hint_none' => 'Станьте донором и получите привилегии',
+            'hint_expires' => 'Истекает: :time',
+            'hint_expired' => 'Срок истёк',
+        ],
     ],
     'main_card' => [
         'title' => 'Основная информация',
@@ -68,6 +75,12 @@ return array_replace_recursive($fallback, [
         'save' => 'Сохранить',
         'save_hint' => 'После сохранения профиль сразу обновится.',
         'avatar_alt' => 'Фото профиля :name',
+        'avatar_remove' => 'Удалить фото',
+        'first_name_label' => 'Имя',
+        'first_name_hint' => 'Только буквы, пробел и дефис',
+        'last_name_label' => 'Фамилия',
+        'last_name_hint' => 'Только буквы, пробел и дефис',
+        'edit_kicker' => 'Редактировать',
     ],
     'blocks' => [
         'exams' => [
@@ -221,24 +234,6 @@ return array_replace_recursive($fallback, [
     'activity_manage_exams_text' => 'Управляйте созданными экзаменами и результатами учеников.',
     'activity_results_text' => 'Сданные экзамены теперь на отдельной странице.',
     'course_request_default_reason' => 'Запрос разрешения на открытие курса',
-    'facts' => [
-        'donor_rank' => [
-            'label' => 'Рейтинг донора',
-            'value_none' => 'Нет',
-            'hint_none' => 'Станьте донором и получите привилегии',
-            'hint_expires' => 'Истекает: :time',
-            'hint_expired' => 'Срок истёк',
-        ],
-    ],
-    'main_card' => [
-        'avatar_remove' => 'Удалить фото',
-        'first_name_label' => 'Имя',
-        'first_name_hint' => 'Только буквы, пробел и дефис',
-        'last_name_label' => 'Фамилия',
-        'last_name_hint' => 'Только буквы, пробел и дефис',
-        'edit_kicker' => 'Редактировать',
-    ],
-
     'appearance' => [
         'themes_title' => 'Доступные темы',
         'themes_view_all' => 'Посмотреть все',

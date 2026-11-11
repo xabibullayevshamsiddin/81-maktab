@@ -107,12 +107,14 @@ class HomePageTest extends TestCase
     {
         $response = $this->post(route("contact.store"), [
             "name" => "Ali",
-            "email" => "ali@example.com",
+            "email" => "ali@gmail.com",
+            "phone" => "+998901234567",
             "message" => "Test message.",
         ]);
 
+        $response->assertSessionHasNoErrors();
         $response->assertRedirect();
-        $this->assertDatabaseHas("contact_messages", ["email" => "ali@example.com"]);
+        $this->assertDatabaseHas("contact_messages", ["email" => "ali@gmail.com"]);
     }
 
     public function test_contact_validation(): void

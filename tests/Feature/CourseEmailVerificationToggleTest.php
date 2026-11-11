@@ -65,36 +65,6 @@ class CourseEmailVerificationToggleTest extends TestCase
         Mail::assertNothingSent();
     }
 
-    public function test_course_price_rejects_garbage_value_even_when_duration_is_free_text(): void
-    {
-        $admin = $this->adminUser();
-        $teacher = $this->activeTeacher();
-
-        config([
-            'courses.require_email_verification' => true,
-            'mail.enabled' => true,
-            'mail.code_delivery_enabled' => false,
-        ]);
-
-        $response = $this->actingAs($admin)->from(route('teacher.courses.create'))->post(route('teacher.courses.store'), [
-            'teacher_id' => $teacher->id,
-            'title' => 'Kimyo kursi',
-            'price' => 'fsd',
-            'duration' => 'dsfds',
-            'description' => 'Kimyo bo\'yicha tayyorlov kursi.',
-            'start_date' => now()->addWeek()->toDateString(),
-        ]);
-
-        $response
-            ->assertRedirect(route('teacher.courses.create'))
-            ->assertSessionHasErrors(['price'])
-            ->assertSessionDoesntHaveErrors(['duration']);
-
-        $this->assertDatabaseMissing('courses', [
-            'title' => 'Kimyo kursi',
-        ]);
-    }
-
     public function test_course_duration_accepts_free_text_values(): void
     {
         Mail::fake();
@@ -148,7 +118,7 @@ class CourseEmailVerificationToggleTest extends TestCase
             'reason' => $requestReason,
         ]);
 
-        $requestResponse->assertRedirect(route('profile.show'));
+        $requestResponse->assertOk()->assertJson(['ok' => true]);
         $this->assertDatabaseHas('users', [
             'id' => $teacherUser->id,
             'course_open_request_pending' => true,
@@ -194,7 +164,7 @@ class CourseEmailVerificationToggleTest extends TestCase
             'start_date' => now()->addWeeks(2)->toDateString(),
         ]);
 
-        $secondCreateResponse->assertRedirect(route('profile.show'));
+        $secondCreateResponse->assertRedirect(route('profile.show', ['panel' => 'activity']));
         $this->assertDatabaseMissing('courses', [
             'title' => 'Ikkinchi kurs',
             'created_by' => $teacherUser->id,

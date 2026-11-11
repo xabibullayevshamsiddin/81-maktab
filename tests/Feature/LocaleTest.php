@@ -13,7 +13,7 @@ class LocaleTest extends TestCase
         $response = $this->get(route("locale.switch", "ru"));
 
         $response->assertRedirect();
-        $this->assertSame("ru", app()->getLocale());
+        $response->assertSessionHas('locale', "ru");
     }
 
     public function test_locale_switch_to_english(): void
@@ -21,7 +21,7 @@ class LocaleTest extends TestCase
         $response = $this->get(route("locale.switch", "en"));
 
         $response->assertRedirect();
-        $this->assertSame("en", app()->getLocale());
+        $response->assertSessionHas('locale', "en");
     }
 
     public function test_locale_switch_to_uzbek(): void
@@ -29,7 +29,7 @@ class LocaleTest extends TestCase
         $response = $this->get(route("locale.switch", "uz"));
 
         $response->assertRedirect();
-        $this->assertSame("uz", app()->getLocale());
+        $response->assertSessionHas('locale', "uz");
     }
 
     public function test_invalid_locale_returns_404(): void
