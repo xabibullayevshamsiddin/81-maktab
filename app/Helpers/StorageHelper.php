@@ -39,6 +39,11 @@ class StorageHelper
             }
         }
 
+        // Vercel serverless muhitida public/ faqat o'qish uchun (read-only), symlink shart emas
+        if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || getenv('VERCEL')) {
+            return;
+        }
+
         // Ensure storage link exists
         $linkPath = public_path('storage');
         $targetPath = storage_path('app/public');
