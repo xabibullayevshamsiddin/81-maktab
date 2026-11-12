@@ -7,8 +7,8 @@
 
   var isDonor = document.body.getAttribute('data-donor-theme') &&
                 document.body.getAttribute('data-donor-theme') !== '';
-  var minMs = isDonor ? 0 : 400;
-  var removeDelayMs = isDonor ? 150 : 400;
+  var minMs = 0;
+  var removeDelayMs = isDonor ? 120 : 250;
   var start = Date.now();
 
   function hide(immediate) {
@@ -28,10 +28,11 @@
 
   window.hideSiteBootLoader = function() { hide(true); };
 
-  if (document.readyState === 'complete') {
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
     hide(false);
   } else {
-    window.addEventListener('load', function () { hide(false); }, { once: true });
+    document.addEventListener('DOMContentLoaded', function () { hide(false); }, { once: true });
+    window.addEventListener('load', function () { hide(true); }, { once: true });
   }
 
   // Always hide loader when page is restored from Back-Forward Cache (bfcache)

@@ -100,16 +100,24 @@ class TrackSiteVisits
             }
         }
 
-        // DB yozuvini yangilash
-        DailySiteVisit::forDate($today);
+        // DB yozuvini yangilash (avval SELECT qilmasdan bitta UPDATE yuborish)
+        $payload = [
+            'page_views' => DB::raw('page_views + 1'),
+            'unique_visitors' => $isNewUnique ? DB::raw('unique_visitors + 1') : DB::raw('unique_visitors'),
+            'auth_visits' => $isNewAuth ? DB::raw('auth_visits + 1') : DB::raw('auth_visits'),
+            'updated_at' => now(),
+        ];
 
-        DailySiteVisit::query()
+        $affected = DailySiteVisit::query()
             ->where('date', $today)
-            ->update([
-                'page_views' => DB::raw('page_views + 1'),
-                'unique_visitors' => $isNewUnique ? DB::raw('unique_visitors + 1') : DB::raw('unique_visitors'),
-                'auth_visits' => $isNewAuth ? DB::raw('auth_visits + 1') : DB::raw('auth_visits'),
-                'updated_at' => now(),
-            ]);
+            ->update($payload);
+
+        if ($affected === 0) {
+            DailySiteVisit::forDate($today);
+
+            DailySiteVisit::query()
+                ->where('date', $today)
+                ->update($payload);
+        }
     }
 }
