@@ -66,10 +66,30 @@ class TelegramUpdateHandler
      */
     public function handleStartGeneric(int $chatId): void
     {
-        $this->telegram->sendMessage($chatId,
-            "Assalomu alaykum!\n\nSaytda ro'yxatdan o'tish yoki kirish uchun havolani bosing.",
-            ['remove_keyboard' => true]
-        );
+        $baseUrl = rtrim((string) config('app.url', 'https://81-maktab.vercel.app'), '/');
+        if ($baseUrl === '' || str_contains($baseUrl, 'localhost')) {
+            $baseUrl = 'https://81-maktab.vercel.app';
+        }
+
+        $text = "👋 <b>Assalomu alaykum!</b>\n\n"
+            ."Bu <b>81-IDUM</b> rasmiy Telegram boti.\n\n"
+            ."Platformada ro'yxatdan o'tish yoki tizimga kirish uchun quyidagi tugmalardan birini bosing:\n\n"
+            ."1️⃣ <b>\"Ro'yxatdan o'tish\"</b> tugmasini bosib saytda ma'lumotlaringizni to'ldiring.\n"
+            ."2️⃣ Saytdagi <i>\"Telegram orqali tasdiqlash\"</i> tugmasi orqali botga qaytib, telefon raqamingizni osongina tasdiqlang.";
+
+        $replyMarkup = [
+            'inline_keyboard' => [
+                [
+                    ['text' => "📝 Ro'yxatdan o'tish", 'url' => $baseUrl.'/register'],
+                    ['text' => '🔑 Tizimga kirish', 'url' => $baseUrl.'/login'],
+                ],
+                [
+                    ['text' => "🌐 Saytga o'tish", 'url' => $baseUrl],
+                ],
+            ],
+        ];
+
+        $this->telegram->sendMessage($chatId, $text, $replyMarkup);
     }
 
     /**
