@@ -36,7 +36,7 @@ return [
     */
 
     'token_length' => 40,
-    'expires_minutes' => 10,
+    'expires_minutes' => env('TELEGRAM_VERIFY_EXPIRES_MINUTES', 30),
     'cleanup_interval' => 60, // daqiqa
 
 ];

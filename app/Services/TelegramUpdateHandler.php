@@ -45,19 +45,36 @@ class TelegramUpdateHandler
                 $verification->update(['status' => TelegramVerification::STATUS_EXPIRED]);
             }
 
-            $this->telegram->sendMessage($chatId,
-                "⚠️ Havola eskirgan yoki noto'g'ri. Saytga qaytib, qayta urinib ko'ring."
+            $baseUrl = rtrim((string) config('app.url', 'https://81-maktab.vercel.app'), '/');
+            if ($baseUrl === '' || str_contains($baseUrl, 'localhost')) {
+                $baseUrl = 'https://81-maktab.vercel.app';
+            }
+
+            $this->telegram->sendMessage(
+                $chatId,
+                "⚠️ <b>Havola muddati tugagan yoki noto'g'ri.</b>\n\n"
+                ."Tasdiqlash havolasi 30 daqiqa amal qiladi. Saytga qaytib yangi havola oling yoki qayta ro'yxatdan o'ting:",
+                [
+                    'inline_keyboard' => [
+                        [
+                            ['text' => "🔄 Ro'yxatdan o'tish", 'url' => $baseUrl.'/register'],
+                            ['text' => '🔑 Tizimga kirish', 'url' => $baseUrl.'/login'],
+                        ],
+                    ],
+                ]
             );
 
             return;
         }
 
+        $promptText = 'register' === $verification->purpose
+            ? 'Saytda kiritgan telefon raqamingizni tasdiqlash uchun pastdagi tugmani bosing.'
+            : "Hisobingizga bog'langan raqamni tasdiqlash uchun pastdagi tugmani bosing.";
+
         $this->telegram->requestContact($chatId,
-            "📱 Telefon raqamni ulashish\n\n"
-            .'\"Telefon raqamni ulashish\" tugmasini bosing. '
-            .('register' === $verification->purpose
-                ? "Saytda kiritgan raqamingizni ulang."
-                : "Hisobingizga bog'langan raqamni ulang.")
+            "📱 <b>Telefon raqamni ulashish</b>\n\n"
+            ."Pastda paydo bo'lgan <b>\"📱 Telefon raqamni ulashish\"</b> tugmasini bosing.\n\n"
+            .$promptText
         );
     }
 
